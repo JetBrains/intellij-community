@@ -28,6 +28,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
 ) : LegacyBridgeModifiableBase(diff), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
 
   private var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
+  private var reloadKind = false
 
   private val currentLibraryValue = CachedValue { storage ->
     val newLibrary = LibraryViaTypedEntity(
@@ -79,9 +80,13 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     assertModelIsLive()
 
     modelIsCommittedOrDisposed = true
-    if (!isChanged) return
 
-    committer(this, diff)
+    if (reloadKind) {
+      originalLibrary.entityStore.clearCachedValue(originalLibrary.snapshotValue, originalLibrary.entityId)
+    }
+    if (isChanged) {
+      committer(this, diff)
+    }
   }
 
   private fun update(updater: ModifiableLibraryEntity.() -> Unit) {
@@ -274,14 +279,12 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     }
   }
 
-  override fun clearKind() {
-    assertModelIsLive()
-    if (kind == null) return
+  override fun forgetKind() {
+    reloadKind = true
+  }
 
-    val properties = currentLibrary.libraryEntity.referrers(LibraryPropertiesEntity::library).toList()
-    for (propertiesEntity in properties) {
-      diff.removeEntity(propertiesEntity)
-    }
+  override fun restoreKind() {
+    reloadKind = true
   }
 
   private fun isUnderRoots(url: VirtualFileUrl, roots: Collection<LibraryRoot>): Boolean {

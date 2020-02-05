@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,7 +37,7 @@ internal class LibraryViaTypedEntity(val libraryImpl: LegacyBridgeLibraryImpl,
     LegacyBridgeFileContainer(urls, jarDirs)
   }
   private val excludedRoots = if (libraryEntity.excludedRoots.isNotEmpty()) LegacyBridgeFileContainer(libraryEntity.excludedRoots, emptyList()) else null
-  private val libraryKind = libraryEntity.getCustomProperties()?.libraryType?.let { LibraryKind.findById(it) } as? PersistentLibraryKind<*>
+  private val libraryKind = libraryEntity.getCustomProperties()?.libraryType?.let { LibraryKind.findById(it) ?: UnknownLibraryKind.getOrCreate(it) } as? PersistentLibraryKind<*>
   private val properties = loadProperties()
 
   private fun loadProperties(): LibraryProperties<*>? {

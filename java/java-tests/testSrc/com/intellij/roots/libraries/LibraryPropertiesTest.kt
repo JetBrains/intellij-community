@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor
@@ -16,42 +17,64 @@ import javax.swing.JComponent
 
 class LibraryPropertiesTest : ModuleRootManagerTestCase() {
   fun `test set type and properties`() {
-    val table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)
     registerLibraryType(testRootDisposable)
+    addLibrary("custom", "data")
+    val library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).libraries.single() as LibraryEx
+    assertEquals(MockLibraryType.KIND, library.kind)
+    assertEquals("data", (library.properties as MockLibraryProperties).data)
+    assertEquals("""
+       <library name="custom" type="mock">
+         <properties>
+           <option name="data" value="data" />
+         </properties>
+         <CLASSES />
+         <JAVADOC />
+         <SOURCES />
+       </library>
+       """.trimIndent(), LibraryTest.serializeLibraries(myProject))
+  }
+
+  private fun addLibrary(name: String, data: String) {
+    val table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)
     runWriteAction {
       val model = table.modifiableModel
-      val lib = model.createLibrary("custom", MockLibraryType.KIND)
+      val lib = model.createLibrary(name, MockLibraryType.KIND)
       val libModel = lib.modifiableModel as LibraryEx.ModifiableModelEx
-      libModel.properties = MockLibraryProperties("data")
+      libModel.properties = MockLibraryProperties(data)
       libModel.commit()
       model.commit()
     }
-    val library = table.libraries.single() as LibraryEx
-    assertEquals(MockLibraryType.KIND, library.kind)
-    assertEquals("data", (library.properties as MockLibraryProperties).data)
   }
 
-  fun `test clear kind when library type is unregistered`() {
+  fun `test convert to unknown library type is unregistered`() {
     val table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)
+    runWithRegisteredType {
+      addLibrary("lib", "hello")
+      val library = table.libraries.single() as LibraryEx
+      assertEquals(MockLibraryType.KIND, library.kind)
+      assertEquals("hello", (library.properties as MockLibraryProperties).data)
+    }
+
+    val unknown = table.libraries.single() as LibraryEx
+    assertInstanceOf(unknown.kind, UnknownLibraryKind::class.java)
+    assertNotNull(unknown.properties)
+
+    runWithRegisteredType {
+      val library = table.libraries.single() as LibraryEx
+      assertEquals(MockLibraryType.KIND, library.kind)
+      assertEquals("hello", (library.properties as MockLibraryProperties).data)
+    }
+  }
+
+  private fun runWithRegisteredType(action: () -> Unit) {
     val libraryTypeDisposable = Disposer.newDisposable()
     registerLibraryType(libraryTypeDisposable)
     try {
-      runWriteAction {
-        val model = table.modifiableModel
-        val lib = model.createLibrary("custom", MockLibraryType.KIND)
-        model.commit()
-      }
-      val library = table.libraries.single() as LibraryEx
-      assertEquals(MockLibraryType.KIND, library.kind)
-      assertEquals("default", (library.properties as MockLibraryProperties).data)
+      action()
     }
     finally {
       Disposer.dispose(libraryTypeDisposable)
     }
-
-    val library = table.libraries.single() as LibraryEx
-    assertNull(library.kind)
-    assertNull(library.properties)
   }
 
   private fun registerLibraryType(disposable: Disposable) {

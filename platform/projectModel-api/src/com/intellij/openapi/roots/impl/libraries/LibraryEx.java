@@ -82,7 +82,9 @@ public interface LibraryEx extends Library {
     /**
      * Removes custom library kind and associated properties if any
      */
-    void clearKind();
+    void forgetKind();
+
+    void restoreKind();
 
     /**
      * Add a URL to list of directories excluded from the library. The directory specified by {@code url} must be located under some

@@ -117,8 +117,12 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Nullable
   private static PersistentLibraryKind<?> findPersistentLibraryKind(@NotNull Element element) {
     String typeString = element.getAttributeValue(LIBRARY_TYPE_ATTR);
+    if (typeString == null) return null;
     LibraryKind kind = LibraryKind.findById(typeString);
-    if (kind != null && !(kind instanceof PersistentLibraryKind<?>)) {
+    if (kind == null) {
+      return UnknownLibraryKind.getOrCreate(typeString);
+    }
+    if (!(kind instanceof PersistentLibraryKind<?>)) {
       LOG.error("Cannot load non-persistable library kind: " + typeString);
       return null;
     }
@@ -293,10 +297,16 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     if (typeId == null) return;
 
     myKind = (PersistentLibraryKind<?>) LibraryKind.findById(typeId);
-    if (myKind == null) return;
+    final Element propertiesElement = element.getChild(JpsLibraryTableSerializer.PROPERTIES_TAG);
+    if (myKind == null) {
+      myKind = UnknownLibraryKind.getOrCreate(typeId);
+      UnknownLibraryKind.UnknownLibraryProperties properties = new UnknownLibraryKind.UnknownLibraryProperties();
+      properties.setConfiguration(propertiesElement);
+      myProperties = properties;
+      return;
+    }
 
     myProperties = myKind.createDefaultProperties();
-    final Element propertiesElement = element.getChild(JpsLibraryTableSerializer.PROPERTIES_TAG);
     if (propertiesElement != null) {
       ComponentSerializationUtil.loadComponentState(myProperties, propertiesElement);
     }
@@ -354,7 +364,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       LOG.assertTrue(myProperties != null, "Properties is 'null' in library with kind " + myKind);
       final Object state = myProperties.getState();
       if (state != null) {
-        final Element propertiesElement = XmlSerializer.serialize(state);
+        final Element propertiesElement = state instanceof Element ? ((Element)state).clone() : XmlSerializer.serialize(state);
         if (propertiesElement != null) {
           element.addContent(propertiesElement.setName(JpsLibraryTableSerializer.PROPERTIES_TAG));
         }
@@ -438,9 +448,30 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   @Override
-  public void clearKind() {
-    myKind = null;
-    myProperties = null;
+  public void forgetKind() {
+    if (myKind == null) return;
+
+    myKind = UnknownLibraryKind.getOrCreate(myKind.getKindId());
+    Object propertiesState = myProperties.getState();
+    if (propertiesState != null) {
+      UnknownLibraryKind.UnknownLibraryProperties properties = new UnknownLibraryKind.UnknownLibraryProperties();
+      properties.setConfiguration(XmlSerializer.serialize(propertiesState));
+      myProperties = properties;
+    }
+    else {
+      myProperties = null;
+    }
+  }
+
+  @Override
+  public void restoreKind() {
+    if (myKind == null || !(myKind instanceof UnknownLibraryKind)) return;
+    myKind = (PersistentLibraryKind<?>)LibraryKind.findById(myKind.getKindId());
+    Element configuration = ((UnknownLibraryKind.UnknownLibraryProperties)myProperties).getConfiguration();
+    myProperties = myKind.createDefaultProperties();
+    if (configuration != null) {
+      ComponentSerializationUtil.loadComponentState(myProperties, configuration);
+    }
   }
 
   @Override
