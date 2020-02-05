@@ -1,7 +1,7 @@
 # List of files containing native libraries that need to be unpacked then
 # codesigned. The paths here indicate the paths in the built Android Studio
 # macOS app bundle.
-
+@@bundle@@/Contents/plugins/gradle/lib/gradle-api-5.2.1-sp1.jar
 @@bundle@@/Contents/plugins/java/lib/debugger-memory-agent-0.0.11.jar
 @@bundle@@/Contents/plugins/Kotlin/kotlinc/lib/kotlin-daemon-client.jar
 @@bundle@@/Contents/plugins/Kotlin/kotlinc/lib/kotlin-compiler.jar
