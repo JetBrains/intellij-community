@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.application.Application;
@@ -140,20 +140,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return false;
   }
 
-  @Override
   @Nullable
+  @Override
   protected String normalize(@NotNull String path) {
-    if (path.isEmpty()) {
-      try {
-        path = new File("").getCanonicalPath();
-      }
-      catch (IOException e) {
-        return path;
-      }
-    }
-    else if (SystemInfo.isWindows) {
-      if (path.charAt(0) == '/' && !path.startsWith("//")) {
-        path = path.substring(1);  // hack over new File(path).toURI().toURL().getFile()
+    if (SystemInfo.isWindows) {
+      if (path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) != '/') {
+        path = path.substring(1);  // hack around `new File(path).toURI().toURL().getFile()`
       }
 
       try {
@@ -164,22 +156,18 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
-    File file = new File(path);
-    if (!isAbsoluteFileOrDriveLetter(file)) {
-      path = file.getAbsolutePath();
+    try {
+      Path file = Paths.get(path);
+      if (!file.isAbsolute() && !(SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':')) {
+        path = file.toAbsolutePath().toString();
+      }
+    }
+    catch (InvalidPathException | IOError e) {
+      Logger.getInstance(getClass()).trace(e);
+      return null;
     }
 
     return FileUtil.normalize(path);
-  }
-
-  private static boolean isAbsoluteFileOrDriveLetter(@NotNull File file) {
-    String path = file.getPath();
-    if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
-      // just drive letter.
-      // return true, despite the fact that technically it's not an absolute path
-      return true;
-    }
-    return file.isAbsolute();
   }
 
   @Override
@@ -590,53 +578,31 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @NotNull
   @Override
-  protected String extractRootPath(@NotNull String path) {
-    if (path.isEmpty()) {
-      try {
-        path = new File("").getCanonicalPath();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
+  protected String extractRootPath(@NotNull String normalizedPath) {
     for (String customRootPath : ourRootPaths) {
-      if (path.startsWith(customRootPath)) return customRootPath;
+      if (normalizedPath.startsWith(customRootPath)) return customRootPath;
     }
 
     if (SystemInfo.isWindows) {
-      if (path.length() >= 2 && path.charAt(1) == ':') {
-        // Drive letter
-        return StringUtil.toUpperCase(path.substring(0, 2));
+      if (normalizedPath.length() >= 2 && normalizedPath.charAt(1) == ':') {
+        // drive letter
+        return StringUtil.toUpperCase(normalizedPath.substring(0, 2));
       }
-
-      if (path.startsWith("//") || path.startsWith("\\\\")) {
-        // UNC. Must skip exactly two path elements like [\\ServerName\ShareName]\pathOnShare\file.txt
-        // Root path is in square brackets here.
-
-        int slashCount = 0;
-        int idx;
-        boolean isSlash = false;
-        for (idx = 2; idx < path.length() && slashCount < 2; idx++) {
-          char c = path.charAt(idx);
-          isSlash = c == '\\' || c == '/';
-          if (isSlash) {
-            slashCount++;
-            if (slashCount == 2) {
-              idx--;
-            }
-          }
-        }
-
-        if (slashCount == 2 || slashCount == 1 && !isSlash) {
-          return path.substring(0, idx);
+      if (normalizedPath.startsWith("//")) {
+        // UNC (https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/62e862f4-2a51-452e-8eeb-dc4ff5ee33cc)
+        int p1 = normalizedPath.indexOf('/', 2);
+        if (p1 > 2) {
+          int p2 = normalizedPath.indexOf('/', p1 + 1);
+          if (p2 > p1 + 1) return normalizedPath.substring(0, p2);
+          if (p2 < 0) return normalizedPath;
         }
       }
-
-      return "";
+    }
+    else if (StringUtil.startsWithChar(normalizedPath, '/')) {
+      return "/";
     }
 
-    return StringUtil.startsWithChar(path, '/') ? "/" : "";
+    return "";
   }
 
   @Override
@@ -712,12 +678,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    String path = normalize(file.getPath());
-    if (path == null) return null;
-    if (file.getParent() == null && path.startsWith("//")) {
-      return FAKE_ROOT_ATTRIBUTES;  // fake Windows roots
+    String path = file.getPath();
+    if (SystemInfo.isWindows && file.getParent() == null && path.startsWith("//")) {
+      return FAKE_ROOT_ATTRIBUTES;  // UNC roots
     }
-    return myAttrGetter.accessDiskWithCheckCanceled(FileUtil.toSystemDependentName(path));
+    else {
+      return myAttrGetter.accessDiskWithCheckCanceled(FileUtil.toSystemDependentName(path));
+    }
   }
 
   private final DiskQueryRelay<String, FileAttributes> myAttrGetter = new DiskQueryRelay<>(FileSystemUtil::getAttributes);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -107,8 +107,8 @@ public class MockLocalFileSystem extends LocalFileSystem {
 
   @NotNull
   @Override
-  protected String extractRootPath(@NotNull String path) {
-    return path;
+  protected String extractRootPath(@NotNull String normalizedPath) {
+    return normalizedPath;
   }
 
   @Override

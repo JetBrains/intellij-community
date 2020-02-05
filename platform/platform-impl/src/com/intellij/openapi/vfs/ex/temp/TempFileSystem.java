@@ -34,7 +34,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
   @NotNull
   @Override
-  protected String extractRootPath(@NotNull final String path) {
+  protected String extractRootPath(@NotNull String normalizedPath) {
     return "/";
   }
 

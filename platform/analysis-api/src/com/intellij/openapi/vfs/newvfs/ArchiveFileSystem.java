@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -68,7 +68,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   }
 
   /**
-   * Strips any separator chars from a root path (obtained via {@link #extractRootPath(String)}) to obtain a path to a local file.
+   * Strips any separator chars from a root (obtained via {@link VfsUtilCore#getRootFile} path to obtain a path to a local file.
    */
   @NotNull
   protected abstract String extractLocalPath(@NotNull String rootPath);
@@ -125,8 +125,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
 
   @NotNull
   protected String getRelativePath(@NotNull VirtualFile file) {
-    String path = file.getPath();
-    String relativePath = path.substring(extractRootPath(path).length());
+    String relativePath = file.getPath().substring(VfsUtilCore.getRootFile(file).getPath().length());
     return StringUtil.trimLeading(relativePath, '/');
   }
 

@@ -37,13 +37,11 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -289,6 +287,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       assertNull(myFS.findFileByPath("\\\\some-unc-server"));
       assertNull(myFS.findFileByPath("//SOME-UNC-SERVER"));
       assertNull(myFS.findFileByIoFile(new File("\\\\some-unc-server")));
+      assertNull(myFS.findFileByPath("\\\\wsl$"));
+      assertNull(myFS.findFileByPath("\\\\?\\C:\\"));
 
       root = myFS.findFileByPath("\\\\some-unc-server\\some-unc-share");
       assertNotNull(root);
@@ -316,6 +316,55 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     if (!SystemInfo.isFileSystemCaseSensitive) {
       root2 = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath().toUpperCase(Locale.US) + "!/");
       assertEquals(String.valueOf(root2), root, root2);
+    }
+  }
+
+  @Test
+  public void testUncOperations() throws IOException {
+    assumeWindows();
+    Path uncRootPath = Paths.get("\\\\127.0.0.1\\" + tempDir.getRoot().getPath().replaceAll("^([A-Z]):", "$1\\$"));
+    assumeTrue("Cannot access " + uncRootPath, Files.isDirectory(uncRootPath));
+
+    VirtualFile uncRootFile = myFS.refreshAndFindFileByPath(uncRootPath.toString());
+    assertNotNull("not found: " + uncRootPath, uncRootFile);
+    assertTrue(uncRootFile.isValid());
+
+    try {
+      assertThat(uncRootFile.getChildren()).isEmpty();
+
+      byte[] data = "original data".getBytes(StandardCharsets.UTF_8);
+      Path testLocalPath1 = Files.write(tempDir.newFile("test1.txt").toPath(), data);
+      uncRootFile.refresh(false, false);
+      VirtualFile testFile1 = uncRootFile.findChild(testLocalPath1.getFileName().toString());
+      assertNotNull("not found: " + testLocalPath1, testFile1);
+      assertTrue("invalid: " + testFile1, testFile1.isValid());
+      assertThat(uncRootFile.getChildren()).hasSize(1);
+
+      assertThat(testFile1.contentsToByteArray(false)).isEqualTo(data);
+      data = "new content".getBytes(StandardCharsets.UTF_8);
+      Files.write(testLocalPath1, data);
+      uncRootFile.refresh(false, false);
+      assertThat(testFile1.contentsToByteArray(false)).isEqualTo(data);
+
+      VirtualFile testFile2 = runInEdtAndGet(() -> WriteAction.compute(() -> uncRootFile.createChildData(this, "test2.txt")));
+      Path testLocalPath2 = tempDir.getRoot().toPath().resolve(testFile2.getName());
+      assertThat(testLocalPath2).isRegularFile();
+      uncRootFile.refresh(false, false);
+      assertTrue("invalid: " + testFile1, testFile1.isValid());
+      assertTrue("invalid: " + testFile2, testFile2.isValid());
+      runInEdtAndWait(() -> WriteAction.run(() -> testFile2.delete(this)));
+      assertTrue("invalid: " + testFile1, testFile1.isValid());
+      assertFalse("still valid: " + testFile2, testFile2.isValid());
+      assertThat(testLocalPath2).doesNotExist();
+
+      Files.delete(testLocalPath1);
+      uncRootFile.refresh(false, false);
+      assertFalse("still valid: " + testFile1, testFile1.isValid());
+      assertThat(uncRootFile.getChildren()).isEmpty();
+    }
+    finally {
+      RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, uncRootFile, false));
+      assertFalse("still valid: " + uncRootFile, uncRootFile.isValid());
     }
   }
 
@@ -372,7 +421,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testWindowsHiddenDirectory() {
-    IoTestUtil.assumeWindows();
+    assumeWindows();
 
     File file = new File("C:\\Documents and Settings\\desktop.ini");
     assumeTrue("Documents and Settings assumed to exist", file.exists());
@@ -441,7 +490,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void testNoMoreFakeRoots() {
     try {
-      PersistentFS.getInstance().findRoot("", myFS);
+      ManagingFS.getInstance().findRoot("", myFS);
       fail("should fail by assertion in PersistentFsImpl.findRoot()");
     }
     catch (Throwable t) {
@@ -455,7 +504,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     try {
       File d = tempDir.newFolder();
       VirtualFile vDir = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(d));
-      PersistentFS.getInstance().findRoot(vDir.getPath(), myFS);
+      ManagingFS.getInstance().findRoot(vDir.getPath(), myFS);
       fail("should fail by assertion in PersistentFsImpl.findRoot()");
     }
     catch (Throwable t) {

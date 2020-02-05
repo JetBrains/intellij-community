@@ -1131,12 +1131,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return null;
     }
 
-    String optimisticUrl = VirtualFileManager.constructUrl(fs.getProtocol(), StringUtil.trimTrailing(path, '/'));
-    VirtualFileSystemEntry root = myRoots.get(optimisticUrl);
-    if (root != null) return root;
-    String rootUrl = normalizeRootUrl(path, fs);
-
-    root = rootUrl.equals(optimisticUrl) ? null : myRoots.get(rootUrl);
+    String rootUrl = UriUtil.trimTrailingSlashes(VirtualFileManager.constructUrl(fs.getProtocol(), path));
+    VirtualFileSystemEntry root = myRoots.get(rootUrl);
     if (root != null) return root;
 
     CharSequence rootName;
@@ -1146,7 +1142,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       VirtualFile localFile = afs.findLocalByRootPath(path);
       if (localFile == null) return null;
       rootName = localFile.getNameSequence();
-      rootPath = afs.getRootPathByLocal(localFile); // make sure to not create FsRoot with ".." garbage in path
+      rootPath = afs.getRootPathByLocal(localFile);
+      rootUrl = UriUtil.trimTrailingSlashes(VirtualFileManager.constructUrl(fs.getProtocol(), rootPath));
     }
     else {
       rootName = rootPath = path;
@@ -1208,13 +1205,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     LOG.assertTrue(rootId == newRoot.getId(), "root=" + newRoot + " expected=" + rootId + " actual=" + newRoot.getId());
 
     return newRoot;
-  }
-
-  @NotNull
-  private static String normalizeRootUrl(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) {
-    // need to protect against relative path of the form "/x/../y"
-    String normalized = VfsImplUtil.normalize(fs, FileUtil.toCanonicalPath(basePath));
-    return VirtualFileManager.constructUrl(fs.getProtocol(), UriUtil.trimTrailingSlashes(normalized));
   }
 
   @Override
@@ -1407,7 +1397,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     final int parentId = parent == null ? 0 : getFileId(parent);
 
     if (parentId == 0) {
-      String rootUrl = normalizeRootUrl(file.getPath(), (NewVirtualFileSystem)file.getFileSystem());
+      String rootUrl = UriUtil.trimTrailingSlashes(file.getUrl());
       synchronized (myRoots) {
         myRoots.remove(rootUrl);
         myIdToDirCache.remove(id);

@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,12 +17,29 @@ import java.util.Map;
 public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface, CachingVirtualFileSystem {
   private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = ContainerUtil.newConcurrentMap();
 
-  @Nullable
-  public abstract VirtualFile findFileByPathIfCached(@NotNull String path);
-
-  protected String normalize(@NotNull String path) {
+  /**
+   * <p>Implementations <b>should</b> convert separator chars to forward slashes and remove duplicates ones,
+   * and convert paths to "absolute" form (so that they start from a root that is valid for this FS and
+   * could be later extracted with {@link #extractRootPath}).</p>
+   *
+   * <p>Implementations <b>should not</b> normalize paths by eliminating directory traversals or other indirections.</p>
+   *
+   * @return a normalized path, or {@code null} when a path is invalid for this FS.
+   */
+  @ApiStatus.OverrideOnly
+  protected @Nullable String normalize(@NotNull String path) {
     return path;
   }
+
+  /**
+   * IntelliJ platform calls this method with non-null value returned by {@link #normalize}, but if something went wrong
+   * and an implementation can't extract a valid root path nevertheless, it should return an empty string.
+   */
+  @ApiStatus.OverrideOnly
+  protected @NotNull abstract String extractRootPath(@NotNull String normalizedPath);
+
+  @Nullable
+  public abstract VirtualFile findFileByPathIfCached(@NotNull String path);
 
   @Override
   public void refreshWithoutFileWatcher(boolean asynchronous) {
@@ -42,9 +60,6 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public String resolveSymLink(@NotNull VirtualFile file) {
     return null;
   }
-
-  @NotNull
-  protected abstract String extractRootPath(@NotNull String path);
 
   @Override
   public void addVirtualFileListener(@NotNull VirtualFileListener listener) {

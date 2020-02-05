@@ -7,10 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.Function;
@@ -131,8 +128,8 @@ public class VfsImplUtil {
     }
 
     String basePath = vfs.extractRootPath(normalizedPath);
-    if (basePath.length() > normalizedPath.length() || basePath.isEmpty()) {
-      LOG.warn(vfs + " failed to extract root path '" + basePath + "' from '" + normalizedPath + "' (original '" + path + "')");
+    if (StringUtil.isEmptyOrSpaces(basePath) || basePath.length() > normalizedPath.length()) {
+      LOG.warn(vfs + " has extracted incorrect root '" + basePath + "' from '" + normalizedPath + "' (original '" + path + "')");
       return null;
     }
 
@@ -150,10 +147,6 @@ public class VfsImplUtil {
     if (roots.length > 0) {
       RefreshQueue.getInstance().refresh(asynchronous, true, null, roots);
     }
-  }
-
-  public static String normalize(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    return vfs.normalize(path);
   }
 
   /**
@@ -185,7 +178,7 @@ public class VfsImplUtil {
   public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
                                                         @NotNull VirtualFile entryFile,
                                                         @NotNull Function<? super String, ? extends T> producer) {
-    String localPath = vfs.extractLocalPath(vfs.extractRootPath(entryFile.getPath()));
+    String localPath = vfs.extractLocalPath(VfsUtilCore.getRootFile(entryFile).getPath());
     checkSubscription();
 
     T handler;

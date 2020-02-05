@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.application.Application;
@@ -8,10 +8,7 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.DiskQueryRelay;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -47,11 +44,11 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     return PROTOCOL;
   }
 
-  @NotNull
+  @Nullable
   @Override
   protected String normalize(@NotNull String path) {
-    int p = path.indexOf(SEPARATOR);
-    return p > 0 ? FileUtil.normalize(path.substring(0, p)) + path.substring(p) : super.normalize(path);
+    int separatorIndex = path.indexOf(SEPARATOR);
+    return separatorIndex > 0 ? FileUtil.normalize(path.substring(0, separatorIndex)) + path.substring(separatorIndex) : null;
   }
 
   @NotNull
@@ -68,10 +65,9 @@ public class JrtFileSystemImpl extends JrtFileSystem {
 
   @NotNull
   @Override
-  protected String extractRootPath(@NotNull String entryPath) {
-    int separatorIndex = entryPath.indexOf(SEPARATOR);
-    assert separatorIndex >= 0 : "Path passed to JrtFileSystem must have a separator '!/' but got: " + entryPath;
-    return entryPath.substring(0, separatorIndex + SEPARATOR.length());
+  protected String extractRootPath(@NotNull String normalizedPath) {
+    int separatorIndex = normalizedPath.indexOf(SEPARATOR);
+    return separatorIndex > 0 ? normalizedPath.substring(0, separatorIndex + SEPARATOR.length()) : "";
   }
 
   @NotNull
@@ -79,7 +75,7 @@ public class JrtFileSystemImpl extends JrtFileSystem {
   protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
     checkSubscription();
 
-    String homePath = extractLocalPath(extractRootPath(entryFile.getPath()));
+    String homePath = extractLocalPath(VfsUtilCore.getRootFile(entryFile).getPath());
     return myHandlers.computeIfAbsent(homePath, key -> {
       JrtHandler handler = new JrtHandler(key);
       ApplicationManager.getApplication().invokeLater(
