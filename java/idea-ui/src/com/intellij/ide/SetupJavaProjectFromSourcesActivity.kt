@@ -56,13 +56,8 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
     })
   }
 
-  private fun Project.hasBeenOpenedBySpecificProcessor(): Boolean {
-    if (true == getUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR)) {
-      putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, null)
-      return false
-    }
-    return true
-  }
+  private fun Project.hasBeenOpenedBySpecificProcessor(): Boolean =
+    true != getUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR)
 
   private fun searchImporters(projectDirectory: VirtualFile): ArrayListMultimap<ProjectOpenProcessor, VirtualFile> {
     val providersAndFiles = ArrayListMultimap.create<ProjectOpenProcessor, VirtualFile>()
