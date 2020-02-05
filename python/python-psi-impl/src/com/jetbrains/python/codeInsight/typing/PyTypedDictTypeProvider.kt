@@ -48,11 +48,12 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
      * and one of them ends up with null.
      */
     private fun checkIfClassIsDirectTypedDictInheritor(cls: PyClass, context: TypeEvalContext): Boolean {
-      if (context.maySwitchToAST(cls) || cls.stub == null) {
+      val stub = cls.stub
+      if (context.maySwitchToAST(cls) || stub == null) {
         return cls.superClassExpressions.any { isTypedDict(it, context) }
       }
       else {
-        return cls.stub.superClassesText.any { isTypedDict(PyUtil.createExpressionFromFragment(it, cls) ?: return false, context) }
+        return stub.superClassesText.any { isTypedDict(PyUtil.createExpressionFromFragment(it, cls) ?: return false, context) }
       }
     }
 
