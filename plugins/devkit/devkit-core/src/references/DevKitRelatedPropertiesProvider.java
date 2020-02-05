@@ -52,14 +52,19 @@ public class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProv
 
     GenericAttributeValue<String> attr = ((ActionOrGroup)ag).getId();
     String id = attr.getStringValue();
+    String tagName = ag.getXmlElementName();
+    if (!"action".equals(tagName) && !"group".equals(tagName)) {
+      return;
+    }
+
     if (id != null) {
       PropertiesFileImpl file = DevKitPluginXmlInspectionBase.findBundlePropertiesFile(ag);
 
       if (file == null) return;
 
       JBIterable<PsiElement> targets = JBIterable.of(
-        file.findPropertyByKey("action." + id + ".text"),
-        file.findPropertyByKey("action." + id + ".description"))
+        file.findPropertyByKey(tagName + "." + id + ".text"),
+        file.findPropertyByKey(tagName + "." + id + ".description"))
         .filter(PsiElement.class);
 
       if (targets.isEmpty()) return;

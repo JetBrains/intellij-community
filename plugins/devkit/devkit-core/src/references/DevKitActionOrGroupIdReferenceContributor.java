@@ -54,7 +54,7 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
             createRef(element, text, ACTION, TEXT),
             createRef(element, text, ACTION, DESC),
             createRef(element, text, GROUP, TEXT),
-            createRef(element, text, ACTION, DESC)).filter(Objects::nonNull).toArray(PsiReference.EMPTY_ARRAY);
+            createRef(element, text, GROUP, DESC)).filter(Objects::nonNull).toArray(PsiReference.EMPTY_ARRAY);
         }
 
         @Nullable
@@ -120,5 +120,4 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
       return false;
     }
   }
-
 }
