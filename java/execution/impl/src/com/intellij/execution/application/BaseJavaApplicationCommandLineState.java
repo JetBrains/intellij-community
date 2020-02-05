@@ -125,7 +125,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     TargetedCommandLineBuilder line = super.createTargetedCommandLine(request, configuration);
     File inputFile = InputRedirectAware.getInputFile(myConfiguration);
     if (inputFile != null) {
-      line.setInputFile(request.createUpload(inputFile.getAbsolutePath()));
+      line.setInputFile(request.getDefaultVolume().createUpload(inputFile.getAbsolutePath()));
     }
     return line;
   }

@@ -3,7 +3,6 @@ package com.intellij.execution.target.local;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetEnvironmentVolume;
 import com.intellij.execution.target.TargetPlatform;
 import com.intellij.execution.target.value.TargetValue;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -13,7 +12,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
-  private final Map<TargetEnvironmentVolume.VolumeMode, TargetEnvironmentVolume> myVolumes = new LinkedHashMap<>();
+  private static int nextSyntheticId = 0;
+  private Volume myDefaultVolume;
+  private final Map<String, LocalDownloadVolume> myDownloadRoots = new LinkedHashMap<>();
+  private final Map<String, LocalUploadVolume> myUploadRoots = new LinkedHashMap<>();
 
   @NotNull
   private GeneralCommandLine.ParentEnvironmentType myParentEnvironmentType = GeneralCommandLine.ParentEnvironmentType.CONSOLE;
@@ -26,13 +28,27 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
 
   @Override
   @NotNull
-  public TargetEnvironmentVolume requestVolume(TargetEnvironmentVolume.@NotNull VolumeMode mode) {
-    return myVolumes.computeIfAbsent(mode, aMode -> new LocalVolume(this, aMode));
+  public Volume getDefaultVolume() {
+    if (myDefaultVolume == null) {
+      myDefaultVolume = createUploadRoot(null, true);
+    }
+    return myDefaultVolume;
   }
 
   @Override
-  public Iterable<TargetEnvironmentVolume> getVolumes() {
-    return myVolumes.values();
+  @NotNull
+  public Volume createUploadRoot(@Nullable String remoteRootPath, boolean temporary) {
+    String id = nextSyntheticId();
+    if (remoteRootPath == null) {
+      remoteRootPath = id;
+    }
+    return myUploadRoots.computeIfAbsent(remoteRootPath, path -> new LocalUploadVolume(this, id));
+  }
+
+  @Override
+  @NotNull
+  public DownloadableVolume createDownloadRoot(@NotNull String remoteRootPath) {
+    return myDownloadRoots.computeIfAbsent(remoteRootPath, path -> new LocalDownloadVolume(this, path));
   }
 
   @NotNull
@@ -46,34 +62,27 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
     return myParentEnvironmentType;
   }
 
+  private static String nextSyntheticId() {
+    return LocalTargetEnvironmentRequest.class.getSimpleName() + ":volume:" + (nextSyntheticId++);
+  }
+
   public void setParentEnvironmentType(@NotNull GeneralCommandLine.ParentEnvironmentType parentEnvironmentType) {
     myParentEnvironmentType = parentEnvironmentType;
   }
 
-  private static class LocalVolume implements TargetEnvironmentVolume {
+  private static class LocalUploadVolume implements TargetEnvironmentRequest.Volume {
     private final LocalTargetEnvironmentRequest myRequest;
-    private final VolumeMode myMode;
-    private final String myRootPath;
+    private final String myVolumeId;
 
-    @Nullable
-    static String getRootPath(VolumeMode mode) {
-      if (mode instanceof VolumeMode.Download) {
-        return ((VolumeMode.Download)mode).getRemoteRoot();
-      }
-      if (mode instanceof VolumeMode.Upload) {
-        return ((VolumeMode.Upload)mode).getRemoteRoot();
-      }
-      throw new IllegalArgumentException("Unknown mode: " + mode);
+    LocalUploadVolume(@NotNull LocalTargetEnvironmentRequest request, @NotNull String volumeId) {
+      myRequest = request;
+      myVolumeId = volumeId;
     }
 
-    LocalVolume(LocalTargetEnvironmentRequest request, VolumeMode mode) {
-      myRequest = request;
-      myMode = mode;
-      myRootPath = getRootPath(mode);
-      if (myRootPath == null) {
-        //FIXME: reconsider, need persisted volumes use case
-        throw new IllegalArgumentException("Incompatible mode, can't find root path: " + mode);
-      }
+    @NotNull
+    @Override
+    public String getVolumeId() {
+      return myVolumeId;
     }
 
     @NotNull
@@ -84,24 +93,33 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
 
     @NotNull
     @Override
-    public TargetEnvironmentVolume.VolumeMode getMode() {
-      return myMode;
-    }
-
-    @NotNull
-    @Override
     public TargetValue<String> createUpload(@NotNull String localPath) {
       return TargetValue.fixed(localPath);
     }
+  }
 
-    @NotNull
+  private static class LocalDownloadVolume extends LocalUploadVolume implements TargetEnvironmentRequest.DownloadableVolume {
+    private final String myRootPath;
+
+    LocalDownloadVolume(@NotNull LocalTargetEnvironmentRequest request, @NotNull String rootPath) {
+      super(request, LocalDownloadVolume.class.getSimpleName() + ":" + rootPath);
+      myRootPath = rootPath;
+    }
+
     @Override
+    @NotNull
+    public String getRemoteRoot() {
+      return myRootPath;
+    }
+
+    @Override
+    @NotNull
     public TargetValue<String> createDownload(@NotNull String rootRelativePath) {
       String fullPath = concatPaths(myRootPath, rootRelativePath);
       return TargetValue.fixed(fullPath);
     }
 
-    // FIXME check separator
+    // FIXME-226344: check local (not remote) separator
     private static String concatPaths(String parent, String child) {
       return parent + "/" + child;
     }

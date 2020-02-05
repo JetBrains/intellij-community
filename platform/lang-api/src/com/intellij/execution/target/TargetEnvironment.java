@@ -29,10 +29,10 @@ public abstract class TargetEnvironment {
   //FIXME: document
   public abstract void shutdown();
 
-  @NotNull
-  public final Iterable<TargetEnvironmentVolume> getVolumes() {
-    return myRequest.getVolumes();
-  }
+  //@NotNull
+  //public final Iterable<? extends TargetEnvironmentRequest.Volume> getVolumes() {
+  //  return myRequest.getVolumes();
+  //}
 
   public final TargetEnvironmentRequest getRequest() {
     return myRequest;

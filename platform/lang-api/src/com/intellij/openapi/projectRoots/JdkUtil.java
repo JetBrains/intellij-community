@@ -11,7 +11,6 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetEnvironmentVolume;
 import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
@@ -201,8 +200,8 @@ public final class JdkUtil {
         .map(JavaLanguageRuntimeConfiguration::getApplicationFolder)
         .map(StringUtil::nullize)
         .orElse(null);
-      TargetEnvironmentVolume volume = request.requestVolume(
-        new TargetEnvironmentVolume.VolumeMode.Upload(remoteAppFolder, true));
+
+      TargetEnvironmentRequest.Volume volume = request.createUploadRoot(remoteAppFolder, false);
       commandLine.setWorkingDirectory(volume.createUpload(workingDirectory));
     }
     javaParameters.getEnv().forEach((key, value) -> commandLine.addEnvironmentVariable(key, value));
@@ -212,8 +211,8 @@ public final class JdkUtil {
       ((LocalTargetEnvironmentRequest)request).setParentEnvironmentType(type);
     }
 
-    TargetEnvironmentVolume classPathVolume = request.createNewTempVolume();
-    TargetEnvironmentVolume agentVolume = request.createNewTempVolume();
+    TargetEnvironmentRequest.Volume classPathVolume = request.createTempVolume();
+    TargetEnvironmentRequest.Volume agentVolume = request.createTempVolume();
 
     ParametersList vmParameters = javaParameters.getVMParametersList();
     boolean dynamicClasspath = javaParameters.isDynamicClasspath();
@@ -292,8 +291,8 @@ public final class JdkUtil {
   }
 
   private static void setArgFileParams(TargetedCommandLineBuilder commandLine,
-                                       TargetEnvironmentVolume classPathVolume,
-                                       TargetEnvironmentVolume agentVolume,
+                                       TargetEnvironmentRequest.Volume classPathVolume,
+                                       TargetEnvironmentRequest.Volume agentVolume,
                                        @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                        SimpleJavaParameters javaParameters,
                                        ParametersList vmParameters,
@@ -384,8 +383,8 @@ public final class JdkUtil {
 
   private static void setCommandLineWrapperParams(TargetedCommandLineBuilder commandLine,
                                                   TargetEnvironmentRequest request,
-                                                  TargetEnvironmentVolume classPathVolume,
-                                                  TargetEnvironmentVolume agentVolume,
+                                                  TargetEnvironmentRequest.Volume classPathVolume,
+                                                  TargetEnvironmentRequest.Volume agentVolume,
                                                   @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                                   SimpleJavaParameters javaParameters,
                                                   ParametersList vmParameters,
@@ -440,7 +439,7 @@ public final class JdkUtil {
       });
 
       Set<TargetValue<String>> classpath = new LinkedHashSet<>();
-      TargetEnvironmentVolume tempVolume = request.getDefaultTempVolume();
+      TargetEnvironmentRequest.Volume tempVolume = request.getDefaultVolume();
 
       classpath.add(tempVolume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)));
       if (isUrlClassloader(vmParameters)) {
@@ -507,8 +506,8 @@ public final class JdkUtil {
 
   private static void setClasspathJarParams(TargetedCommandLineBuilder commandLine,
                                             TargetEnvironmentRequest request,
-                                            TargetEnvironmentVolume classPathVolume,
-                                            TargetEnvironmentVolume agentVolume,
+                                            TargetEnvironmentRequest.Volume classPathVolume,
+                                            TargetEnvironmentRequest.Volume agentVolume,
                                             @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                             SimpleJavaParameters javaParameters,
                                             ParametersList vmParameters,
@@ -549,10 +548,11 @@ public final class JdkUtil {
       Map<String, String> commandLineContent = new HashMap<>();
       commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
 
-      File classpathJarFile = FileUtil.createTempFile(CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt()), ".jar", true);
+      File classpathJarFile =
+        FileUtil.createTempFile(CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt()), ".jar", true);
       commandLine.addFileToDeleteOnTermination(classpathJarFile);
 
-      final TargetEnvironmentVolume volume = request.createNewTempVolume();
+      final TargetEnvironmentRequest.Volume volume = request.createTempVolume();
 
       String jarFilePath = classpathJarFile.getAbsolutePath();
       commandLine.addParameter("-classpath");
@@ -611,12 +611,12 @@ public final class JdkUtil {
 
   private static void appendParamsEncodingClasspath(TargetedCommandLineBuilder commandLine,
                                                     TargetEnvironmentRequest request,
-                                                    TargetEnvironmentVolume classPathVolume,
-                                                    TargetEnvironmentVolume agentVolume,
+                                                    TargetEnvironmentRequest.Volume classPathVolume,
+                                                    TargetEnvironmentRequest.Volume agentVolume,
                                                     @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                                     SimpleJavaParameters javaParameters,
                                                     ParametersList vmParameters) {
-    appendVmParameters(commandLine, request, vmParameters);
+    appendVmParameters(commandLine, 42, agentVolume, vmParameters);
     appendEncoding(javaParameters, commandLine, vmParameters);
     PathsList classPath = javaParameters.getClassPath();
     if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
@@ -635,7 +635,7 @@ public final class JdkUtil {
 
   private static void appendVmParameters(TargetedCommandLineBuilder commandLine,
                                          int dummy,
-                                         TargetEnvironmentVolume agentVolume,
+                                         TargetEnvironmentRequest.Volume agentVolume,
                                          ParametersList vmParameters) {
     for (String vmParameter : vmParameters.getList()) {
       appendVmParameter(commandLine, agentVolume, vmParameter);
@@ -643,7 +643,7 @@ public final class JdkUtil {
   }
 
   private static void appendVmParameter(TargetedCommandLineBuilder commandLine,
-                                        TargetEnvironmentVolume agentVolume,
+                                        TargetEnvironmentRequest.Volume agentVolume,
                                         String vmParameter) {
     if (agentVolume.getRequest() instanceof LocalTargetEnvironmentRequest ||
       SystemProperties.getBooleanProperty("remote.servers.ignore.vm.parameter", false)) {
@@ -663,7 +663,7 @@ public final class JdkUtil {
   }
 
   private static void appendVmAgentParameter(TargetedCommandLineBuilder commandLine,
-                                             TargetEnvironmentVolume agentVolume,
+                                             TargetEnvironmentRequest.Volume agentVolume,
                                              String vmParameter,
                                              String prefix) {
     String value = StringUtil.trimStart(vmParameter, prefix);
@@ -678,7 +678,7 @@ public final class JdkUtil {
   }
 
   @NotNull
-  private static List<TargetValue<String>> getClassPathValues(TargetEnvironmentVolume classPathVolume,
+  private static List<TargetValue<String>> getClassPathValues(TargetEnvironmentRequest.Volume classPathVolume,
                                                               @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                                               SimpleJavaParameters javaParameters) {
     String localJdkPath = ObjectUtils.doIfNotNull(javaParameters.getJdk(), jdk -> jdk.getHomePath());
@@ -717,7 +717,7 @@ public final class JdkUtil {
   }
 
   private static List<TargetValue<String>> getMainClassParams(SimpleJavaParameters javaParameters,
-                                                              TargetEnvironmentVolume volume) throws CantRunException {
+                                                              TargetEnvironmentRequest.Volume volume) throws CantRunException {
     String mainClass = javaParameters.getMainClass();
     String moduleName = javaParameters.getModuleName();
     String jarPath = javaParameters.getJarPath();
