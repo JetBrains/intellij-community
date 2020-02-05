@@ -64,7 +64,8 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
                        @NotNull List<PsiElement> psiElementsToIgnore,
                        @Nullable Runnable refreshViews) {
     Set<PsiElement> distinct = new HashSet<>();
-    List<ReplacementBean> keyValuePairs = ContainerUtil.mapNotNull(descriptors, descriptor -> {
+    Map<String, ReplacementBean> keyValuePairs = new LinkedHashMap<>();
+    for (CommonProblemDescriptor descriptor : descriptors) {
       PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
       ULiteralExpression literalExpression = UastUtils.findContaining(psiElement, ULiteralExpression.class);
       if (literalExpression != null) {
@@ -73,30 +74,47 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
           Object val = literalExpression.getValue();
           if (distinct.add(psiElement) && val instanceof String) {
             String value = StringUtil.escapeStringCharacters((String)val);
-            String key = I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null);
-            return new ReplacementBean(key, value, literalExpression, psiElement, Collections.emptyList());
+            ReplacementBean bean = keyValuePairs.get(value);
+            if (bean != null) {
+              bean.getPsiElements().add(psiElement);
+              bean.getExpressions().add(literalExpression);
+            }
+            else {
+              String key = I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null);
+              ArrayList<PsiElement> elements = new ArrayList<>();
+              elements.add(psiElement);
+              List<UExpression> uExpressions = new ArrayList<>();
+              uExpressions.add(literalExpression);
+              keyValuePairs.put(value, new ReplacementBean(key, value, uExpressions, elements, Collections.emptyList()));
+            }
           }
         }
         else if (distinct.add(concatenation)) {
           ArrayList<PsiExpression> args = new ArrayList<>();
           String value = I18nizeConcatenationQuickFix.getValueString(concatenation, args);
           String key = I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null);
-          return new ReplacementBean(key, 
-                                     value, 
-                                     UastUtils.findContaining(concatenation, UPolyadicExpression.class), 
-                                     concatenation, 
-                                     ContainerUtil.map(args, arg -> UastUtils.findContaining(arg, UExpression.class) ));
+          keyValuePairs.put(value + concatenation.hashCode(),
+                            new ReplacementBean(key,
+                                                value,
+                                                Collections.singletonList(UastUtils.findContaining(concatenation, UPolyadicExpression.class)),
+                                                Collections.singletonList(concatenation),
+                                                ContainerUtil.map(args, arg -> UastUtils.findContaining(arg, UExpression.class))));
         }
       }
-      return null;
-    });
+    }
 
     if (keyValuePairs.isEmpty()) return;
 
-    I18NBatchDialog dialog = new I18NBatchDialog(project, keyValuePairs);
+    ArrayList<ReplacementBean> replacements = new ArrayList<>(keyValuePairs.values());
+    I18NBatchDialog dialog = new I18NBatchDialog(project, replacements);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
-      List<PsiFile> files = ContainerUtil.mapNotNull(keyValuePairs, bean -> bean.getPsiElement().getContainingFile());
+      Set<PsiFile> files = new HashSet<>();
+      for (ReplacementBean pair : replacements) {
+        for (PsiElement element : pair.getPsiElements()) {
+          ContainerUtil.addIfNotNull(files, element.getContainingFile());
+        }
+      }
       if (files.isEmpty()) {
         return;
       }
@@ -110,36 +128,40 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
           bundleName = classesByName[0].getQualifiedName();
           LOG.assertTrue(bundleName != null, propertiesFile.getName());
         }
-        for (ReplacementBean bean : keyValuePairs) {
+        for (ReplacementBean bean : replacements) {
           JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                         Collections.singletonList(propertiesFile),
                                                                         bean.getKey(),
                                                                         bean.getValue(),
                                                                         PsiExpression.EMPTY_ARRAY);
-          UExpression uExpression = bean.getExpression();
-          PsiElement psiElement = bean.getPsiElement();
-          Language language = psiElement.getLanguage();
-          UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(language);
-          if (generationPlugin == null) {
-            LOG.debug("No UAST generation plugin exist for " + language.getDisplayName());
-            continue;
-          }
-          UastElementFactory pluginElementFactory = generationPlugin.getElementFactory(project);
-          List<UExpression> arguments = new ArrayList<>();
-          arguments.add(pluginElementFactory.createStringLiteralExpression(bean.getKey(), psiElement));
-          arguments.addAll(bean.getArgs());
-          UCallExpression callExpression = pluginElementFactory
-            .createCallExpression(pluginElementFactory.createQualifiedReference(bundleName, uExpression),
-                                  "message",
-                                  arguments,
-                                  null,
-                                  UastCallKind.METHOD_CALL,
-                                  psiElement);
-          if (callExpression != null) {
-            generationPlugin.replace(uExpression, callExpression, UCallExpression.class);
-          }
-          else {
-            LOG.debug("Null generated UAST call expression");
+          List<UExpression> uExpressions = bean.getExpressions();
+          List<PsiElement> psiElements = bean.getPsiElements();
+          for (int i = 0; i < psiElements.size(); i++) {
+            PsiElement psiElement = psiElements.get(i);
+            UExpression uExpression = uExpressions.get(i);
+            Language language = psiElement.getLanguage();
+            UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(language);
+            if (generationPlugin == null) {
+              LOG.debug("No UAST generation plugin exist for " + language.getDisplayName());
+              continue;
+            }
+            UastElementFactory pluginElementFactory = generationPlugin.getElementFactory(project);
+            List<UExpression> arguments = new ArrayList<>();
+            arguments.add(pluginElementFactory.createStringLiteralExpression(bean.getKey(), psiElement));
+            arguments.addAll(bean.getArgs());
+            UCallExpression callExpression = pluginElementFactory
+              .createCallExpression(pluginElementFactory.createQualifiedReference(bundleName, uExpression),
+                                    "message",
+                                    arguments,
+                                    null,
+                                    UastCallKind.METHOD_CALL,
+                                    psiElement);
+            if (callExpression != null) {
+              generationPlugin.replace(uExpression, callExpression, UCallExpression.class);
+            }
+            else {
+              LOG.debug("Null generated UAST call expression");
+            }
           }
         }
       }, files.toArray(PsiFile.EMPTY_ARRAY));
@@ -185,8 +207,8 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
               ReplacementBean updated =
                 new ReplacementBean(I18nizeQuickFixDialog.suggestUniquePropertyKey(keyValuePair.myValue, keyValuePair.myKey, propertiesFile),
                                     keyValuePair.myValue,
-                                    keyValuePair.myExpression,
-                                    keyValuePair.myPsiElement,
+                                    keyValuePair.myExpressions,
+                                    keyValuePair.myPsiElements,
                                     keyValuePair.myArgs);
               myKeyValuePairs.set(i, updated);
             }
@@ -216,9 +238,8 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       table.getSelectionModel().addListSelectionListener(e -> {
         int index = table.getSelectionModel().getLeadSelectionIndex();
         if (index != -1) {
-          PsiElement element = myKeyValuePairs.get(index).getPsiElement();
-          UsageInfo usageInfo = new UsageInfo(element.getParent());
-          myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+          List<PsiElement> elements = myKeyValuePairs.get(index).getPsiElements();
+          myUsagePreviewPanel.updateLayout(ContainerUtil.map(elements, element -> new UsageInfo(element.getParent())));
         }
         else {
           myUsagePreviewPanel.updateLayout(null);
@@ -279,7 +300,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (columnIndex == 0) {
           ReplacementBean bean = myKeyValuePairs.get(rowIndex);
-          myKeyValuePairs.set(rowIndex, new ReplacementBean((String)aValue, bean.getValue(), bean.getExpression(), bean.getPsiElement(), bean.getArgs()));
+          myKeyValuePairs.set(rowIndex, new ReplacementBean((String)aValue, bean.getValue(), bean.getExpressions(), bean.getPsiElements(), bean.getArgs()));
         }
       }
 
@@ -293,19 +314,19 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
   private static class ReplacementBean {
     private final String myKey;
     private final String myValue;
-    private final UExpression myExpression;
-    private final PsiElement myPsiElement;
+    private final List<UExpression> myExpressions;
+    private final List<PsiElement> myPsiElements;
     private final List<UExpression> myArgs;
 
     private ReplacementBean(String key,
                             String value,
-                            UExpression expression,
-                            PsiElement psiElement,
+                            List<UExpression> expression,
+                            List<PsiElement> psiElements,
                             List<UExpression> args) {
       myKey = key;
       myValue = value;
-      myExpression = expression;
-      myPsiElement = psiElement;
+      myExpressions = expression;
+      myPsiElements = psiElements;
       myArgs = args;
     }
 
@@ -317,16 +338,16 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       return myValue;
     }
 
-    private UExpression getExpression() {
-      return myExpression;
+    private List<UExpression> getExpressions() {
+      return myExpressions;
     }
 
     private List<UExpression> getArgs() {
       return myArgs;
     }
 
-    private PsiElement getPsiElement() {
-      return myPsiElement;
+    private List<PsiElement> getPsiElements() {
+      return myPsiElements;
     }
   }
 }
