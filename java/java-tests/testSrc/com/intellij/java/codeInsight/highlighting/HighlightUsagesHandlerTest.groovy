@@ -308,6 +308,12 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
     assertRangesAndTexts "17:18 s", "32:33 s"
   }
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp()
+    myFixture.setReadEditorMarkupModel(true)
+  }
+
   /**
    * @param expected sorted by startOffset
    */

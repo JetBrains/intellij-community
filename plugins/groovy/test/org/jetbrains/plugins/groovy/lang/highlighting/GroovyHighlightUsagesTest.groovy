@@ -24,6 +24,12 @@ class GroovyHighlightUsagesTest extends LightGroovyTestCase {
 
   final String basePath = TestUtils.testDataPath + 'highlighting/usages/'
 
+  @Override
+  void setUp() throws Exception {
+    super.setUp()
+    myFixture.setReadEditorMarkupModel(true)
+  }
+
   private void doTest(boolean directoryTest = false) {
     SeveritiesProvider.EP_NAME.getPoint(null).registerExtension(SEVERITIES_PROVIDER, testRootDisposable)
     def name = getTestName()

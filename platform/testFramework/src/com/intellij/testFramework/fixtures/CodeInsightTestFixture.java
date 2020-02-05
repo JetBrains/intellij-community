@@ -614,6 +614,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void setCaresAboutInjection(boolean caresAboutInjection);
 
   /**
+   * By default, {@link #doHighlighting} only collects highlight infos from {@link Document} markup model.
+   * Setting this flag will make this method also return highlight infos from {@link Editor#getMarkupModel}.
+   */
+  void setReadEditorMarkupModel(boolean readEditorMarkupModel);
+
+  /**
    * Completes basically (see {@link #completeBasic()}) <strong>all</strong>
    * carets (places marked with {@link #CARET_MARKER} in file. Example:
    * <pre>

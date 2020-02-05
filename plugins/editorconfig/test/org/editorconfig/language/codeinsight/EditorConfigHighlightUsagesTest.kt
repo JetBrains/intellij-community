@@ -22,6 +22,7 @@ class EditorConfigHighlightUsagesTest : BasePlatformTestCase() {
     SeveritiesProvider.EP_NAME.getPoint(null).registerExtension(SEVERITIES_PROVIDER, testRootDisposable)
     val name = getTestName(true)
     myFixture.configureByFile("${name}/.editorconfig")
+    myFixture.setReadEditorMarkupModel(true)
     doWithHighlightingEnabled {
       ExpectedHighlightingData.expectedDuplicatedHighlighting {myFixture.checkHighlighting ()}
     }

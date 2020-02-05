@@ -83,6 +83,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   private fun offset(line: Int, column: Int): Int = myFixture.editor.document.getLineStartOffset(line - 1) + column - 1
 
   fun testHighlighting() {
+    myFixture.setReadEditorMarkupModel(true)
     myFixture.openFileInEditor(getTestFile("Navigation.class"))
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
       myFixture.editor.caretModel.moveToOffset(offset(11, 14))  // m2(): usage, declaration

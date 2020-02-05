@@ -151,11 +151,11 @@ public class EditorTestFixture {
 
   @NotNull
   public List<HighlightInfo> doHighlighting() {
-    return doHighlighting(false);
+    return doHighlighting(false, false);
   }
 
   @NotNull
-  public List<HighlightInfo> doHighlighting(boolean myAllowDirt) {
+  public List<HighlightInfo> doHighlighting(boolean myAllowDirt, boolean readEditorMarkupModel) {
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
 
     PsiFile file = getFile();
@@ -165,7 +165,7 @@ public class EditorTestFixture {
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
     }
     assertNotNull(file);
-    return instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDirt);
+    return instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDirt, readEditorMarkupModel);
   }
 
   @Nullable

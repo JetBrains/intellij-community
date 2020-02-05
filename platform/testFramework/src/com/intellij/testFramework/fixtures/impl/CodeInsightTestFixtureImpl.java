@@ -166,6 +166,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
+  private boolean myReadEditorMarkupModel;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private ResourceBundle[] myMessageBundles = new ResourceBundle[0];
 
@@ -221,6 +222,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                       @NotNull Editor editor,
                                                       int @NotNull [] toIgnore,
                                                       boolean canChangeDocument) {
+    return instantiateAndRun(file, editor, toIgnore, canChangeDocument, false);
+  }
+
+  @NotNull
+  @TestOnly
+  public static List<HighlightInfo> instantiateAndRun(@NotNull PsiFile file,
+                                                      @NotNull Editor editor,
+                                                      int @NotNull [] toIgnore,
+                                                      boolean canChangeDocument,
+                                                      boolean readEditorMarkupModel) {
     Project project = file.getProject();
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
@@ -241,6 +252,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             policy.waitForHighlighting(project, editor);
           }
           infos.addAll(DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), null, project));
+          if (readEditorMarkupModel) {
+            infos.addAll(DaemonCodeAnalyzerImpl.getHighlights(editor, null, project));
+          }
         });
         infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, file));
         return infos;
@@ -1532,7 +1546,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   @NotNull
   public List<HighlightInfo> doHighlighting() {
-    return myEditorTestFixture.doHighlighting(myAllowDirt);
+    return myEditorTestFixture.doHighlighting(myAllowDirt, myReadEditorMarkupModel);
   }
 
   @NotNull
@@ -1866,6 +1880,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void setCaresAboutInjection(boolean caresAboutInjection) {
     myCaresAboutInjection = caresAboutInjection;
+  }
+
+  @Override
+  public void setReadEditorMarkupModel(boolean readEditorMarkupModel) {
+    myReadEditorMarkupModel = readEditorMarkupModel;
   }
 
   @Override
