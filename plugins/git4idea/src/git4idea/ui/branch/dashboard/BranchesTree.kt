@@ -231,10 +231,12 @@ internal class FilteringBranchesTree(project: Project,
     }
 
   private fun getLocalRootNodes() =
-    if (useDirectoryGrouping) localBranchesDescriptors.asSequence().filter(forParent()) else localBranchesDescriptors.asSequence()
+    if (useDirectoryGrouping) localBranchesDescriptors.asSequence().filter(forParent(localRootNodeDescriptor))
+    else localBranchesDescriptors.asSequence()
 
   private fun getRemoteRootNodes() =
-    if (useDirectoryGrouping) remoteBranchesDescriptors.asSequence().filter(forParent()) else remoteBranchesDescriptors.asSequence()
+    if (useDirectoryGrouping) remoteBranchesDescriptors.asSequence().filter(forParent(remoteRootNodeDescriptor))
+    else remoteBranchesDescriptors.asSequence()
 
   private fun getLocalGroupNodes(parent: BranchNodeDescriptor = localRootNodeDescriptor) =
     if (useDirectoryGrouping) localGroupBranchesDescriptors.asSequence().filter(forParent(parent)) else emptySequence()
