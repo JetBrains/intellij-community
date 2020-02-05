@@ -3,6 +3,7 @@ package com.intellij.dvcs.push.ui
 
 import com.intellij.dvcs.push.PushSupport
 import com.intellij.dvcs.push.PushTarget
+import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -24,7 +25,7 @@ class ForcePushAction : PushActionBase() {
   override fun getDescription(ui: VcsPushUi, enabled: Boolean): String? {
     val prohibitedTarget = getProhibitedTarget(ui)
     return if (!enabled && prohibitedTarget != null) {
-      "Force push to ${prohibitedTarget.presentation} is prohibited"
+      DvcsBundle.message("action.force.push.is.prohibited.description", prohibitedTarget.presentation)
     }
     else null
   }
@@ -48,11 +49,15 @@ class ForcePushAction : PushActionBase() {
       commonTarget = silentForcePushIsNotAllowed[aSupport]!!.map { it.pushSpec.target }.distinct().singleOrNull()
     }
 
-    val to = if (commonTarget != null) " to <b>${commonTarget.presentation}</b>" else ""
-    val message = "You're going to force push${to}. It may overwrite commits at the remote. Are you sure you want to proceed?"
+    val message = if (commonTarget != null) {
+      DvcsBundle.message("action.force.push.to.confirmation.text", commonTarget.presentation)
+    }
+    else {
+      DvcsBundle.message("action.force.push.confirmation.text")
+    }
     val myDoNotAskOption = if (commonTarget != null) MyDoNotAskOptionForPush(aSupport!!, commonTarget) else null
-    val decision = showOkCancelDialog(title = "Force Push", message = XmlStringUtil.wrapInHtml(message),
-                                      okText = "&Force Push",
+    val decision = showOkCancelDialog(title = DvcsBundle.message("action.force.push"), message = XmlStringUtil.wrapInHtml(message),
+                                      okText = DvcsBundle.message("action.force.push"),
                                       icon = Messages.getWarningIcon(), doNotAskOption = myDoNotAskOption,
                                       project = project)
     return decision == Messages.OK
@@ -67,5 +72,5 @@ private class MyDoNotAskOptionForPush(private val pushSupport: PushSupport<*, *,
     }
   }
 
-  override fun getDoNotShowMessage() = "Don't warn about this target"
+  override fun getDoNotShowMessage() = DvcsBundle.message("action.force.push.don.t.warn.about.this.target")
 }

@@ -2,6 +2,7 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushSettings;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -107,8 +108,8 @@ public class PushLog extends JPanel implements DataProvider {
           return "";
         }
         if (node instanceof TooltipNode) {
-          return ((TooltipNode)node).getTooltip() +
-                 "<p style='font-style:italic;color:gray;'>Select to show commit details </p>";
+          String select = DvcsBundle.getString("push.select.all.commit.details");
+          return ((TooltipNode)node).getTooltip() + "<p style='font-style:italic;color:gray;'>" + select + "</p>";
         }
         return "";
       }
@@ -311,7 +312,7 @@ public class PushLog extends JPanel implements DataProvider {
   private JComponent createStrategyPanel() {
     final JPanel labelPanel = new JPanel(new BorderLayout());
     labelPanel.setBackground(myTree.getBackground());
-    final LinkLabel<String> linkLabel = new LinkLabel<>("Edit all targets", null);
+    final LinkLabel<String> linkLabel = new LinkLabel<>(DvcsBundle.getString("push.edit.all.targets"), null);
     linkLabel.setBorder(JBUI.Borders.empty(2));
     linkLabel.setListener(new LinkListener<String>() {
       @Override
@@ -406,7 +407,7 @@ public class PushLog extends JPanel implements DataProvider {
   private void updateChangesView() {
     List<CommitNode> commitNodes = getSelectedCommitNodes();
     if (!commitNodes.isEmpty()) {
-      myChangesBrowser.getViewer().setEmptyText("No differences");
+      myChangesBrowser.getViewer().setEmptyText(DvcsBundle.message("push.no.differences"));
     }
     else {
       setDefaultEmptyText();
@@ -422,7 +423,7 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   private void setDefaultEmptyText() {
-    myChangesBrowser.getViewer().setEmptyText("No commits selected");
+    myChangesBrowser.getViewer().setEmptyText(DvcsBundle.message("push.no.commits.selected"));
   }
 
   // Make changes available for diff action; revisionNumber for create patch and copy revision number actions
@@ -758,7 +759,7 @@ public class PushLog extends JPanel implements DataProvider {
     @NotNull private final Consumer<Boolean> myOnUpdate;
 
     MyShowDetailsAction(@NotNull Project project, @NotNull Consumer<Boolean> onUpdate) {
-      super("Show Details", AllIcons.Actions.PreviewDetailsVertically);
+      super(DvcsBundle.message("push.show.details"), AllIcons.Actions.PreviewDetailsVertically);
       mySettings = ServiceManager.getService(project, PushSettings.class);
       myOnUpdate = onUpdate;
     }

@@ -5,6 +5,8 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -25,6 +27,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,9 +83,12 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
     init();
     updateOkActions();
-    setOKButtonText("Push");
+    setOKButtonText(DvcsBundle.getString("action.push"));
     setOKButtonMnemonic('P');
-    setTitle("Push Commits " + (allRepos.size() == 1 ? "to " + DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)) : ""));
+    String title = allRepos.size() == 1
+                   ? DvcsBundle.message("push.dialog.push.commits.to.title", DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)))
+                   : DvcsBundle.getString("push.dialog.push.commits.title");
+    setTitle(title);
   }
 
   @Nullable
@@ -206,7 +212,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   @Override
   @CalledInAwt
   public void push(boolean forcePush) {
-    executeAfterRunningPrePushHandlers(new Task.Backgroundable(myProject, "Pushing...", true) {
+    executeAfterRunningPrePushHandlers(new Task.Backgroundable(myProject, DvcsBundle.getString("push.process.pushing"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         myController.push(forcePush);
@@ -234,7 +240,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   public PrePushHandler.Result runPrePushHandlersInModalTask() {
     FileDocumentManager.getInstance().saveAllDocuments();
     AtomicReference<PrePushHandler.Result> result = new AtomicReference<>(PrePushHandler.Result.OK);
-    new Task.Modal(myController.getProject(), "Checking Commits...", true) {
+    new Task.Modal(myController.getProject(), DvcsBundle.getString("push.process.checking.commits"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         result.set(myController.executeHandlers(indicator));
@@ -249,24 +255,22 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
           String failedHandler = handlerException.getFailedHandlerName();
           List<String> skippedHandlers = handlerException.getSkippedHandlers();
 
-          String suggestionMessage;
+          @Nls String suggestionMessageProblem;
           if (cause instanceof ProcessCanceledException) {
-            suggestionMessage = failedHandler + " has been cancelled.\n";
+            suggestionMessageProblem = DvcsBundle.message("push.dialog.push.cancelled.message", failedHandler);
           }
           else {
             super.onThrowable(cause);
-            suggestionMessage = failedHandler + " has failed. See log for more details.\n";
+            suggestionMessageProblem = DvcsBundle.message("push.dialog.push.failed.message", failedHandler);
           }
 
-          if (skippedHandlers.isEmpty()) {
-            suggestionMessage += "Would you like to push anyway or cancel the push completely?";
-          }
-          else {
-            suggestionMessage += "Would you like to skip all remaining pre-push steps and push, or cancel the push completely?";
-          }
+          @Nls String suggestionMessageQuestion = skippedHandlers.isEmpty()
+                                                  ? DvcsBundle.message("push.dialog.push.anyway.confirmation")
+                                                  : DvcsBundle.message("push.dialog.skip.all.remaining.steps.confirmation");
 
-          suggestToSkipOrPush(suggestionMessage);
-        } else {
+          suggestToSkipOrPush(suggestionMessageProblem + "\n" + suggestionMessageQuestion);
+        }
+        else {
           super.onThrowable(error);
         }
       }
@@ -274,15 +278,15 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       @Override
       public void onCancel() {
         super.onCancel();
-        suggestToSkipOrPush("Would you like to skip all pre-push steps and push, or cancel the push completely?");
+        suggestToSkipOrPush(DvcsBundle.getString("push.dialog.skip.all.steps.confirmation"));
       }
 
-      private void suggestToSkipOrPush(@NotNull String message) {
+      private void suggestToSkipOrPush(@Nls @NotNull String message) {
         if (Messages.showOkCancelDialog(myProject,
                                         message,
-                                        "Push",
-                                        "&Push Anyway",
-                                        "&Cancel",
+                                        DvcsBundle.getString("action.push"),
+                                        DvcsBundle.getString("action.push.anyway"),
+                                        IdeBundle.message("button.cancel"),
                                         UIUtil.getWarningIcon()) == Messages.OK) {
           result.set(PrePushHandler.Result.OK);
         }
@@ -325,7 +329,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     private final List<? extends ActionWrapper> myOptions;
 
     private ComplexPushAction(@NotNull List<? extends ActionWrapper> additionalActions) {
-      super("&Push");
+      super(DvcsBundle.getString("action.complex.push"));
       myOptions = additionalActions;
     }
 
