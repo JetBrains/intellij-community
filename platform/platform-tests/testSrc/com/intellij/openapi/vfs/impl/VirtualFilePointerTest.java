@@ -31,6 +31,7 @@ import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -364,7 +365,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     File jar = new File(jarParent, "x.jar");
     File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
     FileUtil.copy(originalJar, jar);
-    getVirtualFile(jar); // Make sure we receive events when jar changes
+    getVirtualFile(jar);  // make sure we receive events when .jar changes
 
     VirtualFilePointerListener listener = new LoggingListener();
     VirtualFilePointer jarParentPointer = createPointerByFile(jarParent, listener);
@@ -385,12 +386,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(jarParent.mkdir());
     FileUtil.copy(originalJar, jar);
     assertTrue(jar.setLastModified(System.currentTimeMillis()));
-    assertTrue(jar.exists());
-    assertTrue(jarParent.exists());
-    assertTrue(jarParent.getParentFile().exists());
-    File[] files = jarParent.listFiles();
-    assertThat(files).hasSize(1);
-    assertEquals(jar.getName(), files[0].getName());
     vTemp.refresh(false, true);
     verifyPointersInCorrectState(pointersToWatch);
     assertTrue(jarParentPointer.isValid());
@@ -497,8 +492,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         stressRead(pointer, reads);
       }
     };
-    Disposable disposable = Disposer.newDisposable();
-    VirtualFileManager.getInstance().addVirtualFileListener(listener, disposable);
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(listener));
     try {
       int N = Timings.adjustAccordingToMySpeed(1000, false);
       LOG.debug("N = " + N);
@@ -523,7 +518,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       }
     }
     finally {
-      Disposer.dispose(disposable); // unregister listener early
+      connection.disconnect();  // unregister listener early
       for (Job<?> read : reads) {
         while (!read.isDone()) {
           read.waitForCompletion(1000);
@@ -591,11 +586,11 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFile dir1 = WriteAction.computeAndWait(() -> root.createChildDirectory(this, "dir1"));
     VirtualFile file = WriteAction.computeAndWait(() -> dir1.createChildData(this, "x.txt"));
     VirtualFile dir2 = WriteAction.computeAndWait(() -> root.createChildDirectory(this, "dir2"));
-    VirtualFilePointer fpointer = myVirtualFilePointerManager.create(file.getUrl(), disposable, null);
-    assertTrue(fpointer.isValid());
-    VirtualFilePointer pointer = myVirtualFilePointerManager.create(dir2.getUrl() + "/../" + dir1.getName() + "/" + file.getName(), disposable, null);
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create(file.getUrl(), disposable, null);
+    assertTrue(pointer.isValid());
+    pointer = myVirtualFilePointerManager.create(dir2.getUrl() + "/../" + dir1.getName() + "/" + file.getName(), disposable, null);
     assertEquals(file, pointer.getFile());
-    VirtualFilePointer nonExistingPointer = myVirtualFilePointerManager.create(dir2.getUrl() + "/../" + dir1.getName() + "/nonexisting.txt", disposable, null);
+    VirtualFilePointer nonExistingPointer = myVirtualFilePointerManager.create(dir2.getUrl() + "/../" + dir1.getName() + "/non-existing.txt", disposable, null);
     assertNull(nonExistingPointer.getFile());
   }
 
