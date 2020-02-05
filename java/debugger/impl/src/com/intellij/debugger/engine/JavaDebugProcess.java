@@ -355,7 +355,7 @@ public class JavaDebugProcess extends XDebugProcess {
         final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session, process, tracker);
 
         final Content memoryViewContent =
-          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, "Memory",
+          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, DebuggerBundle.message("memory.toolwindow.title"),
                            null, classesFilteredView.getDefaultFocusedComponent());
 
         memoryViewContent.setCloseable(false);
@@ -388,7 +388,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
         DebugProcessImpl process = myJavaSession.getProcess();
         OverheadView monitor = new OverheadView(process);
-        Content overheadContent = ui.createContent("OverheadMonitor", monitor, "Overhead", null, monitor.getDefaultFocusedComponent());
+        Content overheadContent = ui.createContent("OverheadMonitor", monitor, DebuggerBundle.message("overhead.toolwindow.title"), null, monitor.getDefaultFocusedComponent());
 
         monitor.setBouncer(() -> ui.setBouncing(overheadContent, true));
 
