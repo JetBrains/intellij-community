@@ -20,12 +20,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.xml.XmlAttributeDescriptor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public abstract class BasicXmlAttributeDescriptor extends XmlEnumerationDescriptor implements XmlAttributeDescriptor {
   @Override
+  @Nls
   public String validateValue(XmlElement context, String value) {
     return null;
   }
