@@ -6,6 +6,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class PushLogTreeUtil {
-
+  @NonNls
   public static final String EDIT_MODE_PROP = "tree.edit.mode";
 
   @Nullable

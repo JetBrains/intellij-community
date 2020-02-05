@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +34,8 @@ public class VcsNotifier {
 
   @NotNull
   public static Notification createNotification(@NotNull NotificationGroup notificationGroup,
-                                                @NotNull String title,
-                                                @NotNull String message,
+                                                @Nls @NotNull String title,
+                                                @Nls @NotNull String message,
                                                 @NotNull NotificationType type,
                                                 @Nullable NotificationListener listener) {
     // title can be empty; message can't be neither null, nor empty
@@ -48,8 +49,8 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notify(@NotNull NotificationGroup notificationGroup,
-                             @NotNull String title,
-                             @NotNull String message,
+                             @Nls @NotNull String title,
+                             @Nls @NotNull String message,
                              @NotNull NotificationType type,
                              @Nullable NotificationListener listener) {
     Notification notification = createNotification(notificationGroup, title, message, type, listener);
@@ -58,8 +59,8 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notify(@NotNull NotificationGroup notificationGroup,
-                             @NotNull String title,
-                             @NotNull String message,
+                             @Nls @NotNull String title,
+                             @Nls @NotNull String message,
                              @NotNull NotificationType type,
                              NotificationAction... actions) {
     Notification notification = createNotification(notificationGroup, title, message, type, null);
@@ -76,121 +77,130 @@ public class VcsNotifier {
   }
 
   @NotNull
-  public Notification notifyError(@NotNull String title, @NotNull String message) {
+  public Notification notifyError(@Nls @NotNull String title, @Nls @NotNull String message) {
     return notifyError(title, message, (NotificationListener)null);
   }
 
   @NotNull
-  public Notification notifyError(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+  public Notification notifyError(@Nls @NotNull String title, @Nls @NotNull String message, @Nullable NotificationListener listener) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR, listener);
   }
 
   @NotNull
-  public Notification notifyError(@NotNull String title, @NotNull String message, NotificationAction... actions) {
+  public Notification notifyError(@Nls @NotNull String title, @Nls @NotNull String message, NotificationAction... actions) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR, actions);
   }
 
   @NotNull
-  public Notification notifyWeakError(@NotNull String message) {
+  public Notification notifyWeakError(@Nls @NotNull String message) {
     return notifyWeakError("", message);
   }
 
   @NotNull
-  public Notification notifyWeakError(@NotNull String title, @NotNull String message) {
+  public Notification notifyWeakError(@Nls @NotNull String title, @Nls @NotNull String message) {
     return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR);
   }
 
   @NotNull
-  public Notification notifySuccess(@NotNull String message) {
+  public Notification notifySuccess(@Nls @NotNull String message) {
     return notifySuccess("", message);
   }
 
   @NotNull
-  public Notification notifySuccess(@NotNull String title, @NotNull String message) {
+  public Notification notifySuccess(@Nls @NotNull String title, @Nls @NotNull String message) {
     return notifySuccess(title, message, null);
   }
 
   @NotNull
-  public Notification notifySuccess(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+  public Notification notifySuccess(@Nls @NotNull String title, @Nls @NotNull String message, @Nullable NotificationListener listener) {
     return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.INFORMATION, listener);
   }
 
   @NotNull
-  public Notification notifyImportantInfo(@NotNull String title, @NotNull String message) {
+  public Notification notifyImportantInfo(@Nls @NotNull String title, @Nls @NotNull String message) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.INFORMATION);
   }
 
   @NotNull
-  public Notification notifyImportantInfo(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+  public Notification notifyImportantInfo(@Nls @NotNull String title,
+                                          @Nls @NotNull String message,
+                                          @Nullable NotificationListener listener) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.INFORMATION, listener);
   }
 
   @NotNull
-  public Notification notifyInfo(@NotNull String message) {
+  public Notification notifyInfo(@Nls @NotNull String message) {
     return notifyInfo("", message);
   }
 
   @NotNull
-  public Notification notifyInfo(@NotNull String title, @NotNull String message) {
+  public Notification notifyInfo(@Nls @NotNull String title, @Nls @NotNull String message) {
     return notifyInfo(title, message, null);
   }
 
   @NotNull
-  public Notification notifyInfo(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+  public Notification notifyInfo(@Nls @NotNull String title, @Nls @NotNull String message, @Nullable NotificationListener listener) {
     return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.INFORMATION, listener);
   }
 
   @NotNull
-  public Notification notifyMinorWarning(@NotNull String title, @NotNull String message) {
+  public Notification notifyMinorWarning(@Nls @NotNull String title, @Nls @NotNull String message) {
     return notifyMinorWarning(title, message, null);
   }
 
   @NotNull
-  public Notification notifyMinorWarning(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+  public Notification notifyMinorWarning(@Nls @NotNull String title,
+                                         @Nls @NotNull String message,
+                                         @Nullable NotificationListener listener) {
     return notify(STANDARD_NOTIFICATION, title, message, NotificationType.WARNING, listener);
   }
 
   @NotNull
-  public Notification notifyWarning(@NotNull String title, @NotNull String message) {
+  public Notification notifyWarning(@Nls @NotNull String title, @Nls @NotNull String message) {
     return notifyWarning(title, message, null);
   }
 
   @NotNull
-  public Notification notifyWarning(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+  public Notification notifyWarning(@Nls @NotNull String title, @Nls @NotNull String message, @Nullable NotificationListener listener) {
     return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.WARNING, listener);
   }
 
   @NotNull
-  public Notification notifyImportantWarning(@NotNull String title, @NotNull String message) {
+  public Notification notifyImportantWarning(@Nls @NotNull String title, @Nls @NotNull String message) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING);
   }
 
   @NotNull
-  public Notification notifyImportantWarning(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+  public Notification notifyImportantWarning(@Nls @NotNull String title,
+                                             @Nls @NotNull String message,
+                                             @Nullable NotificationListener listener) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING, listener);
   }
 
   @NotNull
-  public Notification notifyMinorInfo(@NotNull String title, @NotNull String message) {
+  public Notification notifyMinorInfo(@Nls @NotNull String title, @Nls @NotNull String message) {
     return notifyMinorInfo(title, message, (NotificationListener)null);
   }
 
   @NotNull
-  public Notification notifyMinorInfo(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+  public Notification notifyMinorInfo(@Nls @NotNull String title, @Nls @NotNull String message, @Nullable NotificationListener listener) {
     return notify(STANDARD_NOTIFICATION, title, message, NotificationType.INFORMATION, listener);
   }
 
   @NotNull
-  public Notification notifyMinorInfo(@NotNull String title, @NotNull String message, NotificationAction... actions) {
+  public Notification notifyMinorInfo(@Nls @NotNull String title, @Nls @NotNull String message, NotificationAction... actions) {
     return notify(STANDARD_NOTIFICATION, title, message, NotificationType.INFORMATION, actions);
   }
 
   @NotNull
-  public Notification notifyMinorInfo(boolean sticky, @NotNull String title, @NotNull String message, NotificationAction... actions) {
+  public Notification notifyMinorInfo(boolean sticky,
+                                      @Nls @NotNull String title,
+                                      @Nls @NotNull String message,
+                                      NotificationAction... actions) {
     return notify(sticky ? IMPORTANT_ERROR_NOTIFICATION : STANDARD_NOTIFICATION, title, message, NotificationType.INFORMATION, actions);
   }
 
-  public Notification logInfo(@NotNull String title, @NotNull String message) {
+  public Notification logInfo(@Nls @NotNull String title, @Nls @NotNull String message) {
     return notify(SILENT_NOTIFICATION, title, message, NotificationType.INFORMATION);
   }
 
