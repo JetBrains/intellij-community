@@ -37,6 +37,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.ItemRemovable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
                        @Nullable Runnable refreshViews) {
     Set<PsiElement> distinct = new HashSet<>();
     Map<String, ReplacementBean> keyValuePairs = new LinkedHashMap<>();
+    UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
     for (CommonProblemDescriptor descriptor : descriptors) {
       PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
       ULiteralExpression literalExpression = UastUtils.findContaining(psiElement, ULiteralExpression.class);
@@ -87,7 +89,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
               elements.add(psiElement);
               List<UExpression> uExpressions = new ArrayList<>();
               uExpressions.add(literalExpression);
-              keyValuePairs.put(value, new ReplacementBean(key, value, uExpressions, elements, Collections.emptyList()));
+              keyValuePairs.put(value, new ReplacementBean(uniqueNameGenerator.generateUniqueName(key), value, uExpressions, elements, Collections.emptyList()));
             }
           }
         }
@@ -97,7 +99,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
           String key = ObjectUtils.notNull(suggestKeyByPlace(literalExpression),
                                            I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null));
           keyValuePairs.put(value + concatenation.hashCode(),
-                            new ReplacementBean(key,
+                            new ReplacementBean(uniqueNameGenerator.generateUniqueName(key),
                                                 value,
                                                 Collections.singletonList(UastUtils.findContaining(concatenation, UPolyadicExpression.class)),
                                                 Collections.singletonList(concatenation),
@@ -252,10 +254,6 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       List<String> files = I18nUtil.defaultSuggestPropertiesFiles(myProject);
       myPropertiesFile = new ComboBox<>(ArrayUtil.toStringArray(files));
       new ComboboxSpeedSearch(myPropertiesFile);
-      if (!files.isEmpty()) {
-        myPropertiesFile.setSelectedItem(ObjectUtils.notNull(PropertiesComponent.getInstance(myProject).getValue(LAST_USED_PROPERTIES_FILE),
-                                                             files.get(0)));
-      }
       LabeledComponent<JComboBox<String>> component = new LabeledComponent<>();
       component.setText("Property file:");
       component.setComponent(myPropertiesFile);
@@ -267,8 +265,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             for (int i = 0; i < myKeyValuePairs.size(); i++) {
               ReplacementBean keyValuePair = myKeyValuePairs.get(i);
               ReplacementBean updated =
-                new ReplacementBean(ObjectUtils.notNull(suggestKeyByPlace(keyValuePair.getExpressions().get(0)),
-                                                        I18nizeQuickFixDialog.suggestUniquePropertyKey(keyValuePair.myValue, keyValuePair.myKey, propertiesFile)),
+                new ReplacementBean(I18nizeQuickFixDialog.suggestUniquePropertyKey(keyValuePair.myValue, keyValuePair.myKey, propertiesFile),
                                     keyValuePair.myValue,
                                     keyValuePair.myExpressions,
                                     keyValuePair.myPsiElements,
@@ -279,6 +276,10 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         }
       });
 
+      if (!files.isEmpty()) {
+        myPropertiesFile.setSelectedItem(ObjectUtils.notNull(PropertiesComponent.getInstance(myProject).getValue(LAST_USED_PROPERTIES_FILE),
+                                                             files.get(0)));
+      }
       return component;
     }
 
