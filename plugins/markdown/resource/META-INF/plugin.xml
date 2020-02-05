@@ -75,6 +75,7 @@ Includes the following features:</p>
     </applicationConfigurable>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.MarkdownCodeFencePluginCache"/>
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFCustomSchemeInstaller" preload="true"/>
     <lang.psiStructureViewFactory language="Markdown"
                                   implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
     <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.MarkdownReferenceProvider"/>
