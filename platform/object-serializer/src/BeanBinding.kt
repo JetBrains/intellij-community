@@ -284,7 +284,7 @@ private fun computeNonDefaultConstructorInfo(beanClass: Class<*>): NonDefaultCon
 
     if (constructor.parameterCount != annotation.value.size) {
       throw SerializationException("PropertyMapping annotation specifies ${annotation.value.size} parameters, " +
-                                   "but constructor accepts ${constructor.parameterCount}")
+                                   "but constructor of ${beanClass.name} accepts ${constructor.parameterCount}")
     }
     return NonDefaultConstructorInfo(annotation.value.toList(), constructor)
   }
