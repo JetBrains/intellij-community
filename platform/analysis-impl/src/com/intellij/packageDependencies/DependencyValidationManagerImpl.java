@@ -197,7 +197,7 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
       final List<String> order = myNamedScopeManager.myOrderState.myOrder;
       final int i1 = order.indexOf(name1);
       final int i2 = order.indexOf(name2);
-      return i1 > i2 ? 1 : -1;
+      return i1 - i2;
     });
     super.setScopes(scopes);
 
