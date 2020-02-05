@@ -11,7 +11,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="JSON" extensions="json" implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE" language="JSON"/>
+    <fileType name="JSON" extensions="json;har" implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE" language="JSON"/>
     <fileType name="JSON5" extensions="json5" implementationClass="com.intellij.json.json5.Json5FileType" fieldName="INSTANCE" language="JSON5"/>
     <fileIconProvider implementation="com.jetbrains.jsonSchema.JsonSchemaIconProvider"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
