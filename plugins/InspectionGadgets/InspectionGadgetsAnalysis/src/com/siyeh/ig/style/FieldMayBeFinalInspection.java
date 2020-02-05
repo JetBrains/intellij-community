@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalHandler;
 import com.intellij.psi.PsiClass;
@@ -69,6 +71,7 @@ public class FieldMayBeFinalInspection extends BaseInspection implements Cleanup
       if (!FinalUtils.canBeFinal(field)) {
         return;
       }
+      if (UnusedSymbolUtil.isImplicitWrite(field)) return;
       registerVariableError(field, field);
     }
   }
