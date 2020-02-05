@@ -13,7 +13,7 @@ public class LightEditProjectManager {
   private static final Logger LOG = Logger.getInstance(LightEditServiceImpl.class);
   private static final Object LOCK = new Object();
 
-  private volatile LightEditProject myProject;
+  private volatile LightEditProjectImpl myProject;
 
   @Nullable
   public Project getProject() {
@@ -27,9 +27,9 @@ public class LightEditProjectManager {
     }
     synchronized (LOCK) {
       long start = System.nanoTime();
-      LightEditProject project = new LightEditProject();
+      LightEditProjectImpl project = new LightEditProjectImpl();
       myProject = project;
-      LOG.info(LightEditProject.class.getSimpleName() + " loaded in " + TimeoutUtil.getDurationMillis(start) + " ms");
+      LOG.info(LightEditProjectImpl.class.getSimpleName() + " loaded in " + TimeoutUtil.getDurationMillis(start) + " ms");
       return project;
     }
   }
@@ -42,7 +42,4 @@ public class LightEditProjectManager {
     myProject = null;
   }
 
-  public static boolean isLightEditProject(@Nullable Project project) {
-    return project instanceof LightEditProject;
-  }
 }

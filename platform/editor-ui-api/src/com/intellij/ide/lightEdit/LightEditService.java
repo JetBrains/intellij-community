@@ -26,8 +26,6 @@ public interface LightEditService {
 
   Project getOrCreateProject();
 
-  boolean owns(@Nullable Project project);
-
   boolean openFile(@NotNull VirtualFile file);
 
   boolean isAutosaveMode();

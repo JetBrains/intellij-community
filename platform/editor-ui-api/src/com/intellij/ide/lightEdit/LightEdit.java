@@ -14,7 +14,7 @@ public final class LightEdit {
   }
 
   public static boolean owns(@Nullable Project project) {
-    return LightEditService.getInstance().owns(project);
+    return project instanceof LightEditProject;
   }
 
   public static boolean openFile(@NotNull VirtualFile file) {

@@ -109,11 +109,6 @@ public class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  public boolean owns(@Nullable Project project) {
-    return LightEditProjectManager.isLightEditProject(project);
-  }
-
-  @Override
   public boolean openFile(@NotNull VirtualFile file) {
     if (Registry.is(ENABLED_FILE_OPEN_KEY)) {
       doWhenActionManagerInitialized(() -> {
