@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
@@ -33,6 +32,8 @@ import java.util.function.Supplier;
  */
 public class Mappings {
   private final static Logger LOG = Logger.getInstance(Mappings.class);
+  public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
+  private final boolean myProcessConstantsIncrementally = !Boolean.valueOf(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
 
   private final static String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
   private final static String CLASS_TO_CLASS = "classToClass.tab";
@@ -1012,7 +1013,7 @@ public class Mappings {
   }
 
   private class Differential {
-    private static final int DESPERATE_MASK = Opcodes.ACC_FINAL;
+    private static final int INLINABLE_FIELD_MODIFIERS_MASK = Opcodes.ACC_FINAL;
 
     final Mappings myDelta;
     final Collection<? extends File> myFilesToCompile;
@@ -1021,8 +1022,6 @@ public class Mappings {
     final Collection<? super File> myAffectedFiles;
     @Nullable
     final DependentFilesFilter myFilter;
-    @Nullable final Callbacks.ConstantAffectionResolver myConstantSearch;
-    final DelayedWorks myDelayedWorks;
 
     final Util myFuture;
     final Util myPresent;
@@ -1031,90 +1030,6 @@ public class Mappings {
 
     private final Iterable<AnnotationsChangeTracker> myAnnotationChangeTracker =
       JpsServiceManager.getInstance().getExtensions(AnnotationsChangeTracker.class);
-
-    private class DelayedWorks {
-      class Triple {
-        final int owner;
-        final FieldRepr field;
-        @Nullable
-        final Future<? extends Callbacks.ConstantAffection> affection;
-
-        private Triple(final int owner, final FieldRepr field, @Nullable final Future<? extends Callbacks.ConstantAffection> affection) {
-          this.owner = owner;
-          this.field = field;
-          this.affection = affection;
-        }
-
-        Callbacks.ConstantAffection getAffection() {
-          try {
-            return affection != null ? affection.get() : Callbacks.ConstantAffection.EMPTY;
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        }
-      }
-
-      final Collection<Triple> myQueue = new LinkedList<>();
-
-      void addConstantWork(final int ownerClass, final FieldRepr changedField, final boolean isRemoved, boolean accessChanged) {
-        final Future<Callbacks.ConstantAffection> future;
-        if (myConstantSearch == null) {
-          future = null;
-        }
-        else {
-          final String className = myContext.getValue(ownerClass);
-          final String fieldName = myContext.getValue(changedField.name);
-          future = myConstantSearch.request(className.replace('/', '.'), fieldName, changedField.access, isRemoved, accessChanged);
-        }
-        myQueue.add(new Triple(ownerClass, changedField, future));
-      }
-
-      boolean doWork(@NotNull final Collection<? super File> affectedFiles) {
-        if (!myQueue.isEmpty()) {
-          debug("Starting delayed works.");
-
-          for (final Triple t : myQueue) {
-            final Callbacks.ConstantAffection affection = t.getAffection();
-
-            debug("Class: ", t.owner);
-            debug("Field: ", t.field.name);
-
-            if (!affection.isKnown()) {
-              if (myConstantSearch != null) {
-                debug("No external dependency information available.");
-              }
-              else {
-                debug("Constant search service not available.");
-              }
-              debug("Trying to soften non-incremental decision.");
-              if (!incrementalDecision(t.owner, t.field, affectedFiles, myFilesToCompile, myFilter)) {
-                debug("No luck.");
-                debug("End of delayed work, returning false.");
-                return false;
-              }
-            }
-            else {
-              debug("External dependency information retrieved.");
-              final Collection<File> files = affection.getAffectedFiles();
-              if (myFilter == null) {
-                affectedFiles.addAll(files);
-              }
-              else {
-                for (File file : files) {
-                  if (myFilter.accept(file)) {
-                    affectedFiles.add(file);
-                  }
-                }
-              }
-            }
-          }
-
-          debug("End of delayed work, returning true.");
-        }
-        return true;
-      }
-    }
 
     private class FileClasses {
       final File myFileName;
@@ -1157,31 +1072,20 @@ public class Mappings {
       this.myCompiledWithErrors = null;
       this.myAffectedFiles = null;
       this.myFilter = null;
-      this.myConstantSearch = null;
-
-      myDelayedWorks = null;
-
       myFuture = null;
       myPresent = null;
-
       myEasyMode = true;
-
       delta.myIsRebuild = true;
     }
 
     private Differential(final Mappings delta, final Collection<String> removed, final Collection<? extends File> filesToCompile) {
       delta.myRemovedFiles = removed;
-
       this.myDelta = delta;
       this.myFilesToCompile = filesToCompile;
       this.myCompiledFiles = null;
       this.myCompiledWithErrors = null;
       this.myAffectedFiles = null;
       this.myFilter = null;
-      this.myConstantSearch = null;
-
-      myDelayedWorks = null;
-
       myFuture = new Util(delta);
       myPresent = new Util();
       myEasyMode = true;
@@ -1193,8 +1097,7 @@ public class Mappings {
                          final Collection<? extends File> compiledWithErrors,
                          final Collection<? extends File> compiledFiles,
                          final Collection<? super File> affectedFiles,
-                         @NotNull final DependentFilesFilter filter,
-                         @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
+                         @NotNull final DependentFilesFilter filter) {
       delta.myRemovedFiles = removed;
 
       this.myDelta = delta;
@@ -1203,9 +1106,6 @@ public class Mappings {
       this.myCompiledWithErrors = compiledWithErrors;
       this.myAffectedFiles = affectedFiles;
       this.myFilter = filter;
-      this.myConstantSearch = constantSearch;
-
-      myDelayedWorks = new DelayedWorks();
 
       myFuture = new Util(delta);
       myPresent = new Util();
@@ -1755,17 +1655,11 @@ public class Mappings {
       for (final FieldRepr f : removed) {
         debug("Field: ", f.name);
 
-        if (!f.isPrivate() && (f.access & DESPERATE_MASK) == DESPERATE_MASK && f.hasValue()) {
+        if (!myProcessConstantsIncrementally && !f.isPrivate() && (f.access & INLINABLE_FIELD_MODIFIERS_MASK) == INLINABLE_FIELD_MODIFIERS_MASK && f.hasValue()) {
           debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
-          if (myConstantSearch != null) {
-            assert myDelayedWorks != null;
-            myDelayedWorks.addConstantWork(it.name, f, true, false);
-          }
-          else {
-            if (!incrementalDecision(it.name, f, myAffectedFiles, myFilesToCompile, myFilter)) {
-              debug("End of Differentiate, returning false");
-              return false;
-            }
+          if (!incrementalDecision(it.name, f, myAffectedFiles, myFilesToCompile, myFilter)) {
+            debug("End of Differentiate, returning false");
+            return false;
           }
         }
 
@@ -1788,6 +1682,7 @@ public class Mappings {
       }
       debug("Processing changed fields:");
       assert myFuture != null;
+      assert myPresent != null;
 
       for (final Pair<FieldRepr, Difference> f : changed) {
         final Difference d = f.second;
@@ -1795,8 +1690,10 @@ public class Mappings {
 
         debug("Field: ", field.name);
 
+        final Supplier<TIntHashSet> propagated = lazy(()-> myFuture.propagateFieldAccess(field.name, it.name));
+
         // only if the field was a compile-time constant
-        if (!field.isPrivate() && (field.access & DESPERATE_MASK) == DESPERATE_MASK && d.hadValue()) {
+        if (!field.isPrivate() && (field.access & INLINABLE_FIELD_MODIFIERS_MASK) == INLINABLE_FIELD_MODIFIERS_MASK && d.hadValue()) {
           final int changedModifiers = d.addedModifiers() | d.removedModifiers();
           final boolean harmful = (changedModifiers & (Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)) != 0;
           final boolean accessChanged = (changedModifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) != 0;
@@ -1804,12 +1701,12 @@ public class Mappings {
           final boolean valueChanged = (d.base() & Difference.VALUE) != 0;
 
           if (harmful || valueChanged || becameLessAccessible) {
-            debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
-            if (myConstantSearch != null) {
-              assert myDelayedWorks != null;
-              myDelayedWorks.addConstantWork(it.name, field, false, accessChanged);
+            if (myProcessConstantsIncrementally) {
+              debug("Potentially inlined field changed it's access or value => affecting field usages");
+              myFuture.affectFieldUsages(field, propagated.get(), field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
             }
             else {
+              debug("Potentially inlined field changed it's access or value => a switch to non-incremental mode requested");
               if (!incrementalDecision(it.name, field, myAffectedFiles, myFilesToCompile, myFilter)) {
                 debug("End of Differentiate, returning false");
                 return false;
@@ -1819,7 +1716,6 @@ public class Mappings {
         }
 
         if (d.base() != Difference.NONE) {
-          final Supplier<TIntHashSet> propagated = lazy(()-> myFuture.propagateFieldAccess(field.name, it.name));
 
           if ((d.base() & Difference.TYPE) != 0 || (d.base() & Difference.SIGNATURE) != 0) {
             debug("Type or signature changed --- affecting field usages");
@@ -2289,7 +2185,7 @@ public class Mappings {
         }
 
         private void processDependentFile(int depClass, @NotNull File depFile) {
-          if (myAffectedFiles.contains(depFile) || myCompiledFiles.contains(depFile)) {
+          if (myAffectedFiles.contains(depFile)) {
             return;
           }
 
@@ -2299,7 +2195,12 @@ public class Mappings {
           if (repr == null) {
             return;
           }
-
+          if (repr instanceof ClassRepr && !((ClassRepr)repr).hasInlinedConstants() && myCompiledFiles.contains(depFile)) {
+            // Classes containing inlined constants from other classes and compiled against older constant values
+            // may need to be recompiled several times within a compile session.
+            // Otherwise it is safe to skip the file if it has already been compiled in this session.
+            return;
+          }
           final Set<UsageRepr.Usage> depUsages = repr.getUsages();
           if (depUsages == null || depUsages.isEmpty()) {
             return;
@@ -2432,7 +2333,7 @@ public class Mappings {
             return false;
           }
           assert myAffectedFiles != null;
-          assert myDelayedWorks != null;
+          //assert myDelayedWorks != null;
 
           final Collection<String> removed = myDelta.myRemovedFiles;
           if (removed != null) {
@@ -2440,7 +2341,7 @@ public class Mappings {
               myAffectedFiles.remove(new File(r));
             }
           }
-          return myDelayedWorks.doWork(myAffectedFiles);
+          return true/*myDelayedWorks.doWork(myAffectedFiles)*/;
         }
         finally {
           if (myFilesToCompile != null) {
@@ -2587,7 +2488,7 @@ public class Mappings {
      final Collection<? super File> affectedFiles,
      @NotNull final DependentFilesFilter filter,
      @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
-    return new Differential(delta, removed, filesToCompile, compiledWithErrors, compiledFiles, affectedFiles, filter, constantSearch).differentiate();
+    return new Differential(delta, removed, filesToCompile, compiledWithErrors, compiledFiles, affectedFiles, filter).differentiate();
   }
 
   private void cleanupBackDependency(final int className, @Nullable Set<? extends UsageRepr.Usage> usages, final IntIntMultiMaplet buffer) {
@@ -2854,6 +2755,9 @@ public class Mappings {
 
   public Callbacks.Backend getCallback() {
     return new Callbacks.Backend() {
+      // className -> {imports; static_imports}
+      private final Map<String, Pair<Collection<String>, Collection<String>>> myImportRefs = Collections.synchronizedMap(new HashMap<>());
+      private final Map<String, Collection<Callbacks.ConstantRef>> myConstantRefs = Collections.synchronizedMap(new HashMap<>());
 
       @Override
       public void associate(String classFileName, Collection<String> sources, ClassReader cr) {
@@ -2863,6 +2767,20 @@ public class Mappings {
           if (result != null) {
             // since java9 'repr' can represent either a class or a compiled module-info.java
             final int className = result.name;
+
+            if (result instanceof ClassRepr) {
+              final ClassRepr classRepr = (ClassRepr)result;
+              final String classNameStr = myContext.getValue(className);
+              if (addConstantUsages(classRepr, myConstantRefs.remove(classNameStr))) {
+                // Important: should register constants before imports, because imports can produce additional
+                // field references too and addConstantUsages may return false in this case
+                classRepr.setHasInlinedConstants(true);
+              }
+              final Pair<Collection<String>, Collection<String>> imports = myImportRefs.remove(classNameStr);
+              if (imports != null) {
+                addImportUsages(classRepr, imports.getFirst(), imports.getSecond());
+              }
+            }
 
             for (String sourceFileName : sources) {
               String relative = myRelativizer.toRelative(sourceFileName);
@@ -2893,47 +2811,61 @@ public class Mappings {
 
       @Override
       public void registerImports(String className, Collection<String> classImports, Collection<String> staticImports) {
+        final String key = className.replace('.', '/');
         if (!classImports.isEmpty() || !staticImports.isEmpty()) {
-          myPostPasses.offer(() -> {
-            final int rootClassName = myContext.get(className.replace(".", "/"));
-            final Collection<File> files = classToSourceFileGet(rootClassName);
-            final ClassRepr repr = files != null && !files.isEmpty()? getClassReprByName(files.iterator().next(), rootClassName) : null;
-            boolean usageAdded = false;
-
-            for (final String anImport : classImports) {
-              if (!anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
-                final int iname = myContext.get(anImport.replace('.', '/'));
-                myClassToClassDependency.put(iname, rootClassName);
-                usageAdded |= repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
-              }
-            }
-
-            for (String anImport : staticImports) {
-              if (anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
-                final int iname = myContext.get(anImport.substring(0, anImport.length() - IMPORT_WILDCARD_SUFFIX.length()).replace('.', '/'));
-                myClassToClassDependency.put(iname, rootClassName);
-                usageAdded |= repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
-                usageAdded |= repr != null && repr.addUsage(UsageRepr.createImportStaticOnDemandUsage(myContext, iname));
-              }
-              else {
-                final int i = anImport.lastIndexOf('.');
-                if (i > 0 && i < anImport.length() - 1) {
-                  final int iname = myContext.get(anImport.substring(0, i).replace('.', '/'));
-                  final int memberName = myContext.get(anImport.substring(i+1));
-                  myClassToClassDependency.put(iname, rootClassName);
-                  usageAdded |= repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
-                  usageAdded |= repr != null && repr.addUsage(UsageRepr.createImportStaticMemberUsage(myContext, memberName, iname));
-                }
-              }
-            }
-
-            if (usageAdded) {
-              for (File file : files) {
-                myRelativeSourceFilePathToClasses.put(toRelative(file), repr);
-              }
-            }
-          });
+          myImportRefs.put(key, Pair.create(classImports, staticImports));
         }
+        else {
+          myImportRefs.remove(key);
+        }
+      }
+
+      @Override
+      public void registerConstantReferences(String className, Collection<Callbacks.ConstantRef> cRefs) {
+        final String key = className.replace('.', '/');
+        if (!cRefs.isEmpty()) {
+          myConstantRefs.put(key, cRefs);
+        }
+        else {
+          myConstantRefs.remove(key);
+        }
+      }
+
+      private void addImportUsages(ClassRepr repr, Collection<String> classImports, Collection<String> staticImports) {
+        for (final String anImport : classImports) {
+          if (!anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
+            repr.addUsage(UsageRepr.createClassUsage(myContext, myContext.get(anImport.replace('.', '/'))));
+          }
+        }
+        for (String anImport : staticImports) {
+          if (anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
+            final int iname = myContext.get(anImport.substring(0, anImport.length() - IMPORT_WILDCARD_SUFFIX.length()).replace('.', '/'));
+            repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
+            repr.addUsage(UsageRepr.createImportStaticOnDemandUsage(myContext, iname));
+          }
+          else {
+            final int i = anImport.lastIndexOf('.');
+            if (i > 0 && i < anImport.length() - 1) {
+              final int iname = myContext.get(anImport.substring(0, i).replace('.', '/'));
+              final int memberName = myContext.get(anImport.substring(i+1));
+              repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
+              repr.addUsage(UsageRepr.createImportStaticMemberUsage(myContext, memberName, iname));
+            }
+          }
+        }
+      }
+
+      private boolean addConstantUsages(ClassRepr repr, Collection<Callbacks.ConstantRef> cRefs) {
+        boolean addedNewUsages = false;
+        if (cRefs != null) {
+          for (Callbacks.ConstantRef ref : cRefs) {
+            final int owner = myContext.get(ref.getOwner().replace('.', '/'));
+            if (repr.name != owner) {
+              addedNewUsages |= repr.addUsage(UsageRepr.createFieldUsage(myContext, myContext.get(ref.getName()), owner, myContext.get(ref.getDescriptor())));
+            }
+          }
+        }
+        return addedNewUsages;
       }
     };
   }

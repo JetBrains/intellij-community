@@ -17,6 +17,7 @@ package org.jetbrains.ether;
 
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
@@ -97,7 +98,7 @@ public class MarkDirtyTest extends IncrementalTestCase {
     doTestBuild(1).assertSuccessful();
   }
 
-  public void testTransitiveRecompile() {
+  public void testTransitiveRecompile() throws Exception {
     JpsModule module = addModule();
     addTestRoot(module, "testSrc");
     JpsModule util = addModule("util", "util/src");
@@ -106,7 +107,7 @@ public class MarkDirtyTest extends IncrementalTestCase {
     JpsModule lib = addModule("lib", "lib/src");
     addTestRoot(lib, "lib/testSrc");
     JpsModuleRootModificationUtil.addDependency(util, lib);
-    doTestBuild(1).assertSuccessful();
+    executeWithSystemProperty(Mappings.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, String.valueOf(true), () -> doTestBuild(1)).assertSuccessful();
   }
 
   public void testRecompileTwinDependencies() {

@@ -40,6 +40,7 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * @author db
@@ -132,6 +133,22 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       path = "src" + File.separator + path;
     }
     return new File(workDir, StringUtil.trimEnd(path, suffix));
+  }
+
+  public <T> T executeWithSystemProperty(String propName, String propValue, Callable<T> action) throws Exception {
+    final String oldValue = System.getProperty(propName);
+    try {
+      System.setProperty(propName, propValue);
+      return action.call();
+    }
+    finally {
+      if (oldValue != null) {
+        System.setProperty(propName, oldValue);
+      }
+      else {
+        System.clearProperty(propName);
+      }
+    }
   }
 
   public BuildResult doTest() {

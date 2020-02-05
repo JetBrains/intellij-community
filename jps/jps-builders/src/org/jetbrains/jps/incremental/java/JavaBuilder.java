@@ -1139,7 +1139,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     @Override
     public void registerJavacFileData(JavacFileData data) {
       for (JavacFileReferencesRegistrar registrar : myRegistrars) {
-        registrar.registerFile(myContext, data.getFilePath(), registrar.onlyImports() ? data.getImportRefs() : data.getRefs(), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
+        registrar.registerFile(myContext, data.getFilePath(), data.getRefs(), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
       }
     }
 

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.ether;
 
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
@@ -174,8 +175,8 @@ public class CommonTest extends IncrementalTestCase {
     doTest();
   }
 
-  public void testIntegrateOnNonIncrementalMake() {
-    doTest();
+  public void testIntegrateOnNonIncrementalMake() throws Exception {
+    executeWithSystemProperty(Mappings.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, String.valueOf(true), () -> doTest());
   }
 
   public void testNothingChanged() {
