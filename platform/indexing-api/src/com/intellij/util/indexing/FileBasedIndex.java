@@ -141,7 +141,7 @@ public abstract class FileBasedIndex {
    * Inside the command it's safe to call index related stuff and
    * {@link com.intellij.openapi.project.IndexNotReadyException} are not expected to be happen here.
    *
-   * <p> In a smart mode behaviour is the similar to direct command execution.
+   * <p> In smart mode, the behavior is similar to direct command execution
    *
    * @param command - a command to execute
    * @param project - project where dumb mode will be ignored
