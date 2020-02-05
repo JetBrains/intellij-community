@@ -1,176 +1,173 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.concurrency;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.concurrency
 
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.util.ExceptionUtilRt;
-import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.Function
+import com.intellij.util.ThreeState
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+internal val OBSOLETE_ERROR: RuntimeException = MessageError("Obsolete", false)
 
-/**
- * Only internal usage.
- */
+internal fun isHandlerObsolete(handler: Any): Boolean {
+  return handler is Obsolescent && handler.isObsolete
+}
+
+internal interface PromiseImpl<T> {
+  @Suppress("FunctionName")
+  fun _setValue(value: PromiseValue<T>)
+}
+
+internal interface CompletablePromise<T> : Promise<T> {
+  fun setResult(t: T?)
+  fun setError(error: Throwable): Boolean
+}
+
 @ApiStatus.Internal
-public final class InternalPromiseUtil {
-  public static final RuntimeException OBSOLETE_ERROR = new MessageError("Obsolete", false);
+internal class MessageError(message: String, isLog: Boolean) : RuntimeException(message) {
+  val log: ThreeState = ThreeState.fromBoolean(isLog)
 
-  public static final NotNullLazyValue<CancellablePromise<Object>> FULFILLED_PROMISE = new NotNullLazyValue<CancellablePromise<Object>>() {
-    @NotNull
-    @Override
-    protected CancellablePromise<Object> compute() {
-      return new DonePromise<>(PromiseValue.createFulfilled(null));
-    }
-  };
+  @Synchronized
+  override fun fillInStackTrace() = this
+}
 
-  public static boolean isHandlerObsolete(@NotNull Object handler) {
-    return handler instanceof Obsolescent && ((Obsolescent)handler).isObsolete();
-  }
+@ApiStatus.Internal
+fun isMessageError(exception: Exception): Boolean {
+  return exception is MessageError
+}
 
-  public interface PromiseImpl<T> {
-    void _setValue(@NotNull PromiseValue<T> value);
-  }
-
-  public interface CompletablePromise<T> extends Promise<T> {
-    void setResult(@Nullable T t);
-    boolean setError(@NotNull Throwable error);
-  }
-
-  @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
-  public static final class MessageError extends RuntimeException {
-    public final ThreeState log;
-
-    public MessageError(@NotNull String message, boolean isLog) {
-      super(message);
-
-      log = ThreeState.fromBoolean(isLog);
+internal class PromiseValue<T> private constructor(val result: T?, val error: Throwable?) {
+  companion object {
+    @JvmStatic
+    fun <T : Any?> createFulfilled(result: T?): PromiseValue<T> {
+      return PromiseValue(result, null)
     }
 
-    @Override
-    public synchronized Throwable fillInStackTrace() {
-      return this;
+    fun <T : Any?> createRejected(error: Throwable?): PromiseValue<T> {
+      return PromiseValue(null, error)
     }
   }
 
-  public static class PromiseValue<T> {
-    public final T result;
-    public final Throwable error;
+  val state: Promise.State
+    get() = if (error == null) Promise.State.SUCCEEDED else Promise.State.REJECTED
 
-    public static <T> PromiseValue<T> createFulfilled(@Nullable T result) {
-      return new PromiseValue<>(result, null);
-    }
+  val isCancelled: Boolean
+    get() = error === OBSOLETE_ERROR
 
-    public static <T> PromiseValue<T> createRejected(@Nullable Throwable error) {
-      return new PromiseValue<>(null, error);
-    }
-
-    private PromiseValue(@Nullable T result, @Nullable Throwable error) {
-      this.result = result;
-      this.error = error;
-    }
-
-    @NotNull
-    public Promise.State getState() {
-      return error == null ? Promise.State.SUCCEEDED : Promise.State.REJECTED;
-    }
-
-    public boolean isCancelled() {
-      return error == OBSOLETE_ERROR;
-    }
-
-    @Nullable
-    public T getResultOrThrowError() throws ExecutionException, TimeoutException {
-      if (error == null) {
-        return result;
-      }
-
-      if (error == OBSOLETE_ERROR) {
-        return null;
-      }
-
-      ExceptionUtilRt.rethrowUnchecked(error);
-      if (error instanceof ExecutionException) {
-        throw ((ExecutionException)error);
-      }
-      if (error instanceof TimeoutException) {
-        throw ((TimeoutException)error);
-      }
-      throw new ExecutionException(error);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      PromiseValue<?> value = (PromiseValue<?>)o;
-      return Objects.equals(result, value.result) && Objects.equals(error, value.error);
-    }
-
-    @Override
-    public int hashCode() {
-      int result1 = result != null ? result.hashCode() : 0;
-      result1 = 31 * result1 + (error != null ? error.hashCode() : 0);
-      return result1;
+  fun getResultOrThrowError(): T? {
+    return when {
+      error == null -> result
+      error === OBSOLETE_ERROR -> null
+      else -> throw error.cause ?: error
     }
   }
 
-  public abstract static class BasePromise<T> implements Promise<T>, Future<T>, InternalPromiseUtil.PromiseImpl<T>, CancellablePromise<T> {
-    @Nullable
-    protected abstract PromiseValue<T> getValue();
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null || javaClass != other.javaClass) return false
+    val value = other as PromiseValue<*>
+    return result == value.result && error == value.error
+  }
 
-    /**
-     * The same as @{link Future{@link Future#isDone()}}.
-     * Completion may be due to normal termination, an exception, or cancellation -- in all of these cases, this method will return true.
-     */
-    @Override
-    public final boolean isDone() {
-      return getValue() != null;
+  override fun hashCode(): Int {
+    return 31 * (result?.hashCode() ?: 0) + (error?.hashCode() ?: 0)
+  }
+}
+
+internal abstract class BasePromise<T> : Promise<T>, Future<T>, PromiseImpl<T>, CancellablePromise<T> {
+  protected abstract val value: PromiseValue<T>?
+
+  /**
+   * The same as @{link Future[Future.isDone]}.
+   * Completion may be due to normal termination, an exception, or cancellation -- in all of these cases, this method will return true.
+   */
+  override fun isDone() = value != null
+
+  override fun getState() = value?.state ?: Promise.State.PENDING
+
+  override fun isCancelled(): Boolean {
+    val value = value
+    return value != null && value.isCancelled
+  }
+
+  override fun get() = blockingGet(-1)
+
+  override fun get(timeout: Long, unit: TimeUnit) = blockingGet(timeout.toInt(), unit)
+
+  override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
+    if (state == Promise.State.PENDING) {
+      cancel()
+      return true
     }
-
-    @NotNull
-    @Override
-    public final State getState() {
-      PromiseValue<T> value = getValue();
-      return value == null ? State.PENDING : value.getState();
-    }
-
-    @Override
-    public final boolean isCancelled() {
-      PromiseValue<T> value = getValue();
-      return value != null && value.isCancelled();
-    }
-
-    @Override
-    public final T get() throws ExecutionException {
-      try {
-        return blockingGet(-1);
-      }
-      catch (TimeoutException e) {
-        throw new ExecutionException(e);
-      }
-    }
-
-    @Override
-    public final T get(long timeout, @NotNull TimeUnit unit) throws ExecutionException, TimeoutException {
-      return blockingGet((int)timeout, unit);
-    }
-
-    @Override
-    public final boolean cancel(boolean mayInterruptIfRunning) {
-      if (getState() == State.PENDING) {
-        cancel();
-        return true;
-      }
-      else {
-        return false;
-      }
+    else {
+      return false
     }
   }
+}
+
+internal class DonePromise<T>(override val value: PromiseValue<T>) : BasePromise<T>() {
+  override fun onSuccess(handler: Consumer<in T?>): DonePromise<T> {
+    if (value.error != null) {
+      return this
+    }
+
+    if (!isHandlerObsolete(handler)) {
+      handler.accept(value.result)
+    }
+    return this
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun processed(child: Promise<in T?>): Promise<T> {
+    if (child is PromiseImpl<*>) {
+      (child as PromiseImpl<T>)._setValue(value)
+    }
+    else if (child is CompletablePromise<*>) {
+      (child as CompletablePromise<T>).setResult(value.result)
+    }
+    return this
+  }
+
+  override fun onProcessed(handler: Consumer<in T?>): DonePromise<T> {
+    if (value.error == null) {
+      onSuccess(handler)
+    }
+    else if (!isHandlerObsolete(handler)) {
+      handler.accept(null)
+    }
+    return this
+  }
+
+  override fun onError(handler: Consumer<in Throwable?>): DonePromise<T> {
+    if (value.error != null && !isHandlerObsolete(handler)) {
+      handler.accept(value.error)
+    }
+    return this
+  }
+
+  override fun <SUB_RESULT : Any?> then(done: Function<in T, out SUB_RESULT>): Promise<SUB_RESULT> {
+    @Suppress("UNCHECKED_CAST")
+    return when {
+      value.error != null -> this as Promise<SUB_RESULT>
+      isHandlerObsolete(done) -> cancelledPromise()
+      else -> DonePromise(PromiseValue.createFulfilled(done.`fun`(value.result)))
+    }
+  }
+
+  override fun <SUB_RESULT : Any?> thenAsync(done: Function<in T, out Promise<SUB_RESULT>>): Promise<SUB_RESULT> {
+    if (value.error == null) {
+      return done.`fun`(value.result)
+    }
+    else {
+      @Suppress("UNCHECKED_CAST")
+      return this as Promise<SUB_RESULT>
+    }
+  }
+
+  override fun blockingGet(timeout: Int, timeUnit: TimeUnit) = value.getResultOrThrowError()
+
+  override fun _setValue(value: PromiseValue<T>) {}
+
+  override fun cancel() {}
 }

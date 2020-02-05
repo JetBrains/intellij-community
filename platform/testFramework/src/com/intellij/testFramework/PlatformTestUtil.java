@@ -72,7 +72,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.InternalPromiseUtil;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -350,10 +349,11 @@ public class PlatformTestUtil {
       }
       catch (TimeoutException ignore) {
       }
-      catch (java.util.concurrent.ExecutionException | InternalPromiseUtil.MessageError e) {
+      catch (Exception e) {
         if (assertSucceeded) {
           throw new AssertionError(e);
-        } else {
+        }
+        else {
           return null;
         }
       }

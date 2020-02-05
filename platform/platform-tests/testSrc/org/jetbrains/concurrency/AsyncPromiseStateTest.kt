@@ -99,10 +99,6 @@ private const val PRINT = false
 
 private class CheckedException : Exception()
 
-private fun isMessageError(exception: Exception): Boolean {
-  return exception is InternalPromiseUtil.MessageError
-}
-
 private fun log(message: String) {
   @Suppress("ConstantConditionIf")
   if (PRINT) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("Promises")
 package org.jetbrains.concurrency
 
@@ -9,13 +9,12 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.Function
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.concurrency.InternalPromiseUtil.MessageError
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
-val obsoleteError by lazy { MessageError("Obsolete", false) }
+val obsoleteError: RuntimeException by lazy { MessageError("Obsolete", false) }
 
 val Promise<*>.isRejected: Boolean
   get() = state == Promise.State.REJECTED
@@ -23,12 +22,19 @@ val Promise<*>.isRejected: Boolean
 val Promise<*>.isPending: Boolean
   get() = state == Promise.State.PENDING
 
-private val REJECTED: Promise<*> by lazy { DonePromise<Any?>(InternalPromiseUtil.PromiseValue.createRejected(createError("rejected"))) }
+private val REJECTED: Promise<*> by lazy {
+  DonePromise<Any?>(PromiseValue.createRejected(createError("rejected")))
+}
+
+@Suppress("RemoveExplicitTypeArguments")
+private val fulfilledPromise: CancellablePromise<Any?> by lazy {
+  DonePromise<Any?>(PromiseValue.createFulfilled(null))
+}
 
 @Suppress("UNCHECKED_CAST")
-fun <T> resolvedPromise(): Promise<T> = InternalPromiseUtil.FULFILLED_PROMISE.value as Promise<T>
+fun <T> resolvedPromise(): Promise<T> = fulfilledPromise as Promise<T>
 
-fun nullPromise(): Promise<*> = InternalPromiseUtil.FULFILLED_PROMISE.value
+fun nullPromise(): Promise<*> = fulfilledPromise
 
 /**
  * Creates a promise that is resolved with the given value.
@@ -41,8 +47,8 @@ fun <T> resolvedPromise(result: T): Promise<T> = resolvedCancellablePromise(resu
 fun <T> resolvedCancellablePromise(result: T): CancellablePromise<T> {
   @Suppress("UNCHECKED_CAST")
   return when (result) {
-    null -> InternalPromiseUtil.FULFILLED_PROMISE.value as CancellablePromise<T>
-    else -> DonePromise(InternalPromiseUtil.PromiseValue.createFulfilled(result))
+    null -> fulfilledPromise as CancellablePromise<T>
+    else -> DonePromise(PromiseValue.createFulfilled(result))
   }
 }
 
@@ -52,18 +58,19 @@ fun <T> resolvedCancellablePromise(result: T): CancellablePromise<T> {
  */
 fun <T> rejectedPromise(): Promise<T> = REJECTED as Promise<T>
 
-fun <T> rejectedPromise(error: String): Promise<T> = DonePromise(InternalPromiseUtil.PromiseValue.createRejected(createError(error, true)))
+fun <T> rejectedPromise(error: String): Promise<T> = DonePromise(PromiseValue.createRejected(createError(error, true)))
 
 fun <T> rejectedPromise(error: Throwable?): Promise<T> {
   @Suppress("UNCHECKED_CAST")
   return when (error) {
     null -> REJECTED as Promise<T>
-    else -> DonePromise(InternalPromiseUtil.PromiseValue.createRejected(error))
+    else -> DonePromise(PromiseValue.createRejected(error))
   }
 }
 
+@Suppress("RemoveExplicitTypeArguments")
 private val CANCELLED_PROMISE: Promise<Any?> by lazy {
-  DonePromise<Any?>(InternalPromiseUtil.PromiseValue.createRejected(obsoleteError))
+  DonePromise(PromiseValue.createRejected<Any?>(obsoleteError))
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -120,7 +127,7 @@ inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler
   })
 }
 
-inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>): Promise<Any?> = thenAsync(Function<T, Promise<Any?>> { param ->
+inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>): Promise<Any?> = thenAsync(Function { param ->
   @Suppress("UNCHECKED_CAST")
   (return@Function handler(param) as Promise<Any?>)
 })

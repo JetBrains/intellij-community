@@ -2,7 +2,7 @@
 package org.jetbrains.concurrency
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.ExceptionUtil
+import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
 import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
@@ -11,7 +11,7 @@ import java.util.function.Consumer
 
 open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
                                                private val hasErrorHandler: AtomicBoolean,
-                                               addExceptionHandler: Boolean) : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
+                                               addExceptionHandler: Boolean) : CancellablePromise<T>, CompletablePromise<T> {
   private val f: CompletableFuture<T>
   private companion object {
     val CANCELED = CancellationException()
@@ -79,7 +79,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
         throw error
       }
 
-      if (!InternalPromiseUtil.isHandlerObsolete(handler)) {
+      if (!isHandlerObsolete(handler)) {
         handler.accept(value)
       }
     }, hasErrorHandler, addExceptionHandler = true)
@@ -89,7 +89,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { _, exception ->
       if (exception != null) {
-        if (!InternalPromiseUtil.isHandlerObsolete(rejected)) {
+        if (!isHandlerObsolete(rejected)) {
           rejected.accept((exception as? CompletionException)?.cause ?: exception)
         }
       }
@@ -98,7 +98,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
 
   override fun onProcessed(processed: Consumer<in T?>): AsyncPromise<T> {
     return AsyncPromise(f.whenComplete { value, _ ->
-      if (!InternalPromiseUtil.isHandlerObsolete(processed)) {
+      if (!isHandlerObsolete(processed)) {
         processed.accept(value)
       }
     }, hasErrorHandler, addExceptionHandler = true)
@@ -111,10 +111,11 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }
     catch (e: ExecutionException) {
       val cause = e.cause ?: throw e
-      if (cause === InternalPromiseUtil.OBSOLETE_ERROR) {
+      if (cause === OBSOLETE_ERROR) {
         return null
       }
-      ExceptionUtil.rethrowUnchecked(cause)
+      // checked exceptions must be not thrown as is - API should conform to Java standards
+      ExceptionUtilRt.rethrowUnchecked(cause)
       throw e
     }
   }
@@ -160,7 +161,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
 
   protected open fun shouldLogErrors() = !hasErrorHandler.get()
 
-  fun setError(error: String): Boolean = setError(createError(error))
+  fun setError(error: String) = setError(createError(error))
 }
 
 inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {
