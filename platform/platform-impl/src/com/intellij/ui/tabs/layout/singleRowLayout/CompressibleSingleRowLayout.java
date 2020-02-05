@@ -96,8 +96,8 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
 
   public static class CompressibleSingleRowTabsLayoutInfo extends TabsLayoutInfo {
 
-    private final String ID = "CompressibleSingleRowLayoutInfo";
-    private final String NAME = "Compressible Single Row";
+    private static final String ID = "CompressibleSingleRowLayoutInfo";
+    private static final String NAME = "Compressible Single Row";
 
     @NotNull
     @Override
