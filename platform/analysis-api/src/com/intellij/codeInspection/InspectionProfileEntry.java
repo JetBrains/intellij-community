@@ -444,14 +444,6 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return null;
   }
 
-  /** @deprecated This method is no longer internally used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Nullable
-  protected URL getDescriptionUrl() {
-    return null;
-  }
-
   @NotNull
   protected Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getClass();
