@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.problems.ProblemListener;
+import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
@@ -400,7 +401,7 @@ public class ChangesViewManager implements ChangesViewEx,
         myDiffPreview = editorPreview;
         mainPanel = contentPanel;
 
-        myView.setExpandableItemsEnabled(false);
+        UIUtil.putClientProperty(myView, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);
       }
       else {
         PreviewDiffSplitterComponent previewSplitter =
