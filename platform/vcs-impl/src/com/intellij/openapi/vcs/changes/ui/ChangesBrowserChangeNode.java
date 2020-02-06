@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesBrowserFilePathIconProvider;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -88,6 +89,14 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
           renderer.setIcon(icon);
           return;
         }
+      }
+    }
+    //if we failed to get icon from virtual file (e.g source file was deleted) - try another providers with only FilePath as input
+    for (ChangesBrowserFilePathIconProvider provider : ChangesBrowserFilePathIconProvider.EP_NAME.getExtensionList()) {
+      Icon icon = provider.getIcon(filePath, 0, myProject);
+      if (icon != null) {
+        renderer.setIcon(icon);
+        return;
       }
     }
     renderer.setIcon(filePath.getFileType(), filePath.isDirectory() || !isLeaf());
