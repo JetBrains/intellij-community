@@ -190,7 +190,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     @NotNull private final LogInfo myLoadedInfo = new LogInfo(myStorage);
 
     MyRefreshTask(@NotNull DataPack currentDataPack) {
-      super(VcsLogRefresherImpl.this.myProject, "Refreshing History...", false);
+      super(VcsLogRefresherImpl.this.myProject, VcsLogBundle.message("vcs.log.refreshing.history.process"), false);
       myCurrentDataPack = currentDataPack;
     }
 
@@ -361,7 +361,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     private static final RefreshRequest RELOAD_ALL = new RefreshRequest(Collections.emptyList()) {
       @Override
       public String toString() {
-        return "RELOAD_ALL";
+        return "RELOAD_ALL"; // NON-NLS
       }
     };
     private final Collection<VirtualFile> rootsToRefresh;

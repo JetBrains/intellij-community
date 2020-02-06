@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public class ShowAllAffectedFromHistoryAction extends FileHistorySingleCommitAct
       CommittedChangeListForRevision committedChangeList = createCommittedChangeList(detail);
       return new ChangeListViewerDialog.ChangelistData(committedChangeList, file);
     });
-    dialog.setTitle("Paths affected by commit " + detail.getId().toShortString());
+    dialog.setTitle(VcsLogBundle.message("dialog.title.paths.affected.by.commit", detail.getId().toShortString()));
     dialog.show();
   }
 }

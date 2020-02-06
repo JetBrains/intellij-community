@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+@NonNls
 public class StopWatch {
 
   private static final Logger LOG = Logger.getInstance(StopWatch.class);

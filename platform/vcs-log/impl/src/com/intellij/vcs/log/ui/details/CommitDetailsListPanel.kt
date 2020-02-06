@@ -18,8 +18,10 @@ import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.details.commit.getCommitDetailsBackground
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
@@ -63,7 +65,7 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
     loadingPanel.stopLoading()
   }
 
-  fun setStatusText(text: String) {
+  fun setStatusText(@Nls(capitalization = Nls.Capitalization.Sentence) text: String) {
     statusText.text = text
   }
 
@@ -90,7 +92,7 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
 
     if (rows > MAX_ROWS) {
       mainContentPanel.add(SeparatorComponent(0, OnePixelDivider.BACKGROUND, null))
-      val label = JBLabel("(showing $MAX_ROWS of $rows selected commits)").apply {
+      val label = JBLabel(VcsLogBundle.message("vcs.log.details.showing.selected.commits", MAX_ROWS, rows)).apply {
         font = FontUtil.getCommitMetadataFont()
         border = JBUI.Borders.emptyLeft(CommitDetailsPanel.SIDE_BORDER)
       }

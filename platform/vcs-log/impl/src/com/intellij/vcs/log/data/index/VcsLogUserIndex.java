@@ -20,21 +20,20 @@ import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
-  public static final String USERS = "users";
-  public static final String USERS_IDS = "users-ids";
+  @NonNls public static final String USERS = "users";
+  @NonNls public static final String USERS_IDS = "users-ids";
   @NotNull private final UserIndexer myUserIndexer;
 
   public VcsLogUserIndex(@NotNull StorageId storageId,

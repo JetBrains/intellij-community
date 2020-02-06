@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public class VcsBalloonProblemNotifier implements Runnable {
   }
 
   public VcsBalloonProblemNotifier(@NotNull final Project project,
-                                   @NotNull final String message,
+                                   @Nls @NotNull final String message,
                                    final MessageType messageType,
                                    final NamedRunnable @Nullable [] notificationListener) {
     myProject = project;
@@ -42,16 +43,16 @@ public class VcsBalloonProblemNotifier implements Runnable {
     myNotificationListener = notificationListener;
   }
 
-  public static void showOverChangesView(@NotNull final Project project, @NotNull final String message, final MessageType type,
+  public static void showOverChangesView(@NotNull final Project project, @Nls @NotNull final String message, final MessageType type,
                                          final NamedRunnable... notificationListener) {
     show(project, message, type, notificationListener);
   }
 
-  public static void showOverVersionControlView(@NotNull final Project project, @NotNull final String message, final MessageType type) {
+  public static void showOverVersionControlView(@NotNull final Project project, @Nls @NotNull final String message, final MessageType type) {
     show(project, message, type, null);
   }
 
-  private static void show(final Project project, final String message, final MessageType type,
+  private static void show(final Project project, @Nls final String message, final MessageType type,
                            final NamedRunnable @Nullable [] notificationListener) {
     final Application application = ApplicationManager.getApplication();
     if (application.isHeadlessEnvironment()) return;

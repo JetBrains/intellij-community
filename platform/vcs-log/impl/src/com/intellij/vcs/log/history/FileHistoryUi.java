@@ -43,7 +43,7 @@ import java.util.Set;
 import static com.intellij.ui.JBColor.namedColor;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
-  @NotNull private static final String HELP_ID = "reference.versionControl.toolwindow.history";
+  @NotNull private static final String HELP_ID = "reference.versionControl.toolwindow.history"; // NON-NLS
   @NotNull private final FilePath myPath;
   @NotNull private final VirtualFile myRoot;
   @Nullable private final Hash myRevision;
@@ -139,15 +139,18 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       return;
     }
 
-    String mainText = "Commit " + getCommitPresentation(commitId) + " does not exist in history for " + myPath.getName();
     if (getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
-      showWarningWithLink(mainText + " in current branch", "View and Show All Branches", () -> {
+      String text = VcsLogBundle.message("vcs.log.file.history.commit.does.not.exist.in.history.in.current.branch",
+                                         getCommitPresentation(commitId), myPath.getName());
+      showWarningWithLink(text, VcsLogBundle.message("vcs.log.file.history.view.and.show.all.branches.link"), () -> {
         myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
         invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false));
       });
     }
     else {
-      showWarningWithLink(mainText, "View in Log", () -> {
+      String text = VcsLogBundle.message("vcs.log.file.history..commit.does.not.exist.in.history",
+                                         getCommitPresentation(commitId), myPath.getName());
+      showWarningWithLink(text, VcsLogBundle.message("vcs.log.file.history.view.in.log.link"), () -> {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
           if (commitId instanceof Hash) {
             ui.jumpToCommit((Hash)commitId, myRoot);

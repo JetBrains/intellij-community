@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.filter;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.StatusText;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterUi;
@@ -43,7 +44,7 @@ public interface VcsLogFilterUiEx extends VcsLogFilterUi {
    * NB: In the case of error this method is not called, and the general logic is used to show the error in the empty space.
    */
   default void setCustomEmptyText(@NotNull StatusText text) {
-    text.setText("No commits matching filters");
+    text.setText(VcsLogBundle.message("vcs.log.filter.no.commits.matching.filters"));
     VcsLogUiUtil.appendResetFiltersActionToEmptyText(this, text);
   }
 }

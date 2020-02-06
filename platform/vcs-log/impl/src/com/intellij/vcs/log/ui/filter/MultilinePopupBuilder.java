@@ -35,6 +35,7 @@ import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.vcs.log.VcsLogBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +47,6 @@ import java.util.List;
 
 class MultilinePopupBuilder {
   static final char[] SEPARATORS = {'|', '\n'};
-  private static final String COMPLETION_ADVERTISEMENT = "Select one or more values separated with | or new lines";
 
   @NotNull private final EditorTextField myTextField;
 
@@ -82,7 +82,7 @@ class MultilinePopupBuilder {
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTextField)
       .setCancelOnClickOutside(true)
       .setAdText(
-        COMPLETION_ADVERTISEMENT + ", use " + KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()) + " to finish")
+        VcsLogBundle.message("vcs.log.filter.popup.advertisement.with.key.text", KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts())))
       .setRequestFocus(true)
       .setResizable(true)
       .setMayBeParent(true);
@@ -132,7 +132,7 @@ class MultilinePopupBuilder {
     @Nullable
     @Override
     public String getAdvertisement() {
-      return COMPLETION_ADVERTISEMENT;
+      return VcsLogBundle.message("vcs.log.filter.popup.advertisement.text");
     }
   }
 }

@@ -13,6 +13,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
@@ -169,7 +170,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   public static class DisplayNameSupplier implements Supplier<String> {
     @Override
     public String get() {
-      return "Log"; // todo
+      return VcsLogBundle.message("vcs.log.tab.name");
     }
   }
 }

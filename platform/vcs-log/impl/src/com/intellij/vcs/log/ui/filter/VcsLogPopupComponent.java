@@ -12,6 +12,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
   @Nullable private JLabel myNameLabel;
   @NotNull private JLabel myValueLabel;
 
-  protected VcsLogPopupComponent(@NotNull String name) {
+  protected VcsLogPopupComponent(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String name) {
     myName = name;
   }
 

@@ -32,7 +32,7 @@ import java.nio.file.Path
 object PersistentUtil {
   @JvmField
   val LOG_CACHE = File(PathManager.getSystemPath(), "vcs-log")
-  private const val CORRUPTION_MARKER = "corruption.marker"
+  private const val CORRUPTION_MARKER = "corruption.marker" // NON-NLS
 
   @JvmStatic
   val corruptionMarkerFile: File

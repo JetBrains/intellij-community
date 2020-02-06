@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
@@ -151,7 +152,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     }
     else {
       Task.Backgroundable task =
-        new Task.Backgroundable(null, "Loading Selected Details", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+        new Task.Backgroundable(null, VcsLogBundle.message("vcs.log.loading.selected.details.process"), true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             indicator.checkCanceled();

@@ -42,7 +42,7 @@ public class HighlightersActionGroup extends ActionGroup implements DumbAware {
     @NotNull private final VcsLogHighlighterFactory myFactory;
 
     private EnableHighlighterAction(@NotNull VcsLogHighlighterFactory factory) {
-      super(factory.getTitle());
+      super(() -> factory.getTitle());
       myFactory = factory;
     }
 

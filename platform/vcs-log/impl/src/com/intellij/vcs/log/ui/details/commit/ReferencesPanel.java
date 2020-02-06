@@ -7,10 +7,12 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.ui.frame.WrappedFlowLayout;
 import com.intellij.vcs.log.ui.render.LabelIcon;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +97,7 @@ public class ReferencesPanel extends JPanel {
 
   @NotNull
   protected JBLabel createRestLabel(int restSize) {
-    return createLabel("... " + restSize + " more", null);
+    return createLabel(VcsLogBundle.message("vcs.log.references.more.label", restSize), null);
   }
 
   @Nullable
@@ -117,7 +119,7 @@ public class ReferencesPanel extends JPanel {
   }
 
   @NotNull
-  protected JBLabel createLabel(@NotNull String text, @Nullable Icon icon) {
+  protected JBLabel createLabel(@Nls @NotNull String text, @Nullable Icon icon) {
     JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
     label.setFont(getLabelsFont());
     label.setIconTextGap(0);

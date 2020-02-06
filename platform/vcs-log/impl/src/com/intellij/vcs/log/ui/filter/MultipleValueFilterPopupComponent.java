@@ -13,7 +13,9 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.TextCompletionProvider;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
   extends FilterPopupComponent<Filter, Model> {
@@ -29,7 +32,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
 
   @NotNull protected final MainVcsLogUiProperties myUiProperties;
 
-  MultipleValueFilterPopupComponent(@NotNull String filterName,
+  MultipleValueFilterPopupComponent(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String filterName,
                                     @NotNull MainVcsLogUiProperties uiProperties,
                                     @NotNull Model filterModel) {
     super(filterName, filterModel);
@@ -59,7 +62,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
     DefaultActionGroup group = new DefaultActionGroup();
     List<List<String>> recentlyFiltered = getRecentValuesFromSettings();
     if (!recentlyFiltered.isEmpty()) {
-      group.addSeparator("Recent");
+      group.addSeparator(VcsLogBundle.message("vcs.log.filter.recent"));
       for (List<String> recentGroup : recentlyFiltered) {
         if (!recentGroup.isEmpty()) {
           group.add(new PredefinedValueAction(recentGroup));
@@ -76,7 +79,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
     return displayableText(getFilterValues(filter), MAX_FILTER_VALUE_LENGTH);
   }
 
-  @Nullable
+  @Nls
   @Override
   protected String getToolTip(@NotNull Filter filter) {
     return tooltip(getFilterValues(filter));
@@ -115,7 +118,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   }
 
   @NotNull
-  private static String getActionName(@NotNull List<String> values) {
+  protected static String getActionName(@NotNull List<String> values) {
     if (values.size() == 1) return Objects.requireNonNull(ContainerUtil.getFirstItem(values));
     return displayableText(values, 2 * MAX_FILTER_VALUE_LENGTH);
   }
@@ -125,17 +128,19 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
 
     private final boolean myAddToRecent;
 
-    public PredefinedValueAction(@NotNull String value) {
-      this(Collections.singletonList(value));
-    }
-
     public PredefinedValueAction(@NotNull List<String> values) {
-      this(getActionName(values), values, true);
+      this(values, null, true);
     }
 
-    public PredefinedValueAction(@NotNull String name, @NotNull List<String> values, boolean addToRecent) {
+    public PredefinedValueAction(@NotNull List<String> values, @Nullable Supplier<String> displayName) {
+      this(values, displayName, true);
+    }
+
+    public PredefinedValueAction(@NotNull List<String> values,
+                                 @Nullable Supplier<String> displayName,
+                                 boolean addToRecent) {
       super(null, tooltip(values), null);
-      getTemplatePresentation().setText(name, false);
+      getTemplatePresentation().setText(displayName != null ? displayName : () -> getActionName(values), false);
       myValues = values;
       myAddToRecent = addToRecent;
     }
@@ -152,7 +157,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
     @NotNull private final Collection<String> myVariants;
 
     SelectMultipleValuesAction() {
-      super("Select...");
+      super(VcsLogBundle.lazyMessage("vcs.log.filter.action.select"));
       myVariants = getAllValues();
     }
 
@@ -164,7 +169,8 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
       }
 
       Filter filter = myFilterModel.getFilter();
-      List<String> values = filter == null ? Collections.emptyList() : getFilterValues(filter);
+      List<String> values = filter == null ? Collections.emptyList() : getLocalizedValues(
+        MultipleValueFilterPopupComponent.this.getFilterValues(filter));
       final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants,
                                                                            getPopupText(values),
                                                                            getCompletionPrefixProvider());
@@ -173,7 +179,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           if (event.isOk()) {
-            List<String> selectedValues = popupBuilder.getSelectedValues();
+            List<String> selectedValues = parseLocalizedValues(popupBuilder.getSelectedValues());
             if (selectedValues.isEmpty()) {
               myFilterModel.setFilter(null);
             }
@@ -192,4 +198,10 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
       return selectedValues == null || selectedValues.isEmpty() ? "" : StringUtil.join(selectedValues, "\n");
     }
   }
+
+  @NotNull
+  protected abstract List<String> parseLocalizedValues(@NotNull Collection<String> values);
+
+  @NotNull
+  protected abstract List<String> getLocalizedValues(@NotNull Collection<String> values);
 }

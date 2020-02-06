@@ -29,6 +29,7 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
-  private static final String HELP_ID = "reference.changesToolWindow.log";
+  @NonNls private static final String HELP_ID = "reference.changesToolWindow.log";
 
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final MainFrame myMainFrame;

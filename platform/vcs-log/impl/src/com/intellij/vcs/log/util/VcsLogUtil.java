@@ -24,6 +24,7 @@ import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.VcsLogManager.findLogProviders;
 import static java.util.Collections.singletonList;
@@ -43,7 +43,7 @@ public class VcsLogUtil {
   public static final int FULL_HASH_LENGTH = 40;
   public static final int SHORT_HASH_LENGTH = 8;
   public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,40}");
-  public static final String HEAD = "HEAD";
+  @NonNls public static final String HEAD = "HEAD";
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
@@ -319,6 +319,7 @@ public class VcsLogUtil {
   }
 
   @NotNull
+  @NonNls
   public static String getSizeText(int maxSize) {
     if (maxSize < 1000) {
       return String.valueOf(maxSize);
@@ -339,14 +340,14 @@ public class VcsLogUtil {
 
   @NotNull
   public static String getProvidersMapText(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    return "[" + StringUtil.join(providers.keySet(), file -> file.getPresentableUrl(), ", ") + "]";
+    return "[" + StringUtil.join(providers.keySet(), file -> file.getPresentableUrl(), ", ") + "]"; // NON-NLS
   }
 
   @NotNull
   public static String getVcsDisplayName(@NotNull Project project, @NotNull Collection<VcsLogProvider> logProviders) {
     Set<AbstractVcs> vcs = ContainerUtil.map2SetNotNull(logProviders,
                                                         provider -> VcsUtil.findVcsByKey(project, provider.getSupportedVcs()));
-    if (vcs.size() != 1) return "Vcs";
+    if (vcs.size() != 1) return VcsLogBundle.message("vcs");
     return Objects.requireNonNull(getFirstItem(vcs)).getDisplayName();
   }
 }

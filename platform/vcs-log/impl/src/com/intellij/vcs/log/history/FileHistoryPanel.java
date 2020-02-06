@@ -17,6 +17,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
@@ -80,11 +81,12 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       protected void updateEmptyText() {
         VisiblePack visiblePack = getModel().getVisiblePack();
         if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
-          setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), "Error calculating file history");
-          appendActionToEmptyText("Refresh", () -> logUi.getRefresher().onRefresh());
+          setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(),
+                            VcsLogBundle.message("vcs.log.file.history.error.calculating.file.history.status"));
+          appendActionToEmptyText(VcsLogBundle.message("vcs.log.action.refresh"), () -> logUi.getRefresher().onRefresh());
         }
         else {
-          getEmptyText().setText("File history");
+          getEmptyText().setText(VcsLogBundle.message("vcs.log.file.history.empty.status"));
         }
       }
     };

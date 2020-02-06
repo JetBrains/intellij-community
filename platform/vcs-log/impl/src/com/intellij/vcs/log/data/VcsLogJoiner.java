@@ -5,11 +5,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphCommit;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 /**
@@ -20,7 +20,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
  */
 public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
-  public final static String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
+  @NonNls public final static String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
 
   /**
    * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.

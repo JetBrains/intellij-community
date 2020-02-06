@@ -29,8 +29,8 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
   companion object {
     private const val DIALOG_WIDTH = 600
     private const val DIALOG_HEIGHT = 400
-    private const val DIMENSION_KEY = "Vcs.Multiple.Commit.Info.Dialog.Key"
-    private const val CHANGES_SPLITTER = "Vcs.Multiple.Commit.Info.Dialog.Changes.Splitter"
+    private const val DIMENSION_KEY = "Vcs.Multiple.Commit.Info.Dialog.Key" // NON-NLS
+    private const val CHANGES_SPLITTER = "Vcs.Multiple.Commit.Info.Dialog.Changes.Splitter" // NON-NLS
   }
 
   private val commitsList = JBList<VcsCommitMetadata>()

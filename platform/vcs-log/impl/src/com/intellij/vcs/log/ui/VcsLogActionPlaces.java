@@ -15,6 +15,9 @@
  */
 package com.intellij.vcs.log.ui;
 
+import org.jetbrains.annotations.NonNls;
+
+@NonNls
 public class VcsLogActionPlaces {
   // action groups
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";

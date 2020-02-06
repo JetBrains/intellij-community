@@ -17,6 +17,7 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.ValueKey;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -38,7 +39,7 @@ public interface VcsLogUiProperties {
   class VcsLogUiProperty<T> implements ValueKey<T> {
     @NotNull private final String myName;
 
-    public VcsLogUiProperty(@NotNull String name) {
+    public VcsLogUiProperty(@NonNls @NotNull String name) {
       myName = name;
     }
 

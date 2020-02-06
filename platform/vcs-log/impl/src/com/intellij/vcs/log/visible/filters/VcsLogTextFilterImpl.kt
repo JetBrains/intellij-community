@@ -18,6 +18,6 @@ data class VcsLogTextFilterImpl internal constructor(private val text: String,
   override fun matchesCase(): Boolean = isMatchCase
 
   override fun toString(): String {
-    return "containing '$text' ${caseSensitiveText()}"
+    return "containing '$text' ${caseSensitiveText()}" // NON-NLS
   }
 }

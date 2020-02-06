@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.history.FileHistoryUi;
@@ -67,7 +68,8 @@ public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata>
       if (!details.isEmpty()) {
         performAction(project, ui, Objects.requireNonNull(getFirstItem(details)), e);
       }
-    }, t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.getMessage(),
+    }, t -> VcsBalloonProblemNotifier.showOverChangesView(project,
+                                                          VcsLogBundle.message("vcs.log.file.history.could.not.load.selected.commits", t.getMessage()),
                                                           MessageType.ERROR), null);
   }
 

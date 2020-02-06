@@ -28,6 +28,9 @@ import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLogBundle;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,9 +52,7 @@ import java.util.*;
 public class VcsStructureChooser extends DialogWrapper {
   private final static int MAX_FOLDERS = 100;
   public static final Border BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
-  public static final String CAN_NOT_ADD_TEXT =
-    "<html>Selected: <font color=red>(You have added " + MAX_FOLDERS + " elements. No more is allowed.)</font></html>";
-  private static final String VCS_STRUCTURE_CHOOSER_KEY = "git4idea.history.wholeTree.VcsStructureChooser";
+  @NonNls private static final String VCS_STRUCTURE_CHOOSER_KEY = "git4idea.history.wholeTree.VcsStructureChooser";
 
   @NotNull private final Project myProject;
   @NotNull private final List<VirtualFile> myRoots;
@@ -63,7 +64,7 @@ public class VcsStructureChooser extends DialogWrapper {
   private Tree myTree;
 
   public VcsStructureChooser(@NotNull Project project,
-                             @NotNull String title,
+                             @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
                              @NotNull Collection<VirtualFile> initialSelection,
                              @NotNull List<VirtualFile> roots) {
     super(project, true);
@@ -234,7 +235,7 @@ public class VcsStructureChooser extends DialogWrapper {
           selectedLabel.setText("");
         }
         else {
-          selectedLabel.setText(CAN_NOT_ADD_TEXT);
+          selectedLabel.setText(VcsLogBundle.message("vcs.log.filters.max.folders.selected", MAX_FOLDERS));
         }
         selectedLabel.revalidate();
       }

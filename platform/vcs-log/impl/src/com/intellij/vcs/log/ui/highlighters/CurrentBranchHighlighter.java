@@ -7,6 +7,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -52,7 +53,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull public static final String ID = "CURRENT_BRANCH";
+    @NonNls @NotNull public static final String ID = "CURRENT_BRANCH";
 
     @NotNull
     @Override
@@ -69,7 +70,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
     @NotNull
     @Override
     public String getTitle() {
-      return "Current Branch";
+      return VcsLogBundle.message("vcs.log.action.highlight.current.branch");
     }
 
     @Override

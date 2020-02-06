@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
@@ -32,13 +33,13 @@ class ResumeIndexingAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = (bigRepositories.isNotEmpty() || scheduledForIndexing.isNotEmpty())
 
     if (scheduledForIndexing.isNotEmpty()) {
-      e.presentation.text = "Pause Indexing"
-      e.presentation.description = "Indexing ${getText(scheduledForIndexing)} is scheduled. Pause."
+      e.presentation.text = VcsLogBundle.message("action.title.pause.indexing")
+      e.presentation.description = VcsLogBundle.message("action.description.is.scheduled", getText(scheduledForIndexing))
       e.presentation.icon = AllIcons.Process.ProgressPauseSmall
     }
     else {
-      e.presentation.text = "Resume Indexing"
-      e.presentation.description = "Indexing ${getText(bigRepositories)} was paused. Resume."
+      e.presentation.text = VcsLogBundle.message("action.title.resume.indexing")
+      e.presentation.description = VcsLogBundle.message("action.description.was.paused", getText(bigRepositories))
       e.presentation.icon = AllIcons.Process.ProgressResumeSmall
     }
   }

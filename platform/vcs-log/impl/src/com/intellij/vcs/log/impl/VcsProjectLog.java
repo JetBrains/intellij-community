@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -80,7 +81,7 @@ public class VcsProjectLog implements Disposable {
           }
           catch (InterruptedException ignored) {
           }
-        }, "Closing Vcs Log", false, project);
+        }, VcsLogBundle.message("vcs.log.closing.process"), false, project);
       }
     });
   }
@@ -153,10 +154,11 @@ public class VcsProjectLog implements Disposable {
   @CalledInAwt
   private void recreateOnError(@NotNull Throwable t) {
     if ((++myRecreatedLogCount) % RECREATE_LOG_TRIES == 0) {
-      String message = String.format("VCS Log was recreated %d times due to data corruption\n" +
-                                     "Delete %s directory and restart %s if this happens often.\n%s",
-                                     myRecreatedLogCount, LOG_CACHE, ApplicationNamesInfo.getInstance().getFullProductName(),
-                                     t.getMessage());
+      String message = VcsLogBundle.message("vcs.log.recreated.due.to.corruption",
+                                            myRecreatedLogCount,
+                                            LOG_CACHE,
+                                            ApplicationNamesInfo.getInstance().getFullProductName(),
+                                            t.getMessage());
       LOG.error(message, t);
 
       VcsLogManager manager = getLogManager();
@@ -248,7 +250,7 @@ public class VcsProjectLog implements Disposable {
     }
     else { // schedule showing the log, wait its initialization, and then open the tab
       Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
-      new Task.Backgroundable(project, "Loading Commits") {
+      new Task.Backgroundable(project, VcsLogBundle.message("vcs.log.loading.commits")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {

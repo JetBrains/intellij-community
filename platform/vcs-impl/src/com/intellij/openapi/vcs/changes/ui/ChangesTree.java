@@ -32,6 +32,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -246,7 +247,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
   }
 
-  public void setEmptyText(@NotNull String emptyText) {
+  public void setEmptyText(@Nls @NotNull String emptyText) {
     getEmptyText().setText(emptyText);
   }
 

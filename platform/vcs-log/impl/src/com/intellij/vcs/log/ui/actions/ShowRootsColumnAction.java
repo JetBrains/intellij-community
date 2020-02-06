@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class ShowRootsColumnAction extends BooleanPropertyToggleAction {
 
   public ShowRootsColumnAction() {
-    super("Show Root Names");
+    super(VcsLogBundle.lazyMessage("vcs.log.action.show.root.names"));
   }
 
   @Override

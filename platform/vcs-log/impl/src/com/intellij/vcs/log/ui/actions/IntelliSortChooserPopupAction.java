@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -54,7 +55,8 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     e.getPresentation().setEnabled(properties != null);
     if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
-      String description = "IntelliSort: " + properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE).getName();
+      String description = VcsLogBundle.message("vcs.log.action.intellisort.title",
+                                                properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE).getName());
       e.getPresentation().setDescription(description);
       e.getPresentation().setText(description);
     }

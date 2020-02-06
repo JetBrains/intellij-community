@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -22,24 +23,18 @@ import com.intellij.vcs.log.ui.MainVcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
 public class CollapseGraphAction extends CollapseOrExpandGraphAction {
-  @NotNull private static final String COLLAPSE = "Collapse";
-
   public CollapseGraphAction() {
-    super(COLLAPSE);
+    super(VcsLogBundle.lazyMessage("action.title.collapse.linear.branches"),
+          VcsLogBundle.lazyMessage("action.description.collapse.linear.branches"),
+          VcsLogBundle.lazyMessage("action.title.collapse.merges"),
+          VcsLogBundle.lazyMessage("action.description.collapse.merges"));
   }
 
   @Override
   protected void executeAction(@NotNull MainVcsLogUi vcsLogUi) {
-    performLongAction(vcsLogUi, new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE),
-                      "Collapsing " +
-                      (vcsLogUi.getProperties().get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
-                       ? "merges..."
-                       : "linear branches..."));
-  }
-
-  @NotNull
-  @Override
-  protected String getPrefix() {
-    return COLLAPSE + " ";
+    String title = vcsLogUi.getProperties().get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
+                   ? VcsLogBundle.message("action.process.collapsing.merges")
+                   : VcsLogBundle.message("action.process.collapsing.linear.branches");
+    performLongAction(vcsLogUi, new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE), title);
   }
 }

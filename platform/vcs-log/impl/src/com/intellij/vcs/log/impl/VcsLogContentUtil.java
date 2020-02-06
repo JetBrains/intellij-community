@@ -15,6 +15,7 @@ import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
@@ -30,8 +31,6 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Utility methods to operate VCS Log tabs as {@link Content}s of the {@link ContentManager} of the VCS toolwindow.
@@ -188,7 +187,7 @@ public class VcsLogContentUtil {
 
   @CalledInAwt
   public static void showLogIsNotAvailableMessage(@NotNull Project project) {
-    VcsBalloonProblemNotifier.showOverChangesView(project, "Vcs Log is not available", MessageType.WARNING);
+    VcsBalloonProblemNotifier.showOverChangesView(project, VcsLogBundle.message("vcs.log.is.not.available"), MessageType.WARNING);
   }
 
   private static boolean selectMainLog(@NotNull ToolWindow window) {

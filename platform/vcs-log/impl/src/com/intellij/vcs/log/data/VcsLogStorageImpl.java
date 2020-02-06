@@ -32,9 +32,9 @@ import java.util.Map;
  */
 public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull private static final Logger LOG = Logger.getInstance(VcsLogStorage.class);
-  @NotNull private static final String HASHES_STORAGE = "hashes";
-  @NotNull private static final String REFS_STORAGE = "refs";
-  @NotNull private static final String STORAGE = "storage";
+  @NotNull private static final String HASHES_STORAGE = "hashes"; // NON-NLS
+  @NotNull private static final String REFS_STORAGE = "refs"; // NON-NLS
+  @NotNull private static final String STORAGE = "storage"; // NON-NLS
   @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
 
   public static final int VERSION = 7;

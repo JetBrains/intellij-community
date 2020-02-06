@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsLogTabsManager
 import com.intellij.vcs.log.ui.VcsLogPanel
 import java.awt.BorderLayout
@@ -24,7 +25,7 @@ import javax.swing.JPanel
 
 class VcsLogFileType : FileType {
   override fun getName(): String = "VcsLog"
-  override fun getDescription(): String = "Vcs Log"
+  override fun getDescription(): String = VcsLogBundle.message("vcs.log")
   override fun getDefaultExtension(): String = ""
   override fun getIcon(): Icon? = AllIcons.Vcs.Branch
   override fun isBinary(): Boolean = true

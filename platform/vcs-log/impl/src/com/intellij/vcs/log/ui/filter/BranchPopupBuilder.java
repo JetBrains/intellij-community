@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
@@ -75,7 +76,7 @@ public abstract class BranchPopupBuilder {
       actionGroup.add(createAction(entry.getKey(), entry.getValue()));
     }
     if (!groups.recentGroups.isEmpty()) {
-      DefaultActionGroup recentGroup = DefaultActionGroup.createPopupGroup(() -> "Recent");
+      DefaultActionGroup recentGroup = new DefaultActionGroup(VcsLogBundle.message("vcs.log.filter.recent"), true);
       for (List<String> recentItem : groups.recentGroups) {
         createRecentAction(recentGroup, recentItem);
       }

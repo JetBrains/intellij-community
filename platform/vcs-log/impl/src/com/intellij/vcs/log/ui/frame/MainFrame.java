@@ -36,6 +36,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
@@ -78,9 +79,9 @@ import static com.intellij.vcs.log.VcsLogDataKeys.VCS_LOG;
 import static com.intellij.vcs.log.VcsLogDataKeys.VCS_LOG_UI;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
-  private static final String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion";
-  private static final String DETAILS_SPLITTER_PROPORTION = "vcs.log.details.splitter.proportion";
-  private static final String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
+  private static final String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion"; // NON-NLS
+  private static final String DETAILS_SPLITTER_PROPORTION = "vcs.log.details.splitter.proportion"; // NON-NLS
+  private static final String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion"; // NON-NLS
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
@@ -446,11 +447,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     protected void onDetailsLoaded(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
       int maxSize = VcsLogUtil.getMaxSize(detailsList);
       if (maxSize > VcsLogUtil.getShownChangesLimit()) {
-        String commitText = detailsList.size() == 1 ? "This commit" : "One of the selected commits";
         String sizeText = VcsLogUtil.getSizeText(maxSize);
         myChangesBrowser.showText(statusText -> {
-          statusText.setText(commitText + " has " + sizeText + " changes");
-          statusText.appendSecondaryText("Show anyway", VcsLogUiUtil.getLinkAttributes(),
+          statusText.setText(VcsLogBundle.message("vcs.log.details.commit.changes", detailsList.size(), sizeText));
+          statusText.appendSecondaryText(VcsLogBundle.message("vcs.log.details.show.anyway.status"), VcsLogUiUtil.getLinkAttributes(),
                                          e -> myChangesBrowser.setSelectedDetails(detailsList));
         });
       }
@@ -480,7 +480,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected void onError(@NotNull Throwable error) {
-      myChangesBrowser.showText(statusText -> statusText.setText("Error loading commits"));
+      myChangesBrowser.showText(statusText -> statusText.setText(VcsLogBundle.message("vcs.log.error.loading.commits")));
     }
   }
 
@@ -513,13 +513,14 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
       DataPackBase dataPack = visiblePack.getDataPack();
       if (dataPack instanceof DataPack.ErrorDataPack) {
-        setErrorEmptyText(((DataPack.ErrorDataPack)dataPack).getError(), "Error loading commits");
-        appendActionToEmptyText("Refresh", () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
+        setErrorEmptyText(((DataPack.ErrorDataPack)dataPack).getError(),
+                          VcsLogBundle.message("vcs.log.error.loading.commits"));
+        appendActionToEmptyText(VcsLogBundle.message("vcs.log.action.refresh"), () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
       }
       else if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
-        setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), "Error filtering commits");
+        setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), VcsLogBundle.message("vcs.log.error.filtering.commits"));
         if (visiblePack.getFilters().isEmpty()) {
-          appendActionToEmptyText("Refresh", myRefresh);
+          appendActionToEmptyText(VcsLogBundle.message("vcs.log.action.refresh"), myRefresh);
         }
         else {
           VcsLogUiUtil.appendResetFiltersActionToEmptyText(myFilterUi, getEmptyText());
@@ -527,8 +528,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }
       else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
         if (visiblePack.getFilters().isEmpty()) {
-          statusText.setText("No changes committed.").
-            appendSecondaryText("Commit local changes", VcsLogUiUtil.getLinkAttributes(),
+          statusText.setText(VcsLogBundle.message("vcs.log.no.changes.committed.status")).
+            appendSecondaryText(VcsLogBundle.message("vcs.log.commit.local.changes.status"), VcsLogUiUtil.getLinkAttributes(),
                                 ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this,
                                                                 ActionPlaces.UNKNOWN));
           String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION);
@@ -541,7 +542,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         }
       }
       else {
-        statusText.setText(CHANGES_LOG_TEXT);
+        statusText.setText(VcsLogBundle.message("vcs.log.changes.log"));
       }
     }
   }

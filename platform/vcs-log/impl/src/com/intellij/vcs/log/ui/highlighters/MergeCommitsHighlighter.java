@@ -45,7 +45,7 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull public static final String ID = "MERGE_COMMITS";
+    @NotNull public static final String ID = "MERGE_COMMITS"; // NON-NLS
 
     @NotNull
     @Override
@@ -62,7 +62,7 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
     @NotNull
     @Override
     public String getTitle() {
-      return "Merge Commits";
+      return VcsLogBundle.message("vcs.log.action.highlight.merge.commits");
     }
 
     @Override

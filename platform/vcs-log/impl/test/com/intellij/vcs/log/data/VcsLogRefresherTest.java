@@ -18,6 +18,7 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.test.VcsPlatformTest;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -193,7 +194,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
       }
 
       @Override
-      public void displayFatalErrorMessage(@NotNull String message) {
+      public void displayFatalErrorMessage(@Nls @NotNull String message) {
         LOG.error(message);
       }
     }, myProject);

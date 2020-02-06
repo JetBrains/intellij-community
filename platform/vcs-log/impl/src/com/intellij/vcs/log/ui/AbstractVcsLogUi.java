@@ -19,10 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogDataPack;
-import com.intellij.vcs.log.VcsLogListener;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
@@ -31,6 +28,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackChangeListener;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -151,7 +149,8 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     SettableFuture<Boolean> future = SettableFuture.create();
     String trimmed = StringUtil.trim(commitHash, ch -> !StringUtil.containsChar("()'\"`", ch));
     if (!VcsLogUtil.HASH_REGEX.matcher(trimmed).matches()) {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit or reference '" + commitHash + "' not found",
+      VcsBalloonProblemNotifier.showOverChangesView(myProject,
+                                                    VcsLogBundle.message("vcs.log.commit.or.reference.not.found", commitHash),
                                                     MessageType.WARNING);
       future.set(false);
       return future;
@@ -194,9 +193,10 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   }
 
   @NotNull
+  @Nls
   protected static <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {
-    return exists ? "Commit " + getCommitPresentation(commitId) + " doesn't match the filters" :
-           "Commit " + getCommitPresentation(commitId) + " not found";
+    return exists ? VcsLogBundle.message("vcs.log.commit.does.not.match.filters", getCommitPresentation(commitId)) :
+           VcsLogBundle.message("vcs.log.commit.not.found", getCommitPresentation(commitId));
   }
 
   @NotNull
@@ -210,7 +210,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     return commitId.toString();
   }
 
-  protected void showWarningWithLink(@NotNull String mainText, @NotNull String linkText, @NotNull Runnable onClick) {
+  protected void showWarningWithLink(@Nls @NotNull String mainText, @Nls @NotNull String linkText, @NotNull Runnable onClick) {
     VcsBalloonProblemNotifier.showOverChangesView(myProject, mainText, MessageType.WARNING,
                                                   new NamedRunnable(linkText) {
                                                     @Override

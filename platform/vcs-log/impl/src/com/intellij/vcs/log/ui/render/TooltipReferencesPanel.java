@@ -8,6 +8,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -75,7 +76,8 @@ class TooltipReferencesPanel extends ReferencesPanel {
   @Override
   protected JBLabel createRestLabel(int restSize) {
     String gray = ColorUtil.toHex(UIManager.getColor("Button.disabledText"));
-    return createLabel("<html><font color=\"#" + gray + "\">... " + restSize + " more in details pane</font></html>",
-                       createEmptyIcon(getIconHeight()));
+    String labelText = VcsLogBundle.message("vcs.log.references.more.in.details.label", restSize);
+    String html = "<html><font color=\"#" + gray + "\">" + labelText + "</font></html>"; // NON-NLS
+    return createLabel(html, createEmptyIcon(getIconHeight()));
   }
 }

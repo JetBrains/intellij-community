@@ -67,7 +67,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull public static final String ID = "MY_COMMITS";
+    @NotNull public static final String ID = "MY_COMMITS"; // NON-NLS
 
     @NotNull
     @Override
@@ -84,7 +84,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     @NotNull
     @Override
     public String getTitle() {
-      return "My Commits";
+      return VcsLogBundle.message("vcs.log.action.highlight.my.commits");
     }
 
     @Override

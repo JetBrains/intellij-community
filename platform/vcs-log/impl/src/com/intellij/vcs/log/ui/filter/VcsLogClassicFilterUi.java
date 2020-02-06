@@ -581,8 +581,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   }
 
   public static class FileFilterModel extends FilterModel.PairFilterModel<VcsLogStructureFilter, VcsLogRootFilter> {
-    @NotNull private static final String DIR = "dir:";
-    @NotNull private static final String FILE = "file:";
+    @NotNull private static final String DIR = "dir:"; // NON-NLS
+    @NotNull private static final String FILE = "file:"; // NON-NLS
     @NotNull private final Set<VirtualFile> myRoots;
 
     public FileFilterModel(@NotNull Set<VirtualFile> roots,
@@ -748,7 +748,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       });
       String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER);
       if (!shortcutText.isEmpty()) {
-        getTextEditor().setToolTipText("Use " + shortcutText + " to switch between text filter and commits list");
+        getTextEditor().setToolTipText(VcsLogBundle.message("vcs.log.filter.search.tooltip", shortcutText));
       }
     }
 

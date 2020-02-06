@@ -6,6 +6,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -18,6 +19,7 @@ import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,6 +133,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
   }
 
   @NotNull
+  @Nls
   private String getArrowTooltipText(int commit, @Nullable Integer row) {
     VcsShortCommitDetails details;
     if (row != null && row >= 0) {
@@ -140,20 +143,21 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
       details = myLogData.getMiniDetailsGetter().getCommitData(commit, Collections.singleton(commit)); // preload just the commit
     }
 
-    String balloonText = "";
     if (details instanceof LoadingDetails) {
       CommitId commitId = myLogData.getCommitId(commit);
       if (commitId != null) {
-        balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
         if (myLogData.getRoots().size() > 1) {
-          balloonText += " in " + commitId.getRoot().getName();
+          return VcsLogBundle.message("vcs.log.graph.commit.cell.tooltip.jump.to.commit.in", commitId.getHash().toShortString(),
+                                        commitId.getRoot().getName());
         }
+        return VcsLogBundle.message("vcs.log.graph.commit.cell.tooltip.jump.to.commit", commitId.getHash().toShortString());
+
       }
+      return "";
     }
     else {
-      balloonText = "Jump to " + CommitPresentationUtil.getShortSummary(details);
+      return VcsLogBundle.message("vcs.log.graph.commit.cell.tooltip.jump.to", CommitPresentationUtil.getShortSummary(details));
     }
-    return balloonText;
   }
 
   private boolean showTooltip(int row, @NotNull Point pointInCell, @NotNull Point point, boolean now) {

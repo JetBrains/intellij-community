@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
@@ -15,11 +16,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAware {
-  private static final String NAME = "Show Columns";
 
   public ToggleLogColumnsActionGroup() {
-    super(NAME, "Select columns to see in the table", null);
+    super(VcsLogBundle.message("action.title.select.columns.to.see"),
+          VcsLogBundle.message("action.description.select.columns.to.see"), null);
   }
+
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -33,7 +35,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     List<AnAction> actions = new ArrayList<>();
     if (e != null && !isPopup(e)) {
-      actions.add(Separator.create(NAME));
+      actions.add(Separator.create(VcsLogBundle.message("action.title.select.columns.to.see")));
     }
     for (VcsLogColumn column : VcsLogColumn.DYNAMIC_COLUMNS) {
       actions.add(new ToggleColumnAction(column));
@@ -55,7 +57,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     private final int myIndex;
 
     private ToggleColumnAction(@NotNull VcsLogColumn column) {
-      super(column.getName());
+      super(() -> column.getLocalizedName());
       myIndex = column.ordinal();
     }
 

@@ -31,10 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.history.FileHistoryKt;
@@ -50,6 +47,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.UIVcsUtilKt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +58,6 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.*;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES;
@@ -72,7 +69,6 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   private static final Logger LOG = Logger.getInstance(VcsLogChangesBrowser.class);
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
   @NotNull private final Project myProject;
-  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view changes";
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
 
@@ -112,7 +108,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
     init();
 
-    myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
+    myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
     myViewer.rebuildTree();
   }
 
@@ -194,7 +190,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   public void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
     updateModel(() -> {
       if (detailsList.isEmpty()) {
-        myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
+        myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
       }
       else {
         myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
@@ -211,8 +207,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
           }
 
           if (myChanges.isEmpty() && detail.getParents().size() > 1) {
-            myViewer.getEmptyText().setText("No merged conflicts.").
-              appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
+            myViewer.getEmptyText().setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).
+              appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status"), VcsLogUiUtil.getLinkAttributes(),
                                   e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
           }
           else {
@@ -232,8 +228,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       myViewer.setEmptyText("");
     }
     else {
-      myViewer.getEmptyText().setText("No changes that affect selected filters.").
-        appendSecondaryText("Show all changes", VcsLogUiUtil.getLinkAttributes(),
+      myViewer.getEmptyText().setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.filters.status")).
+        appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.changes.status"), VcsLogUiUtil.getLinkAttributes(),
                             e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
     }
   }
@@ -258,7 +254,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
     if (isShowChangesFromParents() && !changesToParents.isEmpty()) {
       if (changes.isEmpty()) {
-        builder.addEmptyTextNode("No merged conflicts");
+        builder.addEmptyTextNode(VcsLogBundle.message("no.merged.conflicts"));
       }
       for (CommitId commitId : changesToParents.keySet()) {
         Collection<Change> changesFromParent = changesToParents.get(commitId);
@@ -467,8 +463,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   }
 
   @NotNull
+  @Nls
   private String getText(@NotNull CommitId commitId) {
-    String text = "Changes to " + commitId.getHash().toShortString();
+    String text = VcsLogBundle.message("vcs.log.changes.browser.changes.to", commitId.getHash().toShortString());
     VcsShortCommitDetails detail = myDataGetter.fun(commitId);
     if (!(detail instanceof LoadingDetails) || (detail instanceof IndexedDetails)) {
       text += " " + StringUtil.shortenTextWithEllipsis(detail.getSubject(), 50, 0);

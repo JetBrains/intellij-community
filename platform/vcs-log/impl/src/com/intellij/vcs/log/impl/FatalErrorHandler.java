@@ -15,11 +15,12 @@
  */
 package com.intellij.vcs.log.impl;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface FatalErrorHandler {
   void consume(@Nullable Object source, @NotNull Throwable throwable);
 
-  void displayFatalErrorMessage(@NotNull String message);
+  void displayFatalErrorMessage(@Nls @NotNull String message);
 }

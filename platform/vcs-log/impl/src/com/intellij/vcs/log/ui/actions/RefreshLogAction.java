@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsLogManager;
@@ -44,7 +45,7 @@ public class RefreshLogAction extends RefreshAction {
   private static final Logger LOG = Logger.getInstance(RefreshLogAction.class);
 
   public RefreshLogAction() {
-    super("Refresh", "Check for new commits and refresh Log if necessary", AllIcons.Actions.Refresh);
+    super(VcsLogBundle.message("action.name.refresh.log"), VcsLogBundle.message("action.description.refresh.log"), AllIcons.Actions.Refresh);
   }
 
   @Override
@@ -58,7 +59,7 @@ public class RefreshLogAction extends RefreshAction {
     if (ui instanceof VcsLogUiEx) {
       VisiblePackRefresher refresher = ((VcsLogUiEx)ui).getRefresher();
       if (!refresher.isValid()) {
-        String message = "Trying to refresh invalid log tab '" + ui.getId() + "'.";
+        String message = "Trying to refresh invalid log tab '" + ui.getId() + "'."; // NON-NLS
         if (!logManager.getDataManager().getProgress().isRunning()) {
           LOG.error(message, collectDiagnosticInformation(e.getProject(), logManager));
         }

@@ -146,6 +146,7 @@ public class VcsLogManager implements Disposable {
    * For diagnostic purposes only
    */
   @ApiStatus.Internal
+  @NonNls
   public String getLogWindowsInformation() {
     return StringUtil.join(myPostponableRefresher.getLogWindows(),
                            window -> window.toString() + (window.isVisible() ? " (visible)" : ""), "\n");
@@ -252,7 +253,7 @@ public class VcsLogManager implements Disposable {
     }
 
     @Override
-    public void displayFatalErrorMessage(@NotNull String message) {
+    public void displayFatalErrorMessage(@Nls @NotNull String message) {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
     }
   }

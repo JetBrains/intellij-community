@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
   protected static final String ALL = VcsBundle.getString("vcs.log.filter.all");
   @NotNull protected final Model myFilterModel;
 
-  FilterPopupComponent(@NotNull String filterName, @NotNull Model filterModel) {
+  FilterPopupComponent(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String filterName, @NotNull Model filterModel) {
     super(filterName);
     myFilterModel = filterModel;
   }
@@ -36,9 +37,11 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
   }
 
   @NotNull
+  @Nls
   protected abstract String getText(@NotNull Filter filter);
 
   @Nullable
+  @Nls
   protected abstract String getToolTip(@NotNull Filter filter);
 
   @Override

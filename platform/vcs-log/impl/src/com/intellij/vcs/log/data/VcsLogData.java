@@ -96,9 +96,9 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       // restart won't help here
       // and can not shut down ide because of this
       // so use memory storage (probably leading to out of memory at some point) + no index
-      String message = "Could not delete " + PersistentUtil.LOG_CACHE + "\nDelete it manually and restart IDEA.";
-      LOG.error(message);
-      myFatalErrorsConsumer.displayFatalErrorMessage(message);
+
+      LOG.error("Could not delete " + PersistentUtil.LOG_CACHE + "\nDelete it manually and restart IDEA.");
+      myFatalErrorsConsumer.displayFatalErrorMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE));
       myStorage = new InMemoryStorage();
       myIndex = new EmptyIndex();
     }
@@ -141,7 +141,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       if (myState.equals(State.CREATED)) {
         myState = State.INITIALIZED;
         StopWatch stopWatch = StopWatch.start("initialize");
-        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
+        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, VcsLogBundle.message("vcs.log.loading.history.process"), false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             indicator.setIndeterminate(true);
