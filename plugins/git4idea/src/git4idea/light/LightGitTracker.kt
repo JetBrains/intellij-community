@@ -74,7 +74,10 @@ internal class LightGitTracker : Disposable {
         val statusesMap = lightEditorManager.openFiles.associateWith {
           newState.statuses[it] ?: state.statuses[it] ?: FileStatus.NOT_CHANGED
         }
-        state = newState.copy(statuses = statusesMap)
+        val location = if (updater.updateLocation) newState.location else state.location
+
+        state = State(location, statusesMap)
+
         eventDispatcher.multicaster.update()
         if (newState.statuses.isNotEmpty()) lightEditService.updateFileStatus(newState.statuses.keys)
       }
@@ -161,14 +164,16 @@ internal class LightGitTracker : Disposable {
       val locationFile = requests.lastInstance(Request.Location::class.java)?.file
       val files = requests.filterIsInstance(Request.Status::class.java).flatMapTo(mutableSetOf()) { it.files }
 
-      val location: String? = locationFile?.let {
+      val location: String? = if (locationFile != null) {
         try {
-          getLocation(it.parent, gitExecutable)
+          getLocation(locationFile.parent, gitExecutable)
         }
         catch (_: VcsException) {
           null
         }
       }
+      else previousResult?.state?.location
+      val updateLocation = locationFile != null || (previousResult as? StateUpdater.Update)?.updateLocation ?: false
 
       val statuses = mutableMapOf<VirtualFile, FileStatus>()
       previousResult?.state?.statuses?.let { statuses.putAll(it) }
@@ -182,7 +187,7 @@ internal class LightGitTracker : Disposable {
         }
       }
 
-      return StateUpdater.Update(State(location, statuses))
+      return StateUpdater.Update(State(location, statuses), updateLocation)
     }
   }
 
@@ -196,7 +201,7 @@ internal class LightGitTracker : Disposable {
 
   private sealed class StateUpdater(val state: State) {
     object Clear : StateUpdater(State.Blank)
-    class Update(s: State) : StateUpdater(s)
+    class Update(s: State, val updateLocation: Boolean) : StateUpdater(s)
   }
 
   private sealed class Request {
