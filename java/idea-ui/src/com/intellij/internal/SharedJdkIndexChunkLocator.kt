@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal
 
-import com.intellij.concurrency.JobLauncher
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -14,8 +13,8 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.Consumer
 import com.intellij.util.indexing.provided.SharedIndexChunkLocator
+import com.intellij.util.indexing.provided.SharedIndexChunkLocator.ChunkDescriptor
 import java.nio.file.Path
 
 class SharedJdkIndexChunkLocator: SharedIndexChunkLocator {
@@ -23,10 +22,9 @@ class SharedJdkIndexChunkLocator: SharedIndexChunkLocator {
 
   override fun locateIndex(project: Project,
                            entries: MutableCollection<out OrderEntry>,
-                           descriptorProcessor: Consumer<in SharedIndexChunkLocator.ChunkDescriptor>,
-                           indicator: ProgressIndicator) {
-    if (ApplicationManager.getApplication().isUnitTestMode) return
-    if (!Registry.`is`("shared.indexes.download")) return
+                           indicator: ProgressIndicator): List<ChunkDescriptor> {
+    if (ApplicationManager.getApplication().isUnitTestMode) return emptyList()
+    if (!Registry.`is`("shared.indexes.download")) return emptyList()
 
     //TODO: it should cache the known objects to return them offline first
     //TODO: what if I have a fresh index update for an already downloaded chunk?
@@ -37,22 +35,22 @@ class SharedJdkIndexChunkLocator: SharedIndexChunkLocator {
       .groupBy({ it.first }, {it.second})
       .toMap()
 
-    if (jdkToEntries.isEmpty()) return
+    if (jdkToEntries.isEmpty()) return emptyList()
     val type = JavaSdk.getInstance() as JavaSdkImpl
 
     val sharedIndexType = "jdk"
-    for ((sdk, sdkEntries) in jdkToEntries) {
+    return jdkToEntries.mapNotNull { (sdk, sdkEntries) ->
       val sdkHash = type.computeJdkFingerprint(sdk)
       logNotification(project, "Hash for JDK \"${sdk.name}\" is $sdkHash")
 
-      sdkHash ?: continue
+      sdkHash ?: return@mapNotNull null
 
       val info = SharedIndexesLoader.getInstance().lookupSharedIndex(SharedIndexRequest(kind = sharedIndexType, hash = sdkHash), indicator)
       logNotification(project, "Shared Index entry for JDK \"${sdk.name}\" is found with $info\n${info?.url}")
 
-      info ?: continue
+      info ?: return@mapNotNull null
 
-      descriptorProcessor.consume(object: SharedIndexChunkLocator.ChunkDescriptor {
+      object: ChunkDescriptor {
         override fun getChunkUniqueId() = "jdk-$sdkHash-${info.version.weakVersionHash}"
         override fun getSupportedInfrastructureVersion() = info.version
 
@@ -66,7 +64,7 @@ class SharedJdkIndexChunkLocator: SharedIndexChunkLocator {
             logNotification(project, "Completed Downloading Shared Index for JDK \"${sdk.name}\" with $info")
           }
         }
-      })
+      }
     }
   }
 
