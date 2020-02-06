@@ -19,10 +19,8 @@ import com.intellij.codeInspection.dataFlow.ContractValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -125,8 +123,13 @@ public class SideEffectChecker {
   }
 
   public static List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element) {
+    return extractSideEffectExpressions(element, e -> false);
+  }
+
+  public static List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element,
+                                                                 @NotNull Predicate<? super PsiElement> ignoreElement) {
     List<PsiElement> list = new SmartList<>();
-    element.accept(new SideEffectsVisitor(list, element));
+    element.accept(new SideEffectsVisitor(list, element, ignoreElement));
     return StreamEx.of(list).select(PsiExpression.class).toList();
   }
 
@@ -197,7 +200,18 @@ public class SideEffectChecker {
     }
 
     @Override
+    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+      List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariables(expression);
+      if (!variables.isEmpty() &&
+          !PsiTreeUtil.isAncestor(myStartElement, variables.get(0).getDeclarationScope(), false)) {
+        if (addSideEffect(expression)) return;
+      }
+      super.visitInstanceOfExpression(expression);
+    }
+
+    @Override
     public void visitVariable(PsiVariable variable) {
+      if (variable instanceof PsiPatternVariable) return;
       if (addSideEffect(variable)) return;
       super.visitVariable(variable);
     }

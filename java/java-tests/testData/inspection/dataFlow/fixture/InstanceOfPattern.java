@@ -14,6 +14,12 @@ public class InstanceOfPattern {
     }
   }
   
+  void testNullCheck(String s) {
+    if (s instanceof String s1) {
+      System.out.println(s1);
+    }
+  }
+  
   interface Foo {
     @Nullable Object bar();
   }

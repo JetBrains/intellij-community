@@ -48,7 +48,7 @@ public enum PatternResolveState {
         state = state.invert();
         continue;
       }
-      throw new IllegalArgumentException("Variable is not available at parent");
+      return WHEN_NONE;
     }
     return state;
   }

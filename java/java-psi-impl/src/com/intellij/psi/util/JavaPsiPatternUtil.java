@@ -52,11 +52,15 @@ public class JavaPsiPatternUtil {
    */
   public static @Nullable String getEffectiveInitializerText(@NotNull PsiPatternVariable variable) {
     PsiPattern pattern = variable.getPattern();
-    if (pattern == null) return null;
     PsiInstanceOfExpression instanceOf = ObjectUtils.tryCast(pattern.getParent(), PsiInstanceOfExpression.class);
     if (instanceOf == null) return null;
     if (pattern instanceof PsiTypeTestPattern) {
-      return "(" + ((PsiTypeTestPattern)pattern).getCheckType().getText() + ")" + instanceOf.getOperand().getText();
+      PsiExpression operand = instanceOf.getOperand();
+      PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
+      if (checkType.getType().equals(operand.getType())) {
+        return operand.getText();
+      }
+      return "(" + checkType.getText() + ")" + operand.getText();
     }
     return null;
   }
