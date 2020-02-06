@@ -18,9 +18,6 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BundledJreManager
-import org.jetbrains.jps.gant.JpsGantProjectBuilder
-import org.jetbrains.jps.model.JpsGlobal
-import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 
 @CompileStatic
@@ -85,16 +82,6 @@ abstract class BuildContext implements CompilationContext {
   abstract boolean shouldBuildDistributionForOS(String os)
 
   static BuildContext createContext(String communityHome, String projectHome, ProductProperties productProperties,
-                                    ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                                    BuildOptions options = new BuildOptions()) {
-    return BuildContextImpl.create(communityHome, projectHome, productProperties, proprietaryBuildTools, options)
-  }
-
-  /**
-   * @deprecated use {@link #createContext(String, String, ProductProperties, ProprietaryBuildTools, BuildOptions)} instead
-   */
-  static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
-                                    String communityHome, String projectHome, ProductProperties productProperties,
                                     ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                                     BuildOptions options = new BuildOptions()) {
     return BuildContextImpl.create(communityHome, projectHome, productProperties, proprietaryBuildTools, options)

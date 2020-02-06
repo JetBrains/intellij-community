@@ -10,7 +10,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
-import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -39,7 +38,6 @@ class CompilationContextImpl implements CompilationContext {
   final JpsProject project
   final JpsGlobal global
   final JpsModel projectModel
-  final JpsGantProjectBuilder projectBuilder
   final Map<String, String> oldToNewModuleName
   final Map<String, String> newToOldModuleName
   JpsCompilationData compilationData
@@ -159,7 +157,6 @@ class CompilationContextImpl implements CompilationContext {
     this.project = model.project
     this.global = model.global
     this.options = options
-    this.projectBuilder = new JpsGantProjectBuilder(ant.project, projectModel)
     this.messages = messages
     this.oldToNewModuleName = oldToNewModuleName
     this.newToOldModuleName = oldToNewModuleName.collectEntries { oldName, newName -> [newName, oldName] } as Map<String, String>

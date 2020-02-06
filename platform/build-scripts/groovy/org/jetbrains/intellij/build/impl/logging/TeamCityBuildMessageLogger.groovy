@@ -11,9 +11,6 @@ import org.jetbrains.intellij.build.impl.BuildUtils
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.BiFunction
 
-/**
- * todo[nik] this is replacement for BuildInfoPrinter. BuildInfoPrinter should be deleted after we move its remaining methods to this class.
- */
 @CompileStatic
 class TeamCityBuildMessageLogger extends BuildMessageLogger {
   public static final BiFunction<String, AntTaskLogger, BuildMessageLogger> FACTORY = { String taskName, AntTaskLogger antLogger ->

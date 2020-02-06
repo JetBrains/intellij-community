@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
-import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
@@ -146,11 +145,6 @@ class BuildContextImpl extends BuildContext {
   @Override
   JpsModel getProjectModel() {
     compilationContext.projectModel
-  }
-
-  @Override
-  JpsGantProjectBuilder getProjectBuilder() {
-    compilationContext.projectBuilder
   }
 
   @Override
