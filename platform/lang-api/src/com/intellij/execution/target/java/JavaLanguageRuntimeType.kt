@@ -42,21 +42,16 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
         }
 
         if (config.javaVersionString.isBlank()) {
-          val promise = subject.promiseExecuteScript("java -version")
-            .thenAccept {
-              it?.let { StringUtil.splitByLines(it, true) }
-                ?.firstOrNull()
-                ?.let { JavaVersion.parse(it) }
-                ?.let { config.javaVersionString = it.toString() }
-            }
-          try {
-            // todo[remoteServers]: blocking wait
-            promise.get(3, TimeUnit.SECONDS)
-          }
-          catch (e: Exception) {
-            LOG.error(e)
-          }
+          return null
         }
+
+        return subject.promiseExecuteScript("java -version")
+          .thenAccept {
+            it?.let { StringUtil.splitByLines(it, true) }
+              ?.firstOrNull()
+              ?.let { JavaVersion.parse(it) }
+              ?.let { config.javaVersionString = it.toString() }
+          }
       }
     }
   }
