@@ -73,7 +73,13 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
 
   protected abstract String getErrorTitle();
 
-  protected abstract String getCommandName();
+  /**
+   * @deprecated this method isn't called by the platform; {@link #getActionName(PsiDirectory, String)} is used instead.
+   */
+  @Deprecated
+  protected String getCommandName() {
+    return "";
+  }
 
   protected abstract String getActionName(PsiDirectory directory, String newName);
 
