@@ -60,7 +60,7 @@ public class TitledSeparator extends JPanel {
     return originalText;
   }
 
-  public void setText(String text) {
+  public void setText(@Nls(capitalization = Nls.Capitalization.Title) String text) {
     originalText = text;
     myLabel.setText(text != null && text.startsWith("<html>") ? text : UIUtil.replaceMnemonicAmpersand(originalText));
   }
