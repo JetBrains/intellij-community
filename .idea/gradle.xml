@@ -13,6 +13,7 @@
             <option value="$PROJECT_DIR$/build/dependencies" />
           </set>
         </option>
+        <option name="resolveExternalAnnotations" value="false" />
         <option name="resolveModulePerSourceSet" value="false" />
         <option name="useAutoImport" value="true" />
         <option name="useQualifiedModuleNames" value="true" />
