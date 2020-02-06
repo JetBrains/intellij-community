@@ -32,6 +32,7 @@ import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MutableErrorTreeView;
 import com.intellij.util.ui.StatusText;
@@ -326,6 +327,24 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     updateAddedElement(myErrorViewStructure.addNavigatableMessage(
       groupName, navigatable, kind, text, data, exportPrefix, renderPrefix, file
     ));
+  }
+
+  public boolean removeMessage(int type, @NotNull String groupName, @NotNull Navigatable navigatable) {
+    final ErrorTreeElementKind kind = ErrorTreeElementKind.convertMessageFromCompilerErrorType(type);
+    List<NavigatableMessageElement> removed = myErrorViewStructure.removeNavigatableMessage(groupName, kind, navigatable);
+    if (removed.isEmpty()) return false;
+    removed.forEach(this::updateAddedElement);
+    return true;
+  }
+
+  public void removeAllInGroup(@NotNull String name) {
+    List<NavigatableMessageElement> removed = myErrorViewStructure.removeAllNavigatableMessagesInGroup(name);
+    removed.forEach(this::updateAddedElement);
+  }
+
+  public NavigatableMessageElement @Nullable [] getNavigatableMessages(@NotNull String groupName) {
+    ErrorTreeElement[] childElements = myErrorViewStructure.getChildElements(new GroupingElement(groupName, null, null));
+    return ObjectUtils.tryCast(childElements, NavigatableMessageElement[].class);
   }
 
   public ErrorViewStructure getErrorViewStructure() {
