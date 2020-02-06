@@ -202,7 +202,7 @@ public class TypeConstraints {
     @NotNull
     @Override
     public String toString() {
-      return myType+"[]";
+      return myType.getCanonicalText()+"[]";
     }
 
     PsiPrimitiveType getType() {
