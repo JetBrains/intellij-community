@@ -7,6 +7,9 @@ fun TextRange.stripWhitespace(chars: CharSequence): TextRange
         = strip(chars) { it.isWhitespace() }
 
 fun TextRange.strip(chars: CharSequence, predicate: (Char) -> Boolean): TextRange {
+    require(startOffset >= 0)
+    require(endOffset <= chars.length)
+
     var startOffset = startOffset
     while (startOffset < endOffset && predicate(chars[startOffset])) {
         startOffset++
@@ -26,6 +29,9 @@ fun TextRange.extendWithWhitespace(chars: CharSequence): TextRange {
 }
 
 fun TextRange.extend(chars: CharSequence, predicate: (Char) -> Boolean): TextRange {
+    require(startOffset >= 0)
+    require(endOffset <= chars.length)
+
     var startOffset = this.startOffset
     while (startOffset > 0 && predicate(chars[startOffset - 1])) {
         startOffset--
