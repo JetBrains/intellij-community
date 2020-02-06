@@ -12,6 +12,7 @@ import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -143,7 +144,7 @@ public class LoadingDecorator {
     return myLoadingLayer.myText.getText();
   }
 
-  public void setLoadingText(final String loadingText) {
+  public void setLoadingText(@Nls String loadingText) {
     myLoadingLayer.myText.setText(loadingText);
   }
 
