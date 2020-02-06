@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.json.JsonBundle;
+import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
