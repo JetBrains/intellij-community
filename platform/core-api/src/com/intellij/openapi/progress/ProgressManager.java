@@ -62,7 +62,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     progress(text, "");
   }
 
-  public static void progress2(@NotNull final String text) throws ProcessCanceledException {
+  public static void progress2(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String text) throws ProcessCanceledException {
     final ProgressIndicator pi = getInstance().getProgressIndicator();
     if (pi != null) {
       pi.checkCanceled();
@@ -70,7 +70,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     }
   }
 
-  public static void progress(@NotNull String text, @Nullable String text2) throws ProcessCanceledException {
+  public static void progress(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String text,
+                              @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String text2) throws ProcessCanceledException {
     final ProgressIndicator pi = getInstance().getProgressIndicator();
     if (pi != null) {
       pi.checkCanceled();
@@ -164,7 +165,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @Deprecated
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                            @NotNull @Nls String progressTitle,
+                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
                                                             @NotNull Runnable process,
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable);
@@ -184,7 +185,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @Deprecated
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                            @NotNull @Nls String progressTitle,
+                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
                                                             @NotNull Runnable process,
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable,
