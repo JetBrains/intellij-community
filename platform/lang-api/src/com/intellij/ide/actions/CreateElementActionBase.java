@@ -71,6 +71,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
    */
   protected abstract PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception;
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   protected abstract String getErrorTitle();
 
   /**
@@ -81,6 +82,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     return "";
   }
 
+  @Nls
   protected abstract String getActionName(PsiDirectory directory, String newName);
 
   @Override
