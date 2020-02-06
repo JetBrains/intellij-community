@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl.validations;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
@@ -32,23 +33,23 @@ public class StringValidation implements JsonSchemaValidation {
     final String value = StringUtil.unquoteString(v);
     if (schema.getMinLength() != null) {
       if (value.length() < schema.getMinLength()) {
-        consumer.error("String is shorter than " + schema.getMinLength(), propValue, JsonErrorPriority.LOW_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.string.shorter.than", schema.getMinLength()), propValue, JsonErrorPriority.LOW_PRIORITY);
         return;
       }
     }
     if (schema.getMaxLength() != null) {
       if (value.length() > schema.getMaxLength()) {
-        consumer.error("String is longer than " + schema.getMaxLength(), propValue, JsonErrorPriority.LOW_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.string.longer.than", schema.getMaxLength()), propValue, JsonErrorPriority.LOW_PRIORITY);
         return;
       }
     }
     if (schema.getPattern() != null) {
       if (schema.getPatternError() != null) {
-        consumer.error("Can not check string by pattern because of error: " + StringUtil.convertLineSeparators(schema.getPatternError()),
+        consumer.error(JsonBundle.message("schema.validation.invalid.string.pattern", StringUtil.convertLineSeparators(schema.getPatternError())),
               propValue, JsonErrorPriority.LOW_PRIORITY);
       }
       if (!schema.checkByPattern(value)) {
-        consumer.error("String is violating the pattern: '" + StringUtil.convertLineSeparators(schema.getPattern()) + "'", propValue, JsonErrorPriority.LOW_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.string.violates.pattern", StringUtil.convertLineSeparators(schema.getPattern())), propValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
     // I think we are not gonna to support format, there are a couple of RFCs there to check upon..
