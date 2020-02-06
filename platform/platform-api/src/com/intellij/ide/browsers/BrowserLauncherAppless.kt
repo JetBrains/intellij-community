@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers
 
 import com.intellij.CommonBundle
@@ -54,7 +54,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     val url = signUrl(_url.trim { it <= ' ' })
     LOG.debug { "opening [$url]" }
 
-    if (url.startsWith("mailto:") && Desktop.getDesktop().isSupported(Desktop.Action.MAIL)) {
+    if (url.startsWith("mailto:") && isDesktopActionSupported(Desktop.Action.MAIL)) {
       try {
         LOG.debug("Trying Desktop#mail")
         Desktop.getDesktop().mail(URI(url))
