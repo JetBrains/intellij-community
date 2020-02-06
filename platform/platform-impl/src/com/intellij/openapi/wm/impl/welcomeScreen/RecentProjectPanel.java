@@ -51,6 +51,8 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
@@ -643,16 +645,11 @@ public class RecentProjectPanel extends JPanel {
         final long startTime = System.currentTimeMillis();
         boolean pathIsValid;
         try {
-          if (!RecentProjectsManagerBase.isFileSystemPath(path))
-            pathIsValid = true;
-          else {
-            pathIsValid = isFileAvailable(new File(path));
-          }
+          pathIsValid = !RecentProjectsManagerBase.isFileSystemPath(path) || isPathAvailable(path);
         }
         catch (Exception e) {
           pathIsValid = false;
         }
-
         if (myInvalidPaths.contains(path) == pathIsValid) {
           if (pathIsValid) {
             myInvalidPaths.remove(path);
@@ -666,14 +663,12 @@ public class RecentProjectPanel extends JPanel {
     }
   }
 
-  private static boolean isFileAvailable(File file) {
-    List<File> roots = Arrays.asList(File.listRoots());
-    File tmp = file;
-    while(tmp != null) {
-      if (roots.contains(tmp)) {
-        return file.exists();
-      }
-      tmp = tmp.getParentFile();
+  private static boolean isPathAvailable(String path) {
+    Path pathRoot = Paths.get(path).getRoot();
+    if (pathRoot == null) return false;
+    if (SystemInfo.isWindows && pathRoot.toString().startsWith("\\\\")) return true;
+    for (Path fsRoot : pathRoot.getFileSystem().getRootDirectories()) {
+      if (pathRoot.equals(fsRoot)) return true;
     }
     return false;
   }
