@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -35,7 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.FileViewProvider;
@@ -414,34 +412,10 @@ public class XPathEvalAction extends XPathAction {
             throw new IllegalArgumentException();
         }
 
-        @Override
-        public void findUsagesInEditor(@NotNull FileEditor editor) {
-            throw new IllegalArgumentException();
-        }
-
-      @Override
-      public void highlightUsages(@NotNull PsiFile file, @NotNull Editor editor, boolean clearHighlights) {
-        throw new UnsupportedOperationException();
-      }
-
       @Override
       public boolean isValid() {
             // re-run will become unavailable if the context node is invalid
             return myContextNode == null || myContextNode.isValid();
-        }
-
-        @Override
-        public boolean isReadOnly() {
-            return true;
-        }
-
-        @Override
-        public VirtualFile @Nullable [] getFiles() {
-            return null;
-        }
-
-        @Override
-        public void update() {
         }
 
         @Override
