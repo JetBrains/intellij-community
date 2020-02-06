@@ -116,7 +116,7 @@
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"
                     interface="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"/>
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.filePathIconProvider"
-                    interface="com.intellij.openapi.vcs.changes.ChangesBrowserFilePathIconProvider"/>
+                    interface="com.intellij.openapi.vcs.changes.FilePathIconProvider"/>
 
     <extensionPoint name="vcs.actions.ScheduleForAdditionActionExtension"
                     interface="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionActionExtension"/>

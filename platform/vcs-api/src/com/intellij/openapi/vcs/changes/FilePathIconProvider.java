@@ -3,17 +3,16 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface ChangesBrowserFilePathIconProvider {
-  ExtensionPointName<ChangesBrowserFilePathIconProvider> EP_NAME =
+public interface FilePathIconProvider {
+  ExtensionPointName<FilePathIconProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.openapi.vcs.changes.ui.filePathIconProvider");
 
   @Nullable
-  Icon getIcon(@NotNull FilePath filePath, @Iconable.IconFlags int flags, @Nullable Project project);
+  Icon getIcon(@NotNull FilePath filePath, @Nullable Project project);
 }

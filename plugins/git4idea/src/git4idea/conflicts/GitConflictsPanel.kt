@@ -235,7 +235,7 @@ private class ConflictChangesBrowserNode(conflict: GitConflict) : ChangesBrowser
     }
     renderer.append(spaceAndThinSpace() + conflictType, SimpleTextAttributes.GRAYED_ATTRIBUTES)
 
-    renderer.setIcon(filePath.fileType, filePath.isDirectory || !isLeaf)
+    renderer.setIcon(filePath, filePath.isDirectory || !isLeaf)
   }
 
   override fun getTextPresentation(): String {
