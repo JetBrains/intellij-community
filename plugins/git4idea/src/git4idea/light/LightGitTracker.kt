@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.EventDispatcher
 import com.intellij.vcs.log.BaseSingleTaskController
+import com.intellij.vcs.log.runInEdt
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionIdentificationException
@@ -102,7 +103,7 @@ internal class LightGitTracker : Disposable {
       if (!hasGit) return
 
       val targetFiles = events.filter { it.isFromSave || it.isFromRefresh }.mapNotNullTo(mutableSetOf()) { it.file }
-      val lightTargetFiles = lightEditorManager.openFiles.intersect(targetFiles)
+      val lightTargetFiles = lightEditorManager.openFiles.intersect(targetFiles).filter { it.parent != null }
       if (lightTargetFiles.isNotEmpty()) {
         singleTaskController.request(Request.Status(lightTargetFiles))
       }
@@ -114,11 +115,11 @@ internal class LightGitTracker : Disposable {
       val requests = mutableListOf<Request>(Request.CheckGit)
 
       val selectedFile = lightEditService.selectedFile
-      if (selectedFile != null) {
+      if (selectedFile != null && selectedFile.parent != null) {
         requests.add(Request.Location(selectedFile))
       }
 
-      val openFiles = lightEditorManager.openFiles
+      val openFiles = lightEditorManager.openFiles.filter { it.parent != null }
       if (openFiles.isNotEmpty()) {
         requests.add(Request.Status(openFiles))
       }
@@ -136,7 +137,7 @@ internal class LightGitTracker : Disposable {
       state = state.copy(location = null)
 
       val selectedFile = editorInfo?.file
-      if (selectedFile != null) {
+      if (selectedFile != null && selectedFile.parent != null) {
         singleTaskController.request(Request.Location(selectedFile))
       }
     }
