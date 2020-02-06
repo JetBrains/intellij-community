@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -38,6 +37,7 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
   // do not use extension point name to avoid map lookup on each event publishing
   private static final ExtensionPointImpl<VirtualFileManagerListener>
     MANAGER_LISTENER_EP = ((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea()).getExtensionPoint("com.intellij.virtualFileManagerListener");
+  private final List<? extends VirtualFileSystem> myPreCreatedFileSystems;
 
   private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
     @Attribute
@@ -45,31 +45,19 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
   }
 
   private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector = new KeyedExtensionCollector<>("com.intellij.virtualFileSystem");
-  private final VirtualFileSystem[] myPhysicalFileSystems;
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<AsyncFileListener> myAsyncFileListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;
 
-  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> fileSystems) {
-    this(fileSystems, ApplicationManager.getApplication().getMessageBus());
+  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> preCreatedFileSystems) {
+    this(preCreatedFileSystems, ApplicationManager.getApplication().getMessageBus());
   }
 
-  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> fileSystems, @NotNull MessageBus bus) {
-    List<VirtualFileSystem> physicalFileSystems = new ArrayList<>(fileSystems);
+  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> preCreatedFileSystems, @NotNull MessageBus bus) {
+    myPreCreatedFileSystems = new ArrayList<>(preCreatedFileSystems);
 
-    ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> point = myCollector.getPoint();
-    if (point != null) {
-      for (KeyedLazyInstance<VirtualFileSystem> bean : point.getExtensionList()) {
-        if (((VirtualFileSystemBean)bean).physical) {
-          physicalFileSystems.add(bean.getInstance());
-        }
-      }
-    }
-
-    myPhysicalFileSystems = physicalFileSystems.toArray(new VirtualFileSystem[0]);
-
-    for (VirtualFileSystem fileSystem : fileSystems) {
+    for (VirtualFileSystem fileSystem : preCreatedFileSystems) {
       myCollector.addExplicitExtension(fileSystem.getProtocol(), fileSystem);
       if (!(fileSystem instanceof CachingVirtualFileSystem)) {
         fileSystem.addVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
@@ -81,6 +69,22 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
     }
 
     bus.connect().subscribe(VFS_CHANGES, new BulkVirtualFileListenerAdapter(myVirtualFileListenerMulticaster.getMulticaster()));
+  }
+
+  @NotNull
+  public List<VirtualFileSystem> getPhysicalFileSystems() {
+    List<VirtualFileSystem> physicalFileSystems = new ArrayList<>(myPreCreatedFileSystems);
+
+    ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> point = myCollector.getPoint();
+    if (point != null) {
+      for (KeyedLazyInstance<VirtualFileSystem> bean : point.getExtensionList()) {
+        if (((VirtualFileSystemBean)bean).physical) {
+          VirtualFileSystem fileSystem = bean.getInstance();
+          physicalFileSystems.add(fileSystem);
+        }
+      }
+    }
+    return physicalFileSystems;
   }
 
   @Override
@@ -111,10 +115,6 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
     return systems.get(0);
   }
 
-  public List<VirtualFileSystem> getPhysicalFileSystems() {
-    return Arrays.asList(myPhysicalFileSystems);
-  }
-
   @Override
   public long syncRefresh() {
     return doRefresh(false, null);
@@ -130,7 +130,7 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
       ApplicationManager.getApplication().assertIsWriteThread();
     }
 
-    for (VirtualFileSystem fileSystem : myPhysicalFileSystems) {
+    for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
       if (!(fileSystem instanceof CachingVirtualFileSystem)) {
         fileSystem.refresh(asynchronous);
       }
@@ -145,7 +145,7 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
       ApplicationManager.getApplication().assertIsWriteThread();
     }
 
-    for (VirtualFileSystem fileSystem : myPhysicalFileSystems) {
+    for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
       if (fileSystem instanceof CachingVirtualFileSystem) {
         ((CachingVirtualFileSystem)fileSystem).refreshWithoutFileWatcher(asynchronous);
       }
