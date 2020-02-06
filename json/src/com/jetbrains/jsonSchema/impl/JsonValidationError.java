@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.json.JsonBundle;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
@@ -65,7 +66,7 @@ public class JsonValidationError {
     public String getMessage(boolean trimIfNeeded) {
       if (myMissingPropertyIssues.size() == 1) {
         MissingPropertyIssueData prop = myMissingPropertyIssues.iterator().next();
-        return "property " + getPropertyNameWithComment(prop);
+        return JsonBundle.message("schema.validation.property", getPropertyNameWithComment(prop));
       }
 
       Collection<MissingPropertyIssueData> namesToDisplay = myMissingPropertyIssues;
@@ -88,7 +89,7 @@ public class JsonValidationError {
         return firstHasEq ? -1 : 1;
       }).collect(Collectors.joining(", "));
       if (trimmed) allNames += ", ...";
-      return "properties " + allNames;
+      return JsonBundle.message("schema.validation.properties", allNames);
     }
   }
 
