@@ -123,7 +123,7 @@ public class ValueContainersTest extends TestCase {
     container.saveTo(new DataOutputStream(os), externalizer);
 
     ValueContainerImpl<Map<String, String>> container2 = new ValueContainerImpl<>();
-    container2.readFrom(new DataInputStream(new ByteArrayInputStream(os.toByteArray())), new MyValueExternalizer(), i -> i);
+    container2.readFrom(new DataInputStream(new ByteArrayInputStream(os.toByteArray())), new MyValueExternalizer(), ValueContainerInputRemapping.IDENTITY);
     AtomicInteger count = new AtomicInteger();
     container2.forEach((id, value1) -> {
       count.incrementAndGet();

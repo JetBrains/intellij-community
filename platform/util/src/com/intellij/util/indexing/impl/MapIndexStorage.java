@@ -45,7 +45,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   private final DataExternalizer<Value> myDataExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
   private final boolean myReadOnly;
-  @NotNull private final IntIntFunction myInputRemapping;
+  @NotNull private final ValueContainerInputRemapping myInputRemapping;
 
   protected MapIndexStorage(@NotNull Path storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -62,7 +62,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
                             boolean keyIsUniqueForIndexedFile,
                             boolean initialize,
                             boolean readOnly,
-                            @Nullable IntIntFunction inputRemapping) throws IOException {
+                            @Nullable ValueContainerInputRemapping inputRemapping) throws IOException {
     myBaseStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
     myCacheSize = cacheSize;
@@ -72,7 +72,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
     if (inputRemapping != null) {
       LOG.assertTrue(myReadOnly, "input remapping allowed only for read-only storage");
     } else {
-      inputRemapping = IntIntFunction.IDENTITY;
+      inputRemapping = ValueContainerInputRemapping.IDENTITY;
     }
     myInputRemapping = inputRemapping;
     if (initialize) initMapAndCache();

@@ -46,7 +46,8 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
   fun testSharedFileContentHashIndex() {
     val internalHashId = 123
     val indexId = 456
-    val inputId = 100
+    val inputId1 = 100
+    val inputId2 = inputId1 + 1
 
     val extension = FileContentHashIndexExtension(object : SharedIndexChunkConfiguration {
       override fun tryEnumerateContentHash(hash: ByteArray?): Long {
@@ -95,11 +96,17 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
       }
     })
 
-    val virtualFile = myFixture.addFileToProject("A.java", "").virtualFile
-    index.update(inputId, FileContentImpl.createByFile(virtualFile)).compute()
-    assertEquals(internalHashId, FileContentHashIndexExtension.getInternalHashId(index.getHashId(inputId)))
-    assertEquals(indexId, FileContentHashIndexExtension.getIndexId(index.getHashId(inputId)))
-    assertEquals(inputId, index.toHashIdToFileIdFunction(indexId).`fun`(internalHashId))
+    val virtualFile1 = myFixture.addFileToProject("A.java", "").virtualFile
+    val virtualFile2 = myFixture.addFileToProject("B.java", "").virtualFile
+    index.update(inputId1, FileContentImpl.createByFile(virtualFile1)).compute()
+    index.update(inputId2, FileContentImpl.createByFile(virtualFile2)).compute()
+
+    assertEquals(internalHashId, FileContentHashIndexExtension.getInternalHashId(index.getHashId(inputId1)))
+    assertEquals(internalHashId, FileContentHashIndexExtension.getInternalHashId(index.getHashId(inputId2)))
+    assertEquals(indexId, FileContentHashIndexExtension.getIndexId(index.getHashId(inputId1)))
+    assertEquals(indexId, FileContentHashIndexExtension.getIndexId(index.getHashId(inputId2)))
+
+    assertEquals(arrayOf(inputId1, inputId2), index.getHashIdToFileIdsFunction(indexId).remap(internalHashId)[0])
     index.dispose()
   }
 
