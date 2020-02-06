@@ -140,6 +140,9 @@ internal class LightGitTracker : Disposable {
       if (selectedFile != null && selectedFile.parent != null) {
         singleTaskController.request(Request.Location(selectedFile))
       }
+      else {
+        runInEdt(this@LightGitTracker) { eventDispatcher.multicaster.update() }
+      }
     }
 
     override fun afterClose(editorInfo: LightEditorInfo) {
