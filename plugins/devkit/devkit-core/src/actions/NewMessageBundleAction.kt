@@ -22,7 +22,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.dom.IdeaPlugin
+import org.jetbrains.idea.devkit.module.PluginModuleType
+import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -57,6 +61,18 @@ class NewMessageBundleAction : CreateElementActionBase() {
   override fun create(newName: String, directory: PsiDirectory): Array<PsiElement> {
     val bundleClass = DevkitActionsUtil.createSingleClass(newName, "MessageBundle.java", directory)
     val module = ModuleUtilCore.findModuleForPsiElement(directory) ?: return emptyArray()
+    val pluginXml = PluginModuleType.getPluginXml(module)
+    if (pluginXml != null) {
+      DescriptorUtil.patchPluginXml({ xmlFile, psiClass ->
+          val fileElement = DomManager.getDomManager(module.project).getFileElement(xmlFile, IdeaPlugin::class.java)
+          if (fileElement != null) {
+            val resourceBundle = fileElement.rootElement.resourceBundle
+            if (!resourceBundle.exists()) {
+              resourceBundle.value = "messages.$newName"
+            }
+          }
+        }, bundleClass, pluginXml)
+    }
     val resourcesRoot = getOrCreateResourcesRoot(module)
     if (resourcesRoot == null) return arrayOf(bundleClass)
     val propertiesFile = runWriteAction {
