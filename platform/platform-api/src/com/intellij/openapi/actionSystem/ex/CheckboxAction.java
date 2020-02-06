@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,11 +21,11 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
 
   protected CheckboxAction() {}
 
-  protected CheckboxAction(final String text) {
+  protected CheckboxAction(@Nls String text) {
     super(text);
   }
 
-  protected CheckboxAction(final String text, final String description, final Icon icon) {
+  protected CheckboxAction(@Nls String text, @Nls(capitalization = Nls.Capitalization.Sentence) String description, final Icon icon) {
     super(text, description, icon);
   }
 
