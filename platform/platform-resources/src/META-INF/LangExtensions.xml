@@ -316,8 +316,6 @@
 
     <projectService serviceImplementation="com.intellij.ide.hierarchy.newAPI.HierarchyBrowserManager"/>
 
-    <projectService serviceImplementation="com.intellij.ide.hierarchy.HierarchyBrowserManager"/>
-
     <projectService serviceImplementation="com.intellij.packageDependencies.DependenciesToolWindow"/>
 
     <projectService serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManager"/>
