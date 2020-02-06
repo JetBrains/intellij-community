@@ -3,22 +3,28 @@ package com.intellij.util.indexing
 
 import com.intellij.index.SharedIndexExtensions
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
+import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.hash.ContentHashEnumerator
 import com.intellij.util.indexing.hash.FileContentHashIndex
 import com.intellij.util.indexing.hash.FileContentHashIndexExtension
 import com.intellij.util.indexing.hash.SharedIndexChunk
+import com.intellij.util.indexing.hash.SharedIndexStorageUtil
 import com.intellij.util.indexing.hash.building.IndexChunk
 import com.intellij.util.indexing.hash.building.IndexesExporter
 import com.intellij.util.indexing.impl.IndexStorage
+import com.intellij.util.indexing.provided.SharedIndexChunkLocator
 import com.intellij.util.indexing.snapshot.IndexedHashesSupport
 import com.intellij.util.indexing.snapshot.OneRecordValueContainer
 import com.intellij.util.indexing.zipFs.UncompressedZipFileSystem
+import gnu.trove.THashMap
 import junit.framework.AssertionFailedError
 import java.nio.file.Files
 import java.nio.file.Path
@@ -28,6 +34,21 @@ private const val CHUNK_NAME = "source"
 
 @SkipSlowTestLocally
 class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
+  private var tempDir: Path? = null
+
+  override fun setUp() {
+    super.setUp()
+    tempDir = FileUtil.createTempDirectory("shared-indexes-test", "").toPath()
+  }
+
+  override fun tearDown() {
+    try {
+      super.tearDown()
+    } finally {
+      FileUtil.delete(tempDir!!)
+    }
+  }
+
   fun testOpenSharedIndexes() {
     val indexZipPath = generateTestSharedIndex()
     val chunkId = 1
@@ -186,6 +207,110 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent(), actualFiles)
   }
 
+  fun `test shared index layout when version doesn't exactly match`() {
+    val indexZipPath = generateTestSharedIndex()
+    val appendStorage = tempDir!!.resolve("append-index.zip")
+
+    val ideVersion = IndexInfrastructureVersion.getIdeVersion()
+
+    val modifiedFbiIndexVersions = THashMap(ideVersion.fileBasedIndexVersions)
+    assertNotNull(modifiedFbiIndexVersions.put(JavaNullMethodArgumentIndex.INDEX_ID.name, "-123"))
+    assertNotNull(modifiedFbiIndexVersions.put("java.simple.property", "-321"))
+    val modifiedVersion = IndexInfrastructureVersion(ideVersion.baseIndexes,
+                                                     modifiedFbiIndexVersions,
+                                                     ideVersion.stubIndexVersions)
+
+    SharedIndexStorageUtil.appendToSharedIndexStorage(indexZipPath, appendStorage, object : SharedIndexChunkLocator.ChunkDescriptor {
+      override fun downloadChunk(targetFile: Path, indicator: ProgressIndicator) = throw AssertionFailedError()
+
+      override fun getOrderEntries() = throw AssertionFailedError()
+
+      override fun getChunkUniqueId(): String = CHUNK_NAME
+
+      override fun getSupportedInfrastructureVersion(): IndexInfrastructureVersion = ideVersion
+    }, modifiedVersion)
+
+    val actualFiles = UncompressedZipFileSystem.create(appendStorage).use {
+      val root = it.rootDirectories.first()
+      Files.walk(root).map { p -> p.toString() }.sorted().collect(Collectors.joining("\n")).trimStart()
+    }
+
+    assertEquals("""
+      source
+      source/IdIndex
+      source/IdIndex/IdIndex.forward
+      source/IdIndex/IdIndex.forward.len
+      source/IdIndex/IdIndex.forward.values.at
+      source/IdIndex/IdIndex.forward_i
+      source/IdIndex/IdIndex.forward_i.len
+      source/IdIndex/IdIndex.storage
+      source/IdIndex/IdIndex.storage.len
+      source/IdIndex/IdIndex.storage.values.at
+      source/IdIndex/IdIndex.storage_i
+      source/IdIndex/IdIndex.storage_i.len
+      source/Stubs
+      source/Stubs/Stubs.storage
+      source/Stubs/Stubs.storage.len
+      source/Stubs/Stubs.storage.values.at
+      source/Stubs/Stubs.storage_i
+      source/Stubs/Stubs.storage_i.len
+      source/Stubs/java.class.fqn
+      source/Stubs/java.class.fqn/java.class.fqn.forward
+      source/Stubs/java.class.fqn/java.class.fqn.forward.len
+      source/Stubs/java.class.fqn/java.class.fqn.storage
+      source/Stubs/java.class.fqn/java.class.fqn.storage.len
+      source/Stubs/java.class.fqn/java.class.fqn.storage.values.at
+      source/Stubs/java.class.fqn/java.class.fqn.storage_i
+      source/Stubs/java.class.fqn/java.class.fqn.storage_i.len
+      source/Stubs/java.class.shortname
+      source/Stubs/java.class.shortname/java.class.shortname.forward
+      source/Stubs/java.class.shortname/java.class.shortname.forward.len
+      source/Stubs/java.class.shortname/java.class.shortname.storage
+      source/Stubs/java.class.shortname/java.class.shortname.storage.keystream
+      source/Stubs/java.class.shortname/java.class.shortname.storage.keystream.len
+      source/Stubs/java.class.shortname/java.class.shortname.storage.len
+      source/Stubs/java.class.shortname/java.class.shortname.storage.values.at
+      source/Stubs/java.class.shortname/java.class.shortname.storage_i
+      source/Stubs/java.class.shortname/java.class.shortname.storage_i.len
+      source/Stubs/java.method.name
+      source/Stubs/java.method.name/java.method.name.forward
+      source/Stubs/java.method.name/java.method.name.forward.len
+      source/Stubs/java.method.name/java.method.name.storage
+      source/Stubs/java.method.name/java.method.name.storage.keystream
+      source/Stubs/java.method.name/java.method.name.storage.keystream.len
+      source/Stubs/java.method.name/java.method.name.storage.len
+      source/Stubs/java.method.name/java.method.name.storage.values.at
+      source/Stubs/java.method.name/java.method.name.storage_i
+      source/Stubs/java.method.name/java.method.name.storage_i.len
+      source/Stubs/serializerNames
+      source/Stubs/serializerNames/names
+      source/Stubs/serializerNames/names.keystream
+      source/Stubs/serializerNames/names.keystream.len
+      source/Stubs/serializerNames/names.len
+      source/Stubs/serializerNames/names_i
+      source/Stubs/serializerNames/names_i.len
+      source/Trigram.Index
+      source/Trigram.Index/Trigram.Index.forward
+      source/Trigram.Index/Trigram.Index.forward.len
+      source/Trigram.Index/Trigram.Index.forward.values.at
+      source/Trigram.Index/Trigram.Index.forward_i
+      source/Trigram.Index/Trigram.Index.forward_i.len
+      source/Trigram.Index/Trigram.Index.storage
+      source/Trigram.Index/Trigram.Index.storage.len
+      source/Trigram.Index/Trigram.Index.storage.values.at
+      source/Trigram.Index/Trigram.Index.storage_i
+      source/Trigram.Index/Trigram.Index.storage_i.len
+      source/empty-indices.txt
+      source/empty-stub-indices.txt
+      source/hashes
+      source/hashes.keystream
+      source/hashes.keystream.len
+      source/hashes.len
+      source/hashes_i
+      source/hashes_i.len
+    """.trimIndent(), actualFiles)
+  }
+
   @Suppress("UNCHECKED_CAST")
   private fun <K, V> ID<K, V>.getExtension(): FileBasedIndexExtension<K, V> {
     return FileBasedIndexExtension.EXTENSION_POINT_NAME.findFirstSafe{ it.name == this } as FileBasedIndexExtension<K, V>
@@ -212,8 +337,7 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
         }
       """.trimIndent()).virtualFile
 
-    val tempDir = FileUtil.createTempDirectory("shared-indexes-test", "").toPath()
-    val indexZipPath = tempDir.resolve("shared-index.zip")
+    val indexZipPath = tempDir!!.resolve("shared-index.zip")
 
     val chunks = arrayListOf<IndexChunk>()
     chunks += IndexChunk(setOf(file), CHUNK_NAME)
