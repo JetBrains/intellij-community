@@ -18,10 +18,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationStarter
-import com.intellij.openapi.application.JetBrainsProtocolHandler
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -53,16 +50,6 @@ open class IdeStarter : ApplicationStarter {
     fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
       wizardStepProvider = provider
     }
-
-    private inline fun invokeOnEdt(crossinline runnable: () -> Unit) {
-      val application = ApplicationManager.getApplication()
-      if (application.isDispatchThread) {
-        runnable()
-      }
-      else {
-        application.invokeLater { runnable() }
-      }
-    }
   }
 
   override fun isHeadless() = false
@@ -87,7 +74,7 @@ open class IdeStarter : ApplicationStarter {
     // application components. So it is proper to perform replacement only here.
     // out of EDT
     val windowManager = WindowManagerEx.getInstanceEx()
-    invokeOnEdt {
+    runInEdt {
       frameInitActivity.runChild("IdeEventQueue informing about WindowManager") {
         IdeEventQueue.getInstance().setWindowManager(windowManager)
       }
@@ -154,18 +141,28 @@ open class IdeStarter : ApplicationStarter {
     }
     else {
       Runnable {
-        doShowWelcomeFrame.run()
+        runInEdt {
+          doShowWelcomeFrame.run()
+        }
         lifecyclePublisher.welcomeScreenDisplayed()
       }
     }
-    wizardStepProvider?.let { wizardStepsProvider ->
-      val wizardDialog = object : CustomizeIDEWizardDialog(wizardStepsProvider, null, false, true) {
-        override fun doOKAction() {
-          super.doOKAction()
-          showWelcomeFrame?.run()
+    wizardStepProvider?.let { wizardStepProvider ->
+      var done = false
+      runInEdt {
+        val wizardDialog = object : CustomizeIDEWizardDialog(wizardStepProvider, null, false, true) {
+          override fun doOKAction() {
+            super.doOKAction()
+            showWelcomeFrame?.run()
+          }
+        }
+
+        if (wizardDialog.showIfNeeded()) {
+          done = true
         }
       }
-      if (wizardDialog.showIfNeeded()) {
+
+      if (done) {
         return false
       }
     }
