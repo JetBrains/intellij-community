@@ -90,7 +90,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   private val splitter = JBSplitter("RunConfigurable.dividerProportion", 0.3f)
   private var wholePanel: JPanel? = null
   private var selectedConfigurable: Configurable? = null
-  private val recentsLimit = JTextField("5", 2)
+  private val recentsLimit = JTextField("5", 5)
   private val confirmation = JCheckBox(ExecutionBundle.message("rerun.confirmation.checkbox"), true)
   private val confirmationDeletionFromPopup = JCheckBox(ExecutionBundle.message("popup.deletion.confirmation"), true)
   private val additionalSettings = ArrayList<Pair<UnnamedConfigurable, JComponent>>()
@@ -322,7 +322,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
     })
     textField.addActionListener { getGlobalInstance().doWhenFocusSettlesDown { getGlobalInstance().requestFocus(tree, true) } }
-    p.add(JLabel("Folder name:"), "gapright 5")
+    p.add(JLabel(ExecutionBundle.message("run.configuration.folder.name")), "gapright 5")
     p.add(textField, "pushx, growx, wrap")
     p.add(JLabel(ExecutionBundle.message("run.configuration.rename.folder.disclaimer")), "gaptop 5, spanx 2")
 
@@ -964,7 +964,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       val configurationTypes: MutableList<ConfigurationType?> = configurationTypeSorted(project, showApplicableTypesOnly, allTypes).toMutableList()
       val hiddenCount = allTypes.size - configurationTypes.size
       if (hiddenCount > 0) {
-        configurationTypes.add(NewRunConfigurationPopup.HIDDEN_ITEMS_STUB);
+        configurationTypes.add(NewRunConfigurationPopup.HIDDEN_ITEMS_STUB)
       }
 
       val popup = NewRunConfigurationPopup.createAddPopup(project, configurationTypes,
