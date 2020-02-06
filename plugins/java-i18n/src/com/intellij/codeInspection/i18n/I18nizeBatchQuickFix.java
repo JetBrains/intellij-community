@@ -248,6 +248,11 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       init();
     }
 
+    @Override
+    protected @Nullable String getDimensionServiceKey() {
+      return "i18nInBatch";
+    }
+
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
