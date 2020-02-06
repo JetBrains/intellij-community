@@ -55,5 +55,9 @@
     <extensionPoint name="changeSignatureDetector" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.changeSignature.inplace.LanguageChangeSignatureDetector"/>
     </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.suggestedRefactoringSupport" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.suggested.SuggestedRefactoringSupport"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

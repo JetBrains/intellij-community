@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,7 +59,7 @@ public final class CustomShortcutSet implements ShortcutSet {
   }
 
   @NotNull
-  public static CustomShortcutSet fromString(String @NotNull ... keyboardShortcuts) {
+  public static CustomShortcutSet fromString(@NonNls String @NotNull ... keyboardShortcuts) {
     final KeyboardShortcut[] shortcuts = new KeyboardShortcut[keyboardShortcuts.length];
     for (int i = 0; i < keyboardShortcuts.length; i++) {
       shortcuts[i] = KeyboardShortcut.fromString(keyboardShortcuts[i]);
