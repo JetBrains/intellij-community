@@ -74,15 +74,15 @@ public class ObjectValidation implements JsonSchemaValidation {
         requiredNames.removeAll(set);
         if (!requiredNames.isEmpty()) {
           JsonValidationError.MissingMultiplePropsIssueData data = createMissingPropertiesData(schema, requiredNames, consumer);
-          consumer.error("Missing required " + data.getMessage(false), value.getDelegate(), JsonValidationError.FixableIssueKind.MissingProperty, data,
+          consumer.error(JsonBundle.message("schema.validation.missing.required.property.or.properties",  data.getMessage(false)), value.getDelegate(), JsonValidationError.FixableIssueKind.MissingProperty, data,
                 JsonErrorPriority.MISSING_PROPS);
         }
       }
       if (schema.getMinProperties() != null && propertyList.size() < schema.getMinProperties()) {
-        consumer.error("Number of properties is less than " + schema.getMinProperties(), value.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.number.of.props.less.than", schema.getMinProperties()), value.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
       }
       if (schema.getMaxProperties() != null && propertyList.size() > schema.getMaxProperties()) {
-        consumer.error("Number of properties is greater than " + schema.getMaxProperties(), value.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.number.of.props.greater.than", schema.getMaxProperties()), value.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
       }
       final Map<String, List<String>> dependencies = schema.getPropertyDependencies();
       if (dependencies != null) {
@@ -93,7 +93,8 @@ public class ObjectValidation implements JsonSchemaValidation {
             deps.removeAll(set);
             if (!deps.isEmpty()) {
               JsonValidationError.MissingMultiplePropsIssueData data = createMissingPropertiesData(schema, deps, consumer);
-              consumer.error("Dependency is violated: " + data.getMessage(false) + " must be specified, since '" + entry.getKey() + "' is specified",
+              consumer.error(
+                JsonBundle.message("schema.validation.violated.dependency", data.getMessage(false), entry.getKey()),
                     value.getDelegate(),
                     JsonValidationError.FixableIssueKind.MissingProperty,
                     data, JsonErrorPriority.MISSING_PROPS);
