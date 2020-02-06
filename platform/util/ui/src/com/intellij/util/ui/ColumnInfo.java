@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -13,7 +14,7 @@ public abstract class ColumnInfo<Item, Aspect> {
   private String myName;
   public static final ColumnInfo[] EMPTY_ARRAY = new ColumnInfo[0];
 
-  public ColumnInfo(String name) {
+  public ColumnInfo(@Nls(capitalization = Nls.Capitalization.Title) String name) {
     myName = name;
   }
 
@@ -93,10 +94,11 @@ public abstract class ColumnInfo<Item, Aspect> {
     return -1;
   }
 
-  public void setName(String s) {
+  public void setName(@Nls(capitalization = Nls.Capitalization.Title) String s) {
     myName = s;
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Nullable
   public String getTooltipText() {
     return null;
