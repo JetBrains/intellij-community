@@ -20,7 +20,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseSharedLocalInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +102,7 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
         @NotNull
         @Override
         public String getFamilyName() {
-          return "Create 'package-info.java'";
+          return InspectionGadgetsBundle.message("create.package.info.java.family.name");
         }
 
         @Override

@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
           if (msg == null) return;
           LocalQuickFix fix = null;
           if (ExpressionUtils.isVoidContext(call)) {
-            fix = new DeleteElementFix(call, "Remove call");
+            fix = new DeleteElementFix(call, InspectionGadgetsBundle.message("remove.call.fix.family.name"));
           }
           holder.registerProblem(container, msg, fix);
         }
@@ -79,7 +80,7 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
         if (value == null) return;
         String msg = getProblemMessage(value);
         if (msg == null) return;
-        holder.registerProblem(value, msg, new DeleteElementFix(statement, "Remove loop"));
+        holder.registerProblem(value, msg, new DeleteElementFix(statement, InspectionGadgetsBundle.message("remove.loop.fix.family.name")));
       }
 
       @Nullable
