@@ -82,9 +82,9 @@ public abstract class JBCefApp {
     /**
      * {@link org.cef.handler.CefAppHandler} args.
      */
-    public final @NotNull String[] myAppArgs;
+    public final String @NotNull[] myAppArgs;
 
-    public CefAppConfig(@NotNull CefSettings settings, @NotNull String[] appArgs) {
+    public CefAppConfig(@NotNull CefSettings settings, String @NotNull[] appArgs) {
       this.mySettings = settings;
       this.myAppArgs = appArgs;
     }
@@ -173,7 +173,7 @@ public abstract class JBCefApp {
   }
 
   private static class MyCefAppHandler extends CefAppHandlerAdapter {
-    MyCefAppHandler(@Nullable String[] args) {
+    MyCefAppHandler(String @Nullable[] args) {
       super(args);
     }
 
