@@ -202,15 +202,15 @@ public abstract class StatusText {
     if (myOwner != null && isStatusVisible()) myOwner.repaint();
   }
 
-  public StatusText appendText(String text) {
+  public StatusText appendText(@Nls(capitalization = Nls.Capitalization.Sentence) String text) {
     return appendText(text, DEFAULT_ATTRIBUTES);
   }
 
-  public StatusText appendText(String text, SimpleTextAttributes attrs) {
+  public StatusText appendText(@Nls(capitalization = Nls.Capitalization.Sentence) String text, SimpleTextAttributes attrs) {
     return appendText(text, attrs, null);
   }
 
-  public StatusText appendText(String text, SimpleTextAttributes attrs, ActionListener listener) {
+  public StatusText appendText(@Nls(capitalization = Nls.Capitalization.Sentence) String text, SimpleTextAttributes attrs, ActionListener listener) {
     if (myIsDefaultText) {
       clear();
       myIsDefaultText = false;
