@@ -6,6 +6,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
+
 abstract class ProjectRootFinder {
   @Nullable VirtualFile findProjectRoot(@NotNull VirtualFile sourceFile) {
     VirtualFile parent = sourceFile.getParent();
@@ -20,4 +22,15 @@ abstract class ProjectRootFinder {
   }
 
   protected abstract boolean isProjectDir(@NotNull VirtualFile file);
+
+  protected abstract boolean requiresConfirmation();
+
+  protected boolean containsChild(@NotNull VirtualFile file, @NotNull Predicate<VirtualFile> predicate) {
+    if (file.isDirectory()) {
+      for (VirtualFile child : file.getChildren()) {
+        if (predicate.test(child)) return true;
+      }
+    }
+    return false;
+  }
 }

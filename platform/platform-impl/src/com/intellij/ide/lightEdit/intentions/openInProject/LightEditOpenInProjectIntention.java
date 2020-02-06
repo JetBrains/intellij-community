@@ -31,7 +31,7 @@ public class LightEditOpenInProjectIntention implements IntentionAction {
   public boolean isAvailable(@NotNull Project project,
                              Editor editor,
                              PsiFile file) {
-    return LightEditService.getInstance().getProject() == project;
+    return LightEdit.owns(project);
   }
 
   @Override

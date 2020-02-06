@@ -3,18 +3,17 @@ package com.intellij.ide.lightEdit.intentions.openInProject;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-class IntellijProjectRootFinder extends ProjectRootFinder {
+import java.util.function.Predicate;
 
+class GitProjectRootFinder extends ProjectRootFinder {
   @Override
   protected boolean isProjectDir(@NotNull VirtualFile file) {
-    return containsChild(file,
-                         child -> child.isDirectory() && PathMacroUtil.DIRECTORY_STORE_NAME.equals(child.getName()));
+    return containsChild(file, virtualFile -> virtualFile.isDirectory() && ".git".equals(virtualFile.getName()));
   }
 
   @Override
   protected boolean requiresConfirmation() {
-    return false;
+    return true;
   }
 }
