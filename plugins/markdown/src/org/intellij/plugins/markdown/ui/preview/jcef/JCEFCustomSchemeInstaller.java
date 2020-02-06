@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef;
 
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.application.options.RegistryManager;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefFileSchemeHandler;
 import org.cef.browser.CefBrowser;
@@ -16,11 +16,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Installs a custom scheme for loading local image files.
  */
-public class JCEFCustomSchemeInstaller {
+final class JCEFCustomSchemeInstaller {
   private static final String MD_FILE_SCHEME_NAME = "jcef-md-image";
 
   JCEFCustomSchemeInstaller() {
-    if (!Registry.is("ide.browser.jcef.enabled")) return;
+    if (!RegistryManager.getInstance().is("ide.browser.jcef.enabled")) {
+      return;
+    }
 
     IntelliJImageGeneratingProviderKt.registerSchemeReplacement("file", MD_FILE_SCHEME_NAME);
 
@@ -37,11 +39,13 @@ public class JCEFCustomSchemeInstaller {
                                   false);
       }
 
+      @NotNull
       @Override
       public String getSchemeName() {
         return MD_FILE_SCHEME_NAME;
       }
 
+      @NotNull
       @Override
       public String getDomainName() {
         return "";
@@ -49,10 +53,12 @@ public class JCEFCustomSchemeInstaller {
 
       @Override
       public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
-        return schemeName.equals(MD_FILE_SCHEME_NAME) ?
-               JBCefFileSchemeHandler.create(MD_FILE_SCHEME_NAME,
-                                             (path) -> MarkdownAccessor.getSafeOpenerAccessor().isSafeExtension(path)) :
-               null;
+        if (schemeName.equals(MD_FILE_SCHEME_NAME)) {
+          return JBCefFileSchemeHandler.create(MD_FILE_SCHEME_NAME, (path) -> {
+            return MarkdownAccessor.getSafeOpenerAccessor().isSafeExtension(path);
+          });
+        }
+        return null;
       }
     });
   }

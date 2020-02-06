@@ -90,7 +90,8 @@
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl" key="jar" physical="true"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.ex.temp.TempFileSystem" key="temp" physical="true"/>
 
-    <applicationService serviceImplementation="com.intellij.application.options.RegistryManager" preload="true"/>
+    <applicationService serviceInterface="com.intellij.application.options.RegistryManager"
+                        serviceImplementation="com.intellij.application.options.RegistryManagerImpl" preload="true"/>
 
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>

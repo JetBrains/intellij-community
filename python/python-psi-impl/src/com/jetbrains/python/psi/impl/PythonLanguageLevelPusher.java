@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.Maps;
 import com.intellij.ProjectTopics;
-import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -270,13 +269,13 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         if (project.isDisposed()) return;
-        final PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+        //final PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
         final List<Runnable> tasks = ReadAction.compute(() -> getRootUpdateTasks(project, sdks));
         PushedFilePropertiesUpdater.getInstance(project).runConcurrentlyIfPossible(tasks);
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          snapshot.logResponsivenessSinceCreation("Pushing Python language level to " + tasks.size() + " roots in " + sdks.size() +
-                                                  " SDKs");
-        }
+        //if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        //  snapshot.logResponsivenessSinceCreation("Pushing Python language level to " + tasks.size() + " roots in " + sdks.size() +
+        //                                          " SDKs");
+        //}
       }
     };
     project.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
