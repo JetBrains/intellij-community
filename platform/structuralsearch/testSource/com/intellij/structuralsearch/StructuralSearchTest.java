@@ -3328,8 +3328,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     // (probably after JDK14 release in March 2020)
     final PsiMethod method = factory.createMethodFromText(in, null, LanguageLevel.JDK_14);
 
-    System.out.println(PsiUtil.getLanguageLevel(method));
-    System.out.println(DebugUtil.psiToString(method, false));
     options.setScope(new LocalSearchScope(method));
     assertEquals("find expressions & statements", 2, findMatchesCount(null, "switch (i) {" +
                                                                           "  case 10 -> {" +
