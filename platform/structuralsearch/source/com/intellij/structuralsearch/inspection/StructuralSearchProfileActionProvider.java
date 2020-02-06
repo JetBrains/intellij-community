@@ -240,7 +240,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
           }
           else {
             for (Configuration configuration : configurations) {
-              if (suppressId.equals(configuration.getNewSuppressId())) {
+              if (suppressId.equals(configuration.getNewSuppressId()) && !myConfiguration.getUuid().equals(configuration.getUuid())) {
                 result.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId),
                                               mySuppressIdTextField));
                 break;
