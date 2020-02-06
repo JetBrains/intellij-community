@@ -85,7 +85,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                                                    "  }\n" +
                                                    "}");
     doTest(schema, "{\"prop\": [101, 102]}");
-    doTest(schema, "{\"prop\": [<warning descr=\"Less than a minimum 18\">16</warning>]}");
+    doTest(schema, "{\"prop\": [<warning descr=\"Less than the minimum 18\">16</warning>]}");
     doTest(schema, "{\"prop\": [<warning descr=\"Incompatible types.\n Required: number. Actual: string.\">\"test\"</warning>]}");
   }
 
@@ -411,7 +411,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                                "  \"withPattern\": \"p1\"\n" +
                                "}";
     final String wrongText = "{\n" +
-                             "  \"withPattern\": <warning descr=\"String is violating the pattern: 'p[0-9]'\">\"wrong\"</warning>\n" +
+                             "  \"withPattern\": <warning descr=\"String violates the pattern: 'p[0-9]'\">\"wrong\"</warning>\n" +
                              "}";
     doTest(schema, correctText);
     doTest(schema, wrongText);
@@ -429,7 +429,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                                "  \"withPattern\": \"1234-11-11\"\n" +
                                "}";
     final String wrongText = "{\n" +
-                             "  \"withPattern\": <warning descr=\"String is violating the pattern: '^\\d{4}\\-(0?[1-9]|1[012])\\-(0?[1-9]|[12][0-9]|3[01])$'\">\"wrong\"</warning>\n" +
+                             "  \"withPattern\": <warning descr=\"String violates the pattern: '^\\d{4}\\-(0?[1-9]|1[012])\\-(0?[1-9]|[12][0-9]|3[01])$'\">\"wrong\"</warning>\n" +
                              "}";
     doTest(schema, correctText);
     doTest(schema, wrongText);
@@ -499,7 +499,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                                             "  }\n" +
                                             "}";
     final String text = "{\"withPattern\":" +
-                        " <warning descr=\"Can not check string by pattern because of error: Unclosed character class near index 3\n^[]$\n   ^\">\"(124)555-4216\"</warning>}";
+                        " <warning descr=\"Cannot check the string by pattern because of an error: Unclosed character class near index 3\n^[]$\n   ^\">\"(124)555-4216\"</warning>}";
     doTest(schema, text);
   }
 
@@ -519,7 +519,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                                             "  }}";
     doTest(schema, "{\"not_type\": \"va4\"}");
     doTest(schema, "{\"not_type\": <warning descr=\"Validates against 'not' schema\">\"a4\"</warning>}");
-    doTest(schema, "{\"not_type\": <warning descr=\"String is violating the pattern: '^[a-z]*[0-5]*$'\">\"4a4\"</warning>}");
+    doTest(schema, "{\"not_type\": <warning descr=\"String violates the pattern: '^[a-z]*[0-5]*$'\">\"4a4\"</warning>}");
   }
 
   public void testDoNotMarkOneOfThatDiffersWithFormat() {
@@ -1015,7 +1015,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
            "\t\t}\n" +
            "\t]\n" +
            "}", "{\n" +
-                "  \"startTime\": <warning descr=\"Incompatible types.\n Required one of: number, string. Actual: null.\">null</warning>\n" +
+                "  \"startTime\": <warning descr=\"Incompatible types.\nRequired one of: number, string. Actual: null.\">null</warning>\n" +
                 "}");
   }
 
@@ -1081,7 +1081,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schemaText, "{\n" +
                        "  \"street_address\": \"1600 Pennsylvania Avenue NW\",\n" +
                        "  \"country\": \"Netherlands\",\n" +
-                       "  \"postal_code\": <warning descr=\"String is violating the pattern: '[0-9]{4} [A-Z]{2}'\">\"20500\"</warning>\n" +
+                       "  \"postal_code\": <warning descr=\"String violates the pattern: '[0-9]{4} [A-Z]{2}'\">\"20500\"</warning>\n" +
                        "}");
   }
 
@@ -1104,7 +1104,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schemaText, "{\n" +
                        "  \"street_address\": \"24 Sussex Drive\",\n" +
                        "  \"country\": \"Canada\",\n" +
-                       "  \"postal_code\": <warning descr=\"String is violating the pattern: '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'\">\"1K1M1M4\"</warning> \n" +
+                       "  \"postal_code\": <warning descr=\"String violates the pattern: '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'\">\"1K1M1M4\"</warning> \n" +
                        "}");
     doTest(schemaText, "{\n" +
                        "  \"street_address\": \"24 Madison Cube Garden NYC\",\n" +
@@ -1114,7 +1114,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schemaText, "{\n" +
                        "  \"street_address\": \"24 Madison Cube Garden NYC\",\n" +
                        "  \"country\": \"United States of America\",\n" +
-                       "  \"postal_code\": <warning descr=\"String is violating the pattern: '[0-9]{5}(-[0-9]{4})?'\">\"1-1111-1111\"</warning>\n" +
+                       "  \"postal_code\": <warning descr=\"String violates the pattern: '[0-9]{5}(-[0-9]{4})?'\">\"1-1111-1111\"</warning>\n" +
                        "}");
   }
 
