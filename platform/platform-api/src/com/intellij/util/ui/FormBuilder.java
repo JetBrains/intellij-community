@@ -6,6 +6,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.ui.components.JBLabel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,25 +56,25 @@ public class FormBuilder {
     return addLabeledComponent(label, component, myVerticalGap, labelOnTop);
   }
 
-  public FormBuilder addLabeledComponent(@NotNull String labelText, @NotNull JComponent component) {
+  public FormBuilder addLabeledComponent(@NotNull @Nls String labelText, @NotNull JComponent component) {
     return addLabeledComponent(labelText, component, myVerticalGap, false);
   }
 
-  public FormBuilder addLabeledComponent(@NotNull String labelText, @NotNull JComponent component, final int topInset) {
+  public FormBuilder addLabeledComponent(@NotNull @Nls String labelText, @NotNull JComponent component, final int topInset) {
     return addLabeledComponent(labelText, component, topInset, false);
   }
 
-  public FormBuilder addLabeledComponent(@NotNull String labelText, @NotNull JComponent component, boolean labelOnTop) {
+  public FormBuilder addLabeledComponent(@NotNull @Nls String labelText, @NotNull JComponent component, boolean labelOnTop) {
     return addLabeledComponent(labelText, component, myVerticalGap, labelOnTop);
   }
 
-  public FormBuilder addLabeledComponent(@NotNull String labelText, @NotNull JComponent component, final int topInset, boolean labelOnTop) {
+  public FormBuilder addLabeledComponent(@NotNull @Nls String labelText, @NotNull JComponent component, final int topInset, boolean labelOnTop) {
     JLabel label = createLabelForComponent(labelText, component);
     return addLabeledComponent(label, component, topInset, labelOnTop);
   }
 
   @NotNull
-  private static JLabel createLabelForComponent(@NotNull String labelText, @NotNull JComponent component) {
+  private static JLabel createLabelForComponent(@NotNull @Nls String labelText, @NotNull JComponent component) {
     JLabel label = new JLabel(UIUtil.removeMnemonic(labelText));
     final int index = UIUtil.getDisplayMnemonicIndex(labelText);
     if (index != -1) {
@@ -137,7 +138,7 @@ public class FormBuilder {
     return addLabeledComponent(label, component, topInset, labelOnTop, fillVertically);
   }
 
-  public FormBuilder addLabeledComponentFillVertically(@NotNull String labelText, @NotNull JComponent component) {
+  public FormBuilder addLabeledComponentFillVertically(@NotNull @Nls String labelText, @NotNull JComponent component) {
     JLabel label = createLabelForComponent(labelText, component);
     return addLabeledComponent(label, component, myVerticalGap, true, true);
   }
