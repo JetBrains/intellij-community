@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util
 
 import com.intellij.openapi.progress.ProgressManager
@@ -8,7 +8,8 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil.lastChild
 import com.intellij.util.containers.stopAfter
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import java.util.*
 import kotlin.reflect.KClass
 
 val PsiElement?.elementType: IElementType? get() = PsiUtilCore.getElementType(this)
@@ -30,48 +31,83 @@ fun PsiElement.strictParents(): Sequence<PsiElement> = parents().drop(1)
 
 private typealias ElementAndOffset = Pair<PsiElement, Int>
 
-@ApiStatus.Experimental
-fun PsiElement.elementsAtOffsetUpTo(offset: Int, scope: PsiElement): Iterator<ElementAndOffset> {
-  return elementsAtOffsetUp(offset).stopAfter {
-    it.first === scope
+/**
+ * Walks the tree up to (and including) the file level starting from [start].
+ *
+ * The method doesn't check if [offsetInStart] is within [start].
+ *
+ * @return returns pairs of (element, offset relative to element)
+ */
+@Experimental
+fun walkUp(start: PsiElement, offsetInStart: Int): Iterator<ElementAndOffset> {
+  return iterator {
+    elementsAtOffsetUp(start, offsetInStart)
   }
 }
 
-@ApiStatus.Experimental
-fun PsiElement.elementsAtOffsetUp(offset: Int): Iterator<ElementAndOffset> = iterator {
-  elementsAtOffsetUp(this@elementsAtOffsetUp, offset)
+/**
+ * Walks the tree up to (and including) the file level or [stopAfter] starting from [start].
+ *
+ * The method doesn't check if [offsetInStart] is within [start].
+ * The method doesn't check if [stopAfter] is an actual parent of [start].
+ *
+ * @return returns pairs of (element, offset relative to element)
+ */
+@Experimental
+fun walkUp(start: PsiElement, offsetInStart: Int, stopAfter: PsiElement): Iterator<ElementAndOffset> {
+  return walkUp(start, offsetInStart).stopAfter {
+    it.first === stopAfter
+  }
 }
 
-@ApiStatus.Experimental
-fun PsiFile.elementsAroundOffsetUp(offset: Int): Iterator<ElementAndOffset> = iterator {
-  elementsAroundOffsetUp(this@elementsAroundOffsetUp, offset)
-}
-
-private suspend fun SequenceScope<ElementAndOffset>.elementsAroundOffsetUp(root: PsiFile, offset: Int) {
-  val leaf = root.findElementAt(offset) ?: return
-  val offsetInLeaf = offset - leaf.textRange.startOffset
+/**
+ * Walks the tree up to (and including) the file level starting from the leaf element at [offsetInFile].
+ * If [offsetInFile] is a boundary between two leafs
+ * then walks up from each leaf to the common parent of the leafs starting from the rightmost one
+ * and continues walking up to the file.
+ *
+ * **Example**: `foo.bar<caret>[42]`, leaf is `[` element.
+ * ```
+ *             foo.bar[42]
+ *            /           \
+ *     foo.bar             [42]
+ *    /   |   \           / |  \
+ * foo    .    bar       [  42  ]
+ * ```
+ * Traversal order: `[`, `[42]`, `bar`, `foo.bar`, `foo.bar[42]`
+ *
+ * @return returns pairs of (element, offset relative to element)
+ * @see elementsAtOffsetUp
+ */
+@Experimental
+fun PsiFile.elementsAroundOffsetUp(offsetInFile: Int): Iterator<ElementAndOffset> {
+  val leaf = findElementAt(offsetInFile) ?: return Collections.emptyIterator()
+  val offsetInLeaf = offsetInFile - leaf.textRange.startOffset
   if (offsetInLeaf == 0) {
-    elementsAroundOffsetUp(leaf)
+    return elementsAroundOffsetUp(leaf)
   }
   else {
-    elementsAtOffsetUp(leaf, offsetInLeaf)
+    return walkUp(leaf, offsetInLeaf)
   }
 }
 
-private suspend fun SequenceScope<ElementAndOffset>.elementsAroundOffsetUp(leaf: PsiElement) {
-  // Example: foo.bar<caret>[42]
-  // Leaf is `[` element.
-  // If we'd only process `[` and up, then we'd miss `bar` element (and its references/declarations).
-  // ----------------------------------------
-  //                 `foo.bar[42]`
-  //                /             \
-  //       `foo.bar`               `[42]`
-  //      /    |    \             /  |   \
-  // `foo`    `.`    `bar`     `[`  `42`  `]`
-  // ----------------------------------------
+/**
+ * Walks the tree up to (and including) the file level starting from the leaf element at [offsetInFile].
+ *
+ * @return returns pairs of (element, offset relative to element)
+ * @see elementsAroundOffsetUp
+ */
+@Experimental
+fun PsiFile.elementsAtOffsetUp(offsetInFile: Int): Iterator<ElementAndOffset> {
+  val leaf = findElementAt(offsetInFile) ?: return Collections.emptyIterator()
+  val offsetInLeaf = offsetInFile - leaf.textRange.startOffset
+  return walkUp(leaf, offsetInLeaf)
+}
+
+private fun elementsAroundOffsetUp(leaf: PsiElement): Iterator<ElementAndOffset> = iterator {
   // We want to still give preference to the elements to the right of the caret,
   // since there may be references/declarations too.
-  val leftSubTree = walkUpToCommonParent(leaf) ?: return
+  val leftSubTree = walkUpToCommonParent(leaf) ?: return@iterator
   // At this point elements to the right of the caret (`[` and `[42]`) are processed.
   // The sibling on the left (`foo.bar`) might be a tree,
   // so we should go up from the rightmost leaf of that tree (`bar`).

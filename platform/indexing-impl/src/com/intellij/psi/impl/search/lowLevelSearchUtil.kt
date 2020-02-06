@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.elementsAtOffsetUpTo
+import com.intellij.psi.util.walkUp
 
 internal data class LeafOccurrence(val scope: PsiElement, val start: PsiElement, val offsetInStart: Int)
 
-internal fun LeafOccurrence.elementsUp(): Iterator<Pair<PsiElement, Int>> = start.elementsAtOffsetUpTo(offsetInStart, scope)
+internal fun LeafOccurrence.elementsUp(): Iterator<Pair<PsiElement, Int>> = walkUp(start, offsetInStart, scope)
 
 internal typealias OccurrenceProcessor = (occurrence: LeafOccurrence) -> Boolean
 
