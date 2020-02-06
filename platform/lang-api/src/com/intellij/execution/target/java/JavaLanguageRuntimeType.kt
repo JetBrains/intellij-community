@@ -11,7 +11,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.lang.JavaVersion
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.CompletableFuture
 
 class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfiguration>(TYPE_ID) {
   override val icon = AllIcons.FileTypes.Java
@@ -35,7 +35,7 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     if (config.homePath.isNotBlank() && config.javaVersionString.isNotBlank()) return null
 
     return object : Introspector {
-      override fun introspect(subject: Introspectable) {
+      override fun introspect(subject: Introspectable): CompletableFuture<*>? {
         if (config.homePath.isBlank()) {
           val home = subject.getEnvironmentVariable("JAVA_HOME")
           home?.let { config.homePath = home }
