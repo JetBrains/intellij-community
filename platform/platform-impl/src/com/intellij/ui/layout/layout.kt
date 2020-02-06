@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.DialogPanel
@@ -16,7 +16,7 @@ import com.intellij.ui.components.DialogPanel
  *
  * `ToolbarDecorator` and `JBScrollPane` (use [Row.scrollPane]) components automatically have [Row.grow] and [Row.push].
  */
-fun panel(vararg constraints: LCFlags, title: String? = null, init: LayoutBuilder.() -> Unit): DialogPanel {
+inline fun panel(vararg constraints: LCFlags, title: String? = null, init: LayoutBuilder.() -> Unit): DialogPanel {
   val builder = createLayoutBuilder()
   builder.init()
 
@@ -26,7 +26,8 @@ fun panel(vararg constraints: LCFlags, title: String? = null, init: LayoutBuilde
   return panel
 }
 
-private fun initPanel(builder: LayoutBuilder, panel: DialogPanel) {
+@PublishedApi
+internal fun initPanel(builder: LayoutBuilder, panel: DialogPanel) {
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
   panel.validateCallbacks = builder.builder.validateCallbacks
   panel.componentValidateCallbacks = builder.builder.componentValidateCallbacks
