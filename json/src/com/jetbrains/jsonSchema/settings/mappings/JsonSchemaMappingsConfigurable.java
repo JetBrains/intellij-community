@@ -65,8 +65,9 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @Nullable
   @Override
   protected String getEmptySelectionString() {
-    return myRoot.children().hasMoreElements() ? "Select JSON Schema to view" :
-           "Please add a JSON Schema file and configure its usage";
+    return myRoot.children().hasMoreElements()
+           ? JsonBundle.message("schema.configuration.mapping.empty.area.string")
+           : JsonBundle.message("schema.configuration.mapping.empty.area.alt.string");
   }
 
   @Nullable
@@ -113,7 +114,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
         }
         int i = tryParseInt(lastPart);
         if (i == -1) continue;
-        max = i > max ? i : max;
+        max = Math.max(i, max);
       }
     }
     return max == -1 ? s : (s + " " + (max + 1));
@@ -192,7 +193,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     final Set<String> set = new HashSet<>();
     for (UserDefinedJsonSchemaConfiguration info : list) {
       if (set.contains(info.getName())) {
-        throw new ConfigurationException("Duplicate schema name: '" + info.getName() + "'");
+        throw new ConfigurationException(JsonBundle.message("schema.configuration.error.duplicate.name", info.getName()));
       }
       set.add(info.getName());
     }
@@ -234,16 +235,18 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
             if (ThreeState.NO.equals(similar)) continue;
 
             if (sb.length() > 0) sb.append('\n');
-            sb.append("'").append(pattern.getPresentation()).append("' for schema '")
-              .append(info.getName()).append("' and '").append(item.getPresentation()).append("' for schema '").append(entry.getKey())
-              .append("'");
+            sb.append(JsonBundle.message("schema.configuration.error.conflicting.mappings.desc",
+                                         pattern.getPresentation(),
+                                         info.getName(),
+                                         item.getPresentation(),
+                                         entry.getKey()));
           }
         }
       }
       patternsMap.put(info.getName(), patterns);
     }
     if (sb.length() > 0) {
-      myError = "Conflicting mappings:\n" + sb.toString();
+      myError = JsonBundle.message("schema.configuration.error.conflicting.mappings.title", sb.toString());
     } else {
       myError = null;
     }

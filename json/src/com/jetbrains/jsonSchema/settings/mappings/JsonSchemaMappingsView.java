@@ -110,7 +110,7 @@ public class JsonSchemaMappingsView implements Disposable {
       final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
       List<JsonSchemaInfo> schemas = service.getAllUserVisibleSchemas();
       JBPopupFactory.getInstance().createListPopup(new JsonSchemaInfoPopupStep(schemas,
-                                                                               myProject, null, service, "Remote Schema URLs") {
+                                                                               myProject, null, service, JsonBundle.message("schema.configuration.mapping.remote")) {
         @Override
         protected void setMapping(@Nullable JsonSchemaInfo selectedValue, @Nullable VirtualFile virtualFile, @NotNull Project project) {
           if (selectedValue != null) {
@@ -148,7 +148,7 @@ public class JsonSchemaMappingsView implements Disposable {
     label.setLabelFor(schemaSelector);
     label.setBorder(JBUI.Borders.empty(0, 10));
     schemaSelector.setBorder(JBUI.Borders.emptyRight(10));
-    JBLabel versionLabel = new JBLabel("Schema version:");
+    JBLabel versionLabel = new JBLabel(JsonBundle.message("json.schema.version.selector.title"));
     mySchemaVersionComboBox = new ComboBox<>(new DefaultComboBoxModel<>(JsonSchemaVersion.values()));
     versionLabel.setLabelFor(mySchemaVersionComboBox);
     versionLabel.setBorder(JBUI.Borders.empty(0, 10));
