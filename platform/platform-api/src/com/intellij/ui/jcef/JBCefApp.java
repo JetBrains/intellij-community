@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -31,6 +32,13 @@ public abstract class JBCefApp {
   private static JBCefApp INSTANCE;
   @NotNull private final CefApp myCefApp;
 
+  @NotNull private final Disposable myDisposable = new Disposable() {
+    @Override
+    public void dispose() {
+      myCefApp.dispose();
+    }
+  };
+
   private static final AtomicBoolean ourInitialized = new AtomicBoolean(false);
   private static final List<JBCefSchemeHandlerFactory> ourSchemeHandlerFactoryList = Collections.synchronizedList(new ArrayList<>());
 
@@ -44,9 +52,12 @@ public abstract class JBCefApp {
     config.mySettings.background_color = config.mySettings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     CefApp.addAppHandler(new MyCefAppHandler(config.myAppArgs));
     myCefApp = CefApp.getInstance(config.mySettings);
-    Disposer.register(ApplicationManager.getApplication(), () -> {
-      myCefApp.dispose();
-    });
+    Disposer.register(ApplicationManager.getApplication(), myDisposable);
+  }
+
+  @NotNull
+  Disposable getDisposable() {
+    return myDisposable;
   }
 
   /**

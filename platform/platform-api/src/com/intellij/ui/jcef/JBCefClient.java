@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.cef.CefClient;
@@ -49,8 +50,9 @@ public class JBCefClient implements JBCefDisposable {
   private final HandlerSupport<CefLoadHandler> myLoadHandler = new HandlerSupport<>();
   private final HandlerSupport<CefRequestHandler> myRequestHandler = new HandlerSupport<>();
 
-  public JBCefClient(@NotNull CefClient client) {
+  JBCefClient(@NotNull CefClient client) {
     myCefClient = client;
+    Disposer.register(JBCefApp.getInstance().getDisposable(), this);
   }
 
   @NotNull
