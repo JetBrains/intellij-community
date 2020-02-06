@@ -92,7 +92,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.class"));
     JPanel panel = new JPanel(new GridLayout(2, 1));
     panel.add(nameGroupsPanel);
-    tablePanel.setBorder(IdeBorderFactory.createTitledBorder("Ignore methods", false));
+    tablePanel.setBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.suspicious.names.ignore.methods.title"), false));
     panel.add(tablePanel);
     return panel;
   }

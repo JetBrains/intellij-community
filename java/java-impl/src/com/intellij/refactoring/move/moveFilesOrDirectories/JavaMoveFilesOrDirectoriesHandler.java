@@ -11,6 +11,7 @@ import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -66,7 +67,8 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
     }
     MoveFilesOrDirectoriesUtil
       .doMove(project, elements, new PsiElement[]{targetContainer}, callback,
-              elements1 -> WriteCommandAction.writeCommandAction(project).withName("Regrouping...").compute(() -> {
+              elements1 -> WriteCommandAction.writeCommandAction(project).withName(
+                RefactoringBundle.message("move.files.regrouping.command.name")).compute(() -> {
                 final List<PsiElement> adjustedElements = new ArrayList<>();
                 for (int i = 0, length = elements1.length; i < length; i++) {
                   PsiElement element = elements1[i];

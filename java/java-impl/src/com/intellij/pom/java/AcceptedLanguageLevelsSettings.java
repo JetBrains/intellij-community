@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
@@ -83,8 +85,9 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
 
           for (LanguageLevel level : unacceptedLevels.keySet()) {
             NOTIFICATION_GROUP.createNotification(
-              EXPERIMENTAL_FEATURE_ALERT,
-              getLegalNotice(level) + "<br/><a href='accept'>Accept</a>",
+              CodeInsightBundle.message("java.preview.features.alert.title"),
+              CodeInsightBundle.message("java.preview.features.legal.notice", level.getPresentableText(),
+                                        CodeInsightBundle.message("java.preview.features.accept.notification.link")),
               NotificationType.WARNING,
               (notification, event) -> {
                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -101,13 +104,12 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
           Optional<LanguageLevel> languageLevel = previewLevels.stream().min(Comparator.naturalOrder());
           assert languageLevel.isPresent();
           int previewFeature = languageLevel.get().toJavaVersion().feature;
-          String content = String
-            .format("When Java %d would be released, support for %d (Preview) language level may be dropped", previewFeature + 1, previewFeature);
-          Notification notification = PREVIEW_NOTIFICATION_GROUP.createNotification("Java Preview Features",
-                                                                                    "Newer IDE versions may discontinue support for preview features",
-                                                                                    content,
-                                                                                    NotificationType.WARNING);
-          notification.addAction(new NotificationAction("Do Not Show Again") {
+          Notification notification = PREVIEW_NOTIFICATION_GROUP.createNotification(
+            CodeInsightBundle.message("java.preview.features.notification.title"),
+            CodeInsightBundle.message("java.preview.features.notification.message"),
+            CodeInsightBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
+            NotificationType.WARNING);
+          notification.addAction(new NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
               PropertiesComponent.getInstance(project).setValue(IGNORE_USED_PREVIEW_FEATURES,true);
@@ -187,7 +189,8 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   }
 
   private static boolean showDialog(Component parent, LanguageLevel level) {
-    int result = LegalNoticeDialog.build(EXPERIMENTAL_FEATURE_ALERT, getLegalNotice(level)).withParent(parent).show();
+    int result = LegalNoticeDialog.build(CodeInsightBundle.message("java.preview.features.alert.title"),
+                                         CodeInsightBundle.message("java.preview.features.legal.notice", level.getPresentableText(), "")).withParent(parent).show();
     if (result == DialogWrapper.OK_EXIT_CODE) {
       acceptAndRestore(null, null, level);
       return true;
@@ -215,16 +218,6 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
         projectExtension.setDefault(false);
       }
     });
-  }
-
-  private static final String EXPERIMENTAL_FEATURE_ALERT = "Experimental Feature Alert";
-
-  private static String getLegalNotice(LanguageLevel level) {
-    return
-      "You must accept the terms of legal notice of the beta Java specification to enable support for " +
-      "\"" + level.getPresentableText() + "\".<br/><br/>" +
-      "<b>The implementation of an early-draft specification developed under the Java Community Process (JCP) " +
-      "is made available for testing and evaluation purposes only and is not compatible with any specification of the JCP.</b>";
   }
 
   @TestOnly

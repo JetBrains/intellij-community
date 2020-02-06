@@ -147,11 +147,11 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       gc.gridx = 0;
       gc.gridy = 0;
       gc.gridwidth = 2;
-      add(new JBLabel("When entry points are in test sources, mark callees as:"), gc);
+      add(new JBLabel(InspectionsBundle.message("unused.declaration.reachable.from.tests.option")), gc);
       gc.gridy++;
 
-      final JBRadioButton asEntryPoint = new JBRadioButton("used", isTestEntryPoints());
-      final JBRadioButton asUnused = new JBRadioButton("unused", !isTestEntryPoints());
+      final JBRadioButton asEntryPoint = new JBRadioButton(InspectionsBundle.message("unused.declaration.used.option"), isTestEntryPoints());
+      final JBRadioButton asUnused = new JBRadioButton(InspectionsBundle.message("unused.declaration.unused.option"), !isTestEntryPoints());
       final ButtonGroup group = new ButtonGroup();
       group.add(asEntryPoint);
       group.add(asUnused);
@@ -172,7 +172,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       gc.gridwidth = 2;
       add(new TitledSeparator(), gc);
       gc.gridy++;
-      add(new JBLabel("Entry points:"), gc);
+      add(new JBLabel(InspectionsBundle.message("entry.points.label")), gc);
       gc.insets = JBUI.insets(5, 0, 0, 0);
       gc.gridy++;
 

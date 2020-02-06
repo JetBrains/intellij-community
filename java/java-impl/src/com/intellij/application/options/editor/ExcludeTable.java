@@ -42,7 +42,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
 
   private static final BiFunction<Object, JComponent, ValidationInfo> validationInfoProducer = (value, component) ->
     (value == null || StringUtil.isEmpty(value.toString()) || ourPackagePattern.matcher(value.toString()).matches()) ?
-      null : new ValidationInfo("Illegal name: " + value.toString(), component);
+      null : new ValidationInfo(ApplicationBundle.message("illegal.name.validation.info", value.toString()), component);
 
   private static final Disposable validatorsDisposable = Disposer.newDisposable();
   private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<Item, String>(ApplicationBundle.message("exclude.table.mask")) {

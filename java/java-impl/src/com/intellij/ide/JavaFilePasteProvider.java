@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -44,7 +45,8 @@ public class JavaFilePasteProvider implements PasteProvider {
       }
     }
     final PsiClass mainClass = publicClass;
-    WriteCommandAction.writeCommandAction(project).withName("Paste class '" + mainClass.getName() + "'").run(() -> {
+    WriteCommandAction.writeCommandAction(project).withName(
+      CodeInsightBundle.message("paste.class.command.name", mainClass.getName())).run(() -> {
       PsiFile file;
       try {
         file = targetDir.createFile(mainClass.getName() + ".java");

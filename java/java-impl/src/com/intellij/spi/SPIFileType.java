@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spi;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.spi.SPILanguage;
 import com.intellij.openapi.extensions.Extensions;
@@ -49,7 +50,7 @@ public class SPIFileType extends LanguageFileType implements FileTypeIdentifiabl
   @NotNull
   @Override
   public String getDescription() {
-    return "Service Provider Interface";
+    return CodeInsightBundle.message("spi.file.type.description");
   }
 
   @NotNull

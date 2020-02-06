@@ -46,7 +46,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     myLanguageLevelCombo.setRenderer(SimpleListCellRenderer.create("", LanguageLevel::getPresentableText));
 
     myPanel = FormBuilder.createFormBuilder()
-                         .addLabeledComponent("Minimum language level:", myLanguageLevelCombo)
+                         .addLabeledComponent(CodeInsightBundle.message("postfix.template.language.level.title"), myLanguageLevelCombo)
                          .addComponentFillVertically(myEditTemplateAndConditionsPanel, UIUtil.DEFAULT_VGAP)
                          .getPanel();
   }

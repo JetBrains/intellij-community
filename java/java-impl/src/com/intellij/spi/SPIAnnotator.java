@@ -15,10 +15,12 @@
  */
 package com.intellij.spi;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -37,17 +39,17 @@ public class SPIAnnotator implements Annotator{
         ClassUtil.findPsiClass(element.getManager(), serviceProviderName, null, true, element.getContainingFile().getResolveScope());
       if (element instanceof PsiFile) {
         if (psiClass == null) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "No service provider \"" + serviceProviderName + "\" found").fileLevel().create();
+          holder.newAnnotation(HighlightSeverity.ERROR, CodeInsightBundle.message("spi.no.provider.error.message", serviceProviderName)).fileLevel().create();
         }
       }
       else if (element instanceof SPIClassProviderReferenceElement) {
         final PsiElement resolve = ((SPIClassProviderReferenceElement)element).resolve();
         if (resolve == null) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "Cannot resolve symbol " + element.getText()).create();
+          holder.newAnnotation(HighlightSeverity.ERROR, PsiBundle.message("cannot.resolve.symbol", element.getText())).create();
         }
         else if (resolve instanceof PsiClass && psiClass != null) {
           if (!((PsiClass)resolve).isInheritor(psiClass, true)) {
-            holder.newAnnotation(HighlightSeverity.ERROR, "Registered extension should implement " + serviceProviderName).create();
+            holder.newAnnotation(HighlightSeverity.ERROR, CodeInsightBundle.message("spi.extension.error.message", serviceProviderName)).create();
           }
         }
       }

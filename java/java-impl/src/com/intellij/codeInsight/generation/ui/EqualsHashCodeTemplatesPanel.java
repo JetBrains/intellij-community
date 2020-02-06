@@ -144,14 +144,14 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
         final Splitter splitter = new Splitter(true);
 
         final JPanel eqPanel = new JPanel(new BorderLayout());
-        eqPanel.add(new TitledSeparator("Equals Template:"), BorderLayout.NORTH);
+        eqPanel.add(new TitledSeparator(CodeInsightBundle.message("generate.equals.template.title")), BorderLayout.NORTH);
         final JComponent eqPane = equalsConfigurable.createComponent();
         eqPane.setPreferredSize(JBUI.size(300, 200));
         eqPanel.add(eqPane, BorderLayout.CENTER);
         splitter.setFirstComponent(eqPanel);
 
         final JPanel hcPanel = new JPanel(new BorderLayout());
-        hcPanel.add(new TitledSeparator("HashCode Template:"), BorderLayout.NORTH);
+        hcPanel.add(new TitledSeparator(CodeInsightBundle.message("generate.hashcode.template.title")), BorderLayout.NORTH);
         final JComponent hcPane = hashCodeConfigurable.createComponent();
         hcPane.setPreferredSize(JBUI.size(300, 200));
         hcPanel.add(hcPane, BorderLayout.CENTER);

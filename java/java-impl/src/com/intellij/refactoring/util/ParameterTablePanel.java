@@ -6,6 +6,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.*;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -168,7 +169,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
   private static class TypeColumnInfo extends ColumnInfo<VariableData, PsiType> {
 
     TypeColumnInfo() {
-      super("Type");
+      super(RefactoringBundle.message("parameter.type.table.column.title"));
     }
 
     @Override

@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -104,7 +105,7 @@ public abstract class SliceNullnessAnalyzerBase {
 
     String encouragementPiece = " (may very well take the whole day)";
     ProgressManager.getInstance().run(new Task.Backgroundable(
-      root.getProject(), "Expanding All Nodes..." + encouragementPiece, true) {
+      root.getProject(), RefactoringBundle.message("dataflow.to.here.expand.progress", encouragementPiece), true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         NullAnalysisResult l = calcNullableLeaves(root, treeStructure, map);

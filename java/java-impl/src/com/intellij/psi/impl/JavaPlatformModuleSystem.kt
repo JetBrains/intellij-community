@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.annotations.NonNls
 
 /**
  * Checks package accessibility according to JLS 7 "Packages and Modules".
@@ -194,7 +195,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
 
   private abstract class CompilerOptionFix(private val module: Module) : IntentionAction {
-    override fun getFamilyName() = "dfd4a2c1-da18-4651-9aa8-d7d31cae10be" // random string; not visible
+    @NonNls override fun getFamilyName() = "dfd4a2c1-da18-4651-9aa8-d7d31cae10be" // random string; not visible
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = !module.isDisposed
 
