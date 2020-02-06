@@ -3,8 +3,11 @@ package com.intellij.remote.ext;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.remote.CredentialsType;
+import com.intellij.remote.OutdatedCredentialsType;
 import com.intellij.remote.RemoteSdkAdditionalData;
+import kotlin.Pair;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -20,4 +23,14 @@ public abstract class CredentialsManager {
   public abstract void loadCredentials(String interpreterPath,
                                        @Nullable Element element,
                                        RemoteSdkAdditionalData data);
+
+  public static void updateOutdatedSdk(@NotNull RemoteSdkAdditionalData<?> data) {
+    if (!(data.getRemoteConnectionType() instanceof OutdatedCredentialsType)) {
+      return;
+    }
+    //noinspection unchecked
+    Pair<CredentialsType<Object>, Object> pair = ((OutdatedCredentialsType)data.getRemoteConnectionType())
+      .transformToNewerType(data.connectionCredentials().getCredentials(), null);
+    data.setCredentials(pair.getFirst().getCredentialsKey(), pair.getSecond());
+  }
 }
