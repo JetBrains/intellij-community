@@ -86,9 +86,9 @@ public class Notification {
    */
   public Notification(@NotNull String groupDisplayId,
                       @Nullable Icon icon,
-                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title,
+                      @Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String subtitle,
-                      @Nullable String content,
+                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
     myGroupId = groupDisplayId;
@@ -104,7 +104,10 @@ public class Notification {
     id = calculateId(this);
   }
 
-  public Notification(@NotNull String groupDisplayId, @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title, @NotNull String content, @NotNull NotificationType type) {
+  public Notification(@NotNull String groupDisplayId,
+                      @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String content,
+                      @NotNull NotificationType type) {
     this(groupDisplayId, title, content, type, null);
   }
 
@@ -117,8 +120,8 @@ public class Notification {
    * @param listener       notification lifecycle listener
    */
   public Notification(@NotNull String groupDisplayId,
-                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title,
-                      @NotNull String content,
+                      @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
     myGroupId = groupDisplayId;
@@ -164,13 +167,14 @@ public class Notification {
   }
 
   @NotNull
-  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
+  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title) {
     myTitle = StringUtil.notNullize(title);
     return this;
   }
 
   @NotNull
-  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title, @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String subtitle) {
+  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
+                               @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String subtitle) {
     return setTitle(title).setSubtitle(subtitle);
   }
 
