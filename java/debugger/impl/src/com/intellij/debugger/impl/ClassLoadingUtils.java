@@ -32,6 +32,9 @@ public class ClassLoadingUtils {
       return context.computeAndKeep(() -> (ClassLoaderReference)process
         .newInstance(context, loaderClass, ctorMethod, Arrays.asList(emptyUrlArray, context.getClassLoader())));
     }
+    catch (VMDisconnectedException e) {
+      throw e;
+    }
     catch (Exception e) {
       throw new EvaluateException("Error creating evaluation class loader: " + e, e);
     }
@@ -51,6 +54,9 @@ public class ClassLoadingUtils {
                                          mirrorOf(bytes, context, process),
                                          proxy.mirrorOf(0),
                                          proxy.mirrorOf(bytes.length)));
+    }
+    catch (VMDisconnectedException e) {
+      throw e;
     }
     catch (Exception e) {
       throw new EvaluateException("Error during class " + name + " definition: " + e, e);
