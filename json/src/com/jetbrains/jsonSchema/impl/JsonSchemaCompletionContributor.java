@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.*;
 import com.intellij.lang.Language;
@@ -486,7 +487,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
       String deprecationMessage = jsonSchemaObject.getDeprecationMessage();
       if (deprecationMessage != null) {
-        builder = builder.withTailText(" (deprecated)", true).withStrikeoutness(true);
+        builder = builder.withTailText(JsonBundle.message("schema.documentation.deprecated.postfix"), true).withStrikeoutness(true);
       }
 
       myVariants.add(builder);
