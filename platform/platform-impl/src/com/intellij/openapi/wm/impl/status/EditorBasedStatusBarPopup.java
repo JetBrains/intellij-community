@@ -33,10 +33,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -307,7 +304,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       this("", "", false);
     }
 
-    public WidgetState(String toolTip, String text, boolean actionEnabled) {
+    public WidgetState(@Nls(capitalization = Nls.Capitalization.Sentence) String toolTip, @Nls String text, boolean actionEnabled) {
       this.toolTip = toolTip;
       this.text = text;
       this.actionEnabled = actionEnabled;
