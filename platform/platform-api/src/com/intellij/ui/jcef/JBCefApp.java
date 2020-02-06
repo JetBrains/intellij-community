@@ -50,6 +50,9 @@ public abstract class JBCefApp {
     config.mySettings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_ERROR;
     Color bg = JBColor.background();
     config.mySettings.background_color = config.mySettings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
+    if (ApplicationManager.getApplication().isInternal()) {
+      config.mySettings.remote_debugging_port = 9229;
+    }
     CefApp.addAppHandler(new MyCefAppHandler(config.myAppArgs));
     myCefApp = CefApp.getInstance(config.mySettings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
