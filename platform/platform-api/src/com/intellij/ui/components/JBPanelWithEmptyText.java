@@ -19,6 +19,7 @@ import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -50,7 +51,7 @@ public class JBPanelWithEmptyText extends JBPanel<JBPanelWithEmptyText> implemen
   }
 
   @NotNull
-  public JBPanelWithEmptyText withEmptyText(String str) {
+  public JBPanelWithEmptyText withEmptyText(@Nls String str) {
     myEmptyText.setText(str);
     return this;
   }
