@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl.validations;
 
+import com.intellij.json.JsonBundle;
 import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation;
 import com.jetbrains.jsonSchema.extension.JsonValidationHost;
@@ -29,6 +30,6 @@ public class NotValidation implements JsonSchemaValidation {
           .anyMatch(s -> schema.equals(s))) return;
 
     final JsonValidationHost checker = consumer.checkByMatchResult(propValue, result, options.withForcedStrict());
-    if (checker == null || checker.isValid()) consumer.error("Validates against 'not' schema", propValue.getDelegate(), JsonErrorPriority.NOT_SCHEMA);
+    if (checker == null || checker.isValid()) consumer.error(JsonBundle.message("schema.validation.against.not"), propValue.getDelegate(), JsonErrorPriority.NOT_SCHEMA);
   }
 }

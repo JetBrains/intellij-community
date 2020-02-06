@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl.validations;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation;
@@ -20,7 +21,7 @@ public class NumericValidation implements JsonSchemaValidation {
     if (JsonSchemaType._integer.equals(schemaType)) {
       value = JsonSchemaType.getIntegerValue(valueText);
       if (value == null) {
-        consumer.error("Integer value expected", propValue,
+        consumer.error(JsonBundle.message("schema.validation.integer.expected"), propValue,
                        JsonValidationError.FixableIssueKind.TypeMismatch,
                        new JsonValidationError.TypeMismatchIssueData(new JsonSchemaType[]{schemaType}), JsonErrorPriority.TYPE_MISMATCH);
         return;
@@ -32,7 +33,7 @@ public class NumericValidation implements JsonSchemaValidation {
       }
       catch (NumberFormatException e) {
         if (!JsonSchemaType._string_number.equals(schemaType)) {
-          consumer.error("Double value expected", propValue,
+          consumer.error(JsonBundle.message("schema.validation.number.expected"), propValue,
                 JsonValidationError.FixableIssueKind.TypeMismatch,
                 new JsonValidationError.TypeMismatchIssueData(new JsonSchemaType[]{schemaType}), JsonErrorPriority.TYPE_MISMATCH);
         }
@@ -45,7 +46,7 @@ public class NumericValidation implements JsonSchemaValidation {
       if (leftOver > 0.000001) {
         final String multipleOfValue = String.valueOf(Math.abs(multipleOf.doubleValue() - multipleOf.intValue()) < 0.000001 ?
                                                       multipleOf.intValue() : multipleOf);
-        consumer.error("Is not multiple of " + multipleOfValue, propValue, JsonErrorPriority.LOW_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.not.multiple.of", multipleOfValue), propValue, JsonErrorPriority.LOW_PRIORITY);
         return;
       }
     }
@@ -63,7 +64,7 @@ public class NumericValidation implements JsonSchemaValidation {
     if (exclusiveMaximumNumber != null) {
       final double doubleValue = exclusiveMaximumNumber.doubleValue();
       if (value.doubleValue() >= doubleValue) {
-        consumer.error("Greater than an exclusive maximum " + exclusiveMaximumNumber, propertyValue, JsonErrorPriority.LOW_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.greater.than.exclusive.maximum", exclusiveMaximumNumber), propertyValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
     Number maximum = schema.getMaximum();
@@ -72,12 +73,12 @@ public class NumericValidation implements JsonSchemaValidation {
     final double doubleValue = maximum.doubleValue();
     if (isExclusive) {
       if (value.doubleValue() >= doubleValue) {
-        consumer.error("Greater than an exclusive maximum " + maximum, propertyValue, JsonErrorPriority.LOW_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.greater.than.exclusive.maximum", maximum), propertyValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
     else {
       if (value.doubleValue() > doubleValue) {
-        consumer.error("Greater than a maximum " + maximum, propertyValue, JsonErrorPriority.LOW_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.greater.than.maximum", maximum), propertyValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
   }
@@ -91,7 +92,7 @@ public class NumericValidation implements JsonSchemaValidation {
     if (exclusiveMinimumNumber != null) {
       final double doubleValue = exclusiveMinimumNumber.doubleValue();
       if (value.doubleValue() <= doubleValue) {
-        consumer.error("Less than an exclusive minimum " + exclusiveMinimumNumber, propertyValue, JsonErrorPriority.LOW_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.less.than.exclusive.minimum", exclusiveMinimumNumber), propertyValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
 
@@ -101,12 +102,12 @@ public class NumericValidation implements JsonSchemaValidation {
     final double doubleValue = minimum.doubleValue();
     if (isExclusive) {
       if (value.doubleValue() <= doubleValue) {
-        consumer.error("Less than an exclusive minimum " + minimum, propertyValue, JsonErrorPriority.LOW_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.less.than.exclusive.minimum", minimum), propertyValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
     else {
       if (value.doubleValue() < doubleValue) {
-        consumer.error("Less than a minimum " + minimum, propertyValue, JsonErrorPriority.LOW_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.less.than.minimum", minimum), propertyValue, JsonErrorPriority.LOW_PRIORITY);
       }
     }
   }
