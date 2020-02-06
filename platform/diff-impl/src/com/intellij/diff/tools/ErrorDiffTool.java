@@ -33,6 +33,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
@@ -71,13 +72,14 @@ public class ErrorDiffTool implements FrameDiffTool {
     @NotNull private final DiffContext myContext;
     @NotNull private final DiffRequest myRequest;
 
-    @NotNull private final JPanel myPanel;
+    @NotNull private final JComponent myPanel;
 
     MyViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
       myContext = context;
       myRequest = request;
 
-      myPanel = JBUI.Panels.simplePanel(createComponent(request));
+      JComponent component = createComponent(request);
+      myPanel = ScrollPaneFactory.createScrollPane(component);
     }
 
     @NotNull
