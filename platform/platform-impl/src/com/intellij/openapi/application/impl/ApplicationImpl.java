@@ -67,7 +67,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    * If value is {@code false}, IW lock will be granted on EDT at all times, guaranteeing the same execution model as before
    * IW lock introduction.
    */
-  public static final boolean USE_NEW_THREADING_MODEL = Boolean.getBoolean(StartupUtil.USE_NEW_THREADING_MODEL_KEY);
+  public static final boolean USE_SEPARATE_WRITE_THREAD = StartupUtil.isUsingSeparateWriteThread();
 
   final ReadMostlyRWLock myLock;
 
@@ -147,7 +147,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(runnable);
     myLock = new ReadMostlyRWLock();
     // Acquire IW lock on EDT indefinitely in legacy mode
-    if (!USE_NEW_THREADING_MODEL) {
+    if (!USE_SEPARATE_WRITE_THREAD) {
       EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(() -> myLock.writeIntentLock());
     }
     else if (isUnitTestMode) {
@@ -780,7 +780,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public void invokeLaterOnWriteThread(Runnable action, ModalityState modal, @NotNull Condition<?> expired) {
     Runnable r = myTransactionGuard.wrapLaterInvocation(action, modal);
     // EDT == Write Thread in legacy mode
-    LaterInvocator.invokeLaterWithCallback(() -> runIntendedWriteActionOnCurrentThread(r), modal, expired, null, !USE_NEW_THREADING_MODEL);
+    LaterInvocator.invokeLaterWithCallback(() -> runIntendedWriteActionOnCurrentThread(r), modal, expired, null, !USE_SEPARATE_WRITE_THREAD);
   }
 
   @Override
@@ -821,7 +821,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
     // Do not ever unlock IW in legacy mode (EDT is holding lock at all times)
-    if (myLock.isWriteIntendedByThisThread() && USE_NEW_THREADING_MODEL) {
+    if (myLock.isWriteIntendedByThisThread() && USE_SEPARATE_WRITE_THREAD) {
       myLock.writeIntentUnlock();
       try {
         return action.compute();
@@ -910,7 +910,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                             @Nullable JComponent parentComponent,
                                             @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
                                             @NotNull Consumer<? super ProgressIndicator> action) {
-    if (!USE_NEW_THREADING_MODEL) {
+    if (!USE_SEPARATE_WRITE_THREAD) {
       // Use Potemkin progress in legacy mode; in the new model such execution will always move to a separate thread.
       return runWriteActionWithClass(action.getClass(), ()->{
         PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);

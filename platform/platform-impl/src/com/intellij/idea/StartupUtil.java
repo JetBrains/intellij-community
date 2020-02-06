@@ -75,8 +75,8 @@ import static java.nio.file.attribute.PosixFilePermission.*;
 
 public final class StartupUtil {
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
-  // See ApplicationImpl.USE_NEW_THREADING_MODEL
-  public static final String USE_NEW_THREADING_MODEL_KEY = "idea.use.new.model";
+  // See ApplicationImpl.USE_SEPARATE_WRITE_THREAD
+  public static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
 
   private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
@@ -84,6 +84,10 @@ public final class StartupUtil {
   private static final AtomicBoolean ourSystemPatched = new AtomicBoolean();
 
   private StartupUtil() { }
+
+  public static boolean isUsingSeparateWriteThread() {
+    return Boolean.getBoolean(USE_SEPARATE_WRITE_THREAD_PROPERTY);
+  }
 
   // called by the app after startup
   public static synchronized void addExternalInstanceListener(@Nullable Function<List<String>, Future<CliResult>> processor) {
@@ -310,7 +314,7 @@ public final class StartupUtil {
     }
 
     CompletableFuture<Void> instrumentationFuture = new CompletableFuture<>();
-    if (Boolean.getBoolean(USE_NEW_THREADING_MODEL_KEY)) {
+    if (isUsingSeparateWriteThread()) {
       executor.execute(() -> {
         Activity activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading");
         try {
