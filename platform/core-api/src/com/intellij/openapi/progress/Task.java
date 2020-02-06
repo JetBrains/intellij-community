@@ -271,15 +271,15 @@ public abstract class Task implements TaskInfo, Progressive {
     private final String myNotificationText;
     private final boolean myShowWhenFocused;
 
-    public NotificationInfo(@NotNull final String notificationName,
-                            @NotNull final String notificationTitle,
-                            @NotNull final String notificationText) {
+    public NotificationInfo(@NotNull String notificationName,
+                            @NotNull @Nls(capitalization = Nls.Capitalization.Title) String notificationTitle,
+                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String notificationText) {
       this(notificationName, notificationTitle, notificationText, false);
     }
 
-    public NotificationInfo(@NotNull final String notificationName,
-                            @NotNull final String notificationTitle,
-                            @NotNull final String notificationText,
+    public NotificationInfo(@NotNull String notificationName,
+                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String notificationTitle,
+                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String notificationText,
                             final boolean showWhenFocused) {
       myNotificationName = notificationName;
       myNotificationTitle = notificationTitle;
@@ -293,11 +293,13 @@ public abstract class Task implements TaskInfo, Progressive {
     }
 
     @NotNull
+    @Nls(capitalization = Nls.Capitalization.Title)
     public String getNotificationTitle() {
       return myNotificationTitle;
     }
 
     @NotNull
+    @Nls(capitalization = Nls.Capitalization.Sentence)
     public String getNotificationText() {
       return myNotificationText;
     }
