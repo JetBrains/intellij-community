@@ -112,8 +112,11 @@ open class IdeStarter : ApplicationStarter {
 
     app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project)
 
-    if (needToOpenProject && project == null && RecentProjectsManager.getInstance().willReopenProjectOnStart() && !JetBrainsProtocolHandler.appStartedWithCommand()) {
-      RecentProjectsManager.getInstance().reopenLastProjectsOnStart()
+    if (needToOpenProject && project == null) {
+      val recentProjectManager = RecentProjectsManager.getInstance()
+      if (recentProjectManager.willReopenProjectOnStart() && !JetBrainsProtocolHandler.appStartedWithCommand()) {
+        recentProjectManager.reopenLastProjectsOnStart()
+      }
     }
 
     app.invokeLater {
@@ -127,9 +130,7 @@ open class IdeStarter : ApplicationStarter {
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
 
     if (PluginManagerCore.isRunningFromSources()) {
-      NonUrgentExecutor.getInstance().execute {
-        AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
-      }
+      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
     }
   }
 
