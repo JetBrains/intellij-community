@@ -13,10 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 
@@ -29,7 +26,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   public interface Builder {
     @Contract(pure = true)
     @NotNull
-    Builder withName(@Nullable String name);
+    Builder withName(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String name);
 
     @Contract(pure = true)
     @NotNull
