@@ -60,8 +60,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.jetbrains.concurrency.Promises.resolvedPromise;
-
 public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<RunnerSettings> {
   private static final Logger LOG = Logger.getInstance(DefaultJavaProgramRunner.class);
   private final static String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
@@ -88,14 +86,16 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
   @Override
   public void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
     RunProfileState currentState = environment.getState();
-    if (currentState == null) return;
+    if (currentState == null) {
+      return;
+    }
 
     ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
     executionManager
       .executePreparationTasks(environment, currentState)
       .onSuccess(preparedEnvironment -> {
-        executionManager.startRunProfile(environment, () -> {
-          return resolvedPromise(doExecute(currentState, environment));
+        executionManager.startRunProfile(environment, currentState, (ignored) -> {
+          return doExecute(currentState, environment);
         });
       });
   }

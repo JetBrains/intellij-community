@@ -8,11 +8,11 @@ import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.project.Project
+import com.intellij.util.ThrowableConvertor
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
-import java.util.function.Function
 
 /**
  * Manages the execution of run configurations and the relationship between running processes and Run/Debug toolwindow tabs.
@@ -54,9 +54,16 @@ abstract class ExecutionManager {
   abstract fun startRunProfile(environment: ExecutionEnvironment, starter: () -> Promise<RunContentDescriptor?>)
 
   @ApiStatus.Internal
-  fun startRunProfile(environment: ExecutionEnvironment, executor: Function<RunProfileState, RunContentDescriptor?>) {
-    val state = environment.state ?: return
-    startRunProfile(environment) { resolvedPromise(executor.apply(state)) }
+  @Throws(ExecutionException::class)
+  fun startRunProfile(environment: ExecutionEnvironment, executor: ThrowableConvertor<RunProfileState, RunContentDescriptor?, ExecutionException>) {
+    startRunProfile(environment, environment.state ?: return, executor)
+  }
+
+  @ApiStatus.Internal
+  fun startRunProfile(environment: ExecutionEnvironment, state: RunProfileState, executor: ThrowableConvertor<RunProfileState, RunContentDescriptor?, ExecutionException>) {
+    startRunProfile(environment) {
+      resolvedPromise(executor.convert(state))
+    }
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")

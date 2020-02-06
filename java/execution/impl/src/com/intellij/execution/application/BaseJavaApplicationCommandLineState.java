@@ -136,13 +136,13 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
 
   @Override
   @NotNull
-  public TargetEnvironment prepareEnvironment(@NotNull ProgressIndicator progressIndicator) {
+  public TargetEnvironment prepareEnvironment(@NotNull ProgressIndicator progressIndicator) throws ExecutionException {
     TargetEnvironmentFactory factory = getTargetEnvironmentFactory(getEnvironment());
     myPreparedRemoteEnvironment = factory.prepareRemoteEnvironment(factory.createRequest(), progressIndicator);
     return myPreparedRemoteEnvironment;
   }
 
-  protected TargetEnvironment getPreparedRemoteEnvironment() {
+  protected TargetEnvironment getPreparedRemoteEnvironment() throws ExecutionException {
     if (myPreparedRemoteEnvironment != null) {
       return myPreparedRemoteEnvironment;
     }

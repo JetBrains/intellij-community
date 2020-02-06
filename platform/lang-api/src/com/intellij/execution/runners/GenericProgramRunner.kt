@@ -25,6 +25,7 @@ abstract class GenericProgramRunner<Settings : RunnerSettings> : ProgramRunner<S
     execute(environment, state)
   }
 
+  @Throws(ExecutionException::class)
   protected open fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
     @Suppress("DEPRECATION")
     return doExecute(environment.project, state, environment.contentToReuse, environment)

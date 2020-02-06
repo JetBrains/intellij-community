@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-import static org.jetbrains.concurrency.Promises.resolvedPromise;
-
 public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericDebuggerRunnerSettings> {
   @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
@@ -56,8 +54,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     executionManager
       .executePreparationTasks(environment, state)
       .onSuccess(preparedEnvironment -> {
-        executionManager.startRunProfile(environment, () -> {
-          return resolvedPromise(doExecute(state, environment));
+        executionManager.startRunProfile(environment, state, state1 -> {
+          return doExecute(state, environment);
         });
       });
   }
@@ -172,7 +170,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     JavaProgramPatcher.runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtensionOrFail(DefaultDebugExecutor.class), runProfile);
   }
 
-  private static RemoteConnection doPatch(@NotNull JavaParameters javaParameters, @NotNull RunnerSettings settings, boolean beforeExecution) {
+  private static RemoteConnection doPatch(@NotNull JavaParameters javaParameters, @NotNull RunnerSettings settings, boolean beforeExecution)
+    throws ExecutionException {
     GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings);
     if (StringUtil.isEmpty(debuggerSettings.getDebugPort())) {
       debuggerSettings.setDebugPort(DebuggerUtils.getInstance().findAvailableDebugAddress(debuggerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT));

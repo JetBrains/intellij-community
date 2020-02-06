@@ -3,7 +3,7 @@ package com.intellij.execution;
 
 import java.io.IOException;
 
-public class ExecutionException extends RuntimeException {
+public class ExecutionException extends Exception {
   public ExecutionException(final String s) {
     super(s);
   }
