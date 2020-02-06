@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
@@ -100,6 +101,7 @@ internal class GitInteractiveRebaseDialog(
     Separator.getInstance(),
     ShowGitRebaseCommandsDialog(project, commitsTable)
   )
+  private var modified = false
 
   init {
     commitsTable.selectionModel.addListSelectionListener { e ->
@@ -108,6 +110,7 @@ internal class GitInteractiveRebaseDialog(
       }
     }
     commitsTableModel.addTableModelListener { resetEntriesLabel.isVisible = true }
+    commitsTableModel.addTableModelListener { modified = true }
     PopupHandler.installRowSelectionTablePopup(
       commitsTable,
       DefaultActionGroup().apply {
@@ -160,6 +163,26 @@ internal class GitInteractiveRebaseDialog(
   fun getEntries(): List<GitRebaseEntryWithEditedMessage> = commitsTableModel.entries
 
   override fun getPreferredFocusedComponent(): JComponent = commitsTable
+
+  override fun doCancelAction() {
+    if (modified) {
+      val result = Messages.showDialog(
+        rootPane,
+        GitBundle.getString("rebase.interactive.dialog.discard.modifications.message"),
+        GitBundle.getString("rebase.interactive.dialog.discard.modifications.cancel"),
+        arrayOf(
+          GitBundle.getString("rebase.interactive.dialog.discard.modifications.discard"),
+          GitBundle.getString("rebase.interactive.dialog.discard.modifications.continue")
+        ),
+        0,
+        Messages.getQuestionIcon()
+      )
+      if (result != Messages.YES) {
+        return
+      }
+    }
+    super.doCancelAction()
+  }
 
   private class AnActionButtonSeparator : AnActionButton("Separator"), CustomComponentAction, DumbAware {
     companion object {
