@@ -20,7 +20,6 @@ import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.openapi.fileTypes.UIBasedFileType;
 import icons.ImagesIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -37,7 +36,7 @@ public final class SvgFileType extends XmlLikeFileType implements UIBasedFileTyp
   @NotNull
   @Override
   public String getName() {
-    return IdeBundle.message("svg");
+    return "SVG";
   }
 
   @NotNull

@@ -25,7 +25,7 @@ public class RestFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getName() {
-    return RestBundle.message("rest");
+    return "ReST";
   }
 
   @Override

@@ -16,7 +16,7 @@ public class Json5FileType extends JsonFileType {
   @NotNull
   @Override
   public String getName() {
-    return JsonBundle.message("json5");
+    return "JSON5";
   }
 
   @NotNull

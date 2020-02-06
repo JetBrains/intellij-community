@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.fileTypes.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.fileTypes.UserBinaryFileType;
 import icons.ImagesIcons;
 import org.intellij.images.ImagesBundle;
@@ -15,7 +14,7 @@ public final class ImageFileType extends UserBinaryFileType {
   @NotNull
   @Override
   public String getName() {
-    return CommonBundle.message("file.type.image");
+    return "Image";
   }
 
   @NotNull
