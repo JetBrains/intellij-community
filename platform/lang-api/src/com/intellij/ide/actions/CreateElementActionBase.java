@@ -62,7 +62,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
    * adapted for asynchronous calls
    * @param elementsConsumer describes actions with created elements
    */
-  protected void invokeDialog(Project project, PsiDirectory directory, Consumer<PsiElement[]> elementsConsumer) {
+  protected void invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull Consumer<PsiElement[]> elementsConsumer) {
     elementsConsumer.accept(invokeDialog(project, directory));
   }
 
@@ -95,7 +95,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     final Project project = e.getProject();
 
     final PsiDirectory dir = view.getOrChooseDirectory();
-    if (dir == null) return;
+    if (dir == null || project == null) return;
     invokeDialog(project, dir, createdElements -> {
       for (PsiElement createdElement : createdElements) {
         view.selectElement(createdElement);
