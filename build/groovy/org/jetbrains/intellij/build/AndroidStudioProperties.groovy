@@ -333,6 +333,11 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       }
     }
 
+    // App Inspection: Sqlite Inspector prebuilt
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources/app-inspection/") {
+      fileset(file: "$root/prebuilts/tools/common/app-inspection/androidx/sqlite/sqlite-inspection.jar")
+    }
+
     // Instant run
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/installer") {
       fileset(dir: "$root/bazel-bin/tools/base/deploy/installer/android-installer")
