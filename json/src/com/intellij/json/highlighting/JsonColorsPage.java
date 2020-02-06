@@ -40,8 +40,8 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
     new AttributesDescriptor(JsonBundle.message("color.page.attribute.line.comment"), JSON_LINE_COMMENT),
     new AttributesDescriptor(JsonBundle.message("color.page.attribute.block.comment"), JSON_BLOCK_COMMENT),
     //new AttributesDescriptor("", JSON_IDENTIFIER),
-    new AttributesDescriptor(JsonBundle.message("valid.escape.sequence"), JSON_VALID_ESCAPE),
-    new AttributesDescriptor(JsonBundle.message("invalid.escape.sequence"), JSON_INVALID_ESCAPE),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.valid.escape.sequence"), JSON_VALID_ESCAPE),
+    new AttributesDescriptor(JsonBundle.message("color.page.attribute.invalid.escape.sequence"), JSON_INVALID_ESCAPE),
   };
 
   @Nullable

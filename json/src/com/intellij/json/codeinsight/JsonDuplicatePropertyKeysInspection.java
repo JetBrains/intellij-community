@@ -116,7 +116,7 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
       else {
         final List<PsiElement> allElements =
           mySameNamedKeys.stream().map(k -> k.getElement()).filter(k -> k != startElement).collect(Collectors.toList());
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiElement>("Duplicates of '" + myEntryKey + "'", allElements) {
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiElement>(JsonBundle.message("navigate.to.duplicates.header", myEntryKey), allElements) {
           @NotNull
           @Override
           public Icon getIconFor(PsiElement aValue) {
@@ -126,7 +126,7 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
           @NotNull
           @Override
           public String getTextFor(PsiElement value) {
-            return "'" + myEntryKey + "' at line #" + editor.getDocument().getLineNumber(value.getTextOffset());
+            return JsonBundle.message("navigate.to.duplicates.desc", myEntryKey, editor.getDocument().getLineNumber(value.getTextOffset()));
           }
 
           @Override
