@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
@@ -73,7 +73,7 @@ public class MavenArtifactSearchPanel extends JPanel {
   private void initComponents(String initialText) {
     myResultList = new Tree();
     myResultList.setExpandableItemsEnabled(false);
-    myResultList.getEmptyText().setText(IdeBundle.message("common.text.loading"));
+    myResultList.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
     myResultList.setRootVisible(false);
     myResultList.setShowsRootHandles(true);
     myResultList.setModel(null);

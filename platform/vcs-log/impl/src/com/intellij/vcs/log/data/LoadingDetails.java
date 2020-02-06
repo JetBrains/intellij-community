@@ -1,6 +1,6 @@
 package com.intellij.vcs.log.data;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,7 +73,7 @@ public class LoadingDetails implements VcsFullCommitDetails {
   @NotNull
   @Override
   public String getSubject() {
-    return IdeBundle.message("common.text.loading");
+    return CommonBundle.getLoadingTreeNodeText();
   }
 
   @NotNull

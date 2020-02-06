@@ -15,15 +15,15 @@
  */
 package com.intellij.diff.requests;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.Nullable;
 
 public class LoadingDiffRequest extends MessageDiffRequest {
   public LoadingDiffRequest(@Nullable String title) {
-    super(title, IdeBundle.message("common.text.loading"));
+    super(title, CommonBundle.getLoadingTreeNodeText());
   }
 
   public LoadingDiffRequest() {
-    super(IdeBundle.message("common.text.loading"));
+    super(CommonBundle.getLoadingTreeNodeText());
   }
 }

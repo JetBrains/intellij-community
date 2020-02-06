@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -72,7 +72,7 @@ class ActivityMonitorAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     JTextArea textArea = new JTextArea(12, 100);
-    textArea.setText(IdeBundle.message("common.text.loading"));
+    textArea.setText(CommonBundle.getLoadingTreeNodeText());
     ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
     List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
     CompilationMXBean jitBean = ManagementFactory.getCompilationMXBean();

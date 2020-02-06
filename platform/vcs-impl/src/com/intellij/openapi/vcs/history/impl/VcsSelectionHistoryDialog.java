@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.diff.Block;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
@@ -14,7 +15,6 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.IntPair;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -302,7 +302,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       VcsFileRevision revision = data.getCurrentLoadingRevision();
       String message = revision != null
                        ? String.format("Loading revision <tt>%s</tt>...", VcsUtil.getShortRevisionString(revision.getRevisionNumber()))
-                       : IdeBundle.message("common.text.loading");
+                       : CommonBundle.getLoadingTreeNodeText();
       int totalRevisions = data.getRevisions().size();
       if (totalRevisions != 0) {
         message += String.format(" (%s/%s)", data.myBlocks.size(), totalRevisions);

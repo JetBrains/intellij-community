@@ -245,7 +245,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
           if (myDisposed) return;
           myUpdater = new Updater(loadingPanel, 100);
           myUpdater.start();
-          text.set(IdeBundle.message("common.text.loading"));
+          text.set(CommonBundle.getLoadingTreeNodeText());
           myTree = new DTree(null, "", true);
           mySource.refresh(userForcedRefresh);
           myTarget.refresh(userForcedRefresh);

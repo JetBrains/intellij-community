@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
@@ -44,7 +44,7 @@ public class LoadingDecorator {
     myDelay = startDelayMs;
     myStartAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parent);
 
-    setLoadingText(IdeBundle.message("common.text.loading"));
+    setLoadingText(CommonBundle.getLoadingTreeNodeText());
 
 
     myFadeOutAnimator = new Animator("Loading", 10, RemoteDesktopService.isRemoteSession()? 2500 : 500, false) {

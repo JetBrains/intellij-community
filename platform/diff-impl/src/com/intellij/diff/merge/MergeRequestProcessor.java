@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge;
 
+import com.intellij.CommonBundle;
 import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.actions.impl.NextDifferenceAction;
 import com.intellij.diff.actions.impl.PrevDifferenceAction;
@@ -10,7 +11,6 @@ import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -104,7 +104,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     myMainPanel.setFocusTraversalPolicyProvider(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
 
-    myViewer = new MessageMergeViewer(myContext, IdeBundle.message("common.text.loading"));
+    myViewer = new MessageMergeViewer(myContext, CommonBundle.getLoadingTreeNodeText());
   }
 
   //

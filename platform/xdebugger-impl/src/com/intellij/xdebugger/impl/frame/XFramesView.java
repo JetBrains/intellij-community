@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -102,7 +102,7 @@ public class XFramesView extends XDebugView {
         label.setIcon(value.getIcon());
       }
       else if (index >= 0) {
-        label.setText(IdeBundle.message("common.text.loading"));
+        label.setText(CommonBundle.getLoadingTreeNodeText());
       }
     }));
     myThreadComboBox.addItemListener(new ItemListener() {

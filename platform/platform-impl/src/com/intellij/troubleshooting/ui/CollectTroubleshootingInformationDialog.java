@@ -16,7 +16,7 @@
 package com.intellij.troubleshooting.ui;
 
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -51,7 +51,7 @@ public class CollectTroubleshootingInformationDialog extends DialogWrapper {
     troubleTypeBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(final ItemEvent e) {
-        summary.setText(IdeBundle.message("common.text.loading"));
+        summary.setText(CommonBundle.getLoadingTreeNodeText());
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           TroubleInfoCollector item = (TroubleInfoCollector)e.getItem();
           String collectedInfo = item.collectInfo(project);

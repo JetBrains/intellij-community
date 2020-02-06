@@ -2,7 +2,7 @@
 
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -79,7 +79,7 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
     commitPanel.add(separator, BorderLayout.NORTH);
 
     myLeftPanel = new JPanel(new GridBagLayout());
-    final JLabel loadingLabel = new JLabel(IdeBundle.message("common.text.loading"));
+    final JLabel loadingLabel = new JLabel(CommonBundle.getLoadingTreeNodeText());
 
     myLoadingLabelPanel = new JPanel(new BorderLayout()) {
       @Override
