@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,6 +125,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
         statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
       }
       if (statement == null) return;
+      boolean blockParent = statement.getParent() instanceof PsiCodeBlock;
 
       final PsiVariable variable =
         statement instanceof PsiDeclarationStatement ? PsiTreeUtil.getParentOfType(expression, PsiVariable.class) : null;
@@ -183,7 +184,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
       }
       ifStatement = (PsiIfStatement)CodeStyleManager.getInstance(project).reformat(
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(ifStatement));
-      if (!ControlFlowUtils.statementMayCompleteNormally(ifStatement.getThenBranch())) {
+      if (!ControlFlowUtils.statementMayCompleteNormally(ifStatement.getThenBranch()) && blockParent) {
         final PsiStatement resultingElse = ifStatement.getElseBranch();
         if (resultingElse != null) {
           ifStatement.getParent().addAfter(ControlFlowUtils.stripBraces(resultingElse), ifStatement);
