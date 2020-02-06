@@ -7,7 +7,7 @@ configurations {
   lombokPlugin
 }
 
-def lombokPluginVersion = "Lombook Plugin:0.25-EAP"
+def lombokPluginVersion = "Lombook Plugin:0.28-2019.3"
 def version = lombokPluginVersion.substring(lombokPluginVersion.indexOf(':') + 1)
 dependencies {
   lombokPlugin "com.jetbrains.plugins:$lombokPluginVersion@zip"
