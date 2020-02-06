@@ -41,7 +41,7 @@ import java.util.concurrent.locks.LockSupport;
  * Read lock: flips {@link Reader#readRequested} bit in its own thread local {@link Reader} structure and waits for writer to release its lock by checking {@link #writeRequested}.<br>
  * Write lock: sets global {@link #writeRequested} bit and waits for all readers (in global {@link #readers} list) to release their locks by checking {@link Reader#readRequested} for all readers.
  */
-public class ReadMostlyRWLock {
+class ReadMostlyRWLock {
   volatile Thread writeThread = null;
   private volatile Thread writeIntendedThread = null;
   volatile boolean writeRequested;  // this writer is requesting or obtained the write access
@@ -92,10 +92,6 @@ public class ReadMostlyRWLock {
   }
 
   boolean isWriteThread() {
-    return Thread.currentThread() == writeThread;
-  }
-
-  boolean isWriteIntendedByThisThread() {
     return Thread.currentThread() == writeThread;
   }
 
@@ -205,7 +201,7 @@ public class ReadMostlyRWLock {
 
   private static final int SPIN_TO_WAIT_FOR_LOCK = 100;
 
-  public void writeIntentLock() {
+  void writeIntentLock() {
     //checkWriteThreadAccess();
     writeIntendedThread = Thread.currentThread();
     for (int iter=0; ;iter++) {
@@ -218,7 +214,7 @@ public class ReadMostlyRWLock {
       }
 
       if (iter > SPIN_TO_WAIT_FOR_LOCK) {
-        LockSupport.parkNanos(this, 1_000_000);  // unparked by readUnlock
+        LockSupport.parkNanos(this, 1_000_000);  // unparked by writeIntentUnlock
       }
       else {
         Thread.yield();
@@ -226,7 +222,7 @@ public class ReadMostlyRWLock {
     }
   }
 
-  public void writeIntentUnlock() {
+  void writeIntentUnlock() {
     checkWriteThreadAccess();
 
     assert !writeAcquired;

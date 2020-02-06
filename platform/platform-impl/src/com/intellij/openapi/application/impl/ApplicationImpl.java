@@ -790,7 +790,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean acquireWriteIntentLockIfNeeded() {
-    if (myLock.isWriteIntendedByThisThread()) return false;
+    if (myLock.isWriteThread()) return false;
     myLock.writeIntentLock();
     return true;
   }
@@ -804,7 +804,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
-    if (myLock.isWriteIntendedByThisThread()) {
+    if (myLock.isWriteThread()) {
       action.run();
     }
     else {
@@ -821,7 +821,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
     // Do not ever unlock IW in legacy mode (EDT is holding lock at all times)
-    if (myLock.isWriteIntendedByThisThread() && USE_SEPARATE_WRITE_THREAD) {
+    if (myLock.isWriteThread() && USE_SEPARATE_WRITE_THREAD) {
       myLock.writeIntentUnlock();
       try {
         return action.compute();
@@ -1006,18 +1006,18 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isReadAccessAllowed() {
-    return myLock.isWriteIntendedByThisThread() || myLock.isReadLockedByThisThread();
+    return myLock.isWriteThread() || myLock.isReadLockedByThisThread();
   }
 
   private boolean checkReadAccessAllowedAndNoPendingWrites() throws ApplicationUtil.CannotRunReadActionException {
-    return myLock.isWriteIntendedByThisThread() || myLock.checkReadLockedByThisThreadAndNoPendingWrites();
+    return myLock.isWriteThread() || myLock.checkReadLockedByThisThreadAndNoPendingWrites();
   }
 
   @Override
   public void assertIsDispatchThread() {
     if (isDispatchThread()) return;
     if (ShutDownTracker.isShutdownHookRunning()) return;
-    assertIsDispatchThread("Access is allowed from write thread only.");
+    assertIsDispatchThread("Access is allowed from event dispatch thread with IW lock only.");
   }
 
   @Override
@@ -1045,7 +1045,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
       " Toolkit.getEventQueue()=" + Toolkit.getDefaultToolkit().getSystemEventQueue() +
       "\nCurrent thread: " + describe(Thread.currentThread()) +
-      "\nSystemEventQueueThread: " + describe(getEventQueueThread()),
+      "\nWrite thread (volatile): " + describe(myLock.writeThread) +
       new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
@@ -1132,7 +1132,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private void startWrite(@NotNull Class<?> clazz) {
     if (!isWriteAccessAllowed()) {
-      assertIsWriteThread("Write access is allowed from event dispatch thread only");
+      assertIsWriteThread("Write access is allowed from write thread only");
     }
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
