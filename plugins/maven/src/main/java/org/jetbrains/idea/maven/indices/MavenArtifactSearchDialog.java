@@ -10,6 +10,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.model.MavenId;
 
@@ -88,7 +89,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
 
     initComponents(project, initialText, classMode);
 
-    setTitle("Maven Artifact Search");
+    setTitle(MavenDomBundle.message("maven.artifact.pom.search.title"));
     updateOkButtonState();
     init();
 
@@ -141,7 +142,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
   @Override
   protected Action getOKAction() {
     Action result = super.getOKAction();
-    result.putValue(Action.NAME, "Add");
+    result.putValue(Action.NAME, MavenDomBundle.message("maven.artifact.pom.search.add"));
     return result;
   }
 

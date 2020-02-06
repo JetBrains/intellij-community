@@ -42,7 +42,7 @@
               <component id="118a4" class="com.intellij.openapi.ui.FixedSizeButton" binding="showProjectTreeButton">
                 <constraints border-constraint="East"/>
                 <properties>
-                  <toolTipText value="Select maven project"/>
+                  <toolTipText resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.edit.goal.select.maven.project"/>
                 </properties>
               </component>
               <component id="d7025" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="workDirectoryField">

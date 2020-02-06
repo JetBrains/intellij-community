@@ -23,7 +23,7 @@
           </grid>
         </constraints>
         <properties/>
-        <border type="etched" title="Properties"/>
+        <border type="etched" title-resource-bundle="messages/MavenWizardBundle" title-key="maven.structure.wizard.properties"/>
         <children/>
       </grid>
       <vspacer id="c877e">

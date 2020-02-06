@@ -76,7 +76,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
 
     JPanel loadingPanel = new JPanel(new GridBagLayout());
     JPanel bp = new JPanel(new BorderLayout(10, 10));
-    bp.add(new JLabel("Loading archetype list..."), BorderLayout.NORTH);
+    bp.add(new JLabel(MavenWizardBundle.message("maven.structure.wizard.loading.archetypes.list")), BorderLayout.NORTH);
     bp.add(myLoadingIcon, BorderLayout.CENTER);
 
     loadingPanel.add(bp, new GridBagConstraints());

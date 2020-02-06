@@ -52,6 +52,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
@@ -97,8 +98,10 @@ import static icons.ExternalSystemIcons.Task;
 
 public class MavenUtil {
   @ApiStatus.Experimental
-  public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("MAVEN");
-  public static final String MAVEN_NOTIFICATION_GROUP = "Maven";
+  @NonNls public static final String MAVEN_NAME = "Maven";
+  @NonNls public static final String MAVEN_NAME_UPCASE = MAVEN_NAME.toUpperCase();
+  public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId(MAVEN_NAME_UPCASE);
+  public static final String MAVEN_NOTIFICATION_GROUP = MAVEN_NAME;
   public static final String SETTINGS_XML = "settings.xml";
   public static final String DOT_M2_DIR = ".m2";
   public static final String PROP_USER_HOME = "user.home";
