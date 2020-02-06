@@ -98,7 +98,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove //" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME;
+      return InspectionGadgetsBundle.message("remove.suppress.comment.fix.family.name", SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
     }
   }
 
@@ -133,13 +133,13 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return "Allow these suppressions";
+      return InspectionGadgetsBundle.message("allow.suppressions.fix.text");
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Allow suppressions";
+      return InspectionGadgetsBundle.message("allow.suppressions.fix.family.name");
     }
   }
 

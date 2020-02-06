@@ -151,7 +151,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Convert JUnit 3 class to JUnit 4";
+      return InspectionGadgetsBundle.message("convert.to.j.unit.4.fix.family.name");
     }
 
     @Override

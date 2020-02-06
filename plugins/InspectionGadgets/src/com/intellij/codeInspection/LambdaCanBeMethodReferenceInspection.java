@@ -19,6 +19,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
@@ -589,7 +590,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace lambda with method reference";
+      return InspectionGadgetsBundle.message("replace.with.method.ref.fix.family.name");
     }
 
     @Override

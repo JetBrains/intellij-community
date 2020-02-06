@@ -67,7 +67,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   @Override
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false));
-    panel.add(new JLabel("Prefer empty array:"));
+    panel.add(new JLabel(InspectionGadgetsBundle.message("inspection.to.array.prefer.empty.array.title")));
 
     ButtonGroup group = new ButtonGroup();
     for (PreferEmptyArray mode : PreferEmptyArray.values()) {

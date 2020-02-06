@@ -35,7 +35,8 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Report char literals", this, "reportChars");
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message("inspection.unnecessary.string.escape.report.char.literals.option"), this, "reportChars");
   }
 
   @Nullable

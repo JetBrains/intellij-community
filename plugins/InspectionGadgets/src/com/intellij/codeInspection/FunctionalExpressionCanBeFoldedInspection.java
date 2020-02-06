@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +68,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with qualifier";
+      return InspectionGadgetsBundle.message("replace.method.ref.with.qualifier.fix.family.name");
     }
 
     @Override

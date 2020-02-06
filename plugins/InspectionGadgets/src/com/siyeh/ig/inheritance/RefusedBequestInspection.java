@@ -96,7 +96,7 @@ public class RefusedBequestInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Insert call to super method";
+      return InspectionGadgetsBundle.message("refused.bequest.fix.family.name");
     }
 
     @Override

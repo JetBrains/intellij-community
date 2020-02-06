@@ -74,7 +74,7 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Move to Javadoc '@throws'";
+      return InspectionGadgetsBundle.message("move.exception.to.javadoc.fix.family.name");
     }
 
     @Override
@@ -173,7 +173,7 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove from \"throws\" clause";
+      return InspectionGadgetsBundle.message("throws.runtime.exception.fix.family.name");
     }
 
     @Override

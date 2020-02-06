@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.util.PsiUtilCore;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class IgnoreClassFix extends InspectionGadgetsFix implements LowPriorityA
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Ignore for these types";
+    return InspectionGadgetsBundle.message("ignore.class.fix.family.name");
   }
 
   @Override

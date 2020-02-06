@@ -135,7 +135,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace foreign class";
+      return InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.fix.family.name");
     }
 
     @Override

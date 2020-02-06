@@ -148,7 +148,7 @@ public class EmptyClassInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove '{}'";
+      return InspectionGadgetsBundle.message("convert.empty.anonymous.to.new.fix.family.name");
     }
   }
 

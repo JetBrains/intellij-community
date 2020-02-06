@@ -3,6 +3,7 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
@@ -38,7 +39,7 @@ public class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Create enum switch branches";
+    return InspectionGadgetsBundle.message("create.missing.switch.branches.fix.family.name");
   }
 
   @Override

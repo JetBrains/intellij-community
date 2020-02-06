@@ -12,6 +12,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
@@ -106,7 +107,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Qualify call";
+      return InspectionGadgetsBundle.message("qualify.call.fix.family.name");
     }
 
     @Override

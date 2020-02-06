@@ -129,7 +129,7 @@ public class TooBroadThrowsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Fix 'throws' clause";
+      return InspectionGadgetsBundle.message("add.throws.clause.fix.family.name");
     }
 
     @Override

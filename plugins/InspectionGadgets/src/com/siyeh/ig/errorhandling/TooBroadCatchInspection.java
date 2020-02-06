@@ -149,7 +149,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Add 'catch' clause";
+      return InspectionGadgetsBundle.message("add.catch.section.fix.family.name");
     }
 
     @Override

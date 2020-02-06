@@ -80,7 +80,7 @@ public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Make class extend 'Exception'";
+      return InspectionGadgetsBundle.message("extend.exception.fix.family.name");
     }
 
     @Override
