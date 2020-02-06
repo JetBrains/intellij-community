@@ -41,20 +41,22 @@ class SharedJdkIndexChunkLocator: SharedIndexChunkLocator {
     val type = JavaSdk.getInstance() as JavaSdkImpl
 
     val sharedIndexType = "jdk"
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(jdkToEntries.entries.toList(), indicator) { (sdk, entries) ->
+    for ((sdk, sdkEntries) in jdkToEntries) {
       val sdkHash = type.computeJdkFingerprint(sdk)
       logNotification(project, "Hash for JDK \"${sdk.name}\" is $sdkHash")
-      sdkHash ?: return@invokeConcurrentlyUnderProgress true
+
+      sdkHash ?: continue
 
       val info = SharedIndexesLoader.getInstance().lookupSharedIndex(SharedIndexRequest(kind = sharedIndexType, hash = sdkHash), indicator)
       logNotification(project, "Shared Index entry for JDK \"${sdk.name}\" is found with $info\n${info?.url}")
-      info ?: return@invokeConcurrentlyUnderProgress true
+
+      info ?: continue
 
       descriptorProcessor.consume(object: SharedIndexChunkLocator.ChunkDescriptor {
         override fun getChunkUniqueId() = "jdk-$sdkHash-${info.version.weakVersionHash}"
         override fun getSupportedInfrastructureVersion() = info.version
 
-        override fun getOrderEntries() = entries
+        override fun getOrderEntries() = sdkEntries
 
         override fun downloadChunk(targetFile: Path, indicator: ProgressIndicator) {
           logNotification(project, "Downloading Shared Index for JDK \"${sdk.name}\" with $info...")
@@ -65,7 +67,6 @@ class SharedJdkIndexChunkLocator: SharedIndexChunkLocator {
           }
         }
       })
-      true
     }
   }
 
