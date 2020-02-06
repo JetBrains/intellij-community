@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
 import com.apple.eawt.AppEvent;
@@ -10,7 +10,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.ShowSettingsAction;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.idea.ApplicationLoader;
+import com.intellij.idea.IdeStarter;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -94,7 +94,7 @@ public final class MacOSApplicationProvider {
           submit("OpenFile", () -> ProjectUtil.tryOpenFileList(project, files, "MacMenu"));
         }
         else {
-          ApplicationLoader.openFilesOnLoading(files);
+          IdeStarter.openFilesOnLoading(files);
         }
       });
 
@@ -208,7 +208,7 @@ public final class MacOSApplicationProvider {
                   ModalityState.NON_MODAL);
               }
               else {
-                ApplicationLoader.openFilesOnLoading(Collections.singletonList(new File(file)));
+                IdeStarter.openFilesOnLoading(Collections.singletonList(new File(file)));
               }
             }
           }
