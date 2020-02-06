@@ -51,10 +51,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,6 +60,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
 public class I18nInspection extends AbstractBaseUastLocalInspectionTool implements CustomSuppressableInspectionTool {
+  private static final HashSet<String> NON_NLS_NAMES = new HashSet<>(Arrays.asList(AnnotationUtil.NLS, AnnotationUtil.NON_NLS));
   public boolean ignoreForAssertStatements = true;
   public boolean ignoreForExceptionConstructors = true;
   @NonNls
@@ -885,7 +884,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     if (method == null) return false;
 
     String oppositeFQN = fqn.equals(AnnotationUtil.NLS) ? AnnotationUtil.NON_NLS : AnnotationUtil.NLS;
-    if (method.hasAnnotation(oppositeFQN)) {
+    PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(method, NON_NLS_NAMES);
+    if (annotation != null && annotation.hasQualifiedName(oppositeFQN)) {
       return false;
     }
 
