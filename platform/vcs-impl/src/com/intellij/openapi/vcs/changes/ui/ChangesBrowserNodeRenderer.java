@@ -1,9 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ChangesBrowserFilePathIconProvider;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -89,6 +92,32 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     else {
       append(text, baseStyle);
     }
+  }
+
+  public void setIcon(@NotNull FilePath filePath, boolean isDirectory) {
+    if (isDirectory) {
+      setIcon(PlatformIcons.FOLDER_ICON);
+      return;
+    }
+    VirtualFile file = filePath.getVirtualFile();
+    if (file != null) {
+      for (FileIconProvider provider : FileIconProvider.EP_NAME.getExtensionList()) {
+        Icon icon = provider.getIcon(file, 0, myProject);
+        if (icon != null) {
+          setIcon(icon);
+          return;
+        }
+      }
+    }
+    //if we failed to get icon from virtual file (e.g source file was deleted) - try another providers with only FilePath as input
+    for (ChangesBrowserFilePathIconProvider provider : ChangesBrowserFilePathIconProvider.EP_NAME.getExtensionList()) {
+      Icon icon = provider.getIcon(filePath, 0, myProject);
+      if (icon != null) {
+        setIcon(icon);
+        return;
+      }
+    }
+    setIcon(filePath.getFileType().getIcon());
   }
 
   public void setIcon(@NotNull FileType fileType, boolean isDirectory) {

@@ -162,7 +162,7 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
         appendCount(renderer);
       }
 
-      renderer.setIcon(myFilePath.getFileType(), myFilePath.isDirectory() || !isLeaf());
+      renderer.setIcon(myFilePath, myFilePath.isDirectory() || !isLeaf());
     }
 
     @Override
