@@ -44,7 +44,8 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
   }
 
   @Override
-  public void insertTab(@Nls(capitalization = Nls.Capitalization.Title) String title, Icon icon, Component component, String tip, int index) {
+  public void insertTab(@Nls(capitalization = Nls.Capitalization.Title) String title, Icon icon, Component component,
+                        @Nls(capitalization = Nls.Capitalization.Sentence) String tip, int index) {
     super.insertTab(title, icon, component, tip, index);
 
     //set custom label for correct work spotlighting in settings
