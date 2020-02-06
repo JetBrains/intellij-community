@@ -66,7 +66,7 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
       }
 
       override fun <Value : Any?, Key : Any?> processChunks(indexId: ID<Key, Value>,
-                                                            processor: Processor<HashBasedMapReduceIndex<Key, Value>>) {
+                                                            processor: Processor<UpdatableIndex<Key, Value, FileContent>>) {
         throw AssertionFailedError()
       }
 

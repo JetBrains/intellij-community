@@ -11,12 +11,12 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.hash.ContentHashEnumerator
 import com.intellij.util.indexing.hash.FileContentHashIndex
 import com.intellij.util.indexing.hash.FileContentHashIndexExtension
 import com.intellij.util.indexing.hash.SharedIndexChunk
 import com.intellij.util.indexing.hash.SharedIndexStorageUtil
+import com.intellij.util.indexing.hash.building.EmptyIndexEnumerator
 import com.intellij.util.indexing.hash.building.IndexChunk
 import com.intellij.util.indexing.hash.building.IndexesExporter
 import com.intellij.util.indexing.impl.IndexStorage
@@ -26,8 +26,10 @@ import com.intellij.util.indexing.snapshot.OneRecordValueContainer
 import com.intellij.util.indexing.zipFs.UncompressedZipFileSystem
 import gnu.trove.THashMap
 import junit.framework.AssertionFailedError
+import junit.framework.TestCase
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 import java.util.stream.Collectors
 
 private const val CHUNK_NAME = "source"
@@ -75,10 +77,10 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
     var readFileId: Int? = null
     UncompressedZipFileSystem.create(indexZipPath).use { zipFs ->
       return ContentHashEnumerator(zipFs.getPath(CHUNK_NAME, "hashes")).use { hashEnumerator ->
-        val idIndexChunk = SharedIndexChunk(zipFs.getPath(CHUNK_NAME), IdIndex.NAME, chunkId, hashEnumerator, 0)
         val findExtension = SharedIndexExtensions.findExtension(IdIndex.NAME.getExtension())
         val extension = IdIndex.NAME.getExtension()
-        val index = idIndexChunk.open(findExtension, extension, hashIndex)
+        val idIndexChunk = SharedIndexChunk(zipFs.getPath(CHUNK_NAME), IdIndex.NAME, chunkId, 0, false, findExtension, extension, hashIndex)
+        val index = idIndexChunk.getIndex()
         index.getData(IdIndexEntry("methodCall", true)).forEach { id, _ ->
           readFileId = id
           true
@@ -103,6 +105,26 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     assertTrue(hashId > 0)
+  }
+
+  fun testEmptyIndexes() {
+    val indexZipPath = generateTestSharedIndex()
+
+    var emptyIndexes :Set<String>? = null
+    var emptyStubIndexes :Set<String>? = null
+
+    UncompressedZipFileSystem.create(indexZipPath).use {
+      val root = it.rootDirectories.first().resolve(CHUNK_NAME)
+
+      emptyIndexes = EmptyIndexEnumerator.readEmptyIndexes(root)
+      emptyStubIndexes = EmptyIndexEnumerator.readEmptyStubIndexes(root)
+    }
+
+    assertFalse(emptyIndexes!!.isEmpty())
+    assertFalse(emptyStubIndexes!!.isEmpty())
+
+    assertTrue(emptyIndexes!!.contains("TodoIndex"))
+    assertTrue(emptyStubIndexes!!.contains("gr.method.name"))
   }
 
   fun testSharedIndexLayout() {
