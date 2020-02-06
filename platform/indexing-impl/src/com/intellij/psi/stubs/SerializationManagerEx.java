@@ -23,8 +23,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * Author: dmitrylomov
+ * This class is intended to manage Stub Serializers {@link ObjectStubSerializer} and stub serialization/deserialization algorithm.
  */
+@ApiStatus.Internal
 public abstract class SerializationManagerEx extends SerializationManager {
 
   public static SerializationManagerEx getInstanceEx() {
@@ -39,7 +40,9 @@ public abstract class SerializationManagerEx extends SerializationManager {
   @ApiStatus.Experimental
   public abstract void reSerialize(@NotNull InputStream inStub,
                                    @NotNull OutputStream outStub,
-                                   @NotNull SerializationManager newSerializationManager) throws IOException;
+                                   @NotNull SerializationManagerEx newSerializationManager) throws IOException;
+
+  protected abstract void initSerializers();
 
   public abstract boolean isNameStorageCorrupted();
 

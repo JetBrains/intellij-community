@@ -17,9 +17,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/*
- * @author max
- */
 public final class SerializationManagerImpl extends SerializationManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(SerializationManagerImpl.class);
 
@@ -28,7 +25,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   private final boolean myUnmodifiable;
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
   private PersistentStringEnumerator myNameStorage;
-  private StubSerializationHelper myStubSerializationHelper;
+  private volatile StubSerializationHelper myStubSerializationHelper;
 
   private volatile boolean mySerializersLoaded;
 
@@ -172,7 +169,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   @Override
   public void reSerialize(@NotNull InputStream inStub,
                           @NotNull OutputStream outStub,
-                          @NotNull SerializationManager newSerializationManager) throws IOException {
+                          @NotNull SerializationManagerEx newSerializationManager) throws IOException {
     initSerializers();
     newSerializationManager.initSerializers();
     myStubSerializationHelper.reSerializeStub(new DataInputStream(inStub),

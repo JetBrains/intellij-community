@@ -16,6 +16,7 @@ import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -337,7 +338,9 @@ class StubSerializationHelper {
     out.write(array, 0, len);
   }
 
-  String intern(String str) {
+  @Nullable
+  @Contract("null -> null")
+  String intern(@Nullable String str) {
     return myStringInterner.get(str);
   }
 
