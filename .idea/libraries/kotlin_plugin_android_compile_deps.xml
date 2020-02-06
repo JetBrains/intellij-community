@@ -107,6 +107,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-ide-plugin-ij193/1.3.70-eap-184/noarg-ide-plugin-ij193-1.3.70-eap-184.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-ide-plugin-ij193/1.3.70-eap-184/allopen-ide-plugin-ij193-1.3.70-eap-184.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/idea-gradle-tooling-api-ij193/1.3.70-eap-184/idea-gradle-tooling-api-ij193-1.3.70-eap-184.jar!/" />
-   </excluded>
+    </excluded>
   </library>
 </component>
