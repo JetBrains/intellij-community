@@ -3297,6 +3297,13 @@ public final class UIUtil {
   // background
 
   @NotNull
+  public static Color getListBackground(@NotNull JList<?> list, boolean selected) {
+    if (selected) return getListSelectionBackground(list.hasFocus());
+    Color background = list.getBackground();
+    return background != null ? background : getListBackground();
+  }
+
+  @NotNull
   public static Color getListBackground() {
     return LIST_BACKGROUND;
   }
@@ -3353,6 +3360,13 @@ public final class UIUtil {
   // foreground
 
   @NotNull
+  public static Color getListForeground(@NotNull JList<?> list, boolean selected) {
+    if (selected) return getListSelectionForeground(list.hasFocus());
+    Color foreground = list.getForeground();
+    return foreground != null ? foreground : getListForeground();
+  }
+
+  @NotNull
   public static Color getListForeground() {
     return UIManager.getColor("List.foreground");
   }
@@ -3399,6 +3413,13 @@ public final class UIUtil {
   // background
 
   @NotNull
+  public static Color getTreeBackground(@NotNull JTree tree, boolean selected) {
+    if (selected) return getTreeSelectionBackground(tree.hasFocus());
+    Color background = tree.getBackground();
+    return background != null ? background : getTreeBackground();
+  }
+
+  @NotNull
   public static Color getTreeBackground() {
     return TREE_BACKGROUND;
   }
@@ -3432,6 +3453,13 @@ public final class UIUtil {
   }
 
   // foreground
+
+  @NotNull
+  public static Color getTreeForeground(@NotNull JTree tree, boolean selected) {
+    if (selected) return getTreeSelectionForeground(tree.hasFocus());
+    Color foreground = tree.getForeground();
+    return foreground != null ? foreground : getTreeForeground();
+  }
 
   @NotNull
   public static Color getTreeForeground() {

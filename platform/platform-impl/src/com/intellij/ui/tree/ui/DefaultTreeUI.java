@@ -10,6 +10,7 @@ import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ComponentWithExpandableItems;
+import com.intellij.ui.LoadingNode;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
@@ -140,7 +141,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   @Nullable
   private Component getRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
-    TreeCellRenderer renderer = currentCellRenderer; // TODO: currentCellRenderer ???
+    TreeCellRenderer renderer = value instanceof LoadingNode ? LoadingNodeRenderer.SHARED : super.currentCellRenderer;
     if (renderer == null) return null;
     Component component = renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, focused);
     if (component == null) return null;
