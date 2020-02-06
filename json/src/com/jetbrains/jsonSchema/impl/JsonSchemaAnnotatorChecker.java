@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +31,7 @@ public class JsonSchemaAnnotatorChecker implements JsonValidationHost {
   @NotNull private final Project myProject;
   @NotNull private final JsonComplianceCheckerOptions myOptions;
   private boolean myHadTypeError;
-  private static final String ENUM_MISMATCH_PREFIX = "Value should be one of: ";
+
   private static final String ACTUAL_PREFIX = "Actual: ";
 
   protected JsonSchemaAnnotatorChecker(@NotNull Project project, @NotNull JsonComplianceCheckerOptions options) {
@@ -550,10 +551,12 @@ public class JsonSchemaAnnotatorChecker implements JsonValidationHost {
     }
 
     if (commonIssueKind == JsonValidationError.FixableIssueKind.NonEnumValue) {
-      return new JsonValidationError(ENUM_MISMATCH_PREFIX
+      String prefix = JsonBundle.message("schema.validation.enum.mismatch", "");
+      return new JsonValidationError(prefix
                                      + errors
                                        .stream()
-                                       .map(e -> StringUtil.trimStart(e.getMessage(), ENUM_MISMATCH_PREFIX))
+                                       // todo remove this ugly textual cutting
+                                       .map(e -> StringUtil.trimEnd(StringUtil.trimStart(e.getMessage(), prefix), prefix) /*ltr and rtl*/)
                                        .map(e -> StringUtil.split(e, ", "))
                                        .flatMap(e -> e.stream())
                                        .distinct()

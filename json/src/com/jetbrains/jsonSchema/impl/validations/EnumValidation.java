@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl.validations;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
@@ -20,7 +21,6 @@ import java.util.function.BiFunction;
 
 public class EnumValidation implements JsonSchemaValidation {
   public static final EnumValidation INSTANCE = new EnumValidation();
-  private static final String ENUM_MISMATCH_PREFIX = "Value should be one of: ";
   @Override
   public void validate(JsonValueAdapter propValue,
                        JsonSchemaObject schema,
@@ -38,8 +38,8 @@ public class EnumValidation implements JsonSchemaValidation {
     for (Object object : enumItems) {
       if (checkEnumValue(object, walker, propValue, text, eq)) return;
     }
-    consumer.error(ENUM_MISMATCH_PREFIX + StringUtil.join(enumItems, o -> o.toString(), ", "), propValue.getDelegate(),
-          JsonValidationError.FixableIssueKind.NonEnumValue, null, JsonErrorPriority.MEDIUM_PRIORITY);
+    consumer.error(JsonBundle.message("schema.validation.enum.mismatch", StringUtil.join(enumItems, o -> o.toString(), ", ")), propValue.getDelegate(),
+                   JsonValidationError.FixableIssueKind.NonEnumValue, null, JsonErrorPriority.MEDIUM_PRIORITY);
   }
 
   private static boolean checkEnumValue(@NotNull Object object,
