@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -13,6 +14,7 @@ import org.intellij.images.fileTypes.impl.SvgFileType;
 import org.intellij.images.util.ImageInfo;
 import org.intellij.images.util.ImageInfoReader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -58,11 +60,9 @@ public final class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<Ima
     return myDataIndexer;
   }
 
-  public static void processValues(VirtualFile virtualFile, FileBasedIndex.ValueProcessor<? super ImageInfo> processor, Project project) {
-    Map<Integer, ImageInfo> data = FileBasedIndex.getInstance().getFileData(INDEX_ID, virtualFile, project);
-    if (!data.isEmpty()) {
-      processor.process(virtualFile, data.values().iterator().next());
-    }
+  @Nullable
+  public static ImageInfo getInfo(@NotNull VirtualFile file, @NotNull Project project) {
+    return ContainerUtil.getFirstItem(FileBasedIndex.getInstance().getFileData(INDEX_ID, file, project).values());
   }
 
   @NotNull
