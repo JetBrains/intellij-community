@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
@@ -11,7 +9,6 @@ import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.LogUtil
 import com.intellij.openapi.diagnostic.logger
@@ -22,13 +19,14 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.updateSettings.IdeCompatibleUpdate
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrameUpdater
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.containers.MultiMap
@@ -94,7 +92,7 @@ object UpdateChecker {
   fun updateAndShowResult(): ActionCallback {
     val callback = ActionCallback()
     ApplicationManager.getApplication().executeOnPooledThread {
-      doUpdateAndShowResult(null, true, false, UpdateSettings.getInstance(), null, callback)
+      doUpdateAndShowResult(null, true, false, false, UpdateSettings.getInstance(), null, callback)
     }
     return callback
   }
@@ -109,7 +107,9 @@ object UpdateChecker {
     val fromSettings = customSettings != null
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
-      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), !fromSettings, true, settings, indicator, null)
+      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), !fromSettings,
+                                                                             fromSettings || WelcomeFrame.getInstance() != null, true,
+                                                                             settings, indicator, null)
       override fun isConditionalModal(): Boolean = fromSettings
       override fun shouldStartInBackground(): Boolean = !fromSettings
     })
@@ -125,6 +125,7 @@ object UpdateChecker {
   private fun doUpdateAndShowResult(project: Project?,
                                     showSettingsLink: Boolean,
                                     showDialog: Boolean,
+                                    showEmptyNotification: Boolean,
                                     updateSettings: UpdateSettings,
                                     indicator: ProgressIndicator?,
                                     callback: ActionCallback?) {
@@ -166,7 +167,7 @@ object UpdateChecker {
     UpdateSettings.getInstance().saveLastCheckedInfo()
 
     ApplicationManager.getApplication().invokeLater {
-      showUpdateResult(project, result, updatedPlugins, incompatiblePlugins, externalUpdates, showSettingsLink, showDialog)
+      showUpdateResult(project, result, updatedPlugins, incompatiblePlugins, externalUpdates, showSettingsLink, showDialog, showEmptyNotification)
       callback?.setDone()
     }
   }
@@ -418,7 +419,8 @@ object UpdateChecker {
                                incompatiblePlugins: Collection<IdeaPluginDescriptor>?,
                                externalUpdates: Collection<ExternalUpdate>?,
                                showSettingsLink: Boolean,
-                               showDialog: Boolean) {
+                               showDialog: Boolean,
+                               showEmptyNotification: Boolean) {
     val updatedChannel = checkForUpdateResult.updatedChannel
     val newBuild = checkForUpdateResult.newBuild
 
@@ -449,26 +451,32 @@ object UpdateChecker {
 
     if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
       updateFound = true
-      val runnable = { PluginUpdateDialog(updatedPlugins).show() }
 
       ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
 
       if (showDialog) {
-        runnable.invoke()
+        PluginUpdateDialog(updatedPlugins).show()
       }
       else {
-        val title = IdeBundle.message("updates.plugins.ready.short.title.available")
-        val plugins = updatedPlugins.joinToString { downloader -> downloader.pluginName }
-        val message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size, plugins)
-        showNotification(project, title, message, runnable, { notification ->
-          notification.addAction(object : NotificationAction(
-            IdeBundle.message(if (updatedPlugins.size == 1) "updates.ignore.update.button" else "updates.ignore.updates.button")) {
-            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-              notification.expire()
-              PluginUpdateDialog.ignorePlugins(updatedPlugins.map { downloader -> downloader.descriptor })
-            }
-          })
-        }, NotificationUniqueType.PLUGINS)
+        val ideFrame = WelcomeFrame.getInstance()
+        if (ideFrame is WelcomeFrameUpdater) {
+          ideFrame.showPluginUpdates { PluginUpdateDialog(updatedPlugins).show() }
+        }
+        else {
+          val title = IdeBundle.message("updates.plugins.ready.short.title.available")
+          val plugins = updatedPlugins.joinToString { downloader -> downloader.pluginName }
+          val message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size, plugins)
+          val runnable = { PluginManagerConfigurable.showPluginConfigurable(project, updatedPlugins) }
+          showNotification(project, title, message, runnable, { notification ->
+            notification.addAction(object : NotificationAction(
+              IdeBundle.message(if (updatedPlugins.size == 1) "updates.ignore.update.button" else "updates.ignore.updates.button")) {
+              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                notification.expire()
+                PluginUpdateDialog.ignorePlugins(updatedPlugins.map { downloader -> downloader.descriptor })
+              }
+            })
+          }, NotificationUniqueType.PLUGINS)
+        }
       }
     }
 
@@ -492,8 +500,16 @@ object UpdateChecker {
       }
     }
 
-    if (!updateFound && showDialog) {
-      NoUpdatesDialog(showSettingsLink).show()
+    if (!updateFound) {
+      if (showDialog) {
+        NoUpdatesDialog(showSettingsLink).show()
+      }
+      else if (showEmptyNotification) {
+        ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
+
+        val title = IdeBundle.message("updates.no.updates.notification")
+        showNotification(project, title, "", {}, { notification -> notification.actions.clear()}, NotificationUniqueType.PLUGINS)
+      }
     }
   }
 

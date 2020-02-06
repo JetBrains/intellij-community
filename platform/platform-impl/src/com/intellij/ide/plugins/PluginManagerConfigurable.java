@@ -134,6 +134,8 @@ public class PluginManagerConfigurable
   private Consumer<InstalledSearchOptionAction> myInstalledSearchCallback;
   private boolean myInstalledSearchSetState = true;
 
+  private Collection<PluginDownloader> myInitUpdates;
+
   public PluginManagerConfigurable() {
   }
 
@@ -179,7 +181,7 @@ public class PluginManagerConfigurable
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.marketplace"), null);
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.installed"), myCountIcon);
 
-    myPluginUpdatesService = PluginUpdatesService.connectConfigurable(countValue -> {
+    Consumer<Integer> callback = countValue -> {
       int count = countValue == null ? 0 : countValue;
       String text = String.valueOf(count);
       boolean visible = count > 0;
@@ -192,8 +194,14 @@ public class PluginManagerConfigurable
 
       myCountIcon.setText(text);
       myTabHeaderComponent.update();
-    });
+    };
+    if (myInitUpdates != null) {
+      callback.accept(myInitUpdates.size());
+    }
+    myPluginUpdatesService = PluginUpdatesService.connectConfigurable(callback);
     myPluginModel.setPluginUpdatesService(myPluginUpdatesService);
+
+    boolean selectInstalledTab = !ContainerUtil.isEmpty(myInitUpdates);
 
     createMarketplaceTab();
     createInstalledTab();
@@ -216,8 +224,12 @@ public class PluginManagerConfigurable
     myTabHeaderComponent.setListener();
 
     int selectionTab = getStoredSelectionTab();
-    myTabHeaderComponent.setSelection(selectionTab);
+    myTabHeaderComponent.setSelection(selectInstalledTab ? INSTALLED_TAB : selectionTab);
     myCardPanel.select(selectionTab, true);
+
+    if (selectInstalledTab) {
+      myInstalledTab.setSearchQuery("/outdated");
+    }
 
     return myCardPanel;
   }
@@ -888,6 +900,11 @@ public class PluginManagerConfigurable
 
         PluginLogo.endBatchMode();
 
+        if (myInitUpdates != null) {
+          applyUpdates(myInstalledPanel, myInitUpdates);
+          myInitUpdates = null;
+        }
+
         return createScrollPane(myInstalledPanel, true);
       }
 
@@ -1313,6 +1330,12 @@ public class PluginManagerConfigurable
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(descriptors));
   }
 
+  public static void showPluginConfigurable(@Nullable Project project, @NotNull Collection<PluginDownloader> updates) {
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    configurable.setInitUpdates(updates);
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+  }
+
   private enum SortBySearchOption {
     Downloads, Name, Rating, Relevance, Updated
   }
@@ -1632,6 +1655,10 @@ public class PluginManagerConfigurable
   @NotNull
   public MyPluginModel getPluginModel() {
     return myPluginModel;
+  }
+
+  public void setInitUpdates(@NotNull Collection<PluginDownloader> initUpdates) {
+    myInitUpdates = initUpdates;
   }
 
   public void select(IdeaPluginDescriptor @NotNull ... descriptors) {
