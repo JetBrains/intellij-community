@@ -33,6 +33,8 @@ import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import java.nio.file.Path
+import java.util.*
+import kotlin.collections.HashMap
 
 // please contact with Dmitry Batkovich in case of any problems
 @SkipSlowTestLocally
@@ -106,7 +108,10 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(indexId, FileContentHashIndexExtension.getIndexId(index.getHashId(inputId1)))
     assertEquals(indexId, FileContentHashIndexExtension.getIndexId(index.getHashId(inputId2)))
 
-    assertEquals(arrayOf(inputId1, inputId2), index.getHashIdToFileIdsFunction(indexId).remap(internalHashId)[0])
+    // order matters
+    val expected = intArrayOf(inputId1, inputId2)
+    val actual = index.getHashIdToFileIdsFunction(indexId).remap(internalHashId)
+    assertTrue(Arrays.equals(expected, actual))
     index.dispose()
   }
 

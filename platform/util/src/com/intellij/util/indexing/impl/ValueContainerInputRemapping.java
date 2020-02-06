@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.impl;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents remapping of inputIds from {@link ValueContainerImpl} to a file ids.
@@ -13,5 +14,6 @@ import org.jetbrains.annotations.ApiStatus;
 public interface ValueContainerInputRemapping {
   ValueContainerInputRemapping IDENTITY = inputId -> new int[]{inputId};
 
+  @NotNull
   int[] remap(int inputId);
 }
