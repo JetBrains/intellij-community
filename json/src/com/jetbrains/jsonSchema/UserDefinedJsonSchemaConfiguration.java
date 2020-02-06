@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -251,14 +252,14 @@ public class UserDefinedJsonSchemaConfiguration {
     public String getError() {
       switch (mappingKind) {
         case File:
-          return !StringUtil.isEmpty(path) ? null : "Empty file path doesn't match anything";
+          return !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.file.path");
         case Pattern:
-          return !StringUtil.isEmpty(path) ? null : "Empty pattern matches nothing";
+          return !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.pattern");
         case Directory:
           return null;
       }
 
-      return "Unknown mapping kind";
+      return JsonBundle.message("schema.configuration.error.unknown.mapping");
     }
 
     public boolean isPattern() {
@@ -279,7 +280,7 @@ public class UserDefinedJsonSchemaConfiguration {
 
     public String getPresentation() {
       if (mappingKind == JsonMappingKind.Directory && StringUtil.isEmpty(path)) {
-        return mappingKind.getPrefix() + "[Project Directory]";
+        return JsonBundle.message("schema.configuration.project.directory", mappingKind.getPrefix());
       }
       return mappingKind.getPrefix() + getPath();
     }

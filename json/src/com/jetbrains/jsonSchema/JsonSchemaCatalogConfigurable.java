@@ -47,10 +47,8 @@ public class JsonSchemaCatalogConfigurable implements Configurable {
         myPreferRemoteCheckBox.setSelected(false);
       }
     });
-    addWithComment(builder, myCatalogCheckBox,
-                   "Schemas will be downloaded and assigned using the <a href=\"http://schemastore.org/json/\">SchemaStore API</a>");
-    addWithComment(builder, myPreferRemoteCheckBox,
-                   "Schemas will always be downloaded from the SchemaStore, even if some of them are bundled with the IDE");
+    addWithComment(builder, myCatalogCheckBox, JsonBundle.message("schema.catalog.hint"));
+    addWithComment(builder, myPreferRemoteCheckBox, JsonBundle.message("schema.catalog.remote.hint"));
     return wrap(builder.getPanel());
   }
 

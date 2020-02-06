@@ -101,7 +101,7 @@ public class SuggestEnumValuesFix implements LocalQuickFix, BatchQuickFix<Common
                        @Nullable Runnable refreshViews) {
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor != null) {
-      HintManager.getInstance().showErrorHint(editor, "Sorry, this fix is not available in batch mode");
+      HintManager.getInstance().showErrorHint(editor, JsonBundle.message("sorry.this.fix.is.not.available.in.batch.mode"));
     }
     else {
       Messages.showErrorDialog(project, JsonBundle.message("sorry.this.fix.is.not.available.in.batch.mode"),
