@@ -786,27 +786,6 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       return true;
     }
 
-
-    @Override
-    public void processKeyEvent(KeyEvent e) {
-      TreePath path = myTree.getSelectionPath();
-      if (path != null) {
-        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-          if (isExpanded(path)) {
-            collapsePath(path);
-            return;
-          }
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-          if (isCollapsed(path)) {
-            expandPath(path);
-            return;
-          }
-        }
-      }
-      super.processKeyEvent(e);
-    }
-
     @Override
     protected void processMouseEvent(MouseEvent event) {
       MyTreeUi ui = (MyTreeUi)myTree.getUI();
