@@ -93,14 +93,20 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
           }
         }
         row {
-          buttonGroup(message("label.when.number.of.opened.editors.exceeds.tab.limit")) {
-            row { radioButton(message("radio.close.non.modified.files.first"), ui::closeNonModifiedFilesFirst) }
-            row { radioButton(message("radio.close.less.frequently.used.files")) }.largeGapAfter()
+          buttonGroup(ui::closeNonModifiedFilesFirst) {
+            checkBoxGroup(message("label.when.number.of.opened.editors.exceeds.tab.limit")) {
+              row { radioButton(message("radio.close.non.modified.files.first"), value = true) }
+              row { radioButton(message("radio.close.less.frequently.used.files"), value = false) }.largeGapAfter()
+            }
           }
         }
         row {
           buttonGroup(message("label.when.closing.active.editor")) {
-            row { radioButton(message("radio.activate.left.neighbouring.tab")) }
+            row {
+              radioButton(message("radio.activate.left.neighbouring.tab")).apply {
+                onReset { component.isSelected = !ui.activeRightEditorOnClose && !ui.activeMruEditorOnClose }
+              }
+            }
             row { radioButton(message("radio.activate.right.neighbouring.tab"), ui::activeRightEditorOnClose) }
             row { radioButton(message("radio.activate.most.recently.opened.tab"), ui::activeMruEditorOnClose) }.largeGapAfter()
           }

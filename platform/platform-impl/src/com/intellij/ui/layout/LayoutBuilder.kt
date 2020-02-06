@@ -41,11 +41,10 @@ class CellBuilderWithButtonGroupProperty<T : Any>
 
   fun Cell.radioButton(text: String, value: T, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
-    return component(comment = comment)
-      .onApply { if (component.isSelected) prop.set(value) }
-      .onReset { component.isSelected = prop.get() == value }
-      .onIsModified { component.isSelected != (prop.get() == value) }
+    return component(comment = comment).bindValue(value)
   }
+
+  fun CellBuilder<JBRadioButton>.bindValue(value: T): CellBuilder<JBRadioButton> = bindValueToProperty(prop, value)
 }
 
 
@@ -55,11 +54,16 @@ class RowBuilderWithButtonGroupProperty<T : Any>
   fun Row.radioButton(text: String, value: T, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
     attachSubRowsEnabled(component)
-    return component(comment = comment)
-      .onApply { if (component.isSelected) prop.set(value) }
-      .onReset { component.isSelected = prop.get() == value }
-      .onIsModified { component.isSelected != (prop.get() == value) }
+    return component(comment = comment).bindValue(value)
   }
+
+  fun CellBuilder<JBRadioButton>.bindValue(value: T): CellBuilder<JBRadioButton> = bindValueToProperty(prop, value)
+}
+
+private fun <T> CellBuilder<JBRadioButton>.bindValueToProperty(prop: PropertyBinding<T>, value: T): CellBuilder<JBRadioButton> = apply {
+  onApply { if (component.isSelected) prop.set(value) }
+  onReset { component.isSelected = prop.get() == value }
+  onIsModified { component.isSelected != (prop.get() == value) }
 }
 
 fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFile: VirtualFile) -> Unit) {
