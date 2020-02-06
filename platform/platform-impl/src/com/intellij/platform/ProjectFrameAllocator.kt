@@ -11,6 +11,8 @@ import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.createModalTask
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.registry.Registry
@@ -61,11 +63,10 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
 
   override fun run(task: () -> Unit): Boolean {
     var completed = false
+    val progressTitle = IdeUICustomization.getInstance().projectMessage("project.loading.name", options.projectName ?: projectFile.fileName)
     ApplicationManager.getApplication().invokeAndWait {
       val frame = createFrameIfNeeded()
-      val progressTitle = IdeUICustomization.getInstance().projectMessage("project.loading.name",
-                                                                          options.projectName ?: projectFile.fileName)
-      completed = ProgressManager.getInstance().runProcessWithProgressSynchronously({
+      val progressTask = createModalTask(progressTitle) {
         if (frameHelper == null) {
           ApplicationManager.getApplication().invokeLater {
             if (cancelled) {
@@ -79,7 +80,8 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
         }
 
         task()
-      }, progressTitle, true, null, frame.rootPane)
+      }
+      completed = (ProgressManager.getInstance() as CoreProgressManager).runProcessWithProgressSynchronously(progressTask, frame.rootPane)
     }
     return completed
   }
@@ -101,9 +103,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       if (recentProjectManager is RecentProjectsManagerBase) {
         val info = recentProjectManager.getProjectMetaInfo(projectFile)
         if (info != null) {
-          options = options.copy()
-          options.frame = info.frame
-          options.projectWorkspaceId = info.projectWorkspaceId
+          options = options.copy(frame = info.frame, projectWorkspaceId = info.projectWorkspaceId)
         }
       }
     }

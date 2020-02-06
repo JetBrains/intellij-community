@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
 import com.google.common.collect.ConcurrentHashMultiset;
@@ -473,7 +473,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // ASSERT IS EDT->UI bg or calling if cant
   // NEW: no assert; bg or calling ...
   public boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
-
     final Ref<Throwable> exceptionRef = new Ref<>();
     TaskContainer taskContainer = new TaskContainer(task) {
       @Override

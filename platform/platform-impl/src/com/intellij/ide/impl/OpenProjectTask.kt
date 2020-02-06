@@ -4,7 +4,6 @@ package com.intellij.ide.impl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.projectImport.ProjectOpenedCallback
-import org.jetbrains.annotations.ApiStatus
 
 data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
                            @JvmField val projectToClose: Project? = null,
@@ -18,7 +17,9 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
                            val isDummyProject: Boolean = false,
                            val sendFrameBack: Boolean = false,
                            val showWelcomeScreen: Boolean = true,
-                           var callback: ProjectOpenedCallback? = null) {
+                           var callback: ProjectOpenedCallback? = null,
+                           val frame: FrameInfo? = null,
+                           val projectWorkspaceId: String? = null) {
   constructor(project: Project) : this(false, project = project)
 
   constructor(forceOpenInNewFrame: Boolean = false, projectToClose: Project?) : this(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, useDefaultProjectAsTemplate = true)
@@ -29,12 +30,6 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
       return OpenProjectTask(useDefaultProjectAsTemplate = useDefaultProjectAsTemplate, isNewProject = true)
     }
   }
-
-  @JvmField
-  var frame: FrameInfo? = null
-
-  @JvmField
-  var projectWorkspaceId: String? = null
 
   /** Used only by [ProjectUtil.openOrImport] */
   @JvmField

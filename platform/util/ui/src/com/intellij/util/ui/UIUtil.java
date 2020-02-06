@@ -504,34 +504,6 @@ public final class UIUtil {
     }
   }
 
-  public static boolean hasLeakingAppleListeners() {
-    // in version 1.6.0_29 Apple introduced a memory leak in JViewport class - they add a PropertyChangeListeners to the CToolkit
-    // but never remove them:
-    // JViewport.java:
-    // public JViewport() {
-    //   ...
-    //   final Toolkit toolkit = Toolkit.getDefaultToolkit();
-    //   if(toolkit instanceof CToolkit)
-    //   {
-    //     final boolean isRunningInHiDPI = ((CToolkit)toolkit).runningInHiDPI();
-    //     if(isRunningInHiDPI) setScrollMode(0);
-    //     toolkit.addPropertyChangeListener("apple.awt.contentScaleFactor", new PropertyChangeListener() { ... });
-    //   }
-    // }
-
-    return SystemInfo.isMac && System.getProperty("java.runtime.version").startsWith("1.6.0_29");
-  }
-
-  public static void removeLeakingAppleListeners() {
-    if (!hasLeakingAppleListeners()) return;
-
-    Toolkit toolkit = Toolkit.getDefaultToolkit();
-    String name = "apple.awt.contentScaleFactor";
-    for (PropertyChangeListener each : toolkit.getPropertyChangeListeners(name)) {
-      toolkit.removePropertyChangeListener(name, each);
-    }
-  }
-
   public static boolean isWindowClientPropertyTrue(Window window, @NotNull Object key) {
     return Boolean.TRUE.equals(getWindowClientProperty(window, key));
   }

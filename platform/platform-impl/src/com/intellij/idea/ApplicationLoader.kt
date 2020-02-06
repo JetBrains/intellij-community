@@ -189,6 +189,7 @@ private fun startApp(app: ApplicationImpl,
 
   val edtExecutor = Executor { ApplicationManager.getApplication().invokeLater(it) }
 
+  @Suppress("RemoveExplicitTypeArguments")
   CompletableFuture.allOf(registerRegistryAndInitStoreFuture, StartupUtil.getServerFuture())
     .thenCompose {
       // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
@@ -208,36 +209,42 @@ private fun startApp(app: ApplicationImpl,
 
       CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
     }
-    .thenComposeAsync<Void?>(
-      Function {
-        val activity = initAppActivity.startChild("app initialized callback")
-        val future = callAppInitialized(app, boundedExecutor)
+    .thenComposeAsync<Void?>(Function {
+      val activity = initAppActivity.startChild("app initialized callback")
+      val future = callAppInitialized(app, boundedExecutor)
 
-        // should be after scheduling all app initialized listeners (because this activity is not important)
-        boundedExecutor.execute {
-          runActivity("project converter provider preloading") {
-            app.extensionArea.getExtensionPoint<Any>("com.intellij.project.converterProvider").extensionList
-          }
+      // should be after scheduling all app initialized listeners (because this activity is not important)
+      boundedExecutor.execute {
+        runActivity("project converter provider preloading") {
+          app.extensionArea.getExtensionPoint<Any>("com.intellij.project.converterProvider").extensionList
         }
-
-        future.thenRun {
-          activity.end()
-          if (!headless) {
-            addActivateAndWindowsCliListeners()
-          }
-
-          initAppActivity.end()
-        }
-      },
-      // if `loadComponentInEdtFuture` is completed after `preloadSyncServiceFuture`, then this task will be executed in EDT —
-      // not good, so force execution out of EDT
-      nonEdtExecutor
-    )
-    .thenRunAsync(Runnable {
-      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-        starter.main(ArrayUtilRt.toStringArray(args))
       }
-    }, edtExecutor)
+
+      future.thenRun {
+        activity.end()
+        if (!headless) {
+          addActivateAndWindowsCliListeners()
+        }
+
+        initAppActivity.end()
+      }
+    },
+      // if `loadComponentInEdtFuture` is completed after `preloadSyncServiceFuture`, then this task will be executed in EDT -
+      // not good, so force execution out of EDT
+                      nonEdtExecutor)
+    .thenRun(Runnable {
+      if (starter is IdeStarter) {
+        starter.main(args)
+      }
+      else {
+        // backward compatibility
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+            starter.main(ArrayUtilRt.toStringArray(args))
+          }
+        })
+      }
+    })
     .exceptionally {
       StartupAbortedException.processException(it)
       null
@@ -422,6 +429,18 @@ fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
 }
 
 open class IdeStarter : ApplicationStarter {
+  companion object {
+    private inline fun invokeOnEdt(crossinline runnable: () -> Unit) {
+      val application = ApplicationManager.getApplication()
+      if (application.isDispatchThread) {
+        runnable()
+      }
+      else {
+        application.invokeLater { runnable() }
+      }
+    }
+  }
+
   override fun isHeadless() = false
   override fun getCommandName(): String? = null
 
@@ -432,22 +451,29 @@ open class IdeStarter : ApplicationStarter {
   }
 
   override fun main(args: Array<String>) {
+    main(args.toList())
+  }
+
+  internal fun main(args: List<String>) {
     val frameInitActivity = StartUpMeasurer.startMainActivity("frame initialization")
 
     // Event queue should not be changed during initialization of application components.
     // It also cannot be changed before initialization of application components because IdeEventQueue uses other
     // application components. So it is proper to perform replacement only here.
-    frameInitActivity.runChild("IdeEventQueue informing about WindowManager") {
-      IdeEventQueue.getInstance().setWindowManager(WindowManagerEx.getInstanceEx())
+    // out of EDT
+    val windowManager = WindowManagerEx.getInstanceEx()
+    invokeOnEdt {
+      frameInitActivity.runChild("IdeEventQueue informing about WindowManager") {
+        IdeEventQueue.getInstance().setWindowManager(windowManager)
+      }
     }
 
-    val commandLineArgs = args.toList()
     val app = ApplicationManager.getApplication()
 
-    val appFrameCreatedActivity = frameInitActivity.startChild("app frame created callback")
     val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
-    lifecyclePublisher.appFrameCreated(commandLineArgs)
-    appFrameCreatedActivity.end()
+    frameInitActivity.runChild("app frame created callback") {
+      lifecyclePublisher.appFrameCreated(args)
+    }
 
     // temporary check until the JRE implementation has been checked and bundled
     if (java.lang.Boolean.getBoolean("ide.popup.enablePopupType")) {
@@ -456,7 +482,7 @@ open class IdeStarter : ApplicationStarter {
     }
 
     // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
-    val willOpenProject = commandLineArgs.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
+    val willOpenProject = args.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
     val needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
 
     frameInitActivity.end()
@@ -468,7 +494,7 @@ open class IdeStarter : ApplicationStarter {
     val project = when {
       !needToOpenProject -> null
       filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFileList(null, filesToLoad, "MacMenu")
-      commandLineArgs.isNotEmpty() -> loadProjectFromExternalCommandLine(commandLineArgs)
+      args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
       else -> null
     }
 
@@ -497,9 +523,12 @@ open class IdeStarter : ApplicationStarter {
 
   private fun showWizardAndWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
     val shouldShowWelcomeFrame = !willOpenProject || JetBrainsProtocolHandler.getCommand() != null
-    val showWelcomeFrame = when (val doShowWelcomeFrame = if (shouldShowWelcomeFrame) WelcomeFrame.prepareToShow() else null) {
-      null -> null
-      else -> Runnable {
+    val doShowWelcomeFrame = if (shouldShowWelcomeFrame) WelcomeFrame.prepareToShow() else null
+    val showWelcomeFrame = if (doShowWelcomeFrame == null) {
+      null
+    }
+    else {
+      Runnable {
         doShowWelcomeFrame.run()
         lifecyclePublisher.welcomeScreenDisplayed()
       }

@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,8 +21,6 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
  * @author yole
  */
 public final class PyCharmCorePluginConfigurator {
-  private static final String DISPLAYED_PROPERTY = "PyCharm.initialConfigurationShown";
-
   PyCharmCorePluginConfigurator() {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration")) {
@@ -59,14 +56,6 @@ public final class PyCharmCorePluginConfigurator {
 
     ActionManager.getInstance().unregisterAction("RunAnything");
 
-    if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-        @Override
-        public void welcomeScreenDisplayed() {
-          ApplicationManager.getApplication().invokeLater(() -> propertiesComponent.setValue(DISPLAYED_PROPERTY, "true"));
-        }
-      });
-    }
     for (ConfigurableEP<Configurable> ep : Configurable.APPLICATION_CONFIGURABLE.getExtensionList()) {
       if ("com.jetbrains.python.documentation.PythonDocumentationConfigurable".equals(ep.id)) {
         ep.displayName = "External Documentation";

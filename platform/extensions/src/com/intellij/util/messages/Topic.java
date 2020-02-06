@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages;
 
 import org.jetbrains.annotations.NonNls;
@@ -22,6 +22,10 @@ public class Topic<L> {
     this(listenerClass.getSimpleName(), listenerClass, BroadcastDirection.TO_CHILDREN);
   }
 
+  public Topic(@NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection) {
+    this(listenerClass.getSimpleName(), listenerClass, broadcastDirection);
+  }
+
   public Topic(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection) {
     myDisplayName = displayName;
     myListenerClass = listenerClass;
@@ -29,7 +33,7 @@ public class Topic<L> {
   }
 
   /**
-   * @return    human-readable name of the current topic. Is intended to be used in informational/logging purposes only
+   * @return human-readable name of the current topic. Is intended to be used in informational/logging purposes only
    */
   @NotNull
   @NonNls

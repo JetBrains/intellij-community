@@ -39,7 +39,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
@@ -142,16 +145,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     }
 
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
-
-    if (UIUtil.hasLeakingAppleListeners()) {
-      UIUtil.addAwtListener(event -> {
-        if (event.getID() == ContainerEvent.COMPONENT_ADDED) {
-          if (((ContainerEvent)event).getChild() instanceof JViewport) {
-            UIUtil.removeLeakingAppleListeners();
-          }
-        }
-      }, AWTEvent.CONTAINER_EVENT_MASK, application);
-    }
   }
 
   @Override

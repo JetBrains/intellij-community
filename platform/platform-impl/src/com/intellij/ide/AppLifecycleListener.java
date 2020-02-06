@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.project.Project;
@@ -12,11 +12,9 @@ import java.util.List;
 
 /**
  * Listener for application lifecycle events.
- *
- * @author yole
  */
 public interface AppLifecycleListener {
-  Topic<AppLifecycleListener> TOPIC = Topic.create("Application lifecycle notifications", AppLifecycleListener.class);
+  Topic<AppLifecycleListener> TOPIC = new Topic<>(AppLifecycleListener.class, Topic.BroadcastDirection.NONE);
 
   /**
    * @deprecated use {@link #appFrameCreated(List)}

@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.ui.UINumericRange;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -58,11 +60,28 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
   private String myDefaultProjectDirectory = "";
 
-  public static GeneralSettings getInstance(){
+  private static final String CONFIGURED_PROPERTY = "GeneralSettings.initiallyConfigured";
+
+  public static GeneralSettings getInstance() {
     return ServiceManager.getService(GeneralSettings.class);
   }
 
   public GeneralSettings() {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return;
+    }
+
+    boolean disableOnlyTips = PlatformUtils.isPyCharmEducational() || PlatformUtils.isRubyMine();
+    if (disableOnlyTips || PlatformUtils.isWebStorm()) {
+      PropertiesComponent propertyManager = PropertiesComponent.getInstance();
+      if (!propertyManager.isValueSet(CONFIGURED_PROPERTY)) {
+        propertyManager.setValue(CONFIGURED_PROPERTY, true);
+        setShowTipsOnStartup(false);
+        if (!disableOnlyTips) {
+          setUseSafeWrite(false);
+        }
+      }
+    }
   }
 
   public void addPropertyChangeListener(@NotNull String propertyName, @NotNull Disposable parentDisposable, @NotNull PropertyChangeListener listener) {
@@ -82,8 +101,8 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
     return myShowTipsOnStartup;
   }
 
-  public void setShowTipsOnStartup(boolean b) {
-    myShowTipsOnStartup = b;
+  public void setShowTipsOnStartup(boolean value) {
+    myShowTipsOnStartup = value;
   }
 
   public boolean isReopenLastProject() {
@@ -177,8 +196,8 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
     return myUseSafeWrite;
   }
 
-  public void setUseSafeWrite(final boolean useSafeWrite) {
-    myUseSafeWrite = useSafeWrite;
+  public void setUseSafeWrite(boolean value) {
+    myUseSafeWrite = value;
   }
 
   @NotNull
