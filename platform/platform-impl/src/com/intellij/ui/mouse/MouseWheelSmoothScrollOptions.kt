@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mouse
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -15,7 +16,7 @@ import java.awt.geom.CubicCurve2D
 import java.awt.geom.Point2D
 import javax.swing.JComponent
 
-internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction("Smooth Scroll Options") {
+internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val settings = UISettings.instance.state
     val points = settings.animatedScrollingCurvePoints
@@ -28,14 +29,14 @@ internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction("Smooth Scr
     myBezierPainter.minimumSize = Dimension(300, 200)
 
     dialog(
-      title = "Smooth Scroll Options",
+      title = IdeBundle.message("title.smooth.scrolling.options"),
       panel = panel {
         lateinit var c: CellBuilder<JBCheckBox>
         row {
-          c = checkBox("Animated smooth scrolling", settings::animatedScrolling)
+          c = checkBox(IdeBundle.message("checkbox.smooth.scrolling.animated"), settings::animatedScrolling)
         }
         row {
-          row("Duration") {
+          row(IdeBundle.message("label.smooth.scrolling.duration")) {
             cell {
               spinner(settings::animatedScrollingDuration, 0, 2000, 50).enableIf(c.selected)
               label("ms")
