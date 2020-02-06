@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl.validations;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
@@ -36,10 +37,6 @@ public class ArrayValidation implements JsonSchemaValidation {
     final JsonArrayValueAdapter asArray = value.getAsArray();
     if (asArray == null) return;
     final List<JsonValueAdapter> elements = asArray.getElements();
-    if (schema.getMinLength() != null && elements.size() < schema.getMinLength()) {
-      consumer.error("Array is shorter than " + schema.getMinLength(), value.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
-      return;
-    }
     checkArrayItems(value, elements, schema, consumer, options);
   }
 
@@ -60,7 +57,7 @@ public class ArrayValidation implements JsonSchemaValidation {
         if (entry.getValue().size() > 1) {
           for (JsonValueAdapter item: entry.getValue()) {
             if (!item.shouldCheckAsValue()) continue;
-            consumer.error("Item is not unique", item.getDelegate(), JsonErrorPriority.TYPE_MISMATCH);
+            consumer.error(JsonBundle.message("schema.validation.not.unique"), item.getDelegate(), JsonErrorPriority.TYPE_MISMATCH);
           }
         }
       }
@@ -75,7 +72,7 @@ public class ArrayValidation implements JsonSchemaValidation {
         }
       }
       if (!match) {
-        consumer.error("No match for 'contains' rule", array.getDelegate(), JsonErrorPriority.MEDIUM_PRIORITY);
+        consumer.error(JsonBundle.message("schema.validation.array.not.contains"), array.getDelegate(), JsonErrorPriority.MEDIUM_PRIORITY);
       }
     }
     if (schema.getItemsSchema() != null) {
@@ -91,7 +88,7 @@ public class ArrayValidation implements JsonSchemaValidation {
         }
         else {
           if (!Boolean.TRUE.equals(schema.getAdditionalItemsAllowed())) {
-            consumer.error("Additional items are not allowed", arrayValue.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+            consumer.error(JsonBundle.message("schema.validation.array.no.extra"), arrayValue.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
           }
           else if (schema.getAdditionalItemsSchema() != null) {
             consumer.checkObjectBySchemaRecordErrors(schema.getAdditionalItemsSchema(), arrayValue);
@@ -100,10 +97,10 @@ public class ArrayValidation implements JsonSchemaValidation {
       }
     }
     if (schema.getMinItems() != null && list.size() < schema.getMinItems()) {
-      consumer.error("Array is shorter than " + schema.getMinItems(), array.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+      consumer.error(JsonBundle.message("schema.validation.array.shorter.than", schema.getMinItems()), array.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
     }
     if (schema.getMaxItems() != null && list.size() > schema.getMaxItems()) {
-      consumer.error("Array is longer than " + schema.getMaxItems(), array.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+      consumer.error(JsonBundle.message("schema.validation.array.longer.than",  schema.getMaxItems()), array.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
     }
   }
 }
