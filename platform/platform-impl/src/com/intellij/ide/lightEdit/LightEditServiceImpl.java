@@ -338,6 +338,9 @@ public class LightEditServiceImpl implements LightEditService,
 
   @Override
   public void appClosing() {
+    myFrameWrapper.getFrame().setVisible(false);
+    disposeFrameWrapper();
+    Disposer.dispose(myEditorManager);
     myLightEditProjectManager.close();
   }
 }
