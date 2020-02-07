@@ -5,14 +5,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.sh.codeInsight.processor.ShFunctionNewProcessor;
+import com.intellij.sh.codeInsight.processor.ShFunctionDeclarationProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
-  private static final ShFunctionResolver RESOLVER = new ShFunctionResolver();
-
   public ShFunctionReference(@NotNull PsiElement element) {
     super(element, TextRange.create(0, element.getTextLength()));
   }
@@ -20,7 +20,12 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
   @Nullable
   @Override
   public PsiElement resolve() {
-    ShFunctionNewProcessor functionProcessor = new ShFunctionNewProcessor(myElement.getText());
+    return CachedValuesManager.getCachedValue(myElement, () -> CachedValueProvider.Result.create(resolveFunction(), myElement.getContainingFile()));
+  }
+
+  @Nullable
+  private PsiElement resolveFunction() {
+    ShFunctionDeclarationProcessor functionProcessor = new ShFunctionDeclarationProcessor(myElement.getText());
     PsiTreeUtil.treeWalkUp(functionProcessor, myElement , null, ResolveState.initial());
     return functionProcessor.getFunction();
   }

@@ -1,42 +1,35 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.codeInsight.processor;
 
-import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.psi.ShFunctionDefinition;
 import com.intellij.sh.psi.ShFunctionName;
-import com.intellij.sh.psi.impl.ShLazyBlockImpl;
-import com.intellij.sh.psi.impl.ShLazyDoBlockImpl;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 public class ShFunctionDeclarationProcessor implements PsiScopeProcessor {
-  // Key in the map is a parent of element(scope of function declaration e.g block for locally defined functions or file for global functions)
-  private final Map<PsiElement, MultiMap<String, ShFunctionName>> functionsDeclarationByScope = new HashMap<>();
-  @Override
-  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-    if (element instanceof ShFunctionDefinition) {
-      ShFunctionDefinition functionDefinition = (ShFunctionDefinition)element;
-      PsiElement parent = PsiTreeUtil.findFirstParent(functionDefinition, Conditions.instanceOf(ShLazyDoBlockImpl.class,
-                                                                                                ShLazyBlockImpl.class,
-                                                                                                ShFile.class));
-      assert parent != null : "Parent for element should be at least file";
-      ShFunctionName functionName = functionDefinition.getFunctionName();
-      assert functionName != null : "Function name can't ne null";
-      functionsDeclarationByScope.computeIfAbsent(parent, key -> MultiMap.create()).putValue(functionName.getText(), functionName);
-    }
-    return true;
+  private final String myFunctionName;
+  private ShFunctionName myResult;
+
+  public ShFunctionDeclarationProcessor(String name) {
+    myFunctionName = name;
   }
 
-  @NotNull
-  public Map<PsiElement, MultiMap<String, ShFunctionName>> getFunctionsDeclarationWithScope() {
-    return functionsDeclarationByScope;
+  @Override
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+    if (!(element instanceof ShFunctionDefinition)) return true;
+    ShFunctionDefinition functionDefinition = (ShFunctionDefinition)element;
+    ShFunctionName functionName = functionDefinition.getFunctionName();
+    assert functionName != null : "Function name can't ne null";
+    if (!functionName.getText().equals(myFunctionName)) return true;
+    myResult = functionName;
+    return false;
+  }
+
+  @Nullable
+  public ShFunctionName getFunction() {
+    return myResult;
   }
 }

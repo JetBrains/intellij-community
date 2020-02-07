@@ -7,6 +7,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.sh.psi.ResolveUtil;
 import com.intellij.sh.psi.ShCompositeElement;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
