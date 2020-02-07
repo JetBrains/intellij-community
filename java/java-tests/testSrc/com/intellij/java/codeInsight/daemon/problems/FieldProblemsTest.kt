@@ -188,6 +188,82 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
     }
   }
 
+  fun testReportProblemWhenTargetFileRemoved() {
+    val targetClass = myFixture.addClass("""
+      package foo;
+      public class A {
+        public static String field;
+      }
+    """.trimIndent())
+
+    val refClass = myFixture.addClass("""
+      package bar;
+      import foo.A;
+      class B {
+        void test() {
+          String aField = A.field;
+        }
+      }
+    """.trimIndent())
+
+    val dummyClass = myFixture.addClass("class Dummy {}")
+
+    doTest(dummyClass) { problemsCollector ->
+      val file = targetClass.containingFile.virtualFile
+      WriteCommandAction.runWriteCommandAction(project) { file.delete(this) }
+      myFixture.doHighlighting()
+      assertTrue(hasReportedProblems<PsiLocalVariable>(refClass, problemsCollector))
+    }
+  }
+
+  fun testReportProblemWhenTargetFileMoved() {
+    val targetClass = myFixture.addClass("""
+      package foo;
+      public class A {
+        public static String field;
+      }
+    """.trimIndent())
+
+    val fooRefClass = myFixture.addClass("""
+      package foo;
+      class FooRef {
+        void test() {
+          String aField = A.field;
+        }
+      }
+    """.trimIndent())
+
+    val barRefClass = myFixture.addClass("""
+      package bar;
+      import foo.A;
+      class BarRef {
+        void test() {
+          String aField = A.field;
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) { problemsCollector ->
+      changeField(targetClass) {
+        val modifiers = it.modifierList!!
+        modifiers.setModifierProperty(PsiModifier.PUBLIC, false)
+      }
+      assertTrue(hasReportedProblems<PsiLocalVariable>(barRefClass, problemsCollector))
+
+      val barRefClassOwner = barRefClass.containingFile as PsiClassOwner
+      val destDir = MoveClassesOrPackagesUtil.chooseDestinationPackage(project, barRefClassOwner.packageName, null)!!
+      barRefClass.containingFile.virtualFile
+
+      val packageWrapper = PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(destDir))
+      val moveDestination = SingleSourceRootMoveDestination(packageWrapper, destDir)
+      MoveClassesOrPackagesProcessor(project, arrayOf(targetClass), moveDestination, true, true, null).run()
+      myFixture.checkHighlighting()
+
+      assertEmpty(problemsCollector.getProblems(barRefClass.containingFile.virtualFile))
+      assertTrue(hasReportedProblems<PsiLocalVariable>(fooRefClass, problemsCollector))
+    }
+  }
+
   fun testMakeFinalFieldPublic() {
     val targetClass = myFixture.addClass("""
       package foo;
