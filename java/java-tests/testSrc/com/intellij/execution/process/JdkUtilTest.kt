@@ -2,6 +2,7 @@
 package com.intellij.execution.process
 
 import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
@@ -122,9 +123,10 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     val cmd = parameters.toCommandLine(request, environmentFactory.targetConfiguration)
     filesToDelete = cmd.filesToDeleteOnTermination
 
-    val actual = cmd.build().prepareCommandLine(LocalTargetEnvironment(request))
+    val actual = ParametersList()
+    actual.addParametersString(cmd.build().getCommandPresentation(LocalTargetEnvironment(request)))
     val toCompare = mutableListOf<String>()
-    actual.forEachIndexed { i, arg ->
+    actual.parameters.forEachIndexed { i, arg ->
       if (i > 0 && !arg.startsWith("-Dfile.encoding=")) {
         toCompare += when {
           arg.contains(File.pathSeparatorChar) -> arg.splitToSequence(File.pathSeparatorChar).map { mapPath(it) }.joinToString(":")

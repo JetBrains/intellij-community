@@ -123,10 +123,8 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     if (content != null) {
       content.forEach((key, value) -> addConsoleFilters(new ArgumentFileFilter(key, value)));
     }
-    //todo[remoteServers]: invent the new method for building presentation string
-    String commandRepresentation = ParametersList.join(targetedCommandLine.prepareCommandLine(remoteEnvironment));
-
-    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process, commandRepresentation,
+    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process,
+                                                                        targetedCommandLine.getCommandPresentation(remoteEnvironment),
                                                                         targetedCommandLine.getCharset(),
                                                                         targetedCommandLineBuilder.getFilesToDeleteOnTermination());
     ProcessTerminatedListener.attach(handler);

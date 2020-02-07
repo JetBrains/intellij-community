@@ -5,6 +5,8 @@ import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.value.TargetValue;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.execution.CommandLineArgumentEncoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -49,7 +51,7 @@ public final class TargetedCommandLine {
   /**
    * {@link GeneralCommandLine#getPreparedCommandLine()}
    */
-  public List<String> prepareCommandLine(@NotNull TargetEnvironment target) throws ExecutionException {
+  public String getCommandPresentation(@NotNull TargetEnvironment target) throws ExecutionException {
     String command = resolvePromise(myExePath.getTargetValue(), "exe path");
     if (command == null) {
       throw new ExecutionException("Resolved value for exe path is null");
@@ -58,10 +60,12 @@ public final class TargetedCommandLine {
     for (TargetValue<String> parameter : myParameters) {
       parameters.add(resolvePromise(parameter.getTargetValue(), "parameter"));
     }
-    return CommandLineUtil.toCommandLine(command, parameters, target.getRemotePlatform().getPlatform());
+    StringBuilder escapedCommand = new StringBuilder(command);
+    CommandLineArgumentEncoder.DEFAULT_ENCODER.encodeArgument(escapedCommand);
+    return StringUtil.join(CommandLineUtil.toCommandLine(escapedCommand.toString(), parameters, target.getRemotePlatform().getPlatform()), " ");
   }
 
-  public List<String> collectCommandsSynchronously(@NotNull TargetEnvironment target) throws ExecutionException {
+  public List<String> collectCommandsSynchronously() throws ExecutionException {
     String command = resolvePromise(myExePath.getTargetValue(), "exe path");
     if (command == null) {
       throw new ExecutionException("Resolved value for exe path is null");
