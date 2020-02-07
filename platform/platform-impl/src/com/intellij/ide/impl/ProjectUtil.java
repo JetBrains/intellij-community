@@ -55,6 +55,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 
 import static com.intellij.platform.PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR;
+import static com.intellij.util.containers.ContainerUtil.filter;
 
 public final class ProjectUtil {
   private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
@@ -160,17 +161,29 @@ public final class ProjectUtil {
       return null;
     }
 
-    ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile, /* onlyIfExistingProjectFile = */ false);
-    if (provider == null) {
+    List<ProjectOpenProcessor> processors = ProjectOpenProcessor.getOpenProcessors(virtualFile, /* onlyIfExistingProjectFile = */ false);
+    if (processors.isEmpty()) {
       return null;
     }
 
-    Project project = provider.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame);
+    ProjectOpenProcessor processor;
+    if (processors.size() == 1) {
+      processor = processors.get(0);
+    }
+    else {
+      processor = selectOpenProcessor(filter(processors, p -> !(p instanceof PlatformProjectOpenProcessor)),
+                                      virtualFile);
+      if (processor == null) {
+        return null;
+      }
+    }
+
+    Project project = processor.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame);
     if (project == null) {
       return null;
     }
 
-    if (provider instanceof PlatformProjectOpenProcessor) {
+    if (processor instanceof PlatformProjectOpenProcessor) {
       project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
     }
 
@@ -183,6 +196,11 @@ public final class ProjectUtil {
       }, ModalityState.NON_MODAL, project.getDisposed());
     });
     return project;
+  }
+
+  @Nullable
+  private static ProjectOpenProcessor selectOpenProcessor(@NotNull List<ProjectOpenProcessor> providers, @NotNull VirtualFile file) {
+    return new SelectProjectOpenProcessorDialog(providers, file).showAndGetChoice();
   }
 
   @Nullable
