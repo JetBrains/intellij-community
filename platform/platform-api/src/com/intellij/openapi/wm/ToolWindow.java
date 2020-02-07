@@ -75,6 +75,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @throws IllegalStateException if tool window isn't installed.
    */
+  @NotNull
   ToolWindowAnchor getAnchor();
 
   /**
@@ -109,6 +110,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @throws IllegalStateException if tool window isn't installed.
    */
+  @NotNull
   ToolWindowType getType();
 
   /**
@@ -203,10 +205,9 @@ public interface ToolWindow extends BusyObject {
   @NotNull
   Disposable getDisposable();
 
-  default void setHelpId(@NonNls String helpId) {
+  default void setHelpId(@NotNull @NonNls String helpId) {
   }
 
-  @Nullable
   default String getHelpId() {
     return null;
   }

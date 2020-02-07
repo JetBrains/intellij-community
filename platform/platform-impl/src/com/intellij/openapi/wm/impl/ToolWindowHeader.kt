@@ -31,9 +31,11 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import javax.swing.plaf.PanelUI
 
-abstract class ToolWindowHeader internal constructor(private val toolWindow: ToolWindowImpl,
-                                                     private val contentUi: ToolWindowContentUi,
-                                                     private val gearProducer: Supplier<ActionGroup>) :
+abstract class ToolWindowHeader internal constructor(
+  private val toolWindow: ToolWindowImpl,
+  private val contentUi: ToolWindowContentUi,
+  private val gearProducer: Supplier<ActionGroup>
+) :
   JPanel(MigLayout(createLayoutConstraints(0, 0).noVisualPadding().fill(), ConstraintParser.parseColumnConstraints("[grow][pref!]"))),
   UISettingsListener, DataProvider {
   private var image: BufferedImage? = null
@@ -54,16 +56,20 @@ abstract class ToolWindowHeader internal constructor(private val toolWindow: Too
     @Suppress("LeakingThis")
     add(westPanel, CC().grow())
     ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true)
-    toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, object : ActionGroup(), DumbAware {
-      private val children by lazy<Array<AnAction>> {
-        val tabListAction = ActionManager.getInstance().getAction("TabList")
-        arrayOf(tabListAction, actionGroup, ShowOptionsAction(), HideAction())
-      }
+    toolbar = ActionManager.getInstance().createActionToolbar(
+      ActionPlaces.TOOLWINDOW_TITLE,
+      object : ActionGroup(), DumbAware {
+        private val children by lazy<Array<AnAction>> {
+          val tabListAction = ActionManager.getInstance().getAction("TabList")
+          arrayOf(tabListAction, actionGroup, ShowOptionsAction(), HideAction())
+        }
 
-      override fun getChildren(e: AnActionEvent?) = children
+        override fun getChildren(e: AnActionEvent?) = children
 
-      override fun isDumbAware() = true
-    }, true)
+        override fun isDumbAware() = true
+      },
+      true
+    )
 
     @Suppress("LeakingThis")
     toolbar.setTargetComponent(this)
@@ -75,37 +81,43 @@ abstract class ToolWindowHeader internal constructor(private val toolWindow: Too
     @Suppress("LeakingThis")
     add(component)
 
-    westPanel.addMouseListener(object : PopupHandler() {
-      override fun invokePopup(comp: Component, x: Int, y: Int) {
-        contentUi.showContextMenu(comp, x, y, toolWindow.popupGroup, contentUi.contentManager.selectedContent)
-      }
-    })
-    westPanel.addMouseListener(object : MouseAdapter() {
-      override fun mouseClicked(e: MouseEvent) {
-        toolWindow.fireActivated()
-      }
-    })
-
-    @Suppress("LeakingThis")
-    addMouseListener(object : MouseAdapter() {
-      override fun mouseReleased(e: MouseEvent) {
-        if (e.isPopupTrigger) {
-          return
+    westPanel.addMouseListener(
+      object : PopupHandler() {
+        override fun invokePopup(comp: Component, x: Int, y: Int) {
+          contentUi.showContextMenu(comp, x, y, toolWindow.popupGroup, contentUi.contentManager.selectedContent)
         }
-
-        if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
-          if (e.isAltDown) {
-            toolWindow.fireHidden()
-          }
-          else {
-            toolWindow.fireHiddenSide()
-          }
-        }
-        else {
+      }
+    )
+    westPanel.addMouseListener(
+      object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
           toolWindow.fireActivated()
         }
       }
-    })
+    )
+
+    @Suppress("LeakingThis")
+    addMouseListener(
+      object : MouseAdapter() {
+        override fun mouseReleased(e: MouseEvent) {
+          if (e.isPopupTrigger) {
+            return
+          }
+
+          if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
+            if (e.isAltDown) {
+              toolWindow.fireHidden()
+            }
+            else {
+              toolWindow.fireHiddenSide()
+            }
+          }
+          else {
+            toolWindow.fireActivated()
+          }
+        }
+      }
+    )
 
     isOpaque = true
     border = JBUI.Borders.empty(0)
@@ -116,12 +128,14 @@ abstract class ToolWindowHeader internal constructor(private val toolWindow: Too
         return true
       }
     }.installOn(westPanel)
-    westPanel.addMouseListener(object : MouseAdapter() {
-      override fun mouseReleased(e: MouseEvent) {
-        val runnable = Runnable { dispatchEvent(SwingUtilities.convertMouseEvent(e.component, e, this@ToolWindowHeader)) }
-        SwingUtilities.invokeLater(runnable)
+    westPanel.addMouseListener(
+      object : MouseAdapter() {
+        override fun mouseReleased(e: MouseEvent) {
+          val runnable = Runnable { dispatchEvent(SwingUtilities.convertMouseEvent(e.component, e, this@ToolWindowHeader)) }
+          SwingUtilities.invokeLater(runnable)
+        }
       }
-    })
+    )
   }
 
   override fun getData(dataId: String): Any? {
@@ -148,7 +162,7 @@ abstract class ToolWindowHeader internal constructor(private val toolWindow: Too
     clearCaches()
   }
 
-  fun setTabActions(actions: Array<AnAction?>) {
+  fun setTabActions(actions: Array<AnAction>) {
     if (toolbarWest == null) {
       initWestToolBar(westPanel)
     }
@@ -231,7 +245,7 @@ abstract class ToolWindowHeader internal constructor(private val toolWindow: Too
     return Dimension(size.width, height)
   }
 
-  private inner class ShowOptionsAction internal constructor() : DumbAwareAction() {
+  private inner class ShowOptionsAction : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
       val inputEvent = e.inputEvent
       val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, gearProducer.get())
@@ -249,7 +263,7 @@ abstract class ToolWindowHeader internal constructor(private val toolWindow: Too
     }
   }
 
-  private inner class HideAction internal constructor() : DumbAwareAction() {
+  private inner class HideAction : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
       hideToolWindow()
     }

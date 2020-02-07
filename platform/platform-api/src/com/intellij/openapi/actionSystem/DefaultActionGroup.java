@@ -40,7 +40,7 @@ public class DefaultActionGroup extends ActionGroup {
    * Contains instances of Pair
    */
   private final List<Pair<AnAction, Constraints>> myPairs = ContainerUtil.createLockFreeCopyOnWriteList();
-  private int myModificationStamp = 0;
+  private int myModificationStamp;
 
   public DefaultActionGroup() {
     this(null, false);
@@ -424,7 +424,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  public final void addAll(AnAction @NotNull ... actions) {
+  public final void addAll(@NotNull AnAction @NotNull ... actions) {
     if (actions.length == 0) {
       return;
     }
