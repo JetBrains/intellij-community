@@ -102,5 +102,13 @@ public class ArrayValidation implements JsonSchemaValidation {
     if (schema.getMaxItems() != null && list.size() > schema.getMaxItems()) {
       consumer.error(JsonBundle.message("schema.validation.array.longer.than",  schema.getMaxItems()), array.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
     }
+
+    // these two are not correct by the schema spec, but are used in some schemas
+    if (schema.getMinLength() != null && list.size() < schema.getMinLength()) {
+      consumer.error(JsonBundle.message("schema.validation.array.shorter.than", schema.getMinLength()), array.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+    }
+    if (schema.getMaxLength() != null && list.size() > schema.getMaxLength()) {
+      consumer.error(JsonBundle.message("schema.validation.array.longer.than",  schema.getMaxLength()), array.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+    }
   }
 }
