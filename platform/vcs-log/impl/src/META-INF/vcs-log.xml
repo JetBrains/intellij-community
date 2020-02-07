@@ -173,6 +173,7 @@
       <reference id="Vcs.Log.GoToParent"/>
       <separator/>
     </group>
+    <group id="Vcs.Log.Toolbar.LeftCorner"/>
     <group id="Vcs.Log.Toolbar.RightCorner">
       <reference id="Vcs.Log.ResumeIndexing"/>
       <reference id="Vcs.Log.GoToRef"/>

@@ -20,6 +20,7 @@ public class VcsLogActionPlaces {
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
   public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar.Internal";
   public static final String TOOLBAR_RIGHT_CORNER_ACTION_GROUP = "Vcs.Log.Toolbar.RightCorner";
+  public static final String TOOLBAR_LEFT_CORNER_ACTION_GROUP = "Vcs.Log.Toolbar.LeftCorner";
   public static final String PRESENTATION_SETTINGS_ACTION_GROUP = "Vcs.Log.PresentationSettings";
   public static final String TEXT_FILTER_SETTINGS_ACTION_GROUP = "Vcs.Log.TextFilterSettings";
   public static final String FILE_HISTORY_TOOLBAR_ACTION_GROUP = "Vcs.FileHistory.Toolbar";
