@@ -266,9 +266,11 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
       if (candidate == null) {
         candidate = innerModel.findNoneSdkItem();
       }
-      if (candidate != null) {
-        setSelectedItem(candidate);
+      if (candidate == null) {
+        candidate = myModel.showProjectSdkItem();
       }
+
+      setSelectedItem(candidate);
       return;
     }
 
