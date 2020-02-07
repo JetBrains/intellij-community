@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ public class ArchiveFileType implements FileType {
   @Override
   @NotNull
   public String getDescription() {
-    return IdeBundle.message("filetype.description.archive.files");
+    return CoreBundle.message("filetype.description.archive.files");
   }
 
   @Override
