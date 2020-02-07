@@ -64,7 +64,7 @@ public class SimpleEditorPreview implements PreviewPanel {
                                                     page.getAdditionalHighlightingTagToColorKeyMap());
     myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(
       myHighlightsExtractor.extractHighlights(page.getDemoText(), myHighlightData), // text without tags
-      10, 3, -1, myOptions.getSelectedScheme(), false);
+      myOptions.getSelectedScheme(), false);
     if (page instanceof EditorCustomization) {
       ((EditorCustomization)page).customize(myEditor);
     }

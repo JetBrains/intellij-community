@@ -50,7 +50,7 @@ public class FontEditorPreview implements PreviewPanel{
 
     @Nls String text = PropertiesComponent.getInstance().getValue(PREVIEW_TEXT_KEY, getIDEDemoText());
 
-    myEditor = (EditorEx)createPreviewEditor(text, 10, 3, -1, mySchemeSupplier.get(), editable);
+    myEditor = (EditorEx)createPreviewEditor(text, mySchemeSupplier.get(), editable);
     registerRestoreAction(myEditor);
     installTrafficLights(myEditor);
   }
@@ -88,7 +88,7 @@ public class FontEditorPreview implements PreviewPanel{
     markupModel.setErrorStripeVisible(true);
   }
 
-  static Editor createPreviewEditor(String text, int column, int line, int selectedLine, EditorColorsScheme scheme, boolean editable) {
+  static Editor createPreviewEditor(String text, EditorColorsScheme scheme, boolean editable) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument(text);
     EditorEx editor = (EditorEx) (editable ? editorFactory.createEditor(editorDocument) : editorFactory.createViewer(editorDocument));
@@ -103,14 +103,6 @@ public class FontEditorPreview implements PreviewPanel{
     settings.setAdditionalLinesCount(0);
     settings.setRightMarginShown(true);
     settings.setRightMargin(60);
-
-    LogicalPosition pos = new LogicalPosition(line, column);
-    editor.getCaretModel().moveToLogicalPosition(pos);
-    if (selectedLine >= 0) {
-      editor.getSelectionModel().setSelection(editorDocument.getLineStartOffset(selectedLine),
-                                              editorDocument.getLineEndOffset(selectedLine));
-    }
-
     return editor;
   }
 
