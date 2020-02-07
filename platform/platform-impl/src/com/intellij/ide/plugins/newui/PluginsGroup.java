@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexander Lobas
@@ -57,8 +59,9 @@ public class PluginsGroup {
 
   public void titleWithEnabled(@NotNull MyPluginModel pluginModel) {
     int enabled = 0;
+    Map<PluginId, Boolean> enabledMap = pluginModel.getEnabledMap();
     for (IdeaPluginDescriptor descriptor : descriptors) {
-      if (pluginModel.isEnabled(descriptor)) {
+      if (enabledMap.get(descriptor.getPluginId()) != null && pluginModel.isEnabled(descriptor)) {
         enabled++;
       }
     }
