@@ -87,7 +87,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     tabsLayout = new TabContentLayout(this);
     this.window = window;
     this.contentComponent = contentComponent;
-    contentComponent.setFocusable(false);
 
     getCurrentLayout().init(contentManager);
 
