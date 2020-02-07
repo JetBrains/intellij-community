@@ -66,7 +66,7 @@ public class FontEditorPreview implements PreviewPanel{
     editor.installPopupHandler(new ContextMenuPopupHandler.Simple(group));
   }
 
-  public static String getIDEDemoText() {
+  private static String getIDEDemoText() {
     return
       ApplicationNamesInfo.getInstance().getFullProductName() +
       " is a full-featured IDE\n" +
@@ -78,7 +78,7 @@ public class FontEditorPreview implements PreviewPanel{
       // Create empty lines in order to make the gutter wide enough to display two-digits line numbers (other previews use long text
       // and we don't want different gutter widths on color pages switching).
       "\n" +
-      "\n" +
+      "<!-- -- != := === >= >- >=> |-> -> <$> </> #[ |||> |= ~@\n" +
       "\n";
   }
 

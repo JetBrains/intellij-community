@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
-import com.intellij.application.options.colors.FontEditorPreview;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
@@ -37,8 +36,7 @@ import java.util.Map;
 public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable, EditorCustomization {
   private static final String STRING_TO_FOLD = "Folded text with highlighting";
 
-  private static final String ADDITIONAL_DEMO_TEXT =
-    "\n" +
+  private static final String DEMO_TEXT =
     "<todo>//TODO: Visit JB Web resources:</todo>\n"+
     "JetBrains Home Page: <hyperlink_f>http://www.jetbrains.com</hyperlink_f>\n" +
     "JetBrains Developer Community: <hyperlink>https://www.jetbrains.com/devnet</hyperlink>\n" +
@@ -224,7 +222,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
   @Override
   @NotNull
   public String getDemoText() {
-    return FontEditorPreview.getIDEDemoText() + ADDITIONAL_DEMO_TEXT;
+    return DEMO_TEXT;
   }
 
   @Override
