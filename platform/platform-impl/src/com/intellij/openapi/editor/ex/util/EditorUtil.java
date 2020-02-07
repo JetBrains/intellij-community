@@ -750,7 +750,9 @@ public final class EditorUtil {
     // for injected editors disposal will happen only when host editor is disposed,
     // but this seems to be the best we can do (there are no notifications on disposal of injected editor)
     Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
-    if (hostEditor instanceof EditorImpl) Disposer.register(((EditorImpl)hostEditor).getDisposable(), disposable);
+    if (hostEditor instanceof EditorImpl) {
+      Disposer.register(((EditorImpl)hostEditor).getDisposable(), disposable);
+    }
     else LOG.warn("Cannot watch for disposal of " + editor);
   }
 
