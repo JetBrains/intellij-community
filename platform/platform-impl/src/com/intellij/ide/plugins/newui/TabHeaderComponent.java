@@ -7,6 +7,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.JBColor;
@@ -23,6 +25,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -113,7 +117,38 @@ public class TabHeaderComponent extends JComponent {
           createActionGroupPopup(null, actions, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
         HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), actionGroupPopup);
-        actionGroupPopup.show(new RelativePoint(toolbarComponent.getComponent(0), getPopupPoint()));
+        Component component = toolbarComponent.getComponent(0);
+
+        Container dialogComponent = ((JComponent)component).getRootPane().getParent();
+        if (dialogComponent != null) {
+          ComponentAdapter listener = new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+              movePopup();
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent e) {
+              movePopup();
+            }
+
+            private void movePopup() {
+              if (actionGroupPopup.isVisible()) {
+                actionGroupPopup.setLocation(new RelativePoint(component, getPopupPoint()).getScreenPoint());
+                actionGroupPopup.pack(true, true);
+              }
+            }
+          };
+          dialogComponent.addComponentListener(listener);
+          actionGroupPopup.addListener(new JBPopupListener() {
+            @Override
+            public void onClosed(@NotNull LightweightWindowEvent event) {
+              dialogComponent.removeComponentListener(listener);
+            }
+          });
+        }
+
+        actionGroupPopup.show(new RelativePoint(component, getPopupPoint()));
       }
 
       private Point getPopupPoint() {
