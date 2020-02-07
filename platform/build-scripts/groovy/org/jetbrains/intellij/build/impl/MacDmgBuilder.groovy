@@ -21,6 +21,7 @@ class MacDmgBuilder {
   private final MacHostProperties macHostProperties
   private final String remoteDir
   private final MacDistributionCustomizer customizer
+  private static final def ENV_FOR_MAC_BUILDER = ['APPL_USER', 'APPL_PASSWORD', 'ARTIFACTORY_URL']
 
   private MacDmgBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, String remoteDir, MacHostProperties macHostProperties) {
     this.customizer = customizer
@@ -267,8 +268,15 @@ class MacDmgBuilder {
                            notarize ? "yes" : "no",
                            customizer.bundleIdentifier,
       ]
+      def env = ''
+      ENV_FOR_MAC_BUILDER.each {
+        def value = System.getenv(it)
+        if (value != null && !value.isEmpty()) {
+          env += "$it=$value "
+        }
+      }
 
-      sshExec("$remoteDir/signapp.sh ${args.join(" ")}", "signapp.log")
+      sshExec("$env$remoteDir/signapp.sh ${args.join(" ")}", "signapp.log")
 
       buildContext.messages.progress("Downloading signed ${targetFile.name} from ${macHostProperties.host}")
       ant.delete(file: targetFile.path)
