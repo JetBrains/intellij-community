@@ -99,15 +99,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
           boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true) &&
                              !SystemProperties.getBooleanProperty("build.is.personal", false)
-          // With second JRE
           def jreManager = buildContext.bundledJreManager
-          if (jreManager.doBundleSecondJre()) {
-            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
-                                          jreManager.findSecondBundledJreArchiveForMac(), jreManager.isSecondBundledJreModular(),
-                                          jreManager.secondJreSuffix(),
-                                          false) // Disabled because JBR 8 cannot be notarized successfully
-          }
-          // With first aka main JRE
+          // With JRE
           File jreArchive = jreManager.findJreArchive(OsFamily.MACOS)
           if (jreArchive.file) {
             MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,

@@ -67,51 +67,21 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(String winDistPath) {
-    def jreSuffix = buildContext.bundledJreManager.secondJreSuffix()
-    String jreDirectoryPath64 = null
-    //do not include win32 launcher into winzip with 9+ jbr bundled
-    List<String> excludeList = ["bin/${buildContext.productProperties.baseFileName}.exe", "bin/${buildContext.productProperties.baseFileName}.exe.vmoptions"]
-    if (buildContext.bundledJreManager.doBundleSecondJre()) {
-      jreDirectoryPath64 = buildContext.bundledJreManager.extractSecondBundledJreForWin(JvmArchitecture.x64)
-      List<String> jreDirectoryPaths = [jreDirectoryPath64]
-
-      if (customizer.buildZipArchive) {
-         buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath, [])
-      }
-    }
-
-    if (customizer.getBaseDownloadUrlForJre() != null) {
-      File archive = buildContext.bundledJreManager.findJreArchive(OsFamily.WINDOWS,JvmArchitecture.x32)
-      if (archive != null && archive.exists()) {
-        //prepare folder with jre x86 for win archive
-        def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS, JvmArchitecture.x32)
-        buildContext.ant.tar(tarfile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}", longfile: "gnu", compression: "gzip") {
-          tarfileset(dir: "${jreDirectoryPath}/jre32") {
-            include(name: "**/**")
-          }
-        }
-      }
+    if (customizer.include32BitLauncher) {
+      buildContext.bundledJreManager.repackageX86Jre(OsFamily.WINDOWS)
     }
 
     def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
     if (customizer.buildZipArchive) {
-      buildWinZip([jreDirectoryPath], ".win", winDistPath, excludeList)
+      buildWinZip([jreDirectoryPath], ".win", winDistPath)
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
-      if (buildContext.bundledJreManager.doBundleSecondJre()) {
-        generateProductJson(productJsonDir, jreDirectoryPath64 != null)
-        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath64], [])
-        new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64)
-          .buildInstaller(winDistPath, productJsonDir,
-                          buildContext.bundledJreManager.secondJreSuffix(),
-                          !buildContext.bundledJreManager.secondBundledJreModular)
-      }
       generateProductJson(productJsonDir, jreDirectoryPath != null)
       new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath], [])
       new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath)
-        .buildInstaller(winDistPath, productJsonDir, '', buildContext.bundledJreManager.is32JreSupported())
+        .buildInstaller(winDistPath, productJsonDir, '', buildContext.windowsDistributionCustomizer.include32BitLauncher)
     }
   }
 
@@ -245,7 +215,7 @@ IDS_VM_OPTIONS=$vmOptions
     return patchedFile
   }
 
-  private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath, List<String> excludeList = [] ) {
+  private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
       def targetPath = "${buildContext.paths.artifacts}/${baseName}${zipNameSuffix}.zip"
@@ -257,11 +227,7 @@ IDS_VM_OPTIONS=$vmOptions
       dirs += [productJsonDir]
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {
-          zipfileset(dir: it, prefix: zipPrefix) {
-            excludeList.each {
-              exclude(name: it)
-            }
-          }
+          zipfileset(dir: it, prefix: zipPrefix)
         }
       }
 

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import org.gradle.internal.os.OperatingSystem
 
 import java.util.concurrent.TimeUnit
@@ -9,11 +10,6 @@ def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").
 def jreBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
 def jrePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
 createJbreTasks(jreBuild, jreVersion, targetOs, jrePrefix)
-
-if (System.getProperty('intellij.build.bundle.second.jre', 'false').toBoolean()) {
-  def secondJreBuild = System.getProperty("intellij.build.bundled.second.jre.build", secondJreBuild)
-  createJbreTasks(secondJreBuild, 8, targetOs)
-}
 
 /**
  * Update this method together with:
@@ -180,5 +176,5 @@ static def jrePlatformsToDownload(targetOs) {
 }
 
 static def archToDownload(platform, is32BitArchSupported) {
-  is32BitArchSupported && platform == 'windows' ? ['x86', 'x64'] : ['x64']
+  is32BitArchSupported && platform != 'osx' ? ['x86', 'x64'] : ['x64']
 }

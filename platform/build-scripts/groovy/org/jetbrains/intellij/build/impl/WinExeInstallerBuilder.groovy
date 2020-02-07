@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
@@ -59,7 +59,6 @@ class WinExeInstallerBuilder {
   }
 
   void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String suffix, boolean jre32BitVersionSupported) {
-
     if (!SystemInfo.isWindows && !SystemInfo.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
       return
@@ -100,13 +99,6 @@ class WinExeInstallerBuilder {
       }
 
       generator.generateInstallerFile(new File(box, "nsiconf/idea_win.nsh"))
-
-      if (buildContext.bundledJreManager.doBundleSecondJre()) {
-        String jre32Dir = buildContext.bundledJreManager.extractSecondBundledJreForWin(JvmArchitecture.x32)
-        if (jre32Dir != null) {
-          generator.addDirectory(jre32Dir)
-        }
-      }
 
       generator.generateUninstallerFile(new File(box, "nsiconf/unidea_win.nsh"))
     }
@@ -178,8 +170,7 @@ class WinExeInstallerBuilder {
 
     def extensionsList = getFileAssociations()
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
-    def linkToJre = customizer.getBaseDownloadUrlForJre() != null ?
-                    "${customizer.getBaseDownloadUrlForJre()}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}" : null
+    def linkToX86Jre = customizer.include32BitLauncher ? buildContext.bundledJreManager.x86JreDownloadUrl(OsFamily.WINDOWS) : null
     new File(box, "nsiconf/strings.nsi").text = """
 !define MANUFACTURER "${buildContext.applicationInfo.shortCompanyName}"
 !define MUI_PRODUCT  "${customizer.getFullNameIncludingEdition(buildContext.applicationInfo)}"
@@ -192,7 +183,7 @@ class WinExeInstallerBuilder {
 !define PRODUCT_HEADER_FILE "headerlogo.bmp"
 !define ASSOCIATION "$fileAssociations"
 !define UNINSTALL_WEB_PAGE "${customizer.getUninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
-!define LINK_TO_JRE "$linkToJre"
+!define LINK_TO_JRE "$linkToX86Jre"
 !define JRE_32BIT_VERSION_SUPPORTED "${jre32BitVersionSupported ? 1 : 0 }"
 
 ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed

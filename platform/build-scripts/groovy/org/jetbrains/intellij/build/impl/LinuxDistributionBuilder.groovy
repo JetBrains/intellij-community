@@ -52,16 +52,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           buildTarGz(null, osSpecificDistPath, "-no-jbr")
         }
       }
-      if (buildContext.bundledJreManager.doBundleSecondJre()) {
-        String jreDirectoryPath = buildContext.bundledJreManager.extractSecondBundledJreForLinux()
-        if (jreDirectoryPath != null) {
-          buildTarGz(jreDirectoryPath, osSpecificDistPath, buildContext.bundledJreManager.secondJreSuffix())
-        }
-        else {
-          buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
-        }
+
+      if (customizer.includeX86Files) {
+        buildContext.bundledJreManager.repackageX86Jre(OsFamily.LINUX)
       }
-      // Used for Snap packages
+
       String jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX)
       buildTarGz(jreDirectoryPath, osSpecificDistPath, "")
 
