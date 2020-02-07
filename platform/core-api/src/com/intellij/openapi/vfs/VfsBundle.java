@@ -17,6 +17,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.DynamicBundle;
+import com.intellij.core.CoreBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -27,6 +28,9 @@ import org.jetbrains.annotations.PropertyKey;
 public class VfsBundle extends DynamicBundle {
 
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    if (!ourInstance.containsKey(key)) {
+      return CoreBundle.message(key, params);
+    }
     return ourInstance.getMessage(key, params);
   }
 

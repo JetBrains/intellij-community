@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -199,7 +200,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (getName().equals(newName)) return;
     if (!getFileSystem().isValidName(newName)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
+      throw new IOException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
     getFileSystem().renameFile(requestor, this, newName);
@@ -378,19 +379,19 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
-      throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
+      throw new IOException(CoreBundle.message("directory.create.wrong.parent.error"));
     }
 
     if (!isValid()) {
-      throw new IOException(VfsBundle.message("invalid.directory.create.files"));
+      throw new IOException(CoreBundle.message("invalid.directory.create.files"));
     }
 
     if (!getFileSystem().isValidName(name)) {
-      throw new IOException(VfsBundle.message("directory.invalid.name.error", name));
+      throw new IOException(CoreBundle.message("directory.invalid.name.error", name));
     }
 
     if (findChild(name) != null) {
-      throw new IOException(VfsBundle.message("file.create.already.exists.error", getUrl(), name));
+      throw new IOException(CoreBundle.message("file.create.already.exists.error", getUrl(), name));
     }
 
     return getFileSystem().createChildDirectory(requestor, this, name);
@@ -409,19 +410,19 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   @NotNull
   public VirtualFile createChildData(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
-      throw new IOException(VfsBundle.message("file.create.wrong.parent.error"));
+      throw new IOException(CoreBundle.message("file.create.wrong.parent.error"));
     }
 
     if (!isValid()) {
-      throw new IOException(VfsBundle.message("invalid.directory.create.files"));
+      throw new IOException(CoreBundle.message("invalid.directory.create.files"));
     }
 
     if (!getFileSystem().isValidName(name)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", name));
+      throw new IOException(CoreBundle.message("file.invalid.name.error", name));
     }
 
     if (findChild(name) != null) {
-      throw new IOException(VfsBundle.message("file.create.already.exists.error", getUrl(), name));
+      throw new IOException(CoreBundle.message("file.create.already.exists.error", getUrl(), name));
     }
 
     return getFileSystem().createChildFile(requestor, this, name);
@@ -456,7 +457,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     if (getFileSystem() != newParent.getFileSystem()) {
-      throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
+      throw new IOException(CoreBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
@@ -468,11 +469,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   @NotNull
   public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull @NonNls String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
-      throw new IOException(VfsBundle.message("file.copy.error", newParent.getPresentableUrl()));
+      throw new IOException(CoreBundle.message("file.copy.error", newParent.getPresentableUrl()));
     }
 
     if (!newParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
+      throw new IOException(CoreBundle.message("file.copy.target.must.be.directory"));
     }
 
     return EncodingRegistry.doActionAndRestoreEncoding(this,

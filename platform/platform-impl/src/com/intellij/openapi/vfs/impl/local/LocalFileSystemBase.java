@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -285,7 +286,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
     if (!isValidName(dir)) {
-      throw new IOException(VfsBundle.message("directory.invalid.name.error", dir));
+      throw new IOException(CoreBundle.message("directory.invalid.name.error", dir));
     }
 
     if (!parent.exists() || !parent.isDirectory()) {
@@ -316,7 +317,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
     if (!isValidName(file)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", file));
+      throw new IOException(CoreBundle.message("file.invalid.name.error", file));
     }
 
     if (!parent.exists() || !parent.isDirectory()) {
@@ -465,7 +466,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public void renameFile(Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException {
     if (!isValidName(newName)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
+      throw new IOException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
     boolean sameName = !isCaseSensitive() && newName.equalsIgnoreCase(file.getName());
@@ -506,7 +507,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
                               @NotNull VirtualFile newParent,
                               @NotNull String copyName) throws IOException {
     if (!isValidName(copyName)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", copyName));
+      throw new IOException(CoreBundle.message("file.invalid.name.error", copyName));
     }
 
     if (!file.exists()) {

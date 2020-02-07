@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -237,11 +238,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
-      throw new IOException(VfsBundle.message("file.copy.error", newParent.getPresentableUrl()));
+      throw new IOException(CoreBundle.message("file.copy.error", newParent.getPresentableUrl()));
     }
 
     if (!newParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
+      throw new IOException(CoreBundle.message("file.copy.target.must.be.directory"));
     }
 
     return EncodingRegistry.doActionAndRestoreEncoding(this, () -> ourPersistence.copyFile(requestor, this, newParent, copyName));
@@ -252,7 +253,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     if (getFileSystem() != newParent.getFileSystem()) {
-      throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
+      throw new IOException(CoreBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
@@ -285,7 +286,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   private void validateName(@NotNull String name) throws IOException {
     if (!getFileSystem().isValidName(name)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", name));
+      throw new IOException(CoreBundle.message("file.invalid.name.error", name));
     }
   }
 
@@ -306,7 +307,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   public void setNewName(@NotNull String newName) {
     if (!getFileSystem().isValidName(newName)) {
-      throw new IllegalArgumentException(VfsBundle.message("file.invalid.name.error", newName));
+      throw new IllegalArgumentException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
     VirtualDirectoryImpl parent = getParent();

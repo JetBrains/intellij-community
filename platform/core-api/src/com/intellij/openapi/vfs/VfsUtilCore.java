@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
@@ -479,11 +480,11 @@ public class VfsUtilCore {
           path = subURL.getPath();
         }
         catch (MalformedURLException e) {
-          throw new RuntimeException(VfsBundle.message("url.parse.unhandled.exception"), e);
+          throw new RuntimeException(CoreBundle.message("url.parse.unhandled.exception"), e);
         }
       }
       else {
-        throw new RuntimeException(new IOException(VfsBundle.message("url.parse.error", url.toExternalForm())));
+        throw new RuntimeException(new IOException(CoreBundle.message("url.parse.error", url.toExternalForm())));
       }
     }
     if (SystemInfo.isWindows) {

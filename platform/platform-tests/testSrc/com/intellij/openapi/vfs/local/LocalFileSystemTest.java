@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -733,7 +734,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
         fail("invalid file name should have been rejected");
       }
       catch (IOException e) {
-        assertEquals(VfsBundle.message("file.invalid.name.error", "a/b"), e.getMessage());
+        assertEquals(CoreBundle.message("file.invalid.name.error", "a/b"), e.getMessage());
       }
     });
   }
