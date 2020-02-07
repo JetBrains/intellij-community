@@ -144,8 +144,8 @@ internal class SnapshotUpdater(private val prevSnapshot: Snapshot?,
       return false
     }
 
-    private fun api(psiClass: PsiClass): JBIterable<PsiMember> =
-      SyntaxTraverser.psiTraverser(psiClass).filter(PsiMember::class.java).filter { !it.hasModifier(PsiModifier.PRIVATE) }
+    internal fun api(psiElement: PsiElement): JBIterable<PsiMember> =
+      SyntaxTraverser.psiTraverser(psiElement).filter(PsiMember::class.java).filter { !it.hasModifier(PsiModifier.PRIVATE) }
 
     private fun PsiMember.hasModifier(modifier: String) = modifierList?.hasModifierProperty(modifier) ?: false
 

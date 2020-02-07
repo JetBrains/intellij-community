@@ -2,36 +2,38 @@
 package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.problems.SnapshotUpdater.Companion.api
+import com.intellij.codeInsight.daemon.problems.ui.ProjectProblemsView
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiClassOwner
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
+import com.intellij.pom.Navigatable
+import com.intellij.psi.*
+import com.intellij.psi.search.GlobalSearchScope
 
 internal data class Change(val prevMember: Member?, val curMember: Member?, val containingFile: PsiFile)
+internal data class Problem(val file: VirtualFile, val message: String?, val place: Navigatable)
 
 @Service
-class ProblemAnalyzer(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
+class ProblemAnalyzer(private val project: Project) : DaemonCodeAnalyzer.DaemonListener, FileEditorManagerListener {
 
-  val psiManager = PsiManager.getInstance(project)
+  private val psiManager = PsiManager.getInstance(project)
+  private val usageSink = UsageSink(project)
 
   init {
     DumbService.getInstance(project).runWhenSmart {
-      project.messageBus.connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, this)
-    }
-  }
-
-  class MyStartupActivity : StartupActivity {
-    override fun runActivity(project: Project) {
-      if (!Registry.`is`("project.problems.view") && !ApplicationManager.getApplication().isUnitTestMode) return
-      project.service<ProblemAnalyzer>()
+      val connection = project.messageBus.connect()
+      connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, this)
+      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
     }
   }
 
@@ -39,11 +41,70 @@ class ProblemAnalyzer(private val project: Project) : DaemonCodeAnalyzer.DaemonL
     fileEditors.mapNotNull { it.file }.forEach { analyzeFile(it) }
   }
 
+  override fun selectionChanged(event: FileEditorManagerEvent) {
+    val file = event.newFile ?: return
+    val psiFile = psiManager.findFile(file) as? PsiClassOwner ?: return
+    val scope = psiFile.useScope as? GlobalSearchScope ?: return
+    DumbService.getInstance(project).smartInvokeLater {
+      if (!psiFile.isValid) return@smartInvokeLater
+      val changes = api(psiFile).mapNotNullTo(mutableSetOf()) { memberChange(it, psiFile, scope) }
+      reportProblems(changes)
+    }
+  }
+
+  private fun memberChange(psiMember: PsiMember, containingFile: PsiFile, scope: GlobalSearchScope): Change? {
+    val member = Member.create(psiMember, scope) ?: return null
+    return Change(null, member, containingFile)
+  }
+
   private fun analyzeFile(file: VirtualFile) {
     if (!file.isValid) return
     val psiFile = psiManager.findFile(file) as? PsiClassOwner ?: return
     for (psiClass in psiFile.classes) {
-      SnapshotUpdater.update(psiClass)
+      val changes = SnapshotUpdater.update(psiClass)
+      if (changes.isEmpty()) continue
+      reportProblems(changes)
+    }
+  }
+
+  private fun reportProblems(changes: Set<Change>) {
+    val problemsView = ProjectProblemsView.SERVICE.getInstance(project)
+    problemsView.executor().execute {
+      val problems = ReadAction.nonBlocking<List<Problem>> {
+        val problems = mutableListOf<Problem>()
+        for ((prevMember, curMember, containingFile) in changes) {
+          if (project.isDisposed) return@nonBlocking emptyList()
+          val problemsAfterChange = usageSink.checkUsages(prevMember, curMember, containingFile)
+          if (problemsAfterChange != null) problems.addAll(problemsAfterChange)
+        }
+        return@nonBlocking problems
+      }.executeSynchronously()
+      if (problems.isEmpty()) return@execute
+
+      ApplicationManager.getApplication().invokeLater {
+        updateProblems(problems, problemsView)
+      }
+    }
+  }
+
+  private fun updateProblems(newProblems: List<Problem>, problemsView: ProjectProblemsView) {
+    val problemsByFile: Map<VirtualFile, MutableMap<Navigatable, String?>> = newProblems.groupingBy { it.file }.aggregate { _, acc, el, _ ->
+      val newAcc = acc ?: mutableMapOf()
+      newAcc[el.place] = el.message
+      newAcc
+    }
+    for ((file, updatedProblems) in problemsByFile) {
+      for ((place, message) in updatedProblems) {
+        problemsView.removeProblems(file, place)
+        if (message != null) problemsView.addProblem(file, message, place)
+      }
+    }
+  }
+
+  class MyStartupActivity : StartupActivity {
+    override fun runActivity(project: Project) {
+      if (!Registry.`is`("project.problems.view") && !ApplicationManager.getApplication().isUnitTestMode) return
+      project.service<ProblemAnalyzer>()
     }
   }
 }
