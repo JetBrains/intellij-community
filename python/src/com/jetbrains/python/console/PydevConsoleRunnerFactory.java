@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathMapper;
 import com.jetbrains.python.buildout.BuildoutFacet;
+import com.jetbrains.python.run.EnvironmentController;
+import com.jetbrains.python.run.PlainEnvironmentController;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -128,9 +130,13 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                                consoleParameters.mySettingsProvider, consoleParameters.myRerunAction, consoleParameters.mySetupFragment);
   }
 
-  public static void putIPythonEnvFlag(@NotNull Project project, Map<String, String> envs) {
+  public static void putIPythonEnvFlag(@NotNull Project project, @NotNull Map<String, String> envs) {
+    putIPythonEnvFlag(project, new PlainEnvironmentController(envs));
+  }
+
+  public static void putIPythonEnvFlag(@NotNull Project project, @NotNull EnvironmentController environmentController) {
     String ipythonEnabled = PyConsoleOptions.getInstance(project).isIpythonEnabled() ? "True" : "False";
-    envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
+    environmentController.putFixedValue(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
   }
 
   @Nullable

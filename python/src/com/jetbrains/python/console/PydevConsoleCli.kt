@@ -6,10 +6,15 @@ package com.jetbrains.python.console
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.ParamsGroup
+import com.intellij.execution.target.HostPort
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonCommandLineState
+import com.jetbrains.python.run.PythonExecution
+import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -19,9 +24,13 @@ const val MODE_OPTION = "mode"
 const val MODE_OPTION_SERVER_VALUE = "server"
 const val MODE_OPTION_CLIENT_VALUE = "client"
 
+const val HOST_OPTION = "host"
 const val PORT_OPTION = "port"
 
 private fun getOptionString(name: String, value: Any): String = "--$name=$value"
+
+private fun getOptionString(name: String, value: TargetEnvironmentFunction<*>): TargetEnvironmentFunction<String> =
+  value.andThen { it: Any? -> "--$name=$it" }
 
 /**
  * Adds new or replaces existing [PythonCommandLineState.GROUP_SCRIPT]
@@ -105,4 +114,24 @@ private fun ParamsGroup.appendClientModeParameters(port: Int) {
 @Throws(ExecutionException::class)
 fun waitForPythonConsoleServerToBeStarted(process: Process) {
   PydevConsoleRunnerImpl.getRemotePortFromProcess(process)
+}
+
+fun createPythonConsoleScriptInServerMode(serverPort: Int, targetEnvironmentRequest: TargetEnvironmentRequest): PythonExecution {
+  val pythonScriptExecution = prepareHelperScriptExecution(PythonHelper.CONSOLE, targetEnvironmentRequest)
+  pythonScriptExecution.addParameter(getOptionString(MODE_OPTION, MODE_OPTION_SERVER_VALUE))
+  pythonScriptExecution.addParameter(getOptionString(PORT_OPTION, serverPort))
+  return pythonScriptExecution
+}
+
+/**
+ * @param ideServerPort           the host and port where the IDE being Python
+ *                                Console frontend listens for the connection
+ */
+fun createPythonConsoleScriptInClientMode(ideServerPort: TargetEnvironmentFunction<HostPort>,
+                                          targetEnvironmentRequest: TargetEnvironmentRequest): PythonExecution {
+  val pythonScriptExecution = prepareHelperScriptExecution(PythonHelper.CONSOLE, targetEnvironmentRequest)
+  pythonScriptExecution.addParameter(getOptionString(MODE_OPTION, MODE_OPTION_CLIENT_VALUE))
+  pythonScriptExecution.addParameter(getOptionString(HOST_OPTION, ideServerPort.andThen(HostPort::host)))
+  pythonScriptExecution.addParameter(getOptionString(PORT_OPTION, ideServerPort.andThen(HostPort::port)))
+  return pythonScriptExecution
 }
