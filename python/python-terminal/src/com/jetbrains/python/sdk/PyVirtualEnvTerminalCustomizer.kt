@@ -81,7 +81,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   override fun getConfigurable(project: Project): UnnamedConfigurable = object : UnnamedConfigurable {
     val settings = PyVirtualEnvTerminalSettings.getInstance(project)
 
-    var myCheckbox: JCheckBox = JCheckBox("Activate virtualenv")
+    var myCheckbox: JCheckBox = JCheckBox(PyTerminalBundle.message("activate.virtualenv.checkbox.text"))
 
     override fun createComponent() = myCheckbox
 
