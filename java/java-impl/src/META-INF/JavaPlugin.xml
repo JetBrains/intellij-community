@@ -526,6 +526,8 @@
 
     <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
 
+    <postStartupActivity implementation="com.intellij.codeInsight.daemon.problems.ProblemAnalyzer$MyStartupActivity"/>
+
     <bundledKeymap file="Visual Studio.xml"/>
     <bundledKeymap file="Eclipse.xml"/>
     <bundledKeymap file="Eclipse (Mac OS X).xml"/>
