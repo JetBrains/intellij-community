@@ -17,12 +17,17 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +37,8 @@ import java.awt.*;
 import java.util.function.Supplier;
 
 public class FontEditorPreview implements PreviewPanel{
+  private static final String PREVIEW_TEXT_KEY = "FontPreviewText";
+
   private final EditorEx myEditor;
 
   private final Supplier<? extends EditorColorsScheme> mySchemeSupplier;
@@ -41,11 +48,22 @@ public class FontEditorPreview implements PreviewPanel{
   public FontEditorPreview(final Supplier<? extends EditorColorsScheme> schemeSupplier, boolean editable) {
     mySchemeSupplier = schemeSupplier;
 
-    @Nls String text = getIDEDemoText();
+    @Nls String text = PropertiesComponent.getInstance().getValue(PREVIEW_TEXT_KEY, getIDEDemoText());
 
     myEditor = (EditorEx)createPreviewEditor(text, 10, 3, -1, mySchemeSupplier.get(), editable);
-
+    registerRestoreAction(myEditor);
     installTrafficLights(myEditor);
+  }
+
+  private static void registerRestoreAction(EditorEx editor) {
+    String originalGroupId = editor.getContextMenuGroupId();
+    AnAction originalGroup = originalGroupId == null ? null : ActionManager.getInstance().getAction(originalGroupId);
+    DefaultActionGroup group = new DefaultActionGroup();
+    if (originalGroup instanceof ActionGroup) {
+      group.addAll(((ActionGroup)originalGroup).getChildren(null));
+    }
+    group.add(new RestorePreviewTextAction());
+    editor.installPopupHandler(new ContextMenuPopupHandler.Simple(group));
   }
 
   public static String getIDEDemoText() {
@@ -125,8 +143,14 @@ public class FontEditorPreview implements PreviewPanel{
 
   @Override
   public void disposeUIResources() {
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    editorFactory.releaseEditor(myEditor);
+    String previewText = myEditor.getDocument().getText();
+    if (previewText.equals(getIDEDemoText())) {
+      PropertiesComponent.getInstance().unsetValue(PREVIEW_TEXT_KEY);
+    }
+    else {
+      PropertiesComponent.getInstance().setValue(PREVIEW_TEXT_KEY, previewText);
+    }
+    EditorFactory.getInstance().releaseEditor(myEditor);
   }
 
   private static class DumbTrafficLightRenderer implements ErrorStripeRenderer {
@@ -134,6 +158,28 @@ public class FontEditorPreview implements PreviewPanel{
     public void paint(Component c, Graphics g, Rectangle r) {
       Icon icon = AllIcons.General.InspectionsOK;
       icon.paintIcon(c, g, r.x, r.y);
+    }
+  }
+
+  private static class RestorePreviewTextAction extends DumbAwareAction {
+    private RestorePreviewTextAction() {
+      super(EditorBundle.message("restore.font.preview.text"), null, AllIcons.Actions.Rollback);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      e.getPresentation().setEnabledAndVisible(editor != null && !editor.getDocument().getText().equals(getIDEDemoText()));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      if (editor != null) {
+        WriteCommandAction.runWriteCommandAction(editor.getProject(), null, null, () -> {
+          editor.getDocument().setText(getIDEDemoText());
+        });
+      }
     }
   }
 }
