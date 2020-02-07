@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions
 
 import com.intellij.CommonBundle
@@ -9,8 +9,10 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import git4idea.DialogManager
 import git4idea.GitUtil
+import git4idea.changes.GitChangeUtils
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -54,9 +56,11 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
         indicator.text2 = "git ${gitCommand.name()} --abort" + GitUtil.mention(repository)
 
         val startHash = GitUtil.getHead(repository)
-        val handler = GitLineHandler(project, repository.root, gitCommand);
-        handler.addParameters("--abort");
-        val result = Git.getInstance().runCommand(handler);
+        val stagedChanges = GitChangeUtils.getStagedChanges(project, repository.root)
+
+        val handler = GitLineHandler(project, repository.root, gitCommand)
+        handler.addParameters("--abort")
+        val result = Git.getInstance().runCommand(handler)
 
         if (!result.success()) {
           VcsNotifier.getInstance(project).notifyError("$operationNameCapitalised Abort Failed", result.errorOutputAsHtmlString)
@@ -65,6 +69,7 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
           VcsNotifier.getInstance(project).notifySuccess("$operationNameCapitalised Abort Succeeded")
 
           GitUtil.updateAndRefreshChangedVfs(repository, startHash)
+          RefreshVFsSynchronously.refresh(stagedChanges, true)
         }
       }
     }.execute()

@@ -47,7 +47,8 @@ object RefreshVFsSynchronously {
   @JvmStatic
   fun updateChanges(changes: Collection<Change>) = refresh(changes, CHANGE_WRAPPER)
 
-  fun refresh(changes: Collection<FilePathChange>) = refresh(changes, FilePathChangeWrapper)
+  fun refresh(changes: Collection<FilePathChange>, isRollback: Boolean = false) =
+    refresh(changes, if (isRollback) REVERSED_FILE_PATH_CHANGE_WRAPPER else FILE_PATH_CHANGE_WRAPPER)
 
   private fun <T> refresh(changes: Collection<T>, wrapper: Wrapper<T>) {
     val files = mutableSetOf<File>()
@@ -70,6 +71,8 @@ object RefreshVFsSynchronously {
 
 private val CHANGE_WRAPPER = ChangeWrapper(false)
 private val REVERSED_CHANGE_WRAPPER = ChangeWrapper(true)
+private val FILE_PATH_CHANGE_WRAPPER = FilePathChangeWrapper(false)
+private val REVERSED_FILE_PATH_CHANGE_WRAPPER = FilePathChangeWrapper(true)
 
 private class ChangeWrapper(private val isReversed: Boolean) : Wrapper<Change> {
   private fun getBeforeRevision(change: Change): ContentRevision? = change.run { if (isReversed) afterRevision else beforeRevision }
@@ -82,12 +85,12 @@ private class ChangeWrapper(private val isReversed: Boolean) : Wrapper<Change> {
     change.run { getAfterRevision(this) == null || isMoved || isRenamed || isIsReplaced }
 }
 
-object FilePathChangeWrapper : Wrapper<FilePathChange> {
-  override fun getBeforePath(change: FilePathChange): FilePath? = change.beforePath
-  override fun getAfterPath(change: FilePathChange): FilePath? = change.afterPath
+private class FilePathChangeWrapper(private val isReversed: Boolean) : Wrapper<FilePathChange> {
+  override fun getBeforePath(change: FilePathChange): FilePath? = change.run { if (isReversed) afterPath else beforePath }
+  override fun getAfterPath(change: FilePathChange): FilePath? = change.run { if (isReversed) beforePath else afterPath }
 
   override fun isBeforePathDeleted(change: FilePathChange): Boolean =
-    change.run { afterPath == null || !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath) }
+    change.let { getAfterPath(it) == null || !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(getBeforePath(it), getAfterPath(it)) }
 }
 
 private interface Wrapper<T> {
