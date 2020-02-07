@@ -205,14 +205,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         continue;
       }
 
-      boolean enabled = isEnabled(descriptor.getPluginId());
-      if (enabled != descriptor.isEnabled()) {
-        if (!enabled) {
-          pluginDescriptorsToDisable.add(descriptor);
-        }
-        else {
-          pluginDescriptorsToEnable.add(descriptor);
-        }
+      PluginId pluginId = descriptor.getPluginId();
+      if (enabledMap.get(pluginId) == null) { // if enableMap contains null for id => enable/disable checkbox don't touch
+        continue;
+      }
+      if (isEnabled(pluginId)) {
+        pluginDescriptorsToEnable.add(descriptor);
+      }
+      else {
+        pluginDescriptorsToDisable.add(descriptor);
       }
     }
 
