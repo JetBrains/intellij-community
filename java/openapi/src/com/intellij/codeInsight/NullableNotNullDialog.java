@@ -46,7 +46,7 @@ public class NullableNotNullDialog extends DialogWrapper {
                                           new HashSet<>(manager.getInstrumentedNotNulls()), showInstrumentationOptions, true);
 
     init();
-    setTitle("Nullable/NotNull Configuration");
+    setTitle(InspectionsBundle.message("nullable.notnull.configuration.dialog.title"));
   }
 
   public static JButton createConfigureAnnotationsButton(Component context) {

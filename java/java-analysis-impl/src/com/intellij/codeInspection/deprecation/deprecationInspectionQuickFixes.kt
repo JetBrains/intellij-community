@@ -47,7 +47,7 @@ internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMe
     PsiFormatUtil.formatMethod(replacementMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME, 0)
 
   override fun getText(): String {
-    return "Replace method call with $myReplacementText"
+    return InspectionGadgetsBundle.message("replace.method.call.fix.text", myReplacementText)
   }
 
   @Nls
@@ -79,7 +79,7 @@ internal class ReplaceFieldReferenceFix(expr: PsiReferenceExpression, replacemen
   }
 
   override fun getText(): String {
-    return "Replace field reference with $myReplacementText"
+    return InspectionGadgetsBundle.message("replace.field.reference.fix.text", myReplacementText)
   }
 
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {

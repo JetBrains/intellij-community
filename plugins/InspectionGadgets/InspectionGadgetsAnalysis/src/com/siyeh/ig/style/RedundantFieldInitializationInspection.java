@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -48,7 +49,7 @@ public class RedundantFieldInitializationInspection extends BaseInspection imple
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Only warn on initialization to null", this, "onlyWarnOnNull");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.redundant.field.initialization.option"), this, "onlyWarnOnNull");
   }
 
   @Override

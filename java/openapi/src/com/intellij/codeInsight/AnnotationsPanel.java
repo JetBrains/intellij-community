@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
@@ -84,7 +85,7 @@ public class AnnotationsPanel {
     myTable = new JBTable(myTableModel, columnModel);
 
     if (showInstrumentationOptions) {
-      columnModel.getColumn(0).setHeaderValue("Annotation");
+      columnModel.getColumn(0).setHeaderValue(CodeInsightBundle.message("node.annotation.tooltip"));
 
       TableColumn checkColumn = new TableColumn(1, 100, new BooleanTableCellRenderer(), new BooleanTableCellEditor());
       columnModel.addColumn(checkColumn);
@@ -103,7 +104,7 @@ public class AnnotationsPanel {
           Component component = defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           if (component instanceof JComponent) {
             ((JComponent)component)
-              .setToolTipText(column == 1 ? "Add runtime assertions for notnull-annotated methods and parameters" : null);
+              .setToolTipText(column == 1 ? InspectionsBundle.message("nullable.notnull.annotations.runtime.instrumentation.tooltip") : null);
           }
           return component;
         }
@@ -151,7 +152,7 @@ public class AnnotationsPanel {
     }
     final JPanel panel = toolbarDecorator.createPanel();
     myComponent = new JPanel(new BorderLayout());
-    myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", false, JBUI.insetsTop(10)));
+    myComponent.setBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("nullable.notnull.annotations.panel.title", name), false, JBUI.insetsTop(10)));
     myComponent.add(panel);
     myComponent.setPreferredSize(new JBDimension(myComponent.getPreferredSize().width, 200));
 

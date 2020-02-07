@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -75,7 +76,7 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
       @NotNull
       @Override
       public String getFamilyName() {
-        return "Make 'default' the last case";
+        return InspectionsBundle.message("make.default.the.last.case.family.name");
       }
     };
   }

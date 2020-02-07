@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
@@ -38,7 +39,7 @@ public class InfiniteLoopStatementInspection extends BaseInspection {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore when placed in Thread.run", this, "myIgnoreInThreadTopLevel");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.infinite.loop.option"), this, "myIgnoreInThreadTopLevel");
   }
 
   @Override

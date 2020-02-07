@@ -100,7 +100,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (modifiers.isEmpty()) return false;
     if (modifiers.size() == 1) {
       target = modifiers.get(0);
-      setText("Make '" + identifier.getText() + "' " + target);
+      setText(IntentionPowerPackBundle.message("change.modifier.text", identifier.getText(), target));
     }
     else {
       setText(getFamilyName());

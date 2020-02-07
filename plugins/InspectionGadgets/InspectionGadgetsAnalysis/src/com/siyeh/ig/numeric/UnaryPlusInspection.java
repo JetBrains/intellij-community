@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -50,7 +51,7 @@ public class UnaryPlusInspection extends BaseInspection {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Only report in confusing binary or unary expression context", this,
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.unary.plus.unary.binary.option"), this,
                                           "onlyReportInsideBinaryExpression");
   }
 
