@@ -29,10 +29,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -210,39 +213,54 @@ public class ConfigurationContext {
     }
 
     final List<RuntimeConfigurationProducer> producers = findPreferredProducers();
-    if (myRuntimeConfiguration != null) {
-      if (producers != null) {
-        for (RuntimeConfigurationProducer producer : producers) {
-          final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
-          if (configuration != null && configuration.getConfiguration() == myRuntimeConfiguration) {
-            myExistingConfiguration.set(configuration);
-          }
-        }
-      }
-      for (RunConfigurationProducer producer : RunConfigurationProducer.getProducers(getProject())) {
-        RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(this);
-        if (configuration != null && configuration.getConfiguration() == myRuntimeConfiguration) {
-          myExistingConfiguration.set(configuration);
-        }
-      }
-    }
+    List<ExistingConfiguration> existingConfigurations = new ArrayList<>();
     if (producers != null) {
       for (RuntimeConfigurationProducer producer : producers) {
-        final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
+        RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
         if (configuration != null) {
-          myExistingConfiguration.set(configuration);
+          existingConfigurations.add(new ExistingConfiguration(configuration, null));
         }
       }
     }
-    for (RunConfigurationProducer producer : RunConfigurationProducer.getProducers(getProject())) {
+    for (RunConfigurationProducer<?> producer : RunConfigurationProducer.getProducers(getProject())) {
       RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(this);
       if (configuration != null) {
-        if (!Registry.is("suggest.all.run.configurations.from.context") || configuration.equals(myConfiguration)) {
-          myExistingConfiguration.set(configuration);
-        }
+        existingConfigurations.add(new ExistingConfiguration(configuration, producer));
       }
     }
+    myExistingConfiguration.set(findPreferredConfiguration(existingConfigurations, psiElement));
     return myExistingConfiguration.get();
+  }
+
+  @Nullable
+  private RunnerAndConfigurationSettings findPreferredConfiguration(@NotNull List<ExistingConfiguration> existingConfigurations,
+                                                                    @NotNull PsiElement psiElement) {
+    for (ExistingConfiguration configuration : existingConfigurations) {
+      RunnerAndConfigurationSettings settings = configuration.getSettings();
+      if (settings.equals(myConfiguration)) {
+        return settings;
+      }
+      if (myRuntimeConfiguration != null && settings.getConfiguration() == myRuntimeConfiguration) {
+        return settings;
+      }
+    }
+    if (Registry.is("suggest.all.run.configurations.from.context")) {
+      return null;
+    }
+    List<ConfigurationFromContext> contexts = ContainerUtil.mapNotNull(existingConfigurations, configuration -> {
+      if (configuration.getProducer() == null) {
+        return null;
+      }
+      return new ConfigurationFromContextImpl(
+        configuration.getProducer(), configuration.getSettings(),
+        psiElement);
+    });
+    ConfigurationFromContext min = Collections.min(contexts, ConfigurationFromContext.COMPARATOR);
+    if (min != null) {
+      return min.getConfigurationSettings();
+    }
+    ExistingConfiguration first = ContainerUtil.getFirstItem(existingConfigurations);
+    return first != null ? first.getSettings() : null;
   }
 
   @Nullable
@@ -334,5 +352,26 @@ public class ConfigurationContext {
       myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true);
     }
     return myConfigurationsFromContext;
+  }
+
+  private static class ExistingConfiguration {
+    private final RunnerAndConfigurationSettings myConfigurationSettings;
+    private final RunConfigurationProducer<?> myProducer;
+
+    private ExistingConfiguration(@NotNull RunnerAndConfigurationSettings configurationSettings,
+                                  @Nullable RunConfigurationProducer<?> producer) {
+      myConfigurationSettings = configurationSettings;
+      myProducer = producer;
+    }
+
+    @NotNull
+    private RunnerAndConfigurationSettings getSettings() {
+      return myConfigurationSettings;
+    }
+
+    @Nullable
+    private RunConfigurationProducer<?> getProducer() {
+      return myProducer;
+    }
   }
 }
