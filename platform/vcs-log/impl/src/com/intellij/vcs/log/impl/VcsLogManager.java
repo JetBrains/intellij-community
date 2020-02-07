@@ -119,6 +119,7 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   private VcsLogTabsWatcher getTabsWatcher() {
+    LOG.assertTrue(!myDisposed);
     if (myTabsLogRefresher == null) myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
     return myTabsLogRefresher;
   }
