@@ -159,5 +159,7 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
             executed = true
             hooks.forEach { it() }
         }
+
+        override fun enableDebug() { }
     }
 }
