@@ -35,9 +35,8 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
 
-  @Override
   @NotNull
-  public Set<VirtualFile> getModuleRootsToIterate() {
+  Set<VirtualFile> getModuleRootsToIterate() {
     return ReadAction.compute(() -> {
       if (myModule.isDisposed()) return Collections.emptySet();
       Set<VirtualFile> result = new LinkedHashSet<>();
