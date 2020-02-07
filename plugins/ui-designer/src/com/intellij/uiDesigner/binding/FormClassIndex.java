@@ -38,7 +38,7 @@ import java.util.*;
  * @author yole
  */
 public class FormClassIndex extends ScalarIndexExtension<String> {
-  @NonNls public static final ID<String, Void> NAME = ID.create("FormClassIndex");
+  @NonNls public static final ID<String, Void> NAME = ID.create("com.intellij.uiDesigner.FormClassIndex");
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
   @Override
