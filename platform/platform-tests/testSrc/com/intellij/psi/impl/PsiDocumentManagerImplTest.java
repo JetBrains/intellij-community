@@ -959,4 +959,27 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertEmpty(getPsiDocumentManager().getUncommittedDocuments());
   }
 
+  public void testDocumentIsUncommittedInsidePsiListener() {
+    PsiFile file = findFile(createFile());
+    Document document = getDocument(file);
+
+    AtomicBoolean called = new AtomicBoolean(true);
+
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void afterPsiChanged(boolean isPhysical) {
+        called.set(true);
+        assertFalse(getPsiDocumentManager().isCommitted(document));
+        assertTrue(getPsiDocumentManager().isUncommited(document));
+        assertSameElements(getPsiDocumentManager().getUncommittedDocuments(), document);
+      }
+    });
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      document.insertString(0, "a");
+      getPsiDocumentManager().commitDocument(document);
+    });
+    assertTrue(called.get());
+  }
+
 }

@@ -72,10 +72,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     myDocumentCommitProcessor = ApplicationManager.getApplication().getService(DocumentCommitProcessor.class);
     mySynchronizer = new PsiToDocumentSynchronizer(this, project.getMessageBus());
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
-
-    project.getMessageBus().connect().subscribe(PsiDocumentTransactionListener.TOPIC, (document, file) -> {
-      myUncommittedDocuments.remove(document);
-    });
   }
 
   @Override
