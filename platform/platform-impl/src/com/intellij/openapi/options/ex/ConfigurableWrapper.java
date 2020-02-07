@@ -161,7 +161,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   @Nullable
   @Override
   public JComponent createComponent() {
-    return getConfigurable().createComponent();
+    UnnamedConfigurable configurable = getConfigurable();
+    return configurable == null ? null : configurable.createComponent();
   }
 
   @Override
