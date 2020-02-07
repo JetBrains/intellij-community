@@ -24,6 +24,42 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
         )
     }
 
+    fun testInconsistentState1() {
+        doTest(
+            """
+                interface I {
+                    void foo(int p<caret>);
+                }
+            """.trimIndent(),
+            {
+                myFixture.type(", char c")
+            },
+            {
+                myFixture.type("/*")
+            },
+            expectedAvailability = Availability.Disabled
+        )
+    }
+
+    fun testInconsistentState2() {
+        doTest(
+            """
+                class C {
+                    public <caret>void foo(int p) {}
+                }
+            """.trimIndent(),
+            {
+                replaceTextAtCaret("void", "int")
+            },
+            {
+                editor.caretModel.moveToOffset(editor.caretModel.offset - "public ".length)
+                replaceTextAtCaret("public", "p")
+                editor.caretModel.moveToOffset(editor.caretModel.offset + 2)
+            },
+            expectedAvailability = Availability.Disabled
+        )
+    }
+
     fun testDuplicateParameter() {
         doTest(
             """

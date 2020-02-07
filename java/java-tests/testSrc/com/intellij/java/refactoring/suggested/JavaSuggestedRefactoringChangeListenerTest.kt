@@ -69,12 +69,12 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
             commitAll()
         }
 
-        perform {
+        perform("inconsistentState") {
             myFixture.type("/*")
             commitAll()
         }
 
-        perform {
+        perform("inconsistentState") {
             myFixture.type(" this is comment for parameter")
             commitAll()
         }
@@ -84,12 +84,12 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
             commitAll()
         }
 
-        perform {
+        perform("inconsistentState") {
             myFixture.type(", int p2 /*")
             commitAll()
         }
 
-        perform {
+        perform("inconsistentState") {
             myFixture.type("this is comment for another parameter")
             commitAll()
         }
@@ -238,7 +238,7 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
                   }
               """.trimIndent())
 
-        perform("editingStarted: '@NotNull\\n    public String foo()'") {
+        perform("editingStarted: '@NotNull\\n    public String foo()'", "inconsistentState") {
             myFixture.type("p")
             commitAll()
         }
