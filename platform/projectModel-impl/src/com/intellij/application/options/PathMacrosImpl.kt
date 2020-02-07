@@ -1,348 +1,200 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.application.options;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.application.options
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathMacroContributor;
-import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
-import org.jetbrains.jps.model.serialization.PathMacroUtil;
+import com.intellij.openapi.application.PathMacroContributor
+import com.intellij.openapi.application.PathMacros
+import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.util.containers.ContainerUtil
+import gnu.trove.THashSet
+import org.jdom.Element
+import org.jetbrains.jps.model.serialization.JpsGlobalLoader.PathVariablesSerializer
+import org.jetbrains.jps.model.serialization.PathMacroUtil
+import java.util.*
+import java.util.concurrent.atomic.AtomicLong
+import java.util.function.Consumer
+import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashMap
 
-import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+@State(name = "PathMacrosImpl", storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.PER_OS)])
+open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors: Boolean = true) : PathMacros(), PersistentStateComponent<Element?>, ModificationTracker {
+  @Volatile
+  private var legacyMacros: Map<String, String> = emptyMap()
 
-@State(
-  name = "PathMacrosImpl",
-  storages = @Storage(value = JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.PER_OS)
-)
-public class PathMacrosImpl extends PathMacros implements PersistentStateComponent<Element>, ModificationTracker {
-  public static final String IGNORED_MACRO_ELEMENT = "ignoredMacro";
-  public static final String MAVEN_REPOSITORY = "MAVEN_REPOSITORY";
+  @Volatile
+  private var macros: Map<String, String> = emptyMap()
+  private val modificationStamp = AtomicLong()
+  private val ignoredMacros = ContainerUtil.createLockFreeCopyOnWriteList<String>()
 
-  private static final Logger LOG = Logger.getInstance(PathMacrosImpl.class);
+  private var userMacroMapCache: Map<String, String>? = null
 
-  private static final Set<String> SYSTEM_MACROS = new THashSet<>();
+  companion object {
+    const val IGNORED_MACRO_ELEMENT = "ignoredMacro"
+    const val MAVEN_REPOSITORY = "MAVEN_REPOSITORY"
+    private val SYSTEM_MACROS: MutableSet<String> = THashSet()
 
-  private final Map<String, String> myLegacyMacros = new THashMap<>();
-  private final Map<String, String> myMacros = new LinkedHashMap<>();
-  private long myModificationStamp = 0;
-  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
-  private final List<String> myIgnoredMacros = ContainerUtil.createLockFreeCopyOnWriteList();
+    @JvmStatic
+    fun getInstanceEx() = getInstance() as PathMacrosImpl
 
-  private final AtomicClearableLazyValue<Map<String, String>> myUserMacroMapCache = new AtomicClearableLazyValue<Map<String, String>>() {
-    @NotNull
-    @Override
-    protected Map<String, String> compute() {
-      myLock.readLock().lock();
-      try {
-        if (myMacros.isEmpty()) {
-          return Collections.emptyMap();
-        }
-
-        LinkedHashMap<String, String> result = new LinkedHashMap<>();
-        result.putAll(myMacros);
-        return Collections.unmodifiableMap(result);
-      }
-      finally {
-        myLock.readLock().unlock();
-      }
-    }
-  };
-
-  static {
-    SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_HOME_DIR);
-    SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_PLUGINS_DIR);
-    SYSTEM_MACROS.add(PathMacroUtil.PROJECT_DIR_MACRO_NAME);
-    SYSTEM_MACROS.add(PathMacroUtil.MODULE_WORKING_DIR_NAME);
-    SYSTEM_MACROS.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
-    SYSTEM_MACROS.add(PathMacroUtil.USER_HOME_NAME);
-  }
-
-  public PathMacrosImpl() {
-    this(true);
-  }
-
-  public PathMacrosImpl(boolean loadContributors) {
-    if (loadContributors) {
-      for (PathMacroContributor contributor : PathMacroContributor.EP_NAME.getExtensionList()) {
-        contributor.registerPathMacros(this);
-      }
-
-      PathMacroContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<PathMacroContributor>() {
-        @Override
-        public void extensionAdded(@NotNull PathMacroContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
-          extension.registerPathMacros(PathMacrosImpl.this);
-        }
-      }, ApplicationManager.getApplication());
+    init {
+      SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_HOME_DIR)
+      SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_PLUGINS_DIR)
+      SYSTEM_MACROS.add(PathMacroUtil.PROJECT_DIR_MACRO_NAME)
+      SYSTEM_MACROS.add(PathMacroUtil.MODULE_WORKING_DIR_NAME)
+      SYSTEM_MACROS.add(PathMacroUtil.MODULE_DIR_MACRO_NAME)
+      SYSTEM_MACROS.add(PathMacroUtil.USER_HOME_NAME)
     }
   }
 
-  public static PathMacrosImpl getInstanceEx() {
-    return (PathMacrosImpl)getInstance();
+  override fun getUserMacroNames() = macros.keys
+
+  override fun getUserMacros() = macros
+
+  open fun removeToolMacroNames(result: Set<String?>) {
   }
 
-  @NotNull
-  @Override
-  public Set<String> getUserMacroNames() {
-    return myUserMacroMapCache.getValue().keySet();
+  override fun getSystemMacroNames(): Set<String> = SYSTEM_MACROS
+
+  override fun getIgnoredMacroNames(): Collection<String> = ignoredMacros
+
+  override fun setIgnoredMacroNames(names: Collection<String>) {
+    ignoredMacros.clear()
+    ignoredMacros.addAll(names)
+    modificationStamp.incrementAndGet()
   }
 
-  @Override
-  @NotNull
-  public Map<String, String> getUserMacros() {
-    return myUserMacroMapCache.getValue();
-  }
-
-  public void removeToolMacroNames(@NotNull Set<String> result) {
-  }
-
-  @NotNull
-  @Override
-  public Set<String> getSystemMacroNames() {
-    return SYSTEM_MACROS;
-  }
-
-  @NotNull
-  @Override
-  public Collection<String> getIgnoredMacroNames() {
-    return myIgnoredMacros;
-  }
-
-  @Override
-  public void setIgnoredMacroNames(@NotNull final Collection<String> names) {
-    try {
-      myLock.writeLock().lock();
-      myIgnoredMacros.clear();
-      myIgnoredMacros.addAll(names);
-    }
-    finally {
-      myModificationStamp++;
-      myLock.writeLock().unlock();
+  override fun addIgnoredMacro(name: String) {
+    if (!ignoredMacros.contains(name)) {
+      ignoredMacros.add(name)
     }
   }
 
-  @Override
-  public void addIgnoredMacro(@NotNull String name) {
-    if (!myIgnoredMacros.contains(name)) myIgnoredMacros.add(name);
+  override fun getModificationCount() = modificationStamp.get()
+
+  override fun isIgnoredMacroName(macro: String) = ignoredMacros.contains(macro)
+
+  override fun getAllMacroNames(): Set<String> {
+    return ContainerUtil.union(userMacroNames, systemMacroNames)
   }
 
-  @Override
-  public long getModificationCount() {
-    myLock.readLock().lock();
-    try {
-      return myModificationStamp;
-    }
-    finally {
-      myLock.readLock().unlock();
-    }
-  }
+  override fun getValue(name: String) = macros.get(name)
 
-  @Override
-  public boolean isIgnoredMacroName(@NotNull String macro) {
-    return myIgnoredMacros.contains(macro);
-  }
-
-  @NotNull
-  @Override
-  public Set<String> getAllMacroNames() {
-    return ContainerUtil.union(getUserMacroNames(), getSystemMacroNames());
-  }
-
-  @Nullable
-  @Override
-  public String getValue(@NotNull String name) {
-    try {
-      myLock.readLock().lock();
-      return myMacros.get(name);
-    }
-    finally {
-      myLock.readLock().unlock();
+  override fun removeAllMacros() {
+    if (macros.isNotEmpty()) {
+      macros = emptyMap()
+      userMacroModified()
     }
   }
 
-  @Override
-  public void removeAllMacros() {
-    try {
-      myLock.writeLock().lock();
-      myMacros.clear();
-      userMacroModified();
-    }
-    finally {
-      myLock.writeLock().unlock();
-    }
+  override fun getLegacyMacroNames(): Collection<String> = legacyMacros.keys
+
+  override fun setMacro(name: String, value: String?) {
+    doSetMacro(name, value)
   }
 
-  @NotNull
-  @Override
-  public Collection<String> getLegacyMacroNames() {
-    try {
-      myLock.readLock().lock();
-      // keyset should not escape the lock
-      return new THashSet<>(myLegacyMacros.keySet());
-    }
-    finally {
-      myLock.readLock().unlock();
-    }
-  }
-
-  @Override
-  public void setMacro(@NotNull String name, @Nullable String value) {
-    try {
-      myLock.writeLock().lock();
-
-      if (StringUtil.isEmptyOrSpaces(value)) {
-        if (myMacros.remove(name) != null) {
-          userMacroModified();
-        }
-        return;
+  private fun doSetMacro(name: String, value: String?): Boolean {
+    var macros = macros
+    if (value.isNullOrBlank()) {
+      if (!macros.containsKey(name)) {
+        return false
       }
 
-      String prevValue = myMacros.put(name, value);
-      if (!value.equals(prevValue)) {
-        userMacroModified();
-      }
+      macros = LinkedHashMap(macros)
+      macros.remove(name)
     }
-    finally {
-      myLock.writeLock().unlock();
-    }
-  }
-
-  private void userMacroModified() {
-    myModificationStamp++;
-    myUserMacroMapCache.drop();
-  }
-
-  @Override
-  public void addLegacyMacro(@NotNull String name, @NotNull String value) {
-    try {
-      myLock.writeLock().lock();
-      myLegacyMacros.put(name, value);
-      myMacros.remove(name);
-      userMacroModified();
-    }
-    finally {
-      myLock.writeLock().unlock();
-    }
-  }
-
-  @Override
-  public void removeMacro(@NotNull String name) {
-    try {
-      myLock.writeLock().lock();
-      LOG.assertTrue(myMacros.remove(name) != null);
-      userMacroModified();
-    }
-    finally {
-      myLock.writeLock().unlock();
-    }
-  }
-
-  @Nullable
-  @Override
-  public Element getState() {
-    try {
-      Element element = new Element("state");
-      myLock.readLock().lock();
-
-      for (Map.Entry<String, String> entry : myMacros.entrySet()) {
-        String value = entry.getValue();
-        if (!StringUtil.isEmptyOrSpaces(value)) {
-          final Element macro = new Element(JpsGlobalLoader.PathVariablesSerializer.MACRO_TAG);
-          macro.setAttribute(JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE, entry.getKey());
-          macro.setAttribute(JpsGlobalLoader.PathVariablesSerializer.VALUE_ATTRIBUTE, value);
-          element.addContent(macro);
-        }
+    else {
+      if (macros.get(name) == value) {
+        return false
       }
 
-      for (final String macro : myIgnoredMacros) {
-        final Element macroElement = new Element(IGNORED_MACRO_ELEMENT);
-        macroElement.setAttribute(JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE, macro);
-        element.addContent(macroElement);
-      }
-      return element;
+      macros = LinkedHashMap(macros)
+      macros.put(name, value)
     }
-    finally {
-      myLock.readLock().unlock();
-    }
+
+    this.macros = if (macros.isEmpty()) emptyMap() else Collections.unmodifiableMap(macros)
+    userMacroModified()
+
+    return true
   }
 
-  @Override
-  public void loadState(@NotNull Element element) {
-    try {
-      myLock.writeLock().lock();
-
-      for (Element macro : element.getChildren(JpsGlobalLoader.PathVariablesSerializer.MACRO_TAG)) {
-        final String name = macro.getAttributeValue(JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE);
-        String value = macro.getAttributeValue(JpsGlobalLoader.PathVariablesSerializer.VALUE_ATTRIBUTE);
-        if (name == null || value == null) {
-          continue;
-        }
-
-        if (SYSTEM_MACROS.contains(name)) {
-          continue;
-        }
-
-        if (value.length() > 1 && value.charAt(value.length() - 1) == '/') {
-          value = value.substring(0, value.length() - 1);
-        }
-
-        myMacros.put(name, value);
-      }
-
-      for (Element macroElement : element.getChildren(IGNORED_MACRO_ELEMENT)) {
-        String ignoredName = macroElement.getAttributeValue(JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE);
-        if (!StringUtil.isEmpty(ignoredName) && !myIgnoredMacros.contains(ignoredName)) {
-          myIgnoredMacros.add(ignoredName);
-        }
-      }
-
-      userMacroModified();
-    }
-    finally {
-      myLock.writeLock().unlock();
-    }
+  private fun userMacroModified() {
+    modificationStamp.incrementAndGet()
+    userMacroMapCache = null
   }
 
-  public void addMacroReplacements(@NotNull ReplacePathToMacroMap result) {
-    Map<String, String> userMacros = getUserMacros();
-    for (String name : userMacros.keySet()) {
-      String value = userMacros.get(name);
-      if (!StringUtil.isEmptyOrSpaces(value)) {
-        result.addMacroReplacement(value, name);
-      }
+  override fun getState(): Element? {
+    val element = Element("state")
+    for ((key, value) in macros) {
+      val macro = Element(PathVariablesSerializer.MACRO_TAG)
+      macro.setAttribute(PathVariablesSerializer.NAME_ATTRIBUTE, key)
+      macro.setAttribute(PathVariablesSerializer.VALUE_ATTRIBUTE, value)
+      element.addContent(macro)
     }
+
+    for (macro in ignoredMacros) {
+      val macroElement = Element(IGNORED_MACRO_ELEMENT)
+      macroElement.setAttribute(PathVariablesSerializer.NAME_ATTRIBUTE, macro)
+      element.addContent(macroElement)
+    }
+    return element
   }
 
-  public void addMacroExpands(@NotNull ExpandMacroToPathMap result) {
-    Map<String, String> userMacros = getUserMacros();
-    for (String name : userMacros.keySet()) {
-      String value = userMacros.get(name);
-      if (!StringUtil.isEmptyOrSpaces(value)) {
-        result.addMacroExpand(name, value);
+  override fun noStateLoaded() {
+    if (!loadContributors) {
+      return
+    }
+
+    loadState(Element("state"))
+  }
+
+  override fun loadState(element: Element) {
+    val newMacros = linkedMapOf<String, String>()
+    for (macro in element.getChildren(PathVariablesSerializer.MACRO_TAG)) {
+      val name = macro.getAttributeValue(PathVariablesSerializer.NAME_ATTRIBUTE) ?: continue
+      var value = macro.getAttributeValue(PathVariablesSerializer.VALUE_ATTRIBUTE) ?: continue
+      if (SYSTEM_MACROS.contains(name)) {
+        continue
+      }
+
+      if (value.length > 1 && value[value.length - 1] == '/') {
+        value = value.substring(0, value.length - 1)
+      }
+      newMacros.put(name, value)
+    }
+
+    val newIgnoredMacros = mutableListOf<String>()
+    for (macroElement in element.getChildren(IGNORED_MACRO_ELEMENT)) {
+      val ignoredName = macroElement.getAttributeValue(PathVariablesSerializer.NAME_ATTRIBUTE)
+      if (!ignoredName.isNullOrEmpty()) {
+        newIgnoredMacros.add(ignoredName)
       }
     }
 
-    myLock.readLock().lock();
-    try {
-      for (Map.Entry<String, String> entry : myLegacyMacros.entrySet()) {
-        result.addMacroExpand(entry.getKey(), entry.getValue());
-      }
+    val newLegacyMacros = HashMap(legacyMacros)
+    PathMacroContributor.EP_NAME.forEachExtensionSafe(Consumer { contributor ->
+      contributor.registerPathMacros(newMacros, newLegacyMacros)
+    })
+
+    macros = if (newMacros.isEmpty()) emptyMap() else Collections.unmodifiableMap(newMacros)
+    legacyMacros = if (newLegacyMacros.isEmpty()) emptyMap() else Collections.unmodifiableMap(newLegacyMacros)
+    ignoredMacros.clear()
+    ignoredMacros.addAll(newIgnoredMacros)
+  }
+
+  fun addMacroReplacements(result: ReplacePathToMacroMap) {
+    for ((name, value) in macros) {
+      result.addMacroReplacement(value, name)
     }
-    finally {
-      myLock.readLock().unlock();
+  }
+
+  fun addMacroExpands(result: ExpandMacroToPathMap) {
+    for ((name, value) in macros) {
+      result.addMacroExpand(name, value)
+    }
+
+    for ((key, value) in legacyMacros) {
+      result.addMacroExpand(key, value)
     }
   }
 }

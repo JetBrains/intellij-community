@@ -212,7 +212,7 @@ public class CompilerTester {
           IComponentStore applicationStore = CompilerTestUtil.getApplicationStore();
           pathMacroManager.setMacro(fakeMacroName, fakeMacroName);
           applicationStore.saveComponent((PersistentStateComponent<?>)pathMacroManager);
-          pathMacroManager.removeMacro(fakeMacroName);
+          pathMacroManager.setMacro(fakeMacroName, null);
           applicationStore.saveComponent((PersistentStateComponent<?>)pathMacroManager);
           if (!Files.exists(macroFilePath)) {
             throw new AssertionError(message);

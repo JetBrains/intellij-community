@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -6,12 +6,10 @@ import com.intellij.mock.MockComponentManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.module.impl.ModuleScopeProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleExtension;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleFileIndexImpl;

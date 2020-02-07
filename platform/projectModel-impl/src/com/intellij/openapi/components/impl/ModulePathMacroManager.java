@@ -6,24 +6,14 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.serviceContainer.NonInjectable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-public class ModulePathMacroManager extends PathMacroManager {
+public final class ModulePathMacroManager extends PathMacroManager {
   private final Module myModule;
 
   public ModulePathMacroManager(@NotNull Module module) {
     super(PathMacros.getInstance());
-    myModule = module;
-  }
-
-  @TestOnly
-  @NonInjectable
-  public ModulePathMacroManager(@NotNull PathMacros pathMacros, @NotNull Module module) {
-    super(pathMacros);
-
     myModule = module;
   }
 
