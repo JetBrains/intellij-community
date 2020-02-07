@@ -84,23 +84,22 @@ internal class GitInteractiveRebaseDialog(
       return CommittedChangesTreeBrowser.zipChanges(changes)
     }
   }
-  private val pickAction = ChangeEntryStateSimpleAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, commitsTable)
-  private val actions = listOf<AnActionButton>(
-    RewordAction(commitsTable),
-    FixupAction(commitsTable),
-    ChangeEntryStateButtonAction(GitRebaseEntry.Action.DROP, commitsTable)
-  )
-  private val contextMenuOnlyActions = listOf<AnAction>(
+  private val iconActions = listOf(
+    ChangeEntryStateSimpleAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, commitsTable),
     ChangeEntryStateSimpleAction(
       GitRebaseEntry.Action.EDIT,
       GitBundle.getString("rebase.interactive.dialog.stop.to.edit.text"),
       GitBundle.getString("rebase.interactive.dialog.stop.to.edit.text"),
-      null,
+      AllIcons.Actions.Pause,
       commitsTable
-    ),
-    Separator.getInstance(),
-    ShowGitRebaseCommandsDialog(project, commitsTable)
+    )
   )
+  private val buttonActions = listOf(
+    RewordAction(commitsTable),
+    FixupAction(commitsTable),
+    ChangeEntryStateButtonAction(GitRebaseEntry.Action.DROP, commitsTable)
+  )
+  private val contextMenuOnlyActions = listOf<AnAction>(ShowGitRebaseCommandsDialog(project, commitsTable))
   private var modified = false
 
   init {
@@ -114,8 +113,8 @@ internal class GitInteractiveRebaseDialog(
     PopupHandler.installRowSelectionTablePopup(
       commitsTable,
       DefaultActionGroup().apply {
-        add(pickAction)
-        addAll(actions)
+        addAll(iconActions)
+        addAll(buttonActions)
         addSeparator()
         addAll(contextMenuOnlyActions)
       },
@@ -136,9 +135,9 @@ internal class GitInteractiveRebaseDialog(
       .setPanelBorder(IdeBorderFactory.createBorder(SideBorder.TOP))
       .disableAddAction()
       .disableRemoveAction()
-      .addExtraAction(pickAction)
+      .addExtraActions(*iconActions.toTypedArray())
       .addExtraAction(AnActionButtonSeparator())
-    actions.forEach {
+    buttonActions.forEach {
       decorator.addExtraAction(it)
     }
 
