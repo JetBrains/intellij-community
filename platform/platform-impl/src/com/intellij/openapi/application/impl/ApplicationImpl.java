@@ -147,11 +147,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(runnable);
     myLock = new ReadMostlyRWLock();
     // Acquire IW lock on EDT indefinitely in legacy mode
-    if (!USE_SEPARATE_WRITE_THREAD) {
+    if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
       EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(() -> myLock.writeIntentLock());
-    }
-    else if (isUnitTestMode) {
-      myLock.writeIntentLock();
     }
     activity.end();
 
@@ -351,6 +348,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     ShutDownTracker.getInstance().ensureStopperThreadsFinished();
 
     super.dispose();
+    // Remove IW lock from EDT as EDT might be re-created which might lead to deadlock if anybody uses this disposed app
+    if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode()) {
+      invokeLater(() -> myLock.writeIntentUnlock(), ModalityState.NON_MODAL);
+    }
 
     // FileBasedIndexImpl can schedule some more activities to execute, so, shutdown executor only after service disposing
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
