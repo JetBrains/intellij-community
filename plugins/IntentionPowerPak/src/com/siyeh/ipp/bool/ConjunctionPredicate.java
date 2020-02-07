@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-import java.util.Arrays;
-
 class ConjunctionPredicate implements PsiElementPredicate {
 
   @Override
@@ -36,7 +34,6 @@ class ConjunctionPredicate implements PsiElementPredicate {
     if (!tokenType.equals(JavaTokenType.ANDAND) && !tokenType.equals(JavaTokenType.OROR)) {
       return false;
     }
-    return !PsiUtilCore.hasErrorElementChild(expression) &&
-           Arrays.stream(expression.getOperands()).noneMatch(PsiUtilCore::hasErrorElementChild);
+    return !PsiUtilCore.hasErrorElementChild(expression);
   }
 }

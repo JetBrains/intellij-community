@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class DemorgansIntention extends MutablyNamedIntention {
   @Override
   public void processIntention(@NotNull PsiElement element) {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
-    CommentTracker tracker = new CommentTracker();
+    final CommentTracker tracker = new CommentTracker();
     final String newExpression = convertConjunctionExpression(polyadicExpression, tracker);
     replaceExpressionWithNegatedExpressionString(newExpression, polyadicExpression, tracker);
   }
@@ -57,13 +57,18 @@ public class DemorgansIntention extends MutablyNamedIntention {
   private static String convertConjunctionExpression(PsiPolyadicExpression polyadicExpression, CommentTracker tracker) {
     final IElementType tokenType = polyadicExpression.getOperationTokenType();
     final boolean tokenTypeAndAnd = tokenType.equals(JavaTokenType.ANDAND);
-    final String flippedConjunction = tokenTypeAndAnd ? "||" : "&&";
+    final String flippedToken = tokenTypeAndAnd ? "||" : "&&";
     final StringBuilder result = new StringBuilder();
-    for (PsiExpression operand : polyadicExpression.getOperands()) {
-      if (result.length() != 0) {
-        result.append(flippedConjunction);
+    for (PsiElement child : polyadicExpression.getChildren()) {
+      if (child instanceof PsiJavaToken) {
+        result.append(flippedToken);
       }
-      result.append(convertLeafExpression(operand, tokenTypeAndAnd, tracker));
+      else if (child instanceof PsiExpression) {
+        result.append(convertLeafExpression((PsiExpression)child, tokenTypeAndAnd, tracker));
+      }
+      else {
+        result.append(tracker.text(child));
+      }
     }
     return result.toString();
   }
@@ -74,18 +79,25 @@ public class DemorgansIntention extends MutablyNamedIntention {
       if (negatedExpression == null) {
         return "";
       }
-      return tracker.text(negatedExpression, tokenTypeAndAnd ? ParenthesesUtils.OR_PRECEDENCE : ParenthesesUtils.AND_PRECEDENCE);
+      return safe(tracker.text(negatedExpression, tokenTypeAndAnd ? ParenthesesUtils.OR_PRECEDENCE : ParenthesesUtils.AND_PRECEDENCE)) ;
     }
     else if (ComparisonUtils.isComparison(expression)) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
       final String negatedComparison = ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
-      assert rhs != null;
-      return tracker.text(lhs) + negatedComparison + tracker.text(rhs);
+      if (rhs != null) {
+        return safe(tracker.text(lhs)) + negatedComparison + safe(tracker.text(rhs));
+      }
     }
-    else {
-      return '!' + tracker.text(expression, ParenthesesUtils.PREFIX_PRECEDENCE);
+    return '!' + safe(tracker.text(expression, ParenthesesUtils.PREFIX_PRECEDENCE));
+  }
+
+  private static String safe(String s) {
+    final int length = s.length();
+    if (length == 0 || s.charAt(0) != '"' || (length != 1 && s.charAt(length - 1) == '"')) {
+      return s;
     }
+    return s + '"';
   }
 }
