@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,14 @@ public class EditorMouseHoverPopupControl {
     setTrackingDisabled(document, false);
   }
 
+  public static void disablePopups(@NotNull Project project) {
+    setTrackingDisabled(project, true);
+  }
+
+  public static void enablePopups(@NotNull Project project) {
+    setTrackingDisabled(project, false);
+  }
+
   private static void setTrackingDisabled(@NotNull UserDataHolder holder, boolean value) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Integer userData = holder.getUserData(MOUSE_TRACKING_DISABLED_COUNT);
@@ -57,8 +66,10 @@ public class EditorMouseHoverPopupControl {
 
   public static boolean arePopupsDisabled(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    Project project = editor.getProject();
     return editor.getUserData(MOUSE_TRACKING_DISABLED_COUNT) != null ||
-           editor.getDocument().getUserData(MOUSE_TRACKING_DISABLED_COUNT) != null;
+           editor.getDocument().getUserData(MOUSE_TRACKING_DISABLED_COUNT) != null ||
+           project != null && project.getUserData(MOUSE_TRACKING_DISABLED_COUNT) != null;
   }
 
   public static EditorMouseHoverPopupControl getInstance() {
