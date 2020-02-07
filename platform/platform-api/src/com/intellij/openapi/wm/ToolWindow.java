@@ -55,6 +55,10 @@ public interface ToolWindow extends BusyObject {
    */
   void show(@Nullable Runnable runnable);
 
+  default void show() {
+    show(null);
+  }
+
   /**
    * Hides tool window. If the window is active, then the method deactivates it.
    * Does nothing if tool window isn't visible.
@@ -63,6 +67,10 @@ public interface ToolWindow extends BusyObject {
    * @throws IllegalStateException if tool window isn't installed.
    */
   void hide(@Nullable Runnable runnable);
+
+  default void hide() {
+    hide(null);
+  }
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
@@ -152,7 +160,7 @@ public interface ToolWindow extends BusyObject {
    *
    * @throws IllegalStateException if tool window isn't installed.
    */
-  void setAvailable(boolean available, @Nullable Runnable runnable);
+  void setAvailable(boolean value, @Nullable Runnable runnable);
 
   void setContentUiType(@NotNull ToolWindowContentUiType type, @Nullable Runnable runnable);
 

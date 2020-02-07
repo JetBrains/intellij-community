@@ -305,10 +305,13 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     contentUi?.setTabDoubleClickActions(*actions)
   }
 
-  override fun setAvailable(available: Boolean, runnable: Runnable?) {
+  override fun setAvailable(value: Boolean, runnable: Runnable?) {
     EDT.assertIsEdt()
-    isAvailable = available
-    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.AVAILABLE)
+
+    if (isAvailable != value) {
+      isAvailable = value
+      toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.AVAILABLE)
+    }
     callLater(runnable)
   }
 

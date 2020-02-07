@@ -473,8 +473,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       sideTool = bean.side,
       canCloseContent = bean.canCloseContents,
       canWorkInDumbMode = DumbService.isDumbAware(factory),
-      shouldBeAvailable = factory.shouldBeAvailable(project)
-    ), factory, bean)
+      shouldBeAvailable = factory.shouldBeAvailable(project),
+      contentFactory = factory
+    ), bean)
   }
 
   fun projectClosed() {
@@ -892,14 +893,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindowImpl {
-    val toolWindow = doRegisterToolWindow(task, null, null).toolWindow
+    val toolWindow = doRegisterToolWindow(task, null).toolWindow
     toolWindowPane!!.validate()
     toolWindowPane!!.repaint()
     fireStateChanged()
     return toolWindow
   }
 
-  private fun doRegisterToolWindow(task: RegisterToolWindowTask, contentFactory: ToolWindowFactory?, bean: ToolWindowEP?): ToolWindowEntry {
+  private fun doRegisterToolWindow(task: RegisterToolWindowTask, bean: ToolWindowEP?): ToolWindowEntry {
     val toolWindowPane = toolWindowPane
     if (toolWindowPane == null) {
       init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project))
@@ -921,6 +922,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val windowInfoSnapshot = info.copy()
 
+    val contentFactory = task.contentFactory
     val toolWindow = ToolWindowImpl(this, task.id, task.canCloseContent, task.canWorkInDumbMode, task.component, disposable,
       windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable)
 
@@ -928,7 +930,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     // contentFactory.init can set icon
     if (toolWindow.icon == null) {
-      var icon: Icon? = null
+      var icon = task.icon
       if (bean?.icon != null) {
         icon = IconLoader.findIcon(bean.icon, contentFactory!!.javaClass)
         if (icon == null) {
@@ -1796,8 +1798,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
   }
-
-  override fun fallbackToEditor() = activeStack.isEmpty
 
   private fun focusToolWindowByDefault() {
     var toFocus: ToolWindowEntry? = null
