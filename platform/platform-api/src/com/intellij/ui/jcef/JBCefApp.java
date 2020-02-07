@@ -25,6 +25,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
+ * A wrapper over {@link CefApp}.
+ * <p>
+ * Use {@link #getInstance()} to get the app (triggers CEF startup on first call).
+ * Use {@link #createClient()} to create a client.
+ *
  * @author tav
  */
 @ApiStatus.Experimental
@@ -207,4 +212,3 @@ public abstract class JBCefApp {
     }
   }
 }
-

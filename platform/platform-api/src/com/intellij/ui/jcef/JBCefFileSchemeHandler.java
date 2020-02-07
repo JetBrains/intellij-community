@@ -21,6 +21,9 @@ import java.util.function.Function;
 
 /**
  * A custom scheme handler for reading resource files.
+ * <p>
+ * A handler is installed to {@link JBCefApp} via adding a factory:
+ * {@link JBCefApp#addCefSchemeHandlerFactory(JBCefApp.JBCefSchemeHandlerFactory)}.
  *
  * @author tav
  */
