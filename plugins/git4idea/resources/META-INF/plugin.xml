@@ -48,7 +48,7 @@
     <action id="Git.Checkout.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$CheckoutSelectedBranchAction"/>
     <action id="Git.Log.Show.Branches" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$ShowBranchesAction"
             icon="AllIcons.Vcs.Branch">
-      <add-to-group group-id="Vcs.Log.Toolbar.Internal"/>
+      <add-to-group group-id="Vcs.Log.Toolbar.LeftCorner"/>
     </action>
     <action id="Git.Fixup.To.Commit" class="git4idea.rebase.GitCommitFixupBySubjectAction"/>
     <action id="Git.Squash.Into.Commit" class="git4idea.rebase.GitCommitSquashBySubjectAction"/>
