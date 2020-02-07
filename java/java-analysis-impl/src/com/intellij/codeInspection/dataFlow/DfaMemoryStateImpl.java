@@ -19,10 +19,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashMap;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import gnu.trove.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,7 +140,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myCachedHash = hash;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public String toString() {
     StringBuilder result = new StringBuilder();
     result.append('<');
@@ -491,7 +487,38 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       return true;
     });
-    myDistinctClasses.forEach(DistinctPairSet.DistinctPair::check);
+    TIntObjectHashMap<BitSet> graph = new TIntObjectHashMap<>();
+    for (DistinctPairSet.DistinctPair pair : myDistinctClasses) {
+      if (pair.isOrdered()) {
+        BitSet set = graph.get(pair.getFirstIndex());
+        if (set == null) {
+          set = new BitSet();
+          graph.put(pair.getFirstIndex(), set);
+        }
+        set.set(pair.getSecondIndex());
+      }
+      pair.check();
+    }
+    BitSet visited = new BitSet();
+    BitSet stack = new BitSet();
+    for (int v : graph.keys()) {
+      if (isCycle(v, graph, visited, stack)) {
+        throw new IllegalStateException("Cycle in distinct pairs involving " + myEqClasses.get(v));
+      }
+    }
+  }
+
+  private static boolean isCycle(int v, TIntObjectHashMap<BitSet> graph, BitSet visited, BitSet stack) {
+    if (!visited.get(v)) {
+      visited.set(v);
+      stack.set(v);
+      BitSet set = graph.get(v);
+      if (set != null && set.stream().anyMatch(i -> !visited.get(i) && isCycle(i, graph, visited, stack) || stack.get(i))) {
+        return true;
+      }
+    }
+    stack.clear(v);
+    return false;
   }
 
   @Override
@@ -1401,7 +1428,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   /**
    * Custom logic to be implemented by subclasses
-   * @param other
+   * @param other other memory start this one was merged with
    */
   protected void afterMerge(DfaMemoryStateImpl other) {
 
