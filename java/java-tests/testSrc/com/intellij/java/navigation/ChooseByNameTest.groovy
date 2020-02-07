@@ -9,7 +9,6 @@ import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
-import com.intellij.idea.Bombed
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -308,14 +307,6 @@ class Intf {
     assert gotoClass('foo.bar.Bar') == [bar]
     assert gotoClass('goo.Bar') == [bar2]
     assert gotoClass('goo.baz.Bar') == [bar2]
-  }
-
-  @Bombed(user = "Mikhail.Sokolov", year=2020, month = Calendar.FEBRUARY, day = 1, description = "Should be handled by SE UI, not Contributor")
-  void "test try lowercase pattern if nothing matches"() {
-    def match = myFixture.addClass("class IPRoi { }")
-    def nonMatch = myFixture.addClass("class InspectionProfileImpl { }")
-    assert gotoClass('IPRoi') == [match]
-    assert gotoClass('IproImpl') == [nonMatch]
   }
 
   private static filterJavaItems(List<Object> items) {
