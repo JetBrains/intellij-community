@@ -31,6 +31,7 @@ import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -581,7 +582,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       myLength++;
     }
 
-    public void stopAndReportError(RegExpElement element, @NotNull String message) {
+    public void stopAndReportError(RegExpElement element, @NotNull @Nls String message) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, message).range(element).create();
       myStop = true;
     }

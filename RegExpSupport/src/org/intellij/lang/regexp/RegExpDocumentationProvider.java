@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpProperty;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public final class RegExpDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   @Nullable
+  @Nls
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     if (element instanceof RegExpProperty) {
       final RegExpProperty prop = (RegExpProperty)element;

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.UserDataHolderUnprotected;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -226,7 +227,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @param messageText the text of the error message displayed to the user.
    */
-  void error(@NotNull String messageText);
+  void error(@NotNull @Nls String messageText);
 
   /**
    * Checks if the lexer has reached the end of file.

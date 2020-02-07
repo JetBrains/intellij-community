@@ -32,6 +32,7 @@ import org.intellij.lang.regexp.RegExpFileType;
 import org.intellij.lang.regexp.psi.RegExpAtom;
 import org.intellij.lang.regexp.psi.RegExpPattern;
 import org.intellij.lang.regexp.psi.impl.RegExpElementImpl;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ class GroupSurrounder implements Surrounder {
     private final String myTitle;
     private final String myGroupStart;
 
-    GroupSurrounder(String title, String groupStart) {
+    GroupSurrounder(@Nls String title, String groupStart) {
         myTitle = title;
         myGroupStart = groupStart;
     }
