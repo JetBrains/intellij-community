@@ -721,7 +721,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
           assertDataClassIsWithoutReferences(kind)
           v1 == v2
         }
-        is EntityPropertyKind.EntityValue -> replaceMap[v1 as Long] == v2
+        is EntityPropertyKind.EntityValue -> if (v1 != null) replaceMap[v1 as Long] == v2 else v1 == v2
         EntityPropertyKind.FileUrl, is EntityPropertyKind.PersistentId, is EntityPropertyKind.Primitive -> v1 == v2
       }
 
