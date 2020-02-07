@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -43,23 +29,23 @@ public class UsageInfoToUsageConverter {
       this(new PsiElement[]{element});
     }
 
-    public TargetElementsDescriptor(PsiElement @NotNull [] primarySearchedElements) {
+    public TargetElementsDescriptor(@NotNull PsiElement @NotNull [] primarySearchedElements) {
       this(primarySearchedElements, PsiElement.EMPTY_ARRAY);
     }
 
-    public TargetElementsDescriptor(PsiElement @NotNull [] primarySearchedElements, PsiElement @NotNull [] additionalSearchedElements) {
+    public TargetElementsDescriptor(@NotNull PsiElement @NotNull [] primarySearchedElements,
+                                    @NotNull PsiElement @NotNull [] additionalSearchedElements) {
       myPrimarySearchedElements = convertToSmartPointers(primarySearchedElements);
       myAdditionalSearchedElements = convertToSmartPointers(additionalSearchedElements);
     }
 
-    private static PsiElement @NotNull [] convertToPsiElements(@NotNull List<? extends SmartPsiElementPointer<PsiElement>> primary) {
+    private static @NotNull PsiElement @NotNull [] convertToPsiElements(@NotNull List<? extends SmartPsiElementPointer<PsiElement>> primary) {
       return ContainerUtil.toArray(ContainerUtil.mapNotNull(primary, SmartPsiElementPointer::getElement), PsiElement.ARRAY_FACTORY);
     }
 
     @NotNull
-    private static List<SmartPsiElementPointer<PsiElement>> convertToSmartPointers(PsiElement @NotNull [] primaryElements) {
+    private static List<@NotNull SmartPsiElementPointer<PsiElement>> convertToSmartPointers(@NotNull PsiElement @NotNull [] primaryElements) {
       if (primaryElements.length == 0) return Collections.emptyList();
-  
       final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(primaryElements[0].getProject());
       return ContainerUtil.mapNotNull(primaryElements, smartPointerManager::createSmartPsiElementPointer);
     }
@@ -69,14 +55,14 @@ public class UsageInfoToUsageConverter {
      * A primary target is a target that was the main purpose of the search.
      * All usages of a non-primary target should be considered as a special case of usages of the corresponding primary target.
      * Example: searching field and its getter and setter methods -
-     *          the field searched is a primary target, and its accessor methods are non-primary targets, because
-     *          for this particular search usages of getter/setter methods are to be considered as a usages of the corresponding field.
+     * the field searched is a primary target, and its accessor methods are non-primary targets, because
+     * for this particular search usages of getter/setter methods are to be considered as a usages of the corresponding field.
      */
-    public PsiElement @NotNull [] getPrimaryElements() {
+    public @NotNull PsiElement @NotNull [] getPrimaryElements() {
       return convertToPsiElements(myPrimarySearchedElements);
     }
 
-    public PsiElement @NotNull [] getAdditionalElements() {
+    public @NotNull PsiElement @NotNull [] getAdditionalElements() {
       return convertToPsiElements(myAdditionalSearchedElements);
     }
 
