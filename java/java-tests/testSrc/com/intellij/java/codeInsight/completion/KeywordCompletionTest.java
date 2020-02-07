@@ -101,6 +101,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testInstanceofAfterStatementStart() { doTest(1, "instanceof"); }
   public void testNoInstanceofInAnnotation() { doTest(0, "instanceof"); }
 
+  public void testInstanceofNegated() { doTest(); }
   public void testInstanceofNegation() {
     configureByTestName();
     selectItem(myItems[0], '!');

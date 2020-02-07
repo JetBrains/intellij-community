@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -521,24 +522,33 @@ public class JavaKeywordCompletion {
     if (isInstanceofPlace(myPosition)) {
       addKeyword(LookupElementDecorator.withInsertHandler(
         createKeyword(PsiKeyword.INSTANCEOF),
-        new InsertHandler<LookupElementDecorator<LookupElement>>() {
-          @Override
-          public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
-            TailType tailType = TailType.HUMBLE_SPACE_BEFORE_WORD;
-            if (tailType.isApplicable(context)) {
-              tailType.processTail(context.getEditor(), context.getTailOffset());
-            }
+        (context, item) -> {
+          TailType tailType = TailType.HUMBLE_SPACE_BEFORE_WORD;
+          if (tailType.isApplicable(context)) {
+            tailType.processTail(context.getEditor(), context.getTailOffset());
+          }
 
-            if ('!' == context.getCompletionChar()) {
-              context.setAddCompletionChar(false);
-              context.commitDocument();
-              PsiInstanceOfExpression expr =
-                PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiInstanceOfExpression.class, false);
-              if (expr != null) {
+          if ('!' == context.getCompletionChar()) {
+            context.setAddCompletionChar(false);
+          }
+          context.commitDocument();
+          PsiInstanceOfExpression expr =
+            PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiInstanceOfExpression.class, false);
+          if (expr != null) {
+            PsiExpression operand = expr.getOperand();
+            if (operand instanceof PsiPrefixExpression && 
+                ((PsiPrefixExpression)operand).getOperationTokenType().equals(JavaTokenType.EXCL)) {
+              PsiExpression negated = ((PsiPrefixExpression)operand).getOperand();
+              if (negated != null) {
                 String space = CompletionStyleUtil.getCodeStyleSettings(context).SPACE_WITHIN_PARENTHESES ? " " : "";
-                context.getDocument().insertString(expr.getTextRange().getStartOffset(), "!(" + space);
+                context.getDocument().insertString(negated.getTextRange().getStartOffset(), "(" + space);
                 context.getDocument().insertString(context.getTailOffset(), space + ")");
               }
+            }
+            else if ('!' == context.getCompletionChar()) {
+              String space = CompletionStyleUtil.getCodeStyleSettings(context).SPACE_WITHIN_PARENTHESES ? " " : "";
+              context.getDocument().insertString(expr.getTextRange().getStartOffset(), "!(" + space);
+              context.getDocument().insertString(context.getTailOffset(), space + ")");
             }
           }
         }));
@@ -626,9 +636,16 @@ public class JavaKeywordCompletion {
     if (psiElement().insideStarting(psiElement(PsiClassObjectAccessExpression.class)).accepts(position)) return true;
 
     PsiElement parent = position.getParent();
-    return parent instanceof PsiReferenceExpression &&
-           !((PsiReferenceExpression)parent).isQualified() &&
-           !JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position);
+    if (!(parent instanceof PsiReferenceExpression) ||
+        ((PsiReferenceExpression)parent).isQualified() ||
+        JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)) {
+      return false;
+    }
+    if (parent.getParent() instanceof PsiExpressionStatement) {
+      PsiElement previous = PsiTreeUtil.skipWhitespacesBackward(parent.getParent());
+      return previous == null || !(previous.getLastChild() instanceof PsiErrorElement);
+    }
+    return true;
   }
 
   public static boolean isInstanceofPlace(PsiElement position) {
