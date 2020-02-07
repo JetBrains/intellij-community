@@ -90,7 +90,7 @@ foo(null as Number)
   }
 
 
-  void 'test inference with explicit type'() {
+  void '_test inference with explicit type'() {
     doTest '''
 def foo(Closure a) {
   a(1)
@@ -100,7 +100,7 @@ foo {<caret>it}
 ''', JAVA_LANG_INTEGER
   }
 
-  void 'test inference with explicit type with dependency on implicit type'() {
+  void '_test inference with explicit type with dependency on implicit type'() {
     doTest '''
 def foo(a, Closure b) {
   b(a)
@@ -110,7 +110,7 @@ foo(1) {<caret>it}
 ''', JAVA_LANG_INTEGER
   }
 
-  void 'test do not infer annotation for already annotated parameter'() {
+  void '_test do not infer annotation for already annotated parameter'() {
     doTest '''
 def foo(@DelegatesTo(Integer) Closure b) {
   b(1)
@@ -120,7 +120,7 @@ foo {<caret>it}
 ''', null
   }
 
-  void 'test do infer annotation for already annotated parameter when annotation is trivial'() {
+  void '_test do infer annotation for already annotated parameter when annotation is trivial'() {
     doTest '''
 def foo(@NotNull Closure b) {
   b(1)

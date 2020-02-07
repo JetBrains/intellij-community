@@ -39,7 +39,7 @@ private val forbiddenAnnotations =
         GroovyCommonClassNames.GROOVY_TRANSFORM_STC_CLOSURE_PARAMS)
 
 internal fun GrParameter.eligibleForExtendedInference(): Boolean =
-  typeElement == null || (type.isClosureType() && (annotations.map { it.qualifiedName } intersect forbiddenAnnotations).isEmpty())
+  typeElement == null //|| (type.isClosureType() && (annotations.map { it.qualifiedName } intersect forbiddenAnnotations).isEmpty())
 
 private fun createDriver(method: GrMethod, options: SignatureInferenceOptions): InferenceDriver {
   val virtualMethod = createVirtualMethod(method) ?: return EmptyDriver
