@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ApplicationUtil {
   // Used in com.intellij.ide.instrument.LockWrappingClassVisitor
@@ -147,11 +148,23 @@ public class ApplicationUtil {
         }
         else {
           Semaphore s = new Semaphore(1);
+          AtomicReference<Throwable> throwable = new AtomicReference<>();
           ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
-            r.run();
-            s.up();
+            try {
+              r.run();
+            }
+            catch (Throwable t) {
+              throwable.set(t);
+            }
+            finally {
+              s.up();
+            }
           }, modalityState);
           s.waitFor();
+
+          if (throwable.get() != null) {
+            ExceptionUtil.rethrow(throwable.get());
+          }
         }
         break;
       case EDT_WITH_IW:
