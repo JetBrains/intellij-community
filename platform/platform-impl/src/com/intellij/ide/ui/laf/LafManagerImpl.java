@@ -407,14 +407,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * Sets current LAF. The method doesn't update component hierarchy.
    */
   @Override
-  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
-    setCurrentLookAndFeel(lookAndFeelInfo, false);
+  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme) {
+    setLookAndFeelImpl(lookAndFeelInfo, lockEditorScheme, false);
   }
 
   /**
    * Sets current LAF. The method doesn't update component hierarchy.
    */
-  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean processChangeSynchronously) {
+  private void setLookAndFeelImpl(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme, boolean processChangeSynchronously) {
     UIManager.LookAndFeelInfo oldLaf = myCurrentLaf;
 
     if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
@@ -494,7 +494,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
       try {
-        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getLookAndFeelDefaults());
+        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getLookAndFeelDefaults(), lockEditorScheme);
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -513,11 +513,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
 
     if (!myFirstSetup) {
-      if (processChangeSynchronously) {
-        updateEditorSchemeIfNecessary(oldLaf, true);
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(() -> updateEditorSchemeIfNecessary(oldLaf, false));
+      if (!lockEditorScheme) {
+        if (processChangeSynchronously) {
+          updateEditorSchemeIfNecessary(oldLaf, true);
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(() -> updateEditorSchemeIfNecessary(oldLaf, false));
+        }
       }
     }
     myFirstSetup = false;
@@ -1106,7 +1108,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         myLafComboBoxModel.replaceAll(getLafReferences());
       }
       if (switchLafTo != null) {
-        setCurrentLookAndFeel(switchLafTo, true);
+        setLookAndFeelImpl(switchLafTo, false, true);
         if (myLafComboBoxModel != null) {
           myLafComboBoxModel.setSelectedItem(createLafReference(switchLafTo));
         }
@@ -1180,7 +1182,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
 
       if (switchLafTo != null) {
-        setCurrentLookAndFeel(switchLafTo, true);
+        setLookAndFeelImpl(switchLafTo, false, true);
         if (myLafComboBoxModel != null) {
           myLafComboBoxModel.setSelectedItem(switchLafTo);
         }

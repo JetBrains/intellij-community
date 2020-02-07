@@ -30,7 +30,11 @@ public abstract class LafManager {
   @ApiStatus.Internal
   public abstract LafReference getCurrentLookAndFeelReference();
 
-  public abstract void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo);
+  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
+    setCurrentLookAndFeel(lookAndFeelInfo, false);
+  }
+
+  public abstract void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme);
 
   public abstract void updateUI();
 

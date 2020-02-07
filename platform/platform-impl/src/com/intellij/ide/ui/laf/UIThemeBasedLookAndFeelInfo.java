@@ -42,7 +42,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     return myTheme;
   }
 
-  public void installTheme(UIDefaults defaults) {
+  public void installTheme(UIDefaults defaults, boolean lockEditorScheme) {
     myTheme.applyProperties(defaults);
     IconPathPatcher patcher = myTheme.getPatcher();
     if (patcher != null) {
@@ -55,7 +55,9 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     }
 
     installBackgroundImage();
-    installEditorScheme();
+    if (!lockEditorScheme) {
+      installEditorScheme();
+    }
     myInitialised = true;
   }
 

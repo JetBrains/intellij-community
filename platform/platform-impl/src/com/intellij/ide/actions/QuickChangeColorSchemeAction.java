@@ -83,9 +83,8 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
         Messages.getYesButton(), Messages.getNoButton(),
         Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES) {
 
-        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : new DarculaLookAndFeelInfo());
+        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : new DarculaLookAndFeelInfo(), true);
         lafManager.updateUI();
-        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(DarculaInstaller::install);
       }
     } else if (!isDarkEditorTheme &&
@@ -98,15 +97,13 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
             Messages.getYesButton(), Messages.getNoButton(),
             Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES)) {
 
-        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultLaf());
+        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultLaf(), true);
         lafManager.updateUI();
-        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(DarculaInstaller::uninstall);
       }
     }
 
     if (onDone != null) {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(onDone);
     }
   }
