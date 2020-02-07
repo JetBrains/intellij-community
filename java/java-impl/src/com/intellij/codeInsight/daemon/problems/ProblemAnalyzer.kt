@@ -136,7 +136,7 @@ class ProblemAnalyzer(private val project: Project) : DaemonCodeAnalyzer.DaemonL
 
   class MyStartupActivity : StartupActivity {
     override fun runActivity(project: Project) {
-      if (!Registry.`is`("project.problems.view") && !ApplicationManager.getApplication().isUnitTestMode) return
+      if (!Registry.`is`("project.problems.view")) return
       project.service<ProblemAnalyzer>()
     }
   }

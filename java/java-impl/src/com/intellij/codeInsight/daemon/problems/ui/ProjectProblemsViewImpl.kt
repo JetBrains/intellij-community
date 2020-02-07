@@ -20,7 +20,7 @@ class ProjectProblemsViewImpl(private val project: Project) : ProjectProblemsVie
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("ProblemsViewPoolExecutor", 1)
 
   init {
-    if (Registry.`is`("project.problems.view") || ApplicationManager.getApplication().isUnitTestMode) {
+    if (Registry.`is`("project.problems.view")) {
       Disposer.register(project, Disposable { Disposer.dispose(panel) })
     }
   }
