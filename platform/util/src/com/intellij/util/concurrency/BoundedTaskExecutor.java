@@ -272,7 +272,6 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     }
   }
 
-  @TestOnly
   public boolean isEmpty() {
     return (int)myStatus.get() == 0;
   }

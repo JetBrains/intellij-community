@@ -22,6 +22,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
@@ -338,6 +340,7 @@ public class LightEditServiceImpl implements LightEditService,
 
   @Override
   public void appClosing() {
+    ((EncodingManagerImpl)EncodingManager.getInstance()).clearDocumentQueue();
     if (myFrameWrapper != null) {
       myFrameWrapper.getFrame().setVisible(false);
       disposeFrameWrapper();
