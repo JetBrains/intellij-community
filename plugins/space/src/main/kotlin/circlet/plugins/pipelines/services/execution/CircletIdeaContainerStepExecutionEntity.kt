@@ -2,6 +2,7 @@ package circlet.plugins.pipelines.services.execution
 
 import circlet.pipelines.common.api.*
 import circlet.pipelines.config.api.*
+import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.api.storage.*
 
 class CircletIdeaContainerStepExecutionEntity(
@@ -14,7 +15,8 @@ class CircletIdeaContainerStepExecutionEntity(
     override val baseVolumeName: String?,
     override val isSnapshotPoint: Boolean,
     override val volumeSize: Int?,
-    override var workerId: String? = null
+    override var workerId: String? = null,
+    override val services: List<ServiceExecutionData> = emptyList()
 ) : AContainerStepExecutionEntity {
     override fun equals(other: Any?): Boolean {
         return (other as? CircletIdeaContainerStepExecutionEntity)?.id == this.id
