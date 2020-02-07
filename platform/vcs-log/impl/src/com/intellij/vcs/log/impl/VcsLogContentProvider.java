@@ -78,8 +78,6 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     content.setComponent(myContainer);
     content.setDisposer(() -> {
       disposeContent();
-
-      myContent.setDisplayName(TAB_NAME);
       myContent = null;
     });
   }
