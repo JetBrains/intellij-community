@@ -432,7 +432,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       throw new IOException(VfsBundle.message("vfs.file.not.exist.error", file.getPath()));
     }
     if (file.getParent() == null) {
-      throw new IOException(VfsBundle.message("cannot.rename.root.directory", file.getPath()));
+      throw new IOException(CoreBundle.message("cannot.rename.root.directory", file.getPath()));
     }
     if (!newParent.exists() || !newParent.isDirectory()) {
       throw new IOException(VfsBundle.message("vfs.target.not.directory.error", newParent.getPath()));
@@ -476,7 +476,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
     VirtualFile parent = file.getParent();
     if (parent == null) {
-      throw new IOException(VfsBundle.message("cannot.rename.root.directory", file.getPath()));
+      throw new IOException(CoreBundle.message("cannot.rename.root.directory", file.getPath()));
     }
     if (!sameName && parent.findChild(newName) != null) {
       throw new IOException(VfsBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + newName));

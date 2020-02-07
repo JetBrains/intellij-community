@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -106,11 +107,11 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     CheckUtil.checkWritable(this);
     VirtualFile parentFile = myFile.getParent();
     if (parentFile == null) {
-      throw new IncorrectOperationException(VfsBundle.message("cannot.rename.root.directory", myFile.getPath()));
+      throw new IncorrectOperationException(CoreBundle.message("cannot.rename.root.directory", myFile.getPath()));
     }
     VirtualFile child = parentFile.findChild(name);
     if (child != null && !child.equals(myFile)) {
-      throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", child.getPresentableUrl()));
+      throw new IncorrectOperationException(CoreBundle.message("file.already.exists.error", child.getPresentableUrl()));
     }
   }
 
@@ -304,7 +305,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   public void checkCreateSubdirectory(@NotNull String name) throws IncorrectOperationException {
     VirtualFile existingFile = getVirtualFile().findChild(name);
     if (existingFile != null) {
-      throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", existingFile.getPresentableUrl()));
+      throw new IncorrectOperationException(CoreBundle.message("file.already.exists.error", existingFile.getPresentableUrl()));
     }
     CheckUtil.checkWritable(this);
   }
@@ -385,7 +386,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   public void checkCreateFile(@NotNull String name) throws IncorrectOperationException {
     VirtualFile existingFile = getVirtualFile().findChild(name);
     if (existingFile != null) {
-      throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", existingFile.getPresentableUrl()));
+      throw new IncorrectOperationException(CoreBundle.message("file.already.exists.error", existingFile.getPresentableUrl()));
     }
     CheckUtil.checkWritable(this);
   }
@@ -454,8 +455,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
                                                 item -> Comparing.strEqual(item.getName(), name, caseSensitive));
       if (existing != null) {
         throw new IncorrectOperationException(
-          VfsBundle.message(existing.isDirectory() ? "dir.already.exists.error" : "file.already.exists.error",
-                            existing.getPresentableUrl()));
+          CoreBundle.message(existing.isDirectory() ? "dir.already.exists.error" : "file.already.exists.error",
+                             existing.getPresentableUrl()));
       }
     }
     else {

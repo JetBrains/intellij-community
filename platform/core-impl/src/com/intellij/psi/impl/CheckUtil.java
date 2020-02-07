@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +34,7 @@ public class CheckUtil {
     if (!element.isWritable()) {
       if (element instanceof PsiDirectory) {
         String url = ((PsiDirectory)element).getVirtualFile().getPresentableUrl();
-        throw new IncorrectOperationException(PsiBundle.message("cannot.modify.a.read.only.directory", url));
+        throw new IncorrectOperationException(CoreBundle.message("cannot.modify.a.read.only.directory", url));
       }
       else {
         PsiFile file = element.getContainingFile();
@@ -57,7 +58,7 @@ public class CheckUtil {
           return false;
         }
         if (!file.isWritable()) {
-          throw new IncorrectOperationException(PsiBundle.message("cannot.delete.a.read.only.file", file.getPresentableUrl()));
+          throw new IncorrectOperationException(CoreBundle.message("cannot.delete.a.read.only.file", file.getPresentableUrl()));
         }
         return true;
       }
