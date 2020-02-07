@@ -48,7 +48,18 @@ public class HighlightDisplayLevel {
   public static final HighlightDisplayLevel INFO = new HighlightDisplayLevel(HighlightSeverity.INFO, createIconByKey(DO_NOT_SHOW_KEY));
   public static final HighlightDisplayLevel WEAK_WARNING = new HighlightDisplayLevel(HighlightSeverity.WEAK_WARNING, createIconByKey(CodeInsightColors.WEAK_WARNING_ATTRIBUTES));
 
-  public static final HighlightDisplayLevel NON_SWITCHABLE_ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR);
+  public static final HighlightDisplayLevel NON_SWITCHABLE_ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR) {
+    @Override
+    public boolean isNonSwitchable() {
+      return true;
+    }
+  };
+  public static final HighlightDisplayLevel NON_SWITCHABLE_WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING) {
+    @Override
+    public boolean isNonSwitchable() {
+      return true;
+    }
+  };
 
   private Icon myIcon;
   private final HighlightSeverity mySeverity;
@@ -96,6 +107,10 @@ public class HighlightDisplayLevel {
   @NotNull
   public HighlightSeverity getSeverity(){
     return mySeverity;
+  }
+
+  public boolean isNonSwitchable() {
+    return false;
   }
 
   public static void registerSeverity(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey key, @Nullable Icon icon) {
