@@ -26,14 +26,18 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
 import java.util.Set;
 
 /**
  * @author peter
  */
+@ApiStatus.Internal
 public class ProgressSuspender implements AutoCloseable {
   private static final Key<ProgressSuspender> PROGRESS_SUSPENDER = Key.create("PROGRESS_SUSPENDER");
   public static final Topic<SuspenderListener> TOPIC = Topic.create("ProgressSuspender", SuspenderListener.class);
@@ -138,7 +142,7 @@ public class ProgressSuspender implements AutoCloseable {
   }
 
   private boolean freezeIfNeeded(@Nullable ProgressIndicator current) {
-    if (current == null || !myProgresses.contains(current) || ourApp.isReadAccessAllowed()) {
+    if (current == null || !myProgresses.contains(current) || isCurrentThreadHoldingKnownLocks()) {
       return false;
     }
 
@@ -154,7 +158,19 @@ public class ProgressSuspender implements AutoCloseable {
       return true;
     }
   }
-  
+
+  private static boolean isCurrentThreadHoldingKnownLocks() {
+    if (ourApp.isReadAccessAllowed()) {
+      return true;
+    }
+
+    ThreadInfo info = ManagementFactory.getThreadMXBean().getThreadInfo(Thread.currentThread().getId());
+    if (info != null && info.getLockedSynchronizers().length > 0) {
+      return true;
+    }
+    return false;
+  }
+
   public interface SuspenderListener {
     /** Called (on any thread) when a new progress is created with suspension capability */
     default void suspendableProgressAppeared(@NotNull ProgressSuspender suspender) {}
