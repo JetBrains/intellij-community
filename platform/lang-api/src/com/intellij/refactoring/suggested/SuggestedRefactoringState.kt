@@ -32,12 +32,13 @@ data class SuggestedRefactoringState(
             require(importsRange.endOffset < signatureRange.startOffset)
         }
 
-        var text = psiFile.text
-        text = text.replaceRange(signatureRange.startOffset, signatureRange.endOffset, oldDeclarationText)
+        val fileCopy = psiFile.copy() as PsiFile
+        val document = fileCopy.viewProvider.document!!
+        document.replaceString(signatureRange.startOffset, signatureRange.endOffset, oldDeclarationText)
         if (oldImportsText != null) {
-            text = text.replaceRange(importsRange!!.startOffset, importsRange.endOffset, oldImportsText)
+            document.replaceString(importsRange!!.startOffset, importsRange.endOffset, oldImportsText)
         }
-        val restoredFileCopy = PsiFileFactory.getInstance(psiFile.project).createFileFromText(text, psiFile)!!
+        PsiDocumentManager.getInstance(psiFile.project).commitDocument(document)
 
         var originalSignatureStart = signatureRange.startOffset
         if (oldImportsText != null) {
@@ -45,7 +46,7 @@ data class SuggestedRefactoringState(
             originalSignatureStart += oldImportsText.length
         }
 
-        return refactoringSupport.declarationByOffset(restoredFileCopy, originalSignatureStart)!!
+        return refactoringSupport.declarationByOffset(fileCopy, originalSignatureStart)!!
     }
 }
 
