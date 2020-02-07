@@ -12,13 +12,13 @@ internal class LegacyBridgeModifiableModelCommitterService : ModifiableModelComm
   override fun multiCommit(rootModels: MutableCollection<out ModifiableRootModel>, moduleModel: ModifiableModuleModel) {
     // TODO Naive impl, check for existing contact in com.intellij.openapi.module.impl.ModuleManagerImpl.commitModelWithRunnable
     val diffs = mutableSetOf<TypedEntityStorageBuilder>()
+    diffs += (moduleModel as LegacyBridgeModifiableModuleModel).collectChanges()
     for (rootModel in rootModels) {
       if (rootModel.isChanged) {
         diffs += (rootModel as LegacyBridgeModifiableRootModel).collectChanges() ?: continue
       }
       else rootModel.dispose()
     }
-    diffs += (moduleModel as LegacyBridgeModifiableModuleModel).collectChanges()
 
     WorkspaceModel.getInstance(moduleModel.project).updateProjectModel {
       diffs.forEach(it::addDiff)
