@@ -97,7 +97,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     try {
       return commandLine.createProcess();
     }
-    catch (RuntimeException | Error e) {
+    catch (Throwable e) {
       deleteTempFiles(commandLine.getUserData(DELETE_FILES_ON_TERMINATION));
       throw e;
     }
@@ -296,7 +296,8 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   public static void deleteFileOnTermination(@NotNull GeneralCommandLine commandLine, @NotNull File fileToDelete) {
     Set<File> set = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
     if (set == null) {
-      commandLine.putUserData(DELETE_FILES_ON_TERMINATION, set = new THashSet<>());
+      set = new THashSet<>();
+      commandLine.putUserData(DELETE_FILES_ON_TERMINATION, set);
     }
     set.add(fileToDelete);
   }
