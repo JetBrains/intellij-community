@@ -39,10 +39,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.FocusUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,6 +53,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 
 import static com.intellij.platform.PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR;
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static java.util.Collections.singletonList;
 
 public final class ProjectUtil {
   private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
@@ -134,7 +133,7 @@ public final class ProjectUtil {
         }
 
         if (provider.canOpenProject(virtualFile)) {
-          return openUsingProvider(provider, virtualFile, options);
+          return chooseProcessorAndOpen(singletonList(provider), virtualFile, options);
         }
       }
     }
@@ -161,18 +160,14 @@ public final class ProjectUtil {
       return null;
     }
 
-    ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile, /* onlyIfExistingProjectFile = */ false);
-    if (provider == null) {
+    List<ProjectOpenProcessor> processors = ProjectOpenProcessor.getOpenProcessors(virtualFile, /* onlyIfExistingProjectFile = */ false);
+    if (processors.isEmpty()) {
       return null;
     }
 
-    Project project = openUsingProvider(provider, virtualFile, options);
+    Project project = chooseProcessorAndOpen(processors, virtualFile, options);
     if (project == null) {
       return null;
-    }
-
-    if (provider instanceof PlatformProjectOpenProcessor) {
-      project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
     }
 
     StartupManager.getInstance(project).runAfterOpened(() -> {
@@ -187,14 +182,37 @@ public final class ProjectUtil {
   }
 
   @Nullable
-  private static Project openUsingProvider(@NotNull ProjectOpenProcessor provider,
-                                           @NotNull VirtualFile virtualFile,
-                                           @NotNull OpenProjectTask options) {
+  private static Project chooseProcessorAndOpen(@NotNull List<ProjectOpenProcessor> processors,
+                                                @NotNull VirtualFile virtualFile,
+                                                @NotNull OpenProjectTask options) {
     Ref<Project> result = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      result.set(provider.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame));
+      ProjectOpenProcessor processor = selectOpenProcessor(processors, virtualFile);
+
+      if (processor != null) {
+        Project project = processor.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame);
+
+        if (project != null && processor instanceof PlatformProjectOpenProcessor) {
+          project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
+        }
+
+        result.set(project);
+      }
     });
     return result.get();
+  }
+
+  @CalledInAwt
+  @Nullable
+  private static ProjectOpenProcessor selectOpenProcessor(@NotNull List<ProjectOpenProcessor> processors, @NotNull VirtualFile file) {
+    if (processors.size() == 1) {
+      return processors.get(0);
+    }
+    List<ProjectOpenProcessor> notDefaultProcessors = filter(processors, p -> !(p instanceof PlatformProjectOpenProcessor));
+    if (notDefaultProcessors.size() == 1) {
+      return notDefaultProcessors.get(0);
+    }
+    return new SelectProjectOpenProcessorDialog(notDefaultProcessors, file).showAndGetChoice();
   }
 
   @Nullable
