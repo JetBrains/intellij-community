@@ -99,6 +99,7 @@ import static icons.ExternalSystemIcons.Task;
 public class MavenUtil {
   @ApiStatus.Experimental
   @NonNls public static final String MAVEN_NAME = "Maven";
+  @NonNls public static final String MAVEN_NAME_PRESENTABLE = MAVEN_NAME;
   @NonNls public static final String MAVEN_NAME_UPCASE = MAVEN_NAME.toUpperCase();
   public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId(MAVEN_NAME_UPCASE);
   public static final String MAVEN_NOTIFICATION_GROUP = MAVEN_NAME;

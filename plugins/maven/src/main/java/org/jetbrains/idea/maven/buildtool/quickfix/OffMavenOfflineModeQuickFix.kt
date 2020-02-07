@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -21,7 +22,7 @@ class OffMavenOfflineModeQuickFix : BuildIssueQuickFix {
       generalSettings.isWorkOffline = false
     }
     Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                 "Maven Offline Mode was switched off",
+                 MavenProjectBundle.message("maven.offline.mode.switched.off.notification"),
                  NotificationType.INFORMATION).notify(project)
     return CompletableFuture.completedFuture(null)
   }

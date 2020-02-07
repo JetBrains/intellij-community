@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.tasks.TasksBundle;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -31,14 +32,14 @@ public class MavenExecuteGoalDialog extends MavenEditGoalDialog {
   public MavenExecuteGoalDialog(@NotNull Project project, @Nullable Collection<String> history) {
     super(project, history);
 
-    setTitle("Execute Maven Goal");
+    setTitle(TasksBundle.message("maven.tasks.execute"));
   }
 
   @NotNull
   @Override
   protected Action getOKAction() {
     Action action = super.getOKAction();
-    action.putValue(Action.NAME, "&Execute");
+    action.putValue(Action.NAME, TasksBundle.message("maven.tasks.execute.ok.title"));
     return action;
   }
 }

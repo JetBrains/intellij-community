@@ -56,7 +56,7 @@ public class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTo
           if (groupId.equals(parentGroupId)) {
             XmlTag xmlTag = projectModel.getGroupId().getXmlTag();
 
-            LocalQuickFix fix = new LocalQuickFixBase("Remove unnecessary <groupId>") {
+            LocalQuickFix fix = new LocalQuickFixBase(MavenDomBundle.message("inspection.redundant.groupId.fix")) {
               @Override
               public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
                 descriptor.getPsiElement().delete();
@@ -65,7 +65,7 @@ public class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTo
 
             return new ProblemDescriptor[]{
               manager.createProblemDescriptor(xmlTag,
-                                              "Definition of groupId is redundant, because it's inherited from the parent",
+                                              MavenDomBundle.message("inspection.redundant.groupId.fix.description"),
                                               fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)
             };
           }

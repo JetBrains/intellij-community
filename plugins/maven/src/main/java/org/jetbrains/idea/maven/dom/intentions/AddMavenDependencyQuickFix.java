@@ -86,7 +86,8 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
     final MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, mavenProject.getFile());
     if (model == null) return;
 
-    WriteCommandAction.writeCommandAction(project, DomUtil.getFile(model)).withName("Add Maven Dependency").run(() -> {
+    WriteCommandAction.writeCommandAction(project, DomUtil.getFile(model)).withName(
+      MavenDomBundle.message("maven.dom.quickfix.add.maven.dependency")).run(() -> {
       boolean isTestSource = false;
 
       VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();

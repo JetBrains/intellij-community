@@ -22,6 +22,7 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
@@ -104,8 +105,8 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
       projectToUpdate.add(fromProject);
     }
 
-    WriteCommandAction.writeCommandAction(myProject, PsiUtilCore.toPsiFileArray(files)).withName("Add Maven Dependency").run(() -> {
-      PsiDocumentManager pdm = PsiDocumentManager.getInstance(myProject);
+    WriteCommandAction.writeCommandAction(myProject, PsiUtilCore.toPsiFileArray(files)).withName(MavenDomBundle.message("fix.add.dependency")).run(() -> {
+                                                                                                 PsiDocumentManager pdm = PsiDocumentManager.getInstance(myProject);
       for (Trinity<MavenDomProjectModel, MavenId, String> trinity : models) {
         final MavenDomProjectModel model = trinity.first;
         MavenDomDependency dependency = MavenDomUtil.createDomDependency(model, null, trinity.second);
@@ -182,7 +183,7 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
     final MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
     if (model == null) return null;
 
-    WriteCommandAction.writeCommandAction(myProject, DomUtil.getFile(model)).withName("Add Maven Dependency").run(() -> {
+    WriteCommandAction.writeCommandAction(myProject, DomUtil.getFile(model)).withName(MavenDomBundle.message("fix.add.dependency")).run(() -> {
       XmlTag tag = getCompilerPlugin(model).getConfiguration().ensureTagExists();
       String option = JpsJavaSdkType.complianceOption(level.toJavaVersion());
       setChildTagValue(tag, "source", option);

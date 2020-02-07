@@ -11,11 +11,14 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.AnimatedIcon;
+import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 
 import javax.swing.*;
-import javax.swing.Timer;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -27,8 +30,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.jetbrains.idea.maven.indices.MavenSearchIndex.Kind.REMOTE;
 
 public class MavenRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final MavenProjectIndicesManager myManager;
@@ -46,7 +47,9 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     myManager = MavenProjectIndicesManager.getInstance(project);
     configControls();
 
-    myBorderPanel.setBorder(IdeBorderFactory.createTitledBorder("Indexed Maven repositories:", false, JBUI.insetsTop(8)).setShowLine(false));
+    myBorderPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.repositories.title"), false, JBUI.insetsTop(8))
+        .setShowLine(false));
   }
 
   @Override
@@ -86,7 +89,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     myIndicesTable.setDefaultRenderer(MavenIndicesManager.IndexUpdatingState.class,
                                       new MyIconCellRenderer());
 
-    myIndicesTable.getEmptyText().setText("No remote repositories");
+    myIndicesTable.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.repositories.no"));
 
     updateButtonsState();
   }

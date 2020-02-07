@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.tasks.TasksBundle;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -43,7 +44,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
     myProject = project;
     myHistory = history;
 
-    setTitle("Edit Maven Goal");
+    setTitle(TasksBundle.message("maven.tasks.goal.edit"));
     setUpDialog();
     setModal(true);
     init();
@@ -95,7 +96,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
   @Override
   protected ValidationInfo doValidate() {
     if (workDirectoryField.getText().trim().isEmpty()) {
-      return new ValidationInfo("Working directory is empty", workDirectoryField);
+      return new ValidationInfo(TasksBundle.message("maven.tasks.edit.working.dir.is.empty"), workDirectoryField);
     }
 
     return null;

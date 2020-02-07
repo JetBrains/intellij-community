@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.NullNode;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -43,7 +44,7 @@ public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
 
   @Override
   protected Action @NotNull [] createActions() {
-    Action selectNoneAction = new AbstractAction("&None") {
+    Action selectNoneAction = new AbstractAction(CommonBundle.message("action.text.none")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction();

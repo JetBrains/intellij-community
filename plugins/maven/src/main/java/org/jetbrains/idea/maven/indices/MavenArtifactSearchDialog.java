@@ -116,8 +116,8 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     myArtifactsPanel = new MavenArtifactSearchPanel(project, !classMode ? initialText : "", false, listener, this, myManagedDependenciesMap);
     myClassesPanel = new MavenArtifactSearchPanel(project, classMode ? initialText : "", true, listener, this, myManagedDependenciesMap);
 
-    myTabbedPane.addTab("Search for artifact", myArtifactsPanel);
-    myTabbedPane.addTab("Search for class", myClassesPanel);
+    myTabbedPane.addTab(MavenDomBundle.message("maven.search.for.artifact.tab.title"), myArtifactsPanel);
+    myTabbedPane.addTab(MavenDomBundle.message("maven.search.for.class.tab.title"), myClassesPanel);
     myTabbedPane.setSelectedIndex(classMode ? 1 : 0);
 
     myTabbedPane.getComponent().setPreferredSize(JBUI.size(900, 600));

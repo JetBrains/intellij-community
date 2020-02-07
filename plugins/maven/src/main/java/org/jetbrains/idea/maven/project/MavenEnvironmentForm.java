@@ -119,7 +119,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     }
     mavenHomeField.setHistory(foundMavenHomes);
     mavenHomeComponent = LabeledComponent.create(
-      new ComponentWithBrowseButton<>(mavenHomeField, null), "Maven &amp;home directory");
+      new ComponentWithBrowseButton<>(mavenHomeField, null), MavenConfigurableBundle.message("maven.settings.environment.home.directory"));
 
     final JBLabel versionLabel = new JBLabel();
     versionLabel.setOpaque(true);

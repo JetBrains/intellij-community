@@ -2,12 +2,10 @@ package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,7 +20,6 @@ import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 
 /**
@@ -31,22 +28,6 @@ import java.io.IOException;
 public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(MavenShowEffectivePom.class);
-
-  private static void showUnsupportedNotification(@NotNull final Project project) {
-    new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                     "Unsupported action",
-                     "<html>Maven3 required to use Show Effective POM action. \n" +
-                     "Please <a href='#'>select Maven3 home directory</a> or use \"Bundled (Maven 3)\"</html>",
-                     NotificationType.ERROR,
-                     new NotificationListener.Adapter() {
-                       @Override
-                       protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-                         notification.expire();
-                         ShowSettingsUtil.getInstance()
-                           .showSettingsDialog(project, MavenProjectBundle.message("configurable.MavenSettings.display.name"));
-                       }
-                     }).notify(project);
-  }
 
   public static void actionPerformed(@NotNull final Project project, @NotNull final VirtualFile file) {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
@@ -59,8 +40,8 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
       if (s == null) { // null means UnsupportedOperationException
         new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                         "Error",
-                         "Failed to evaluate effective pom.",
+                         MavenProjectBundle.message("maven.effective.pom.failed.title"),
+                         MavenProjectBundle.message("maven.effective.pom.failed"),
                          NotificationType.ERROR).notify(project);
         return;
       }
@@ -103,10 +84,7 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
     final VirtualFile file = findPomXml(event.getDataContext());
     if (file == null) return;
 
-    if (MavenServerManager.getInstance().isUseMaven2()) {
-      showUnsupportedNotification(project);
-    }
-    else {
+    if (!MavenServerManager.getInstance().isUseMaven2()) {
       actionPerformed(project, file);
     }
   }
@@ -117,6 +95,7 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
     boolean visible = findPomXml(e.getDataContext()) != null;
 
+    visible = visible && !MavenServerManager.getInstance().isUseMaven2();
     p.setVisible(visible);
   }
 

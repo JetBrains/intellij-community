@@ -243,7 +243,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
-        ProgressManager.getInstance().run(new Task.Modal(null, "Maven Server Shutdown", false) {
+        ProgressManager.getInstance().run(new Task.Modal(null, RunnerBundle.message("maven.server.shutdown"), false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             shutdown(true);
@@ -331,8 +331,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") >= 0
         && StringUtil.compareVersionNumbers(version, "1.7") < 0) {
       new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                       "Maven 3.3.1+ requires JDK 1.7+. Please set appropriate JDK at <br>" +
-                       sdkConfigLocation,
+                       RunnerBundle.message("maven.3.3.1.bad.jdk", sdkConfigLocation),
                        NotificationType.WARNING).notify(null);
     }
   }
