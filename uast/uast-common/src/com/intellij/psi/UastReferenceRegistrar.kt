@@ -3,6 +3,7 @@
 
 package com.intellij.psi
 
+import com.intellij.model.search.SearchService
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
@@ -10,14 +11,12 @@ import com.intellij.patterns.uast.UElementPattern
 import com.intellij.patterns.uast.capture
 import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.patterns.uast.uExpression
-import com.intellij.psi.impl.search.LowLevelSearchUtil
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ProcessingContext
-import com.intellij.util.SmartList
-import com.intellij.util.text.StringSearcher
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
@@ -90,13 +89,13 @@ fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Cla
 )
 
 /**
- * Creates UAST reference provider that accepts additional PSI element that could be either is the same as reference PSI element or
- * reference element that is used in the same file and satisfy usage pattern.
+ * Creates UAST reference provider that accepts additional PSI element that could be either the same as reference PSI element or reference
+ * element that is used in the same file and satisfy usage pattern.
  *
  * @see registerReferenceProviderByUsage
  */
 @ApiStatus.Experimental
-fun uastByUsageReferenceProvider(provider: (expr: UExpression, referencePsi: PsiElement, usagePsi: PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+fun uastByUsageReferenceProvider(provider: (UExpression, referencePsi: PsiElement, usagePsi: PsiElement) -> Array<PsiReference>): UastReferenceProvider =
   object : UastReferenceProvider(UExpression::class.java) {
     override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
       val usagePsi = context[USAGE_PSI_ELEMENT] ?: context[REQUESTED_PSI_ELEMENT]
@@ -109,8 +108,8 @@ fun uastByUsageReferenceProvider(provider: (expr: UExpression, referencePsi: Psi
 
 /**
  * Registers a provider that will be called on the expressions that directly satisfy the [usagePattern] or at least one of the expression
- * usages satisfies the pattern if it was assigned to a variable. Search of variable usages performed only for expressions that satisfy
- * [expressionPattern]. There are standard expression patterns for usage search: [uInjectionHostInVariable] and [uExpressionInVariable].
+ * usages satisfies the pattern if it was assigned to a variable. The provider will search for usages of variables only for expressions that
+ * satisfy [expressionPattern]. There are standard expression patterns for usage search: [uInjectionHostInVariable] and [uExpressionInVariable].
  *
  * Consider using [uastByUsageReferenceProvider] if you need to obtain additional context from a usage place.
  */
@@ -133,7 +132,9 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
         else -> null
       }
 
-      if (parentVariable == null || !parentVariable.type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      if (parentVariable == null
+          || parentVariable.name.isNullOrEmpty()
+          || !parentVariable.type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return PsiReference.EMPTY_ARRAY
       }
 
@@ -153,28 +154,28 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
 
 @ApiStatus.Experimental
 fun uInjectionHostInVariable() = injectionHostUExpression().withUastParent(capture(UVariable::class.java))
-@ApiStatus.Experimental
-fun uExpressionInVariable() = uExpression().withUastParent(capture(UElement::class.java).withUastParentOrSelf(capture(UVariable::class.java)))
 
-private fun getDirectVariableUsages(uVar: UVariable): List<PsiElement> {
+@ApiStatus.Experimental
+fun uExpressionInVariable() = uExpression().filter {
+  it.uastParent is UVariable || it.uastParent?.uastParent is UVariable
+}
+
+private fun getDirectVariableUsages(uVar: UVariable): Collection<PsiElement> {
   val variablePsi = uVar.sourcePsi ?: return emptyList()
   return CachedValuesManager.getManager(variablePsi.project).getCachedValue(variablePsi, CachedValueProvider {
     Result.createSingleDependency(findDirectVariableUsages(variablePsi), PsiModificationTracker.MODIFICATION_COUNT)
   })
 }
 
-private fun findDirectVariableUsages(variablePsi: PsiElement): List<PsiElement> {
-  val uVariable = variablePsi.toUElementOfType<UVariable>() ?: return emptyList()
-  val variableName = uVariable.name ?: return emptyList()
+private fun findDirectVariableUsages(variablePsi: PsiElement): Collection<PsiElement> {
+  val variableName = variablePsi.toUElementOfType<UVariable>()?.name
+  if (variableName.isNullOrEmpty()) return emptyList()
   val file = variablePsi.containingFile ?: return emptyList()
 
-  val fileContent = file.viewProvider.contents
-  val searcher = StringSearcher(variableName, true, true)
-  val usages = SmartList<PsiElement>()
-
-  LowLevelSearchUtil.processTextOccurrences(fileContent, 0, fileContent.length, searcher) { offset ->
-    val occurrencePsi = file.findElementAt(offset)
-    if (occurrencePsi != null) {
+  return SearchService.getInstance()
+    .searchWord(variablePsi.project, variableName)
+    .inScope(LocalSearchScope(arrayOf(file), null, true))
+    .buildQuery { _, occurrencePsi, _ ->
       // we get identifiers and need to process their parents, see IDEA-232166
       val uRef = occurrencePsi.parent.findContaining(UReferenceExpression::class.java)
       val expressionType = uRef?.getExpressionType()
@@ -182,12 +183,9 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): List<PsiElement> 
         val occurrenceResolved = uRef.tryResolve().toUElement()?.sourcePsi
         if (occurrenceResolved != null
             && PsiManager.getInstance(occurrencePsi.project).areElementsEquivalent(occurrenceResolved, variablePsi)) {
-          usages.add(uRef.sourcePsi)
+          return@buildQuery listOfNotNull(uRef.sourcePsi)
         }
       }
-    }
-    true
-  }
-
-  return if (usages.isEmpty()) emptyList() else usages
+      emptyList<PsiElement>()
+    }.findAll()
 }
