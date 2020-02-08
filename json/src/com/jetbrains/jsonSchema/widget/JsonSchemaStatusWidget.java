@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -32,6 +32,7 @@ import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,15 +102,29 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     return !DumbService.getInstance(myProject).isDumb();
   }
 
+  @Contract("_, null -> false")
+  public static boolean isAvailableOnFile(@NotNull Project project, @Nullable VirtualFile file) {
+    if (file == null) {
+      return false;
+    }
+    List<JsonSchemaEnabler> enablers = JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensionList();
+    if (enablers.stream().noneMatch(e -> e.isEnabledForFile(file) && e.shouldShowSwitcherWidget(file))) {
+      return false;
+    }
+    if (DumbService.getInstance(project).isDumb()) {
+      return true;
+    }
+    List<JsonWidgetSuppressor> suppressors = JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList();
+    if (suppressors.stream().anyMatch(s -> s.suppressSwitcherWidget(file, project))) {
+      return false;
+    }
+    return true;
+  }
+
   @NotNull
   @Override
   protected WidgetState getWidgetState(@Nullable VirtualFile file) {
-    if (file == null) {
-      return WidgetState.HIDDEN;
-    }
-
-    List<JsonSchemaEnabler> enablers = JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensionList();
-    if (enablers.stream().noneMatch(e -> e.isEnabledForFile(file) && e.shouldShowSwitcherWidget(file))) {
+    if (!isAvailableOnFile(myProject, file)) {
       return WidgetState.HIDDEN;
     }
 
@@ -120,11 +135,6 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (!hasAccessToSymbols()) {
       return WidgetState.getDumbModeState(JsonBundle.message("schema.widget.service"), isJsonFile ? JsonBundle.message("schema.widget.prefix.json.files")
                                                                             : JsonBundle.message("schema.widget.prefix.other.files"));
-    }
-
-    List<JsonWidgetSuppressor> suppressors = JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList();
-    if (suppressors.stream().anyMatch(s -> s.suppressSwitcherWidget(file, myProject))) {
-      return WidgetState.HIDDEN;
     }
 
     JsonSchemaService service = getService();
