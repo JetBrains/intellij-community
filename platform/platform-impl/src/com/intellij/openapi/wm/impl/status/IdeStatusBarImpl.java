@@ -187,12 +187,10 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
       addWidget(widget, Position.RIGHT, anchor);
-      repaint();
     }
     else {
       app.invokeLater(() -> {
         addWidget(widget, Position.RIGHT, anchor);
-        repaint();
       });
     }
   }
@@ -289,6 +287,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     panel.add(c, getPositionIndex(position, anchor));
     myWidgetMap.put(widget.ID(), WidgetBean.create(widget, position, c, anchor));
     widget.install(this);
+    panel.revalidate();
     Disposer.register(this, widget);
     if (widget instanceof StatusBarWidget.Multiframe) {
       StatusBarWidget.Multiframe multiFrameWidget = (StatusBarWidget.Multiframe)widget;
@@ -525,8 +524,9 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     myOrderedWidgets.remove(id);
     WidgetBean bean = myWidgetMap.remove(id);
     if (bean != null) {
-      getTargetPanel(bean.position).remove(bean.component);
-      repaint();
+      JPanel targetPanel = getTargetPanel(bean.position);
+      targetPanel.remove(bean.component);
+      targetPanel.revalidate();
       Disposer.dispose(bean.widget);
     }
     updateChildren(child -> child.removeWidget(id));
@@ -543,19 +543,19 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   @Override
   public void updateWidget(@NotNull final String id) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      final WidgetBean bean = myWidgetMap.get(id);
-      if (bean != null) {
-        if (bean.component instanceof StatusBarWidgetWrapper) {
-          ((StatusBarWidgetWrapper)bean.component).beforeUpdate();
+      JComponent widgetComponent = getWidgetComponent(id);
+      if (widgetComponent != null) {
+        if (widgetComponent instanceof StatusBarWidgetWrapper) {
+          ((StatusBarWidgetWrapper)widgetComponent).beforeUpdate();
 
-          StatusBarWidget.WidgetPresentation presentation = ((StatusBarWidgetWrapper)bean.component).getPresentation();
-          bean.component.setToolTipText(presentation.getTooltipText());
+          StatusBarWidget.WidgetPresentation presentation = ((StatusBarWidgetWrapper)widgetComponent).getPresentation();
+          widgetComponent.setToolTipText(presentation.getTooltipText());
           if (Registry.is("ide.helptooltip.enabled")) {
-            bean.component.putClientProperty(HelpTooltipManager.SHORTCUT_PROPERTY, presentation.getShortcutText());
+            widgetComponent.putClientProperty(HelpTooltipManager.SHORTCUT_PROPERTY, presentation.getShortcutText());
           }
         }
 
-        bean.component.repaint();
+        widgetComponent.repaint();
       }
 
       updateChildren(child -> child.updateWidget(id));
