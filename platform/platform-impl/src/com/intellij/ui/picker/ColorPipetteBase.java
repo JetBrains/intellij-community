@@ -34,7 +34,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
   }
 
   public static boolean canUseMacPipette() {
-    return SystemInfo.isMac && Registry.is("ide.mac.new.color.picker") && JnaLoader.isLoaded();
+    return SystemInfo.isMac && Registry.is("ide.mac.native.pipette") && JnaLoader.isLoaded();
   }
 
   @Override
