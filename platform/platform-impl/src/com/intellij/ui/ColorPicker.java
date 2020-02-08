@@ -369,6 +369,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener) {
+    showColorPickerPopup(project, currentColor, listener, null);
+  }
+
+  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable Point location) {
     Ref<LightCalloutPopup> ref = Ref.create();
 
     ColorListener colorListener = new ColorListener() {
@@ -401,7 +405,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       .build();
     ref.set(popup);
 
-    popup.show(MouseInfo.getPointerInfo().getLocation());
+    if (location == null) {
+      location = MouseInfo.getPointerInfo().getLocation();
+    }
+    popup.show(location);
     updatePointer(ref);
   }
 
