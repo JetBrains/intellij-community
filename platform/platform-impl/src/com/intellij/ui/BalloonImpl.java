@@ -1713,11 +1713,6 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
       myBalloon = balloon;
 
-      // When a screen reader is active, TAB/Shift-TAB should allow moving the focus
-      // outside the balloon in the event the balloon acquired the focus.
-      if (!ScreenReader.isActive()) {
-        setFocusCycleRoot(true);
-      }
       putClientProperty(Balloon.KEY, BalloonImpl.this);
 
       myContent = new JPanel(new BorderLayout(2, 2));
@@ -1733,34 +1728,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       myContent.setBorder(shapeBorder);
       myContent.setOpaque(false);
 
+      myContent.setFocusCycleRoot(true);
+
       add(myContent);
-      setFocusTraversalPolicyProvider(true);
-      setFocusTraversalPolicy(new FocusTraversalPolicy() {
-        @Override
-        public Component getComponentAfter(Container aContainer, Component aComponent) {
-          return WeakFocusStackManager.getInstance().getLastFocusedOutside(MyComponent.this);
-        }
-
-        @Override
-        public Component getComponentBefore(Container aContainer, Component aComponent) {
-          return WeakFocusStackManager.getInstance().getLastFocusedOutside(MyComponent.this);
-        }
-
-        @Override
-        public Component getFirstComponent(Container aContainer) {
-          return WeakFocusStackManager.getInstance().getLastFocusedOutside(MyComponent.this);
-        }
-
-        @Override
-        public Component getLastComponent(Container aContainer) {
-          return WeakFocusStackManager.getInstance().getLastFocusedOutside(MyComponent.this);
-        }
-
-        @Override
-        public Component getDefaultComponent(Container aContainer) {
-          return WeakFocusStackManager.getInstance().getLastFocusedOutside(MyComponent.this);
-        }
-      });
     }
 
     @NotNull
