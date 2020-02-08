@@ -34,7 +34,7 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
     myPushTags.setSelected(defaultMode != null);
 
     myPushTagsMode = new ComboBox<>(GitPushTagMode.getValues());
-    myPushTagsMode.setRenderer(SimpleListCellRenderer.create("", GitPushTagMode::getTitle));
+    myPushTagsMode.setRenderer(SimpleListCellRenderer.create("", GitPushTagModeKt::localizedTitle));
     myPushTagsMode.setEnabled(myPushTags.isSelected());
     if (defaultMode != null) {
       myPushTagsMode.setSelectedItem(defaultMode);

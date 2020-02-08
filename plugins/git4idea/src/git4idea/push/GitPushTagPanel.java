@@ -51,7 +51,7 @@ public class GitPushTagPanel extends VcsPushOptionsPanel {
 
     if (followTagsSupported) {
       myCombobox = new ComboBox<>(GitPushTagMode.getValues());
-      myCombobox.setRenderer(SimpleListCellRenderer.create("", GitPushTagMode::getTitle));
+      myCombobox.setRenderer(SimpleListCellRenderer.create("", GitPushTagModeKt::localizedTitle));
       myCombobox.setEnabled(myCheckBox.isSelected());
       if (defaultMode != null) {
         myCombobox.setSelectedItem(defaultMode);

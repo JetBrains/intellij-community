@@ -3,15 +3,15 @@ package git4idea.push
 
 import com.intellij.openapi.components.BaseState
 import git4idea.i18n.GitBundle
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 
 class GitPushTagMode : BaseState {
   var title by string()
   var argument by string()
 
   @Suppress("unused")
-  constructor(@Nls title: String, @NonNls argument: String) : super() {
+  constructor() : this(ALL.title!!, ALL.argument!!)
+
+  constructor(title: String, argument: String) : super() {
     // must be in constructor, not as default value for field
     this.title = title
     this.argument = argument
@@ -19,11 +19,18 @@ class GitPushTagMode : BaseState {
 
   companion object {
     @JvmField
-    val ALL = GitPushTagMode(GitBundle.message("push.dialog.push.tags.combo.all"), "--tags")
+    val ALL = GitPushTagMode("All", "--tags")
+
     @JvmField
-    val FOLLOW = GitPushTagMode(GitBundle.message("push.dialog.push.tags.combo.current.branch"), "--follow-tags")
+    val FOLLOW = GitPushTagMode("Current Branch", "--follow-tags")
 
     @JvmStatic
     val values = arrayOf(ALL, FOLLOW)
   }
+}
+
+fun GitPushTagMode.localizedTitle(): String? = when {
+  this == GitPushTagMode.ALL -> GitBundle.message("push.dialog.push.tags.combo.all")
+  this == GitPushTagMode.FOLLOW -> GitBundle.message("push.dialog.push.tags.combo.current.branch")
+  else -> this.title
 }
