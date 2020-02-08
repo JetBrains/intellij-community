@@ -79,7 +79,7 @@ public class ErrorDiffTool implements FrameDiffTool {
       myRequest = request;
 
       JComponent component = createComponent(request);
-      myPanel = ScrollPaneFactory.createScrollPane(component);
+      myPanel = ScrollPaneFactory.createScrollPane(component, true);
     }
 
     @NotNull
