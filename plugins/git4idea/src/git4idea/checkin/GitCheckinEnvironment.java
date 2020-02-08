@@ -195,12 +195,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
 
     GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
-    Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(myProject, changes, exceptions);
+    Map<GitRepository, Collection<Change>> sortedChanges = sortChangesByGitRoot(myProject, changes, exceptions);
     LOG.assertTrue(!sortedChanges.isEmpty(), "Trying to commit an empty list of changes: " + changes);
 
-    List<GitRepository> repositories = manager.sortByDependency(getRepositoriesFromRoots(manager, sortedChanges.keySet()));
+    List<GitRepository> repositories = manager.sortByDependency(sortedChanges.keySet());
     for (GitRepository repository : repositories) {
-      Collection<Change> rootChanges = sortedChanges.get(repository.getRoot());
+      Collection<Change> rootChanges = sortedChanges.get(repository);
       Collection<CommitChange> toCommit = map(rootChanges, CommitChange::new);
 
       if (isCommitRenamesSeparately(commitContext)) {
@@ -1085,10 +1085,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   @NotNull
-  private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull Project project,
-                                                                           @NotNull List<? extends Change> changes,
-                                                                           @NotNull List<? super VcsException> exceptions) {
-    Map<VirtualFile, Collection<Change>> result = new HashMap<>();
+  private static Map<GitRepository, Collection<Change>> sortChangesByGitRoot(@NotNull Project project,
+                                                                             @NotNull List<? extends Change> changes,
+                                                                             @NotNull List<? super VcsException> exceptions) {
+    Map<GitRepository, Collection<Change>> result = new HashMap<>();
     for (Change change : changes) {
       try {
         // note that any path will work, because changes could happen within single vcs root
@@ -1098,7 +1098,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
         // to the parent change. The path "." is never is valid change, so there should be no problem
         // with it.
         GitRepository repository = getRepositoryForFile(project, assertNotNull(filePath.getParentPath()));
-        Collection<Change> changeList = result.computeIfAbsent(repository.getRoot(), key -> new ArrayList<>());
+        Collection<Change> changeList = result.computeIfAbsent(repository, key -> new ArrayList<>());
         changeList.add(change);
       }
       catch (VcsException e) {
