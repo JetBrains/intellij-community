@@ -2,10 +2,14 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutter;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -151,6 +155,24 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     if (hsb) {
       myFormat.setSelectedIndex(1);
     }
+  }
+
+  @Nullable
+  public static Point bestLocationForColorPickerPopup(@Nullable Editor editor) {
+    if (editor == null || editor.isDisposed()) {
+      return null;
+    }
+    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    if (event instanceof MouseEvent) {
+      Component component = ((MouseEvent)event).getComponent();
+      Component clickComponent = SwingUtilities.getDeepestComponentAt(component, ((MouseEvent)event).getX(), ((MouseEvent)event).getY());
+      if (clickComponent instanceof EditorGutter) {
+        return null;
+      }
+    }
+    VisualPosition visualPosition = editor.getCaretModel().getCurrentCaret().getVisualPosition();
+    Point pointInEditor = editor.visualPositionToXY(new VisualPosition(visualPosition.line + 1, visualPosition.column));
+    return new RelativePoint(editor.getContentComponent(),pointInEditor).getScreenPoint();
   }
 
   @Nullable
@@ -366,6 +388,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     return null;
+  }
+
+  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener) {
+    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor));
   }
 
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener) {
