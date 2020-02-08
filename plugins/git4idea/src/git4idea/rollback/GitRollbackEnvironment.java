@@ -208,7 +208,7 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
                             @NotNull FilePath file,
                             @NotNull List<? super VcsException> exceptions) {
     try {
-      VirtualFile root = GitUtil.getRepositoryForFile(myProject, file).getRoot();
+      VirtualFile root = GitUtil.getRootForFile(myProject, file);
       List<FilePath> paths = files.computeIfAbsent(root, key -> new ArrayList<>());
       paths.add(file);
     }

@@ -202,7 +202,7 @@ public class GitFileHistory {
                                  @NotNull Consumer<? super VcsException> exceptionConsumer,
                                  String... parameters) {
     try {
-      VirtualFile repositoryRoot = GitUtil.getRepositoryForFile(project, path).getRoot();
+      VirtualFile repositoryRoot = GitUtil.getRootForFile(project, path);
       VcsRevisionNumber revision = startingFrom == null ? GitRevisionNumber.HEAD : startingFrom;
       new GitFileHistory(project, repositoryRoot, path, revision).load(consumer, exceptionConsumer, parameters);
     }

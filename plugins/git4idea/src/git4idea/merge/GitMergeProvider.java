@@ -89,7 +89,7 @@ public class GitMergeProvider implements MergeProvider2 {
   @Override
   @NotNull
   public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
-    VirtualFile root = GitUtil.getRepositoryForFile(myProject, file).getRoot();
+    VirtualFile root = GitUtil.getRootForFile(myProject, file);
     FilePath path = VcsUtil.getFilePath(file);
     return loadMergeData(myProject, root, path, myReverseRoots.contains(root));
   }
@@ -97,7 +97,7 @@ public class GitMergeProvider implements MergeProvider2 {
   @Override
   public void conflictResolvedForFile(@NotNull VirtualFile file) {
     try {
-      GitFileUtils.addFilesForce(myProject, GitUtil.getRepositoryForFile(myProject, file).getRoot(), Collections.singletonList(file));
+      GitFileUtils.addFilesForce(myProject, GitUtil.getRootForFile(myProject, file), Collections.singletonList(file));
     }
     catch (VcsException e) {
       LOG.error("Confirming conflict resolution failed", e);

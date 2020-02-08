@@ -183,7 +183,7 @@ public final class GitVcs extends AbstractVcs {
     }
     if (path != null) {
       try {
-        VirtualFile root = GitUtil.getRepositoryForFile(myProject, path).getRoot();
+        VirtualFile root = GitUtil.getRootForFile(myProject, path);
         return GitRevisionNumber.resolve(myProject, root, revision);
       }
       catch (VcsException e) {

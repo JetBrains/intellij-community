@@ -670,6 +670,27 @@ public class GitUtil {
     return repository;
   }
 
+  @NotNull
+  public static VirtualFile getRootForFile(@NotNull Project project, @NotNull FilePath filePath) throws VcsException {
+    VcsRoot root = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(filePath);
+    if (!isGitVcsRoot(root)) throw new GitRepositoryNotFoundException(filePath);
+    return root.getPath();
+  }
+
+  @NotNull
+  public static VirtualFile getRootForFile(@NotNull Project project, @NotNull VirtualFile file) throws VcsException {
+    VcsRoot root = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file);
+    if (!isGitVcsRoot(root)) throw new GitRepositoryNotFoundException(file);
+    return root.getPath();
+  }
+
+  private static boolean isGitVcsRoot(@Nullable VcsRoot root) {
+    if (root == null) return false;
+    AbstractVcs vcs = root.getVcs();
+    if (vcs == null) return false;
+    return GitVcs.getKey().equals(vcs.getKeyInstanceMethod());
+  }
+
   /**
    * Show changes made in the specified revision.
    *
@@ -687,7 +708,7 @@ public class GitUtil {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         try {
-          VirtualFile vcsRoot = getRepositoryForFile(project, file).getRoot();
+          VirtualFile vcsRoot = getRootForFile(project, file);
           final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision, true, local, revertable);
           UIUtil.invokeLaterIfNeeded(
             () -> AbstractVcsHelper.getInstance(project)

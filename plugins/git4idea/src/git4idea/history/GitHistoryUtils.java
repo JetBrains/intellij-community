@@ -184,7 +184,7 @@ public class GitHistoryUtils {
   public static VcsRevisionNumber getCurrentRevision(@NotNull Project project, @NotNull FilePath filePath,
                                                      @Nullable String branch) throws VcsException {
     filePath = VcsUtil.getLastCommitPath(project, filePath);
-    GitLineHandler h = new GitLineHandler(project, GitUtil.getRepositoryForFile(project, filePath).getRoot(), GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, GitUtil.getRootForFile(project, filePath), GitCommand.LOG);
     GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, COMMIT_TIME);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
@@ -207,7 +207,7 @@ public class GitHistoryUtils {
   public static VcsRevisionDescription getCurrentRevisionDescription(@NotNull Project project, @NotNull FilePath filePath)
     throws VcsException {
     filePath = VcsUtil.getLastCommitPath(project, filePath);
-    GitLineHandler h = new GitLineHandler(project, GitUtil.getRepositoryForFile(project, filePath).getRoot(), GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, GitUtil.getRootForFile(project, filePath), GitCommand.LOG);
     GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, COMMIT_TIME, AUTHOR_NAME, COMMITTER_NAME,
                                                                          SUBJECT, BODY, RAW_BODY);
     h.setSilent(true);
@@ -320,7 +320,7 @@ public class GitHistoryUtils {
   @NotNull
   public static List<Pair<SHAHash, Date>> onlyHashesHistory(@NotNull Project project, @NotNull FilePath path, String... parameters)
     throws VcsException {
-    final VirtualFile root = GitUtil.getRepositoryForFile(project, path).getRoot();
+    final VirtualFile root = GitUtil.getRootForFile(project, path);
     return onlyHashesHistory(project, path, root, parameters);
   }
 
