@@ -15,11 +15,8 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
     val LOG = logger<MacExecutableProblemHandler>()
   }
 
-  private val gitFileName = "git-2.23.0-intel-universal-mavericks.dmg"
   private val tempPath = FileUtil.createTempDirectory("git-install", null)
   private val mountPoint = File(tempPath, "mount")
-  private val gitFile = File(tempPath, gitFileName)
-  private val pkgFileName = "git-2.23.0-intel-universal-mavericks.pkg"
 
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     when {
@@ -32,17 +29,22 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
   private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     errorNotifier.showError("Git is not installed", ErrorNotifier.FixOption.Standard("Download and install") {
       errorNotifier.executeTask("Downloading...", false) {
-        val url = "https://netix.dl.sourceforge.net/project/git-osx-installer/$gitFileName"
-        if (downloadGit(project, url, gitFile, errorNotifier)) {
-          errorNotifier.changeProgressTitle("Installing...")
-          installGit(errorNotifier, onErrorResolved)
+        val installer = fetchInstaller(errorNotifier) { it.os == "macOS" }
+        if (installer != null) {
+          val fileName = installer.fileName
+          val dmgFile = File(tempPath, fileName)
+          val pkgFileName = installer.pkgFileName
+          if (downloadGit(installer, dmgFile, project, errorNotifier)) {
+            errorNotifier.changeProgressTitle("Installing...")
+            installGit(dmgFile, pkgFileName, errorNotifier, onErrorResolved)
+          }
         }
       }
     })
   }
 
-  private fun installGit(errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
-    if (attachVolume(gitFile, errorNotifier)) {
+  private fun installGit(dmgFile: File, pkgFileName: String, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
+    if (attachVolume(dmgFile, errorNotifier)) {
       try {
         if (installPackageOrShowError(pkgFileName, errorNotifier)) {
           errorNotifier.showMessage("Git has been installed")

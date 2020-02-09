@@ -45,5 +45,8 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" name="commons-codec" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="library" name="xz" level="project" />
   </component>
 </module>

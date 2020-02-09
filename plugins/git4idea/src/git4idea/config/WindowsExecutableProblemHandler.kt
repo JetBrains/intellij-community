@@ -15,24 +15,27 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
     val LOG = logger<WindowsExecutableProblemHandler>()
   }
 
-  private val gitexe = if (SystemInfo.is64Bit) "Git-2.24.1.2-64-bit.exe" else "Git-2.24.1.2-32-bit.exe"
-  private val gitFile = File(PathManager.getTempPath(), gitexe)
-
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     errorNotifier.showError("Git is not installed", ErrorNotifier.FixOption.Standard("Download and install") {
       errorNotifier.executeTask("Downloading...", true) {
-        val url = "https://github.com/git-for-windows/git/releases/download/v2.24.1.windows.2/$gitexe"
-        if (downloadGit(project, url, gitFile, errorNotifier)) {
-          errorNotifier.changeProgressTitle("Installing...")
-          installGit(errorNotifier, onErrorResolved)
+        val installer = fetchInstaller(errorNotifier) { it.os == "windows" && archMatches(it.arch) }
+        if (installer != null) {
+          val fileName = installer.fileName
+          val exeFile = File(PathManager.getTempPath(), fileName)
+          if (downloadGit(installer, exeFile, project, errorNotifier)) {
+            errorNotifier.changeProgressTitle("Installing...")
+            installGit(exeFile, errorNotifier, onErrorResolved)
+          }
         }
       }
     })
   }
 
-  private fun installGit(errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
+  private fun archMatches(arch: String) = if (SystemInfo.is32Bit) arch == "x86_32" else arch == "x86_64"
+
+  private fun installGit(exeFile: File, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     val commandLine = GeneralCommandLine()
-      .withExePath(gitFile.path)
+      .withExePath(exeFile.path)
       .withParameters("/verysilent")
     try {
       val output = ExecUtil.execAndGetOutput(commandLine)
