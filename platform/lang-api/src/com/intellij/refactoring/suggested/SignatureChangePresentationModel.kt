@@ -90,7 +90,7 @@ fun SignatureChangePresentationModel.checkCorrectness() {
         for (fragment in fragments) {
             fragment.forSelfAndDescendants {
                 if (it != fragment) {
-                    require(it.connectionId == null) { "Connections supported only for top-level fragments" }
+                    check(it.connectionId == null) { "Connections supported only for top-level fragments" }
                 }
             }
         }
@@ -104,18 +104,18 @@ fun SignatureChangePresentationModel.checkCorrectness() {
         for (fragment in fragments) {
             val id = fragment.connectionId ?: continue
             val added = set.add(id)
-            require(added) { "Duplicate connectionId: $id" }
+            check(added) { "Duplicate connectionId: $id" }
         }
         return set
     }
 
     val idSet1 = connectionIdSet(oldSignature)
     val idSet2 = connectionIdSet(newSignature)
-    require(idSet1 == idSet2) { "Mismatching set of connectionId's for oldSignature and newSignature" }
+    check(idSet1 == idSet2) { "Mismatching set of connectionId's for oldSignature and newSignature" }
 
     fun checkEffectWithConnection(fragment: TextFragment) {
         if (fragment.connectionId != null) {
-            require(fragment.effect == Effect.None || fragment.effect == Effect.Modified || fragment.effect == Effect.Moved) {
+            check(fragment.effect == Effect.None || fragment.effect == Effect.Modified || fragment.effect == Effect.Moved) {
                 "Incorrect effect for fragment with connection: ${fragment.effect}"
             }
         }
