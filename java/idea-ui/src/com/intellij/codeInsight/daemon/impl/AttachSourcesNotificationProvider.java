@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeEditor.JavaEditorFileSwapper;
 import com.intellij.codeInsight.AttachSourcesProvider;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -117,7 +119,8 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           panel.createActionLabel(GuiUtils.getTextWithoutMnemonicEscaping(action.getName()), () -> {
             List<LibraryOrderEntry> entries = findLibraryEntriesForFile(file, project);
             if (!Comparing.equal(libraries, entries)) {
-              Messages.showErrorDialog(project, "Can't find library for " + file.getName(), "Error");
+              Messages.showErrorDialog(project, CodeInsightBundle.message("can.t.find.library.for.0", file.getName()),
+                                       CommonBundle.message("title.error"));
               return;
             }
 
