@@ -23,7 +23,7 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Interpreter options:"/>
+              <text resource-bundle="messages/PyBundle" key="runcfg.unittest.dlg.interpreter_options_title"/>
             </properties>
           </component>
           <component id="47414" class="com.intellij.ui.RawCommandLineEditor" binding="myInterpreterOptionsTextField">
@@ -31,7 +31,7 @@
               <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <dialogCaption value="Enter interpreter options"/>
+              <dialogCaption resource-bundle="messages/PyBundle" key="runcfg.captions.interpreter_options_dialog"/>
             </properties>
           </component>
           <component id="32056" class="javax.swing.JLabel">
@@ -39,7 +39,7 @@
               <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Working directory:"/>
+              <text resource-bundle="messages/PyBundle" key="runcfg.labels.working_directory"/>
             </properties>
           </component>
           <component id="a0dd" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myWorkingDirectoryTextField">
@@ -54,7 +54,7 @@
             </constraints>
             <properties>
               <labelFor value="39bcf"/>
-              <text value="&amp;Python interpreter:"/>
+              <text resource-bundle="messages/PyBundle" key="runcfg.labels.python.interpreter"/>
             </properties>
           </component>
           <component id="39bcf" class="javax.swing.JComboBox" binding="myInterpreterComboBox" custom-create="true">
@@ -69,7 +69,7 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
-              <text value="&amp;Environment variables"/>
+              <text resource-bundle="messages/PyBundle" key="runcfg.labels.environment_variables"/>
             </properties>
           </component>
           <component id="fec2b" class="javax.swing.JLabel" binding="myProjectLabel">
@@ -77,7 +77,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Pro&amp;ject:"/>
+              <text resource-bundle="messages/PyBundle" key="runcfg.labels.project"/>
             </properties>
           </component>
           <component id="195cd" class="com.intellij.application.options.ModulesComboBox" binding="myModuleCombo">
@@ -100,7 +100,7 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
-              <text value="Path mappings"/>
+              <text resource-bundle="messages/PyBundle" key="runcfg.labels.path.mappings"/>
             </properties>
           </component>
           <component id="7ebfd" class="com.intellij.ui.components.JBCheckBox" binding="myAddContentRootsCheckbox">
@@ -109,7 +109,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="Add content roots to PYTHONPATH"/>
+              <text resource-bundle="messages/PyBundle" key="runcfg.labels.add.content.roots.to.pythonpath"/>
             </properties>
           </component>
           <component id="507b" class="com.intellij.ui.components.JBCheckBox" binding="myAddSourceRootsCheckbox">
@@ -118,7 +118,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="Add source roots to PYTHONPATH"/>
+              <text resource-bundle="messages/PyBundle" key="runcfg.labels.add.source.roots.to.pythonpath"/>
             </properties>
           </component>
         </children>
