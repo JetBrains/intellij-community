@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.HttpRequests
+import git4idea.i18n.GitBundle
 import org.tukaani.xz.XZInputStream
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -33,7 +34,7 @@ internal fun fetchInstaller(errorNotifier: ErrorNotifier, condition: (GitInstall
   }
   catch (t: Throwable) {
     LOG.warn(t)
-    errorNotifier.showError("Couldn't install Git")
+    errorNotifier.showError(GitBundle.message("install.general.error"))
     return null
   }
 
@@ -43,7 +44,7 @@ internal fun fetchInstaller(errorNotifier: ErrorNotifier, condition: (GitInstall
   }
   else {
     LOG.warn("Couldn't find installer among $installers")
-    errorNotifier.showError("Couldn't install Git")
+    errorNotifier.showError(GitBundle.message("install.general.error"))
     return null
   }
 }

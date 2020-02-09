@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
+import com.intellij.CommonBundle
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -10,6 +11,9 @@ import git4idea.config.GitExecutableProblemsNotifier.getPrettyErrorMessage
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.Nls.Capitalization.Sentence
+import org.jetbrains.annotations.Nls.Capitalization.Title
 
 fun findGitExecutableProblemHandler(project: Project): GitExecutableProblemHandler {
   return when {
@@ -33,24 +37,26 @@ interface GitExecutableProblemHandler {
 interface ErrorNotifier {
 
   @CalledInAny
-  fun showError(text: String, description: String? = null, fixOption: FixOption)
+  fun showError(@Nls(capitalization = Sentence) text: String,
+                @Nls(capitalization = Sentence) description: String? = null,
+                fixOption: FixOption)
 
   @CalledInAny
-  fun showError(text: String, fixOption: FixOption) {
+  fun showError(@Nls(capitalization = Sentence) text: String, fixOption: FixOption) {
     showError(text, null, fixOption)
   }
 
   @CalledInAny
-  fun showError(text: String)
+  fun showError(@Nls(capitalization = Sentence) text: String)
 
   @CalledInAwt
-  fun executeTask(title: String, cancellable: Boolean, action: () -> Unit)
+  fun executeTask(@Nls(capitalization = Title) title: String, cancellable: Boolean, action: () -> Unit)
 
   @CalledInAny
-  fun changeProgressTitle(text: String)
+  fun changeProgressTitle(@Nls(capitalization = Title) text: String)
 
   @CalledInAny
-  fun showMessage(text: String)
+  fun showMessage(@Nls(capitalization = Sentence) text: String)
 
   @CalledInAny
   fun hideProgress()
@@ -61,11 +67,11 @@ interface ErrorNotifier {
     GitExecutableManager.getInstance().dropExecutableCache()
   }
 
-  sealed class FixOption(val text: String, @CalledInAwt val fix: () -> Unit) {
-    class Standard(text: String, @CalledInAwt fix: () -> Unit) : FixOption(text, fix)
+  sealed class FixOption(@Nls(capitalization = Title) val text: String, @CalledInAwt val fix: () -> Unit) {
+    class Standard(@Nls(capitalization = Title) text: String, @CalledInAwt fix: () -> Unit) : FixOption(text, fix)
 
     // todo probably change to "Select on disk" instead of opening Preferences
-    internal class Configure(val project: Project) : FixOption("Configure...", {
+    internal class Configure(val project: Project) : FixOption(CommonBundle.message("action.text.configure.ellipsis"), {
       ShowSettingsUtil.getInstance().showSettingsDialog(project, GitVcs.NAME)
     })
   }
@@ -90,7 +96,6 @@ internal fun getErrorTitle(text: String, description: String?) =
   if (description == null) GitBundle.getString("git.executable.validation.error.start.title") else text
 
 internal fun getErrorMessage(text: String, description: String?) = description ?: text
-
 
 private class DefaultExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {

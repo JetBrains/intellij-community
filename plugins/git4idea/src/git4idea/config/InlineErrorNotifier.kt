@@ -18,14 +18,16 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.Nls.Capitalization.Sentence
+import org.jetbrains.annotations.Nls.Capitalization.Title
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
 internal interface InlineComponent {
-  fun showProgress(text: String): ProgressIndicator
-  fun showError(errorText: String, link: LinkLabel<*>? = null)
-  fun showMessage(text: String)
+  fun showProgress(@Nls(capitalization = Title) text: String): ProgressIndicator
+  fun showError(@Nls(capitalization = Sentence) errorText: String, link: LinkLabel<*>? = null)
+  fun showMessage(@Nls(capitalization = Sentence) text: String)
   fun hideProgress()
 }
 
@@ -36,7 +38,8 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
   var isTaskInProgress: Boolean = false // Check from EDT only
     private set
 
-  override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption) {
+  override fun showError(@Nls(capitalization = Sentence) text: String,
+                         @Nls(capitalization = Sentence) description: String?, fixOption: ErrorNotifier.FixOption) {
     invokeAndWaitIfNeeded(modalityState) {
       val linkLabel = LinkLabel<Any>(fixOption.text, null) { _, _ ->
         fixOption.fix()
@@ -46,14 +49,14 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
     }
   }
 
-  override fun showError(text: String) {
+  override fun showError(@Nls(capitalization = Sentence) text: String) {
     invokeAndWaitIfNeeded(modalityState) {
       inlineComponent.showError(text)
     }
   }
 
   @CalledInAwt
-  override fun executeTask(title: String, cancellable: Boolean, action: () -> Unit) {
+  override fun executeTask(@Nls(capitalization = Title) title: String, cancellable: Boolean, action: () -> Unit) {
     val pi = inlineComponent.showProgress(title)
     isTaskInProgress = true
     Disposer.register(disposable, Disposable { pi.cancel() })
@@ -71,13 +74,13 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
     }
   }
 
-  override fun changeProgressTitle(text: String) {
+  override fun changeProgressTitle(@Nls(capitalization = Title) text: String) {
     invokeAndWaitIfNeeded(modalityState) {
       inlineComponent.showProgress(text)
     }
   }
 
-  override fun showMessage(text: String) {
+  override fun showMessage(@Nls(capitalization = Sentence) text: String) {
     invokeAndWaitIfNeeded(modalityState) {
       inlineComponent.showMessage(text)
     }
@@ -96,7 +99,7 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
 
   private var progressShown = false
 
-  override fun showProgress(@Nls text: String): ProgressIndicator {
+  override fun showProgress(@Nls(capitalization = Title) text: String): ProgressIndicator {
     container.removeAll()
 
     val pi = TwoLineProgressIndicator(true).apply {
@@ -114,7 +117,7 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     return pi
   }
 
-  override fun showError(errorText: String, link: LinkLabel<*>?) {
+  override fun showError(@Nls(capitalization = Sentence) errorText: String, link: LinkLabel<*>?) {
     container.removeAll()
     progressShown = false
 
@@ -130,7 +133,7 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     panelToValidate?.validate()
   }
 
-  override fun showMessage(text: String) {
+  override fun showMessage(@Nls(capitalization = Sentence) text: String) {
     container.removeAll()
     progressShown = false
 

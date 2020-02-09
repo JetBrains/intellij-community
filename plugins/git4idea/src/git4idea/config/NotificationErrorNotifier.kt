@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.intellij.notification.NotificationAction
@@ -9,9 +9,12 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.config.GitExecutableProblemsNotifier.BadGitExecutableNotification
+import org.jetbrains.annotations.Nls
 
 internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
-  override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption) {
+  override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String,
+                         @Nls(capitalization = Nls.Capitalization.Sentence) description: String?,
+                         fixOption: ErrorNotifier.FixOption) {
     val notification = createNotification(text, description)
     notification.addAction(NotificationAction.createSimpleExpiring(fixOption.text) {
       fixOption.fix()
@@ -25,11 +28,11 @@ internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
                                         NotificationType.ERROR, null)
   }
 
-  override fun showError(text: String) {
+  override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String) {
     GitExecutableProblemsNotifier.notify(project, createNotification(text, null))
   }
 
-  override fun executeTask(title: String, cancellable: Boolean, action: () -> Unit) {
+  override fun executeTask(@Nls(capitalization = Nls.Capitalization.Title) title: String, cancellable: Boolean, action: () -> Unit) {
     ProgressManager.getInstance().run(object: Task.Backgroundable(project, title, cancellable) {
       override fun run(indicator: ProgressIndicator) {
         action()
@@ -37,11 +40,11 @@ internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
     })
   }
 
-  override fun changeProgressTitle(text: String) {
+  override fun changeProgressTitle(@Nls(capitalization = Nls.Capitalization.Title) text: String) {
     ProgressManager.getInstance().progressIndicator?.text = text
   }
 
-  override fun showMessage(text: String) {
+  override fun showMessage(@Nls(capitalization = Nls.Capitalization.Sentence) text: String) {
     VcsNotifier.getInstance(project).notifyInfo(text)
   }
 
