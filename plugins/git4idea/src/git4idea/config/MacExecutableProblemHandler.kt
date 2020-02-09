@@ -29,15 +29,20 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
   private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     errorNotifier.showError("Git is not installed", ErrorNotifier.FixOption.Standard("Download and install") {
       errorNotifier.executeTask("Downloading...", false) {
-        val installer = fetchInstaller(errorNotifier) { it.os == "macOS" }
-        if (installer != null) {
-          val fileName = installer.fileName
-          val dmgFile = File(tempPath, fileName)
-          val pkgFileName = installer.pkgFileName
-          if (downloadGit(installer, dmgFile, project, errorNotifier)) {
-            errorNotifier.changeProgressTitle("Installing...")
-            installGit(dmgFile, pkgFileName, errorNotifier, onErrorResolved)
+        try {
+          val installer = fetchInstaller(errorNotifier) { it.os == "macOS" }
+          if (installer != null) {
+            val fileName = installer.fileName
+            val dmgFile = File(tempPath, fileName)
+            val pkgFileName = installer.pkgFileName
+            if (downloadGit(installer, dmgFile, project, errorNotifier)) {
+              errorNotifier.changeProgressTitle("Installing...")
+              installGit(dmgFile, pkgFileName, errorNotifier, onErrorResolved)
+            }
           }
+        }
+        finally {
+          FileUtil.delete(tempPath)
         }
       }
     })

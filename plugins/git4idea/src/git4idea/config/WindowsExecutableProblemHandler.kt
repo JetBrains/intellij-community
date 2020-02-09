@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 
 internal class WindowsExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
@@ -17,18 +18,23 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
 
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     errorNotifier.showError("Git is not installed", ErrorNotifier.FixOption.Standard("Download and install") {
-      errorNotifier.executeTask("Downloading...", true) {
-        val installer = fetchInstaller(errorNotifier) { it.os == "windows" && archMatches(it.arch) }
-        if (installer != null) {
-          val fileName = installer.fileName
-          val exeFile = File(PathManager.getTempPath(), fileName)
-          if (downloadGit(installer, exeFile, project, errorNotifier)) {
-            errorNotifier.changeProgressTitle("Installing...")
-            installGit(exeFile, errorNotifier, onErrorResolved)
+        errorNotifier.executeTask("Downloading...", true) {
+          val installer = fetchInstaller(errorNotifier) { it.os == "windows" && archMatches(it.arch) }
+          if (installer != null) {
+            val fileName = installer.fileName
+            val exeFile = File(PathManager.getTempPath(), fileName)
+            try {
+              if (downloadGit(installer, exeFile, project, errorNotifier)) {
+                errorNotifier.changeProgressTitle("Installing...")
+                installGit(exeFile, errorNotifier, onErrorResolved)
+              }
+            }
+            finally {
+              FileUtil.delete(exeFile)
+            }
           }
         }
-      }
-    })
+      })
   }
 
   private fun archMatches(arch: String) = if (SystemInfo.is32Bit) arch == "x86_32" else arch == "x86_64"
