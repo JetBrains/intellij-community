@@ -16,7 +16,7 @@ before_cache:
 
 env:
   - IDEA_VERSION=LATEST-EAP-SNAPSHOT
-  - IDEA_VERSION=2019.3.1
+  - IDEA_VERSION=2019.3.2
   - IDEA_VERSION=2019.3
 
 before_install:
