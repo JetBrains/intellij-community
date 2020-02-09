@@ -164,7 +164,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
 
   private static class NameColumnInfo extends ColumnInfo<OverheadProducer, OverheadProducer> {
     NameColumnInfo() {
-      super("Name");
+      super(CommonBundle.message("title.name"));
     }
 
     @Nullable

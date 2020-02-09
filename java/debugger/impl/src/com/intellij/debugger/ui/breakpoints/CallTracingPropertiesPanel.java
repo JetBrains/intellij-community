@@ -2,6 +2,7 @@
 
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.settings.TraceSettings;
 import com.intellij.openapi.project.Project;
@@ -31,9 +32,9 @@ public class CallTracingPropertiesPanel extends XBreakpointCustomPropertiesPanel
   @NotNull
   @Override
   public JComponent getComponent() {
-    myStartTracing = new JBCheckBox("Start");
-    myEndTracing = new JBCheckBox("Stop");
-    JButton filters = new JButton(DebuggerBundle.message("filters"));
+    myStartTracing = new JBCheckBox(CommonBundle.message("checkbox.start"));
+    myEndTracing = new JBCheckBox(CommonBundle.message("checkbox.stop"));
+    JButton filters = new JButton(CommonBundle.message("checkbox.filters"));
     //DialogUtil.registerMnemonic(myStartTracing);
     //DialogUtil.registerMnemonic(myEndTracing);
 
@@ -41,7 +42,7 @@ public class CallTracingPropertiesPanel extends XBreakpointCustomPropertiesPanel
     _panel.add(myStartTracing);
     _panel.add(myEndTracing);
     _panel.add(filters);
-    _panel.setBorder(IdeBorderFactory.createTitledBorder("Tracing"));
+    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("checkbox.tracing")));
 
     ActionListener listener = new ActionListener() {
       @Override
