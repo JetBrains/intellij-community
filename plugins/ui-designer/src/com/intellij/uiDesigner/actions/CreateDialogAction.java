@@ -72,11 +72,6 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
   }
 
   @Override
-  protected String getCommandName() {
-    return UIDesignerBundle.message("command.create.dialog");
-  }
-
-  @Override
   protected String getErrorTitle() {
     return UIDesignerBundle.message("error.cannot.create.dialog");
   }

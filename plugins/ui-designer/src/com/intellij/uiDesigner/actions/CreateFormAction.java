@@ -89,11 +89,6 @@ public class CreateFormAction extends AbstractCreateFormAction {
     return UIDesignerBundle.message("error.cannot.create.form");
   }
 
-  @Override
-  protected String getCommandName() {
-    return UIDesignerBundle.message("command.create.form");
-  }
-
   private class MyDialog extends DialogWrapper {
     private JPanel myTopPanel;
     private JTextField myFormNameTextField;

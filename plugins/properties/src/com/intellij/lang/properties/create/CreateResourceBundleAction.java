@@ -43,11 +43,6 @@ public class CreateResourceBundleAction extends CreateElementActionBase {
   }
 
   @Override
-  protected String getCommandName() {
-    return PropertiesBundle.message("create.resource.bundle.dialog.command");
-  }
-
-  @Override
   protected String getActionName(PsiDirectory directory, String newName) {
     return PropertiesBundle.message("create.resource.bundle.dialog.action.name", newName);
   }

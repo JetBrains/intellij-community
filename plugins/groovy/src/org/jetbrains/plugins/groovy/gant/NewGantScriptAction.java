@@ -41,11 +41,6 @@ public class NewGantScriptAction extends NewGroovyActionBase {
   }
 
   @Override
-  protected String getCommandName() {
-    return "Create Gant Script";
-  }
-
-  @Override
   protected boolean isAvailable(DataContext dataContext) {
     return super.isAvailable(dataContext) &&
            GantUtils.isSDKConfiguredToRun(ObjectUtils.assertNotNull(LangDataKeys.MODULE.getData(dataContext)));

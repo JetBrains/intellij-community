@@ -114,11 +114,6 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   }
 
   @Override
-  protected String getCommandName() {
-    return DevKitBundle.message("new.action.command");
-  }
-
-  @Override
   protected String getActionName(PsiDirectory directory, String newName) {
     return DevKitBundle.message("new.action.action.name", directory, newName);
   }
