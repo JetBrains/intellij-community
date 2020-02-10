@@ -80,7 +80,7 @@ internal class GitRebaseCommitsTableModel(initialEntries: List<GitRebaseEntryWit
     fireTableRowsUpdated(rowIndex, rowIndex)
   }
 
-  override fun isCellEditable(rowIndex: Int, columnIndex: Int) = true
+  override fun isCellEditable(rowIndex: Int, columnIndex: Int) = columnIndex == SUBJECT_COLUMN
 
   fun getEntry(row: Int): GitRebaseEntryWithEditedMessage = rows[row].entry
 
