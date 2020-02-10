@@ -288,16 +288,9 @@ bool LocateJVM()
 
   if (FindJVMInSettings()) return true;
 
-  std::vector<std::string> jrePaths;
-  if(need64BitJRE) jrePaths.push_back(GetAdjacentDir("jbr"));
-  if(need64BitJRE) jrePaths.push_back(GetAdjacentDir("jre64"));
-  jrePaths.push_back(GetAdjacentDir("jre32"));
-  jrePaths.push_back(GetAdjacentDir("jre"));
-  for(std::vector<std::string>::iterator it = jrePaths.begin(); it != jrePaths.end(); ++it) {
-    if (FindValidJVM((*it).c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
-    {
-      return true;
-    }
+  if (FindValidJVM(GetAdjacentDir(need64BitJRE ? "jbr" : "jre32").c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
+  {
+    return true;
   }
 
   if (FindJVMInEnvVar("JAVA_HOME", result))
