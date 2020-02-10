@@ -13,7 +13,6 @@ import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -117,10 +116,6 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
   public static String messageIde(@PropertyKey(resourceBundle = IdeBundle.BUNDLE) String property) {
     return StringUtil.stripHtml(IdeBundle.message(property), false);
-  }
-
-  public static String messageKeyMap(String property) {
-    return StringUtil.stripHtml(KeyMapBundle.message(property), false);
   }
 
   /*
