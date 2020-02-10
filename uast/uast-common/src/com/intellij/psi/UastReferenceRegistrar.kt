@@ -10,7 +10,6 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.uast.UElementPattern
 import com.intellij.patterns.uast.capture
 import com.intellij.patterns.uast.injectionHostUExpression
-import com.intellij.patterns.uast.uExpression
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValueProvider.Result
@@ -156,8 +155,9 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
 fun uInjectionHostInVariable() = injectionHostUExpression().withUastParent(capture(UVariable::class.java))
 
 @ApiStatus.Experimental
-fun uExpressionInVariable() = uExpression().filter {
-  it.uastParent is UVariable || it.uastParent?.uastParent is UVariable
+fun uExpressionInVariable() = injectionHostUExpression().filter {
+  val uastParent = it.uastParent
+  uastParent is UVariable || (uastParent is UPolyadicExpression && uastParent.uastParent is UVariable)
 }
 
 private fun getDirectVariableUsages(uVar: UVariable): Collection<PsiElement> {
