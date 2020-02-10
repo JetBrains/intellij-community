@@ -24,7 +24,7 @@ internal data class GitInstaller(
   val version: String,
   val url: String,
   val fileName: String,
-  val pkgFileName: String,
+  val pkgFileName: String?,
   val sha256: String
 )
 
@@ -92,7 +92,7 @@ private fun parse(node: ObjectNode) : List<GitInstaller> {
         item["version"]?.asText() ?: continue,
         item["url"]?.asText() ?: continue,
         item["fileName"]?.asText() ?: continue,
-        item["pkgFileName"]?.asText() ?: continue,
+        item["pkgFileName"]?.asText(),
         item["sha256"]?.asText() ?: continue
       )
     )
