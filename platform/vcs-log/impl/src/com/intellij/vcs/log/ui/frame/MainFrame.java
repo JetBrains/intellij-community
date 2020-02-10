@@ -66,7 +66,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -97,6 +96,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final EditorNotificationPanel myNotificationLabel;
   @NotNull private final AbstractVcsLogUi myLogUi;
+
+  @Nullable private final FrameDiffPreview<VcsLogChangeProcessor> myDiffPreview;
 
   @Nullable private VCSContentVirtualFile myGraphViewFile;
   @NotNull private final JComponent myToolbarsAndTable;
@@ -167,15 +168,18 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     setLayout(new BorderLayout());
     if (withDiffPreview) {
-      add(new FrameDiffPreview<VcsLogChangeProcessor>(createDiffPreview(false, myChangesBrowser),
-                                                      myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION, false, 0.7f) {
+      myDiffPreview = new FrameDiffPreview<VcsLogChangeProcessor>(createDiffPreview(false, myChangesBrowser),
+                                                                  myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION, false,
+                                                                  0.7f) {
         @Override
         public void updatePreview(boolean state) {
           getPreviewDiff().updatePreview(state);
         }
-      }.getMainComponent());
+      };
+      add(myDiffPreview.getMainComponent());
     }
     else {
+      myDiffPreview = null;
       add(myChangesBrowserSplitter);
     }
 
@@ -483,9 +487,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      return Arrays.asList(myGraphTable,
-                           myChangesBrowser.getPreferredFocusedComponent(),
-                           myFilterUi.getTextFilterComponent().getTextEditor());
+      List<Component> components = ContainerUtil.newArrayList(myGraphTable,
+                                                              myChangesBrowser.getPreferredFocusedComponent(),
+                                                              myFilterUi.getTextFilterComponent().getTextEditor());
+      if (myDiffPreview != null) {
+        components.add(2, myDiffPreview.getPreviewDiff().getPreferredFocusedComponent());
+      }
+      return components;
     }
   }
 
