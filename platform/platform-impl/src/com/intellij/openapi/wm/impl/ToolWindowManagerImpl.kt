@@ -77,8 +77,6 @@ import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 import kotlin.collections.HashSet
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 private val LOG = logger<ToolWindowManagerImpl>()
 
@@ -1761,6 +1759,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    * Handles event from decorator and modify weight/floating bounds of the
    * tool window depending on decoration type.
    */
+  @ApiStatus.Internal
   fun resized(source: InternalDecorator) {
     if (!source.isShowing) {
       // do not recalculate the tool window size if it is not yet shown (and, therefore, has 0,0,0,0 bounds)
@@ -1805,6 +1804,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           info.sideWeight = sizeInSplit / splitter.width
         }
       }
+
       val layeredPane = toolWindowPane!!.layeredPane
       var paneWeight = if (anchor.isHorizontal) source.height.toFloat() / layeredPane.height else source.width.toFloat() / layeredPane.width
       info.weight = paneWeight
@@ -1838,17 +1838,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
   }
 
-  /**
-   * Delegate method for compatibility with older versions of IDEA
-   */
-  fun requestFocus(c: Component, forced: Boolean): ActionCallback {
-    return IdeFocusManager.getInstance(project).requestFocus(c, forced)
-  }
-
-  fun doWhenFocusSettlesDown(runnable: Runnable) {
-    IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(runnable)
-  }
-
   fun setShowStripeButton(id: String, visibleOnPanel: Boolean) {
     val info = getRegisteredMutableInfoOrLogError(id)
     if (visibleOnPanel == info.isShowStripeButton) {
@@ -1877,23 +1866,26 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     val violations = mutableListOf<String>()
-    idToEntry.forEach { (id, entry) ->
-      val info = layout.getInfo(id) ?: return@forEach
-      if (info.isVisible) {
-        if (info.type == ToolWindowType.FLOATING) {
-          if (entry.floatingDecorator == null) {
-            violations.add("Floating window has no decorator: $id")
-          }
+    for (entry in idToEntry.values) {
+      val info = layout.getInfo(entry.id) ?: continue
+      if (!info.isVisible) {
+        continue
+      }
+
+      if (info.type == ToolWindowType.FLOATING) {
+        if (entry.floatingDecorator == null) {
+          violations.add("Floating window has no decorator: ${entry.id}")
         }
-        else if (info.type == ToolWindowType.WINDOWED) {
-          if (entry.windowedDecorator == null) {
-            violations.add("Windowed window has no decorator: $id")
-          }
+      }
+      else if (info.type == ToolWindowType.WINDOWED) {
+        if (entry.windowedDecorator == null) {
+          violations.add("Windowed window has no decorator: ${entry.id}")
         }
       }
     }
+
     if (violations.isNotEmpty()) {
-      LOG.error("Invariants failed: \n${java.lang.String.join("\n", violations)}\nContext: $additionalMessage")
+      LOG.error("Invariants failed: \n${violations.joinToString("\n")}\nContext: $additionalMessage")
     }
   }
 }
