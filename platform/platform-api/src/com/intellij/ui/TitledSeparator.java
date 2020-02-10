@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
@@ -20,7 +20,7 @@ public class TitledSeparator extends JPanel {
   public static final int TOP_INSET = 7;
   public static final int BOTTOM_INSET = 5;
   public static final int SEPARATOR_LEFT_INSET = 6;
-  public static final int SEPARATOR_RIGHT_INSET = 3;
+  public static final int SEPARATOR_RIGHT_INSET = 0;
 
   private static final Color ENABLED_SEPARATOR_FOREGROUND = JBColor.namedColor("Group.separatorColor", new JBColor(Gray.xCD, Gray.x51));
   private static final Color DISABLED_SEPARATOR_FOREGROUND = JBColor.namedColor("Group.disabledSeparatorColor", ENABLED_SEPARATOR_FOREGROUND);
