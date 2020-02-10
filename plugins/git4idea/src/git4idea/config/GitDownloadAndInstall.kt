@@ -112,7 +112,7 @@ internal fun downloadGit(installer: GitInstaller, fileToSave: File, project: Pro
   }
   catch (e: Exception) {
     LOG.warn("Couldn't download ${installer.fileName} from ${installer.url}", e)
-    errorNotifier.showError("Couldn't download Git, please do it manually", getLinkToConfigure(project))
+    errorNotifier.showError(GitBundle.message("install.general.error"), getLinkToConfigure(project))
     return false
   }
 }
