@@ -34,7 +34,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
   @NotNull
   public GeneralCommandLine createGeneralCommandLine(@NotNull TargetedCommandLine commandLine) throws CantRunException {
     try {
-      GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.collectCommandsSynchronously(this));
+      GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.collectCommandsSynchronously());
       if (getRequest() instanceof LocalTargetEnvironmentRequest) {
         generalCommandLine.withParentEnvironmentType(((LocalTargetEnvironmentRequest)getRequest()).getParentEnvironmentType());
       }
