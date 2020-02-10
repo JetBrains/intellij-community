@@ -790,8 +790,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           sideStack.pop(info.anchor)
         }
       }
-      for ((otherId, otherEntry) in idToEntry) {
-        val otherInfo = layout.getInfo(otherId) ?: continue
+      for (otherEntry in idToEntry.values) {
+        val otherInfo = layout.getInfo(otherEntry.id) ?: continue
         if (otherInfo.isVisible && otherInfo.anchor == info.anchor) {
           doDeactivateToolWindow(otherInfo, otherEntry, dirtyMode = dirtyMode)
         }
@@ -862,25 +862,26 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       // We store WindowInfo of hidden tool window in the SideStack (if the tool window
       // is docked and not auto-hide one). Therefore it's possible to restore the
       // hidden tool window when showing tool window will be closed.
-      for ((otherId, otherEntry) in idToEntry) {
-        if (entry.id == otherId) {
+      for (otherEntry in idToEntry.values) {
+        if (entry.id == otherEntry.id) {
           continue
         }
 
-        val otherInfo = layout.getInfo(otherId) ?: continue
+        val otherInfo = otherEntry.readOnlyWindowInfo
         if (otherInfo.isVisible && otherInfo.type == info.type && otherInfo.anchor == info.anchor && otherInfo.isSplit == info.isSplit) {
+          val mutableOtherInfo = layout.getInfo(otherEntry.id)!!.copy()
           // hide and deactivate tool window
-          setHiddenState(otherInfo, otherEntry)
+          setHiddenState(mutableOtherInfo, otherEntry)
 
-          otherEntry.applyWindowInfo(otherInfo.copy())
+          otherEntry.applyWindowInfo(mutableOtherInfo)
 
           otherEntry.toolWindow.decoratorComponent?.let { decorator ->
-            toolWindowPane!!.removeDecorator(otherInfo, decorator, false, this)
+            toolWindowPane!!.removeDecorator(mutableOtherInfo, decorator, false, this)
           }
 
           // store WindowInfo into the SideStack
           if (isStackEnabled && otherInfo.isDocked && !otherInfo.isAutoHide) {
-            sideStack.push(otherInfo)
+            sideStack.push(mutableOtherInfo)
           }
         }
       }
@@ -1102,12 +1103,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val list = mutableListOf<LayoutData>()
 
-    for ((id, entry) in idToEntry) {
-      val old = layout.getInfo(id) ?: entry.readOnlyWindowInfo as WindowInfoImpl
-      val new = newLayout.getInfo(id)
+    for (entry in idToEntry.values) {
+      val old = layout.getInfo(entry.id) ?: entry.readOnlyWindowInfo as WindowInfoImpl
+      val new = newLayout.getInfo(entry.id)
       // just copy if defined in the old layout but not in the new
       if (new == null) {
-        newLayout.addInfo(id, old.copy())
+        newLayout.addInfo(entry.id, old.copy())
       }
       else if (old != new) {
         list.add(LayoutData(old = old, new = new, entry = entry))
@@ -1343,8 +1344,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     layout.setAnchor(layoutInfo, anchor, order)
     // update infos for all window. Actually we have to update only infos affected by setAnchor method
-    for ((otherId, otherEntry) in idToEntry) {
-      val otherInfo = layout.getInfo(otherId)?.copy() ?: continue
+    for (otherEntry in idToEntry.values) {
+      val otherInfo = layout.getInfo(otherEntry.id)?.copy() ?: continue
       otherEntry.applyWindowInfo(otherInfo)
     }
     addStripeButton(entry.stripeButton, anchor)
@@ -1377,8 +1378,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     // we should hide the window and show it in a 'new place' to automatically hide possible window that is already located in a 'new place'
     hideIfNeededAndShowAfterTask(entry, info) {
       info.isSplit = isSplit
-      for ((otherId, otherEntry) in idToEntry) {
-        otherEntry.applyWindowInfo((layout.getInfo(otherId) ?: continue).copy())
+      for (otherEntry in idToEntry.values) {
+        otherEntry.applyWindowInfo((layout.getInfo(otherEntry.id) ?: continue).copy())
       }
     }
     toolWindowPane!!.updateButtonPosition(entry.readOnlyWindowInfo.anchor)
