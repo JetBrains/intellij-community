@@ -210,6 +210,7 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
                                                                        dropIndexingStampsRecursively(it)
                                                                        true
                                                                      }, project, EmptyProgressIndicator())
+      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true)
       indexSwitcher.turnOn()
     }
   }
