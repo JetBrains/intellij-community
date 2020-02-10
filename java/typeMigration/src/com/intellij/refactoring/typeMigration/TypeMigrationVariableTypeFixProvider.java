@@ -42,7 +42,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
       @NotNull
       @Override
       public String getText() {
-        return "Migrate \'" + myName + "\' type to \'" + getReturnType().getPresentableText() + "\'";
+        return TypeMigrationBundle.message("migrate.fix.text", myName, getReturnType().getPresentableText());
       }
 
       @Override

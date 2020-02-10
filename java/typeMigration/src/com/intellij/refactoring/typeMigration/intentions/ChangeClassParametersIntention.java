@@ -18,6 +18,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.util.ArrayUtil;
@@ -40,7 +41,7 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Change class type parameter";
+    return TypeMigrationBundle.message("change.class.type.parameter.family.name");
   }
 
   @Override

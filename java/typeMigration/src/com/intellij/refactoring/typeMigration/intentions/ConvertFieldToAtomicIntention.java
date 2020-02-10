@@ -17,6 +17,7 @@ import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -48,7 +49,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   @NotNull
   @Override
   public String getText() {
-    return "Convert to atomic";
+    return TypeMigrationBundle.message("convert.to.atomic.family.name");
   }
 
   @NotNull
