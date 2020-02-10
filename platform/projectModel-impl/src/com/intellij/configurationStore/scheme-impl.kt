@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
@@ -54,7 +54,7 @@ interface SchemeContentChangedHandler<MUTABLE_SCHEME> {
   fun schemeContentChanged(scheme: MUTABLE_SCHEME, name: String, dataHolder: SchemeDataHolder<MUTABLE_SCHEME>)
 }
 
-abstract class LazySchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME>(private val nameAttribute: String = "name") : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
+abstract class LazySchemeProcessor<SCHEME : Any, MUTABLE_SCHEME : SCHEME>(private val nameAttribute: String = "name") : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
   open fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
     return attributeProvider.apply(nameAttribute)
   }
