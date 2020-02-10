@@ -592,4 +592,11 @@ public class EditorImplTest extends AbstractEditorTest {
     runWriteCommand(() -> ((EditorEx)getEditor()).getDocument().moveText(19, 25, 0));
     assertEquals(80, getEditor().getContentComponent().getPreferredSize().width);
   }
+
+  public void testEditorIsNotScrolledOnSoftWrappingIfNotScrolledPreviously() {
+    initText("long long line");
+    EditorTestUtil.configureSoftWrapsAndViewport(getEditor(), 100, 1);
+    EditorTestUtil.configureSoftWrapsAndViewport(getEditor(), 10, 1);
+    assertEquals(0, getEditor().getScrollingModel().getVerticalScrollOffset());
+  }
 }

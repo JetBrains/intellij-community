@@ -181,13 +181,21 @@ public class EditorTestUtil {
     return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
   }
 
-  /**
-   * Configures given editor to wrap at given width, assuming characters are of given width
-   *
-   * @return whether any actual wraps of editor contents were created as a result of turning on soft wraps
-   */
+  @TestOnly
+  public static boolean configureSoftWrapsAndViewport(Editor editor, int charCountToWrapAt, int visibleLineCount) {
+    int charWidthInPixels = 10;
+    // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
+    return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, visibleLineCount * editor.getLineHeight(),
+                              charWidthInPixels);
+  }
+
   @TestOnly
   public static boolean configureSoftWraps(Editor editor, final int visibleWidth, final int charWidthInPixels) {
+    return configureSoftWraps(editor, visibleWidth, 1000, charWidthInPixels);
+  }
+
+  @TestOnly
+  public static boolean configureSoftWraps(Editor editor, int visibleWidthInPixels, int visibleHeightInPixels, int charWidthInPixels) {
     editor.getSettings().setUseSoftWraps(true);
     SoftWrapModelImpl model = (SoftWrapModelImpl)editor.getSoftWrapModel();
     model.setSoftWrapPainter(new SoftWrapPainter() {
@@ -217,14 +225,14 @@ public class EditorTestUtil {
     model.reinitSettings();
 
     SoftWrapApplianceManager applianceManager = model.getApplianceManager();
-    applianceManager.setWidthProvider(() -> visibleWidth);
+    applianceManager.setWidthProvider(() -> visibleWidthInPixels);
     model.setEditorTextRepresentationHelper(new DefaultEditorTextRepresentationHelper(editor) {
       @Override
       public int charWidth(int c, int fontType) {
         return charWidthInPixels;
       }
     });
-    setEditorVisibleSizeInPixels(editor, visibleWidth, 1000);
+    setEditorVisibleSizeInPixels(editor, visibleWidthInPixels, visibleHeightInPixels);
     applianceManager.registerSoftWrapIfNecessary();
     return !model.getRegisteredSoftWraps().isEmpty();
   }
