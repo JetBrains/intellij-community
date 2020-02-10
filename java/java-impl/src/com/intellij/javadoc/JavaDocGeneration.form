@@ -247,7 +247,7 @@
         </constraints>
         <properties>
           <margin top="0" left="8" bottom="10" right="3"/>
-          <text value="Include JDK and library sources in -sourcepath"/>
+          <text resource-bundle="messages/JavadocBundle" key="javadoc.generate.include.jdk.library.sources.in.sourcepath.option"/>
         </properties>
       </component>
       <component id="44709" class="javax.swing.JCheckBox" binding="myLinkToJdkDocs">
@@ -256,7 +256,7 @@
         </constraints>
         <properties>
           <margin top="0" left="8" bottom="10" right="3"/>
-          <text value="Link to JDK documentation (use -link option)"/>
+          <text resource-bundle="messages/JavadocBundle" key="javadoc.generate.link.to.jdk.documentation.option"/>
         </properties>
       </component>
     </children>

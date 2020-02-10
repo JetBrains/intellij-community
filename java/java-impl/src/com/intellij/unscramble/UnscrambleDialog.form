@@ -91,7 +91,7 @@
         </constraints>
         <properties>
           <margin top="2" left="0" bottom="2" right="3"/>
-          <text value="Automatically detect and analyze thread dumps copied to the clipboard outside of IntelliJ IDEA"/>
+          <text resource-bundle="messages/IdeBundle" key="unscramble.detect.analyze.threaddump.from.clipboard.item"/>
         </properties>
       </component>
       <grid id="28646" binding="myBottomPanel" custom-create="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
