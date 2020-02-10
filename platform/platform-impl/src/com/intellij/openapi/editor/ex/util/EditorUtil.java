@@ -741,7 +741,7 @@ public final class EditorUtil {
   }
 
   public static void disposeWithEditor(@NotNull Editor editor, @NotNull Disposable disposable) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (Disposer.isDisposed(disposable)) return;
     if (editor.isDisposed()) {
       Disposer.dispose(disposable);
