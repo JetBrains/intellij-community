@@ -277,7 +277,7 @@ internal class FilteringBranchesTree(project: Project,
     }
   }
 
-  override fun getText(nodeDescriptor: BranchNodeDescriptor?) = nodeDescriptor?.getDisplayText()
+  override fun getText(nodeDescriptor: BranchNodeDescriptor?) = nodeDescriptor?.branchInfo?.branchName ?: nodeDescriptor?.displayName
 
   private fun getRootNodeDescriptors() =
     mutableListOf<BranchNodeDescriptor>().apply {
