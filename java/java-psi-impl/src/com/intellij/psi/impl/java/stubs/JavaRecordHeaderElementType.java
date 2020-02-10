@@ -7,7 +7,7 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiRecordHeader;
 import com.intellij.psi.impl.java.stubs.impl.PsiRecordHeaderStubImpl;
 import com.intellij.psi.impl.source.PsiRecordHeaderImpl;
-import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.java.RecordHeaderElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -24,7 +24,7 @@ public class JavaRecordHeaderElementType extends JavaStubElementType<PsiRecordHe
   @NotNull
   @Override
   public ASTNode createCompositeNode() {
-    return new CompositeElement(this);
+    return new RecordHeaderElement();
   }
 
   @Override

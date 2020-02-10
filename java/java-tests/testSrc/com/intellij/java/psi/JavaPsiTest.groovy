@@ -177,6 +177,15 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     assert clazz.recordComponents == components
   }
 
+  void "test delete record component"() {
+    def clazz = configureFile("record A(String s, int x)").classes[0]
+    runCommand {
+      clazz.recordComponents[1].delete()
+    }
+
+    assert "record A(String s)" == clazz.text
+  }
+
   void "test record component with name record"() {
     // it is forbidden, but it should not fail
     def clazz = configureFile("record A(record r)").classes[0]
