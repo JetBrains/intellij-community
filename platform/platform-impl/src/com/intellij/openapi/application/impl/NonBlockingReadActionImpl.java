@@ -262,15 +262,12 @@ public class NonBlockingReadActionImpl<T>
     public boolean setError(@NotNull Throwable error) {
       boolean result = super.setError(error);
       cleanupIfNeeded();
-      if (result && shouldLogErrors()) {
-        LOG.error(error);
-      }
       return result;
     }
 
     @Override
     protected boolean shouldLogErrors() {
-      return super.shouldLogErrors() && backendExecutor != SYNC_DUMMY_EXECUTOR;
+      return backendExecutor != SYNC_DUMMY_EXECUTOR;
     }
 
     private void cleanupIfNeeded() {
