@@ -48,6 +48,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -439,7 +440,7 @@ public final class DebuggerUIUtil {
   }
 
   @NotNull
-  public static String getShortcutsAdText(String key, String... actionNames) {
+  public static String getShortcutsAdText(@PropertyKey(resourceBundle = XDebuggerBundle.BUNDLE) String key, String... actionNames) {
     String text = StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull()
       .joining(XDebuggerBundle.message("xdebugger.shortcuts.text.delimiter"));
     return StringUtil.isEmpty(text) ? "" : XDebuggerBundle.message(key, text);

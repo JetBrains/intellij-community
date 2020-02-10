@@ -84,6 +84,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font", "TextArea.font", "TextPane.font", "EditorPane.font",
     "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font"};
 
+  @PropertyKey(resourceBundle = IdeBundle.BUNDLE)
   @NonNls private static final String[] ourFileChooserTextKeys = {"FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText",
     "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"};
 

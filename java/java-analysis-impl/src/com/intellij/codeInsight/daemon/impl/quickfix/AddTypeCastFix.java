@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     this(type, expression, "add.typecast.text");
   }
 
-  public AddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression, String messageKey) {
+  public AddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression, @PropertyKey(resourceBundle = QuickFixBundle.BUNDLE) String messageKey) {
     super(expression);
     myType = type;
     myName = QuickFixBundle.message(messageKey, type.isValid() ? type.getCanonicalText() : "");

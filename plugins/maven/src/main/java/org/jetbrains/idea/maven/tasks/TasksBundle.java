@@ -23,7 +23,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class TasksBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.MavenTasksBundle";
+  @NonNls public static final String BUNDLE = "messages.MavenTasksBundle";
   private static final TasksBundle INSTANCE = new TasksBundle();
 
   private TasksBundle() { super(BUNDLE); }

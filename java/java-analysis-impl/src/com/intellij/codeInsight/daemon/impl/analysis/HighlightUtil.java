@@ -3252,6 +3252,7 @@ public class HighlightUtil extends HighlightUtilBase {
     TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_14_PREVIEW, "feature.text.block.escape.sequences");
 
     private final LanguageLevel level;
+    @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
     private final String key;
 
     Feature(LanguageLevel level, @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key) {

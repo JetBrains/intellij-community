@@ -111,8 +111,7 @@ public class MavenDependencyCompletionUtil {
     if (info.getItems().length == 1) {
       return getLookupString(info.getItems()[0]);
     }
-    String key = "maven.dependency.completion.presentable";
-    return IndicesBundle.message(key, info.getGroupId(), info.getArtifactId());
+    return IndicesBundle.message("maven.dependency.completion.presentable", info.getGroupId(), info.getArtifactId());
   }
 
   @Nullable

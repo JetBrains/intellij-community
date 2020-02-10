@@ -18,6 +18,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 /**
  * @author Dennis.Ushakov
@@ -78,7 +79,7 @@ public abstract class PyClassRefactoringHandler implements RefactoringActionHand
 
 
 
-  protected boolean inClass(PyClass clazz, Project project, Editor editor, String errorMessageId) {
+  protected boolean inClass(PyClass clazz, Project project, Editor editor, @PropertyKey(resourceBundle = PyBundle.BUNDLE) String errorMessageId) {
     if (clazz == null) {
       CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message(errorMessageId), getTitle(), getHelpId());
       return false;

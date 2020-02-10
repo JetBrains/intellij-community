@@ -24,7 +24,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class KeyMapBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.KeyMapBundle";
+  @NonNls public static final String BUNDLE = "messages.KeyMapBundle";
   private static final KeyMapBundle INSTANCE = new KeyMapBundle();
 
   private KeyMapBundle() { super(BUNDLE); }

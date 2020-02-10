@@ -19,6 +19,7 @@ import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -41,11 +42,11 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
   private Keymap myKeymap;
   private Group myGroup;
 
-  ShortcutDialog(Component parent, String title, ShortcutPanel<T> panel) {
+  ShortcutDialog(Component parent, @PropertyKey(resourceBundle = KeyMapBundle.BUNDLE) String titleKey, ShortcutPanel<T> panel) {
     super(parent, true);
     myShortcutPanel = panel;
     myProject = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parent));
-    setTitle(KeyMapBundle.message(title));
+    setTitle(KeyMapBundle.message(titleKey));
   }
 
   String getActionPath(String actionId) {

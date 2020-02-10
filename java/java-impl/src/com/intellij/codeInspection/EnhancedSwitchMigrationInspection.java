@@ -13,6 +13,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.util.*;
@@ -223,10 +224,10 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   private enum ReplacementType {
     Expression("inspection.replace.with.switch.expression.fix.name"),
     Statement("inspection.replace.with.enhanced.switch.statement.fix.name");
-
+    @PropertyKey(resourceBundle = InspectionsBundle.BUNDLE)
     private final String key;
 
-    ReplacementType(String key) {
+    ReplacementType(@PropertyKey(resourceBundle = InspectionsBundle.BUNDLE) String key) {
       this.key = key;
     }
 

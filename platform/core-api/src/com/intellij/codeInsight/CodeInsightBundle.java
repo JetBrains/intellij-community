@@ -23,7 +23,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class CodeInsightBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.CodeInsightBundle";
+  @NonNls public static final String BUNDLE = "messages.CodeInsightBundle";
   private static final CodeInsightBundle INSTANCE = new CodeInsightBundle();
 
   private CodeInsightBundle() { super(BUNDLE); }

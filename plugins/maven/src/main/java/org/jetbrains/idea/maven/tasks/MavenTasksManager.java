@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -51,10 +52,10 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
     AFTER_COMPILE("maven.tasks.goal.after.compile"),
     BEFORE_REBUILD("maven.tasks.goal.before.rebuild"),
     AFTER_REBUILD("maven.tasks.goal.after.rebuild");
-
+    @PropertyKey(resourceBundle = TasksBundle.BUNDLE)
     public final String myMessageKey;
 
-    Phase(String messageKey) {
+    Phase(@PropertyKey(resourceBundle = TasksBundle.BUNDLE) String messageKey) {
       myMessageKey = messageKey;
     }
   }

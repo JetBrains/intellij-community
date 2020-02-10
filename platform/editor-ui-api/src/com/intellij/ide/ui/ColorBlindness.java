@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.PropertyKey;
+
 public enum ColorBlindness {
   /**
    * Lacking the long-wavelength sensitive retinal cones,
@@ -48,9 +51,10 @@ public enum ColorBlindness {
    */
   achromatopsia("color.blindness.achromatopsia.name");
 
+  @PropertyKey(resourceBundle = UIBundle.BUNDLE)
   public final String key;
 
-  ColorBlindness(String key) {
+  ColorBlindness(@PropertyKey(resourceBundle = UIBundle.BUNDLE) String key) {
     this.key = key;
   }
 }

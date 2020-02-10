@@ -39,6 +39,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -273,7 +274,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     private void checkCombination(final PsiElement location,
                                   @Nullable final String name,
                                   @Nullable final String referenceName,
-                                  final String key) {
+                                  @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key) {
       String nameGroup1 = findNameGroup(name);
       String nameGroup2 = findNameGroup(referenceName);
       if (nameGroup1 != null && nameGroup2 != null && !nameGroup1.equals(nameGroup2)) {

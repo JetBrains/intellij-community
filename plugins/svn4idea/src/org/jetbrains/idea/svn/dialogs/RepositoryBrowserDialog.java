@@ -35,6 +35,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -616,10 +617,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   protected class CopyOrMoveAction extends DumbAwareAction {
     private final Supplier<String> myActionName;
-    private final String myDialogTitleKey;
+    private final @PropertyKey(resourceBundle = SvnBundle.BUNDLE) String myDialogTitleKey;
     private final boolean myMove;
 
-    public CopyOrMoveAction(final Supplier<String> actionName, final String dialogTitleKey, final boolean move) {
+    public CopyOrMoveAction(final Supplier<String> actionName,
+                            @PropertyKey(resourceBundle = SvnBundle.BUNDLE) String dialogTitleKey, final boolean move) {
       myActionName = actionName;
       myDialogTitleKey = dialogTitleKey;
       myMove = move;

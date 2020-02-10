@@ -13,6 +13,7 @@ import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 import javax.swing.*;
@@ -82,7 +83,7 @@ public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigura
 
       public final String myName;
 
-      protected PropertyManager(String nameKey) {
+      protected PropertyManager(@PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String nameKey) {
         myName = ApplicationBundle.message(nameKey);
       }
 

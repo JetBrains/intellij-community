@@ -24,7 +24,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class XDebuggerBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.XDebuggerBundle";
+  @NonNls public static final String BUNDLE = "messages.XDebuggerBundle";
   private static final XDebuggerBundle INSTANCE = new XDebuggerBundle();
 
   private XDebuggerBundle() { super(BUNDLE); }

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,7 +36,7 @@ final class CvsOptionsTopHitProvider implements OptionsSearchTopHitProvider.Proj
     return Collections.emptyList();
   }
 
-  private static BooleanOptionDescription option(final Project project, String option, String field) {
+  private static BooleanOptionDescription option(final Project project, @PropertyKey(resourceBundle = CvsBundle.BUNDLE) String option, String field) {
     return new PublicFieldBasedOptionDescription("CVS: " + CvsBundle.message(option), "vcs.CVS", field) {
       @Override
       public Object getInstance() {

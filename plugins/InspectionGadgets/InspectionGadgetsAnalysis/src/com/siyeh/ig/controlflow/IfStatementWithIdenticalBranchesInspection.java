@@ -26,10 +26,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -530,8 +527,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     EXTRACT_SIDE_EFFECTS("inspection.common.if.parts.message.complete.duplicate.side.effect",
                          "inspection.common.if.parts.description.complete.duplicate.side.effect");
 
-    private @NotNull final String myBundleFixKey;
-    private @NotNull final String myBundleDescriptionKey;
+    private @PropertyKey(resourceBundle = InspectionsBundle.BUNDLE) @NotNull final String myBundleFixKey;
+    private @PropertyKey(resourceBundle = InspectionsBundle.BUNDLE) @NotNull final String myBundleDescriptionKey;
 
     @NotNull
     private String getFixMessage(boolean mayChangeSemantics) {
@@ -544,7 +541,9 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       return InspectionsBundle.message(myBundleDescriptionKey, mayChangeSemanticsText);
     }
 
-    CommonPartType(@NotNull String key, @NotNull String bundleDescriptionKey) {myBundleFixKey = key;
+    CommonPartType(@PropertyKey(resourceBundle = InspectionsBundle.BUNDLE) @NotNull String key,
+                   @PropertyKey(resourceBundle = InspectionsBundle.BUNDLE) @NotNull String bundleDescriptionKey) {
+      myBundleFixKey = key;
       myBundleDescriptionKey = bundleDescriptionKey;
     }
   }

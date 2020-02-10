@@ -33,10 +33,7 @@ import com.siyeh.ig.fixes.EqualsToEqualityFix;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.text.MessageFormat;
@@ -220,7 +217,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return visitor;
   }
 
-  private static void reportAnalysisQualityProblem(ProblemsHolder holder, PsiElement scope, String problemKey) {
+  private static void reportAnalysisQualityProblem(ProblemsHolder holder, PsiElement scope, @PropertyKey(resourceBundle = InspectionsBundle.BUNDLE) String problemKey) {
     PsiIdentifier name = null;
     String message = null;
     if(scope.getParent() instanceof PsiMethod) {

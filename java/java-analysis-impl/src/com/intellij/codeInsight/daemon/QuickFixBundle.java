@@ -9,7 +9,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class QuickFixBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.QuickFixBundle";
+  @NonNls public static final String BUNDLE = "messages.QuickFixBundle";
   private static final QuickFixBundle INSTANCE = new QuickFixBundle();
 
   private QuickFixBundle() { super(BUNDLE); }

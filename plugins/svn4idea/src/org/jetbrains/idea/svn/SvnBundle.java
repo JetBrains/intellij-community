@@ -23,7 +23,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class SvnBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.SvnBundle";
+  @NonNls public static final String BUNDLE = "messages.SvnBundle";
 
   private static final SvnBundle INSTANCE = new SvnBundle();
 

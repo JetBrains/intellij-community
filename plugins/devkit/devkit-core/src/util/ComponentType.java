@@ -21,6 +21,7 @@ public enum ComponentType {
   APPLICATION(BaseComponent.class, "application-components", "new.menu.application.component.text");
 
   public final String myClassName;
+  @PropertyKey(resourceBundle = DevKitBundle.BUNDLE)
   public final String myPropertyKey;
   private final String myName;
 

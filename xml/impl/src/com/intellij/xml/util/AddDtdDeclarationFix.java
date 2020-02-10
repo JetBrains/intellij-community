@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class AddDtdDeclarationFix implements LocalQuickFix {
+  @PropertyKey(resourceBundle = XmlBundle.BUNDLE)
   private final String myMessageKey;
   private final String myElementDeclarationName;
   private final String myReference;

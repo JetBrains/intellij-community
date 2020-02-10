@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 import static com.intellij.BundleUtil.loadLanguageBundle;
 
 public class UIBundle {
-  private static final String BUNDLE = "messages.UIBundle";
+  public static final String BUNDLE = "messages.UIBundle";
   private static ResourceBundle ourBundle;
 
   @NotNull
