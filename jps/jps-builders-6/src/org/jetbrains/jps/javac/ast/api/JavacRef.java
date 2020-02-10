@@ -166,7 +166,7 @@ public interface JavacRef {
       super(name, modifiers);
       myContainingClassName = containingClassName;
       myOwnerName = ownerName;
-      myDescriptor = descriptor;
+      myDescriptor = descriptor != null && !descriptor.isEmpty()? descriptor : null;
     }
 
     @Override

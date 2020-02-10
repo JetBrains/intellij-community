@@ -206,7 +206,8 @@ public class JavacFileData {
       out.writeByte(FIELD_MARKER);
       out.writeUTF(((JavacRef.JavacField)ref).getContainingClass());
       out.writeUTF(ref.getOwnerName());
-      out.writeUTF(((JavacRef.JavacField)ref).getDescriptor());
+      final String descriptor = ((JavacRef.JavacField)ref).getDescriptor();
+      out.writeUTF(descriptor == null? "" : descriptor);
     }
     else if (ref instanceof JavacRef.JavacMethod) {
       out.writeByte(METHOD_MARKER);
