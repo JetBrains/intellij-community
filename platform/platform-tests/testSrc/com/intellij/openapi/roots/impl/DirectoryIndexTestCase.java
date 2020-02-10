@@ -15,14 +15,17 @@
  */
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
@@ -140,5 +143,18 @@ public abstract class DirectoryIndexTestCase extends HeavyPlatformTestCase {
     });
     if (mustContain != null) assertContainsElements(collected, mustContain);
     if (mustNotContain != null) assertDoesntContain(collected, mustNotContain);
+  }
+
+  @NotNull
+  protected static Module createJavaModuleWithContent(@NotNull Project project, @NotNull String name, @NotNull VirtualFile contentRoot) {
+    ModuleType<?> type = ModuleTypeManager.getInstance().findByID(ModuleTypeId.JAVA_MODULE);
+    return WriteCommandAction.writeCommandAction(project).compute(() -> {
+      ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+      Module module = moduleModel.newModule(contentRoot.getPath() + "/" + name + ".iml", type.getId());
+      moduleModel.commit();
+      assertNotNull(module);
+      PsiTestUtil.addContentRoot(module, contentRoot);
+      return module;
+    });
   }
 }

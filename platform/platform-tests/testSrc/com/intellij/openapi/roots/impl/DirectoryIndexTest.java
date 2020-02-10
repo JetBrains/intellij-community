@@ -132,7 +132,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
       myModule1OutputDir = createChildDirectory(myOutputDir, "module1");
 
       getCompilerProjectExtension().setCompilerOutputUrl(myOutputDir.getUrl());
-      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
 
       // fill roots of module1
       {
@@ -152,8 +151,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
       // fill roots of module2
       {
-        VirtualFile moduleFile = createChildData(myModule2Dir, "module2.iml");
-        myModule2 = moduleManager.newModule(moduleFile.getPath(), ModuleTypeId.JAVA_MODULE);
+        myModule2 = createJavaModuleWithContent(getProject(), "module2", myModule2Dir);
 
         PsiTestUtil.addContentRoot(myModule2, myModule2Dir);
         mySrcDir2Folder = PsiTestUtil.addSourceRoot(myModule2, mySrcDir2);
@@ -179,8 +177,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
       // fill roots of module3
       {
-        VirtualFile moduleFile = createChildData(myModule3Dir, "module3.iml");
-        myModule3 = moduleManager.newModule(moduleFile.getPath(), ModuleTypeId.JAVA_MODULE);
+        myModule3 = createJavaModuleWithContent(getProject(), "module3", myModule3Dir);
 
         PsiTestUtil.addContentRoot(myModule3, myModule3Dir);
         ModuleRootModificationUtil.addDependency(myModule3, myModule2);
