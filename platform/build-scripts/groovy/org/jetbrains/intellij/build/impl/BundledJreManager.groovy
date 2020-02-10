@@ -78,7 +78,7 @@ class BundledJreManager {
    * @param archive linux or windows JRE archive
    */
   @CompileDynamic
-  private def untar(File archive, String destination, boolean isModular) {
+  private void untar(File archive, String destination, boolean isModular) {
     // strip `jre` root directory for jbr8
     def stripRootDir = !isModular ||
                        // or `jbr` root directory for jbr11+
@@ -93,7 +93,7 @@ class BundledJreManager {
     else {
       // 'tar' command is used instead of Ant task to ensure that executable flags will be preserved
       buildContext.ant.mkdir(dir: destination)
-      buildContext.ant.exec(executable: "tar", dir: archive.parent) {
+      buildContext.ant.exec(executable: "tar", dir: archive.parent, failonerror: true) {
         arg(value: "-xf")
         arg(value: archive.name)
         if (stripRootDir) {
@@ -231,9 +231,20 @@ class BundledJreManager {
     }
 
     def artifactPath = "${buildContext.paths.artifacts}/${x86JreArchiveName(osFamily)}"
-    buildContext.ant.tar(tarfile: artifactPath, longfile: "gnu", compression: "gzip") {
-      tarfileset(dir: "${jreDirectoryPath}/jre32") {
-        include(name: "**/**")
+    if (SystemInfo.isWindows) {
+      buildContext.ant.tar(tarfile: artifactPath, longfile: "gnu", compression: "gzip") {
+        tarfileset(dir: "${jreDirectoryPath}/jre32") {
+          include(name: "**/**")
+        }
+      }
+    }
+    else {
+      buildContext.ant.exec(executable: "tar", dir: "${jreDirectoryPath}/jre32", failonerror: true) {
+        arg(value: "cf")
+        arg(value: artifactPath)
+        for (f in new File("${jreDirectoryPath}/jre32").list()) {
+          arg(value: f)
+        }
       }
     }
     buildContext.notifyArtifactBuilt(artifactPath)
