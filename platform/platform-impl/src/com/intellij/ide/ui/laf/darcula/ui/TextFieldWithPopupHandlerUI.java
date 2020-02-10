@@ -155,6 +155,16 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   protected void showSearchPopup() {
   }
 
+  @Override
+  protected void installDefaults() {
+    super.installDefaults();
+    if (SystemInfo.isMacOSCatalina) {
+      JTextComponent component = getComponent();
+      component.setFont(component.getFont().deriveFont(
+        Collections.<AttributedCharacterIterator.Attribute, Integer>singletonMap(TextAttribute.KERNING, null)));
+    }
+  }
+
   /**
    * Adds listeners to the current text component and sets its variant.
    */
@@ -446,10 +456,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @Override
   protected void paintSafely(Graphics g) {
     JTextComponent component = getComponent();
-    if (SystemInfo.isMacOSCatalina) {
-      component.setFont(component.getFont().deriveFont(
-        Collections.<AttributedCharacterIterator.Attribute, Integer>singletonMap(TextAttribute.KERNING, null)));
-    }
     if (!component.isOpaque()) paintBackground(g);
     Shape clip = g.getClip();
     super.paintSafely(g);
