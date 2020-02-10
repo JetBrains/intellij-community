@@ -1,3 +1,3 @@
-from m1 import Cls
+from m1 import SomeCls
 
-Cls
+SomeCls

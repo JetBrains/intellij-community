@@ -79,7 +79,7 @@ public class PySearchUtilBase {
       }
       // XXX: Disable resolving to any third-party libraries from typeshed in the same places where we don't want SDK tests
       excludedDirs.addAll(Arrays.stream(sdk.getRootProvider().getFiles(OrderRootType.CLASSES))
-                            .filter(file -> PyTypeShed.INSTANCE.isInside(file) || PyTypeShed.INSTANCE.isInThirdPartyLibraries(file))
+                            .filter(file -> PyTypeShed.INSTANCE.isInside(file) && PyTypeShed.INSTANCE.isInThirdPartyLibraries(file))
                             .collect(Collectors.toList()));
       if (!excludedDirs.isEmpty()) {
         GlobalSearchScope scope = buildUnionScope(project, excludedDirs);
