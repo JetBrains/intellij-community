@@ -1102,11 +1102,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val list = mutableListOf<LayoutData>()
 
-    // create a new default layout for each tool window that's not defined in a new layout
     for ((id, entry) in idToEntry) {
       val old = layout.getInfo(id) ?: entry.readOnlyWindowInfo as WindowInfoImpl
-      val new = newLayout.getOrCreateDefault(id)
-      if (old != new) {
+      val new = newLayout.getInfo(id)
+      // just copy if defined in the old layout but not in the new
+      if (new == null) {
+        newLayout.addInfo(id, old.copy())
+      }
+      else if (old != new) {
         list.add(LayoutData(old = old, new = new, entry = entry))
       }
     }

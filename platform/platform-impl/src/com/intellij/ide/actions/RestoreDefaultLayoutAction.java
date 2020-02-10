@@ -19,7 +19,7 @@ public final class RestoreDefaultLayoutAction extends AnAction implements DumbAw
     }
 
     DesktopLayout layout = WindowManagerEx.getInstanceEx().getLayout();
-    ToolWindowManagerEx.getInstanceEx(project).setLayout(layout);
+    ToolWindowManagerEx.getInstanceEx(project).setLayout(layout.copy());
   }
 
   @Override
