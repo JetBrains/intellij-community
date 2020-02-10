@@ -27,6 +27,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 @HeavyPlatformTestCase.WrapInCommand
@@ -1005,5 +1006,24 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
         delete(xxx);
       }
     }).assertTiming();
+  }
+
+  public void testSourceRootResidingUnderExcludedDirectoryMustBeIndexed() throws IOException {
+    VirtualFile contentDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDir("module"));
+
+    Module module = createJavaModuleWithContent(getProject(), "module", contentDir);
+
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      VirtualFile excludedDir = createChildDirectory(contentDir, "excluded");
+      VirtualFile sourcesDir = createChildDirectory(excludedDir, "sources");
+      createChildData(sourcesDir, "A.java");
+
+      PsiTestUtil.addContentRoot(module, contentDir);
+      PsiTestUtil.addExcludedRoot(module, excludedDir);
+      PsiTestUtil.addSourceRoot(module, sourcesDir);
+    });
+
+    VirtualFile aJava = contentDir.findChild("excluded").findChild("sources").findChild("A.java");
+    assertIndexableContent(Collections.singletonList(aJava), Collections.emptyList());
   }
 }
