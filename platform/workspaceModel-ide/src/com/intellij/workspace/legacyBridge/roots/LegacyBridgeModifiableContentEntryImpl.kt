@@ -44,10 +44,10 @@ internal class LegacyBridgeModifiableContentEntryImpl(
       error("Source folder $sourceFolderUrl must be under content entry $contentEntryUrl")
     }
 
-    val sourceFolder = sourceFolders.find { it.url == sourceFolderUrl.url && it.rootType == type }
-    if (sourceFolder != null) {
+    val duplicate = findDuplicate(sourceFolderUrl, type, properties)
+    if (duplicate != null) {
       LOG.debug("Source folder for '$sourceFolderUrl' and type '$type' already exist")
-      return sourceFolder
+      return duplicate
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -98,6 +98,24 @@ internal class LegacyBridgeModifiableContentEntryImpl(
     return currentContentEntry.value.sourceFolders.firstOrNull {
       it.url == sourceFolderUrl.url && it.rootType == type
     } ?: error("Source folder for '$sourceFolderUrl' and type '$type' was not found after adding")
+  }
+
+  private fun <P : JpsElement?> findDuplicate(sourceFolderUrl: VirtualFileUrl, type: JpsModuleSourceRootType<P>,
+                                              properties: P): SourceFolder? {
+    val propertiesFilter: (SourceFolder) -> Boolean = when (properties) {
+      is JavaSourceRootProperties -> label@{ sourceFolder: SourceFolder ->
+        val javaSourceRoot = (sourceFolder as SourceFolderViaTypedEntity).sourceRootEntity.asJavaSourceRoot()
+        return@label javaSourceRoot != null && javaSourceRoot.generated == properties.isForGeneratedSources
+                     && javaSourceRoot.packagePrefix == properties.packagePrefix
+      }
+      is JavaResourceRootProperties -> label@{ sourceFolder: SourceFolder ->
+        val javaResourceRoot = (sourceFolder as SourceFolderViaTypedEntity).sourceRootEntity.asJavaResourceRoot()
+        return@label javaResourceRoot != null && javaResourceRoot.generated == properties.isForGeneratedSources
+                     && javaResourceRoot.relativeOutputPath == properties.relativeOutputPath
+      }
+      else -> { _ -> true }
+    }
+    return sourceFolders.filter { it.url == sourceFolderUrl.url && it.rootType == type }.find { propertiesFilter.invoke(it) }
   }
 
   override fun removeSourceFolder(sourceFolder: SourceFolder) {
