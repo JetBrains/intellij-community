@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Producer;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,9 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     }
   }
 
-  private static boolean canShowDiff(@Nullable Project project, @NotNull Stream<? extends Change> changes, @NotNull Stream<FilePath> paths) {
+  private static boolean canShowDiff(@Nullable Project project,
+                                     @NotNull Stream<? extends Change> changes,
+                                     @NotNull Stream<? extends FilePath> paths) {
     return paths.findAny().isPresent() ||
            changes.anyMatch(it -> ChangeDiffRequestProducer.canCreate(project, it));
   }
@@ -70,14 +73,16 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
         () -> {
           ChangesViewManager.getInstanceEx(project).refreshImmediately();
           List<Change> actualChanges = loadFakeRevisions(project, changes);
-          showDiff(project, actualChanges, unversioned, view);
+          ListSelection<Producer> producers = collectRequestProducers(project, actualChanges, unversioned, view);
+          showDiff(project, producers.getList(), producers.getSelectedIndex());
         },
         InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
         ActionsBundle.actionText(IdeActions.ACTION_SHOW_DIFF_COMMON),
         ModalityState.current());
     }
     else {
-      showDiff(project, changes, unversioned, view);
+      ListSelection<Producer> producers = collectRequestProducers(project, changes, unversioned, view);
+      showDiff(project, producers.getList(), producers.getSelectedIndex());
     }
   }
 
@@ -108,66 +113,47 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     return actualChanges;
   }
 
-
-  private static void showDiff(@NotNull Project project,
-                               @NotNull List<? extends Change> changes,
-                               @NotNull List<? extends FilePath> unversioned,
-                               @NotNull ChangesListView changesView) {
+  @NotNull
+  private static ListSelection<Producer> collectRequestProducers(@NotNull Project project,
+                                                                 @NotNull List<? extends Change> changes,
+                                                                 @NotNull List<? extends FilePath> unversioned,
+                                                                 @NotNull ChangesListView changesView) {
     if (changes.size() == 1 && unversioned.isEmpty()) { // show all changes from this changelist
       Change selectedChange = changes.get(0);
       List<Change> changelistChanges = changesView.getAllChangesFromSameChangelist(selectedChange);
       if (changelistChanges != null) {
         int selectedIndex = ContainerUtil.indexOf(changelistChanges, it -> ChangeListChange.HASHING_STRATEGY.equals(selectedChange, it));
-        if (selectedIndex != -1) {
-          showChangesDiff(project, ListSelection.createAt(changelistChanges, selectedIndex));
-        }
-        else {
-          showChangesDiff(project, ListSelection.create(changelistChanges, selectedChange));
-        }
-        return;
+        if (selectedIndex == -1) selectedIndex = changelistChanges.indexOf(selectedChange);
+        return createChangeProducers(project, changelistChanges, selectedIndex);
       }
     }
 
     if (unversioned.size() == 1 && changes.isEmpty()) { // show all unversioned changes
       FilePath selectedFile = unversioned.get(0);
       List<FilePath> allUnversioned = changesView.getUnversionedFiles().collect(toList());
-      showUnversionedDiff(project, ListSelection.create(allUnversioned, selectedFile));
-      return;
+      int selectedIndex = allUnversioned.indexOf(selectedFile);
+      return createUnversionedProducers(project, allUnversioned, selectedIndex);
     }
 
-    showSelectionDiff(project, changes, unversioned);
+    ListSelection<Producer> changeProducers = createChangeProducers(project, changes, 0);
+    ListSelection<Producer> unversionedProducers = createUnversionedProducers(project, unversioned, 0);
+    return ListSelection.createAt(ContainerUtil.concat(changeProducers.getList(), unversionedProducers.getList()), 0);
   }
 
-
-  private static void showChangesDiff(@Nullable Project project,
-                                      @NotNull ListSelection<? extends Change> selection) {
-    ListSelection<ChangeDiffRequestChain.Producer> producers =
-      selection.map(change -> ChangeDiffRequestProducer.create(project, change));
-
-    showDiff(project, producers.getList(), producers.getSelectedIndex());
+  private static ListSelection<Producer> createChangeProducers(@NotNull Project project,
+                                                               @NotNull List<? extends Change> changes,
+                                                               int selected) {
+    return ListSelection.createAt(changes, selected).map(change -> ChangeDiffRequestProducer.create(project, change));
   }
 
-  private static void showUnversionedDiff(@Nullable Project project,
-                                          @NotNull ListSelection<? extends FilePath> selection) {
-    ListSelection<ChangeDiffRequestChain.Producer> producers =
-      selection.map(path -> UnversionedDiffRequestProducer.create(project, path));
-
-    showDiff(project, producers.getList(), producers.getSelectedIndex());
-  }
-
-  private static void showSelectionDiff(@Nullable Project project,
-                                        @NotNull List<? extends Change> changes,
-                                        @NotNull List<? extends FilePath> unversioned) {
-    List<ChangeDiffRequestChain.Producer> changeRequests =
-      ContainerUtil.mapNotNull(changes, change -> ChangeDiffRequestProducer.create(project, change));
-    List<ChangeDiffRequestChain.Producer> unversionedRequests =
-      ContainerUtil.mapNotNull(unversioned, path -> UnversionedDiffRequestProducer.create(project, path));
-
-    showDiff(project, ContainerUtil.concat(changeRequests, unversionedRequests), 0);
+  private static ListSelection<Producer> createUnversionedProducers(@NotNull Project project,
+                                                                    @NotNull List<? extends FilePath> unversioned,
+                                                                    int selected) {
+    return ListSelection.createAt(unversioned, selected).map(path -> UnversionedDiffRequestProducer.create(project, path));
   }
 
   private static void showDiff(@Nullable Project project,
-                               @NotNull List<? extends ChangeDiffRequestChain.Producer> producers,
+                               @NotNull List<? extends Producer> producers,
                                int selected) {
     if (producers.isEmpty()) return;
     DiffRequestChain chain = new ChangeDiffRequestChain(producers, selected);
