@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.ui.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.streams.StreamDebuggerBundle;
 import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
 import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
 import com.intellij.debugger.streams.trace.*;
@@ -37,14 +39,11 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class EvaluationAwareTraceWindow extends DialogWrapper {
-  private static final String DIALOG_TITLE = "Stream Trace";
   private static final String IS_FLAT_MODE_PROPERTY = "org.jetbrains.debugger.streams:isTraceWindowInFlatMode";
   private static final boolean IS_DEFAULT_MODE_FLAT = false;
 
   private static final int DEFAULT_WIDTH = 870;
   private static final int DEFAULT_HEIGHT = 400;
-  private static final String FLAT_MODE_NAME = "Flat Mode";
-  private static final String TABBED_MODE_NAME = "Split Mode";
   private final MyCenterPane myCenterPane;
   private final List<MyPlaceholder> myTabContents;
   private final MyPlaceholder myFlatContent;
@@ -62,7 +61,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       }
     }, myDisposable);
     setModal(false);
-    setTitle(DIALOG_TITLE);
+    setTitle(StreamDebuggerBundle.message("stream.debugger.dialog.title"));
     myCenterPane = new MyCenterPane();
     myCenterPane.add(MyMode.SPLIT.name(), myTabsPane.getComponent());
 
@@ -137,15 +136,17 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     final MyPlaceholder resultTab = myTabContents.get(myTabContents.size() - 1);
 
     if (resolvedTrace.exceptionThrown()) {
-      resultTab.setContent(new JBLabel("There is no result: exception was thrown", SwingConstants.CENTER), BorderLayout.CENTER);
-      setTitle(DIALOG_TITLE + " - Exception was thrown. Trace can be incomplete");
+      JBLabel label = new JBLabel(StreamDebuggerBundle.message("tab.content.exception.thrown"), SwingConstants.CENTER);
+      resultTab.setContent(label, BorderLayout.CENTER);
+      setTitle(StreamDebuggerBundle.message("stream.debugger.dialog.with.exception.title"));
       final ExceptionView exceptionView = new ExceptionView(context, result);
       Disposer.register(myDisposable, exceptionView);
-      myTabsPane.insertTab("Exception", AllIcons.Nodes.ErrorIntroduction, exceptionView, "", 0);
+      myTabsPane.insertTab(StreamDebuggerBundle.message("exception.tab.name"), AllIcons.Nodes.ErrorIntroduction, exceptionView, "", 0);
       myTabsPane.setSelectedIndex(0);
     }
     else if (resolvedTrace.getSourceChain().getTerminationCall().getResultType().equals(JavaTypes.INSTANCE.getVOID())) {
-      resultTab.setContent(new JBLabel("There is no result of such stream chain", SwingConstants.CENTER), BorderLayout.CENTER);
+      JBLabel label = new JBLabel(StreamDebuggerBundle.message("tab.content.no.result"), SwingConstants.CENTER);
+      resultTab.setContent(label, BorderLayout.CENTER);
     }
 
     final FlatView flatView = new FlatView(controllers, context);
@@ -161,7 +162,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    return new Action[]{new DialogWrapperExitAction("Close", CLOSE_EXIT_CODE)};
+    return new Action[]{new DialogWrapperExitAction(CommonBundle.message("action.text.close"), CLOSE_EXIT_CODE)};
   }
 
   @Override
@@ -220,8 +221,10 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   }
 
   @NotNull
-  private static String getButtonText(@NotNull MyMode mode) {
-    return MyMode.SPLIT.equals(mode) ? FLAT_MODE_NAME : TABBED_MODE_NAME;
+  private static String getButtonText(@NotNull MyMode currentState) {
+    return MyMode.SPLIT.equals(currentState)
+           ? StreamDebuggerBundle.message("stream.debugger.dialog.flat.mode.button")
+           : StreamDebuggerBundle.message("stream.debugger.dialog.split.mode.button");
   }
 
   private class MyToggleViewAction extends DialogWrapperAction {
@@ -249,7 +252,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   private static class MyPlaceholder extends JPanel {
     MyPlaceholder() {
       super(new BorderLayout());
-      add(new JBLabel("Evaluation in process", SwingConstants.CENTER), BorderLayout.CENTER);
+      add(new JBLabel(StreamDebuggerBundle.message("evaluation.in.process"), SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
     void setContent(@NotNull JComponent view, String placement) {
