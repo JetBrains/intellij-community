@@ -89,7 +89,7 @@ public class ProblemsHolder {
     registerProblem(newProblem);
   }
 
-  public void registerProblem(@NotNull PsiReference reference, String descriptionTemplate, ProblemHighlightType highlightType) {
+  public void registerProblem(@NotNull PsiReference reference, @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate, ProblemHighlightType highlightType) {
     LocalQuickFix[] fixes = null;
     if (reference instanceof LocalQuickFixProvider) {
       fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
@@ -99,7 +99,7 @@ public class ProblemsHolder {
 
   public void registerProblemForReference(@NotNull PsiReference reference,
                                           @NotNull ProblemHighlightType highlightType,
-                                          @NotNull String descriptionTemplate,
+                                          @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                                           LocalQuickFix @Nullable ... fixes) {
     ProblemDescriptor descriptor = myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(),
                                                                      descriptionTemplate, highlightType, myOnTheFly, fixes);
