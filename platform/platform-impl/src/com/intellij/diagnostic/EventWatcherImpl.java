@@ -6,9 +6,9 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.InvocationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -18,11 +18,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.event.InvocationEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
@@ -37,6 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.diagnostic.RunnablesListener.*;
+import static com.intellij.util.ReflectionUtil.*;
 
 @ApiStatus.Experimental
 public final class EventWatcherImpl implements LoggableEventWatcher, Disposable {
@@ -49,10 +48,6 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
   private static final Pattern DESCRIPTION_BY_EVENT = Pattern.compile(
     "(([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*)\\[(?<description>\\w+(,runnable=(?<runnable>[^,]+))?[^]]*)].*"
   );
-
-  @NotNull
-  private static final NotNullLazyValue<Field> ourRunnableField =
-    NotNullLazyValue.createValue(() -> Objects.requireNonNull(findTargetField(InvocationEvent.class)));
 
   @NotNull
   private final ConcurrentMap<String, WrapperDescription> myWrappers = new ConcurrentHashMap<>();
@@ -103,9 +98,7 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
     if ("LaterInvocator.FlushQueue".equals(findGroupByName("runnable"))) return;
 
     new InvocationLogger(event, startedAt)
-      .log(() -> event instanceof InvocationEvent ?
-                 (Runnable)getValue(event, ourRunnableField.getValue()) :
-                 null);
+      .log(() -> InvocationUtil.extractRunnable(event));
   }
 
   @Override
@@ -113,15 +106,15 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
     Object current = runnable;
 
     while (current != null) {
-      Class<?> originalClass = current.getClass();
-      Field field = findTargetField(originalClass);
+      Class<?> rootClass = current.getClass();
+      Field field = findCallableOrRunnableField(rootClass);
 
       if (field != null) {
         myWrappers.compute(
-          originalClass.getName(),
+          rootClass.getName(),
           WrapperDescription::computeNext
         );
-        current = getValue(current, field);
+        current = getFieldValue(field, current);
       }
       else {
         break;
@@ -197,41 +190,17 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
     );
   }
 
-  @Nullable
-  private static Field findTargetField(@NotNull Class<?> originalClass) {
-    for (Class<?> currentClass = originalClass;
-         currentClass != null;
-         currentClass = currentClass.getSuperclass()) {
-      for (Field field : currentClass.getDeclaredFields()) {
-        if (isInstanceField(field) && isCallableOrRunnable(field)) {
-          return field;
-        }
-      }
-    }
-
-    return null;
-  }
-
-  private static boolean isInstanceField(@NotNull Field field) {
-    return !Modifier.isStatic(field.getModifiers());
+  private static @Nullable Field findCallableOrRunnableField(@NotNull Class<?> rootClass) {
+    return findFieldInHierarchy(
+      rootClass,
+      field -> isInstanceField(field) && isCallableOrRunnable(field)
+    );
   }
 
   private static boolean isCallableOrRunnable(@NotNull Field field) {
     Class<?> fieldType = field.getType();
-    return Runnable.class.isAssignableFrom(fieldType) ||
-           Callable.class.isAssignableFrom(fieldType);
-  }
-
-  @Nullable
-  private static Object getValue(@NotNull Object object,
-                                 @NotNull Field field) {
-    try {
-      field.setAccessible(true);
-      return field.get(object);
-    }
-    catch (IllegalAccessException ignored) {
-      return null;
-    }
+    return isAssignable(Runnable.class, fieldType) ||
+           isAssignable(Callable.class, fieldType);
   }
 
   @NotNull

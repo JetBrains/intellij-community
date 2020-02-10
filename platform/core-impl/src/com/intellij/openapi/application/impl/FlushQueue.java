@@ -34,7 +34,7 @@ class FlushQueue {
   }
 
   public void scheduleFlush() {
-    myRunnableExecutor.accept(this::flushNow);
+    myRunnableExecutor.accept(new FlushNow());
   }
 
   public void flushNow() {
@@ -175,6 +175,13 @@ class FlushQueue {
         myQueue.clear();
         myQueue.addAll(alive);
       }
+    }
+  }
+
+  final class FlushNow implements Runnable {
+    @Override
+    public void run() {
+      flushNow();
     }
   }
 

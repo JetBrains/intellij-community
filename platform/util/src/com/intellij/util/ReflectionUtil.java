@@ -145,8 +145,8 @@ public final class ReflectionUtil {
     throw new NoSuchFieldException("Class: " + clazz + " fieldName: " + fieldName + " fieldType: " + fieldType);
   }
 
-  @Nullable
-  private static Field findFieldInHierarchy(@NotNull Class<?> rootClass, @NotNull java.util.function.Predicate<? super Field> checker) {
+  public static @Nullable Field findFieldInHierarchy(@NotNull Class<?> rootClass,
+                                                     @NotNull java.util.function.Predicate<? super Field> checker) {
     for (Class<?> aClass = rootClass; aClass != null; aClass = aClass.getSuperclass()) {
       for (Field field : aClass.getDeclaredFields()) {
         if (checker.test(field)) {
@@ -326,10 +326,9 @@ public final class ReflectionUtil {
   public static <T> T getField(@NotNull Class<?> objectClass, @Nullable Object object, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {
     try {
       Field field = findAssignableField(objectClass, fieldType, fieldName);
-      //noinspection unchecked
-      return (T)field.get(object);
+      return getFieldValue(field, object);
     }
-    catch (NoSuchFieldException | IllegalAccessException e) {
+    catch (NoSuchFieldException e) {
       LOG.debug(e);
       return null;
     }
@@ -338,16 +337,30 @@ public final class ReflectionUtil {
   public static <T> T getStaticFieldValue(@NotNull Class<?> objectClass, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {
     try {
       final Field field = findAssignableField(objectClass, fieldType, fieldName);
-      if (!Modifier.isStatic(field.getModifiers())) {
+      if (isInstanceField(field)) {
         throw new IllegalArgumentException("Field " + objectClass + "." + fieldName + " is not static");
       }
-      //noinspection unchecked
-      return (T)field.get(null);
+      return getFieldValue(field, null);
     }
-    catch (NoSuchFieldException | IllegalAccessException e) {
+    catch (NoSuchFieldException e) {
       LOG.debug(e);
       return null;
     }
+  }
+
+  public static <T> @Nullable T getFieldValue(@NotNull Field field, @Nullable Object object) {
+    try {
+      //noinspection unchecked
+      return (T)field.get(object);
+    }
+    catch (IllegalAccessException e) {
+      LOG.debug(e);
+      return null;
+    }
+  }
+
+  public static boolean isInstanceField(@NotNull Field field) {
+    return !Modifier.isStatic(field.getModifiers());
   }
 
   // returns true if value was set

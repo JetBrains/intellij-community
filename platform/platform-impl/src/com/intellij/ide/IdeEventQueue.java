@@ -72,14 +72,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.application.impl.InvocationUtil.*;
+
 public final class IdeEventQueue extends EventQueue {
-  private static final Set<String> ourRunnablesWoWrite = ContainerUtil.set("javax.swing.RepaintManager$ProcessingRunnable");
-  private static final Set<String> ourRunnablesWithWrite = ContainerUtil.set("LaterInvocator.FlushQueue");
+  private static final Set<Class<? extends Runnable>> ourRunnablesWoWrite = ContainerUtil.set(REPAINT_PROCESSING_CLASS);
+  private static final Set<Class<? extends Runnable>> ourRunnablesWithWrite = ContainerUtil.set(FLUSH_NOW_CLASS);
   private static final boolean ourDefaultEventWithWrite = true;
 
   private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
-  private static final Logger TYPEAHEAD_LOG = Logger.getInstance(IdeEventQueue.class.getName()+".typeahead");
-  private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName()+".runnables");
+  private static final Logger TYPEAHEAD_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".typeahead");
+  private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".runnables");
   private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
   private static final boolean ourActionAwareTypeaheadEnabled = SystemProperties.getBooleanProperty("action.aware.typeAhead", true);
   private static final boolean ourTypeAheadSearchEverywhereEnabled =
@@ -434,6 +436,11 @@ public final class IdeEventQueue extends EventQueue {
       myCurrentEvent = e;
 
       AWTEvent finalE1 = e;
+      Runnable runnable = extractRunnable(e);
+      Class<? extends Runnable> runnableClass = runnable != null ?
+                                                runnable.getClass() :
+                                                Runnable.class;
+
       Runnable processEventRunnable = () -> {
         try (AccessToken ignored = startActivity(finalE1)) {
           ProgressManager progressManager = obtainProgressManager();
@@ -475,23 +482,14 @@ public final class IdeEventQueue extends EventQueue {
         }
       };
 
-      if (e instanceof InvocationEvent) {
-        String eventToString = e.toString();
-        int i = eventToString.indexOf(",runnable=");
-        if (i != -1) {
-          String substring = eventToString.substring(i + ",runnable=".length());
-          for (String s : ourRunnablesWoWrite) {
-            if (substring.startsWith(s)) {
-              processEventRunnable.run();
-              return;
-            }
-          }
-          for (String s : ourRunnablesWithWrite) {
-            if (substring.startsWith(s)) {
-              ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(processEventRunnable);
-              return;
-            }
-          }
+      if (runnableClass != Runnable.class) {
+        if (ourRunnablesWoWrite.contains(runnableClass)) {
+          processEventRunnable.run();
+          return;
+        }
+        if (ourRunnablesWithWrite.contains(runnableClass)) {
+          ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(processEventRunnable);
+          return;
         }
       }
 
