@@ -477,13 +477,13 @@ public class HighlightMethodUtil {
     PsiMethod resolvedMethod = candidateInfo.getElement();
     PsiSubstitutor substitutor = candidateInfo.getSubstitutor();
     String methodName = HighlightMessageUtil.getSymbolName(resolvedMethod, substitutor);
-    PsiElement parent = resolvedMethod.getParent();
+    PsiClass parent = resolvedMethod.getContainingClass();
     String containerName = parent == null ? "" : HighlightMessageUtil.getSymbolName(parent, substitutor);
     String argTypes = buildArgTypesList(list);
     String description = JavaErrorBundle.message("wrong.method.arguments", methodName, containerName, argTypes);
     String toolTip = null;
     List<PsiExpression> mismatchedExpressions;
-    if (parent instanceof PsiClass) {
+    if (parent != null) {
       final PsiExpression[] expressions = list.getExpressions();
       final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
       mismatchedExpressions = mismatchedArgs(expressions, substitutor, parameters, candidateInfo.isVarargs());

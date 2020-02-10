@@ -57,6 +57,12 @@ record ImplicitCanonicalConstructor(String s) {
   static void test() {
     new ImplicitCanonicalConstructor("Asdasd");
   }
+
+  static class UsageInAnotherClass {
+    static void test() {
+      new ImplicitCanonicalConstructor<error descr="'ImplicitCanonicalConstructor(java.lang.String)' in 'ImplicitCanonicalConstructor' cannot be applied to '(int)'">(1)</error>;
+    }
+  }
 }
 record AssignmentInNonCanonical(int x, int y, long depth) {
   public AssignmentInNonCanonical(int x, int y) {
