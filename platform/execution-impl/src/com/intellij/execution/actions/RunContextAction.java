@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -115,8 +116,8 @@ public class RunContextAction extends BaseRunConfigurationAction {
   @NotNull
   private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context, @NotNull List<? extends ConfigurationFromContext> configurationsFromContext) {
     return new AnAction(
-      "Run All",
-      "Run all configurations available in this context",
+      CommonBundle.message("action.text.run.all"),
+      ExecutionBundle.message("run.all.configurations.available.in.this.context"),
       AllIcons.RunConfigurations.Compound
     ) {
       @Override

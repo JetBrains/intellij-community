@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.macro;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
@@ -37,8 +38,8 @@ public class ModuleSdkPathMacro extends Macro {
   @Override
   public String getDescription() {
     return PlatformUtils.isPyCharm()
-      ? "Project interpreter path"
-      : "Module SDK path";
+      ? ExecutionBundle.message("project.interpreter.path")
+      : ExecutionBundle.message("module.sdk.path");
   }
 
   @Nullable

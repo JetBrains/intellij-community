@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.startup;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -73,8 +74,9 @@ final class ProjectStartupTaskManager {
       if (settings != null && settings.getName().equals(descriptor.getName())) {
         result.add(settings);
       } else {
-        NOTIFICATION_GROUP.createNotification(PREFIX + " Run Configuration '" + descriptor.getName() + "' not found, removed from list.",
-                                              MessageType.WARNING).notify(myProject);
+        NOTIFICATION_GROUP.createNotification(
+          ExecutionBundle.message("0.run.configuration.1.not.found.removed.from.list", PREFIX, descriptor.getName()),
+          MessageType.WARNING).notify(myProject);
       }
     }
     return result;
@@ -113,8 +115,8 @@ final class ProjectStartupTaskManager {
         localConfigurations.add(settings);
         setStartupConfigurations(sharedConfigurations, localConfigurations);
 
-        NOTIFICATION_GROUP.createNotification(PREFIX + " configuration was made \"not shared\", since included Run Configuration '" +
-                                              settings.getName() + "' is not shared.", MessageType.WARNING).notify(myProject);
+        NOTIFICATION_GROUP.createNotification(ExecutionBundle.message("0.configuration.was.made.not.shared", PREFIX, settings.getName()),
+                                              MessageType.WARNING).notify(myProject);
       }
     }
   }

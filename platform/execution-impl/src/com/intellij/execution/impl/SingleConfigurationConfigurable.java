@@ -439,7 +439,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
       myRunOnPanel.setBorder(JBUI.Borders.emptyLeft(5));
       UI.PanelFactory.panel(myRunOnPanelInner)
-        .withLabel("Run on:")
+        .withLabel(ExecutionBundle.message("run.on"))
         .withComment(ExecutionBundle.message("edit.run.configuration.run.configuration.run.on.comment"))
         .addToPanel(myRunOnPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0,
                                                          GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,

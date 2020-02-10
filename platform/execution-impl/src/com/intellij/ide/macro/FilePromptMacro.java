@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.macro;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -38,7 +39,7 @@ public class FilePromptMacro extends PromptingMacro implements SecondQueueExpand
   @NotNull
   @Override
   public String getDescription() {
-    return "Shows a file chooser dialog";
+    return ExecutionBundle.message("shows.a.file.chooser.dialog");
   }
 
   @Override

@@ -118,7 +118,7 @@ public class ExecutionHelper {
           builder.append("\n");
           builder.append(exception.getMessage());
         }
-        Messages.showErrorDialog(builder.toString(), "Execution Error");
+        Messages.showErrorDialog(builder.toString(), ExecutionBundle.message("execution.error"));
         return;
       }
 
@@ -167,7 +167,8 @@ public class ExecutionHelper {
         openMessagesView(errorTreeView, myProject, tabDisplayName);
       }
       catch (NullPointerException e) {
-        Messages.showErrorDialog(stdOutTitle + "\n" + stdout + "\n" + stderrTitle + "\n" + stderr, "Process Output");
+        Messages.showErrorDialog(stdOutTitle + "\n" + stdout + "\n" + stderrTitle + "\n" + stderr,
+                                 ExecutionBundle.message("process.output"));
         return;
       }
 
@@ -224,7 +225,7 @@ public class ExecutionHelper {
       Disposer.register(content, errorTreeView);
       messageView.getContentManager().setSelectedContent(content);
       ContentManagerUtil.cleanupContents(content, myProject, tabDisplayName);
-    }, "Open message view", null);
+    }, ExecutionBundle.message("open.message.view"), null);
   }
 
   public static Collection<RunContentDescriptor> findRunningConsoleByTitle(final Project project,
@@ -432,7 +433,7 @@ public class ExecutionHelper {
       public void run() {
         myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
         if (myProgressIndicator != null && StringUtil.isEmpty(myProgressIndicator.getText())) {
-          myProgressIndicator.setText("Please wait...");
+          myProgressIndicator.setText(ExecutionBundle.message("please.wait"));
         }
 
         LOG.assertTrue(myProgressIndicator != null || cancelableFun != null,

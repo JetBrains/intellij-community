@@ -110,7 +110,7 @@ final class ProjectStartupRunner implements StartupActivity.DumbAware {
       }
       // reporting that the task successfully started would require changing the interface of execution subsystem, not it reports errors by itself
       ProjectStartupTaskManager.NOTIFICATION_GROUP
-        .createNotification(ProjectStartupTaskManager.PREFIX + " starting '" + myName + "'", MessageType.INFO).notify(myProject);
+        .createNotification(ExecutionBundle.message("0.starting.1", ProjectStartupTaskManager.PREFIX, myName), MessageType.INFO).notify(myProject);
       ProgramRunnerUtil.executeConfiguration(myEnvironment, true, true);
       // same thread always
       if (myAlarm.isEmpty()) Disposer.dispose(myAlarm);

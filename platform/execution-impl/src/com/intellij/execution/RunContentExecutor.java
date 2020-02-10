@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
@@ -173,8 +174,7 @@ public class RunContentExecutor implements Disposable {
 
   private class RerunAction extends AnAction {
     RerunAction(JComponent consolePanel) {
-      super("Rerun", "Rerun",
-            AllIcons.Actions.Restart);
+      super(CommonBundle.message("action.text.rerun"), CommonBundle.message("action.text.rerun"), AllIcons.Actions.Restart);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), consolePanel);
     }
 

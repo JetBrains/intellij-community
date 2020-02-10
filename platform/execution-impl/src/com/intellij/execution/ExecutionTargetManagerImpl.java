@@ -36,7 +36,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     @NotNull
     @Override
     public String getDisplayName() {
-      return "Multiple specified";
+      return ExecutionBundle.message("multiple.specified");
     }
 
     @Override

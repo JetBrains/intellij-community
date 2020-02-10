@@ -2,6 +2,7 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
@@ -58,7 +59,8 @@ public class ProgramParametersConfigurator {
 
   public static void addMacroSupport(@NotNull ExpandableTextField expandableTextField) {
     if (Registry.is("allow.macros.for.run.configurations")) {
-      expandableTextField.addExtension(ExtendableTextComponent.Extension.create(AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, "Insert Macros", ()
+      expandableTextField.addExtension(ExtendableTextComponent.Extension.create(AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover,
+                                                                                ExecutionBundle.message("insert.macros"), ()
         -> MacrosDialog.show(expandableTextField, macro -> {
         if (macro instanceof PromptMacro) return true;
         return !(macro instanceof PromptingMacro) && !(macro instanceof EditorMacro);

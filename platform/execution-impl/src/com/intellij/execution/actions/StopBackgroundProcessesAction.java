@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -68,7 +69,8 @@ public class StopBackgroundProcessesAction extends DumbAwareAction implements An
 
     JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
       .setMovable(true)
-      .setTitle(handlerItems.size() == 1 ? "Confirm background process stop" : "Stop background process")
+      .setTitle(handlerItems.size() == 1 ? ExecutionBundle.message("confirm.background.process.stop")
+                                         : ExecutionBundle.message("stop.background.process"))
       .setNamerForFiltering(o -> ((StopAction.HandlerItem)o).displayName)
       .setItemChoosenCallback(() -> {
         List valuesList = list.getSelectedValuesList();

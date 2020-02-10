@@ -1218,13 +1218,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   @NotNull
   @Override
   public String getPreviousContentActionName() {
-    return "Select Previous Tab";
+    return ExecutionBundle.message("select.previous.tab");
   }
 
   @NotNull
   @Override
   public String getNextContentActionName() {
-    return "Select Next Tab";
+    return ExecutionBundle.message("select.next.tab");
   }
 
   @Override

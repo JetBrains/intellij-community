@@ -132,7 +132,7 @@ public final class ShowRunningListAction extends AnAction {
 
       if (!runningDescriptors.isEmpty() && projects.size() > 1) {
         state.append(project.getName());
-        panel.add(new JLabel("<html><body><b>Project '" + project.getName() + "'</b></body></html>"));
+        panel.add(new JLabel(ExecutionBundle.message("html.body.b.project.0.b.body.html", project.getName())));
       }
 
       for (RunContentDescriptor descriptor : runningDescriptors) {

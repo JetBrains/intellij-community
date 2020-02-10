@@ -285,7 +285,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       String name = target.getDisplayName();
       Presentation presentation = getTemplatePresentation();
       presentation.setText(name, false);
-      presentation.setDescription("Select " + name);
+      presentation.setDescription(ExecutionBundle.message("select.0", name));
 
       presentation.setIcon(selected ? CHECKED_ICON : EMPTY_ICON);
       presentation.setSelectedIcon(selected ? CHECKED_SELECTED_ICON : EMPTY_ICON);
@@ -321,7 +321,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
       final Presentation presentation = getTemplatePresentation();
       presentation.setText(name, false);
-      presentation.setDescription("Select " + configuration.getType().getConfigurationTypeDescription() + " '" + name + "'");
+      presentation.setDescription(ExecutionBundle.message("select.0.1", configuration.getType().getConfigurationTypeDescription(), name));
       updateIcon(presentation);
     }
 

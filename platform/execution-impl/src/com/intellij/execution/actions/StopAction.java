@@ -159,7 +159,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
           }
         }))
         .setMovable(true)
-        .setTitle(items.size() == 1 ? "Confirm process stop" : "Stop process")
+        .setTitle(items.size() == 1 ? ExecutionBundle.message("confirm.process.stop") : ExecutionBundle.message("stop.process"))
         .setNamerForFiltering(o -> o.displayName)
         .setItemsChosenCallback((valuesList) -> {
           for (HandlerItem item : valuesList) {

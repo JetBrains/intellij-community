@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.ExecutorGroup;
@@ -199,8 +200,8 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     if (runManagerConfig.isDeletionFromPopupRequiresConfirmation()) {
       popup.myPopup.cancel();
       confirmed = Messages.YES == Messages.showYesNoDialog(project,
-                                                           "Are you sure you want to delete " + configurationSettings.getName() + "?",
-                                                           "Confirmation",
+                                                           ExecutionBundle.message("are.you.sure.you.want.to.delete.0", configurationSettings.getName()),
+                                                           CommonBundle.message("title.confirmation"),
                                                            Messages.getQuestionIcon(), new DialogWrapper.DoNotAskOption.Adapter() {
           @Override
           public void rememberChoice(boolean isSelected, int exitCode) {
@@ -210,7 +211,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
           @NotNull
           @Override
           public String getDoNotShowMessage() {
-            return "Don't ask again";
+            return ExecutionBundle.message("don.t.ask.again");
           }
 
           @Override
