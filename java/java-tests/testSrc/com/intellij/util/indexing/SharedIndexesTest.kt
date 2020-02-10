@@ -169,7 +169,7 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
         .getInstance(project)
         .exportIndices(chunks, indexZip, EmptyProgressIndicator())
 
-      restartFileBasedIndex(indexZip)
+      restartFileBasedIndex(indexZip, project)
 
       val fileBasedIndex = FileBasedIndex.getInstance()
 
@@ -180,7 +180,7 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
       TestCase.assertEquals(UsageSearchContext.IN_COMMENTS.toInt(), values.single())
       assertHashIndexContainsProperData((virtualFile as VirtualFileWithId).id)
     } finally {
-      restartFileBasedIndex(null)
+      restartFileBasedIndex(null, project)
     }
   }
 
@@ -190,35 +190,39 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
     assertTrue(hashId != FileContentHashIndexExtension.NULL_HASH_ID)
   }
 
-  private fun restartFileBasedIndex(indexZip: Path?) {
-    val indexSwitcher = FileBasedIndexSwitcher(FileBasedIndex.getInstance() as FileBasedIndexImpl)
-    ApplicationManager.getApplication().runWriteAction {
-      indexSwitcher.turnOff()
+  companion object {
+    @JvmStatic
+    fun restartFileBasedIndex(indexZip: Path?, project: Project?) {
+      val indexSwitcher = FileBasedIndexSwitcher(FileBasedIndex.getInstance() as FileBasedIndexImpl)
+      ApplicationManager.getApplication().runWriteAction {
+        indexSwitcher.turnOff()
+      }
+
+      FileUtil.delete(PathManager.getIndexRoot())
+      val rootProp = indexZip?.toAbsolutePath()?.toString()
+      if (rootProp == null) {
+        System.clearProperty(OnDiskSharedIndexChunkLocator.ROOT_PROP)
+      } else {
+        System.setProperty(OnDiskSharedIndexChunkLocator.ROOT_PROP, rootProp)
+      }
+
+      ApplicationManager.getApplication().runWriteAction {
+        IndexingStamp.flushCaches()
+        if (project != null) {
+          FileBasedIndex.getInstance().iterateIndexableFilesConcurrently({
+                                                                           dropIndexingStampsRecursively(it)
+                                                                           true
+                                                                         }, project, EmptyProgressIndicator())
+          ProjectRootManagerEx.getInstanceEx(project).incModificationCount()
+        }
+        indexSwitcher.turnOn()
+      }
     }
 
-    FileUtil.delete(PathManager.getIndexRoot())
-    val rootProp = indexZip?.toAbsolutePath()?.toString()
-    if (rootProp == null) {
-      System.clearProperty(OnDiskSharedIndexChunkLocator.ROOT_PROP)
-    } else {
-      System.setProperty(OnDiskSharedIndexChunkLocator.ROOT_PROP, rootProp)
-    }
-
-    ApplicationManager.getApplication().runWriteAction {
-      IndexingStamp.flushCaches()
-      FileBasedIndex.getInstance().iterateIndexableFilesConcurrently({
-                                                                       dropIndexingStampsRecursively(it)
-                                                                       true
-                                                                     }, project, EmptyProgressIndicator())
-      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true)
-      indexSwitcher.turnOn()
+    private fun dropIndexingStampsRecursively(file: VirtualFile) {
+      file as VirtualFileSystemEntry
+      file.isFileIndexed = false;
+      IndexingStamp.dropIndexingTimeStamps(file.id)
     }
   }
-
-  private fun dropIndexingStampsRecursively(file: VirtualFile) {
-    file as VirtualFileSystemEntry
-    file.isFileIndexed = false;
-    IndexingStamp.dropIndexingTimeStamps(file.id)
-  }
-
 }
