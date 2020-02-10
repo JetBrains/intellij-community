@@ -24,7 +24,7 @@ abstract class SuggestedRefactoringExecution(protected val refactoringSupport: S
         }
 
         var refactoring = RefactoringFactory.getInstance(project).createRename(data.declaration, newName, true, true)
-        refactoring.addAutomaticRenames()
+        refactoring.respectEnabledAutomaticRenames()
 
         val usages = refactoring.findUsages()
         if (usages.any { it.isNonCodeUsage } && !ApplicationManager.getApplication().isHeadlessEnvironment) {
@@ -43,7 +43,7 @@ abstract class SuggestedRefactoringExecution(protected val refactoringSupport: S
             )
             if (result != Messages.OK) {
                 refactoring = RefactoringFactory.getInstance(project).createRename(data.declaration, newName, false, false)
-                refactoring.addAutomaticRenames()
+                refactoring.respectEnabledAutomaticRenames()
             }
         }
 

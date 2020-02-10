@@ -35,5 +35,5 @@ public interface RenameRefactoring extends Refactoring {
   boolean isSearchInNonJavaFiles();
 
   @ApiStatus.Experimental
-  void addAutomaticRenames();
+  void respectEnabledAutomaticRenames();
 }
