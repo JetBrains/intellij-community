@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.project.Project;
@@ -62,7 +62,8 @@ public abstract class WindowManagerEx extends WindowManager {
   /**
    * @return default layout for tool windows.
    */
-  public abstract DesktopLayout getLayout();
+  @ApiStatus.Internal
+  public abstract @NotNull DesktopLayout getLayout();
 
   /**
    * Copies {@code layout} into internal default layout.

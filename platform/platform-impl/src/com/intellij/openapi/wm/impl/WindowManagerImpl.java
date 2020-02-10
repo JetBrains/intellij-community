@@ -736,7 +736,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final DesktopLayout getLayout() {
+  public final @NotNull DesktopLayout getLayout() {
     return myLayout;
   }
 

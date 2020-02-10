@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class NewWatchAction
@@ -13,7 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RestoreLayoutAction extends DumbAwareAction {
+public final class RestoreLayoutAction extends DumbAwareAction {
   @Nullable
   public static RunnerContentUi getRunnerUi(@NotNull AnActionEvent e) {
     return e.getData(RunnerContentUi.KEY);
