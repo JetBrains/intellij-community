@@ -54,7 +54,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private long myExecutionId;
   private String myHelpId;
 
-  public ContentImpl(JComponent component, @Nls(capitalization = Nls.Capitalization.Title) String displayName, boolean isPinnable) {
+  public ContentImpl(JComponent component, @Nullable @Nls(capitalization = Nls.Capitalization.Title) String displayName, boolean isPinnable) {
     myComponent = component;
     myDisplayName = displayName;
     myPinnable = isPinnable;

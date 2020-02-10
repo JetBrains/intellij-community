@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.BundleBase
+import com.intellij.DynamicBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.runActivity
 import com.intellij.icons.AllIcons
@@ -9,6 +11,7 @@ import com.intellij.ide.UiActivity
 import com.intellij.ide.UiActivityMonitor
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.MaximizeActiveDialogAction
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
 import com.intellij.notification.impl.NotificationsManagerImpl
@@ -58,6 +61,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.*
 import org.intellij.lang.annotations.JdkConstants
 import org.jdom.Element
@@ -923,8 +927,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val windowInfoSnapshot = info.copy()
 
     val contentFactory = task.contentFactory
+    var stripeTitle = task.id
+    val pluginDescriptor = bean?.pluginDescriptor
+    if (pluginDescriptor != null && PluginManagerCore.CORE_ID != pluginDescriptor.pluginId) {
+      getStripeTitle(pluginDescriptor, "toolwindow.stripe.${task.id}")?.let {
+        stripeTitle = it
+      }
+    }
+
     val toolWindow = ToolWindowImpl(this, task.id, task.canCloseContent, task.canWorkInDumbMode, task.component, disposable,
-      windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable)
+      windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable, stripeTitle = stripeTitle)
 
     contentFactory?.init(toolWindow)
 
@@ -1959,4 +1971,17 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
     }
   }
   return source != null
+}
+
+private fun getStripeTitle(pluginDescriptor: PluginDescriptor, key: String): String? {
+  val bundleName = pluginDescriptor.resourceBundleBaseName ?: return null
+  val classLoader = pluginDescriptor.pluginClassLoader
+  try {
+    val bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
+    return BundleBase.messageOrDefault(bundle, key, "").nullize()
+  }
+  catch (e: MissingResourceException) {
+    LOG.warn("Missing bundle ${bundleName} at ${classLoader}: ${e.message}")
+    return null
+  }
 }

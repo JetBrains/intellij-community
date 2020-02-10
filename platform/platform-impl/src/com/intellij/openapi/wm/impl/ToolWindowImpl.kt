@@ -28,8 +28,8 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.EDT
 import com.intellij.util.SingleAlarm
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -55,9 +55,8 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
                                           private val parentDisposable: Disposable,
                                           windowInfo: WindowInfo,
                                           private var contentFactory: ToolWindowFactory?,
-                                          private var isAvailable: Boolean = true) : ToolWindowEx {
-  private var stripeTitle: String? = null
-
+                                          private var isAvailable: Boolean = true,
+                                          private var stripeTitle: String? = null) : ToolWindowEx {
   override fun getId() = id
 
   var windowInfo: WindowInfo = windowInfo
@@ -275,7 +274,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     callLater(runnable)
   }
 
-  override fun getInternalType(): ToolWindowType = windowInfo.internalType
+  override fun getInternalType() = windowInfo.internalType
 
   override fun stretchWidth(value: Int) {
     toolWindowManager.stretchWidth(this, value)
@@ -407,8 +406,10 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun setStripeTitle(value: String) {
     EDT.assertIsEdt()
-    stripeTitle = value
-    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.STRIPE_TITLE)
+    if (value != stripeTitle) {
+      stripeTitle = value
+      toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.STRIPE_TITLE)
+    }
   }
 
   fun fireActivated() {
