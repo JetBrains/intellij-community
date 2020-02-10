@@ -515,7 +515,7 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
   @Override
   public AnAction[] createAddActions(final Project project, final Consumer<? super BaseInjection> consumer) {
     return new AnAction[] {
-      new AnAction("Java Parameter", null, PlatformIcons.PARAMETER_ICON) {
+      new AnAction(IntelliLangBundle.message("java.parameter"), null, PlatformIcons.PARAMETER_ICON) {
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new MethodParameterInjection());
