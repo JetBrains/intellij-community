@@ -7,7 +7,7 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "@amcharts/amcharts4": "4.8.5",
+    "@amcharts/amcharts4": "4.9.0",
     "chokidar": "^3.3.1",
     "compare-versions": "^3.5.1",
     "debounce": "^1.2.0",
@@ -27,7 +27,7 @@
     "@vue/cli-service": "^4.1.2",
     "typescript": "^3.7.5",
     "vue-template-compiler": "^2.6.11",
-    "vuex-module-decorators": "^0.11.0"
+    "vuex-module-decorators": "^0.16.1"
   },
   "postcss": {
     "plugins": {
