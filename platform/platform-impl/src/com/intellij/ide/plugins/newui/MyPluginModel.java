@@ -209,11 +209,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (enabledMap.get(pluginId) == null) { // if enableMap contains null for id => enable/disable checkbox don't touch
         continue;
       }
-      if (isEnabled(pluginId)) {
-        pluginDescriptorsToEnable.add(descriptor);
-      }
-      else {
-        pluginDescriptorsToDisable.add(descriptor);
+      boolean shouldEnable = isEnabled(pluginId);
+      if (shouldEnable != descriptor.isEnabled()) {
+        if (shouldEnable) {
+          pluginDescriptorsToEnable.add(descriptor);
+        }
+        else {
+          pluginDescriptorsToDisable.add(descriptor);
+        }
       }
     }
 
