@@ -4,7 +4,6 @@ package com.intellij.diagnostic;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -28,7 +27,6 @@ import java.util.function.Function;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -71,16 +69,14 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
     TimeUnit.MILLISECONDS
   );
 
-  @NotNull
-  private final LogFileWriter myWriter = new LogFileWriter();
-  @NotNull
-  private final MessageBus myMessageBus;
+  private final @NotNull LogFileWriter myWriter = new LogFileWriter();
+  private final @NotNull MessageBus myMessageBus;
 
   @Nullable
   private MatchResult myCurrentResult = null;
 
-  public EventWatcherImpl() {
-    myMessageBus = ApplicationManager.getApplication().getMessageBus();
+  public EventWatcherImpl(@NotNull MessageBus messageBus) {
+    myMessageBus = messageBus;
     myMessageBus.connect(this).subscribe(TOPIC, myWriter);
   }
 
@@ -229,19 +225,13 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
 
   private static final class LogFileWriter implements RunnablesListener, Disposable {
 
-    @NotNull
-    public static final Collector<CharSequence, ?, String> JOINING_COLLECTOR = Collectors.joining("\n");
-
-    @NotNull
-    private final File myLogPath = new File(
+    private final @NotNull File myLogDir = new File(
       new File(PathManager.getLogPath(), "edt-log"),
       String.format("%tY%<tm%<td-%<tH%<tM%<tS", System.currentTimeMillis())
     );
 
-    @NotNull
-    private final Map<String, InvocationsInfo> myInfos = new HashMap<>();
-    @NotNull
-    private final Map<String, WrapperDescription> myWrappers = new HashMap<>();
+    private final @NotNull Map<String, InvocationsInfo> myInfos = new HashMap<>();
+    private final @NotNull Map<String, WrapperDescription> myWrappers = new HashMap<>();
 
     @Override
     public void eventsProcessed(@NotNull Class<? extends AWTEvent> eventClass,
@@ -267,16 +257,20 @@ public final class EventWatcherImpl implements LoggableEventWatcher, Disposable 
 
     private <T> void appendToFile(@NotNull String kind,
                                   @NotNull Stream<T> lines) {
-      if (!(myLogPath.isDirectory() || myLogPath.mkdirs())) return;
+      if (!(myLogDir.isDirectory() || myLogDir.mkdirs())) {
+        LOG.debug(myLogDir.getAbsolutePath() + " cannot be created");
+        return;
+      }
 
       try {
         FileUtil.writeToFile(
-          new File(myLogPath, kind + ".log"),
-          lines.map(Objects::toString).collect(JOINING_COLLECTOR),
+          new File(myLogDir, kind + ".log"),
+          lines.map(Objects::toString).collect(Collectors.joining("\n")),
           true
         );
       }
-      catch (IOException ignored) {
+      catch (IOException e) {
+        LOG.debug(e);
       }
     }
 
