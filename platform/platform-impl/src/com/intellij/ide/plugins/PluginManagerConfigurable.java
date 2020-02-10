@@ -902,7 +902,6 @@ public class PluginManagerConfigurable
 
         if (myInitUpdates != null) {
           applyUpdates(myInstalledPanel, myInitUpdates);
-          myInitUpdates = null;
         }
 
         return createScrollPane(myInstalledPanel, true);
@@ -1104,8 +1103,18 @@ public class PluginManagerConfigurable
                   }
                 });
               }
+              else if (parser.needUpdate) {
+                result.rightAction = new LinkLabel<>(IdeBundle.message("plugin.manager.update.all"), null, (__, ___) -> {
+                  result.rightAction.setEnabled(false);
 
-              Collection<PluginDownloader> updates = PluginUpdatesService.getUpdates();
+                  for (ListPluginComponent plugin : result.ui.plugins) {
+                    plugin.updatePlugin();
+                  }
+                });
+              }
+
+              Collection<PluginDownloader> updates = myInitUpdates == null ? PluginUpdatesService.getUpdates() : myInitUpdates;
+              myInitUpdates = null;
               if (!ContainerUtil.isEmpty(updates)) {
                 myPostFillGroupCallback = () -> {
                   applyUpdates(myPanel, updates);
@@ -1579,8 +1588,7 @@ public class PluginManagerConfigurable
     PluginsGroup group = new PluginsGroup(name);
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
-      //noinspection unchecked
-      group.rightAction = new LinkLabel(IdeBundle.message("plugins.configurable.show.all"), null, myMarketplaceTab.mySearchListener, showAllQuery);
+      group.rightAction = new LinkLabel<>(IdeBundle.message("plugins.configurable.show.all"), null, myMarketplaceTab.mySearchListener, showAllQuery);
       group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
     }
 
