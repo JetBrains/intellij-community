@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -41,6 +41,8 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
    */
   public boolean m_requireAnnotationsFirst = true;
 
+  public boolean typeUseWithType = false;
+
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
@@ -59,11 +61,14 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("missorted.modifiers.require.option"),
-                                          this, "m_requireAnnotationsFirst");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    final JCheckBox box =
+      panel.addCheckboxEx(InspectionGadgetsBundle.message("missorted.modifiers.require.option"), "m_requireAnnotationsFirst");
+    panel.addDependentCheckBox("Target TYPE_USE annotations always go before type", "typeUseWithType", box);
+    return panel;
   }
 
-  private static class SortModifiersFix extends InspectionGadgetsFix {
+  private class SortModifiersFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
@@ -85,7 +90,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
           final PsiAnnotation annotation = (PsiAnnotation)child;
           if (PsiImplUtil.isTypeAnnotation(child) && !isMethodWithVoidReturnType(modifierList.getParent())) {
             final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
-            if (!modifiers.isEmpty() ||
+            if (typeUseWithType || !modifiers.isEmpty() ||
                 AnnotationTargetUtil.findAnnotationTarget(annotation, targets[0]) == PsiAnnotation.TargetType.UNKNOWN) {
               typeAnnotations.add(child.getText());
               continue;
@@ -185,9 +190,11 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
             if (AnnotationTargetUtil.isTypeAnnotation(annotation) && !isMethodWithVoidReturnType(modifierList.getParent())) {
               // type annotations go next to the type
               // see e.g. https://www.oracle.com/technical-resources/articles/java/ma14-architect-annotations.html
+              if (typeUseWithType || currentModifier != null) {
+                typeAnnotationSeen = true;
+              }
               final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
-              if (currentModifier != null ||
-                  AnnotationTargetUtil.findAnnotationTarget(annotation, targets[0]) == PsiAnnotation.TargetType.UNKNOWN) {
+              if (AnnotationTargetUtil.findAnnotationTarget(annotation, targets[0]) == PsiAnnotation.TargetType.UNKNOWN) {
                 typeAnnotationSeen = true;
               }
               continue;
