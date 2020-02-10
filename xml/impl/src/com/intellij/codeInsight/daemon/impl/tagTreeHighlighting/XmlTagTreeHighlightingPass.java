@@ -11,6 +11,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -176,7 +177,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
     final Color[] baseColors = XmlTagTreeHighlightingUtil.getBaseColors();
     final Color[] colorsForEditor = count > 1 ? toColorsForEditor(baseColors) :
-                                    new Color[] {myEditor.getColorsScheme().getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES).getBackgroundColor()};
+                                    new Color[] {myEditor.getColorsScheme().getAttributes(XmlHighlighterColors.MATCHED_TAG_NAME).getBackgroundColor()};
     final Color[] colorsForLineMarkers = toColorsForLineMarkers(baseColors);
 
     final List<RangeHighlighter> newHighlighters = new ArrayList<>();
