@@ -224,8 +224,11 @@ public final class ParametersList implements Cloneable {
    */
   public void addProperty(@NotNull String propertyName, @Nullable String propertyValue) {
     if (propertyValue == null) return;
-    String exact = "-D" + propertyName;
-    String prefix = "-D" + propertyName + "=";
+    // Android Studio: don't append "-D" if the property name starts with "-".
+    // TODO(b/149320690): remove in 4.1 final release.
+    String optionPrefix = propertyName.startsWith("-") ? "" : "-D";
+    String exact = optionPrefix + propertyName;
+    String prefix = optionPrefix + propertyName + "=";
     String value = propertyValue.isEmpty() ? exact : prefix + expandMacros(propertyValue);
     replaceOrAddAt(value, myParameters.size(), o -> o.equals(exact) || o.startsWith(prefix));
   }
