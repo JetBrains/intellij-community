@@ -41,7 +41,7 @@ public class RefusedBequestInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(annotations, null);
-    final CheckBox checkBox1 = new CheckBox("Only report when super method is annotated by:", this, "onlyReportWhenAnnotated");
+    final CheckBox checkBox1 = new CheckBox(InspectionGadgetsBundle.message("inspection.refused.bequest.super.annotated.option"), this, "onlyReportWhenAnnotated");
     final MultipleCheckboxOptionsPanel checkBoxPanel = new MultipleCheckboxOptionsPanel(this);
     checkBoxPanel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option"), "ignoreEmptySuperMethods");
     checkBoxPanel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"), "ignoreDefaultSuperMethods");
