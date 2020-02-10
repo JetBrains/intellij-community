@@ -305,11 +305,15 @@ internal class GHPRComponentFactory(private val project: Project) {
       scrollPane.isVisible = detailsModel.value != null
     }
 
-    return JBPanelWithEmptyText(BorderLayout()).apply {
+    val panel = JBPanelWithEmptyText(BorderLayout()).apply {
       isOpaque = false
 
       add(scrollPane, BorderLayout.CENTER)
     }
+    detailsModel.addValueChangedListener {
+      panel.validate()
+    }
+    return panel
   }
 
   private fun installPopup(list: GHPRList) {
