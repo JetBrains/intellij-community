@@ -3,7 +3,7 @@ import java.util.List;
 
 class X {
   void test(Object obj) {
-    if (obj instanceof List<?>list) {
+    if (obj instanceof List<?> list) {
     }
   }
 }
