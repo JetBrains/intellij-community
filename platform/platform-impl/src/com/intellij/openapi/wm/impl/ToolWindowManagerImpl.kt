@@ -897,7 +897,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindowImpl {
-    val toolWindow = doRegisterToolWindow(task, null).toolWindow
+    val toolWindow = doRegisterToolWindow(task, bean = null).toolWindow
     toolWindowPane!!.validate()
     toolWindowPane!!.repaint()
     fireStateChanged()
