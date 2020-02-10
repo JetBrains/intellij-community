@@ -80,8 +80,8 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
                                           @NotNull ProblemsHolder holder,
                                           Nls.Capitalization capitalization) {
     if (titleValue != null && !titleValue.isSatisfied(capitalization)) {
-      holder.registerProblem(e, "String '" + titleValue + "' is not properly capitalized. It should have " +
-                                StringUtil.toLowerCase(capitalization.toString()) + " capitalization",
+      holder.registerProblem(e, InspectionsBundle
+                               .message("inspection.title.capitalization.description", titleValue, StringUtil.toLowerCase(capitalization.toString())),
                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                              titleValue.canFix() ? new TitleCapitalizationFix(titleValue, capitalization) : null);
     }
@@ -147,7 +147,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getName() {
-      return "Properly capitalize '" + myTitleValue + '\'';
+      return InspectionsBundle.message("title.capitalization.fix.text", myTitleValue);
     }
 
     @Override
@@ -194,7 +194,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Properly capitalize";
+      return InspectionsBundle.message("title.capitalization.fix.family.name");
     }
   }
 

@@ -433,7 +433,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
       return getDuplicateLiterals(project,
                                   (PsiLiteralExpression)literalExpression,
                                   false /* here we want find all the expressions */);
-    }, "Searching for Duplicates of '" + ((PsiLiteralExpression)literalExpression).getValue() + "'", true, project);
+    }, InspectionsBundle.message("searching.for.duplicates.of.0", ((PsiLiteralExpression)literalExpression).getValue()), true, project);
   }
 
   private static void introduceConstant(PsiExpression @NotNull [] expressions, @NotNull Project project) {

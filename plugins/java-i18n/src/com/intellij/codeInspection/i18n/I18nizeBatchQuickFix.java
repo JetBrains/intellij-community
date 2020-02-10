@@ -260,7 +260,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       myPropertiesFile = new ComboBox<>(ArrayUtil.toStringArray(files));
       new ComboboxSpeedSearch(myPropertiesFile);
       LabeledComponent<JComboBox<String>> component = new LabeledComponent<>();
-      component.setText("Property file:");
+      component.setText(InspectionsBundle.message("property.file"));
       component.setComponent(myPropertiesFile);
       myPropertiesFile.addActionListener(new ActionListener() {
         @Override

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.references.PropertyReference;
@@ -65,10 +66,10 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     );
 
     if (!result) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Property has non-method usages", getRefactoringName(), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, InspectionsBundle.message("property.has.non.method.usages"), getRefactoringName(), null);
     }
     if (occurrences.isEmpty()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Property has no usages", getRefactoringName(), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, InspectionsBundle.message("property.has.no.usages"), getRefactoringName(), null);
       return;
     }
 

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -404,7 +405,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
     private MyShiftEnterAction() {
       super(new Handler());
       Presentation presentation = getTemplatePresentation();
-      presentation.setDescription("New line (" + KeymapUtil.getKeystrokeText(SHIFT_ENTER) + ")");
+      presentation.setDescription(InspectionsBundle.message("new.line.0", KeymapUtil.getKeystrokeText(SHIFT_ENTER)));
       presentation.setIcon(AllIcons.Actions.SearchNewLine);
       presentation.setHoveredIcon(AllIcons.Actions.SearchNewLineHover);
     }

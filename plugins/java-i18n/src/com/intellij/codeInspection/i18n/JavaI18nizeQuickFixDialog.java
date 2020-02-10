@@ -3,6 +3,7 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
@@ -108,8 +109,8 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       myResourceBundleSuggester.add(UI.PanelFactory.panel(myRBEditorTextField)
                                       .withLabel(CodeInsightBundle.message("i18n.quickfix.code.panel.resource.bundle.expression.label"))
                                       .withComment(
-                                        "If the resource bundle is invalid, either declare it as an object of the java.util.ResourceBundle class in the source code, " +
-                                        "or edit the internationalization template to point to the method of your custom resource bundle class.")
+                                        InspectionsBundle.message(
+                                          "if.the.resource.bundle.is.invalid.either.declare.it.as.an.object"))
                                       .createPanel(), BorderLayout.NORTH);
       suggestAvailableResourceBundleExpressions();
       myRBEditorTextField.addDocumentListener(new DocumentListener() {
