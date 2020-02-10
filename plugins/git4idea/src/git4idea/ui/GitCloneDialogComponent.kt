@@ -80,13 +80,14 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
 
     if (!listenerInstalled) {
       listenerInstalled = true
+      scheduleCheckVersion()
+
       ApplicationActivationListener.TOPIC.subscribe(this, object : ApplicationActivationListener {
         override fun applicationActivated(ideFrame: IdeFrame) {
           scheduleCheckVersion()
         }
       })
     }
-    scheduleCheckVersion()
   }
 
   private fun checkGitVersion(dialogStateListener: VcsCloneDialogComponentStateListener) {
