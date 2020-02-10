@@ -189,6 +189,7 @@ object DynamicPlugins {
     val pluginXmlFactory = PluginXmlFactory()
     val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(PluginManagerCore.disabledPlugins())
     for (descriptor in PluginManager.getPlugins()) {
+      if (!descriptor.isEnabled) continue
       if (!descriptor.optionalDependentPluginIds.contains(rootDescriptor.pluginId)) {
         continue
       }
