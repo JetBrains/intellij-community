@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -106,7 +106,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     if (model instanceof Disposable) {
       Disposer.register(this, (Disposable)model);
     }
-    Invoker foreground = new Invoker.EDT(this);
+    Invoker foreground = Invoker.forEventDispatchThread(this);
     Invoker background = foreground;
     if (model instanceof InvokerSupplier) {
       InvokerSupplier supplier = (InvokerSupplier)model;
