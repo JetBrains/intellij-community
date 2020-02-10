@@ -53,9 +53,9 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
     add(scrollPane, MAIN);
     add(myCustomizePanel, CUSTOMIZE);
 
-    Map<String, Pair<Icon, List<String>>> groups = pluginGroups.getTree();
-    for (final Map.Entry<String, Pair<Icon, List<String>>> entry : groups.entrySet()) {
-      final String group = entry.getKey();
+    List<PluginGroups.Group> groups = pluginGroups.getTree();
+    for (PluginGroups.Group g : groups) {
+      final String group = g.getName();
       if (PluginGroups.CORE.equals(group) || myPluginGroups.getSets(group).isEmpty()) continue;
 
       JPanel groupPanel = new JPanel(new GridBagLayout()) {
@@ -76,7 +76,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
           return isGroupEnabled(group);
         }
       };
-      groupPanel.add(new JLabel(entry.getValue().getFirst()), gbc);
+      groupPanel.add(new JLabel(g.getIcon()), gbc);
       //gbc.insets.bottom = 5;
       groupPanel.add(titleLabel, gbc);
       JLabel descriptionLabel = new JLabel(pluginGroups.getDescription(group), SwingConstants.CENTER) {
