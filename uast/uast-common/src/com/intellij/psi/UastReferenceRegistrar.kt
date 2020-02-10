@@ -95,7 +95,7 @@ fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Cla
  * @see registerReferenceProviderByUsage
  */
 @ApiStatus.Experimental
-fun uastByUsageReferenceProvider(provider: (UExpression, referencePsi: PsiElement, usagePsi: PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+fun uastReferenceProviderByUsage(provider: (UExpression, referencePsi: PsiElement, usagePsi: PsiElement) -> Array<PsiReference>): UastReferenceProvider =
   object : UastReferenceProvider(UExpression::class.java) {
     override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
       val usagePsi = context[USAGE_PSI_ELEMENT] ?: context[REQUESTED_PSI_ELEMENT]
@@ -111,7 +111,7 @@ fun uastByUsageReferenceProvider(provider: (UExpression, referencePsi: PsiElemen
  * usages satisfies the pattern if it was assigned to a variable. The provider will search for usages of variables only for expressions that
  * satisfy [expressionPattern]. There are standard expression patterns for usage search: [uInjectionHostInVariable] and [uExpressionInVariable].
  *
- * Consider using [uastByUsageReferenceProvider] if you need to obtain additional context from a usage place.
+ * Consider using [uastReferenceProviderByUsage] if you need to obtain additional context from a usage place.
  */
 @ApiStatus.Experimental
 fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UElementPattern<*, *>,
