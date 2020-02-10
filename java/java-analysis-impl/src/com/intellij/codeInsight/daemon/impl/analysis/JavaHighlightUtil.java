@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,6 +180,12 @@ public class JavaHighlightUtil {
     if (type instanceof PsiArrayType) return checkPsiTypeUseInContext(((PsiArrayType) type).getComponentType(), context);
     if (PsiUtil.resolveClassInType(type) != null) return null;
     if (type instanceof PsiClassType) return checkClassType((PsiClassType)type, context);
+    return invalidJavaTypeMessage();
+  }
+
+  @NotNull
+  @Nls
+  public static String invalidJavaTypeMessage() {
     return "Invalid Java type";
   }
 
@@ -188,7 +195,7 @@ public class JavaHighlightUtil {
     if (classExists(context, className)) {
       return getClassInaccessibleMessage(context, className);
     }
-    return "Invalid Java type";
+    return invalidJavaTypeMessage();
   }
 
   private static boolean classExists(@NotNull PsiElement context, @NotNull String className) {
@@ -196,6 +203,7 @@ public class JavaHighlightUtil {
   }
 
   @NotNull
+  @Nls
   private static String getClassInaccessibleMessage(@NotNull PsiElement context, @NotNull String className) {
     Module module = ModuleUtilCore.findModuleForPsiElement(context);
     return "Class '" + className + "' is not accessible " + (module == null ? "here" : "from module '" + module.getName() + "'");
