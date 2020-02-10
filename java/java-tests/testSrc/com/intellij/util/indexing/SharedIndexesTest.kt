@@ -1,12 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -17,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.SkipSlowTestLocally
+import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Processor
 import com.intellij.util.indexing.hash.FileContentHashIndex
@@ -29,6 +36,7 @@ import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.UpdatableValueContainer
 import com.intellij.util.indexing.impl.ValueContainerImpl
 import com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator
+import com.intellij.util.indexing.provided.SharedIndexChunkLocator
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
@@ -39,10 +47,39 @@ import kotlin.collections.HashMap
 // please contact with Dmitry Batkovich in case of any problems
 @SkipSlowTestLocally
 class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
+  private var disposable: Disposable? = null
+
+  override fun setUp() {
+    TestApplicationManager.getInstance()
+    if (getTestName(false) == "LocatorNotQueriedTooOften") {
+      disposable = Disposer.newDisposable()
+      SharedIndexChunkLocator.EP_NAME.getPoint(null).registerExtension(DummySharedIndexLocator(), disposable!!)
+    }
+    super.setUp()
+  }
+
+  override fun tearDown() {
+    if (disposable != null) {
+      Disposer.dispose(disposable!!)
+      disposable = null
+    }
+    super.tearDown()
+  }
 
   private val indexZip: Path by lazy {
     val tempDir = FileUtil.createTempDirectory("shared-indexes-test", "").toPath()
     tempDir.resolve("index.zip")
+  }
+
+  fun testLocatorNotQueriedTooOften() {
+    DumbService.getInstance(project).queueTask(UnindexedFilesUpdater(project))
+    val initial = DummySharedIndexLocator.ourRequestCount.get(project)
+    DumbService.getInstance(project).queueTask(UnindexedFilesUpdater(project))
+    assertEquals(initial, DummySharedIndexLocator.ourRequestCount.get(project))
+    WriteAction.run<Exception> {
+      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true)
+    }
+    assertEquals(initial!!.inc(), DummySharedIndexLocator.ourRequestCount.get(project) as Int)
   }
 
   fun testSharedFileContentHashIndex() {
