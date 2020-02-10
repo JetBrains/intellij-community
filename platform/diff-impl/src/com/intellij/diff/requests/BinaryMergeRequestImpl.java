@@ -26,6 +26,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -131,7 +132,7 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
           }
           catch (IOException e) {
             LOG.error(e);
-            Messages.showErrorDialog(myProject, "Can't apply result", CommonBundle.getErrorTitle());
+            Messages.showErrorDialog(myProject, DiffBundle.message("can.t.apply.result"), CommonBundle.getErrorTitle());
           }
         });
       }

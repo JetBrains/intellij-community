@@ -576,7 +576,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         throw ex;
       }
       catch (Throwable ex) {
-        Messages.showErrorDialog(e.getProject(), ex.getMessage(), "Can't Show Diff In External Tool");
+        Messages.showErrorDialog(e.getProject(), ex.getMessage(), DiffBundle.message("can.t.show.diff.in.external.tool"));
       }
     }
   }
@@ -654,8 +654,9 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Diff Actions", myPopupActionGroup, e.getDataContext(),
-                                                                            JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+      ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+        DiffBundle.message("diff.actions"), myPopupActionGroup, e.getDataContext(),
+        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
       popup.showInCenterOf(myPanel);
     }
   }

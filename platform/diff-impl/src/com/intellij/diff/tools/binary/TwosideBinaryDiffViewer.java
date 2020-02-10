@@ -230,7 +230,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
     MyAcceptSideAction(@NotNull Side baseSide) {
       myBaseSide = baseSide;
-      getTemplatePresentation().setText("Copy Content to " + baseSide.select("Right", "Left"));
+      getTemplatePresentation().setText(DiffBundle.message("copy.content.to.0", baseSide.select("Right", "Left")));
       getTemplatePresentation().setIcon(baseSide.select(AllIcons.Vcs.Arrow_right, AllIcons.Vcs.Arrow_left));
       setShortcutSet(ActionManager.getInstance().getAction(baseSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
     }
@@ -255,7 +255,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
       }
       catch (IOException err) {
         LOG.warn(err);
-        Messages.showErrorDialog(getProject(), err.getMessage(), "Can't Copy File");
+        Messages.showErrorDialog(getProject(), err.getMessage(), DiffBundle.message("can.t.copy.file"));
       }
     }
 

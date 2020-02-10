@@ -6,6 +6,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.IntPair;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -731,7 +732,7 @@ public abstract class LineStatusMarkerRenderer {
     @NotNull
     @Override
     public String getAccessibleName() {
-      return "VCS marker: changed line";
+      return DiffBundle.message("vcs.marker.changed.line");
     }
   }
 }

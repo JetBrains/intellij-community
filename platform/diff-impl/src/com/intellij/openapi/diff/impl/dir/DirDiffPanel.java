@@ -197,8 +197,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     registerCustomShortcuts(actions, myTable);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
     if (model.isOperationsEnabled()) {
-      final JBLabel label = new JBLabel("Use Space button or mouse click to change operation for the selected elements." +
-                                        " Enter to perform.", SwingConstants.CENTER);
+      final JBLabel label = new JBLabel(DiffBundle.message("use.space.button.or.mouse.click"), SwingConstants.CENTER);
       label.setForeground(UIUtil.getInactiveTextColor());
       UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
       myFilesPanel.add(label, BorderLayout.SOUTH);
@@ -221,7 +220,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
         if (showHelp && myModel.isOperationsEnabled() && myModel.getRowCount() > 0) {
           final long count = PropertiesComponent.getInstance().getLong("dir.diff.space.button.info", 0);
           if (count < 3) {
-            JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(" Use Space button to change operation"))
+            JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(
+              DiffBundle.message("use.space.button.to.change.operation")))
               .setFadeoutTime(5000)
               .setContentInsets(JBUI.insets(15))
               .createBalloon().show(new RelativePoint(myTable, new Point(myTable.getWidth() / 2, 0)), Balloon.Position.above);

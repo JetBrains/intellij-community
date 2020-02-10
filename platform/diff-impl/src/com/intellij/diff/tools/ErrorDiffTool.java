@@ -25,6 +25,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -65,7 +66,7 @@ public class ErrorDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Error viewer";
+    return DiffBundle.message("error.viewer");
   }
 
   private static class MyViewer implements DiffViewer {

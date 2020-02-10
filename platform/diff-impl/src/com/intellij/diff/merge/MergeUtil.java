@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge;
 
+import com.intellij.CommonBundle;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.contents.DiffContent;
@@ -141,7 +142,9 @@ public class MergeUtil {
     if (customMessage != null) {
       String title = customMessage.first;
       String message = customMessage.second;
-      return Messages.showConfirmationDialog(component, message, title, "Yes", "No") == Messages.YES;
+      return Messages.showConfirmationDialog(component, message, title,
+                                             CommonBundle.message("button.without.mnemonic.yes"),
+                                             CommonBundle.message("button.without.mnemonic.no")) == Messages.YES;
     }
 
     return showConfirmDiscardChangesDialog(component, "Cancel Merge", true);
@@ -161,8 +164,10 @@ public class MergeUtil {
   public static boolean shouldRestoreOriginalContentOnCancel(@NotNull MergeRequest request) {
     MergeCallback callback = MergeCallback.getCallback(request);
     if (callback.checkIsValid()) return true;
-    return Messages.showYesNoDialog("Merge conflict is outdated. Restore file content prior to conflict resolve start?",
-                                    DiffBundle.message("cancel.visual.merge.dialog.title"), "Restore", "Do nothing",
+    return Messages.showYesNoDialog(DiffBundle.message("merge.conflict.is.outdated"),
+                                    DiffBundle.message("cancel.visual.merge.dialog.title"),
+                                    CommonBundle.message("button.without.mnemonic.restore"),
+                                    CommonBundle.message("button.without.mnemonic.do.nothing"),
                                     Messages.getQuestionIcon()) == Messages.YES;
   }
 

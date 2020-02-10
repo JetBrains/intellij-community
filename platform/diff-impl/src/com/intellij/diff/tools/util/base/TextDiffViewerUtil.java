@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorBundle;
@@ -333,7 +334,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public ToggleAutoScrollAction(@NotNull TextDiffSettings settings) {
-      super("Synchronize Scrolling", AllIcons.Actions.SynchronizeScrolling);
+      super(DiffBundle.message("synchronize.scrolling"), AllIcons.Actions.SynchronizeScrolling);
       mySettings = settings;
     }
 
@@ -352,7 +353,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public ToggleExpandByDefaultAction(@NotNull TextDiffSettings settings) {
-      super("Collapse Unchanged Fragments", AllIcons.Actions.Collapseall);
+      super(DiffBundle.message("collapse.unchanged.fragments"), AllIcons.Actions.Collapseall);
       mySettings = settings;
     }
 
@@ -382,7 +383,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public ReadOnlyLockAction(@NotNull DiffContext context) {
-      super("Disable Editing", null, AllIcons.Diff.Lock);
+      super(DiffBundle.message("disable.editing"), null, AllIcons.Diff.Lock);
       myContext = context;
       mySettings = getTextSettings(context);
     }

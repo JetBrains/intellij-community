@@ -91,7 +91,7 @@ public class DiffNotifications {
     panel.text(text);
     if (showHideAction) {
       HyperlinkLabel link = panel.createActionLabel("Hide", () -> panel.setVisible(false));
-      link.setToolTipText("Hide this notification");
+      link.setToolTipText(DiffBundle.message("hide.this.notification"));
     }
     return panel;
   }

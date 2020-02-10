@@ -26,6 +26,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -77,7 +78,7 @@ public class ExternalDiffTool {
     }
     catch (Throwable e) {
       LOG.warn(e);
-      Messages.showErrorDialog(project, e.getMessage(), "Can't Show Diff In External Tool");
+      Messages.showErrorDialog(project, e.getMessage(), DiffBundle.message("can.t.show.diff.in.external.tool"));
     }
   }
 
@@ -131,7 +132,7 @@ public class ExternalDiffTool {
     }
 
     if (!errorRequests.isEmpty()) {
-      new Notification("Diff", "Can't Load Some Changes", StringUtil.join(errorRequests, "<br>"), NotificationType.ERROR).notify(project);
+      new Notification("Diff", DiffBundle.message("can.t.load.some.changes"), StringUtil.join(errorRequests, "<br>"), NotificationType.ERROR).notify(project);
     }
 
     return requests;

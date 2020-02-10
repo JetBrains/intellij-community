@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.*;
@@ -168,7 +169,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     @NotNull private final T myProducer;
 
     public ReloadRequestAction(@NotNull T provider) {
-      super("Reload", null, AllIcons.Actions.Refresh);
+      super(CommonBundle.message("action.text.reload"), null, AllIcons.Actions.Refresh);
       myProducer = provider;
     }
 

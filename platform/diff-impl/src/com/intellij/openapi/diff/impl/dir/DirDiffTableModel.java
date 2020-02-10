@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -513,7 +514,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       SwingUtilities.invokeLater(() -> {
         myElements.clear();
         fireTableDataChanged();
-        myTable.getEmptyText().setText("Data has been changed externally. Reloading data...");
+        myTable.getEmptyText().setText(DiffBundle.message("data.has.been.changed.externally.reloading.data"));
         reloadModel(true);
         myTable.repaint();
       });
@@ -789,7 +790,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   private boolean confirmDeletion(int count) {
-    return MessageDialogBuilder.yesNo("Confirm Delete", "Delete " + count + " items?").project(myProject).yesText("Delete").noText(
+    return MessageDialogBuilder.yesNo(DiffBundle.message("confirm.delete"),
+                                      DiffBundle.message("delete.0.items", count)).project(myProject).yesText(
+      DiffBundle.message("button.delete")).noText(
       CommonBundle.getCancelButtonText()).doNotAsk(
       new DialogWrapper.DoNotAskOption() {
         @Override
@@ -815,7 +818,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         @NotNull
         @Override
         public String getDoNotShowMessage() {
-          return "Do not ask me again";
+          return DiffBundle.message("do.not.ask.me.again");
         }
       }).show() == Messages.YES;
   }

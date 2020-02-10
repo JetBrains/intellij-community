@@ -322,8 +322,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
               Messages.showConfirmationDialog(myPanel.getRootPane(),
                                               DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()),
                                               DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-                                              "Apply Changes and Mark Resolved",
-                                              "Continue Merge") != Messages.YES) {
+                                              DiffBundle.message("apply.changes.and.mark.resolved"),
+                                              DiffBundle.message("continue.merge")) != Messages.YES) {
             return;
           }
           if (result == MergeResult.CANCEL &&
@@ -350,8 +350,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       if (myContentModified) {
         if (Messages.showYesNoDialog(myProject,
-                                     "Changing highlighting requires the file merge restart. Discard unsaved changes and restart merge anyway?",
-                                     "Update Highlighting Settings", "Discard Changes and Restart Merge", "Continue Merge",
+                                     DiffBundle.message("changing.highlighting.requires.the.file.merge.restart"),
+                                     DiffBundle.message("update.highlighting.settings"),
+                                     DiffBundle.message("discard.changes.and.restart.merge"),
+                                     DiffBundle.message("continue.merge"),
                                      Messages.getQuestionIcon()) != Messages.YES) {
           getTextSettings().setIgnorePolicy(myCurrentIgnorePolicy);
           return;

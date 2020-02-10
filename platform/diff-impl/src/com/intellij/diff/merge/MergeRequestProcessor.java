@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -330,7 +331,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
     catch (Exception e) {
       LOG.warn(e);
-      new Notification("Merge", "Can't Finish Merge Resolve", e.getMessage(), NotificationType.ERROR).notify(myProject);
+      new Notification("Merge", DiffBundle.message("can.t.finish.merge.resolve"), e.getMessage(), NotificationType.ERROR).notify(myProject);
     }
   }
 
