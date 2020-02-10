@@ -816,7 +816,7 @@ public class ExpressionParser {
     else {
       if (!optionalClassKeyword) return null;
       mark.rollbackTo();
-      builder.error(".class expected");
+      builder.error(JavaErrorBundle.message("class.literal.expected"));
     }
 
     expr.done(JavaElementType.CLASS_OBJECT_ACCESS_EXPRESSION);
