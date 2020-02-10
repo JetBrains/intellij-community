@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.util.ExceptionUtil
+import com.jetbrains.python.PythonCondaBundle
 import com.jetbrains.python.conda.InstallCondaUtils
 import icons.PythonIcons.Python.Anaconda
 
@@ -65,7 +66,7 @@ class InstallCondaAction : AnAction(ActionsBundle.message("action.SetupMiniconda
     Notifications.Bus.notify(
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
                    ActionsBundle.message("action.SetupMiniconda.installSuccess"),
-                   "Successfully installed to $path",
+                   PythonCondaBundle.message("conda.successfully.installed.notification.content", path),
                    NotificationType.INFORMATION),
       project)
   }
