@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,6 +180,7 @@ public abstract class CompletionContributor {
    */
   @Deprecated
   @Nullable
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String advertise(@NotNull CompletionParameters parameters) {
     return null;
   }
