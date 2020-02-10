@@ -22,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.*;
 
-public class ConfigurableExtensionPointUtil {
-
+public final class ConfigurableExtensionPointUtil {
   private final static Logger LOG = Logger.getInstance(ConfigurableExtensionPointUtil.class);
 
   private ConfigurableExtensionPointUtil() {
@@ -394,10 +393,6 @@ public class ConfigurableExtensionPointUtil {
     if (configurable == null) {
       return false;
     }
-    OptionalConfigurable optional = ConfigurableWrapper.cast(OptionalConfigurable.class, configurable);
-    if (optional != null && !optional.needDisplay()) {
-      return false;
-    }
     return project == null || !project.isDefault() || !ConfigurableWrapper.isNonDefaultProject(configurable);
   }
 
@@ -435,7 +430,7 @@ public class ConfigurableExtensionPointUtil {
       return null;
     }
   }
-  
+
   private static String getName(ResourceBundle bundle, @NonNls String resource) {
     if (bundle == null) return null;
     try {

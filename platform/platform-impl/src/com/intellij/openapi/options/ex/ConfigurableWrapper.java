@@ -80,9 +80,6 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
             return null; // do not create configurable that cannot be cast to the specified type
           }
         }
-        else if (type == OptionalConfigurable.class) {
-          return null; // do not create configurable from ConfigurableProvider which replaces OptionalConfigurable
-        }
       }
       configurable = wrapper.getConfigurable();
     }
