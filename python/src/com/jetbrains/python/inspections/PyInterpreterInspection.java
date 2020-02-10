@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -47,8 +48,15 @@ public class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void visitPyFile(PyFile node) {
-      final Module module = ModuleUtilCore.findModuleForPsiElement(node);
-      if (module == null || isFileIgnored(node)) return;
+      if (isFileIgnored(node)) return;
+      Module module = ModuleUtilCore.findModuleForPsiElement(node);
+      if (module == null) {
+        Module[] modules = ModuleManager.getInstance(node.getProject()).getModules();
+        if (modules.length != 1) {
+          return;
+        }
+        module = modules[0];
+      }
       final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
 
       final boolean pyCharm = PythonIdeLanguageCustomization.isMainlyPythonIde();
