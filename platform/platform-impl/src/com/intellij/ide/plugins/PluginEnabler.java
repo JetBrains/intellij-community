@@ -10,10 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -33,8 +30,8 @@ public class PluginEnabler {
   public static boolean updatePluginEnabledState(Collection<IdeaPluginDescriptor> pluginsToEnable,
                                                  Collection<IdeaPluginDescriptor> pluginsToDisable,
                                                  @Nullable JComponent parentComponent) {
-    List<IdeaPluginDescriptorImpl> pluginDescriptorsToEnable = ContainerUtil.map(pluginsToEnable, PluginEnabler::loadFullDescriptor);
-    List<IdeaPluginDescriptorImpl> pluginDescriptorsToDisable = ContainerUtil.map(pluginsToDisable, PluginEnabler::loadFullDescriptor);
+    List<IdeaPluginDescriptorImpl> pluginDescriptorsToEnable = loadFullDescriptors(pluginsToEnable);
+    List<IdeaPluginDescriptorImpl> pluginDescriptorsToDisable = loadFullDescriptors(pluginsToDisable);
 
     Set<PluginId> disabledIds = PluginManagerCore.getDisabledIds();
     for (PluginDescriptor descriptor : pluginsToEnable) {
@@ -50,14 +47,14 @@ public class PluginEnabler {
       PluginManagerCore.saveDisabledPlugins(disabledIds, false);
     }
     catch (IOException e) {
-      PluginManagerMain.LOG.error(e);
+      LOG.error(e);
     }
 
     if (ContainerUtil.all(pluginDescriptorsToDisable, (plugin) -> DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) &&
         ContainerUtil.all(pluginDescriptorsToEnable, (plugin) -> DynamicPlugins.allowLoadUnloadWithoutRestart(plugin))) {
       boolean needRestart = false;
-      for (IdeaPluginDescriptor descriptor : pluginDescriptorsToDisable) {
-        if (!DynamicPlugins.unloadPluginWithProgress(parentComponent, (IdeaPluginDescriptorImpl)descriptor, true)) {
+      for (IdeaPluginDescriptorImpl descriptor : pluginDescriptorsToDisable) {
+        if (!DynamicPlugins.unloadPluginWithProgress(parentComponent, descriptor, true)) {
           needRestart = true;
           break;
         }
@@ -73,15 +70,23 @@ public class PluginEnabler {
     return false;
   }
 
+  private static List<IdeaPluginDescriptorImpl> loadFullDescriptors(Collection<IdeaPluginDescriptor> pluginsToEnable) {
+    List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
+    for (IdeaPluginDescriptor descriptor : pluginsToEnable) {
+      if (descriptor instanceof IdeaPluginDescriptorImpl) {
+        result.add(loadFullDescriptor((IdeaPluginDescriptorImpl) descriptor));
+      }
+    }
+    return result;
+  }
+
   @NotNull
-  public static IdeaPluginDescriptorImpl loadFullDescriptor(PluginDescriptor descriptor) {
+  public static IdeaPluginDescriptorImpl loadFullDescriptor(IdeaPluginDescriptorImpl descriptor) {
     // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
-    IdeaPluginDescriptorImpl fullDescriptor =
-      PluginManager.loadDescriptor(((IdeaPluginDescriptorImpl)descriptor).getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections
-        .emptySet());
+    IdeaPluginDescriptorImpl fullDescriptor = PluginManager.loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
     if (fullDescriptor == null) {
       LOG.error("Could not load full descriptor for plugin " + descriptor.getPath());
-      fullDescriptor = (IdeaPluginDescriptorImpl)descriptor;
+      fullDescriptor = descriptor;
     }
     return fullDescriptor;
   }
