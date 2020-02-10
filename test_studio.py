@@ -108,6 +108,20 @@ class StudioTests(unittest.TestCase):
       if "android-studio/" + req not in files:
         self.fail("Required file not found in distribution: " + req)
 
+  def test_trace_agent_jar_present(self):
+    """Tests that trace_agent.jar is included in distribution"""
+    expected = "plugins/android/lib/trace_agent.jar"
+    artifact_prefix = os.path.join(dist_dir, self.artifact_prefix() + build)
+
+    for platform_suffix in [".win.zip", ".mac.zip"]:
+      files = zipfile.ZipFile(artifact_prefix + platform_suffix).namelist()
+      if not any(file_name.endswith(expected) for file_name in files):
+        self.fail("Required file not found in distribution: " + expected)
+
+    linux_artifact = artifact_prefix + ".tar.gz"
+    if "android-studio/" + expected not in tarfile.open(linux_artifact, "r:gz").getnames():
+      self.fail("Required file not found in distribution: " + expected)
+
   def test_mac_attributes(self):
     name = os.path.join(dist_dir, self.artifact_prefix() + build + ".mac.zip")
     with zipfile.ZipFile(name) as file:

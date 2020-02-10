@@ -339,6 +339,11 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       fileset(file: "$root/prebuilts/tools/common/app-inspection/androidx/sqlite/sqlite-inspection.jar")
     }
 
+    // Trace agent. TODO(b/149320690): remove in 4.1 final release.
+    buildContext.ant.copy(todir: "$androidPluginLib") {
+      fileset(file: "$root/bazel-bin/tools/base/tracer/trace_agent.jar")
+    }
+
     // Instant run
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/installer") {
       fileset(dir: "$root/bazel-bin/tools/base/deploy/installer/android-installer")
