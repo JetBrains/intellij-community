@@ -22,4 +22,6 @@ public interface ShFunctionDefinition extends ShCommand {
   @Nullable
   PsiElement getWord();
 
+  int getTextOffset();
+
 }

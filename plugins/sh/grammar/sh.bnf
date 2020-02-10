@@ -217,7 +217,7 @@ private pipeline_command_list ::= pipeline_command (pipeline_command_list_separa
 } // todo with pin
 private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') newlines
 
-function_definition ::= &(function | word '(') function_definition_inner {extends=command}
+function_definition ::= &(function | word '(') function_definition_inner {extends=command methods=[getTextOffset]}
 private function_definition_inner ::=           word argument_list  newlines block
                                      | function (word | <<keywordsRemapped>>) argument_list? newlines block {pin(".*")="function|argument_list"}
 private argument_list ::= '(' ')' {recoverWhile = argument_list_recover}

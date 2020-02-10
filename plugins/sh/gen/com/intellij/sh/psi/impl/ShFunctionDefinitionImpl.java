@@ -55,4 +55,9 @@ public class ShFunctionDefinitionImpl extends ShCommandImpl implements ShFunctio
     return findChildByType(WORD);
   }
 
+  @Override
+  public int getTextOffset() {
+    return ShPsiImplUtil.getTextOffset(this);
+  }
+
 }
