@@ -14,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class LightEditOpenInProjectIntention implements IntentionAction {
+public class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
   public @NotNull String getText() {
