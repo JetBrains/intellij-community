@@ -12,6 +12,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
@@ -160,7 +161,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
             // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
             val lastFocusedFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
             projectToClose = lastFocusedFrame?.project
-            if (projectToClose == null) {
+            if (projectToClose == null || LightEdit.owns(projectToClose)) {
               projectToClose = openProjects[openProjects.size - 1]
             }
           }
