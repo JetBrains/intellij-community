@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.DefaultLogger
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.psi.*
+import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiImmediateClassType
+import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -190,6 +193,16 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     // it is forbidden, but it should not fail
     def clazz = configureFile("record A(record r)").classes[0]
     assert 1 == clazz.methods.size() // only constructor
+  }
+
+  void "test record has members in dumb mode"() {
+    final DumbServiceImpl dumbService = DumbServiceImpl.getInstance(getProject());
+    EdtTestUtil.runInEdtAndWait({ -> dumbService.setDumb(true) })
+    def clazz = configureFile("record A(@Foo A... i)").classes[0]
+    def methods = clazz.findMethodsByName("i")
+    assert 1 == methods.size()
+    def method = methods.first()
+    assert method instanceof LightRecordMethod
   }
 
   private PsiJavaFile configureFile(String text) {
