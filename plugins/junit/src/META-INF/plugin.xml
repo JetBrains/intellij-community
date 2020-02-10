@@ -107,14 +107,15 @@
   </extensionPoints>
 
   <actions>
-    <group>
-      <action class="com.intellij.execution.junit.JUnitExcludeFromRunAction" text="Exclude from Suite" id="excludeFromSuite"/>
+    <group id="junit.exclude.group">
+      <action class="com.intellij.execution.junit.JUnitExcludeFromRunAction" id="excludeFromSuite"/>
       <separator/>
       <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
     </group>
-    <group>
-      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to JUnit Pattern Suite"/>
+    <group id="junit.add.to.pattern.group">
+      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite"/>
       <add-to-group anchor="last" group-id="RunContextGroup"/>
     </group>
   </actions>
+  <resource-bundle>messages.JUnitBundle</resource-bundle>
 </idea-plugin>

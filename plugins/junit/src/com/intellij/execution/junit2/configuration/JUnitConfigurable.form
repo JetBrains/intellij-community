@@ -128,7 +128,7 @@
             </constraints>
             <properties>
               <labelFor value="6c375"/>
-              <text value="&amp;Repeat:"/>
+              <text resource-bundle="messages/JUnitBundle" key="repeat.label"/>
             </properties>
           </component>
           <component id="bafba" class="com.intellij.ui.components.JBLabel">
@@ -136,7 +136,7 @@
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Fork mode:"/>
+              <text resource-bundle="messages/JUnitBundle" key="fork.mode.label"/>
             </properties>
           </component>
           <component id="73c49" class="javax.swing.JComboBox" binding="myForkCb" default-binding="true">
@@ -215,7 +215,7 @@
             <properties>
               <componentClass value="javax.swing.JPanel"/>
               <labelLocation value="West"/>
-              <text value="Pattern"/>
+              <text resource-bundle="messages/JUnitBundle" key="pattern.label"/>
               <visible value="true"/>
             </properties>
           </component>
@@ -234,7 +234,7 @@
             </constraints>
             <properties>
               <labelLocation value="West"/>
-              <text value="Category"/>
+              <text resource-bundle="messages/JUnitBundle" key="category.label"/>
             </properties>
           </component>
           <component id="7d2af" class="com.intellij.openapi.ui.LabeledComponent" binding="myUniqueIdField">
@@ -244,7 +244,7 @@
             <properties>
               <componentClass value="com.intellij.ui.RawCommandLineEditor"/>
               <labelLocation value="West"/>
-              <text value="UniqueId"/>
+              <text resource-bundle="messages/JUnitBundle" key="uniqueid.label"/>
             </properties>
           </component>
           <component id="ac0a6" class="com.intellij.openapi.ui.LabeledComponent" binding="myDir">
@@ -254,7 +254,7 @@
             <properties>
               <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
               <labelLocation value="West"/>
-              <text value="Directory"/>
+              <text resource-bundle="messages/JUnitBundle" key="directory.label"/>
             </properties>
           </component>
           <component id="9b01f" class="com.intellij.openapi.ui.LabeledComponent" binding="myChangeListLabeledComponent" default-binding="true">
@@ -264,7 +264,7 @@
             <properties>
               <componentClass value="javax.swing.JComboBox"/>
               <labelLocation value="West"/>
-              <text value="Change list"/>
+              <text resource-bundle="messages/JUnitBundle" key="change.list.label"/>
             </properties>
           </component>
           <grid id="c9a5f" binding="myScopesPanel" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -321,7 +321,7 @@
             <properties>
               <componentClass value="com.intellij.ui.RawCommandLineEditor"/>
               <labelLocation value="West"/>
-              <text value="Tag expression"/>
+              <text resource-bundle="messages/JUnitBundle" key="tag.expression.label"/>
             </properties>
           </component>
         </children>
