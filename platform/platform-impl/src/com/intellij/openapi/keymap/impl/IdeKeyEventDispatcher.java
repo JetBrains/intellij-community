@@ -909,14 +909,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     private static void invokeAction(@NotNull final AnAction action, final DataContext ctx) {
-      TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
-          final AnActionEvent event =
-            new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
-                              ActionManager.getInstance(), 0);
-          if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-            ActionUtil.performActionDumbAware(action, event);
-          }
-        });
+      AnActionEvent event =
+        new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
+                          ActionManager.getInstance(), 0);
+      if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
+        ActionUtil.performActionDumbAware(action, event);
+      }
     }
 
     @Override
