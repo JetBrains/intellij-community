@@ -251,12 +251,10 @@ public class ConfigurationContext {
       if (configuration.getProducer() == null) {
         return null;
       }
-      return new ConfigurationFromContextImpl(
-        configuration.getProducer(), configuration.getSettings(),
-        psiElement);
+      return new ConfigurationFromContextImpl(configuration.getProducer(), configuration.getSettings(), psiElement);
     });
-    ConfigurationFromContext min = contexts.isEmpty() ? null : Collections.min(contexts, ConfigurationFromContext.COMPARATOR);
-    if (min != null) {
+    if (!contexts.isEmpty()) {
+      ConfigurationFromContext min = Collections.min(contexts, ConfigurationFromContext.COMPARATOR);
       return min.getConfigurationSettings();
     }
     ExistingConfiguration first = ContainerUtil.getFirstItem(existingConfigurations);
