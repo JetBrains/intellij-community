@@ -29,6 +29,7 @@ import com.intellij.refactoring.rename.BindablePsiReference;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.IndexingBundle;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -545,7 +546,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   @Override
   public String getUnresolvedMessagePattern() {
     return LangBundle.message("error.cannot.resolve")
-           + " " + LangBundle.message(isLast() ? "terms.file" : "terms.directory")
+           + " " + IndexingBundle.message(isLast() ? "terms.file" : "terms.directory")
            + " '" + StringUtil.escapePattern(decode(getCanonicalText())) + "'";
   }
 

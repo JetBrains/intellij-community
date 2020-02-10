@@ -22,7 +22,7 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
+import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -103,7 +103,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
   @Override
   @NotNull
   public String getDisplayName() {
-    return myDisplayName == null ? PsiBundle.message("psi.search.scope.project.and.libraries") : myDisplayName;
+    return myDisplayName == null ? IndexingBundle.message("psi.search.scope.project.and.libraries") : myDisplayName;
   }
 
   public void setDisplayName(@NotNull String displayName) {

@@ -17,12 +17,12 @@
 package com.intellij.usageView;
 
 import com.intellij.ide.TypePresentationService;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
+import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,10 +53,10 @@ public class UsageViewTypeLocation extends ElementDescriptionLocation {
       }
 
       if (psiElement instanceof PsiFile) {
-        return LangBundle.message("terms.file");
+        return IndexingBundle.message("terms.file");
       }
       if (psiElement instanceof PsiDirectory) {
-        return LangBundle.message("terms.directory");
+        return IndexingBundle.message("terms.directory");
       }
 
       String type = LanguageFindUsages.getType(psiElement);

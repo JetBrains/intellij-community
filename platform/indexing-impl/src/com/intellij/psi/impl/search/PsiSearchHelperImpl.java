@@ -32,8 +32,6 @@ import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
@@ -41,6 +39,7 @@ import com.intellij.util.codeInsight.CommentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -256,13 +255,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     progress.pushState();
     boolean result;
     try {
-      progress.setText(PsiBundle.message("psi.scanning.files.progress"));
+      progress.setText(IndexingBundle.message("psi.scanning.files.progress"));
 
       String text = searcher.getPattern();
       Set<VirtualFile> fileSet = new THashSet<>();
       getFilesWithText(scope, searchContext, caseSensitively, text, fileSet);
 
-      progress.setText(PsiBundle.message("psi.search.for.word.progress", text));
+      progress.setText(IndexingBundle.message("psi.search.for.word.progress", text));
 
       final Processor<PsiElement> localProcessor = localProcessor(searcher, processor);
       if (containerName != null) {
@@ -529,7 +528,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     progress.pushState();
     final Ref<Boolean> stopped = Ref.create(Boolean.FALSE);
     try {
-      progress.setText(PsiBundle.message("psi.search.in.non.java.files.progress"));
+      progress.setText(IndexingBundle.message("psi.search.in.non.java.files.progress"));
 
       final SearchScope useScope = originalElement == null ? null : myDumbService.runReadActionInSmartMode(() -> getUseScope(originalElement));
 
@@ -745,7 +744,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                             @NotNull ProgressIndicator progress,
                                                             @NotNull Map<T, Processor<? super PsiElement>> localProcessors) {
     progress.pushState();
-    progress.setText(PsiBundle.message("psi.scanning.files.progress"));
+    progress.setText(IndexingBundle.message("psi.scanning.files.progress"));
     boolean result;
 
     try {
@@ -764,7 +763,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         ProgressManager.checkCanceled();
         allWords.add(singleRequest.getWord());
       }
-      progress.setText(PsiBundle.message("psi.search.for.word.progress", getPresentableWordsDescription(allWords)));
+      progress.setText(IndexingBundle.message("psi.search.for.word.progress", getPresentableWordsDescription(allWords)));
 
       if (intersectionCandidateFiles.isEmpty()) {
         result = processCandidates(localProcessors, restCandidateFiles, progress, restCandidateFiles.size(), 0);

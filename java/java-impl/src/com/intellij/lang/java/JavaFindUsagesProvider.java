@@ -15,6 +15,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -59,10 +60,10 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   @NotNull
   public String getType(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
-      return LangBundle.message("terms.directory");
+      return IndexingBundle.message("terms.directory");
     }
     if (element instanceof PsiFile) {
-      return LangBundle.message("terms.file");
+      return IndexingBundle.message("terms.file");
     }
     if (ThrowSearchUtil.isSearchable(element)) {
       return LangBundle.message("java.terms.exception");

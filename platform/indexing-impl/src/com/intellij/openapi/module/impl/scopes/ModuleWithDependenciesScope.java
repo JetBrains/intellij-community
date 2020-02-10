@@ -7,10 +7,10 @@ import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.IndexingBundle;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.intellij.lang.annotations.MagicConstant;
@@ -108,8 +108,8 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   @NotNull
   @Override
   public String getDisplayName() {
-    return hasOption(COMPILE_ONLY) ? PsiBundle.message("search.scope.module", myModule.getName())
-                                   : PsiBundle.message("search.scope.module.runtime", myModule.getName());
+    return hasOption(COMPILE_ONLY) ? IndexingBundle.message("search.scope.module", myModule.getName())
+                                   : IndexingBundle.message("search.scope.module.runtime", myModule.getName());
   }
 
   @Override
