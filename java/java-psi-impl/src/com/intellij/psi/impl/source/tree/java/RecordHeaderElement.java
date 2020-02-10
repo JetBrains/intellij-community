@@ -20,9 +20,14 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSourceUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RecordHeaderElement extends CompositeElement implements Constants {
+  private final TokenSet RECORD_TOKEN_SET = TokenSet.create(JavaElementType.RECORD_COMPONENT);
+
   public RecordHeaderElement() {
     super(RECORD_HEADER);
   }
@@ -34,5 +39,15 @@ public class RecordHeaderElement extends CompositeElement implements Constants {
     }
 
     super.deleteChildInternal(child);
+  }
+
+  @Override
+  public TreeElement addInternal(TreeElement first, ASTNode last, @Nullable ASTNode anchor, @Nullable Boolean before) {
+    TreeElement firstAdded = super.addInternal(first, last, anchor, before);
+
+    if (first == last && first.getElementType() == JavaElementType.RECORD_COMPONENT) {
+      JavaSourceUtil.addSeparatingComma(this, first, RECORD_TOKEN_SET);
+    }
+    return firstAdded;
   }
 }
