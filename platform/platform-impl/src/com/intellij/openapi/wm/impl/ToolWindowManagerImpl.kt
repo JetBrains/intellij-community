@@ -930,7 +930,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     var stripeTitle = task.id
     val pluginDescriptor = bean?.pluginDescriptor
     if (pluginDescriptor != null && PluginManagerCore.CORE_ID != pluginDescriptor.pluginId) {
-      getStripeTitle(pluginDescriptor, "toolwindow.stripe.${task.id}")?.let {
+      getStripeTitle(pluginDescriptor, "toolwindow.stripe.${task.id}", defaultValue = task.id)?.let {
         stripeTitle = it
       }
     }
@@ -1976,12 +1976,12 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
   return source != null
 }
 
-private fun getStripeTitle(pluginDescriptor: PluginDescriptor, key: String): String? {
+private fun getStripeTitle(pluginDescriptor: PluginDescriptor, key: String, defaultValue: String): String? {
   val bundleName = pluginDescriptor.resourceBundleBaseName ?: return null
   val classLoader = pluginDescriptor.pluginClassLoader
   try {
     val bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
-    return BundleBase.messageOrDefault(bundle, key, "").nullize()
+    return BundleBase.messageOrDefault(bundle, key, defaultValue).nullize()
   }
   catch (e: MissingResourceException) {
     LOG.warn("Missing bundle ${bundleName} at ${classLoader}: ${e.message}")
