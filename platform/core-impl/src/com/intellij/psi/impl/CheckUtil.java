@@ -20,7 +20,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -45,7 +44,7 @@ public class CheckUtil {
         if (virtualFile == null) {
           throw new IncorrectOperationException();
         }
-        throw new IncorrectOperationException(PsiBundle.message("cannot.modify.a.read.only.file", virtualFile.getPresentableUrl()));
+        throw new IncorrectOperationException(CoreBundle.message("cannot.modify.a.read.only.file", virtualFile.getPresentableUrl()));
       }
     }
   }

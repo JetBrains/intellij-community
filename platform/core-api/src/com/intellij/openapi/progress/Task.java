@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress;
 
-import com.intellij.CommonBundle;
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.EdtReplacementThread;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,8 +37,8 @@ public abstract class Task implements TaskInfo, Progressive {
   protected String myTitle;
   private final boolean myCanBeCancelled;
 
-  private String myCancelText = CommonBundle.getCancelButtonText();
-  private String myCancelTooltipText = CommonBundle.getCancelButtonText();
+  private String myCancelText = CoreBundle.message("button.cancel");
+  private String myCancelTooltipText = CoreBundle.message("button.cancel");
 
   private Task(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
     myProject = project;
