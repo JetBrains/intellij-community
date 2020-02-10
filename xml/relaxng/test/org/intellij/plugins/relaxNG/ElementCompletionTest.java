@@ -27,7 +27,7 @@ public class ElementCompletionTest extends HighlightingTestBase {
   }
 
   public void testElementCompletionRoot() {
-    doTestCompletion("element-completion-root.xml", "bar", "baz", "completion-1", "completion-2", "completion-3", "foo", "x");
+    doTestCompletion("element-completion-root.xml", "?xml version=\"1.0\" encoding=\"\" ?>", "bar", "baz", "completion-1", "completion-2", "completion-3", "foo", "x");
   }
 
   public void testElementCompletion1() {

@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -55,17 +56,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     List<XmlElementDescriptor> variants = TagNameVariantCollector.getTagDescriptors(tag, namespaces, nsInfo);
 
     if (psiFile instanceof XmlFile && ((XmlFile) psiFile).getRootTag() == tag) {
-      if (Arrays.stream(tag.getParent().getChildren()).noneMatch(it -> it.getNode().getElementType() == XmlElementType.XML_PROCESSING_INSTRUCTION)) {
-        final LookupElementBuilder xmlDeclaration = LookupElementBuilder
-          .create("?xml version=\"1.0\" encoding=\"\" ?>")
-          .withPresentableText("<?xml version=\"1.0\" encoding=\"\" ?>")
-          .withInsertHandler((context, item) -> {
-            int offset = context.getEditor().getCaretModel().getOffset();
-            context.getEditor().getCaretModel().moveToOffset(offset - 4);
-            AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
-          });
-        elements.add(xmlDeclaration);
-      }
+      addXmlProcessingInstructions(elements, tag);
       if (variants.isEmpty()) {
         getRootTagsVariants(tag, elements);
         return;
@@ -103,6 +94,29 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       lookupElement = lookupElement.withCaseSensitivity(!(descriptor instanceof HtmlElementDescriptorImpl));
       elements.add(PrioritizedLookupElement.withPriority(lookupElement, separator > 0 ? 0 : 1));
     }
+  }
+
+  private static void addXmlProcessingInstructions(@NotNull List<LookupElement> elements, @NotNull XmlTag tag) {
+    final PsiElement file = tag.getParent();
+    final PsiElement prolog = file.getFirstChild();
+    if (prolog.getTextLength() != 0) {
+      // "If [the XML Prolog] exists, it must come first in the document."
+      return;
+    }
+
+    if (Arrays.stream(tag.getChildren()).anyMatch(it -> it instanceof OuterLanguageElement)) {
+      return;
+    }
+
+    final LookupElementBuilder xmlDeclaration = LookupElementBuilder
+      .create("?xml version=\"1.0\" encoding=\"\" ?>")
+      .withPresentableText("<?xml version=\"1.0\" encoding=\"\" ?>")
+      .withInsertHandler((context, item) -> {
+        int offset = context.getEditor().getCaretModel().getOffset();
+        context.getEditor().getCaretModel().moveToOffset(offset - 4);
+        AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
+      });
+    elements.add(xmlDeclaration);
   }
 
   private static void getRootTagsVariants(final XmlTag tag, final List<? super LookupElement> elements) {
