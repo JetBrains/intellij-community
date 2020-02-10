@@ -105,7 +105,7 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
   }
 
   private static class RedirectInputPanel extends JPanel implements PanelWithAnchor {
-    private final JBCheckBox myCheckBox = new JBCheckBox("Redirect input from:");
+    private final JBCheckBox myCheckBox = new JBCheckBox(ExecutionBundle.message("redirect.input.from"));
     private final TextFieldWithBrowseButton myInputFile = new TextFieldWithBrowseButton();
 
     RedirectInputPanel() {

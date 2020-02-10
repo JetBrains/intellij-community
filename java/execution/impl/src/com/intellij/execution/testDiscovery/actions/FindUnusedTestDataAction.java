@@ -104,7 +104,7 @@ public class FindUnusedTestDataAction extends DumbAwareAction {
   private static void nothingToDo() {
     Notifications.Bus.notify(new Notification(FindUnusedTestDataAction.class.getName(),
                                               ExecutionBundle.message("well.done"),
-                                              "Every file is used",
+                                              ExecutionBundle.message("every.file.is.used"),
                                               NotificationType.INFORMATION));
   }
 }

@@ -130,7 +130,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private final JPanel          mainPanel;
   private final JTextArea       myArgsArea = new JTextArea();
   private final JComboBox<Mode> myModeCombo = new ComboBox<>(Mode.values());
-  private final JBCheckBox      myAutoRestart = new JBCheckBox("Auto restart");
+  private final JBCheckBox      myAutoRestart = new JBCheckBox(ExecutionBundle.message("auto.restart"));
   private final JComboBox<Transport> myTransportCombo = new ComboBox<>(Transport.values());
 
   private final ConfigurationModuleSelector myModuleSelector;
