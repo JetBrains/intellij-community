@@ -11,6 +11,7 @@ public class DemorgansIntentionTest extends IPPTestCase {
   public void testErrorElement() { doTest(); }
   public void testFlattenPolyadic() { doTest(); }
   public void testUnclosedLiteral() { doTest(); }
+  public void testRegression() { doTest(CommonQuickFixBundle.message("fix.replace.x.with.y", "&&", "||")); }
 
   @Override
   protected String getIntentionName() {

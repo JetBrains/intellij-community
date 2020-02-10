@@ -79,7 +79,10 @@ public class DemorgansIntention extends MutablyNamedIntention {
       if (negatedExpression == null) {
         return "";
       }
-      return safe(tracker.text(negatedExpression, tokenTypeAndAnd ? ParenthesesUtils.OR_PRECEDENCE : ParenthesesUtils.AND_PRECEDENCE)) ;
+      if (negatedExpression instanceof PsiLiteralExpression) {
+        return safeText(negatedExpression);
+      }
+      return tracker.text(negatedExpression, tokenTypeAndAnd ? ParenthesesUtils.OR_PRECEDENCE : ParenthesesUtils.AND_PRECEDENCE);
     }
     else if (ComparisonUtils.isComparison(expression)) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
@@ -87,17 +90,23 @@ public class DemorgansIntention extends MutablyNamedIntention {
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
       if (rhs != null) {
-        return safe(tracker.text(lhs)) + negatedComparison + safe(tracker.text(rhs));
+        final String lhsText = lhs instanceof PsiLiteralExpression ? safeText(lhs) : tracker.text(lhs);
+        final String rhsText = rhs instanceof PsiLiteralExpression ? safeText(rhs) : tracker.text(rhs);
+        return lhsText + negatedComparison + rhsText;
       }
     }
-    return '!' + safe(tracker.text(expression, ParenthesesUtils.PREFIX_PRECEDENCE));
+    if (expression instanceof PsiLiteralExpression) {
+      return '!' + safeText(expression);
+    }
+    return '!' + tracker.text(expression, ParenthesesUtils.PREFIX_PRECEDENCE);
   }
 
-  private static String safe(String s) {
-    final int length = s.length();
-    if (length == 0 || s.charAt(0) != '"' || (length != 1 && s.charAt(length - 1) == '"')) {
-      return s;
+  private static String safeText(PsiExpression expression) {
+    final String text = expression.getText(); // don't need CommentTracker because literal can't contain comment
+    final int length = text.length();
+    if (length != 0 && text.charAt(0) == '"' && (length == 1 || text.charAt(length - 1) != '"')) {
+      return text + '"';
     }
-    return s + '"';
+    return text;
   }
 }
