@@ -421,7 +421,6 @@
       <module fileurl="file://$PROJECT_DIR$/../studio/google/cloud/tools/core-plugin/google-cloud-tools-core-as.iml" filepath="$PROJECT_DIR$/../studio/google/cloud/tools/core-plugin/google-cloud-tools-core-as.iml" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/cloud/tools/google-login-plugin/google-login-as.iml" filepath="$PROJECT_DIR$/../studio/google/cloud/tools/google-login-plugin/google-login-as.iml" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/samples/google-samples.iml" filepath="$PROJECT_DIR$/../studio/google/samples/google-samples.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../studio/google/services/google-services.iml" filepath="$PROJECT_DIR$/../studio/google/services/google-services.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-adb/intellij.android.adb.iml" filepath="$PROJECT_DIR$/../adt/idea/android-adb/intellij.android.adb.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-adb/intellij.android.adb.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-adb/intellij.android.adb.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-branding/intellij.android.adt.branding.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-branding/intellij.android.adt.branding.iml" />

@@ -50,7 +50,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       "$home/../studio/google/cloud/tools/android-studio-plugin/lib/licenses",
       "$home/../studio/google/cloud/tools/core-plugin/lib/licenses",
       "$home/../studio/google/cloud/tools/google-login-plugin/lib/licenses",
-      "$home/../studio/google/services/lib/licenses",
       "$home/../vendor/google/firebase/lib/licenses",
       "$home/../../prebuilts/studio/layoutlib/licenses",
     )
@@ -94,7 +93,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                            "google-cloud-tools-as",
                                            "google-cloud-tools-core-as",
                                            "google-samples",
-                                           "google-services",
                                            "intellij.android.compose-ide-plugin",
                                            "intellij.android.layoutlib",
                                            "intellij.android.layoutlib-native",
