@@ -9,6 +9,7 @@ import com.intellij.coverage.view.CoverageViewExtension;
 import com.intellij.coverage.view.CoverageViewManager;
 import com.intellij.coverage.view.JavaCoverageViewExtension;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
@@ -309,8 +310,8 @@ public class JavaCoverageEngine extends CoverageEngine {
       suite.checkModule(module);
       final Runnable runnable = () -> {
         if (Messages.showOkCancelDialog(
-          "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
-          "Project Is out of Date", Messages.getWarningIcon()) == Messages.OK) {
+          ExecutionBundle.message("project.class.files.are.out.of.date"),
+          ExecutionBundle.message("project.is.out.of.date"), Messages.getWarningIcon()) == Messages.OK) {
           final CompilerManager compilerManager = CompilerManager.getInstance(project);
           compilerManager.make(compilerManager.createProjectCompileScope(project), (aborted, errors, warnings, compileContext) -> {
             if (aborted || errors != 0) return;
@@ -663,7 +664,7 @@ public class JavaCoverageEngine extends CoverageEngine {
                                    @NotNull final CoverageSuitesBundle currentSuite) {
 
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Generating Coverage Report ...") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, ExecutionBundle.message("generating.coverage.report")) {
       final Exception[] myExceptions = new Exception[1];
 
       @Override
