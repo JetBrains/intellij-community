@@ -7,12 +7,15 @@ import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible {
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -40,16 +43,31 @@ public class LightEditOpenInProjectIntention implements IntentionAction, LightEd
     LightEditorInfo editorInfo =
       ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currFile);
     if (editorInfo != null) {
-      VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(currFile);
-      if (projectRoot != null) {
-        Project openedProject =
-          PlatformProjectOpenProcessor.getInstance().openProjectAndFile(projectRoot, -1, -1, false);
-        if (openedProject != null) {
-          ((LightEditServiceImpl)LightEditService.getInstance()).closeEditor(editorInfo);
-          OpenFileAction.openFile(file.getVirtualFile(), openedProject);
+      Project openProject = findOpenProject(currFile);
+      if (openProject != null) {
+        OpenFileAction.openFile(currFile, openProject);
+      }
+      else {
+        VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(currFile);
+        if (projectRoot != null) {
+          openProject = PlatformProjectOpenProcessor.getInstance().openProjectAndFile(projectRoot, -1, -1, false);
         }
       }
+      if (openProject != null) {
+        ((LightEditServiceImpl)LightEditService.getInstance()).closeEditor(editorInfo);
+        OpenFileAction.openFile(file.getVirtualFile(), openProject);
+      }
     }
+  }
+
+  @Nullable
+  private static Project findOpenProject(@NotNull VirtualFile file) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+        return project;
+      }
+    }
+    return null;
   }
 
   @Override
