@@ -21,6 +21,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.extensions.ExtensionsArea
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -30,6 +31,7 @@ import com.intellij.openapi.keymap.impl.BundledKeymapProvider
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.PotemkinProgress
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Disposer
@@ -397,28 +399,16 @@ object DynamicPlugins {
       unloadListener.run()
     }
 
-    pluginDescriptor.app.extensionPoints?.let {
-      for (point in it) {
-        val rootArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
-        rootArea.unregisterExtensionPoint(point.name)
-        point.clearExtensionClass()
-      }
+    processExtensionPoints(pluginDescriptor, openProjects) { areaInstance, name ->
+      areaInstance.getExtensionPoint<Any>(name).reset()
     }
-    pluginDescriptor.project.extensionPoints?.let {
-      for (point in it) {
-        val extensionPointName = point.name
-        for (openProject in openProjects) {
-          openProject.extensionArea.unregisterExtensionPoint(extensionPointName)
-        }
-        point.clearExtensionClass()
-      }
+    processExtensionPoints(pluginDescriptor, openProjects) { areaInstance, name ->
+      areaInstance.unregisterExtensionPoint(name)
     }
-    loadedPluginDescriptor.app.extensionPoints?.forEach {
-      it.clearExtensionClass()
-    }
-    loadedPluginDescriptor.project.extensionPoints?.forEach {
-      it.clearExtensionClass()
-    }
+    pluginDescriptor.app.extensionPoints?.forEach(ExtensionPointImpl<*>::clearExtensionClass)
+    pluginDescriptor.project.extensionPoints?.forEach(ExtensionPointImpl<*>::clearExtensionClass)
+    loadedPluginDescriptor.app.extensionPoints?.forEach(ExtensionPointImpl<*>::clearExtensionClass)
+    loadedPluginDescriptor.project.extensionPoints?.forEach(ExtensionPointImpl<*>::clearExtensionClass)
 
     val appServiceInstances = application.unloadServices(pluginDescriptor.app)
     for (appServiceInstance in appServiceInstances) {
@@ -439,6 +429,25 @@ object DynamicPlugins {
         }
       }
       (project.messageBus as MessageBusImpl).unsubscribePluginListeners(loadedPluginDescriptor)
+    }
+  }
+
+  private fun processExtensionPoints(pluginDescriptor: IdeaPluginDescriptorImpl,
+                                     openProjects: Array<Project>,
+                                     callback: (ExtensionsArea, String) -> Unit) {
+    pluginDescriptor.app.extensionPoints?.let {
+      val rootArea = ApplicationManager.getApplication().extensionArea
+      for (point in it) {
+        callback(rootArea, point.name)
+      }
+    }
+    pluginDescriptor.project.extensionPoints?.let {
+      for (point in it) {
+        val extensionPointName = point.name
+        for (openProject in openProjects) {
+          callback(openProject.extensionArea, extensionPointName)
+        }
+      }
     }
   }
 
