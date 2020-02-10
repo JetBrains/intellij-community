@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.project;
 
-import com.intellij.ide.lightEdit.LightEditProject;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
@@ -21,7 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 
-final class LightEditProjectImpl extends ProjectImpl implements LightEditProject {
+final class LightEditProjectImpl extends ProjectImpl implements LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(LightEditProjectImpl.class);
   private static final String NAME = "LightEditProject";
   private static final Set<String> ALLOWED_CLASSES = ContainerUtil.newHashSet(

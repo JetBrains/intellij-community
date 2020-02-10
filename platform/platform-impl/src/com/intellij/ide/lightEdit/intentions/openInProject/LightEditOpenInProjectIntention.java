@@ -2,7 +2,6 @@
 package com.intellij.ide.lightEdit.intentions.openInProject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.LightEditIntention;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -15,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class LightEditOpenInProjectIntention implements IntentionAction, LightEditIntention {
+public class LightEditOpenInProjectIntention implements IntentionAction {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
   public @NotNull String getText() {

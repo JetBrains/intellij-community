@@ -14,7 +14,7 @@ public final class LightEdit {
   }
 
   public static boolean owns(@Nullable Project project) {
-    return project instanceof LightEditProject;
+    return project instanceof LightEditCompatible;
   }
 
   public static boolean openFile(@NotNull VirtualFile file) {
