@@ -20,14 +20,13 @@
 
   <actions>
     <action id="com.jetbrains.rest.sphinx.RunSphinxQuickStartAction"
-            class="com.jetbrains.rest.sphinx.RunSphinxQuickStartAction"
-            text="Sphinx Quickstart" description="Allows to run sphinx quick-start action">
+            class="com.jetbrains.rest.sphinx.RunSphinxQuickStartAction">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
   </actions>
 
   <extensions defaultExtensionNs="restructured.text">
-    <html.preview.provider implementation="com.jetbrains.rest.RestPythonPreviewProvider" />
+    <html.preview.provider implementation="com.jetbrains.rest.RestPythonPreviewProvider"/>
   </extensions>
 </idea-plugin>
