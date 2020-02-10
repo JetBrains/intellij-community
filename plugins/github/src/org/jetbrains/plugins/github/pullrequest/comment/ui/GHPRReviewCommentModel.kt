@@ -8,7 +8,7 @@ import java.util.*
 
 class GHPRReviewCommentModel(val id: String, dateCreated: Date, body: String,
                              authorUsername: String?, authorLinkUrl: String?, authorAvatarUrl: String?,
-                             val canBeDeleted: Boolean) {
+                             val canBeDeleted: Boolean, val canBeUpdated: Boolean) {
 
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
@@ -70,6 +70,6 @@ class GHPRReviewCommentModel(val id: String, dateCreated: Date, body: String,
       GHPRReviewCommentModel(comment.id, comment.createdAt, comment.bodyHtml,
                              comment.author?.login, comment.author?.url,
                              comment.author?.avatarUrl,
-                             comment.viewerCanDelete)
+                             comment.viewerCanDelete, comment.viewerCanUpdate)
   }
 }

@@ -22,6 +22,12 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
 
   override fun canComment() = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
 
+  override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String> {
+    return progressManager.submitIOTask(progressIndicator) {
+      requestExecutor.execute(GHGQLRequests.PullRequest.Review.getCommentBody(repository.serverPath, commentId))
+    }
+  }
+
   override fun addComment(progressIndicator: ProgressIndicator,
                           pullRequest: Long,
                           body: String,
@@ -52,5 +58,12 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(GHGQLRequests.PullRequest.Review.deleteComment(repository.serverPath, commentId))
       messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
+    }
+
+  override fun updateComment(progressIndicator: ProgressIndicator, pullRequest: Long, commentId: String, newText: String) =
+    progressManager.submitIOTask(progressIndicator) {
+      val comment = requestExecutor.execute(GHGQLRequests.PullRequest.Review.updateComment(repository.serverPath, commentId, newText))
+      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
+      comment
     }
 }

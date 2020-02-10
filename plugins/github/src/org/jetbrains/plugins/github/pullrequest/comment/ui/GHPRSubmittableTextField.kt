@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -22,7 +23,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
-import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -46,11 +46,68 @@ object GHPRSubmittableTextField {
   private val SUBMIT_SHORTCUT_SET = CommonShortcuts.CTRL_ENTER
   private val CANCEL_SHORTCUT_SET = CommonShortcuts.ESCAPE
 
+  fun create(model: Model,
+             @Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
+             onCancel: (() -> Unit)? = null): JComponent {
+
+    val textField = createTextField(model.document, actionName)
+    val submitButton = createSubmitButton(actionName)
+    val cancelButton = createCancelButton()
+
+    return create(model, textField, submitButton, cancelButton, null, onCancel)
+  }
+
   fun create(model: Model, avatarIconsProvider: GHAvatarIconsProvider, author: GHUser,
              @Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
              onCancel: (() -> Unit)? = null): JComponent {
 
-    val textField = object : EditorTextField(model.document, null, FileTypes.PLAIN_TEXT) {
+    val textField = createTextField(model.document, actionName)
+    val submitButton = createSubmitButton(actionName)
+    val cancelButton = createCancelButton()
+
+    val authorLabel = LinkLabel.create("") {
+      BrowserUtil.browse(author.url)
+    }.apply {
+      icon = avatarIconsProvider.getIcon(author.avatarUrl)
+      isFocusable = true
+      border = JBUI.Borders.empty(if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) 4 else 2, 0)
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+    }
+
+    return create(model, textField, submitButton, cancelButton, authorLabel, onCancel)
+  }
+
+  private fun create(model: Model,
+                     textField: EditorTextField,
+                     submitButton: InlineIconButton,
+                     cancelButton: InlineIconButton,
+                     authorLabel: LinkLabel<out Any>? = null,
+                     onCancel: (() -> Unit)? = null): JPanel {
+    val panel = JPanel(null)
+    Controller(model, panel, textField, submitButton, cancelButton, onCancel)
+
+    val textFieldWithSubmitButton = createTextFieldWithInlinedButton(textField, submitButton)
+    return panel.apply {
+      isOpaque = false
+      layout = MigLayout(LC().gridGap("0", "0")
+                           .insets("0", "0", "0", "0")
+                           .fillX())
+
+      if (authorLabel != null) {
+        isFocusCycleRoot = true
+        isFocusTraversalPolicyProvider = true
+        focusTraversalPolicy = ListFocusTraversalPolicy(listOf(textField, authorLabel))
+        add(authorLabel, CC().alignY("top").gapRight("${UI.scale(6)}"))
+      }
+
+      add(textFieldWithSubmitButton, CC().grow().pushX())
+      add(cancelButton, CC().alignY("top").hideMode(3))
+    }
+  }
+
+  private fun createTextField(document: Document, placeHolder: String): EditorTextField {
+
+    return object : EditorTextField(document, null, FileTypes.PLAIN_TEXT) {
       //always paint pretty border
       override fun updateBorder(editor: EditorEx) = setupBorder(editor)
 
@@ -68,57 +125,24 @@ object GHPRSubmittableTextField {
     }.apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       setOneLineMode(false)
-      setPlaceholder(actionName)
+      setPlaceholder(placeHolder)
       addSettingsProvider {
         it.colorsScheme.lineSpacing = 1f
       }
       selectAll()
     }
+  }
 
-    val submitButton =
-      InlineIconButton(GithubIcons.Send, GithubIcons.SendHovered, tooltip = actionName, shortcut = SUBMIT_SHORTCUT_SET).apply {
-        putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-      }
-
-    val cancelButton =
-      InlineIconButton(AllIcons.Actions.Close, AllIcons.Actions.CloseHovered, tooltip = "Cancel", shortcut = CANCEL_SHORTCUT_SET).apply {
-        border = JBUI.Borders.empty(if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) 6 else 4, 0)
-        putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-      }
-
-    val authorLabel = LinkLabel.create("") {
-      BrowserUtil.browse(author.url)
-    }.apply {
-      icon = avatarIconsProvider.getIcon(author.avatarUrl)
-      isFocusable = true
-      border = JBUI.Borders.empty(if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) 4 else 2, 0)
+  private fun createSubmitButton(actionName: String) =
+    InlineIconButton(GithubIcons.Send, GithubIcons.SendHovered, tooltip = actionName, shortcut = SUBMIT_SHORTCUT_SET).apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
-    Controller(model, textField, submitButton, cancelButton, onCancel)
-
-    val panel = JPanel(null)
-    textField.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        panel.revalidate()
-      }
-    })
-
-    val textFieldWithSubmitButton = createTextFieldWithInlinedButton(textField, submitButton)
-    return panel.apply {
-      isFocusCycleRoot = true
-      isFocusTraversalPolicyProvider = true
-      focusTraversalPolicy = ListFocusTraversalPolicy(listOf(textField, authorLabel))
-      isOpaque = false
-      layout = MigLayout(LC().gridGap("0", "0")
-                           .insets("0", "0", "0", "0")
-                           .fillX(),
-                         AC().gap("${UI.scale(6)}"))
-      add(authorLabel, CC().alignY("top"))
-      add(textFieldWithSubmitButton, CC().grow().pushX())
-      add(cancelButton, CC().alignY("top").hideMode(3))
+  private fun createCancelButton() =
+    InlineIconButton(AllIcons.Actions.Close, AllIcons.Actions.CloseHovered, tooltip = "Cancel", shortcut = CANCEL_SHORTCUT_SET).apply {
+      border = JBUI.Borders.empty(if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) 6 else 4, 0)
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
-  }
 
   private fun createTextFieldWithInlinedButton(textField: EditorTextField, button: JComponent): JComponent {
 
@@ -190,6 +214,7 @@ object GHPRSubmittableTextField {
   }
 
   private class Controller(private val model: Model,
+                           private val panel: JPanel,
                            private val textField: EditorTextField,
                            private val submitButton: InlineIconButton,
                            cancelButton: InlineIconButton,
@@ -198,6 +223,7 @@ object GHPRSubmittableTextField {
       textField.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
           updateSubmittionState()
+          panel.revalidate()
         }
       })
 

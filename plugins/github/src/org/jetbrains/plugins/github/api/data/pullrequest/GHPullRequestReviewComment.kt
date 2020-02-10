@@ -22,7 +22,8 @@ class GHPullRequestReviewComment(id: String,
                                  val replyTo: GHNode?,
                                  val diffHunk: String,
                                  @JsonProperty("pullRequestReview") pullRequestReview: GHNode,
-                                 val viewerCanDelete: Boolean)
+                                 val viewerCanDelete: Boolean,
+                                 val viewerCanUpdate: Boolean)
   : GHComment(id, author, bodyHTML, createdAt) {
   val reviewId = pullRequestReview.id
 }

@@ -47,7 +47,7 @@ object GHPRReviewThreadComponent {
       panel.add(createThreadActionsPanel(avatarIconsProvider, currentUser) { text ->
         reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
           thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl,
-                                                   true))
+                                                   true, true))
         }
       })
     }

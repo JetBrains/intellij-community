@@ -116,9 +116,22 @@ object GHGQLRequests {
 
     object Review {
 
+      fun getCommentBody(server: GithubServerPath, commentId: String): GQLQuery<String> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.getReviewCommentBody,
+                                 mapOf("id" to commentId),
+                                 String::class.java,
+                                 "node", "body")
+
       fun deleteComment(server: GithubServerPath, commentId: String): GQLQuery<Any> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.deleteReviewComment,
                                  mapOf("id" to commentId), Any::class.java)
+
+      fun updateComment(server: GithubServerPath, commentId: String, newText: String): GQLQuery<GHPullRequestReviewComment> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.updateReviewComment,
+                                 mapOf("id" to commentId,
+                                       "body" to newText),
+                                 GHPullRequestReviewComment::class.java,
+                                 "updatePullRequestReviewComment", "pullRequestReviewComment")
     }
   }
 }

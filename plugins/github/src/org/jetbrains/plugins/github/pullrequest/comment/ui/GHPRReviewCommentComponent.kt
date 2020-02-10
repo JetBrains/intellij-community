@@ -1,10 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
@@ -14,11 +18,17 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.event.ActionListener
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JPanel
+import javax.swing.text.BadLocationException
+import javax.swing.text.Utilities
 
 object GHPRReviewCommentComponent {
 
@@ -51,6 +61,10 @@ object GHPRReviewCommentComponent {
       textPane.setBody(comment.body)
     }
 
+    val editorWrapper = Wrapper()
+    val editButton = createEditButton(reviewService, comment, editorWrapper, textPane).apply {
+      isVisible = comment.canBeUpdated
+    }
     val deleteButton = createDeleteButton(reviewService, thread, comment).apply {
       isVisible = comment.canBeDeleted
     }
@@ -60,12 +74,14 @@ object GHPRReviewCommentComponent {
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
                            .fill(),
-                         AC().gap("${UI.scale(8)}").gap("${UI.scale(12)}").gap("push"))
+                         AC().gap("${UI.scale(8)}").gap("${UI.scale(12)}").gap("${UI.scale(8)}").gap("push"))
 
       add(avatarLabel, CC().pushY())
       add(titlePane, CC().growX().pushX().minWidth("0"))
+      add(editButton, CC().hideMode(3))
       add(deleteButton, CC().hideMode(3))
-      add(textPane, CC().newline().skip().spanX(2).grow().push().minWidth("0").minHeight("0"))
+      add(textPane, CC().newline().skip().spanX(4).grow().push().minWidth("0").minHeight("0"))
+      add(editorWrapper, CC().newline().skip().spanX(4).grow().push().minWidth("0").minHeight("0"))
     }
   }
 
@@ -83,6 +99,68 @@ object GHPRReviewCommentComponent {
         }
       }
     }
+  }
+
+  private fun createEditButton(reviewService: GHPRReviewServiceAdapter,
+                               comment: GHPRReviewCommentModel,
+                               editorWrapper: Wrapper,
+                               textPane: JEditorPane): JComponent {
+
+    val action = ActionListener {
+      val linesCount = calcLines(textPane)
+      val text = StringUtil.repeatSymbol('\n', linesCount - 1)
+
+      val model = GHPRSubmittableTextField.Model { newText ->
+        reviewService.updateComment(EmptyProgressIndicator(), comment.id, newText).successOnEdt {
+          comment.update(it)
+        }.handleOnEdt { _, _ ->
+          editorWrapper.setContent(null)
+          editorWrapper.revalidate()
+        }
+      }
+
+      with(model.document) {
+        runWriteAction {
+          setText(text)
+          setReadOnly(true)
+        }
+
+        reviewService.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id).successOnEdt {
+          runWriteAction {
+            setReadOnly(false)
+            setText(it)
+          }
+        }
+      }
+
+      val editor = GHPRSubmittableTextField.create(model, "Submit", onCancel = {
+        editorWrapper.setContent(null)
+        editorWrapper.revalidate()
+      })
+      editorWrapper.setContent(editor)
+      GithubUIUtil.focusPanel(editor)
+    }
+    val icon = AllIcons.General.Inline_edit
+    val hoverIcon = AllIcons.General.Inline_edit_hovered
+    return InlineIconButton(icon, hoverIcon, tooltip = "Edit").apply {
+      actionListener = action
+    }
+  }
+
+
+  private fun calcLines(textPane: JEditorPane): Int {
+    var lineCount = 0
+    var offset = 0
+    while (true) {
+      try {
+        offset = Utilities.getRowEnd(textPane, offset) + 1
+        lineCount++
+      }
+      catch (e: BadLocationException) {
+        break
+      }
+    }
+    return lineCount
   }
 
   fun factory(thread: GHPRReviewThreadModel, reviewService: GHPRReviewServiceAdapter, avatarIconsProvider: GHAvatarIconsProvider)
