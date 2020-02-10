@@ -2,6 +2,7 @@
 package com.intellij.psi.util
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.util.SmartList
@@ -162,17 +163,73 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
   }
 
   /**
+   * @return the range in the given [host] (encoder-aware) that corresponds to the [rangeInPks] in the [valueIfKnown]
+   *
+   * NOTE: currently supports only single-segment [rangeInPks]
+   */
+  fun mapRangeToHostRange(host: PsiLanguageInjectionHost, rangeInPks: TextRange): TextRange? {
+    val hostValueTextRange = ElementManipulators.getValueTextRange(host)
+
+    fun getHostRangeEscapeAware(inSegmentStart: Int, inSegmentEnd: Int): TextRange {
+      val escaper = host.createLiteralTextEscaper()
+      val decode = escaper.decode(hostValueTextRange, StringBuilder())
+      if (decode) {
+        return TextRange(
+          escaper.getOffsetInHost(inSegmentStart, hostValueTextRange),
+          escaper.getOffsetInHost(inSegmentEnd, hostValueTextRange))
+      }
+      else
+        return TextRange(inSegmentStart, inSegmentEnd).shiftRight(hostValueTextRange.startOffset)
+    }
+
+    var accumulated = 0
+    for (segment in segments) {
+      if (segment !is StringEntry.Known) continue
+      val segmentEnd = accumulated + segment.value.length
+
+      // assume that all content fits into one segment
+      if (rangeInPks.startOffset >= accumulated && rangeInPks.endOffset <= segmentEnd) {
+        val inSegmentStart = rangeInPks.startOffset - accumulated
+        val inSegmentEnd = rangeInPks.endOffset - accumulated
+
+        val sourcePsi = segment.sourcePsi
+        if (sourcePsi == host) {
+          return getHostRangeEscapeAware(inSegmentStart, inSegmentEnd)
+        }
+        if (sourcePsi?.parent == host) { // The Kotlin case
+          return getHostRangeEscapeAware(sourcePsi.startOffsetInParent - hostValueTextRange.startOffset + inSegmentStart,
+                                         sourcePsi.startOffsetInParent - hostValueTextRange.startOffset + inSegmentEnd)
+        }
+        else return null // no idea what to do, feel free to extend
+      }
+      accumulated = segmentEnd
+    }
+    return null
+  }
+
+  /**
    * @return the range in the [valueIfKnown] that corresponds to given [host]
    */
   fun getRangeOfTheHostContent(host: PsiLanguageInjectionHost): TextRange? {
     var accumulated = 0
+    var start = 0
+    var end = 0
+    var found = false
     for (segment in segments) {
       if (segment !is StringEntry.Known) continue
-      if (segment.host == host)
-        return TextRange.from(accumulated, segment.value.length)
+      if (segment.host == host) {
+        if (!found) {
+          found = true
+          start = accumulated
+        }
+        end = accumulated + segment.value.length
+      }
       accumulated += segment.value.length
     }
-    return null
+    if (found)
+      return TextRange.from(start, end)
+    else
+      return null
   }
 
   /**
