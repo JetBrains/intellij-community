@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.template;
 
-import com.intellij.core.JavaCoreBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaStringContextType extends TemplateContextType {
   public JavaStringContextType() {
-    super("JAVA_STRING", JavaCoreBundle.message("context.type.string"), JavaCodeContextType.Generic.class);
+    super("JAVA_STRING", JavaPsiBundle.message("context.type.string"), JavaCodeContextType.Generic.class);
   }
 
   @Override

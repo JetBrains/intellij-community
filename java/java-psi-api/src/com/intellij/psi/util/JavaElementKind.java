@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
-import com.intellij.core.JavaCoreBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public enum JavaElementKind {
    */
   @Nls
   public @NotNull String subject() {
-    return JavaCoreBundle.message("element." + name().toLowerCase(Locale.ROOT), 0);
+    return JavaPsiBundle.message("element." + name().toLowerCase(Locale.ROOT), 0);
   }
 
   /**
@@ -49,7 +49,7 @@ public enum JavaElementKind {
    */
   @Nls
   public @NotNull String object() {
-    return JavaCoreBundle.message("element." + name().toLowerCase(Locale.ROOT), 1);
+    return JavaPsiBundle.message("element." + name().toLowerCase(Locale.ROOT), 1);
   }
 
   public static JavaElementKind fromElement(@NotNull PsiElement element) {

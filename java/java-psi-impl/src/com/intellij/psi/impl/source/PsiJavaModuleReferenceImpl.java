@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
-import com.intellij.core.JavaCoreBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -37,7 +37,7 @@ public class PsiJavaModuleReferenceImpl extends PsiReferenceBase.Poly<PsiJavaMod
   public PsiElement handleElementRename(@NotNull String newName) throws IncorrectOperationException {
     PsiJavaModuleReferenceElement element = getElement();
     if (element instanceof PsiCompiledElement) {
-      throw new IncorrectOperationException(JavaCoreBundle.message("psi.error.attempt.to.edit.class.file", element.getContainingFile()));
+      throw new IncorrectOperationException(JavaPsiBundle.message("psi.error.attempt.to.edit.class.file", element.getContainingFile()));
     }
     PsiElement newElement = PsiElementFactory.getInstance(element.getProject()).createModuleReferenceFromText(newName, null);
     return element.replace(newElement);

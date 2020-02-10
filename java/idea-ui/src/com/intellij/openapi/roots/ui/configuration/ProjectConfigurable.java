@@ -2,7 +2,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.core.JavaCoreBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -304,7 +304,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   private void createUIComponents() {
-    myLanguageLevelCombo = new LanguageLevelCombo(JavaCoreBundle.message("default.language.level.description")) {
+    myLanguageLevelCombo = new LanguageLevelCombo(JavaPsiBundle.message("default.language.level.description")) {
       @Override
       protected LanguageLevel getDefaultLevel() {
         Sdk sdk = myProjectJdkConfigurable.getSelectedProjectJdk();

@@ -22,11 +22,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class JavaCoreBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.JavaCoreBundle";
-  private static final JavaCoreBundle INSTANCE = new JavaCoreBundle();
+public class JavaPsiBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.JavaPsiBundle";
+  private static final JavaPsiBundle INSTANCE = new JavaPsiBundle();
 
-  private JavaCoreBundle() { super(BUNDLE); }
+  private JavaPsiBundle() { super(BUNDLE); }
 
   @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
