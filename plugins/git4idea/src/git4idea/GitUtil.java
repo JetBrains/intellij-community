@@ -3,6 +3,7 @@ package git4idea;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -673,15 +674,21 @@ public class GitUtil {
   @NotNull
   public static VirtualFile getRootForFile(@NotNull Project project, @NotNull FilePath filePath) throws VcsException {
     VcsRoot root = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(filePath);
-    if (!isGitVcsRoot(root)) throw new GitRepositoryNotFoundException(filePath);
-    return root.getPath();
+    if (isGitVcsRoot(root)) return root.getPath();
+
+    Repository repository = VcsRepositoryManager.getInstance(project).getExternalRepositoryForFile(filePath);
+    if (repository instanceof GitRepository) return repository.getRoot();
+    throw new GitRepositoryNotFoundException(filePath);
   }
 
   @NotNull
   public static VirtualFile getRootForFile(@NotNull Project project, @NotNull VirtualFile file) throws VcsException {
     VcsRoot root = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file);
-    if (!isGitVcsRoot(root)) throw new GitRepositoryNotFoundException(file);
-    return root.getPath();
+    if (isGitVcsRoot(root)) return root.getPath();
+
+    Repository repository = VcsRepositoryManager.getInstance(project).getExternalRepositoryForFile(file);
+    if (repository instanceof GitRepository) return repository.getRoot();
+    throw new GitRepositoryNotFoundException(file);
   }
 
   private static boolean isGitVcsRoot(@Nullable VcsRoot root) {

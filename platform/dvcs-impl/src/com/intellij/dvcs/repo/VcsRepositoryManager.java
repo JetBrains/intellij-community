@@ -94,13 +94,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   public Repository getRepositoryForFile(@NotNull VirtualFile file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
     if (vcsRoot == null) {
-      Map<VirtualFile, Repository> repositories = getExternalRepositories();
-      for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
-        if (entry.getKey().isValid() && VfsUtilCore.isAncestor(entry.getKey(), file, false)) {
-          return entry.getValue();
-        }
-      }
-      return null;
+      return getExternalRepositoryForFile(file);
     }
     return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
   }
@@ -109,15 +103,31 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   public Repository getRepositoryForFile(@NotNull FilePath file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
     if (vcsRoot == null) {
-      Map<VirtualFile, Repository> repositories = getExternalRepositories();
-      for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
-        if (entry.getKey().isValid() && FileUtil.isAncestor(entry.getKey().getPath(), file.getPath(), false)) {
-          return entry.getValue();
-        }
-      }
-      return null;
+      return getExternalRepositoryForFile(file);
     }
     return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
+  }
+
+  @Nullable
+  public Repository getExternalRepositoryForFile(@NotNull VirtualFile file) {
+    Map<VirtualFile, Repository> repositories = getExternalRepositories();
+    for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
+      if (entry.getKey().isValid() && VfsUtilCore.isAncestor(entry.getKey(), file, false)) {
+        return entry.getValue();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public Repository getExternalRepositoryForFile(@NotNull FilePath file) {
+    Map<VirtualFile, Repository> repositories = getExternalRepositories();
+    for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
+      if (entry.getKey().isValid() && FileUtil.isAncestor(entry.getKey().getPath(), file.getPath(), false)) {
+        return entry.getValue();
+      }
+    }
+    return null;
   }
 
   @Nullable
