@@ -366,10 +366,7 @@ public class TestCaseLoader {
     System.out.println(message);
 
     if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0) {
-      TeamCityLogger.error(message);
-    }
-    else {
-      TeamCityLogger.info(message);
+      System.out.println("Expected some tests to be executed, but no test classes were found.");
     }
   }
 
