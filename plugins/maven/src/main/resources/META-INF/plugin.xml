@@ -18,6 +18,7 @@
       ]]>
   </description>
   <vendor>JetBrains</vendor>
+  <resource-bundle>messages.MavenProjectBundle</resource-bundle>
 
   <extensionPoints>
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>
@@ -431,71 +432,55 @@
 
   <actions>
     <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.actions.ReimportAction"
-            text="Reimport All Maven Projects"
             icon="AllIcons.Actions.Refresh">
     </action>
 
     <action id="Maven.ReimportProject" class="org.jetbrains.idea.maven.project.actions.ReimportProjectAction"
-            text="Reimport" description="Reimport selected Maven projects"
             icon="AllIcons.Actions.Refresh">
     </action>
 
-    <action id="Maven.ShowEffectivePom" class="org.jetbrains.idea.maven.project.actions.MavenShowEffectivePom"
-            text="Show Effective POM" description="Generate and show effective POM">
+    <action id="Maven.ShowEffectivePom" class="org.jetbrains.idea.maven.project.actions.MavenShowEffectivePom">
     </action>
 
     <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersAction"
-            text="Generate Sources and Update Folders For All Projects"
             icon="MavenIcons.UpdateFolders">
     </action>
 
     <action id="Maven.UpdateFoldersForProject" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersForProjectAction"
-            text="Generate Sources and Update Folders"
             icon="MavenIcons.UpdateFolders">
     </action>
 
     <action id="Maven.DownloadAllSources" class="org.jetbrains.idea.maven.project.actions.DownloadAllSourcesAction"
-            text="Download Sources" description="Download sources for all dependencies"
             icon="AllIcons.Actions.Download">
     </action>
 
     <action id="Maven.DownloadAllDocs" class="org.jetbrains.idea.maven.project.actions.DownloadAllDocsAction"
-            text="Download Documentation" description="Download documentation for all dependencies"
             icon="AllIcons.Actions.Download">
     </action>
 
     <action id="Maven.DownloadAllSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadAllSourcesAndDocsAction"
-            text="Download Sources and Documentation" description="Download sources and documentation for all dependencies"
             icon="AllIcons.Actions.Download">
     </action>
 
     <action id="Maven.DownloadSelectedSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAndDocsAction"
-            text="Download Sources and Documentation"
-            description="Download sources and documentation for all dependencies for selected projects"
             icon="AllIcons.Actions.Download">
     </action>
 
     <action id="Maven.DownloadSelectedSources" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAction"
-            text="Download Sources" description="Download sources for all dependencies for selected projects"
             icon="AllIcons.Actions.Download">
     </action>
 
     <action id="Maven.DownloadSelectedDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedDocsAction"
-            text="Download Documentation" description="Download documentation for all dependencies for selected projects"
             icon="AllIcons.Actions.Download">
     </action>
 
     <action id="Maven.AddManagedFiles"
             class="org.jetbrains.idea.maven.project.actions.AddManagedFilesAction"
-            text="Add Maven Projects"
-            description="Add and import Maven projects to the projects tree"
             icon="AllIcons.General.Add">
     </action>
 
     <action id="Maven.AddFileAsMavenProject"
             class="org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction"
-            text="Add as Maven Project"
-            description="Add and import Maven project to the projects tree"
             icon="AllIcons.General.Add">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="Maven.GlobalProjectMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="Maven.GlobalProjectMenu"/>
@@ -503,122 +488,90 @@
 
     <action id="Maven.RemoveManagedFiles"
             class="org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction"
-            text="Unlink Maven Projects"
-            description="Unlink selected Maven projects and their subprojects from the project tree"
             icon="AllIcons.General.Remove">
     </action>
 
     <action id="Maven.OpenSettingsXml"
-            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateSettingsXmlAction"
-            text="Open settings.xml"
-            description="Open Maven settings.xml"/>
+            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateSettingsXmlAction"/>
 
     <action id="Maven.OpenProfilesXml"
-            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateProfilesXmlAction"
-            text="Open profiles.xml"
-            description="Open profiles.xml for selected projects"/>
+            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateProfilesXmlAction"/>
 
     <action id="Maven.IgnoreProjects"
-            class="org.jetbrains.idea.maven.project.actions.ToggleIgnoredProjectsAction"
-            text="_Ignore Projects"
-            description="Exclude/Include selected Maven projects from being imported">
+            class="org.jetbrains.idea.maven.project.actions.ToggleIgnoredProjectsAction">
     </action>
     <action id="Maven.ToggleProfile"
-            class="org.jetbrains.idea.maven.project.actions.ToggleProfileAction"
-            text="Toggle Profile"
-            description="Activate/deactivate profile">
+            class="org.jetbrains.idea.maven.project.actions.ToggleProfileAction">
     </action>
 
     <action id="Maven.RunBuild"
             class="org.jetbrains.idea.maven.project.actions.RunBuildAction"
-            text="_Run Maven Build"
-            description="Execute selected phases or goals"
             icon="AllIcons.Actions.Execute">
     </action>
 
     <action id="Maven.ShowSettings"
-            class="org.jetbrains.idea.maven.project.actions.EditSettingsAction" text="Maven Settings"
-            description="Edit Maven integration settings for the current project"
+            class="org.jetbrains.idea.maven.project.actions.EditSettingsAction"
             icon="AllIcons.General.Settings">
     </action>
 
     <action id="Maven.ToggleOffline"
-            class="org.jetbrains.idea.maven.project.actions.ToggleOfflineAction" text="Toggle Offline Mode"
-            description="Toggle offline mode for Maven builds"
+            class="org.jetbrains.idea.maven.project.actions.ToggleOfflineAction"
             icon="AllIcons.Actions.OfflineMode">
     </action>
 
     <action id="Maven.ToggleLookNested"
-            class="org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction" text="Toggle Search For Maven Project Recursively"
-            description="Toggle Search for project recursively when importing Maven projects">
+            class="org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction">
     </action>
 
     <action id="Maven.ToggleSkipTests"
-            class="org.jetbrains.idea.maven.project.actions.ToggleSkipTestsAction" text="Toggle 'Skip Tests' Mode"
-            description="Toggle 'Skip tests' mode for Maven builds"
+            class="org.jetbrains.idea.maven.project.actions.ToggleSkipTestsAction"
             icon="AllIcons.Nodes.ExceptionClass">
     </action>
 
-    <action id="Maven.ExpandAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$ExpandAll" text="Expand All"
+    <action id="Maven.ExpandAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$ExpandAll"
             icon="AllIcons.Actions.Expandall"
             use-shortcut-of="ExpandAll"/>
-    <action id="Maven.CollapseAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$CollapseAll" text="Collapse All"
+    <action id="Maven.CollapseAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$CollapseAll"
             icon="AllIcons.Actions.Collapseall"
             use-shortcut-of="CollapseAll"/>
 
-    <action id="Maven.ExecuteGoal" class="org.jetbrains.idea.maven.navigator.actions.MavenExecuteGoalAction" text="Execute Maven Goal"
+    <action id="Maven.ExecuteGoal" class="org.jetbrains.idea.maven.navigator.actions.MavenExecuteGoalAction"
             icon="MavenIcons.ExecuteMavenGoal">
     </action>
 
     <action id="Maven.GroupProjects"
             class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
-            text="Group Modules"
-            description="Group projects according to Maven structure"
             icon="AllIcons.Nodes.Folder"/>
     <action id="Maven.ShowIgnored"
             class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
-            text="Show Ignored Projects"
-            description="Show ignored projects"
             icon="AllIcons.Actions.ShowHiddens"/>
     <action id="Maven.ShowBasicPhasesOnly"
             class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
-            text="Show Basic Phases Only"
-            description="Show basic phases only"
             icon="AllIcons.General.Filter"/>
     <action id="Maven.AlwaysShowArtifactId"
-            class="org.jetbrains.idea.maven.navigator.actions.AlwaysShowArtifactIdAction"
-            text="Always Show ArtifactId"
-            description="Always Show ArtifactId instead of project name"/>
+            class="org.jetbrains.idea.maven.navigator.actions.AlwaysShowArtifactIdAction"/>
     <action id="Maven.ShowVersions"
-            class="org.jetbrains.idea.maven.navigator.actions.ShowVersionsAction"
-            text="Show version"
-            description="Show version for Maven project"/>
+            class="org.jetbrains.idea.maven.navigator.actions.ShowVersionsAction"/>
 
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
-              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction" text="Execute Before Build"
-              description="Execute selected phase/goal before Build">
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction">
       </action>
       <action id="Maven.AfterCompile"
-              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterCompileTasksAction" text="Execute After Build"
-              description="Execute selected phase/goal after Build">
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterCompileTasksAction">
       </action>
       <action id="Maven.BeforeRebuild"
-              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeRebuildTasksAction" text="Execute Before Rebuild"
-              description="Execute selected phase/goal before full rebuild">
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeRebuildTasksAction">
       </action>
       <action id="Maven.AfterRebuild"
-              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterRebuildTasksAction" text="Execute After Rebuild"
-              description="Execute selected phase/goal after full rebuild">
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterRebuildTasksAction">
       </action>
       <action id="Maven.BeforeRun"
-              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeRunTaskAction" text="Execute Before Run/Debug..."
-              description="Execute selected phase/goal before launching Run/Debug configuration">
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeRunTaskAction">
       </action>
       <separator/>
       <action id="Maven.AssignShortcut"
-              class="org.jetbrains.idea.maven.tasks.actions.AssignShortcutAction" text="Assign Shortcut..."
-              description="Assign shortcut to the selected phase/goal">
+              class="org.jetbrains.idea.maven.tasks.actions.AssignShortcutAction">
       </action>
     </group>
 
@@ -633,7 +586,6 @@
       <reference id="Maven.UpdateFolders"/>
 
       <group id="Maven.DownloadAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
-             text="Download Sources and/or Documentation"
              icon="AllIcons.Actions.Download">
         <reference id="Maven.DownloadAllGroup"/>
       </group>
@@ -685,25 +637,25 @@
       <reference ref="Maven.TasksGroup"/>
     </group>
 
-    <group id="Maven.GlobalProjectMenu" class="org.jetbrains.idea.maven.utils.actions.MavenActionGroup" popup="true" text="Maven"
+    <group id="Maven.GlobalProjectMenu" class="org.jetbrains.idea.maven.utils.actions.MavenActionGroup" popup="true"
            icon="OpenapiIcons.RepositoryLibraryLogo">
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
       <reference ref="Maven.BaseProjectMenu"/>
     </group>
 
-    <action id="Maven.GenerateGroup" class="org.jetbrains.idea.maven.dom.generate.MavenGenerateDomActionGroup" text="Generate">
+    <action id="Maven.GenerateGroup" class="org.jetbrains.idea.maven.dom.generate.MavenGenerateDomActionGroup">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
-    <group id="Maven.RefactoringGroup" text="Refactoring">
+    <group id="Maven.RefactoringGroup">
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceParameter"/>
       <separator/>
-      <action id="refactoring.introduce.property" text="Property"
+      <action id="refactoring.introduce.property"
               class="org.jetbrains.idea.maven.dom.refactorings.introduce.IntroducePropertyAction"
               use-shortcut-of="IntroduceVariable"/>
 
-      <action id="refactoring.extract.dependency" text="Extract Managed Dependency"
+      <action id="refactoring.extract.dependency"
               class="org.jetbrains.idea.maven.dom.refactorings.extract.ExtractManagedDependenciesAction"
               use-shortcut-of="ExtractMethod"/>
     </group>
@@ -711,10 +663,10 @@
     <group id="Maven.RunConfigurationMenu" popup="true" class="org.jetbrains.idea.maven.navigator.actions.MavenRunConfigurationMenu">
       <separator/>
       <action id="Maven.EditRunConfiguration"
-              text="Edit Run Configuration..." icon="AllIcons.Actions.Edit"
+              icon="AllIcons.Actions.Edit"
               class="org.jetbrains.idea.maven.navigator.actions.EditMavenRunConfigurationAction"/>
       <action id="Maven.RemoveRunConfiguration"
-              text="Remove Run Configuration" icon="AllIcons.General.Remove"
+              icon="AllIcons.General.Remove"
               class="org.jetbrains.idea.maven.navigator.actions.RemoveMavenRunConfigurationAction"/>
     </group>
 
