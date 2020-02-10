@@ -306,8 +306,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (arguments == null) {
         return;
       }
-      if(myConnection.isServerMode()) {
-        ((ListeningConnector)findConnector(myConnection.isUseSockets(), true)).stopListening(arguments);
+      if (myConnection.isServerMode()) {
+        Connector connector = getConnector();
+        if (connector instanceof ListeningConnector) {
+          ((ListeningConnector)connector).stopListening(arguments);
+        }
       }
     }
     catch (IOException | IllegalConnectorArgumentsException | IllegalArgumentException e) {
@@ -454,65 +457,42 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       final String port = myConnection.getDebuggerAddress();
 
+      Connector connector = getConnector();
+      myArguments = connector.defaultArguments();
       if (myConnection instanceof PidRemoteConnection && !((PidRemoteConnection)myConnection).isFixedAddress()) {
-        PidRemoteConnection pidRemoteConnection = (PidRemoteConnection)myConnection;
-        Connector connector = pidRemoteConnection.getConnector(this);
-        String pid = pidRemoteConnection.getPid();
+        String pid = ((PidRemoteConnection)myConnection).getPid();
         if (StringUtil.isEmpty(pid)) {
           throw new CantRunException(DebuggerBundle.message("error.no.pid"));
         }
-        myArguments = connector.defaultArguments();
-        Connector.Argument pidArg = myArguments.get("pid");
-        if (pidArg != null) {
-          pidArg.setValue(pid);
-        }
-        if (connector instanceof AttachingConnector) {
-          return attachConnector((AttachingConnector)connector);
-        }
-        else {
-          return connectorListen(port, (ListeningConnector)connector);
-        }
+        setConnectorArgument("pid", pid);
       }
       else if (myConnection.isServerMode()) {
-        ListeningConnector connector = (ListeningConnector)findConnector(myConnection.isUseSockets(), true);
-        myArguments = connector.defaultArguments();
         if (myArguments == null) {
           throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
         }
-        return connectorListen(port, connector);
       }
       else { // is client mode, should attach to already running process
-        AttachingConnector connector = (AttachingConnector)findConnector(myConnection.isUseSockets(), false);
-        myArguments = connector.defaultArguments();
         if (myConnection.isUseSockets()) {
-          final Connector.Argument hostnameArg = myArguments.get("hostname");
-          if (hostnameArg != null && myConnection.getDebuggerHostName() != null) {
-            hostnameArg.setValue(myConnection.getDebuggerHostName());
+          String debuggerHostName = myConnection.getDebuggerHostName();
+          if (debuggerHostName != null) {
+            setConnectorArgument("hostname", debuggerHostName);
           }
           if (port == null) {
             throw new CantRunException(DebuggerBundle.message("error.no.debug.attach.port"));
           }
-          final Connector.Argument portArg = myArguments.get("port");
-          if (portArg != null) {
-            portArg.setValue(port);
-          }
+          setConnectorArgument("port", port);
         }
         else {
           if (port == null) {
             throw new CantRunException(DebuggerBundle.message("error.no.shmem.address"));
           }
-          final Connector.Argument nameArg = myArguments.get("name");
-          if (nameArg != null) {
-            nameArg.setValue(port);
-          }
+          setConnectorArgument("name", port);
         }
-        final Connector.Argument timeoutArg = myArguments.get("timeout");
-        if (timeoutArg != null) {
-          timeoutArg.setValue("0"); // wait forever
-        }
-
-        return attachConnector(connector);
+        setConnectorArgument("timeout", "0"); // wait forever
       }
+      return connector instanceof AttachingConnector
+             ? attachConnector((AttachingConnector)connector)
+             : connectorListen(port, (ListeningConnector)connector);
     }
     catch (IOException e) {
       throw new ExecutionException(processIOException(e, DebuggerBundle.getAddressDisplayName(myConnection)), e);
@@ -522,6 +502,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     finally {
       myArguments = null;
+    }
+  }
+
+  private void setConnectorArgument(String name, String value) {
+    Connector.Argument argument = myArguments.get(name);
+    if (argument != null) {
+      argument.setValue(value);
     }
   }
 
@@ -541,10 +528,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myArguments.put(uniqueArg.name(), uniqueArg);
       }
     }
-    final Connector.Argument timeoutArg = myArguments.get("timeout");
-    if (timeoutArg != null) {
-      timeoutArg.setValue("0"); // wait forever
-    }
+    setConnectorArgument("timeout", "0"); // wait forever
     try {
       String listeningAddress = connector.startListening(myArguments);
       String port = StringUtil.substringAfterLast(listeningAddress, ":");
@@ -591,6 +575,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         StatusBarUtil.setStatusBarInfo(myProject, text);
       }
     }, 50);
+  }
+
+  private Connector getConnector() throws ExecutionException {
+    if (myConnection instanceof PidRemoteConnection && !((PidRemoteConnection)myConnection).isFixedAddress()) {
+      return ((PidRemoteConnection)myConnection).getConnector(this);
+    }
+    return findConnector(myConnection.isUseSockets(), myConnection.isServerMode());
   }
 
   @NotNull
