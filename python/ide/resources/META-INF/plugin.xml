@@ -11,6 +11,8 @@
   <xi:include href="/META-INF/pycharm-community-customization.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.jetbrains.python.PyCharmCorePluginConfigurator"/>
+
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.jetbrains.python.psi.search.PyProjectScopeBuilder"
                     overrides="true"/>
@@ -20,12 +22,4 @@
     <annotator language="JSON" implementationClass="com.jetbrains.python.PyCharmProfessionalAdvertiser"/>
     <projectService serviceImplementation="com.jetbrains.python.PyCharmProfessionalAdvertiserSettings"/>
   </extensions>
-
-  <application-components>
-    <component>
-      <implementation-class>com.jetbrains.python.PyCharmCorePluginConfigurator</implementation-class>
-      <headless-implementation-class/>
-    </component>
-  </application-components>
-
 </idea-plugin>

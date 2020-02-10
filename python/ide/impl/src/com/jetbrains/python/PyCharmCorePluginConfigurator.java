@@ -3,6 +3,7 @@ package com.jetbrains.python;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,10 +19,14 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
  *
  * This class is called <strong>only in PyCharm</strong>.
  * It does not work in plugin
- * @author yole
  */
-public final class PyCharmCorePluginConfigurator {
-  PyCharmCorePluginConfigurator() {
+final class PyCharmCorePluginConfigurator implements ApplicationInitializedListener {
+  @Override
+  public void componentsInitialized() {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return;
+    }
+
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration")) {
       propertiesComponent.setValue("PyCharm.InitialConfiguration", "true");
