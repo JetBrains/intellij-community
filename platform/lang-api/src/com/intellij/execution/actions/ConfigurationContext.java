@@ -255,7 +255,7 @@ public class ConfigurationContext {
         configuration.getProducer(), configuration.getSettings(),
         psiElement);
     });
-    ConfigurationFromContext min = Collections.min(contexts, ConfigurationFromContext.COMPARATOR);
+    ConfigurationFromContext min = contexts.isEmpty() ? null : Collections.min(contexts, ConfigurationFromContext.COMPARATOR);
     if (min != null) {
       return min.getConfigurationSettings();
     }
