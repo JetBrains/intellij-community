@@ -273,7 +273,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
 
     Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if ((application.isUnitTestMode() || application.isHeadlessEnvironment()) && !Boolean.parseBoolean(System.getProperty("idea.force.dumb.queue.tasks", "false"))) {
       runTaskSynchronously(task);
     }
     else {

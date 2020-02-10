@@ -1990,6 +1990,7 @@
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
 
     <appStarter implementation="com.intellij.internal.DumpJdkIndexStarter"/>
+    <appStarter implementation="com.intellij.internal.DumpProjectIndexesStarter" />
     <applicationService serviceImplementation="com.intellij.internal.SharedIndexesLoader"/>
     <sharedIndexChunkLocator implementation="com.intellij.internal.SharedJdkIndexChunkLocator"/>
 

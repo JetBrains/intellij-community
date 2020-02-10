@@ -1037,6 +1037,7 @@
     <actionPromoter implementation="com.intellij.codeInsight.editorActions.TabActionsPromoter"/>
 
     <projectService serviceImplementation="com.intellij.util.indexing.hash.building.IndexesExporter"/>
+    <projectService serviceImplementation="com.intellij.util.indexing.hash.building.ProjectIndexesExporter"/>
 
     <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
 

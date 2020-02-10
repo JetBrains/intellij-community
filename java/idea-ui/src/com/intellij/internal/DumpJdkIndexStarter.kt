@@ -11,16 +11,12 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.IndexInfrastructureVersion
 import com.intellij.util.indexing.hash.building.IndexChunk
 import com.intellij.util.indexing.hash.building.IndexesExporter
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.text.nullize
-import org.tukaani.xz.LZMA2Options
-import org.tukaani.xz.XZOutputStream
-import java.io.File
 import kotlin.system.exitProcess
 
 class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
@@ -28,20 +24,14 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     println("Dump JDK indexes command:")
     val nameHintKey = "name-infix"
     val jdkHomeKey = "jdk-home"
-    val tempKey = "temp"
-    val outputKey = "output"
 
     println("")
     println("  [idea] ${commandName} ... (see keys below)")
-    println("       [--$jdkHomeKey=<home to JDK>]  --- path to JDK to index")
+    println("       --$jdkHomeKey=<home to JDK>    --- path to JDK to index")
     println("       [--$nameHintKey=<infix>]       --- name suffix to for the generated files")
     println("                                         a hint to the later indexes management")
-    println("       --$tempKey=<temp folder>       --- path where temp files can be created,")
-    println("                                         (!) it will be cleared by the tool")
-    println("       --$outputKey=<output path>     --- location of the indexes CDN image,")
-    println("                                         it will be updated with new data")
-    println("")
-    println("")
+    tempKey.usage()
+    outputKey.usage()
     println("")
 
     val nameHint = args.arg(nameHintKey, "").nullize(true)
@@ -51,7 +41,6 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     val projectDir = (tempDir / "project").recreateDir()
     val zipsDir = (tempDir / "zips").recreateDir()
     val indexZip = zipsDir / "index.zip"
-    val indexZipXZ = zipsDir / "index.zip.xz"
 
     LOG.info("Resolved jdkHome = $jdkHome")
     LOG.info("Resolved outputDir = $outputDir")
@@ -119,58 +108,13 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     LOG.info("Indexing...")
     val infraVersion = IndexesExporter.getInstance(project).exportIndexesChunk(indexChunk, indexZip.toPath())
 
-    LOG.info("Packing the indexes to XZ...")
-    xz(indexZip, indexZipXZ)
-
     val indexingTime = max(0L, System.currentTimeMillis() - indexingStartTime)
     LOG.info("Indexes build completed in ${StringUtil.formatDuration(indexingTime)}")
     LOG.info("JDK size          = ${StringUtil.formatFileSize(jdkHome.totalSize())}")
     LOG.info("JDK hash          = ${hash}")
-    LOG.info("Index.zip size    = ${StringUtil.formatFileSize(indexZip.totalSize())}")
-    LOG.info("Index.zip.xz size = ${StringUtil.formatFileSize(indexZipXZ.totalSize())}")
-    LOG.info("Generated index in $indexZip")
 
-    val indexMetadata = runAndCatchNotNull("extract JSON metadata from $indexZip"){
-      SharedIndexMetadata.writeIndexMetadata(indexName, indexKind, hash, infraVersion)
-    }
-
-    //we generate production layout here:
-    // <kind>
-    //   |
-    //   | <hash>
-    //       |
-    //       | index.json  // (contains the listing of all entries for a given hash)
-    //       |
-    //       | <entry>.ijx    // an entry that is listed
-    //       | <entry>.json   // that entry metadata (same as in the metadata.json)
-    //       | <entry>.sha256 // hashcode of the entry
-    //
-
-    val indexDir = (outputDir / indexKind / hash).apply { mkdirs() }
-    fun indexFile(nameSuffix: String) = indexDir / "${indexChunk.name}-${infraVersion.weakVersionHash}$nameSuffix"
-
-    FileUtil.copy(indexZipXZ, indexFile(".ijx.xz"))
-    FileUtil.writeToFile(indexFile(".json"), indexMetadata)
-    FileUtil.writeToFile(indexFile(".sha256"), indexZipXZ.sha256())
-
+    packIndexes(indexKind, indexName, hash, indexZip, infraVersion, outputDir)
     exitProcess(0)
   }
-
-  private fun xz(file: File, output: File) {
-    val bufferSize = 1024 * 1024
-    FileUtil.createParentDirs(output)
-
-    try {
-      output.outputStream().buffered(bufferSize).use { outputStream ->
-        XZOutputStream(outputStream, LZMA2Options()).use { output ->
-          file.inputStream().copyTo(output, bufferSize = bufferSize)
-        }
-      }
-    } catch (e: Exception) {
-      LOG.error("Failed to generate index.zip.xz package from $file to $output. ${e.message}", e)
-    }
-  }
-
-  private operator fun File.div(x: String) = File(this, x)
 }
 

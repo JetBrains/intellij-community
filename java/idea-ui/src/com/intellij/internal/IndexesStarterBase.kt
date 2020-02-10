@@ -5,9 +5,12 @@ import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.indexing.IndexInfrastructureVersion
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.isFile
 import com.intellij.util.io.sizeOrNull
+import org.tukaani.xz.LZMA2Options
+import org.tukaani.xz.XZOutputStream
 import java.io.File
 import java.nio.file.Files
 import kotlin.system.exitProcess
@@ -15,6 +18,20 @@ import kotlin.system.exitProcess
 abstract class IndexesStarterBase(
   private val commandName: String
 ) : ApplicationStarter {
+  protected data class CommandLineKey(val name: String, private val usage: CommandLineKey.() -> Unit) {
+    fun usage() = this.usage.invoke(this)
+  }
+
+  protected val tempKey = CommandLineKey("temp") {
+    println("       --$name=<temp folder>       --- path where temp files can be created,")
+    println("                                         (!) it will be cleared by the tool")
+  }
+
+  protected val outputKey = CommandLineKey("output") {
+    println("       --$name=<output path>     --- location of the indexes CDN image,")
+    println("                                         it will be updated with new data")
+  }
+
   final override fun getCommandName() = commandName
 
   final override fun main(args: Array<out String>) {
@@ -27,6 +44,61 @@ abstract class IndexesStarterBase(
   }
 
   protected abstract fun mainImpl(args: Array<out String>)
+
+  protected fun packIndexes(indexKind: String,
+                            indexName: String,
+                            hash: String,
+                            indexZip: File,
+                            infraVersion: IndexInfrastructureVersion,
+                            outputDir: File) {
+    LOG.info("Packing the indexes to XZ...")
+    val indexZipXZ = File(indexZip.path + ".xz")
+    xz(indexZip, indexZipXZ)
+
+    LOG.info("Index.zip size    = ${StringUtil.formatFileSize(indexZip.totalSize())}")
+    LOG.info("Index.zip.xz size = ${StringUtil.formatFileSize(indexZipXZ.totalSize())}")
+    LOG.info("Generated index in $indexZip")
+
+    val indexMetadata = runAndCatchNotNull("extract JSON metadata from $indexZip") {
+      SharedIndexMetadata.writeIndexMetadata(indexName, indexKind, hash, infraVersion)
+    }
+
+    //we generate production layout here:
+    // <kind>
+    //   |
+    //   | <hash>
+    //       |
+    //       | index.json  // (contains the listing of all entries for a given hash)
+    //       |
+    //       | <entry>.ijx    // an entry that is listed
+    //       | <entry>.json   // that entry metadata (same as in the metadata.json)
+    //       | <entry>.sha256 // hashcode of the entry
+    //
+
+    val indexDir = (outputDir / indexKind / hash).apply { mkdirs() }
+    fun indexFile(nameSuffix: String) = indexDir / "${indexName}-${infraVersion.weakVersionHash}$nameSuffix"
+
+    FileUtil.copy(indexZipXZ, indexFile(".ijx.xz"))
+    FileUtil.writeToFile(indexFile(".json"), indexMetadata)
+    FileUtil.writeToFile(indexFile(".sha256"), indexZipXZ.sha256())
+  }
+
+  private fun xz(file: File, output: File) {
+    val bufferSize = 1024 * 1024
+    FileUtil.createParentDirs(output)
+
+    try {
+      output.outputStream().buffered(bufferSize).use { outputStream ->
+        XZOutputStream(outputStream, LZMA2Options()).use { output ->
+          file.inputStream().copyTo(output, bufferSize = bufferSize)
+        }
+      }
+    } catch (e: Exception) {
+      LOG.error("Failed to generate index.zip.xz package from $file to $output. ${e.message}", e)
+    }
+  }
+
+  protected operator fun File.div(x: String) = File(this, x)
 
   protected object LOG {
     fun info(message: String) {
@@ -41,6 +113,7 @@ abstract class IndexesStarterBase(
     }
   }
 
+  protected fun Array<out String>.arg(arg: CommandLineKey, default: String? = null) = arg(arg.name, default)
   protected fun Array<out String>.arg(arg: String, default: String? = null): String {
     val key = "--$arg="
     val values = filter { it.startsWith(key) }.map { it.removePrefix(key) }
@@ -52,7 +125,8 @@ abstract class IndexesStarterBase(
     return values.first()
   }
 
-  protected fun Array<out String>.argFile(arg: String, default: String? = null) = File(arg(arg, default)).canonicalFile
+  protected fun Array<out String>.argFile(arg: CommandLineKey, default: String? = null) = argFile(arg.name, default)
+  protected fun Array<out String>.argFile(arg: String, default: String? = null) = File(arg(arg, default)).canonicalFile!!
 
   protected fun <Y: Any> runAndCatchNotNull(errorMessage: String, action: () -> Y?) : Y {
     try {
