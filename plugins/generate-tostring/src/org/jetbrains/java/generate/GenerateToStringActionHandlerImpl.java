@@ -16,9 +16,11 @@
 package org.jetbrains.java.generate;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -111,7 +113,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 }
             };
         //noinspection DialogTitleCapitalization
-        chooser.setTitle("Generate toString()");
+        chooser.setTitle(CodeInsightBundle.message("generate.tostring.title"));
 
         chooser.setCopyJavadocVisible(false);
         chooser.selectElements(getPreselection(clazz, dialogMembers));
@@ -212,7 +214,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             final Collection<TemplateResource> templates = ToStringTemplatesManager.getInstance().getAllTemplates();
             final TemplateResource[] all = templates.toArray(new TemplateResource[0]);
 
-            final JButton settingsButton = new JButton("Settings");
+            final JButton settingsButton = new JButton(IdeBundle.message("button.text.settings"));
             settingsButton.setMnemonic(KeyEvent.VK_S);
 
             comboBox = new ComboBox<>(all);
@@ -243,7 +245,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
 
                         @Override
                         public String getDisplayName() {
-                            return "toString() Generation Settings";
+                            return CodeInsightBundle.message("generate.tostring.tab.title");
                         }
 
                         @Override
@@ -271,7 +273,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
 
             comboBox.setSelectedItem(ToStringTemplatesManager.getInstance().getDefaultTemplate());
 
-            final JLabel templatesLabel = new JLabel("Template: ");
+            final JLabel templatesLabel = new JLabel(CodeInsightBundle.message("generate.tostring.template.label"));
             templatesLabel.setDisplayedMnemonic('T');
             templatesLabel.setLabelFor(comboBox);
 
