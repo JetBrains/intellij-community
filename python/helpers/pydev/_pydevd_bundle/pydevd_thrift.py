@@ -353,13 +353,13 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
         value = pandas_to_str(v, typeName, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
     debug_value.value = value
 
-    if is_numeric_container(type_qualifier, typeName, v):
-        debug_value.shape = str(v.shape)
-    elif hasattr(v, '__len__') and not is_string(v):
-        try:
+    try:
+        if is_numeric_container(type_qualifier, typeName, v):
+            debug_value.shape = str(v.shape)
+        elif hasattr(v, '__len__') and not is_string(v):
             debug_value.shape = str(len(v))
-        except:
-            pass
+    except:
+        pass
 
     if is_exception_on_eval:
         debug_value.isErrorOnEval = True
