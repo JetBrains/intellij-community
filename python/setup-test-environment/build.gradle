@@ -147,21 +147,6 @@ envs {
   if (Os.isFamily(Os.FAMILY_UNIX)) {
     createPython("qt_env", python37version, ["pyqt5==5.12", "PySide2==5.12.1"], "qt", true)
   }
-
-  if (Os.isFamily(Os.FAMILY_WINDOWS)) { // Only windows needs IronPython
-
-    ironpython "ironpython"
-
-    project.tasks.create("Misc for ironpython") { // "Misc" will be launched by "build"
-      shouldRunAfter 'build_envs'
-
-      doLast {
-        def file = Paths.get(bootstrapDirectory.toString(), "ironpython", "tags.txt").toFile()
-        file.createNewFile()
-        file.write("iron")
-      }
-    }
-  }
 }
 
 /**
