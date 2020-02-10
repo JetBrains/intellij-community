@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
@@ -27,6 +26,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
+import com.intellij.projectModel.ProjectModelBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.ApiStatus;
@@ -49,19 +49,19 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
     @NotNull
     @Override
     public String getDisplayName(boolean plural) {
-      return ProjectBundle.message("module.library.display.name", plural ? 2 : 1);
+      return ProjectModelBundle.message("module.library.display.name", plural ? 2 : 1);
     }
 
     @NotNull
     @Override
     public String getDescription() {
-      return ProjectBundle.message("libraries.node.text.module");
+      return ProjectModelBundle.message("libraries.node.text.module");
     }
 
     @NotNull
     @Override
     public String getLibraryTableEditorTitle() {
-      return ProjectBundle.message("library.configure.module.title");
+      return ProjectModelBundle.message("library.configure.module.title");
     }
   };
 

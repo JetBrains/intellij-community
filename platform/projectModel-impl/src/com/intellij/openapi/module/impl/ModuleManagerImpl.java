@@ -18,7 +18,6 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
@@ -32,6 +31,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.projectModel.ProjectModelBundle;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -45,7 +45,10 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -354,7 +357,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   }
 
   private void reportError(@NotNull List<? super ModuleLoadingErrorDescription> errors, @NotNull ModulePath modulePath, @NotNull Exception e) {
-    errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath, this));
+    errors.add(new ModuleLoadingErrorDescription(ProjectModelBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath, this));
   }
 
   public int getModulePathsCount() { return myModulePathsToLoad == null ? 0 : myModulePathsToLoad.size(); }
@@ -731,7 +734,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       }
 
       if (oldModule != null) {
-        throw new ModuleWithNameAlreadyExists(ProjectBundle.message("module.already.exists.error", newName), newName);
+        throw new ModuleWithNameAlreadyExists(ProjectModelBundle.message("module.already.exists.error", newName), newName);
       }
     }
 
@@ -839,7 +842,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
         throw e;
       }
       catch (IOException e) {
-        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtilRt.toSystemDependentName(resolvedPath), e.getMessage()), e);
+        throw new IOException(ProjectModelBundle.message("module.corrupted.file.error", FileUtilRt.toSystemDependentName(resolvedPath), e.getMessage()), e);
       }
     }
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.ArrayUtil
 import com.intellij.workspace.api.LibraryId
 import com.intellij.workspace.api.LibraryTableId
@@ -332,7 +333,7 @@ internal class ModuleSourceOrderEntryViaTypedEntity(module: LegacyBridgeModule, 
 
   override fun getUrls(rootType: OrderRootType): Array<out String> = if (rootType == OrderRootType.SOURCES) rootModel.sourceRootUrls else ArrayUtil.EMPTY_STRING_ARRAY
 
-  override fun getPresentableName(): String = ProjectBundle.message("project.root.module.source")
+  override fun getPresentableName(): String = ProjectModelBundle.message("project.root.module.source")
 
   override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? =
     policy.visitModuleSourceOrderEntry(this, initialValue)

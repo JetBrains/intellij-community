@@ -11,6 +11,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
@@ -208,7 +209,7 @@ internal class LegacyBridgeModifiableModuleModel(
     }
 
     if (oldModule != null) {
-      throw ModuleWithNameAlreadyExists(ProjectBundle.message("module.already.exists.error", newName), newName)
+      throw ModuleWithNameAlreadyExists(ProjectModelBundle.message("module.already.exists.error", newName), newName)
     }
   }
 

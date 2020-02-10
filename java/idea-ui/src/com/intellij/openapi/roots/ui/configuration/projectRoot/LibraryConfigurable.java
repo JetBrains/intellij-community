@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryRootsCom
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.projectModel.ProjectModelBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -127,7 +128,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   public String getBannerSlogan() {
     final LibraryTable libraryTable = myLibrary.getTable();
     String libraryType = libraryTable == null
-                         ? ProjectBundle.message("module.library.display.name", 1)
+                         ? ProjectModelBundle.message("module.library.display.name", 1)
                          : libraryTable.getPresentation().getDisplayName(false);
     return ProjectBundle.message("project.roots.library.banner.text", getDisplayName(), libraryType);
   }

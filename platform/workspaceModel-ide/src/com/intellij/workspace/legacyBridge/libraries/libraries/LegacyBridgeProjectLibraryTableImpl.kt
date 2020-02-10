@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
+import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ConcurrentMultiMap
 import com.intellij.workspace.api.*
@@ -245,11 +246,11 @@ internal class LegacyBridgeProjectLibraryTableImpl(
       }
 
     internal val PROJECT_LIBRARY_TABLE_PRESENTATION = object : LibraryTablePresentation() {
-      override fun getDisplayName(plural: Boolean) = ProjectBundle.message("project.library.display.name", if (plural) 2 else 1)
+      override fun getDisplayName(plural: Boolean) = ProjectModelBundle.message("project.library.display.name", if (plural) 2 else 1)
 
-      override fun getDescription() = ProjectBundle.message("libraries.node.text.project")
+      override fun getDescription() = ProjectModelBundle.message("libraries.node.text.project")
 
-      override fun getLibraryTableEditorTitle() = ProjectBundle.message("library.configure.project.title")
+      override fun getLibraryTableEditorTitle() = ProjectModelBundle.message("library.configure.project.title")
     }
   }
 }
