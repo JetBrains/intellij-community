@@ -133,11 +133,6 @@ public class JBPopupMenu extends JPopupMenu {
         myScrollDirection = -1;
       }
       else {
-        myScrollDirection = 0;
-      }
-      if (myScrollDirection == 0) {
-        myTarget.revalidate();
-        myTarget.repaint();
         return;
       }
 
@@ -223,7 +218,9 @@ public class JBPopupMenu extends JPopupMenu {
     @Override
     public Dimension preferredLayoutSize(Container target) {
       Dimension dimension = super.preferredLayoutSize(target);
-      dimension.height = Math.min(getMaxHeight(), dimension.height);
+      int maxHeight = getMaxHeight();
+      switchTimer(dimension.height > maxHeight);
+      dimension.height = Math.min(maxHeight, dimension.height);
       return dimension;
     }
   }
