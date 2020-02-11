@@ -4,6 +4,9 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "intellij.platform.core",
     srcs = ["src"],
+    bundle_data = [
+        "//tools/idea:platform-build-info",  # Used by BuildNumber#currentVersion.
+    ],
     iml_files = ["intellij.platform.core.iml"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

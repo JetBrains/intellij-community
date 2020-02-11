@@ -661,6 +661,9 @@ iml_module(
         "plugins/IntentionPowerPak/src",
         "plugins/generate-tostring/src",
     ],
+    bundle_data = [
+        "//tools/idea/java/jdkAnnotations",  # Used by JavaSdkImpl.
+    ],
     iml_files = ["java/java-impl/intellij.java.impl.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     # do not sort: must match IML order
