@@ -1,5 +1,6 @@
 package com.intellij.coverage;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -66,7 +67,7 @@ public interface CoverageSuite extends JDOMExternalizable {
     final String fileName = getCoverageDataFileName();
     if (!FileUtil.isAncestor(PathManager.getSystemPath(), fileName, false)) {
       String message = "Would you like to delete file \'" + fileName + "\' " + "on disk?";
-      if (Messages.showYesNoDialog(getProject(), message, "Delete File", Messages.getWarningIcon()) != Messages.YES) {
+      if (Messages.showYesNoDialog(getProject(), message, ExecutionBundle.message("delete.file"), Messages.getWarningIcon()) != Messages.YES) {
         return;
       }
     }

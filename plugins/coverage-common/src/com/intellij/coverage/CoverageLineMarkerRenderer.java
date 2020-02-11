@@ -477,6 +477,6 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
   @NotNull
   @Override
   public String getAccessibleName() {
-    return "marker: code coverage";
+    return ExecutionBundle.message("marker.code.coverage");
   }
 }

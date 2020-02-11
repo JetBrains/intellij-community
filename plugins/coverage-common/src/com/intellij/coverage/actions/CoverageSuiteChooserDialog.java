@@ -63,7 +63,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         });
       }
     };
-    mySuitesTree.getEmptyText().appendText("No coverage suites configured.");
+    mySuitesTree.getEmptyText().appendText(ExecutionBundle.message("no.coverage.suites.configured"));
     mySuitesTree.setRootVisible(false);
     mySuitesTree.setShowsRootHandles(false);
     TreeUtil.installActions(mySuitesTree);

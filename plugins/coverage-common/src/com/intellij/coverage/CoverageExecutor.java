@@ -52,13 +52,13 @@ public class CoverageExecutor extends Executor {
 
   @Override
   public String getDescription() {
-    return "Run selected configuration with coverage enabled";
+    return ExecutionBundle.message("run.selected.configuration.with.coverage.enabled");
   }
 
   @Override
   @NotNull
   public String getActionName() {
-    return "Cover";
+    return ExecutionBundle.message("action.name.cover");
   }
 
   @Override
