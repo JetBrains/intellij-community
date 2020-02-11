@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
@@ -60,7 +59,7 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
     @JvmStatic
     fun doUpdate(event: AnActionEvent): OpenInBrowserRequest? {
       val request = createRequest(event.dataContext, isForceFileUrlIfNoUrlProvider = false)
-      val applicable = request != null && WebBrowserServiceImpl.getProvider(request) != null
+      val applicable = request != null && WebBrowserServiceImpl.getProviders(request).findAny().isPresent
       event.presentation.isEnabledAndVisible = applicable
       return if (applicable) request else  null
     }
