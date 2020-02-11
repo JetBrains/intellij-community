@@ -563,6 +563,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   @NotNull
   static InstallPluginInfo finishInstall(@NotNull IdeaPluginDescriptor descriptor) {
     InstallPluginInfo info = myInstallingInfos.remove(descriptor.getPluginId());
+    info.close();
     myInstallingWithUpdatesPlugins.remove(descriptor);
     if (info.install) {
       myInstallingPlugins.remove(descriptor);

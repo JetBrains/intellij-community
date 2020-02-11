@@ -20,6 +20,7 @@ public class InstallPluginInfo {
   public final boolean install;
   public final IdeaPluginDescriptor updateDescriptor;
   private TaskInfo myStatusBarTaskInfo;
+  private boolean myClosed;
 
   /**
    * Descriptor that has been loaded synchronously.
@@ -51,6 +52,9 @@ public class InstallPluginInfo {
   }
 
   public synchronized void finish(boolean success, boolean cancel, boolean showErrors, boolean restartRequired) {
+    if (myClosed) {
+      return;
+    }
     if (myPluginModel == null) {
       MyPluginModel.finishInstall(myDescriptor);
       closeStatusBarIndicator();
@@ -68,6 +72,10 @@ public class InstallPluginInfo {
       indicator.finish(myStatusBarTaskInfo);
       myStatusBarTaskInfo = null;
     }
+  }
+
+  public void close() {
+    myClosed = true;
   }
 
   public IdeaPluginDescriptor getDescriptor() {
