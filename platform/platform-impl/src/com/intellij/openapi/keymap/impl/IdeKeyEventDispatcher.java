@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.diagnostic.EventsWatcher;
@@ -790,10 +790,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return;
     }
 
+    ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+    if (actionManager == null) {
+      return;
+    }
+
     KeymapManager keymapManager = KeymapManager.getInstance();
     Keymap keymap = keymapManager == null ? null : keymapManager.getActiveKeymap();
     String[] actionIds = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(shortcut);
-    ActionManager actionManager = ActionManager.getInstance();
     for (String actionId : actionIds) {
       AnAction action = actionManager.getAction(actionId);
       if (action != null && (!myContext.isModalContext() || action.isEnabledInModalContext())) {
