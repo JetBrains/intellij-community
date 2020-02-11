@@ -54,13 +54,15 @@ final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   }
 
   @Override
+  @NotNull
   Collection<String> getConflicts(KeyboardShortcut shortcut, String actionId, Keymap keymap) {
-    final String sysAct = getSystemShortcutAction(shortcut.getFirstKeyStroke());
-    final Collection<String> keymapConflicts = keymap.getConflicts(actionId, shortcut).keySet();
-    if (sysAct == null)
+    String sysAct = getSystemShortcutAction(shortcut.getFirstKeyStroke());
+    Collection<String> keymapConflicts = keymap.getConflicts(actionId, shortcut).keySet();
+    if (sysAct == null) {
       return keymapConflicts;
+    }
     if (keymapConflicts == null || keymapConflicts.isEmpty()) {
-      return Arrays.asList(sysAct);
+      return Collections.singletonList(sysAct);
     }
 
     List<String> result = new ArrayList<>();

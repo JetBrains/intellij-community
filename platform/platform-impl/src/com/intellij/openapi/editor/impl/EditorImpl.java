@@ -4097,9 +4097,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (keymapManager == null) return false;
     Keymap keymap = keymapManager.getActiveKeymap();
     MouseShortcut mouseShortcut = KeymapUtil.createMouseShortcut(e);
-    String[] mappedActions = keymap.getActionIds(mouseShortcut);
-    if (!ArrayUtil.contains(actionId, mappedActions)) return false;
-    if (mappedActions.length < 2 || e.getID() == MouseEvent.MOUSE_DRAGGED /* 'normal' actions are not invoked on mouse drag */) return true;
+    List<String> mappedActions = keymap.getActionIds(mouseShortcut);
+    if (!mappedActions.contains(actionId)) {
+      return false;
+    }
+
+    if (mappedActions.size() < 2 || e.getID() == MouseEvent.MOUSE_DRAGGED /* 'normal' actions are not invoked on mouse drag */) {
+      return true;
+    }
+
     ActionManager actionManager = ActionManager.getInstance();
     for (String mappedActionId : mappedActions) {
       if (actionId.equals(mappedActionId)) continue;

@@ -553,8 +553,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       int result = showConfirmationDialog(parent);
       if (result == Messages.YES) {
         Keymap keymap = accessor.keymap();
-        String[] actionIds = keymap.getActionIds(mouseShortcut);
-        for (String id : actionIds) {
+        for (String id : keymap.getActionIds(mouseShortcut)) {
           keymap.removeShortcut(id, mouseShortcut);
         }
       }

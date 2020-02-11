@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -57,7 +58,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
     return myConflictsPanel.isVisible();
   }
 
-  abstract Collection<String> getConflicts(T shortcut, String actionId, Keymap keymap);
+  abstract @NotNull Collection<String> getConflicts(T shortcut, String actionId, Keymap keymap);
 
   abstract T toShortcut(Object value);
 

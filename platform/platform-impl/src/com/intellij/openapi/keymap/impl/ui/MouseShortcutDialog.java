@@ -8,14 +8,11 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.util.Arrays;
+import javax.swing.*;
+import java.awt.*;
 import java.util.Collection;
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
 
 /**
  * @author Vladimir Kondratyev
@@ -60,7 +57,8 @@ final class MouseShortcutDialog extends ShortcutDialog<MouseShortcut> {
   }
 
   @Override
+  @NotNull
   Collection<String> getConflicts(MouseShortcut shortcut, String actionId, Keymap keymap) {
-    return Arrays.asList(keymap.getActionIds(shortcut));
+    return keymap.getActionIds(shortcut);
   }
 }

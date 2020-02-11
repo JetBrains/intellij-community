@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
@@ -27,7 +27,6 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdve
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.KeyStrokeAdapter
-import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
@@ -333,7 +332,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return result
   }
 
-  private fun getActionIds(shortcut: KeyboardModifierGestureShortcut): Array<String> {
+  private fun getActionIds(shortcut: KeyboardModifierGestureShortcut): List<String> {
     // first, get keystrokes from own map
     val list = SmartList<String>()
     for ((key, value) in gestureToListOfIds) {
@@ -353,10 +352,13 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         }
       }
     }
-    return sortInRegistrationOrder(list)
+    sortInRegistrationOrder(list)
+    return list
   }
 
-  override fun getActionIds(firstKeyStroke: KeyStroke): Array<String> = getActionIds(firstKeyStroke, { it.keystrokeToIds }, KeymapImpl::convertKeyStroke)
+  override fun getActionIds(firstKeyStroke: KeyStroke): Array<String> {
+    return ArrayUtilRt.toStringArray(getActionIds(firstKeyStroke, { it.keystrokeToIds }, KeymapImpl::convertKeyStroke))
+  }
 
   override fun getActionIds(firstKeyStroke: KeyStroke, secondKeyStroke: KeyStroke?): Array<String> {
     val ids = getActionIds(firstKeyStroke)
@@ -386,9 +388,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         val second = shortcut.secondKeyStroke
         if (second == null) getActionIds(first) else getActionIds(first, second)
       }
-      is MouseShortcut -> getActionIds(shortcut)
-      is KeyboardModifierGestureShortcut -> getActionIds(shortcut)
-      else -> ArrayUtil.EMPTY_STRING_ARRAY
+      is MouseShortcut -> ArrayUtilRt.toStringArray(getActionIds(shortcut))
+      is KeyboardModifierGestureShortcut -> ArrayUtilRt.toStringArray(getActionIds(shortcut))
+      else -> ArrayUtilRt.EMPTY_STRING_ARRAY
     }
   }
 
@@ -408,12 +410,14 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     while (true)
   }
 
-  override fun getActionIds(shortcut: MouseShortcut): Array<String> = getActionIds(shortcut, { it.mouseShortcutToActionIds }, KeymapImpl::convertMouseShortcut)
+  override fun getActionIds(shortcut: MouseShortcut): List<String> {
+    return getActionIds(shortcut, { it.mouseShortcutToActionIds }, KeymapImpl::convertMouseShortcut)
+  }
 
-  private fun <T> getActionIds(shortcut: T, shortcutToActionIds: (keymap: KeymapImpl) -> Map<T, MutableList<String>>, convertShortcut: (keymap: KeymapImpl, shortcut: T) -> T): Array<String> {
+  private fun <T> getActionIds(shortcut: T, shortcutToActionIds: (keymap: KeymapImpl) -> Map<T, MutableList<String>>, convertShortcut: (keymap: KeymapImpl, shortcut: T) -> T): List<String> {
     // first, get keystrokes from own map
     var list = shortcutToActionIds(this).get(shortcut)
-    val parentIds = parent?.getActionIds(convertShortcut(this, shortcut), shortcutToActionIds, convertShortcut) ?: ArrayUtilRt.EMPTY_STRING_ARRAY
+    val parentIds = parent?.getActionIds(convertShortcut(this, shortcut), shortcutToActionIds, convertShortcut) ?: emptyList()
     var isOriginalListInstance = list != null
     for (id in parentIds) {
       // add actions from parent keymap only if they are absent in this keymap
@@ -434,7 +438,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         list.add(id)
       }
     }
-    return sortInRegistrationOrder(list)
+    sortInRegistrationOrder(list ?: return emptyList())
+    return list
   }
 
   fun isActionBound(actionId: String): Boolean = keymapManager.boundActions.contains(actionId)
@@ -706,10 +711,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   override fun hashCode(): Int = name.hashCode()
 }
 
-private fun sortInRegistrationOrder(ids: List<String>?): Array<String> {
-  val array = ArrayUtilRt.toStringArray(ids)
-  array.sortWith(ActionManagerEx.getInstanceEx().registrationOrderComparator)
-  return array
+private fun sortInRegistrationOrder(ids: MutableList<String>) {
+  ids.sortWith(ActionManagerEx.getInstanceEx().registrationOrderComparator)
 }
 
 // compare two lists in any order
