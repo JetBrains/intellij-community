@@ -217,7 +217,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       nameId.replace(factory.createIdentifier(newName));
     }
     PsiTypeElement element = method.getReturnTypeElement();
-    if (element != null && !element.textMatches(type)) {
+    if (element != null && !element.getType().equalsToText(type)) {
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(element.replace(factory.createTypeElementFromText(type, method)));
     }
   }

@@ -19,6 +19,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
@@ -199,7 +200,8 @@ class JavaChangeSignatureUsageSearcher {
               if (nameChanged) {
                 addParameterUsages(explicitGetter, result, info);
               }
-              if (!(explicitGetter instanceof SyntheticElement) && (nameChanged || !parameter.getType().equalsToText(info.getTypeText()))) {
+              if (!(explicitGetter instanceof LightRecordMethod) && 
+                  (nameChanged || !parameter.getType().equalsToText(info.getTypeText()))) {
                 result.add(new RecordGetterDeclarationUsageInfo(explicitGetter, info.getName(), info.getTypeText()));
               }
             }
