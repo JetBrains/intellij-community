@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.lang.JavaVersion
 import java.io.File
 import java.io.IOException
 import java.net.URL
@@ -206,15 +205,9 @@ object UpdateInstaller {
 
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
 
-  private fun getJdkSuffix(): String {
-    var jreHome = File(PathManager.getHomePath(), "jbr")
-    if (!jreHome.exists()) jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "jdk" else "jre64")
-    if (!jreHome.exists()) return "-no-jbr"
-    val releaseFile = File(jreHome, if (SystemInfo.isMac) "Contents/Home/release" else "release")
-    val version = try {
-      releaseFile.readLines().first { it.startsWith("JAVA_VERSION=") }.let { JavaVersion.parse(it) }.feature
-    }
-    catch (e: Exception) { 0 }
-    return if (version == 11) "-jbr11" else ""
+  private fun getJdkSuffix(): String = when {
+    !SystemInfo.isMac && Files.isDirectory(Paths.get(PathManager.getHomePath(), "jre32")) -> "-jbr11-x86"
+    Files.isDirectory(Paths.get(PathManager.getHomePath(), "jbr")) -> "-jbr11"
+    else -> "-no-jbr"
   }
 }
