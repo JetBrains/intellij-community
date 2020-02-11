@@ -13,12 +13,16 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
     myDefaultHint = InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix");
     myFixture.addClass("package org.slf4j; public interface Logger { void info(String format); }");
     myFixture.addClass("package org.slf4j; public class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}");
+    myFixture.addClass("package org.apache.logging.log4j; public interface LogBuilder { void log(String format); LogBuilder withLocation(); }");
+    myFixture.addClass("package org.apache.logging.log4j; public interface Logger { LogBuilder atInfo(); }");
+    myFixture.addClass("package org.apache.logging.log4j; public class LogManager { public static Logger getLogger(Class clazz) { return null; }}");
     myFixture.enableInspections(new StringConcatenationArgumentToLogCallInspection());
   }
 
   public void testUseOfConstant() { doTest(); }
   public void testCharLiteral() { doTest(); }
   public void testQuoteCharLiteral() { doTest(); }
+  public void testLog4JLogBuilder() { doTest(); }
 
   @Override
   protected String getRelativePath() {

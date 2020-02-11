@@ -280,7 +280,8 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       }
       final PsiClass containingClass = method.getContainingClass();
       if (!InheritanceUtil.isInheritor(containingClass, "org.slf4j.Logger") &&
-          !InheritanceUtil.isInheritor(containingClass, "org.apache.logging.log4j.Logger")) {
+          !InheritanceUtil.isInheritor(containingClass, "org.apache.logging.log4j.Logger") &&
+          !InheritanceUtil.isInheritor(containingClass, "org.apache.logging.log4j.LogBuilder")) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
