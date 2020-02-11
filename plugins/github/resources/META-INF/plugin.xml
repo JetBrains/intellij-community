@@ -97,6 +97,7 @@
       <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
+      <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="last"/>
     </action>
     <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
       <add-to-group group-id="EditorPopupMenu"/>

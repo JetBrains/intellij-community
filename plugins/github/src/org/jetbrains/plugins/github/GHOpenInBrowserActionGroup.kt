@@ -76,11 +76,10 @@ open class GHOpenInBrowserActionGroup
   }
 
   private fun getDataFromHistory(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
-    val filePath = dataContext.getData(VcsDataKeys.FILE_PATH) ?: return null
     val fileRevision = dataContext.getData(VcsDataKeys.VCS_FILE_REVISION) ?: return null
     if (fileRevision !is GitFileRevision) return null
 
-    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath)
+    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(fileRevision.path)
     if (repository == null) return null
 
     val accessibleRepositories = service<GithubGitHelper>().getPossibleRepositories(repository)
