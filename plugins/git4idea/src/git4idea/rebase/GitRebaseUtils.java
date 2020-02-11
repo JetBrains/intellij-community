@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.dvcs.repo.Repository;
@@ -24,9 +24,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class GitRebaseUtils {
   public static final String CONTINUE_PROGRESS_TITLE = "Continue Rebase Process" + ELLIPSIS;
@@ -162,7 +162,7 @@ public class GitRebaseUtils {
 
   @Nullable
   public static File getRebaseDir(@NotNull Project project, @NotNull VirtualFile root) {
-    GitRepository repository = assertNotNull(GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root));
+    GitRepository repository = Objects.requireNonNull(GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root));
     File f = repository.getRepositoryFiles().getRebaseApplyDir();
     if (f.exists()) {
       return f;

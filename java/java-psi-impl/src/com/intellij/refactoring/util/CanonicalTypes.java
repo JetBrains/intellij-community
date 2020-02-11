@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author dsl
@@ -313,7 +314,7 @@ public class CanonicalTypes {
           PsiType substitute = substitutor.substitute(typeParameter);
           substitutionMap.put(typeParameter.getName(), substitute != null ? substitute.accept(this) : null);
         }
-        String qualifiedName = ObjectUtils.notNull(aClass.getQualifiedName(), ObjectUtils.assertNotNull(aClass.getName()));
+        String qualifiedName = ObjectUtils.notNull(aClass.getQualifiedName(), Objects.requireNonNull(aClass.getName()));
         return new ClassType(type, qualifiedName, substitutionMap);
       }
     }

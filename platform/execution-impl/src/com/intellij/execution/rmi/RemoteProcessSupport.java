@@ -250,7 +250,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   private EntryPoint acquire(final RunningInfo port) throws Exception {
     EntryPoint result = RemoteUtil.executeWithClassLoader(() -> {
       Registry registry = LocateRegistry.getRegistry(getLocalHost(), port.port);
-      Remote remote = ObjectUtils.assertNotNull(registry.lookup(port.name));
+      Remote remote = Objects.requireNonNull(registry.lookup(port.name));
 
       if (myValueClass.isInstance(remote)) {
         EntryPoint entryPoint = myValueClass.cast(remote);

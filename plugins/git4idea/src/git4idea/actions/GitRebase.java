@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import git4idea.rebase.GitRebaseDialog;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.dvcs.DvcsUtil.sortRepositories;
 import static git4idea.GitUtil.*;
@@ -53,7 +53,7 @@ public class GitRebase extends DumbAwareAction {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           GitRepository selectedRepository =
-            ObjectUtils.assertNotNull(GitRepositoryManager.getInstance(project).getRepositoryForRoot(dialog.gitRoot()));
+            Objects.requireNonNull(GitRepositoryManager.getInstance(project).getRepositoryForRoot(dialog.gitRoot()));
           GitRebaseUtils.rebase(project, singletonList(selectedRepository), dialog.getSelectedParams(), indicator);
         }
       });

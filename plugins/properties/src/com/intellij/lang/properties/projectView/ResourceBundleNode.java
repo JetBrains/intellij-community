@@ -188,7 +188,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   @NotNull
   @Override
   public ResourceBundle getResourceBundle() {
-    return ObjectUtils.notNull(getValue());
+    return Objects.requireNonNull(getValue());
   }
 
   @Nullable

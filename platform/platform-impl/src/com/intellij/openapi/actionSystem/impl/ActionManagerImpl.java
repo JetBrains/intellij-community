@@ -50,7 +50,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -1246,12 +1245,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           if (customActionSchema != null) {
             customActionSchema.invalidateCustomizedActionGroup(groupId);
           }
-          DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
+          DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)getActionOrStub(groupId));
           group.remove(actionToRemove, actionId);
           if (!(group instanceof ActionGroupStub)) {
             //group can be used as a stub in other actions
             for (String parentOfGroup : myId2GroupId.get(groupId)) {
-              DefaultActionGroup parentOfGroupAction = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(parentOfGroup));
+              DefaultActionGroup parentOfGroupAction = Objects.requireNonNull((DefaultActionGroup)getActionOrStub(parentOfGroup));
               for (AnAction stub : parentOfGroupAction.getChildActionsOrStubs()) {
                 if (stub instanceof ActionGroupStub && ((ActionGroupStub)stub).getId() == groupId) {
                   ((ActionGroupStub)stub).remove(actionToRemove, actionId);

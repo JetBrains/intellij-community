@@ -83,7 +83,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHEL
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindow;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
@@ -884,7 +883,7 @@ public class ShelvedChangesViewManager implements Disposable {
         }
 
         DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
-        ShelvedBinaryFile binaryFile = assertNotNull(provider.getBinaryFile());
+        ShelvedBinaryFile binaryFile = requireNonNull(provider.getBinaryFile());
         if (binaryFile.AFTER_PATH == null) {
           throw new DiffRequestProducerException("Content for '" + getRequestName(provider) + "' was removed");
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -35,8 +35,6 @@ import org.zmlx.hg4idea.util.HgVersion;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class HgHistoryUtil {
 
@@ -236,7 +234,7 @@ public class HgHistoryUtil {
           secondPath = null;
           break;
       }
-      result.add(new VcsFileStatusInfo(type, notNull(firstPath), secondPath));
+      result.add(new VcsFileStatusInfo(type, Objects.requireNonNull(firstPath), secondPath));
     }
     return result;
   }

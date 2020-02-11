@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.details.commit;
 
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsRef;
@@ -17,10 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.vcs.log.ui.details.commit.CommitDetailsPanelKt.getCommitDetailsBackground;
 
@@ -81,7 +78,7 @@ public class ReferencesPanel extends JPanel {
     }
     if (getHiddenReferencesSize() > 0) {
       JBLabel label = createRestLabel(getHiddenReferencesSize());
-      addWrapped(label, ObjectUtils.assertNotNull(firstLabel));
+      addWrapped(label, Objects.requireNonNull(firstLabel));
     }
     setVisible(!myGroupedVisibleReferences.isEmpty());
     revalidate();

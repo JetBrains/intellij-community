@@ -69,7 +69,6 @@ import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
 import static com.intellij.vcs.commit.ToggleAmendCommitOption.isAmendCommitOptionSupported;
@@ -398,7 +397,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     List<FilePath> pathsToDelete = new ArrayList<>();
     for (CommitChange change : partialChanges) {
       if (change.isMove()) {
-        pathsToDelete.add(assertNotNull(change.beforePath));
+        pathsToDelete.add(Objects.requireNonNull(change.beforePath));
       }
     }
     LOG.debug(String.format("Updating index for partial changes: removing: %s", pathsToDelete));
@@ -409,7 +408,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     for (int i = 0; i < partialChanges.size(); i++) {
       CommitChange change = partialChanges.get(i);
 
-      FilePath path = assertNotNull(change.afterPath);
+      FilePath path = Objects.requireNonNull(change.afterPath);
       PartialCommitHelper helper = helpers.get(i);
       VirtualFile file = change.virtualFile;
       if (file == null) throw new VcsException("Can't find file: " + path.getPath());
@@ -516,8 +515,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   private static boolean isCaseOnlyRename(@NotNull ChangedPath change) {
     if (SystemInfo.isFileSystemCaseSensitive) return false;
     if (!change.isMove()) return false;
-    FilePath afterPath = assertNotNull(change.afterPath);
-    FilePath beforePath = assertNotNull(change.beforePath);
+    FilePath afterPath = Objects.requireNonNull(change.afterPath);
+    FilePath beforePath = Objects.requireNonNull(change.beforePath);
     return isCaseOnlyChange(beforePath.getPath(), afterPath.getPath());
   }
 
@@ -639,8 +638,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     for (Movement move : explicitMoves) {
       FilePath beforeFilePath = move.getBefore();
       FilePath afterFilePath = move.getAfter();
-      CommitChange bChange = assertNotNull(affectedBeforePaths.get(beforeFilePath));
-      CommitChange aChange = assertNotNull(affectedAfterPaths.get(afterFilePath));
+      CommitChange bChange = Objects.requireNonNull(affectedBeforePaths.get(beforeFilePath));
+      CommitChange aChange = Objects.requireNonNull(affectedAfterPaths.get(afterFilePath));
 
       if (bChange.beforeRevision == null) {
         LOG.warn(String.format("Unknown before revision: %s, %s", bChange, aChange));
@@ -756,8 +755,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     try {
       if (!isCaseOnlyRename(change)) return false;
 
-      FilePath beforePath = assertNotNull(change.beforePath);
-      FilePath afterPath = assertNotNull(change.afterPath);
+      FilePath beforePath = Objects.requireNonNull(change.beforePath);
+      FilePath afterPath = Objects.requireNonNull(change.afterPath);
 
       LOG.debug(String.format("Restoring staged case-only rename after commit: %s", change));
       GitLineHandler h = new GitLineHandler(project, root, GitCommand.MV);
@@ -1097,7 +1096,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
         // the parent paths for calculating roots in order to account for submodules that contribute
         // to the parent change. The path "." is never is valid change, so there should be no problem
         // with it.
-        GitRepository repository = getRepositoryForFile(project, assertNotNull(filePath.getParentPath()));
+        GitRepository repository = getRepositoryForFile(project, Objects.requireNonNull(filePath.getParentPath()));
         Collection<Change> changeList = result.computeIfAbsent(repository, key -> new ArrayList<>());
         changeList.add(change);
       }

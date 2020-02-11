@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
@@ -19,6 +19,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class RefJavaUtilImpl extends RefJavaUtil {
   private static final Logger LOG = Logger.getInstance(RefJavaUtilImpl.class);
@@ -294,7 +295,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                        @Override
                        public boolean visitReturnExpression(@NotNull UReturnExpression node) {
-                         if (refFrom instanceof RefMethodImpl && 
+                         if (refFrom instanceof RefMethodImpl &&
                              UastUtils.getParentOfType(node, UMethod.class, false, UClass.class, ULambdaExpression.class) == decl) {
                            RefMethodImpl refMethod = (RefMethodImpl)refFrom;
                            refMethod.updateReturnValueTemplate(node.getReturnExpression());
@@ -404,7 +405,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                UExpression refExpression,
                                final UElement uFrom,
                                final RefElement refFrom) {
-    UMethod uMethod = ObjectUtils.notNull(UastContextKt.toUElement(psiResolved, UMethod.class));
+    UMethod uMethod = Objects.requireNonNull(UastContextKt.toUElement(psiResolved, UMethod.class));
     RefMethodImpl refMethod = (RefMethodImpl)refResolved;
 
     if (refExpression instanceof UCallableReferenceExpression) {

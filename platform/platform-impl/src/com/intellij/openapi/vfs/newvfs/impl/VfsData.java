@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationListener;
@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry.ALL_FLAGS_MASK;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * The place where all the data is stored for VFS parts loaded into a memory: name-ids, flags, user data, children.
@@ -95,7 +94,7 @@ public class VfsData {
     synchronized (myDeadMarker) {
       if (!myDyingIds.isEmpty()) {
         for (int id : myDyingIds.toArray()) {
-          Segment segment = assertNotNull(getSegment(id, false));
+          Segment segment = Objects.requireNonNull(getSegment(id, false));
           segment.myObjectArray.set(getOffset(id), myDeadMarker);
           myChangedParents.remove(id);
         }
@@ -191,7 +190,7 @@ public class VfsData {
   }
 
   int getNameId(int id) {
-    return assertNotNull(getSegment(id, false)).getNameId(id);
+    return Objects.requireNonNull(getSegment(id, false)).getNameId(id);
   }
 
   boolean isFileValid(int id) {

@@ -41,7 +41,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.ui.JBColor.namedColor;
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private static final String HELP_ID = "reference.versionControl.toolwindow.history";
@@ -73,7 +72,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     myUiProperties = uiProperties;
 
-    myFileHistoryModel = new FileHistoryModel(logData, notNull(logData.getLogProvider(root).getDiffHandler()), root) {
+    myFileHistoryModel = new FileHistoryModel(logData, Objects.requireNonNull(logData.getLogProvider(root).getDiffHandler()), root) {
       @NotNull
       @Override
       protected VisiblePack getVisiblePack() {

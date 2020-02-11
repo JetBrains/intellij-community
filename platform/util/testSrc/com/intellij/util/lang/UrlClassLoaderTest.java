@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableConsumer;
 import org.junit.Rule;
 import org.junit.Test;
@@ -13,10 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -74,7 +70,7 @@ public class UrlClassLoaderTest {
     List<String> resourceNames = new ArrayList<>();
     List<URL> urls = new ArrayList<>();
 
-    File[] libs = ObjectUtils.assertNotNull(new File(PathManager.getHomePathFor(UrlClassLoader.class) + "/lib").listFiles());
+    File[] libs = Objects.requireNonNull(new File(PathManager.getHomePathFor(UrlClassLoader.class) + "/lib").listFiles());
     for (File file : libs) {
       if (file.getName().endsWith(".jar")) {
         urls.add(file.toURI().toURL());

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -25,13 +25,13 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
@@ -117,7 +117,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   }
 
   private static void processVariable(Project project, Editor editor, PsiLocalVariable variable) {
-    PsiExpression initializer = ObjectUtils.assertNotNull(variable.getInitializer());
+    PsiExpression initializer = Objects.requireNonNull(variable.getInitializer());
     PsiElement declaration = variable.getParent();
     PsiElement codeBlock = declaration.getParent();
 
@@ -218,7 +218,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   }
 
   private static void processExpression(Project project, Editor editor, PsiExpression expression) {
-    PsiType type = ObjectUtils.assertNotNull(expression.getType());
+    PsiType type = Objects.requireNonNull(expression.getType());
     PsiStatement statement = (PsiStatement)expression.getParent();
 
     CommentTracker commentTracker = new CommentTracker();

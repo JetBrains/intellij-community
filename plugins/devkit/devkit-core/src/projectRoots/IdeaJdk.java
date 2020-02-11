@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationStarter;
@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import gnu.trove.THashSet;
 import icons.DevkitIcons;
 import org.jdom.Element;
@@ -238,7 +237,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         ArrayUtilRt.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
       if (choice != -1) {
         String name = javaSdks.get(choice);
-        Sdk internalJava = ObjectUtils.assertNotNull(sdkModel.findSdk(name));
+        Sdk internalJava = Objects.requireNonNull(sdkModel.findSdk(name));
         //roots from internal jre
         setInternalJdk(sdk, sdkModificator, internalJava);
       }
@@ -300,7 +299,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   private static boolean setupSdkPaths(Sdk sdk, SdkModificator sdkModificator, SdkModel sdkModel) {
-    String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
+    String sdkHome = Objects.requireNonNull(sdk.getHomePath());
     if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) {
       try {
         ProgressManager.getInstance().runProcessWithProgressSynchronously((ThrowableComputable<Void, IOException>)() -> {
@@ -328,8 +327,8 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   private static void setupSdkPathsFromIDEAProject(Sdk sdk, SdkModificator sdkModificator, SdkModel sdkModel) throws IOException {
-    ProgressIndicator indicator = ObjectUtils.assertNotNull(ProgressManager.getInstance().getProgressIndicator());
-    String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
+    ProgressIndicator indicator = Objects.requireNonNull(ProgressManager.getInstance().getProgressIndicator());
+    String sdkHome = Objects.requireNonNull(sdk.getHomePath());
     JpsModel model = JpsSerializationManager.getInstance().loadModel(sdkHome, PathManager.getOptionsPath());
     JpsSdkReference<JpsDummyElement> sdkRef = model.getProject().getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
     Sdk internalJava = sdkRef == null ? null : sdkModel.findSdk(sdkRef.getSdkName());

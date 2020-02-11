@@ -21,12 +21,12 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ref.GCWatcher;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class ClsPsiTest extends LightIdeaTestCase {
@@ -423,7 +423,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertEquals("java.lang.@pkg.TypeAnnotations.MixA(\"field and type\") String", f2.getType().getCanonicalText(true));
 
     PsiMethod m1 = cls.findMethodsByName("m1", false)[0];
-    assertEquals("@pkg.TypeAnnotations.TA(\"return type\") int", ObjectUtils.assertNotNull(m1.getReturnType()).getCanonicalText(true));
+    assertEquals("@pkg.TypeAnnotations.TA(\"return type\") int", Objects.requireNonNull(m1.getReturnType()).getCanonicalText(true));
 
     PsiParameter p1 = cls.findMethodsByName("m2", false)[0].getParameterList().getParameters()[0];
     assertEquals("@pkg.TypeAnnotations.TA(\"parameter\") int", p1.getType().getCanonicalText(true));
@@ -469,7 +469,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     File file1 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
     FileUtil.copy(file1, testFile);
     VirtualFile copyVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile);
-    
+
     ClsFileImpl clsFile = (ClsFileImpl)PsiManager.getInstance(getProject()).findFile(copyVFile);
     PsiElement mirror = clsFile.getMirror();
 

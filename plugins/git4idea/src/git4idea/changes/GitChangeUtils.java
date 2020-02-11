@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.update.FilePathChange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
@@ -536,7 +535,8 @@ public class GitChangeUtils {
 
     @NotNull
     public FilePath getFilePath() {
-      return ObjectUtils.assertNotNull(afterPath != null ? afterPath : beforePath);
+      com.intellij.openapi.vcs.@Nullable FilePath t = afterPath != null ? afterPath : beforePath;
+      return Objects.requireNonNull(t);
     }
 
     @NotNull

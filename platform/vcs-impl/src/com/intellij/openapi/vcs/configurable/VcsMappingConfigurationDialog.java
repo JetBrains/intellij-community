@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.configurable;
 
@@ -18,12 +18,14 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.google.common.collect.Maps.uniqueIndex;
 import static com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleFolderDescriptor;
@@ -112,7 +114,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
         UnnamedConfigurable configurable = vcs.getRootConfigurable(myMappingCopy);
         if (configurable != null) {
           myVcsConfigurable = configurable;
-          myVcsConfigurableComponent = notNull(myVcsConfigurable.createComponent());
+          myVcsConfigurableComponent = Objects.requireNonNull(myVcsConfigurable.createComponent());
           myVcsConfigurablePlaceholder.add(myVcsConfigurableComponent, BorderLayout.CENTER);
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.Disposable;
@@ -42,8 +42,8 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
@@ -64,7 +64,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myProject = logData.getProject();
 
     myFilePath = filePath;
-    myRoot = notNull(VcsLogUtil.getActualRoot(myProject, myFilePath));
+    myRoot = Objects.requireNonNull(VcsLogUtil.getActualRoot(myProject, myFilePath));
 
     myFileHistoryModel = fileHistoryModel;
     myProperties = logUi.getProperties();
@@ -222,7 +222,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       .ifEq(VcsDataKeys.VCS_VIRTUAL_FILE).thenGet(() -> {
         List<VcsCommitMetadata> details = getSelectedMetadata();
         if (details.isEmpty()) return null;
-        VcsCommitMetadata detail = notNull(getFirstItem(details));
+        VcsCommitMetadata detail = Objects.requireNonNull(getFirstItem(details));
         return FileHistoryUtil.createVcsVirtualFile(myFileHistoryModel.createRevision(detail));
       })
       .ifEq(CommonDataKeys.VIRTUAL_FILE).thenGet(myFilePath::getVirtualFile)

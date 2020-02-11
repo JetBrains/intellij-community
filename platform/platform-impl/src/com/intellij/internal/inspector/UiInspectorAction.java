@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.inspector;
 
 import com.google.common.base.MoreObjects;
@@ -1758,7 +1758,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     public void setValueAt(Object value, int row, int col) {
       PropertyBean bean = myProperties.get(row);
       try {
-        myProperties.set(row, new PropertyBean(bean.propertyName, ObjectUtils.notNull(updater(bean)).fun(value)));
+        myProperties.set(row, new PropertyBean(bean.propertyName, Objects.requireNonNull(updater(bean)).fun(value)));
       }
       catch (Exception ignored) {
       }

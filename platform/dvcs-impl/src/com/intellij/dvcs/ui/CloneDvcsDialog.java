@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -34,7 +34,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.progress.ComponentVisibilityProgressManager;
 import com.intellij.util.ui.JBDimension;
@@ -133,7 +132,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @NotNull
   public String getParentDirectory() {
     Path parent = Paths.get(myDirectoryField.getText()).toAbsolutePath().getParent();
-    return ObjectUtils.assertNotNull(parent).toAbsolutePath().toString();
+    return Objects.requireNonNull(parent).toAbsolutePath().toString();
   }
 
   @NotNull

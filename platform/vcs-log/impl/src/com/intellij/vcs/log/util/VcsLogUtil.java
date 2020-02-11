@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -195,7 +195,7 @@ public class VcsLogUtil {
   @NotNull
   public static VcsFullCommitDetails getDetails(@NotNull VcsLogData data, @NotNull VirtualFile root, @NotNull Hash hash)
     throws VcsException {
-    return notNull(getFirstItem(getDetails(data.getLogProvider(root), root, singletonList(hash.asString()))));
+    return Objects.requireNonNull(getFirstItem(getDetails(data.getLogProvider(root), root, singletonList(hash.asString()))));
   }
 
   @NotNull
@@ -257,7 +257,7 @@ public class VcsLogUtil {
     if (rootObject == null) return null;
     Map<VirtualFile, VcsLogProvider> providers = findLogProviders(singletonList(rootObject), project);
     if (providers.isEmpty()) return null;
-    VcsLogProvider provider = notNull(getFirstItem(providers.values()));
+    VcsLogProvider provider = Objects.requireNonNull(getFirstItem(providers.values()));
     return provider.getVcsRoot(project, rootObject.getPath(), path);
   }
 
@@ -347,6 +347,6 @@ public class VcsLogUtil {
     Set<AbstractVcs> vcs = ContainerUtil.map2SetNotNull(logProviders,
                                                         provider -> VcsUtil.findVcsByKey(project, provider.getSupportedVcs()));
     if (vcs.size() != 1) return "Vcs";
-    return notNull(getFirstItem(vcs)).getDisplayName();
+    return Objects.requireNonNull(getFirstItem(vcs)).getDisplayName();
   }
 }

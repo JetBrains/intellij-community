@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -18,13 +18,13 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, ImplicitToStringSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance(ImplicitToStringSearcher.class);
@@ -76,7 +76,7 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, I
                                      Processor<? super PsiExpression> consumer,
                                      DumbService dumbService) {
     return dumbService.runReadActionInSmartMode(() -> {
-      PsiFile psiFile = ObjectUtils.notNull(manager.findFile(file));
+      PsiFile psiFile = Objects.requireNonNull(manager.findFile(file));
       if (!(psiFile instanceof PsiJavaFile)) {
         LOG.error("Non-java file " + psiFile + "; " + file);
         return true;

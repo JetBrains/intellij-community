@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.openapi.vcs.impl.BackgroundableActionLock.getLock;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -176,7 +177,7 @@ public class VcsCachingHistory {
   public static VcsHistorySession collectSession(@NotNull AbstractVcs vcs,
                                                  @NotNull FilePath filePath,
                                                  @Nullable VcsRevisionNumber revision) throws VcsException {
-    VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
+    VcsCachingHistory history = new VcsCachingHistory(vcs, Objects.requireNonNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
     CollectingHistorySessionConsumer partner = new CollectingHistorySessionConsumer();
     history.reportHistory(filePath, revision, vcs.getKeyInstanceMethod(), partner, true);
     partner.check();
@@ -188,7 +189,7 @@ public class VcsCachingHistory {
                                          @NotNull FilePath filePath,
                                          @NotNull VcsBackgroundableActions actionKey,
                                          @NotNull Consumer<? super VcsHistorySession> consumer) {
-    VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
+    VcsCachingHistory history = new VcsCachingHistory(vcs, Objects.requireNonNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
     CollectingHistoryPartner partner = new CollectingHistoryPartner(vcs.getProject(), filePath, consumer);
     BackgroundableActionLock lock = getHistoryLock(vcs, actionKey, filePath, null);
     history.reportHistoryInBackground(filePath, null, vcs.getKeyInstanceMethod(), lock, partner, true);
@@ -199,7 +200,7 @@ public class VcsCachingHistory {
                                          @NotNull FilePath filePath,
                                          @NotNull VcsHistorySessionConsumer partner,
                                          boolean canUseCache) {
-    VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
+    VcsCachingHistory history = new VcsCachingHistory(vcs, Objects.requireNonNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
     BackgroundableActionLock lock = getHistorySessionLock(vcs, filePath, null);
     history.reportHistoryInBackground(filePath, null, vcs.getKeyInstanceMethod(), lock, partner, canUseCache);
   }
@@ -212,7 +213,7 @@ public class VcsCachingHistory {
 
     BackgroundableActionLock lock = getHistorySessionLock(vcs, filePath, startRevisionNumber);
 
-    VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
+    VcsCachingHistory history = new VcsCachingHistory(vcs, Objects.requireNonNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
     history.reportHistoryInBackground(filePath, startRevisionNumber, vcs.getKeyInstanceMethod(), lock, partner, false);
   }
 
@@ -220,7 +221,7 @@ public class VcsCachingHistory {
   public static boolean collectFromCache(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath,
                                          @NotNull VcsHistorySessionConsumer partner) {
-    VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
+    VcsCachingHistory history = new VcsCachingHistory(vcs, Objects.requireNonNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
 
     VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = history.getCacheableFactory();
     if (cacheableFactory != null) {

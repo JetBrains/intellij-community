@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -124,7 +110,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
     if (references.isEmpty()) return Collections.emptyList();
 
-    return Collections.singletonList(ObjectUtils.notNull(moveDeclaration(project, variable, references, true)));
+    return Collections.singletonList(Objects.requireNonNull(moveDeclaration(project, variable, references, true)));
   }
 
   protected PsiElement moveDeclaration(Project project, V variable, final Collection<? extends PsiReference> references, boolean delete) {
@@ -206,8 +192,8 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     final PsiDeclarationStatement declaration = elementFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
     if (references.stream()
                   .map(PsiReference::getElement)
-                  .anyMatch(element -> element instanceof PsiExpression && 
-                                       PsiUtil.isAccessedForWriting((PsiExpression)element))) { 
+                  .anyMatch(element -> element instanceof PsiExpression &&
+                                       PsiUtil.isAccessedForWriting((PsiExpression)element))) {
       PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
     }
     final PsiElement newDeclaration = action.fun(declaration);

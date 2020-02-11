@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
@@ -26,11 +12,11 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -73,14 +59,14 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
   /**
    * Remove imports on {@code imports} (including static imports in format Class_Name.Member_Name)
    * To ensure that on-demand import expands when one of the import inside was deleted, let's do optimize imports.
-   * 
-   * This may change some unrelated imports 
+   *
+   * This may change some unrelated imports
    */
   public static void removeImports(PsiJavaFile javaFile, Set<String> imports) {
     PsiImportList importList = new ImportHelper(JavaCodeStyleSettings.getInstance(javaFile))
       .prepareOptimizeImportsResult(javaFile, pair -> !imports.contains(pair.first));
     if (importList != null) {
-      ObjectUtils.notNull(javaFile.getImportList()).replace(importList);
+      Objects.requireNonNull(javaFile.getImportList()).replace(importList);
     }
   }
 

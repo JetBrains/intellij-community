@@ -36,9 +36,9 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.icons.AllIcons.General.CollapseComponentHover;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
@@ -162,7 +162,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   private void processOnSizeChanged() {
-    Dimension newSize = assertNotNull(getSize());
+    Dimension newSize = Objects.requireNonNull(getSize());
     int preferredHeight = getComponent().getPreferredSize().height;
     int realHeight = getComponent().getHeight();
     boolean shouldExpand = preferredHeight + myMeanRowHeight < realHeight;
@@ -464,7 +464,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       if (event != null && event.getSource() instanceof JComponent) {
         DataProvider dataProvider = DataManager.getDataProvider((JComponent)event.getSource());
         if (dataProvider != null) {
-          assertNotNull(POPUP_MODEL.getData(dataProvider)).refilter();
+          Objects.requireNonNull(POPUP_MODEL.getData(dataProvider)).refilter();
         }
       }
     }

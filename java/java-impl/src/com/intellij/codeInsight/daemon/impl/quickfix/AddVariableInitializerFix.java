@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -91,7 +91,7 @@ public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOn
                                     @Nullable Editor editor) {
     if (editor == null) return;
     LOG.assertTrue(!initializers.isEmpty());
-    final PsiExpression initializer = ObjectUtils.notNull(ContainerUtil.getFirstItem(initializers));
+    final PsiExpression initializer = Objects.requireNonNull(ContainerUtil.getFirstItem(initializers));
     PsiElement context = initializers.size() == 1 ? initializer : PsiTreeUtil.findCommonParent(initializers);
     if (context == null) return;
     final TemplateBuilderImpl builder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(context);

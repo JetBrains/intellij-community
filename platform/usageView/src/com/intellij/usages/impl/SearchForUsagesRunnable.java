@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -37,7 +37,6 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
@@ -493,7 +492,8 @@ class SearchForUsagesRunnable implements Runnable {
   @NotNull
   private static String mayHaveUsagesInUnloadedModulesMessage(@NotNull Collection<? extends UnloadedModuleDescription> unloadedModules) {
     String modulesText = unloadedModules.size() > 1 ? unloadedModules.size() + " unloaded modules"
-                                                    : "unloaded module '" + ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(unloadedModules)).getName() + "'";
+                                                    : "unloaded module '" + Objects
+                                                      .requireNonNull(ContainerUtil.getFirstItem(unloadedModules)).getName() + "'";
     return "Occurrences in " + modulesText + " may be skipped. Load all modules and repeat the search to get complete results.";
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -20,7 +20,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.IndexTreePathState;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -539,6 +538,6 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
   }
 
   public void selectGroup(String searchQuery) {
-    ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTable, true)).findAndSelectElement(searchQuery);
+    Objects.requireNonNull(SpeedSearchSupply.getSupply(myTable, true)).findAndSelectElement(searchQuery);
   }
 }

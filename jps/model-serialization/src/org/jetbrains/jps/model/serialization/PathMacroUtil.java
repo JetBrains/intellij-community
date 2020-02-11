@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -12,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Objects;
 
 import static com.intellij.openapi.util.io.FileUtilRt.toSystemIndependentName;
 
@@ -56,7 +56,7 @@ public class PathMacroUtil {
 
   @NotNull
   public static String getUserHomePath() {
-    return ObjectUtils.assertNotNull(getGlobalSystemMacroValue(USER_HOME_NAME));
+    return Objects.requireNonNull(getGlobalSystemMacroValue(USER_HOME_NAME));
   }
 
   @NotNull

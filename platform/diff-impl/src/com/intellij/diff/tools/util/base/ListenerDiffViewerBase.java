@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class ListenerDiffViewerBase extends DiffViewerBase {
   public ListenerDiffViewerBase(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
@@ -78,7 +78,7 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
         for (VFileEvent event : events) {
           if (event instanceof VFileContentChangeEvent ||
               event instanceof VFilePropertyChangeEvent) {
-            VirtualFile file = ObjectUtils.assertNotNull(event.getFile());
+            VirtualFile file = Objects.requireNonNull(event.getFile());
             if (files.contains(file)) {
               onFileChange(file);
             }

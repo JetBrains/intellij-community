@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -961,8 +961,8 @@ public class HighlightUtil extends HighlightUtilBase {
           //noinspection DuplicateExpressions
           if (PsiModifier.STATIC.equals(modifier) || privateOrProtected || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
             isAllowed = modifierOwnerParent instanceof PsiClass && ((PsiClass)modifierOwnerParent).getQualifiedName() != null ||
-                        (modifierOwnerParent instanceof PsiDeclarationStatement && aClass.isRecord() && PsiModifier.STATIC.equals(modifier)) ||            
-                        FileTypeUtils.isInServerPageFile(modifierOwnerParent) || 
+                        (modifierOwnerParent instanceof PsiDeclarationStatement && aClass.isRecord() && PsiModifier.STATIC.equals(modifier)) ||
+                        FileTypeUtils.isInServerPageFile(modifierOwnerParent) ||
                         // non-physical dummy holder might not have FQN
                         !modifierOwnerParent.isPhysical();
           }
@@ -1306,7 +1306,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   static HighlightInfo checkMustBeBoolean(@NotNull PsiExpression expr, @Nullable PsiType type) {
     PsiElement parent = expr.getParent();
-    if (parent instanceof PsiIfStatement || 
+    if (parent instanceof PsiIfStatement ||
         parent instanceof PsiConditionalLoopStatement && expr.equals(((PsiConditionalLoopStatement)parent).getCondition())) {
       if (expr.getNextSibling() instanceof PsiErrorElement) return null;
 
@@ -2829,20 +2829,20 @@ public class HighlightUtil extends HighlightUtilBase {
       String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
       boolean showShortType = showShortType(lSubstitutedType, rSubstitutedType);
 
-      requiredRow.append(skipColumns ? "" 
+      requiredRow.append(skipColumns ? ""
                                      : "<td style='padding: 0px 0px 8px 0px;'>")
         .append(lTypeParams.length == 0 ? "" : openBrace)
         .append(redIfNotMatch(lSubstitutedType, true, showShortType))
         .append(i < lTypeParams.length ? closeBrace : "")
-        .append(skipColumns ? "" 
+        .append(skipColumns ? ""
                             : "</td>");
 
-      foundRow.append(skipColumns ? "" 
+      foundRow.append(skipColumns ? ""
                                   : "<td style='padding: 0px 0px 0px 0px;'>")
         .append(rTypeParams.length == 0 ? "" : openBrace)
         .append(redIfNotMatch(rSubstitutedType, matches, showShortType))
         .append(i < rTypeParams.length ? closeBrace : "")
-        .append(skipColumns ? "" 
+        .append(skipColumns ? ""
                             : "</td>");
 
     }
@@ -2985,8 +2985,8 @@ public class HighlightUtil extends HighlightUtilBase {
       JavaResolveResult[] results = ref.multiResolve(true);
       String description;
       if (results.length > 1) {
-        String t1 = format(ObjectUtils.notNull(results[0].getElement()));
-        String t2 = format(ObjectUtils.notNull(results[1].getElement()));
+        String t1 = format(Objects.requireNonNull(results[0].getElement()));
+        String t2 = format(Objects.requireNonNull(results[1].getElement()));
         description = JavaErrorBundle.message("ambiguous.reference", refName.getText(), t1, t2);
       }
       else {

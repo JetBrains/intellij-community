@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.defUse;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -124,7 +124,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
       isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, assignment.getRExpression()) ? new RemoveAssignmentFix() : null);
     holder.registerProblem(assignment.getLExpression(),
                            InspectionsBundle.message("inspection.unused.assignment.problem.descriptor3",
-                                                     ObjectUtils.assertNotNull(assignment.getRExpression()).getText(), "<code>#ref</code>" + " #loc"),
+                                                     Objects.requireNonNull(assignment.getRExpression()).getText(), "<code>#ref</code>" + " #loc"),
                            ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
     );
   }

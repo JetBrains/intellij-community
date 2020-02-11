@@ -565,7 +565,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertTrue(tool.visited.toString(), visitedCount > 0);
     tool.visited.clear();
 
-    Document otherDocument = ObjectUtils.assertNotNull(PsiDocumentManager.getInstance(getProject()).getDocument(otherFile));
+    Document otherDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(otherFile));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> otherDocument.setText("zzz"));
 
     infos = doHighlighting(HighlightSeverity.WARNING);
@@ -658,7 +658,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         break;
       }
     }
-    delete(ObjectUtils.assertNotNull(schemaEditor));
+    delete(Objects.requireNonNull(schemaEditor));
 
     errors = highlightErrors();
     assertFalse(errors.isEmpty());
@@ -902,7 +902,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     LineMarkerProviders.getInstance().addExplicitExtension(JavaLanguage.INSTANCE, provider, getTestRootDisposable());
     myDaemonCodeAnalyzer.restart();
     try {
-      TextRange range = ObjectUtils.assertNotNull(FileStatusMap.getDirtyTextRange(getEditor(), Pass.UPDATE_ALL));
+      TextRange range = Objects.requireNonNull(FileStatusMap.getDirtyTextRange(getEditor(), Pass.UPDATE_ALL));
       log.append("FileStatusMap.getDirtyTextRange: " + range+"\n");
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(getFile(), range.getStartOffset(), range.getEndOffset());
       log.append("CollectHighlightsUtil.getElementsInRange: " + range + ": " + elements.size() +" elements : "+ elements+"\n");
@@ -1479,7 +1479,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       });
 
       FileEditorManager fe = FileEditorManager.getInstance(alienProject);
-      final Editor alienEditor = ObjectUtils.assertNotNull(fe.openTextEditor(alienDescriptor, false));
+      final Editor alienEditor = Objects.requireNonNull(fe.openTextEditor(alienDescriptor, false));
       ((EditorImpl)alienEditor).setCaretActive();
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
@@ -1877,7 +1877,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     UtilKt.runInAllowSaveMode(() -> {
       StoreUtil.saveDocumentsAndProjectsAndApp(true);
       VirtualFile workspaceFile = Objects.requireNonNull(getProject().getWorkspaceFile());
-      PsiFile excluded = ObjectUtils.assertNotNull(PsiManager.getInstance(getProject()).findFile(workspaceFile));
+      PsiFile excluded = Objects.requireNonNull(PsiManager.getInstance(getProject()).findFile(workspaceFile));
 
       List<HighlightInfo> errors = highlightErrors();
       assertEmpty(errors);
@@ -1886,7 +1886,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertNull(scope);
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        Document document = ObjectUtils.assertNotNull(PsiDocumentManager.getInstance(getProject()).getDocument(excluded));
+        Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(excluded));
         document.insertString(0, "<!-- dsfsd -->");
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       });
@@ -2071,7 +2071,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     PsiExpressionCodeFragment fragment = JavaCodeFragmentFactory.getInstance(getProject()).createExpressionCodeFragment("+ <caret>\"a\"", null,
                                     PsiType.getJavaLangObject(getPsiManager(), GlobalSearchScope.allScope(getProject())), true);
     myFile = fragment;
-    Document document = ObjectUtils.assertNotNull(PsiDocumentManager.getInstance(getProject()).getDocument(fragment));
+    Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(fragment));
     myEditor = EditorFactory.getInstance().createEditor(document, getProject(), StdFileTypes.JAVA, false);
 
     ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 0), myEditor);

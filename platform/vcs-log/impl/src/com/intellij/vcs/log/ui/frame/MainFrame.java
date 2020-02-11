@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
@@ -69,6 +69,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -368,7 +369,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     else if (VcsLogInternalDataKeys.LOG_DIFF_HANDLER.is(dataId)) {
       Collection<VirtualFile> roots = getSelectedRoots();
       if (roots.size() != 1) return null;
-      return myLogData.getLogProvider(notNull(getFirstItem(roots))).getDiffHandler();
+      return myLogData.getLogProvider(Objects.requireNonNull(getFirstItem(roots))).getDiffHandler();
     }
     else if (VCS_LOG.is(dataId)) {
       return myLogUi.getVcsLog();
@@ -379,7 +380,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     else if (VcsDataKeys.VCS_REVISION_NUMBER.is(dataId)) {
       List<CommitId> hashes = myLogUi.getVcsLog().getSelectedCommits();
       if (hashes.isEmpty()) return null;
-      return VcsLogUtil.convertToRevisionNumber(notNull(getFirstItem(hashes)).getHash());
+      return VcsLogUtil.convertToRevisionNumber(Objects.requireNonNull(getFirstItem(hashes)).getHash());
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
       List<CommitId> hashes = myLogUi.getVcsLog().getSelectedCommits();

@@ -1778,7 +1778,8 @@ public final class UIUtil {
   public static void dispatchAllInvocationEvents() {
     assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    Method dispatchEventMethod = ObjectUtils.notNull(ReflectionUtil.getDeclaredMethod(eventQueue.getClass(), "dispatchEvent", AWTEvent.class));
+    Method dispatchEventMethod =
+      Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(eventQueue.getClass(), "dispatchEvent", AWTEvent.class));
     for (int i = 1; ; i++) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;

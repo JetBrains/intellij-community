@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.TailTypes;
@@ -26,12 +12,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -71,7 +57,7 @@ public class JavaMembersGetter extends MembersGetter {
 
   private void addConstantsFromReferencedClassesInSwitch(final Consumer<? super LookupElement> results) {
     if (!JavaCompletionContributor.IN_SWITCH_LABEL.accepts(myPlace)) return;
-    PsiSwitchBlock block = ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(myPlace, PsiSwitchBlock.class));
+    PsiSwitchBlock block = Objects.requireNonNull(PsiTreeUtil.getParentOfType(myPlace, PsiSwitchBlock.class));
     final Set<PsiField> fields = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(block);
     final Set<PsiClass> classes = new HashSet<>();
     for (PsiField field : fields) {

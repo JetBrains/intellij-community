@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -16,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -84,7 +84,7 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
       newRightExpression = getLargeRightExpression(rightExpression, project);
     }
     else {
-      operator = invertOperator(assertNotNull(rightExpression.getPsiOperator()));
+      operator = invertOperator(Objects.requireNonNull(rightExpression.getPsiOperator()));
       final PyExpression rightLeftExpr = rightExpression.getLeftExpression();
       if (rightLeftExpr instanceof PyBinaryExpression) {
         newRightExpression = invertExpression((PyBinaryExpression)rightLeftExpr, elementGenerator);
@@ -165,7 +165,7 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
       final PyExpression left = expression.getLeftExpression();
       final PyExpression right = expression.getRightExpression();
 
-      final String newOperator = invertOperator(assertNotNull(expression.getPsiOperator()));
+      final String newOperator = invertOperator(Objects.requireNonNull(expression.getPsiOperator()));
       final PyExpression newRight = isComparisonExpression(left) ? invertExpression((PyBinaryExpression)left, elementGenerator) : left;
 
       return elementGenerator.createBinaryExpression(newOperator, right, newRight);

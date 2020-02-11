@@ -200,7 +200,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
         myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
 
         if (detailsList.size() == 1) {
-          VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
+          VcsFullCommitDetails detail = Objects.requireNonNull(getFirstItem(detailsList));
           myChanges.addAll(detail.getChanges());
 
           if (detail.getParents().size() > 1) {
@@ -322,10 +322,10 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @Nullable
   private AbstractVcs getVcs() {
     List<AbstractVcs> allVcs = ContainerUtil.mapNotNull(myRoots, root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root));
-    if (allVcs.size() == 1) return notNull(getFirstItem(allVcs));
+    if (allVcs.size() == 1) return Objects.requireNonNull(getFirstItem(allVcs));
 
     Set<AbstractVcs> selectedVcs = ChangesUtil.getAffectedVcses(getSelectedChanges(), myProject);
-    if (selectedVcs.size() == 1) return notNull(getFirstItem(selectedVcs));
+    if (selectedVcs.size() == 1) return Objects.requireNonNull(getFirstItem(selectedVcs));
 
     return null;
   }

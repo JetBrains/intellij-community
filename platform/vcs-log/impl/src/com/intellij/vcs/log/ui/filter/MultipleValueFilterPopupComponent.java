@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
   extends FilterPopupComponent<Filter, Model> {
@@ -86,7 +86,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   static String displayableText(@NotNull Collection<String> values, int maxLength) {
     String text;
     if (values.size() == 1) {
-      text = ObjectUtils.notNull(ContainerUtil.getFirstItem(values));
+      text = Objects.requireNonNull(ContainerUtil.getFirstItem(values));
     }
     else {
       text = StringUtil.join(values, "|");
@@ -116,7 +116,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
 
   @NotNull
   private static String getActionName(@NotNull List<String> values) {
-    if (values.size() == 1) return ObjectUtils.notNull(ContainerUtil.getFirstItem(values));
+    if (values.size() == 1) return Objects.requireNonNull(ContainerUtil.getFirstItem(values));
     return displayableText(values, 2 * MAX_FILTER_VALUE_LENGTH);
   }
 

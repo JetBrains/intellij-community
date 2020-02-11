@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
@@ -17,7 +17,6 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,10 +57,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
@@ -307,7 +303,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyStubElementTypes.THROWS_CLAUSE));
+    return Objects.requireNonNull(getStubOrPsiChild(GroovyStubElementTypes.THROWS_CLAUSE));
   }
 
   @Override
@@ -383,7 +379,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   @NotNull
   public GrModifierList getModifierList() {
-    return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST));
+    return Objects.requireNonNull(getStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST));
   }
 
   @Override

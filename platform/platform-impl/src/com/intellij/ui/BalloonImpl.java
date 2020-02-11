@@ -34,7 +34,6 @@ import com.intellij.ui.jcef.HwFacadeNonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -468,7 +467,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     myTracker = tracker;
     myTracker.init(this);
 
-    JRootPane root = ObjectUtils.notNull(UIUtil.getRootPane(comp));
+    JRootPane root = Objects.requireNonNull(UIUtil.getRootPane(comp));
 
     myVisible = true;
 

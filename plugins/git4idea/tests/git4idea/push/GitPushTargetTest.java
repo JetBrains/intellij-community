@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
-import com.intellij.util.ObjectUtils;
 import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.test.GitSingleRepoTest;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class GitPushTargetTest extends GitSingleRepoTest {
 
@@ -30,7 +17,7 @@ public class GitPushTargetTest extends GitSingleRepoTest {
   }
 
   public void test_no_push_spec() {
-    GitPushTarget target = GitPushTarget.getFromPushSpec(repo, ObjectUtils.assertNotNull(repo.getCurrentBranch()));
+    GitPushTarget target = GitPushTarget.getFromPushSpec(repo, Objects.requireNonNull(this.repo.getCurrentBranch()));
     assertNull(target);
   }
 
@@ -55,7 +42,7 @@ public class GitPushTargetTest extends GitSingleRepoTest {
   public void test_standard_fetch_refspec() {
     setPushSpec("origin", "refs/heads/*:refs/remotes/origin/*");
     assertStandardRemoteBranch("master",
-                               ObjectUtils.assertNotNull(repo.getBranches().findBranchByName("origin/master")));
+                               Objects.requireNonNull(this.repo.getBranches().findBranchByName("origin/master")));
   }
 
   public void test_tracked_remote_is_preferable_over_origin() {
@@ -85,7 +72,7 @@ public class GitPushTargetTest extends GitSingleRepoTest {
   }
 
   private void assertSpecialTargetRef(@NotNull String expectedRefName, @NotNull String expectedRemoteName) {
-    GitPushTarget target = GitPushTarget.getFromPushSpec(repo, ObjectUtils.assertNotNull(repo.getCurrentBranch()));
+    GitPushTarget target = GitPushTarget.getFromPushSpec(repo, Objects.requireNonNull(this.repo.getCurrentBranch()));
     assertNotNull(target);
     assertTrue(target.isSpecialRef());
     assertEquals(expectedRefName, target.getPresentation());
@@ -102,7 +89,7 @@ public class GitPushTargetTest extends GitSingleRepoTest {
     assertEquals(remoteName, actualRemoteBranch.getRemote().getName());
   }
   private void assertStandardRemoteBranch(@NotNull String expectedPresentation, @NotNull GitBranch expectedBranch) {
-    GitPushTarget target = GitPushTarget.getFromPushSpec(repo, ObjectUtils.assertNotNull(repo.getCurrentBranch()));
+    GitPushTarget target = GitPushTarget.getFromPushSpec(repo, Objects.requireNonNull(this.repo.getCurrentBranch()));
     assertNotNull(target);
     assertFalse(target.isSpecialRef());
     assertEquals(expectedPresentation, target.getPresentation());

@@ -13,7 +13,6 @@ import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,11 +74,20 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   @Override
   public JComponent getPreferredFocusableComponent() {
-    if (myFocusRequest != null) return myFocusRequest.compute();
-    if (myComponent == null) return null;
+    if (myFocusRequest != null) {
+      return myFocusRequest.compute();
+    }
+    if (myComponent == null) {
+      return null;
+    }
+
     Container traversalRoot = myComponent.isFocusCycleRoot() ? myComponent : myComponent.getFocusCycleRootAncestor();
-    if (traversalRoot == null) return null;
-    return ObjectUtils.tryCast(traversalRoot.getFocusTraversalPolicy().getDefaultComponent(myComponent), JComponent.class);
+    if (traversalRoot == null) {
+      return null;
+    }
+
+    Component component = traversalRoot.getFocusTraversalPolicy().getDefaultComponent(myComponent);
+    return component instanceof JComponent ? (JComponent)component : null;
   }
 
   @Override

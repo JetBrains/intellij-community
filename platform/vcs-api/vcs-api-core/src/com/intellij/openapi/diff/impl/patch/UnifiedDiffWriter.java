@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.diff.impl.patch;
 
@@ -53,9 +53,10 @@ public class UnifiedDiffWriter {
     for (FilePatch filePatch : patches) {
       if (!(filePatch instanceof TextFilePatch)) continue;
       TextFilePatch patch = (TextFilePatch)filePatch;
-      String path = ObjectUtils.assertNotNull(patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName());
+      @Nullable String t = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
+      String path = Objects.requireNonNull(t);
       String pathRelatedToProjectDir =
-        project == null ? path : getPathRelatedToDir(ObjectUtils.assertNotNull(project.getBasePath()), basePath, path);
+        project == null ? path : getPathRelatedToDir(Objects.requireNonNull(project.getBasePath()), basePath, path);
       final Map<String, CharSequence> additionalMap = new HashMap<>();
       for (PatchEP extension : extensions) {
         final CharSequence charSequence = extension.provideContent(pathRelatedToProjectDir, commitContext);

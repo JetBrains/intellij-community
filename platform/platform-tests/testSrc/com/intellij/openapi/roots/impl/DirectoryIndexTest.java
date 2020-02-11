@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,7 +18,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.testFramework.*;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -737,7 +736,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertIteratedContent(myFileIndex, Arrays.asList(fileRoot, fileSourceRoot, fileTestSourceRoot), null);
 
     // removing file content root
-    PsiTestUtil.removeContentEntry(myModule, ObjectUtils.notNull(contentEntry.getFile()));
+    PsiTestUtil.removeContentEntry(myModule, Objects.requireNonNull(contentEntry.getFile()));
     assertNotInProject(fileRoot);
     assertFalse(myFileIndex.isInContent(fileRoot));
     assertFalse(myFileIndex.isInSource(fileRoot));
@@ -937,7 +936,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   public void testSourceRootFromUnsupportedFileSystem() {
-    VirtualFile httpFile = ObjectUtils.notNull(HttpFileSystem.getInstance().findFileByPath("example.com"));
+    VirtualFile httpFile = Objects.requireNonNull(HttpFileSystem.getInstance().findFileByPath("example.com"));
     PsiTestUtil.addSourceRoot(myModule, httpFile);
     assertNotInProject(httpFile);
   }

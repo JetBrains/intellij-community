@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
-
 /**
  * Git repository change provider
  */
@@ -74,8 +72,8 @@ public final class GitChangeProvider implements ChangeProvider {
           builder.processChange(file, GitVcs.getKey());
 
           if (file.isMoved() || file.isRenamed()) {
-            FilePath beforePath = assertNotNull(ChangesUtil.getBeforePath(file));
-            FilePath afterPath = assertNotNull(ChangesUtil.getAfterPath(file));
+            FilePath beforePath = Objects.requireNonNull(ChangesUtil.getBeforePath(file));
+            FilePath afterPath = Objects.requireNonNull(ChangesUtil.getAfterPath(file));
 
             if (dirtyScope.belongsTo(beforePath) != dirtyScope.belongsTo(afterPath)) {
               newDirtyPaths.add(beforePath);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -29,6 +29,7 @@ import org.jetbrains.idea.svn.status.StatusType;
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -126,7 +127,7 @@ public class SvnChangeProvider implements ChangeProvider {
                                  @Nullable VcsDirtyScope dirtyScope) throws SvnBindException {
     boolean foundRename = false;
     final Status copiedStatus = copiedFile.getStatus();
-    Url copyFromURL = notNull(copiedFile.getCopyFromURL());
+    Url copyFromURL = Objects.requireNonNull(copiedFile.getCopyFromURL());
     final Set<SvnChangedFile> deletedToDelete = new HashSet<>();
 
     for (SvnChangedFile deletedFile : context.getDeletedFiles()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
@@ -40,17 +40,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author peter
@@ -567,7 +563,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @NotNull
   private LookupElementBuilder createSubclassLookupValue(@NotNull PsiClass clazz) {
     return JavaLookupElementBuilder.forClass(clazz, getQualifiedClassNameToInsert(clazz), true)
-      .withPresentableText(ObjectUtils.assertNotNull(clazz.getName()));
+      .withPresentableText(Objects.requireNonNull(clazz.getName()));
   }
 
   @Override

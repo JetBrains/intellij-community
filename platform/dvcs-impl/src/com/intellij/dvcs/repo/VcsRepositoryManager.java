@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.*;
@@ -49,7 +48,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
   @NotNull
   public static VcsRepositoryManager getInstance(@NotNull Project project) {
-    return ObjectUtils.assertNotNull(project.getComponent(VcsRepositoryManager.class));
+    return Objects.requireNonNull(project.getComponent(VcsRepositoryManager.class));
   }
 
   public VcsRepositoryManager(@NotNull Project project) {

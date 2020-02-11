@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.notification;
 
@@ -34,7 +34,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
@@ -493,7 +492,7 @@ public final class EventLog {
             return;
           }
 
-          EventLogConsole console = ObjectUtils.assertNotNull(getConsole(notification));
+          EventLogConsole console = Objects.requireNonNull(getConsole(notification));
           GuiUtils.invokeLaterIfNeeded(() -> console.doPrintNotification(notification), ModalityState.NON_MODAL, myProject.getDisposed());
         }
       });
@@ -596,7 +595,7 @@ public final class EventLog {
     public void navigate(Project project) {
       NotificationListener listener = myNotification.getListener();
       if (listener != null) {
-        EventLogConsole console = ObjectUtils.assertNotNull(getProjectComponent(project).getConsole(myNotification));
+        EventLogConsole console = Objects.requireNonNull(getProjectComponent(project).getConsole(myNotification));
         JComponent component = console.getConsoleEditor().getContentComponent();
         listener.hyperlinkUpdate(myNotification, IJSwingUtilities.createHyperlinkEvent(myHref, component));
       }
@@ -623,7 +622,7 @@ public final class EventLog {
         hideBalloon(notification);
       }
 
-      EventLogConsole console = ObjectUtils.assertNotNull(getProjectComponent(project).getConsole(myNotification));
+      EventLogConsole console = Objects.requireNonNull(getProjectComponent(project).getConsole(myNotification));
       if (myRangeHighlighter == null || !myRangeHighlighter.isValid()) {
         return;
       }

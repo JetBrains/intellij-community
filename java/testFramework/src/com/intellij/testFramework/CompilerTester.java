@@ -36,7 +36,6 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -143,7 +142,7 @@ public class CompilerTester {
   public void setFileText(final PsiFile file, final String text) throws IOException {
     WriteAction.runAndWait(() -> {
       final VirtualFile virtualFile = file.getVirtualFile();
-      VfsUtil.saveText(ObjectUtils.assertNotNull(virtualFile), text);
+      VfsUtil.saveText(Objects.requireNonNull(virtualFile), text);
     });
     touch(file.getVirtualFile());
   }

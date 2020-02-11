@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TObjectHashingStrategy;
@@ -357,7 +356,7 @@ public class ChangesUtil {
     FilePath before = getBeforePath(change);
     FilePath after = getAfterPath(change);
     return before == null
-           ? ObjectUtils.assertNotNull(after).getIOFile()
+           ? Objects.requireNonNull(after).getIOFile()
            : after == null ? before.getIOFile() : FileUtil.findAncestor(before.getIOFile(), after.getIOFile());
   }
 }

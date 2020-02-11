@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
@@ -19,6 +18,7 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static java.util.Collections.singletonList;
@@ -27,7 +27,7 @@ import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 public class HgBookmarkCommand {
 
   public static void createBookmarkAsynchronously(@NotNull List<? extends HgRepository> repositories, @NotNull String name, boolean isActive) {
-    final Project project = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(repositories)).getProject();
+    final Project project = Objects.requireNonNull(ContainerUtil.getFirstItem(repositories)).getProject();
     if (StringUtil.isEmptyOrSpaces(name)) {
       VcsNotifier.getInstance(project).notifyError("Hg Error", "Bookmark name is empty");
       return;

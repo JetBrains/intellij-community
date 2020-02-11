@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.dvcs.repo.RepositoryManager;
@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
@@ -154,9 +153,9 @@ public class GitRefManager implements VcsLogRefManager {
     if (groupedRefs.isEmpty()) return result;
 
     VcsRef head = null;
-    Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup = ObjectUtils.notNull(ContainerUtil.getFirstItem(groupedRefs.entrySet()));
+    Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup = Objects.requireNonNull(ContainerUtil.getFirstItem(groupedRefs.entrySet()));
     if (firstGroup.getKey().equals(HEAD)) {
-      head = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
+      head = Objects.requireNonNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
       groupedRefs.remove(HEAD, head);
     }
 
@@ -177,7 +176,7 @@ public class GitRefManager implements VcsLogRefManager {
       }
       else {
         if (!result.isEmpty()) {
-          RefGroup first = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(result));
+          RefGroup first = Objects.requireNonNull(ContainerUtil.getFirstItem(result));
           first.getRefs().add(0, head);
         }
         else {
@@ -240,7 +239,7 @@ public class GitRefManager implements VcsLogRefManager {
   private GitRepository getRepository(@NotNull Collection<? extends VcsRef> references) {
     if (references.isEmpty()) return null;
 
-    VcsRef ref = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references));
+    VcsRef ref = Objects.requireNonNull(ContainerUtil.getFirstItem(references));
     GitRepository repository = getRepository(ref);
     if (repository == null) {
       LOG.warn("No repository for root: " + ref.getRoot());

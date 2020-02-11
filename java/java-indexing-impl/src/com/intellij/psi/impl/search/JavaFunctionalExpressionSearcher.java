@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -46,8 +46,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
   private static final Logger LOG = Logger.getInstance(JavaFunctionalExpressionSearcher.class);
@@ -110,7 +108,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       processSubInterfaces(aClass, visited);
       for (PsiClass samClass : visited) {
         if (LambdaUtil.isFunctionalClass(samClass)) {
-          PsiMethod saMethod = assertNotNull(LambdaUtil.getFunctionalInterfaceMethod(samClass));
+          PsiMethod saMethod = Objects.requireNonNull(LambdaUtil.getFunctionalInterfaceMethod(samClass));
           PsiType samType = saMethod.getReturnType();
           if (samType == null) continue;
 
@@ -312,7 +310,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       if (name == null) return Collections.emptyList();
 
       List<FunctionalExpressionKey> result = new ArrayList<>();
-      for (String lambdaType : new String[]{assertNotNull(name), ""}) {
+      for (String lambdaType : new String[]{Objects.requireNonNull(name), ""}) {
         for (int lambdaParamCount : new int[]{FunctionalExpressionKey.UNKNOWN_PARAM_COUNT, samParamCount}) {
           result.add(new FunctionalExpressionKey(lambdaParamCount, FunctionalExpressionKey.CoarseType.UNKNOWN, lambdaType));
           if (isVoid) {

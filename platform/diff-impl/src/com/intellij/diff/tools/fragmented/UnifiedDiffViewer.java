@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -70,7 +70,6 @@ import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLinesContent;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull protected final EditorEx myEditor;
@@ -1306,7 +1305,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
           myUpdateIndicator.cancel();
           myUpdateIndicator = new EmptyProgressIndicator();
 
-          ChangedBlockData blockData = assertNotNull(myModel.getData());
+          ChangedBlockData blockData = Objects.requireNonNull(myModel.getData());
 
           ReadAction
             .nonBlocking(() -> updateHighlighters(blockData))

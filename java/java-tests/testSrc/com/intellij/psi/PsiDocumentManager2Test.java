@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -10,11 +10,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 @HeavyPlatformTestCase.WrapInCommand
 public class PsiDocumentManager2Test extends LightPlatformTestCase {
@@ -49,7 +49,7 @@ public class PsiDocumentManager2Test extends LightPlatformTestCase {
       }
     }
     PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("DummyFile.my", new MyFileType(), "<gggg></gggg>", LocalTimeCounter.currentTime(), true);
-    Document document = ObjectUtils.assertNotNull(PsiDocumentManager.getInstance(getProject()).getDocument(file));
+    Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(file));
 
     assertTrue(document.isWritable());
     assertTrue(file.getVirtualFile().getFileType() instanceof MyFileType);

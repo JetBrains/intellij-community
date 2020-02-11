@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -56,7 +57,6 @@ import static com.intellij.diff.tools.util.DiffNotifications.createNotification;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.createConflictDiffRequest;
 import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.createDiffRequest;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class DiffShelvedChangesActionProvider implements AnActionExtensionProvider {
@@ -470,7 +470,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
         leftTitle = CURRENT_VERSION;
       }
       else {
-        leftContent = contentFactory.create(myProject, assertNotNull(texts.getBase()), myFile);
+        leftContent = contentFactory.create(myProject, Objects.requireNonNull(texts.getBase()), myFile);
         leftTitle = BASE_VERSION;
       }
 

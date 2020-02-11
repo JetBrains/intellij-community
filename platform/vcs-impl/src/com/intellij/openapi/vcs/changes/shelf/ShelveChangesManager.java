@@ -76,7 +76,6 @@ import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChang
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.createShelvedChangesFromFilePatches;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Objects.requireNonNull;
@@ -151,7 +150,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   public static String getShelfPath(@NotNull Project project) {
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
     if (vcsConfiguration.USE_CUSTOM_SHELF_PATH) {
-      return assertNotNull(vcsConfiguration.CUSTOM_SHELF_PATH);
+      return requireNonNull(vcsConfiguration.CUSTOM_SHELF_PATH);
     }
     return getDefaultShelfPath(project);
   }
@@ -516,9 +515,9 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     }
 
     for (VcsRoot vcsRoot : changesGroupedByRoot.keySet()) {
-      AbstractVcs vcs = notNull(vcsRoot.getVcs());
+      AbstractVcs vcs = requireNonNull(vcsRoot.getVcs());
       if (vcs.getDiffProvider() != null) {
-        vcs.getDiffProvider().preloadBaseRevisions(notNull(vcsRoot.getPath()), changesGroupedByRoot.get(vcsRoot));
+        vcs.getDiffProvider().preloadBaseRevisions(requireNonNull(vcsRoot.getPath()), changesGroupedByRoot.get(vcsRoot));
       }
     }
   }

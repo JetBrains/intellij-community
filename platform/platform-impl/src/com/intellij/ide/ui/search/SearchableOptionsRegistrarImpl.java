@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.ui.search;
 
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -123,7 +122,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         while (resources.hasMoreElements()) {
           final URL url = resources.nextElement();
           if (URLUtil.JAR_PROTOCOL.equals(url.getProtocol())) {
-            final Pair<String, String> parts = ObjectUtils.notNull(URLUtil.splitJarUrl(url.getFile()));
+            final Pair<String, String> parts = Objects.requireNonNull(URLUtil.splitJarUrl(url.getFile()));
             final File file = new File(parts.first);
             try (final JarFile jar = new JarFile(file)) {
               final Enumeration<JarEntry> entries = jar.entries();

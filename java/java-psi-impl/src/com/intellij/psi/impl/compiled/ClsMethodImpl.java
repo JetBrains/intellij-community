@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
@@ -29,8 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import java.util.Objects;
 
 public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAnnotationMethod {
   private final NotNullLazyValue<PsiTypeElement> myReturnType;
@@ -121,7 +120,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   @Override
   @NotNull
   public PsiModifierList getModifierList() {
-    return assertNotNull(getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
+    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
   }
 
   @Override
@@ -132,18 +131,18 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   @Override
   @NotNull
   public PsiParameterList getParameterList() {
-    return assertNotNull(getStub().findChildStubByType(JavaStubElementTypes.PARAMETER_LIST)).getPsi();
+    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.PARAMETER_LIST)).getPsi();
   }
 
   @Override
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return assertNotNull(getStub().findChildStubByType(JavaStubElementTypes.THROWS_LIST)).getPsi();
+    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.THROWS_LIST)).getPsi();
   }
 
   @Override
   public PsiTypeParameterList getTypeParameterList() {
-    return assertNotNull(getStub().findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST)).getPsi();
+    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST)).getPsi();
   }
 
   @Override

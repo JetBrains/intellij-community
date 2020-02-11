@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -25,7 +25,6 @@ import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -49,10 +48,8 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiFunction;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
@@ -728,8 +725,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
                                  resize().
         createPanel());
 
-      ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb1)).setCommentText("Long long long long long long long text");
-      ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb2)).setCommentText("Short text");
+      Objects.requireNonNull(ProgressPanel.getProgressPanel(pb1)).setCommentText("Long long long long long long long text");
+      Objects.requireNonNull(ProgressPanel.getProgressPanel(pb2)).setCommentText("Short text");
 
       JProgressBar pb3 = new JProgressBar(0, 100);
       JProgressBar pb4 = new JProgressBar(0, 100);
@@ -745,8 +742,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
                                  resize().
         createPanel());
 
-      ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb3)).setCommentText("Long long long long long long text");
-      ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb4)).setCommentText("Short text");
+      Objects.requireNonNull(ProgressPanel.getProgressPanel(pb3)).setCommentText("Long long long long long long text");
+      Objects.requireNonNull(ProgressPanel.getProgressPanel(pb4)).setCommentText("Short text");
 
       panel.add(UI.PanelFactory.grid().
         add(UI.PanelFactory.panel(new JProgressBar(0, 100)).

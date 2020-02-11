@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -33,13 +33,13 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This class is for "lightweight" tests only, i.e. those which can run inside default light project set up
@@ -171,10 +171,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     }
     finally {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      VirtualFile file = ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(e.getDocument()));
+      VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(e.getDocument()));
       FileEditorManager.getInstance(getProject()).closeFile(file);
       VfsTestUtil.deleteFile(file);
-      VirtualFile file2 = ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(e2.getDocument()));
+      VirtualFile file2 = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(e2.getDocument()));
       FileEditorManager.getInstance(getProject()).closeFile(file2);
       VfsTestUtil.deleteFile(file2);
     }

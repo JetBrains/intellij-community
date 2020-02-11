@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author gregsh
@@ -52,7 +52,7 @@ public final class JBSwingUtilities {
   public static Graphics2D runGlobalCGTransform(@NotNull JComponent c, @NotNull Graphics g) {
     Graphics2D gg = (Graphics2D)g;
     for (PairFunction<? super JComponent, ? super Graphics2D, ? extends Graphics2D> transform : ourGlobalTransform) {
-      gg = ObjectUtils.notNull(transform.fun(c, gg));
+      gg = Objects.requireNonNull(transform.fun(c, gg));
     }
     return gg;
   }

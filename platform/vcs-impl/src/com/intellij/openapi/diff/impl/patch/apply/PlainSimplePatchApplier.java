@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.diff.tools.util.text.LineOffsets;
@@ -12,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class PlainSimplePatchApplier {
   private static final Logger LOG = getInstance(PlainSimplePatchApplier.class);
@@ -64,7 +64,7 @@ public class PlainSimplePatchApplier {
   }
 
   private boolean handleLastLine() {
-    List<PatchLine> lastHunkLines = notNull(ContainerUtil.getLastItem(myHunks)).getLines();
+    List<PatchLine> lastHunkLines = Objects.requireNonNull(ContainerUtil.getLastItem(myHunks)).getLines();
     PatchLine lastBaseLine = ContainerUtil.findLast(lastHunkLines, line -> line.getType() != PatchLine.Type.ADD);
     PatchLine lastPatchedLine = ContainerUtil.findLast(lastHunkLines, line -> line.getType() != PatchLine.Type.REMOVE);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
@@ -16,7 +16,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -146,7 +145,7 @@ public class GlobalSearchScopesCore {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myFileIndex.isInSourceContent(file) && !TestSourcesFilter.isTestSources(file, ObjectUtils.assertNotNull(getProject()));
+      return myFileIndex.isInSourceContent(file) && !TestSourcesFilter.isTestSources(file, Objects.requireNonNull(getProject()));
     }
 
     @Override
@@ -167,7 +166,7 @@ public class GlobalSearchScopesCore {
     @NotNull
     @Override
     public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
-      return ModuleManager.getInstance(ObjectUtils.assertNotNull(getProject())).getUnloadedModuleDescriptions();
+      return ModuleManager.getInstance(Objects.requireNonNull(getProject())).getUnloadedModuleDescriptions();
     }
 
     @NotNull
@@ -184,7 +183,7 @@ public class GlobalSearchScopesCore {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return TestSourcesFilter.isTestSources(file, ObjectUtils.assertNotNull(getProject()));
+      return TestSourcesFilter.isTestSources(file, Objects.requireNonNull(getProject()));
     }
 
     @Override

@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents {@link DataIndexer} which behaviour can be extended by some kind of extension points.
@@ -51,7 +51,7 @@ public interface CompositeDataIndexer<K, V, SubIndexerType, SubIndexerVersion> e
   @Override
   default Map<K, V> map(@NotNull FileContent inputData) {
     SubIndexerType subIndexerType = calculateSubIndexer(inputData);
-    return subIndexerType == null ? Collections.emptyMap() : map(inputData, ObjectUtils.notNull(subIndexerType));
+    return subIndexerType == null ? Collections.emptyMap() : map(inputData, Objects.requireNonNull(subIndexerType));
   }
 
   /**

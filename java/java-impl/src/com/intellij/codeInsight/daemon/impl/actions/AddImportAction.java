@@ -1,5 +1,5 @@
 
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
@@ -31,7 +31,6 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +39,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class AddImportAction implements QuestionAction {
   private static final Logger LOG = Logger.getInstance(AddImportAction.class);
@@ -121,7 +121,7 @@ public class AddImportAction implements QuestionAction {
         @NotNull
         @Override
         public String getTextFor(PsiClass value) {
-          return ObjectUtils.assertNotNull(value.getQualifiedName());
+          return Objects.requireNonNull(value.getQualifiedName());
         }
 
         @Override
@@ -170,7 +170,7 @@ public class AddImportAction implements QuestionAction {
       }
     };
   }
-  
+
   public static void excludeFromImport(@NotNull Project project, @NotNull String prefix) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (project.isDisposed()) return;

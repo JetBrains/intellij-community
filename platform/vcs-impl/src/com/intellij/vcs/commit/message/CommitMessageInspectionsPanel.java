@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -29,13 +29,9 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel.areToolDescriptorsChanged;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.exists;
 
 public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements Disposable, UnnamedConfigurable {
@@ -201,13 +197,13 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
     @NotNull
     @Override
     public Descriptor getDefaultDescriptor() {
-      return notNull(super.getDefaultDescriptor());
+      return Objects.requireNonNull(super.getDefaultDescriptor());
     }
 
     @NotNull
     @Override
     public ToolDescriptors getDescriptors() {
-      return notNull(super.getDescriptors());
+      return Objects.requireNonNull(super.getDescriptors());
     }
 
     @Override

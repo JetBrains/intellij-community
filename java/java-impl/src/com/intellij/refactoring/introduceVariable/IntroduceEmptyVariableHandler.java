@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -35,8 +21,9 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class IntroduceEmptyVariableHandler {
   private static final String VARIABLE_NAME = "IntroducedVariable";
@@ -57,7 +44,7 @@ public class IntroduceEmptyVariableHandler {
 
     SuggestedNameInfo suggestedNameInfo = getSuggestedVariableNames(project, type, at);
     assert suggestedNameInfo.names.length > 0;
-    
+
     ApplicationManager.getApplication().runWriteAction(() -> {
       Document document = editor.getDocument();
       String initialVariableName = suggestedNameInfo.names[0];
@@ -88,10 +75,10 @@ public class IntroduceEmptyVariableHandler {
       templateBuilder.replaceElement(localVariable.getNameIdentifier(), VARIABLE_NAME,
                                      new ConstantNode(suggestedNameInfo.names[0]).withLookupStrings(suggestedNameInfo.names), true);
       templateBuilder.replaceElement(variableReference, VARIABLE_NAME, (String)null, false);
-      templateBuilder.replaceElement(ObjectUtils.assertNotNull(localVariable.getInitializer()), "");
+      templateBuilder.replaceElement(Objects.requireNonNull(localVariable.getInitializer()), "");
       templateBuilder.setEndVariableAfter(variableReference);
       Template template = templateBuilder.buildInlineTemplate();
-      
+
       editor.getCaretModel().moveToOffset(context.getTextOffset());
       TemplateManager.getInstance(project).startTemplate(editor, template);
     });

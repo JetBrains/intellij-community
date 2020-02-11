@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.migrate;
 
 import com.intellij.diff.DiffContentFactory;
@@ -23,8 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import java.util.Objects;
 
 public class MigrateToNewDiffUtil {
   @NotNull
@@ -47,21 +46,21 @@ public class MigrateToNewDiffUtil {
       return factory.createEmpty();
     }
     if (oldContent instanceof com.intellij.openapi.diff.FileContent) {
-      VirtualFile file = assertNotNull(oldContent.getFile());
+      VirtualFile file = Objects.requireNonNull(oldContent.getFile());
       return factory.create(project, file);
     }
     else if (oldContent instanceof com.intellij.openapi.diff.SimpleContent) {
       return factory.create(project, ((SimpleContent)oldContent).getText(), oldContent.getContentType());
     }
     else {
-      Document document = assertNotNull(oldContent.getDocument());
+      Document document = Objects.requireNonNull(oldContent.getDocument());
       return factory.create(project, document, oldContent.getContentType());
     }
   }
 
   @NotNull
   public static MergeRequest convertMergeRequest(@NotNull MergeRequestImpl request) throws InvalidDiffRequestException {
-    MergeRequestImpl.MergeContent mergeContent = assertNotNull(request.getMergeContent());
+    MergeRequestImpl.MergeContent mergeContent = Objects.requireNonNull(request.getMergeContent());
     MergeVersion.MergeDocumentVersion mergeVersion = (MergeVersion.MergeDocumentVersion)mergeContent.getMergeVersion();
 
     com.intellij.openapi.diff.SimpleContent leftContent = (SimpleContent)request.getContents()[0];

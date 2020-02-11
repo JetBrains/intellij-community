@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.ResourceBundle;
@@ -269,13 +269,13 @@ class ResourceBundleEditorFileListener implements VirtualFileListener {
     @NotNull
     public String getPropertyName() {
       LOG.assertTrue(myType == EventType.PROPERTY_CHANGED, "Unexpected event type: " + myType);
-      return ObjectUtils.notNull(myPropertyName);
+      return Objects.requireNonNull(myPropertyName);
     }
 
     @NotNull
     public Object getPropertyNewValue() {
       LOG.assertTrue(myType == EventType.PROPERTY_CHANGED, "Unexpected event type: " + myType);
-      return ObjectUtils.notNull(myPropertyNewValue);
+      return Objects.requireNonNull(myPropertyNewValue);
     }
 
     @Override

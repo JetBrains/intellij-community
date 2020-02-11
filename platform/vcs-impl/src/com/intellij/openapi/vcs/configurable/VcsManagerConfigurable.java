@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.application.options.colors.fileStatus.FileStatusColorsConfigurable;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurable;
@@ -159,7 +160,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
       return new ObjectProducer() {
         @Override
         protected Object createElement() {
-          return notNull(ProjectLevelVcsManager.getInstance(getProject()).findVcsByName(myDescriptor.getName())).getConfigurable();
+          return Objects.requireNonNull(ProjectLevelVcsManager.getInstance(getProject()).findVcsByName(myDescriptor.getName())).getConfigurable();
         }
 
         @Override

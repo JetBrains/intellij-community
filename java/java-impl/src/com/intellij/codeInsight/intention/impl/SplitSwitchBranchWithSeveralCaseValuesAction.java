@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.psi.util.PsiTreeUtil.getNextSiblingOfType;
 import static com.intellij.psi.util.PsiTreeUtil.getPrevSiblingOfType;
@@ -214,7 +215,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
     }
 
     List<PsiSwitchLabelStatement> newLabels = new ArrayList<>();
-    PsiExpression[] expressions = notNull(labelStatement.getCaseValues()).getExpressions();
+    PsiExpression[] expressions = Objects.requireNonNull(labelStatement.getCaseValues()).getExpressions();
     for (int i = expressions.length - 1; i >= 1; i--) {
       PsiExpression caseValue = expressions[i];
       PsiSwitchLabelStatement newLabel = branch.addLabelAfter(caseValue);
@@ -234,11 +235,11 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiSwitchLabeledRuleStatement newRule = (PsiSwitchLabeledRuleStatement)factory.createStatementFromText("case 1->{}", null);
 
-    notNull(newRule.getCaseValues()).getExpressions()[0].replace(caseValue);
+    Objects.requireNonNull(newRule.getCaseValues()).getExpressions()[0].replace(caseValue);
     newRule = (PsiSwitchLabeledRuleStatement)labeledRule.getParent().addAfter(newRule, labeledRule);
     newRule = (PsiSwitchLabeledRuleStatement)CodeStyleManager.getInstance(project).reformat(newRule);
 
-    notNull(newRule.getBody()).replace(notNull(labeledRule.getBody()));
+    Objects.requireNonNull(newRule.getBody()).replace(Objects.requireNonNull(labeledRule.getBody()));
 
     caseValue.delete();
     return newRule;
@@ -364,7 +365,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
       Project project = myCodeBlock.getProject();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiSwitchLabelStatement newLabel = (PsiSwitchLabelStatement)factory.createStatementFromText("case 1:", null);
-      notNull(newLabel.getCaseValues()).getExpressions()[0].replace(caseValue);
+      Objects.requireNonNull(newLabel.getCaseValues()).getExpressions()[0].replace(caseValue);
 
       newLabel = (PsiSwitchLabelStatement)myCodeBlock.addAfter(newLabel, myLastStatement);
       newLabel = (PsiSwitchLabelStatement)CodeStyleManager.getInstance(project).reformat(newLabel);

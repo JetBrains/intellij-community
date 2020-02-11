@@ -14,12 +14,12 @@ import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.RunAll;
-import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.test.VcsPlatformTest;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -100,7 +100,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     String externalName = "external";
     mkdir(externalName);
     projectRoot.refresh(false, true);
-    final VirtualFile repositoryFile = ObjectUtils.assertNotNull(projectRoot.findChild(externalName));
+    final VirtualFile repositoryFile = Objects.requireNonNull(this.projectRoot.findChild(externalName));
     MockRepositoryImpl externalRepo = new MockRepositoryImpl(myProject, repositoryFile, myProject);
     myGlobalRepositoryManager.addExternalRepository(repositoryFile, externalRepo);
     return repositoryFile;

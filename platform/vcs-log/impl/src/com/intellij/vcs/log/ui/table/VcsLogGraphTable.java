@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
@@ -71,7 +71,6 @@ import java.beans.PropertyChangeEvent;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
@@ -493,7 +492,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
         Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> getModel().getRootAtRow(row));
         if (roots.size() == 1) {
-          return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
+          return myLogData.getLogProvider(Objects.requireNonNull(getFirstItem(roots))).getSupportedVcs();
         }
         return null;
       })

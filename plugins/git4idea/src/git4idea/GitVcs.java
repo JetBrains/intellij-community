@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import com.intellij.vcs.AnnotationProviderEx;
@@ -60,10 +59,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -86,7 +82,7 @@ public final class GitVcs extends AbstractVcs {
 
   @NotNull
   public static GitVcs getInstance(@NotNull Project project) {
-    return ObjectUtils.notNull((GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME));
+    return Objects.requireNonNull((GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME));
   }
 
   public GitVcs(@NotNull Project project) {

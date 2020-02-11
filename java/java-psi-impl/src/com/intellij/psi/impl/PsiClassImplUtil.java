@@ -437,7 +437,7 @@ public class PsiClassImplUtil {
       }
 
       private PsiSubstitutor obtainSubstitutor(PsiMember member) {
-        PsiClass containingClass = ObjectUtils.assertNotNull(member.getContainingClass());
+        PsiClass containingClass = Objects.requireNonNull(member.getContainingClass());
         PsiSubstitutor superSubstitutor = ObjectUtils.notNull(hierarchy.getSuperMembersSubstitutor(containingClass, languageLevel),
                                                               PsiSubstitutor.EMPTY);
         return obtainFinalSubstitutor(containingClass, superSubstitutor, aClass, substitutor, factory, languageLevel);

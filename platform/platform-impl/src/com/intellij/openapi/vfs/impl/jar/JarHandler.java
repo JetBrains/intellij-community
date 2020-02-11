@@ -35,7 +35,6 @@ import java.security.MessageDigest;
 import java.util.*;
 import java.util.zip.ZipFile;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 public class JarHandler extends ZipHandler {
@@ -332,23 +331,24 @@ public class JarHandler extends ZipHandler {
       // - Collect librarySnapshot -> projectLibraryPaths and existing projectLibraryPath -> librarySnapshot
       // - Remove all projectLibraryPaths that doesn't exist from persistent mapping
       // - Remove jar library snapshots that have no projectLibraryPath
-      Set<String> availableLibrarySnapshots = newTroveSet(assertNotNull(snapshotInfoFile.getParentFile().list(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          int lastDotPosition = name.lastIndexOf('.');
-          if (lastDotPosition == -1) return false;
-          String extension = name.substring(lastDotPosition + 1);
-          if (extension.length() != 40 || !consistsOfHexLetters(extension)) return false;
-          return true;
-        }
-
-        private boolean consistsOfHexLetters(String extension) {
-          for (int i = 0; i < extension.length(); ++i) {
-            if (Character.digit(extension.charAt(i), 16) == -1) return false;
+      Set<String> availableLibrarySnapshots = newTroveSet(
+        Objects.requireNonNull(snapshotInfoFile.getParentFile().list(new FilenameFilter() {
+          @Override
+          public boolean accept(File dir, String name) {
+            int lastDotPosition = name.lastIndexOf('.');
+            if (lastDotPosition == -1) return false;
+            String extension = name.substring(lastDotPosition + 1);
+            if (extension.length() != 40 || !consistsOfHexLetters(extension)) return false;
+            return true;
           }
-          return true;
-        }
-      })));
+
+          private boolean consistsOfHexLetters(String extension) {
+            for (int i = 0; i < extension.length(); ++i) {
+              if (Character.digit(extension.charAt(i), 16) == -1) return false;
+            }
+            return true;
+          }
+        })));
 
       final List<String> invalidLibraryFilePaths = new ArrayList<>();
       final List<String> allLibraryFilePaths = new ArrayList<>();

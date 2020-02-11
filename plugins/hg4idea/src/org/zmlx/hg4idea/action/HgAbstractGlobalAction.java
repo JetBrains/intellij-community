@@ -19,7 +19,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
@@ -30,6 +29,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class HgAbstractGlobalAction extends DumbAwareAction {
 
@@ -69,7 +69,7 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
     if (project == null) {
       return false;
     }
-    HgVcs vcs = ObjectUtils.assertNotNull(HgVcs.getInstance(project));
+    HgVcs vcs = Objects.requireNonNull(HgVcs.getInstance(project));
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
     if (roots == null || roots.length == 0) {
       return false;

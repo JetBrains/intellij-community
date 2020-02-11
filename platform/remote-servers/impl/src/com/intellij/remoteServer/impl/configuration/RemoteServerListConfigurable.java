@@ -18,7 +18,6 @@ import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.JBUI;
@@ -138,7 +137,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Nullable
   @Override
   public Runnable enableSearch(final String option) {
-    return () -> ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(option);
+    return () -> Objects.requireNonNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(option);
   }
 
   @Override

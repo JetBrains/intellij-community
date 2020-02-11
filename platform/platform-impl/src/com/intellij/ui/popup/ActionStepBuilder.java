@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.openapi.actionSystem.Presentation.restoreTextWithMnemonic;
 
@@ -48,7 +49,7 @@ class ActionStepBuilder {
       myPresentationFactory = new PresentationFactory();
     }
     else {
-      myPresentationFactory = ObjectUtils.notNull(presentationFactory);
+      myPresentationFactory = Objects.requireNonNull(presentationFactory);
     }
     myListModel = new ArrayList<>();
     myDataContext = dataContext;

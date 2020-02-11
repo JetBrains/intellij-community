@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.concurrency.Job;
@@ -32,10 +32,7 @@ import org.junit.Assert;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -531,7 +528,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     ReadMostlyRWLock lock = new ReadMostlyRWLock();
     lock.setWriteThread(Thread.currentThread());
     final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
-    final Field myThreadLocalsField = ObjectUtils.notNull(ReflectionUtil.getDeclaredField(Thread.class, "threadLocals"));
+    final Field myThreadLocalsField = Objects.requireNonNull(ReflectionUtil.getDeclaredField(Thread.class, "threadLocals"));
     //noinspection Convert2Lambda
     List<Callable<Void>> callables = Collections.nCopies(numOfThreads, new Callable<Void>() {
       @Override

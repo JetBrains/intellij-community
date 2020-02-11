@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -10,7 +10,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -81,7 +81,7 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
   public <T extends LocalInspectionTool> T getTool(@NotNull Class<T> aClass) {
     InspectionToolWrapper tool = getInspectionTool(InspectionProfileEntry.getShortName(aClass.getSimpleName()), myProject);
     //noinspection unchecked
-    return (T)ObjectUtils.notNull(tool).getTool();
+    return (T)Objects.requireNonNull(tool).getTool();
   }
 
   public <T extends LocalInspectionTool> boolean isToolEnabled(@NotNull Class<T> aClass) {

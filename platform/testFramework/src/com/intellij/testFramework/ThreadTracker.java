@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.NettyUtil;
 import org.junit.Assert;
@@ -45,7 +46,7 @@ public class ThreadTracker {
     myDefaultProjectInitialized = ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized();
   }
 
-  private static final Method getThreads = ObjectUtils.notNull(ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads"));
+  private static final Method getThreads = Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads"));
 
   @NotNull
   public static Map<String, Thread> getThreads() {

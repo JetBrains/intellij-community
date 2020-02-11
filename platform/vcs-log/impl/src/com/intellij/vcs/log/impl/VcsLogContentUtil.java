@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -176,7 +177,7 @@ public class VcsLogContentUtil {
       return;
     }
 
-    Runnable runConsumer = () -> notNull(VcsLogContentProvider.getInstance(project)).executeOnMainUiCreated(consumer);
+    Runnable runConsumer = () -> Objects.requireNonNull(VcsLogContentProvider.getInstance(project)).executeOnMainUiCreated(consumer);
     if (!window.isVisible()) {
       window.activate(runConsumer);
     }

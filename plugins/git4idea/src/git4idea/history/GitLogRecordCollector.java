@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static git4idea.history.GitLogParser.GitLogOption.HASH;
 import static git4idea.history.GitLogParser.GitLogOption.TREE;
 
@@ -63,7 +62,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
 
   protected void processCollectedRecords() {
     for (String hash : myHashToRecord.keySet()) {
-      ArrayList<R> records = new ArrayList<>(notNull(myHashToRecord.get(hash)));
+      ArrayList<R> records = new ArrayList<>(Objects.requireNonNull(myHashToRecord.get(hash)));
       R firstRecord = records.get(0);
       if (firstRecord.getParentsHashes().length != 0 && records.size() != firstRecord.getParentsHashes().length) {
         processIncompleteRecord(hash, records);
@@ -103,7 +102,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
     List<R> firstRecords = ContainerUtil.map(incompleteRecords.entrySet(), e -> ContainerUtil.getFirstItem(e.getValue()));
     Map<String, String> hashToTreeMap = getHashToTreeMap(project, root, firstRecords);
     for (String hash : incompleteRecords.keySet()) {
-      ArrayList<R> records = new ArrayList<>(notNull(incompleteRecords.get(hash)));
+      ArrayList<R> records = new ArrayList<>(Objects.requireNonNull(incompleteRecords.get(hash)));
       fillWithEmptyRecords(records, hashToTreeMap);
       consumer.consume(records);
     }

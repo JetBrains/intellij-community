@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.openapi.CompositeDisposable;
@@ -45,6 +45,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.openapi.application.ModalityState.defaultModalityState;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
@@ -366,7 +367,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
 
   @NotNull
   public static String filePath(@NotNull FilePath newFilePath) {
-    return newFilePath.getName() + " (" + notNull(newFilePath.getParentPath()).getPath() + ")";
+    return newFilePath.getName() + " (" + Objects.requireNonNull(newFilePath.getParentPath()).getPath() + ")";
   }
 
   private static ActionListener createBoth(TreeConflictDescription description) {

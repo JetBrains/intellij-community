@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -503,7 +502,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   public void testFindRootWithDeepNestedFileMustThrow() {
     try {
       File d = tempDir.newFolder();
-      VirtualFile vDir = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(d));
+      VirtualFile vDir = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(d));
       ManagingFS.getInstance().findRoot(vDir.getPath(), myFS);
       fail("should fail by assertion in PersistentFsImpl.findRoot()");
     }
@@ -836,7 +835,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   private static void assertWritable(File file, VirtualFile vFile, boolean expected) {
     assertEquals(expected, file.canWrite());
-    assertEquals(expected, ObjectUtils.assertNotNull(FileSystemUtil.getAttributes(file)).isWritable());
+    assertEquals(expected, Objects.requireNonNull(FileSystemUtil.getAttributes(file)).isWritable());
     assertEquals(expected, vFile.isWritable());
   }
 

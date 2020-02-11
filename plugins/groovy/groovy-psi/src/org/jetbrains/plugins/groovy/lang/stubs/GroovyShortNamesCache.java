@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.stubs;
 
 import com.intellij.openapi.project.Project;
@@ -22,10 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrSourceFilterScope;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys.CLASS_SHORT_NAMES;
 
@@ -40,7 +37,8 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   public static GroovyShortNamesCache getGroovyShortNamesCache(Project project) {
-    return ObjectUtils.assertNotNull(ContainerUtil.findInstance(PsiShortNamesCache.EP_NAME.getExtensionList(project), GroovyShortNamesCache.class));
+    return Objects
+      .requireNonNull(ContainerUtil.findInstance(PsiShortNamesCache.EP_NAME.getExtensionList(project), GroovyShortNamesCache.class));
   }
 
   @Override

@@ -5,7 +5,6 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +19,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -252,7 +252,7 @@ public class IoTestUtil {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       FileUtil.visitFiles(root, file -> {
         if (file.isFile()) {
-          String path = FileUtil.toSystemIndependentName(ObjectUtils.assertNotNull(FileUtil.getRelativePath(root, file)));
+          String path = FileUtil.toSystemIndependentName(Objects.requireNonNull(FileUtil.getRelativePath(root, file)));
           try {
             stream.putNextEntry(new ZipEntry(path));
             try (InputStream is = new FileInputStream(file)) {

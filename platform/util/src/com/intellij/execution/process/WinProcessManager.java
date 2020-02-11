@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +10,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import java.util.Objects;
 
 /**
  * Do not call this class directly - use {@link OSProcessUtil} instead.
@@ -31,7 +31,7 @@ public class WinProcessManager {
           return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
         }
 
-        long handle = assertNotNull(ReflectionUtil.getField(process.getClass(), process, long.class, "handle"));
+        long handle = Objects.requireNonNull(ReflectionUtil.getField(process.getClass(), process, long.class, "handle"));
         return Kernel32.INSTANCE.GetProcessId(new WinNT.HANDLE(Pointer.createConstant(handle)));
       }
       catch (Throwable t) {

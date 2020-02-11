@@ -1,7 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.lookup.*;
@@ -25,7 +28,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.*;
@@ -36,8 +41,8 @@ import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
-import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -59,7 +64,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * @author peter
@@ -380,7 +384,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   private static void registerClassFromTypeElement(LookupElement element, JavaCompletionSession session) {
-    PsiType type = assertNotNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getType();
+    PsiType type = Objects.requireNonNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getType();
     if (type instanceof PsiPrimitiveType) {
       session.registerKeyword(type.getCanonicalText(false));
     }
@@ -584,7 +588,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiElement insertedElement,
                                                       CompletionParameters parameters) {
     PsiNameValuePair pair = PsiTreeUtil.getParentOfType(insertedElement, PsiNameValuePair.class);
-    PsiAnnotationParameterList parameterList = (PsiAnnotationParameterList)assertNotNull(pair).getParent();
+    PsiAnnotationParameterList parameterList = (PsiAnnotationParameterList)Objects.requireNonNull(pair).getParent();
     PsiAnnotation anno = (PsiAnnotation)parameterList.getParent();
     boolean showClasses = psiElement().afterLeaf("(").accepts(insertedElement);
     PsiClass annoClass = null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -19,16 +19,12 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
@@ -100,7 +96,7 @@ public class VcsRootProblemNotifier {
       // Register the single root equal to the project dir silently, without any notification
       if (invalidRoots.isEmpty() &&
           importantUnregisteredRoots.size() == 1 &&
-          FileUtil.pathsEqual(notNull(getFirstItem(importantUnregisteredRoots)).getMapping(), myProject.getBasePath())) {
+          FileUtil.pathsEqual(Objects.requireNonNull(getFirstItem(importantUnregisteredRoots)).getMapping(), myProject.getBasePath())) {
         return;
       }
 
@@ -170,7 +166,7 @@ public class VcsRootProblemNotifier {
   }
 
   private boolean isUnderOrAboveProjectDir(@NotNull String mapping) {
-    String projectDir = ObjectUtils.assertNotNull(myProject.getBasePath());
+    String projectDir = Objects.requireNonNull(myProject.getBasePath());
     return mapping.equals(PROJECT_CONSTANT) ||
            FileUtil.isAncestor(projectDir, mapping, false) ||
            FileUtil.isAncestor(mapping, projectDir, false);

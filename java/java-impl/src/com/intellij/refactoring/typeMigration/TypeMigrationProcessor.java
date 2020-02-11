@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,12 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import java.util.*;
 
 public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   public volatile static boolean ourSkipFailedConversionInTestMode;
@@ -166,7 +161,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     MigrationPanel panel = new MigrationPanel(myRoots, myLabeler, myProject, isPreviewUsages());
     String name;
     if (myRoots.length == 1) {
-      String fromType = assertNotNull(TypeMigrationLabeler.getElementType(myRoots[0])).getPresentableText();
+      String fromType = Objects.requireNonNull(TypeMigrationLabeler.getElementType(myRoots[0])).getPresentableText();
       String toType = myRootTypes.fun(myRoots[0]).getPresentableText();
       String text;
       text = getPresentation(myRoots[0]);

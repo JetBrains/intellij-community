@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -36,12 +22,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance(CompositeElement.class);
@@ -647,7 +634,7 @@ public class CompositeElement extends TreeElement {
     TreeUtil.ensureParsed(anotherParent.getFirstChildNode());
     final ASTNode firstChild = anotherParent.getFirstChildNode();
     ChangeUtil.prepareAndRunChangeAction(
-      event -> remove((TreeChangeEventImpl)event, (TreeElement)anotherParent.getFirstChildNode(), null), 
+      event -> remove((TreeChangeEventImpl)event, (TreeElement)anotherParent.getFirstChildNode(), null),
       (TreeElement)anotherParent);
 
     if (firstChild != null) {
@@ -657,7 +644,7 @@ public class CompositeElement extends TreeElement {
         CompositeElement parent = getTreeParent();
         if (parent != null) {
           // treat all replacements as one big childrenChanged to simplify resulting PSI/document events
-          event.addElementaryChange(parent); 
+          event.addElementaryChange(parent);
         }
         remove(event, first, null);
         add(event, this, (TreeElement)firstChild);
@@ -703,7 +690,7 @@ public class CompositeElement extends TreeElement {
     if (wrapper != null) return wrapper;
 
     wrapper = createPsiNoLock();
-    return ourPsiUpdater.compareAndSet(this, null, wrapper) ? wrapper : ObjectUtils.assertNotNull(myWrapper);
+    return ourPsiUpdater.compareAndSet(this, null, wrapper) ? wrapper : Objects.requireNonNull(myWrapper);
   }
 
   @Override

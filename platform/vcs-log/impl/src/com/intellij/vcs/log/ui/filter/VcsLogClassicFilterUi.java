@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.Disposable;
@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -537,7 +536,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     @Nullable
     @Override
     protected VcsLogTextFilter createFilter1(@NotNull List<String> values) {
-      return createTextFilter(ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(values)));
+      return createTextFilter(Objects.requireNonNull(ContainerUtil.getFirstItem(values)));
     }
 
     @Nullable

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch.dashboard;
 
 import com.intellij.ide.ui.UISettings;
@@ -246,7 +246,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
                            @NotNull Function<U, String> namer, @NotNull Function<U, N> nodeFactory,
                            @NotNull Function<U, Iterable<U>> structure) {
       super(root);
-      myRootObject = ObjectUtils.assertNotNull(getUserObject(root));
+      myRootObject = Objects.requireNonNull(getUserObject(root));
       mySpeedSearch = speedSearch;
       myNamer = namer;
       myFactory = nodeFactory;

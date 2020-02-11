@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -68,7 +68,8 @@ import static com.intellij.openapi.ui.Messages.getWarningIcon;
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.util.text.StringUtil.capitalize;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
-import static com.intellij.util.ObjectUtils.*;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.ObjectUtils.tryCast;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static git4idea.GitUtil.*;
 import static git4idea.merge.GitDefaultMergeDialogCustomizerKt.getTitleWithCommitDetailsCustomizer;
@@ -297,7 +298,7 @@ public class GitRebaseProcess {
                                             @Nullable GitRebaseResumeMode mode,
                                             GitLineHandlerListener @NotNull ... listeners) {
     if (mode == null) {
-      GitRebaseParams params = assertNotNull(myRebaseSpec.getParams());
+      GitRebaseParams params = Objects.requireNonNull(myRebaseSpec.getParams());
       return myGit.rebase(repository, params, listeners);
     }
     else if (mode == GitRebaseResumeMode.SKIP) {

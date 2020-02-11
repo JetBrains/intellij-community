@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.push.ui.VcsPushDialog;
@@ -112,7 +98,7 @@ public class GitBranchPopupActions {
       localBranchActions.add(0, new CurrentBranchActions(myProject, repositoryList, currentBranch.getName(), myRepository));
       topShownBranches++;
     }
-    // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites; 
+    // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites;
     wrapWithMoreActionIfNeeded(myProject, popupGroup, localBranchActions,
                                topShownBranches, firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null,
                                firstLevelGroup);
@@ -868,7 +854,7 @@ public class GitBranchPopupActions {
   private static String getCurrentBranchPresentation(@NotNull Collection<? extends GitRepository> repositories) {
     Set<String> currentBranches = map2Set(repositories,
                                           repo -> notNull(repo.getCurrentBranchName(),
-                                                          getShortHash(notNull(repo.getCurrentRevision()))));
+                                                          getShortHash(Objects.requireNonNull(repo.getCurrentRevision()))));
     if (currentBranches.size() == 1) return getBranchPresentation(currentBranches.iterator().next());
     return "current branch";
   }

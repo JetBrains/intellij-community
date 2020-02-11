@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.jna.JnaLoader;
@@ -18,8 +18,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * Use {@link com.intellij.execution.process.OSProcessUtil} wherever possible.
@@ -63,7 +61,7 @@ public class UnixProcessManager {
         return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
       }
 
-      return assertNotNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
+      return Objects.requireNonNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
     }
     catch (Throwable t) {
       throw new IllegalStateException("Failed to get PID from an instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);

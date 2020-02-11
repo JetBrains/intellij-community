@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.actionSystem.*;
@@ -30,12 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import java.util.*;
 
 /**
  * @author peter
@@ -66,7 +62,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
                               @NonNls String subTagName,
                               final boolean editable,
                               ColumnInfo<T, ?>... columnInfos) {
-    this(parentElement, assertNotNull(parentElement.getGenericInfo().getCollectionChildDescription(subTagName)), editable, columnInfos);
+    this(parentElement, Objects.requireNonNull(parentElement.getGenericInfo().getCollectionChildDescription(subTagName)), editable, columnInfos);
   }
 
   public DomCollectionControl(@NotNull DomElement parentElement, @NotNull DomCollectionChildDescription description) {
@@ -75,7 +71,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   public DomCollectionControl(@NotNull DomElement parentElement, @NotNull @NonNls String subTagName) {
-    this(parentElement, assertNotNull(parentElement.getGenericInfo().getCollectionChildDescription(subTagName)));
+    this(parentElement, Objects.requireNonNull(parentElement.getGenericInfo().getCollectionChildDescription(subTagName)));
   }
 
   public boolean isEditable() {
