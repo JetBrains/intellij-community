@@ -6,9 +6,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -203,8 +205,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
     6. (opt) Poll tasks on WT
     */
 
-    boolean forceSyncExec = ApplicationManager.getApplication().isDispatchThread()
-                            && ApplicationManager.getApplication().isWriteAccessAllowed();
+    boolean forceSyncExec = checkIfForceDirectExecNeeded();
 
     CompletableFuture<? extends ProgressIndicator> progressFuture;
     if (myProgressIndicatorFuture == null) {
@@ -269,6 +270,28 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
                                   throwable instanceof ProcessCanceledException || isCanceled(progressFuture),
                                   throwable);
     });
+  }
+
+  // The case of sync exec from the EDT without the ability to poll events (no ProgressWindow#startBlocking or presence of Write Action)
+  // must be handled by very synchronous direct call (alt: use proper progress indicator, i.e. PotemkinProgress or ProgressWindow).
+  // Note: running sync task on pooled thread from EDT can lead to deadlock if pooled thread will try to invokeAndWait.
+  private boolean checkIfForceDirectExecNeeded() {
+    if (!isSync && myBlockEdtRunnable != null) {
+      throw new IllegalStateException("Async execution with blocking EDT event pumping is nonsense, might lead to deadlock");
+    }
+
+    boolean forceDirectExec = isSync && ApplicationManager.getApplication().isDispatchThread()
+                            && (ApplicationManager.getApplication().isWriteAccessAllowed() || myBlockEdtRunnable == null);
+    if (forceDirectExec) {
+      String reason = ApplicationManager.getApplication().isWriteAccessAllowed() ? "inside Write Action" : "no ProgressWindow supplied";
+      String failedConstraints = "";
+      if (myBlockEdtRunnable != null) failedConstraints += "Use ProgressWindow; ";
+      if (myThreadToUse == ThreadToUse.POOLED) failedConstraints += "Use pooled thread; ";
+      failedConstraints = StringUtil.defaultIfEmpty(failedConstraints, "none");
+      Logger.getInstance(ProgressRunner.class)
+        .warn("Forced to sync exec on EDT. Reason: " + reason + ". Failed constraints: " + failedConstraints, new Throwable());
+    }
+    return forceDirectExec;
   }
 
   @NotNull
