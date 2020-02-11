@@ -356,6 +356,7 @@ public final class ProjectUtil {
     }
 
     File parent = projectFile.getParentFile();
+    if (parent == null) return false;
     if (parent.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
       parent = parent.getParentFile();
       return parent != null && FileUtil.pathsEqual(parent.getPath(), existingBaseDirPath);
