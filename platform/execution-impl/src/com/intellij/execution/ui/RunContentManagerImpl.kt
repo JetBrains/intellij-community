@@ -27,7 +27,7 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.wm.RegisterToolWindowTask.Companion.closable
+import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -116,7 +116,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       return toolWindow.contentManager
     }
 
-    toolWindow = toolWindowManager.registerToolWindow(closable(toolWindowId))
+    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(id = toolWindowId, icon = executor.toolWindowIcon))
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
       private var myInsideGetData = 0
@@ -135,7 +135,6 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         }
       }
     })
-    toolWindow.setIcon(executor.toolWindowIcon)
     ContentManagerWatcher.watchContentManager(toolWindow, contentManager)
     initToolWindow(executor, toolWindowId, executor.toolWindowIcon, contentManager)
     return contentManager

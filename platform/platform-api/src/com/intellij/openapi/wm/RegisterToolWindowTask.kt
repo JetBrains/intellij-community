@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm
 
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -13,7 +14,8 @@ data class RegisterToolWindowTask(
   val canWorkInDumbMode: Boolean = true,
   val shouldBeAvailable: Boolean = true,
   val contentFactory: ToolWindowFactory? = null,
-  val icon: Icon? = null
+  val icon: Icon? = null,
+  val stripeTitle: Supplier<String>? = null
 ) {
   // for Java clients
   companion object {
@@ -23,7 +25,13 @@ data class RegisterToolWindowTask(
 
     @JvmStatic
     @JvmOverloads
-    fun closable(id: String, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM) = RegisterToolWindowTask(id, anchor = anchor)
+    fun closable(id: String, icon: Icon, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM) = RegisterToolWindowTask(id, icon = icon, anchor = anchor)
+
+    @JvmStatic
+    @JvmOverloads
+    fun closableSecondary(id: String, stripeTitle: Supplier<String>, icon: Icon, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask {
+      return RegisterToolWindowTask(id, anchor = anchor, icon = icon, sideTool = true, stripeTitle = stripeTitle)
+    }
 
     @JvmStatic
     @JvmOverloads

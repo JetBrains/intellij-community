@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -35,13 +36,17 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
   private final Map<String, CoverageView> myViews = new HashMap<>();
   private boolean myReady;
 
-  public CoverageViewManager(Project project) {
+  public CoverageViewManager(@NotNull Project project) {
     myProject = project;
 
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT, myProject, true, true);
+    RegisterToolWindowTask registerToolWindowTask = RegisterToolWindowTask.closableSecondary(
+      TOOLWINDOW_ID,
+      ExecutionBundle.lazyMessage("coverage.view.title"),
+      AllIcons.Toolwindows.ToolWindowCoverage,
+      ToolWindowAnchor.RIGHT
+    );
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(registerToolWindowTask);
     toolWindow.setHelpId(CoverageView.HELP_ID);
-    toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowCoverage);
-    toolWindow.setStripeTitle(ExecutionBundle.message("coverage.view.title"));
     myContentManager = toolWindow.getContentManager();
     ContentManagerWatcher.watchContentManager(toolWindow, myContentManager);
   }
@@ -86,11 +91,11 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
   }
 
   void closeView(String displayName) {
-    final CoverageView oldView = myViews.remove(displayName);
+    CoverageView oldView = myViews.remove(displayName);
     if (oldView != null) {
       oldView.saveSize();
-      final Content content = myContentManager.getContent(oldView);
-      final Runnable runnable = () -> {
+      Content content = myContentManager.getContent(oldView);
+      Runnable runnable = () -> {
         if (content != null) {
           myContentManager.removeContent(content, false);
         }
@@ -109,11 +114,11 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
   }
 
   public static String getDisplayName(CoverageSuitesBundle suitesBundle) {
-    RunConfigurationBase configuration = suitesBundle.getRunConfiguration();
+    RunConfigurationBase<?> configuration = suitesBundle.getRunConfiguration();
     return configuration != null ? configuration.getName() : suitesBundle.getPresentableName();
   }
 
-  public static class StateBean {
+  public static final class StateBean {
     public boolean myFlattenPackages = false;
     public boolean myAutoScrollToSource = false;
     public boolean myAutoScrollFromSource = false;

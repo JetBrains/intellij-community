@@ -61,7 +61,6 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.text.nullize
 import com.intellij.util.ui.*
 import org.intellij.lang.annotations.JdkConstants
 import org.jdom.Element
@@ -926,16 +925,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val windowInfoSnapshot = info.copy()
 
     val contentFactory = task.contentFactory
-    var stripeTitle = task.id
-    val pluginDescriptor = bean?.pluginDescriptor
-    if (pluginDescriptor != null && PluginManagerCore.CORE_ID != pluginDescriptor.pluginId) {
-      getStripeTitle(pluginDescriptor, "toolwindow.stripe.${task.id}", defaultValue = task.id)?.let {
-        stripeTitle = it
-      }
-    }
-
     val toolWindow = ToolWindowImpl(this, task.id, task.canCloseContent, task.canWorkInDumbMode, task.component, disposable,
-      windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable, stripeTitle = stripeTitle)
+      windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable, stripeTitle = getStripeTitle(task, bean))
 
     contentFactory?.init(toolWindow)
 
@@ -1969,15 +1960,27 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
   return source != null
 }
 
-private fun getStripeTitle(pluginDescriptor: PluginDescriptor, key: String, defaultValue: String): String? {
-  val bundleName = pluginDescriptor.resourceBundleBaseName ?: return null
+private fun getStripeTitle(task: RegisterToolWindowTask, bean: ToolWindowEP?): String {
+  task.stripeTitle?.let {
+    return it.get()
+  }
+
+  val pluginDescriptor = bean?.pluginDescriptor
+  if (pluginDescriptor != null && pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
+    return getStripeTitleFromPluginResourceBundle(pluginDescriptor, "toolwindow.stripe.${task.id}", defaultValue = task.id)
+  }
+  return task.id
+}
+
+private fun getStripeTitleFromPluginResourceBundle(pluginDescriptor: PluginDescriptor, key: String, defaultValue: String): String {
+  val bundleName = pluginDescriptor.resourceBundleBaseName ?: return defaultValue
   val classLoader = pluginDescriptor.pluginClassLoader
   try {
     val bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
-    return BundleBase.messageOrDefault(bundle, key, defaultValue).nullize()
+    return BundleBase.messageOrDefault(bundle, key, defaultValue)
   }
   catch (e: MissingResourceException) {
     LOG.warn("Missing bundle ${bundleName} at ${classLoader}: ${e.message}")
-    return null
+    return defaultValue
   }
 }
