@@ -1204,7 +1204,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     String commitMessage = StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment();
     ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(myProject, commitState, new CommitContext(), null, changeList.getName(), false);
+      new SingleChangeListCommitter(myProject, commitState, new CommitContext(), changeList.getName(), false);
 
     committer.addResultHandler(new ShowNotificationCommitResultHandler(committer));
     committer.runCommit(changeList.getName(), synchronously);

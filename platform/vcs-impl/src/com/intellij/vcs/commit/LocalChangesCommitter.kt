@@ -1,16 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.history.LocalHistory
 import com.intellij.history.LocalHistoryAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress
+
+private val COMMIT_WITHOUT_CHANGES_ROOTS_KEY = Key.create<Collection<VcsRoot>>("Vcs.Commit.CommitWithoutChangesRoots")
+var CommitContext.commitWithoutChangesRoots: Collection<VcsRoot> by commitProperty(COMMIT_WITHOUT_CHANGES_ROOTS_KEY, emptyList())
 
 open class LocalChangesCommitter(
   project: Project,
@@ -25,7 +31,22 @@ open class LocalChangesCommitter(
   protected var isSuccess = false
 
   override fun commit() {
-    processChangesByVcs(project, changes, this::commit)
+    val committedVcses = commitChanges()
+    commitWithoutChanges(committedVcses)
+  }
+
+  private fun commitChanges(): Set<AbstractVcs> {
+    val committedVcses = mutableSetOf<AbstractVcs>()
+    processChangesByVcs(project, changes) { vcs, vcsChanges ->
+      committedVcses += vcs
+      commit(vcs, vcsChanges)
+    }
+    return committedVcses
+  }
+
+  private fun commitWithoutChanges(committedVcses: Set<AbstractVcs>) {
+    val commitWithoutChangesVcses = commitContext.commitWithoutChangesRoots.mapNotNullTo(mutableSetOf()) { it.vcs }
+    (commitWithoutChangesVcses - committedVcses).forEach { commit(it, emptyList()) }
   }
 
   override fun afterCommit() {

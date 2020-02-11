@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.vcs;
 
 import com.intellij.icons.AllIcons;
@@ -320,7 +320,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     CheckinHandler checkinHandler = new TaskCheckinHandlerFactory().createHandler(panel, new CommitContext());
     ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(getProject(), commitState, new CommitContext(), null, "Commit", false);
+      new SingleChangeListCommitter(getProject(), commitState, new CommitContext(), "Commit", false);
 
     committer.addResultHandler(new CommitHandlersNotifier(singletonList(checkinHandler)));
     committer.runCommit("Commit", true);

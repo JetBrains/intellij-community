@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -47,6 +48,7 @@ import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.provider.HgCurrentBinaryContentRevision;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -55,7 +57,9 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
+import static com.intellij.vcs.commit.LocalChangesCommitterKt.getCommitWithoutChangesRoots;
 import static com.intellij.vcs.commit.ToggleAmendCommitOption.isAmendCommitOptionSupported;
+import static java.util.Collections.emptySet;
 import static org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutorKt.isPushAfterCommit;
 import static org.zmlx.hg4idea.provider.commit.HgCommitOptionsKt.*;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
@@ -63,7 +67,6 @@ import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAware {
   @NotNull private final HgVcs myVcs;
   @NotNull private final Project myProject;
-  @Nullable private Collection<HgRepository> myRepos;
 
   public HgCheckinEnvironment(@NotNull HgVcs vcs) {
     myVcs = vcs;
@@ -73,8 +76,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   @Nullable
   @Override
   public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
-    reset();
-
     Collection<HgRepository> repos =
       ContainerUtil.map2SetNotNull(commitPanel.getRoots(), getRepositoryManager(myProject)::getRepositoryForFileQuick);
     boolean hasSubrepos = ContainerUtil.exists(repos, HgRepository::hasSubrepos);
@@ -83,10 +84,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     if (!hasSubrepos && !showAmendOption) return null;
 
     return new HgCommitAdditionalComponent(commitPanel, commitContext, hasSubrepos, showAmendOption);
-  }
-
-  private void reset() {
-    myRepos = null;
   }
 
   @Override
@@ -125,7 +122,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
                                    @NotNull Set<String> feedback) {
     List<VcsException> exceptions = new LinkedList<>();
     Map<HgRepository, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
-    addRepositoriesWithoutChanges(repositoriesMap);
+    addRepositoriesWithoutChanges(repositoriesMap, commitContext);
     boolean isAmend = isAmendCommitMode(commitContext);
     for (Map.Entry<HgRepository, Set<HgFile>> entry : repositoriesMap.entrySet()) {
 
@@ -297,15 +294,14 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     hgFiles.add(new HgFile(repo.getRoot(), filePath));
   }
 
-  public void setRepos(@NotNull Collection<HgRepository> repos) {
-    myRepos = repos;
-  }
+  private void addRepositoriesWithoutChanges(@NotNull Map<HgRepository, Set<HgFile>> repositoryMap, @NotNull CommitContext commitContext) {
+    HgRepositoryManager repositoryManager = getRepositoryManager(myProject);
 
-  private void addRepositoriesWithoutChanges(@NotNull Map<HgRepository, Set<HgFile>> repositoryMap) {
-    if (myRepos == null) return;
-    for (HgRepository repository : myRepos) {
-      if (!repositoryMap.keySet().contains(repository)) {
-        repositoryMap.put(repository, Collections.emptySet());
+    for (VcsRoot root : getCommitWithoutChangesRoots(commitContext)) {
+      HgRepository repository = root.getVcs() == myVcs ? repositoryManager.getRepositoryForRoot(root.getPath()) : null;
+
+      if (repository != null && !repositoryMap.containsKey(repository)) {
+        repositoryMap.put(repository, emptySet());
       }
     }
   }

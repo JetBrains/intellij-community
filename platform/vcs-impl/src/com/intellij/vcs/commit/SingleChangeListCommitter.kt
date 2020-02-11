@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -24,19 +24,21 @@ open class SingleChangeListCommitter(
   project: Project,
   private val commitState: ChangeListCommitState,
   commitContext: CommitContext,
-  private val vcsToCommit: AbstractVcs?,
   localHistoryActionName: String,
   private val isDefaultChangeListFullyIncluded: Boolean
 ) : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, localHistoryActionName) {
 
-  private val changeList get() = commitState.changeList
+  @Deprecated("Use constructor without `vcsToCommit: AbstractVcs?` parameter")
+  constructor(
+    project: Project,
+    commitState: ChangeListCommitState,
+    commitContext: CommitContext,
+    @Suppress("UNUSED_PARAMETER") vcsToCommit: AbstractVcs?, // external usages pass `null` here
+    localHistoryActionName: String,
+    isDefaultChangeListFullyIncluded: Boolean
+  ) : this(project, commitState, commitContext, localHistoryActionName, isDefaultChangeListFullyIncluded)
 
-  override fun commit() {
-    if (vcsToCommit != null && changes.isEmpty()) {
-      commit(vcsToCommit, changes)
-    }
-    super.commit()
-  }
+  private val changeList get() = commitState.changeList
 
   override fun onFailure() {
     getApplication().invokeLater(Runnable {

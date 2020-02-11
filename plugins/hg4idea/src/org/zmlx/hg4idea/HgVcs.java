@@ -130,7 +130,7 @@ public class HgVcs extends AbstractVcs {
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor();
     myMqNewExecutor = new HgMQNewExecutor();
-    myCloseBranchExecutor = new HgCloseBranchExecutor(checkinEnvironment);
+    myCloseBranchExecutor = new HgCloseBranchExecutor();
   }
 
   @Override

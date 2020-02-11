@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.diagnostic.logger
@@ -29,12 +29,11 @@ internal fun CommitExecutor.getPresentableText() = removeEllipsisSuffix(removeMn
 
 open class SingleChangeListCommitWorkflow(
   project: Project,
+  affectedVcses: Set<AbstractVcs>,
   val initiallyIncluded: Collection<*>,
   val initialChangeList: LocalChangeList? = null,
   executors: List<CommitExecutor> = emptyList(),
   final override val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
-  val vcsToCommit: AbstractVcs? = null,
-  affectedVcses: Set<AbstractVcs> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
   private val isDefaultChangeListFullyIncluded: Boolean = true,
   val initialCommitMessage: String? = null,
   private val resultHandler: CommitResultHandler? = null
@@ -76,8 +75,7 @@ open class SingleChangeListCommitWorkflow(
   protected open fun doCommit(commitState: ChangeListCommitState) {
     LOG.debug("Do actual commit")
 
-    with(object : SingleChangeListCommitter(project, commitState, commitContext, vcsToCommit, DIALOG_TITLE,
-                                            isDefaultChangeListFullyIncluded) {
+    with(object : SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE, isDefaultChangeListFullyIncluded) {
       override fun afterRefreshChanges() = endExecution { super.afterRefreshChanges() }
     }) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
