@@ -17,6 +17,7 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.branch.GitBranchType
+import git4idea.i18n.GitBundle.message
 import git4idea.ui.branch.GitBranchManager
 import kotlin.properties.Delegates
 
@@ -126,7 +127,7 @@ internal class BranchesDashboardController(private val project: Project,
                                               onSuccess: (Set<BranchInfo>) -> Unit,
                                               onFinished: () -> Unit) {
     var calculatedBranches: Set<BranchInfo>? = null
-    object : Task.Backgroundable(project, "Calculating My Branches", true) {
+    object : Task.Backgroundable(project, message("action.Git.Show.My.Branches.description.calculating.branches.progress"), true) {
       override fun run(indicator: ProgressIndicator) {
         calculatedBranches = run(indicator)
       }

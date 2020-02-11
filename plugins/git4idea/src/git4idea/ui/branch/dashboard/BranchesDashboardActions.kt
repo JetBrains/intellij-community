@@ -11,7 +11,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -23,10 +22,13 @@ import git4idea.branch.GitBrancher
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchResult
 import git4idea.fetch.GitFetchSupport
+import git4idea.i18n.GitBundle.message
+import git4idea.i18n.GitBundleExtensions.lazyMessage
 import git4idea.isRemoteBranchProtected
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.*
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 internal object BranchesDashboardActions {
@@ -93,14 +95,14 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class NewBranchAction : BranchesActionBase(com.intellij.dvcs.ui.NewBranchAction.text,
-                                             com.intellij.dvcs.ui.NewBranchAction.description,
+  class NewBranchAction : BranchesActionBase({ com.intellij.dvcs.ui.NewBranchAction.text },
+                                             { com.intellij.dvcs.ui.NewBranchAction.description },
                                              com.intellij.dvcs.ui.NewBranchAction.icon) {
 
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
       if (branches.size > 1) {
         e.presentation.isEnabled = false
-        e.presentation.description = "Select only one branch to proceed create a new branch"
+        e.presentation.description = message("action.Git.New.Branch.description")
         return
       }
 
@@ -113,11 +115,12 @@ internal object BranchesDashboardActions {
       val project = e.project!!
       val repositories = branches.flatMap(BranchInfo::repositories).distinct()
       val branchName = branches.first().branchName
-      createOrCheckoutNewBranch(project, repositories, "$branchName^0", "Create New Branch From $branchName")
+      createOrCheckoutNewBranch(project, repositories, "$branchName^0", message("action.Git.New.Branch.dialog.title", branchName))
     }
   }
 
-  class UpdateSelectedBranchAction : BranchesActionBase(text = "Update Selected", icon = AllIcons.Actions.CheckOut) {
+  class UpdateSelectedBranchAction : BranchesActionBase(text = lazyMessage("action.Git.Update.Selected.text"),
+                                                        icon = AllIcons.Actions.CheckOut) {
     override fun update(e: AnActionEvent) {
       val enabledAndVisible = e.project?.let(::hasRemotes) ?: false
       e.presentation.isEnabledAndVisible = enabledAndVisible
@@ -131,23 +134,21 @@ internal object BranchesDashboardActions {
       val presentation = e.presentation
       if (GitFetchSupport.fetchSupport(project).isFetchRunning) {
         presentation.isEnabled = false
-        presentation.description = "Update is already running"
+        presentation.description = message("action.Git.Update.Selected.description.already.running")
         return
       }
       if (branches.any(BranchInfo::isCurrent)) {
         presentation.isEnabled = false
-        presentation.description = "Select non current branches only"
+        presentation.description = message("action.Git.Update.Selected.description.select.non.current")
         return
       }
       val repositories = branches.flatMap(BranchInfo::repositories).distinct()
       val branchNames = branches.map(BranchInfo::branchName)
-      val pluralizedBranchName = StringUtil.pluralize("branch", branchNames.size)
-      presentation.description =
-        "Fetch remote tracking $pluralizedBranchName and fast-forward selected local $pluralizedBranchName (like `git fetch branch:branch`)"
+      presentation.description = message("action.Git.Update.Selected.description", branches.size, branches.size)
       val trackingInfosExist = isTrackingInfosExist(branchNames, repositories)
       presentation.isEnabled = trackingInfosExist
       if (!trackingInfosExist) {
-        presentation.description = "Tracking branch doesn't configured for selected $pluralizedBranchName"
+        presentation.description = message("action.Git.Update.Selected.description.tracking.not.configured", branches.size)
       }
     }
 
@@ -162,7 +163,7 @@ internal object BranchesDashboardActions {
 
   class DeleteBranchAction : BranchesActionBase(icon = AllIcons.Actions.GC) {
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
-      e.presentation.text = "Delete ${StringUtil.pluralize("Branch", branches.size)}"
+      e.presentation.text = message("action.Git.Delete.Branch.title", branches.size)
       val disabled = branches.any { it.isCurrent || (!it.isLocal && isRemoteBranchProtected(it.repositories, it.branchName)) }
       e.presentation.isEnabled = !disabled
     }
@@ -192,11 +193,12 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class ShowBranchDiffAction : BranchesActionBase("Compare with Current", null, AllIcons.Actions.Diff) {
+  class ShowBranchDiffAction : BranchesActionBase(text = lazyMessage("action.Git.Compare.With.Current.title"),
+                                                  icon = AllIcons.Actions.Diff) {
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
       if (branches.none { !it.isCurrent }) {
         e.presentation.isEnabled = false
-        e.presentation.description = "Select non current branches only"
+        e.presentation.description = message("action.Git.Update.Selected.description.select.non.current")
       }
     }
 
@@ -212,7 +214,7 @@ internal object BranchesDashboardActions {
   }
 
   class ShowMyBranchesAction(private val uiController: BranchesDashboardController)
-    : ToggleAction("Show My Branches", null, AllIcons.Actions.Find), DumbAware {
+    : ToggleAction(lazyMessage("action.Git.Show.My.Branches.title"), AllIcons.Actions.Find), DumbAware {
 
     override fun isSelected(e: AnActionEvent) = uiController.showOnlyMy
 
@@ -239,17 +241,19 @@ internal object BranchesDashboardActions {
       }
 
       e.presentation.isEnabled = supportsIndexing && isGraphReady && allRootsIndexed
-      e.presentation.description = if (!supportsIndexing) {
-        "Some of repositories doesn't support indexing."
-      }
-      else if (!allRootsIndexed) {
-        "Not all repositories are indexed."
-      }
-      else if (!isGraphReady) {
-        "The log is not ready yet, please wait a bit."
-      }
-      else {
-        "A branch is 'My' if all exclusive commits of this branch are made by 'me', i.e. by current Git author."
+      e.presentation.description = when {
+        !supportsIndexing -> {
+          message("action.Git.Show.My.Branches.description.not.support.indexing")
+        }
+        !allRootsIndexed -> {
+          message("action.Git.Show.My.Branches.description.not.all.roots.indexed")
+        }
+        !isGraphReady -> {
+          message("action.Git.Show.My.Branches.description.not.graph.ready")
+        }
+        else -> {
+          message("action.Git.Show.My.Branches.description.is.my.branch")
+        }
       }
     }
   }
@@ -258,13 +262,13 @@ internal object BranchesDashboardActions {
     override fun update(e: AnActionEvent) {
       super.update(e)
       with(e.presentation) {
-        text = "Fetch All Remotes"
+        text = message("action.Git.Fetch.title")
         icon = AllIcons.Actions.Refresh
         description = ""
         val project = e.project ?: return@with
         if (GitFetchSupport.fetchSupport(project).isFetchRunning) {
           isEnabled = false
-          description = "Fetch in progress..."
+          description = message("action.Git.Fetch.description.fetch.in.progress")
         }
       }
     }
@@ -279,7 +283,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class ToggleFavoriteAction : BranchesActionBase(text = "Mark/Unmark As Favorite", icon = AllIcons.Nodes.Favorite) {
+  class ToggleFavoriteAction : BranchesActionBase(text = lazyMessage("action.Git.Toggle.Favorite.title"), icon = AllIcons.Nodes.Favorite) {
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project!!
       val branches = e.getData(GIT_BRANCHES)!!
@@ -315,7 +319,9 @@ internal object BranchesDashboardActions {
     override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = SHOW_GIT_BRANCHES_LOG_PROPERTY
   }
 
-  abstract class BranchesActionBase(text: String? = null, private val description: String? = null, icon: Icon? = null) :
+  abstract class BranchesActionBase(@Nls(capitalization = Nls.Capitalization.Title) text: () -> String = { "" },
+                                    @Nls(capitalization = Nls.Capitalization.Sentence) private val description: () -> String = { "" },
+                                    icon: Icon? = null) :
     DumbAwareAction(text, description, icon) {
 
     open fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {}
@@ -325,7 +331,7 @@ internal object BranchesDashboardActions {
       val project = e.project
       val enabled = project != null && branches != null && branches.isNotEmpty()
       e.presentation.isEnabled = enabled
-      description?.let { e.presentation.description = it }
+      e.presentation.description = description()
       if (enabled) {
         update(e, project!!, branches!!)
       }

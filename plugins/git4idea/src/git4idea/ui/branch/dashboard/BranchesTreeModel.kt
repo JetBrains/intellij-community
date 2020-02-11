@@ -3,6 +3,7 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.util.ThreeState
+import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
@@ -39,9 +40,8 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
   fun getTextRepresentation(): String {
     val nodeDescriptor = userObject as? BranchNodeDescriptor ?: return super.toString()
     return when (nodeDescriptor.type) {
-      NodeType.ROOT -> "root"
-      NodeType.LOCAL_ROOT -> "Local"
-      NodeType.REMOTE_ROOT -> "Remote"
+      NodeType.LOCAL_ROOT -> message("group.Git.Local.Branch.title")
+      NodeType.REMOTE_ROOT -> message("group.Git.Remote.Branch.title")
       else -> nodeDescriptor.getDisplayText() ?: super.toString()
     }
   }

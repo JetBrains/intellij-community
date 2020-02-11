@@ -43,6 +43,7 @@ import com.intellij.vcs.log.ui.frame.VcsLogChangeProcessor
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import git4idea.i18n.GitBundle.message
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.GroupByDirectoryAction
@@ -198,7 +199,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   }
 
   fun startLoadingBranches() {
-    tree.component.emptyText.text = "Loading branches..."
+    tree.component.emptyText.text = message("action.Git.Loading.Branches.progress")
     branchesTreePanel.isEnabled = false
     branchesProgressStripe.startLoading()
   }
