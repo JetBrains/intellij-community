@@ -224,6 +224,7 @@ public class ContainerUtil extends ContainerUtilRt {
     DeprecatedMethodException.report("Use `new ArrayList(Collection)` instead. "+iterable.getClass());
     return new ArrayList<>(iterable);
   }
+
   @NotNull
   @Contract(pure=true)
   public static <E> ArrayList<E> newArrayList(@NotNull Iterable<? extends E> iterable) {
@@ -370,6 +371,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> HashSet<T> newHashSet(T @NotNull ... elements) {
+    //noinspection SSBasedInspection
     return new HashSet<>(Arrays.asList(elements));
   }
 
@@ -1065,9 +1067,9 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K, V> map2Map(@NotNull Collection<? extends Pair<K, V>> collection) {
-    final Map<K, V> result = new THashMap<>(collection.size());
-    for (Pair<K, V> pair : collection) {
+  public static <K, V> Map<K, V> map2Map(@NotNull Collection<? extends Pair<? extends K, ? extends V>> collection) {
+    Map<K, V> result = new THashMap<>(collection.size());
+    for (Pair<? extends K, ? extends V> pair : collection) {
       result.put(pair.first, pair.second);
     }
     return result;
@@ -2226,6 +2228,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> set(T @NotNull ... items) {
+    //noinspection SSBasedInspection
     return new HashSet<>(Arrays.asList(items));
   }
 
@@ -2286,8 +2289,8 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> V getOrElse(@NotNull Map<T, V> result, final T key, @NotNull V defValue) {
-    V value = result.get(key);
+  public static <T, V> V getOrElse(@NotNull Map<? extends T, ? extends V> map, final T key, @NotNull V defValue) {
+    V value = map.get(key);
     return value == null ? defValue : value;
   }
 
@@ -2532,13 +2535,13 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <E> List<E> flattenIterables(@NotNull Iterable<? extends Iterable<E>> collections) {
+  public static <E> List<E> flattenIterables(@NotNull Iterable<? extends Iterable<? extends E>> collections) {
     int totalSize = 0;
-    for (Iterable<E> list : collections) {
+    for (Iterable<? extends E> list : collections) {
       totalSize += list instanceof Collection ? ((Collection<?>)list).size() : 10;
     }
     List<E> result = new ArrayList<>(totalSize);
-    for (Iterable<E> list : collections) {
+    for (Iterable<? extends E> list : collections) {
       for (E e : list) {
         result.add(e);
       }
@@ -2659,9 +2662,9 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <A,B> Map<B,A> reverseMap(@NotNull Map<A,B> map) {
+  public static <A,B> Map<B,A> reverseMap(@NotNull Map<? extends A, ? extends B> map) {
     final Map<B,A> result = new HashMap<>();
-    for (Map.Entry<A, B> entry : map.entrySet()) {
+    for (Map.Entry<? extends A, ? extends B> entry : map.entrySet()) {
       result.put(entry.getValue(), entry.getKey());
     }
     return result;
@@ -2673,7 +2676,7 @@ public class ContainerUtil extends ContainerUtilRt {
     if (list.isEmpty()) return emptyList();
 
     if (list instanceof ArrayList) {
-      ((ArrayList<?>)list).trimToSize();
+      ((ArrayList<T>)list).trimToSize();
     }
 
     return list;

@@ -42,7 +42,7 @@ public abstract class Classifier<T> {
   }
 
   @NotNull
-  public abstract Iterable<T> classify(@NotNull Iterable<T> source, @NotNull ProcessingContext context);
+  public abstract Iterable<T> classify(@NotNull Iterable<? extends T> source, @NotNull ProcessingContext context);
 
   /**
    * @return a mapping from the given items to objects (e.g. Comparable instances) used to sort the items in {@link #classify(Iterable, ProcessingContext)}.
@@ -50,7 +50,7 @@ public abstract class Classifier<T> {
    * Used for diagnostics and statistic collection.
    */
   @NotNull
-  public abstract List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<T> items, @NotNull ProcessingContext context);
+  public abstract List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<? extends T> items, @NotNull ProcessingContext context);
 
   @Nullable
   public final Classifier<T> getNext() {

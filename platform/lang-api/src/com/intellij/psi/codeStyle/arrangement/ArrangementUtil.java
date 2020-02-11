@@ -188,9 +188,9 @@ public class ArrangementUtil {
     return result.get();
   }
 
-  public static <T> Set<T> flatten(@NotNull Iterable<? extends Iterable<T>> data) {
+  public static <T> Set<T> flatten(@NotNull Iterable<? extends Iterable<? extends T>> data) {
     Set<T> result = new HashSet<>();
-    for (Iterable<T> i : data) {
+    for (Iterable<? extends T> i : data) {
       for (T t : i) {
         result.add(t);
       }

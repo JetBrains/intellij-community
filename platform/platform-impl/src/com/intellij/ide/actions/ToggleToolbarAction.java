@@ -38,7 +38,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
   @NotNull
   public static ToggleToolbarAction createAction(@NotNull String id,
                                                  @NotNull PropertiesComponent properties,
-                                                 @NotNull Supplier<? extends Iterable<JComponent>> components) {
+                                                 @NotNull Supplier<? extends Iterable<? extends JComponent>> components) {
     return new ToggleToolbarAction(properties, getShowToolbarProperty(id), components);
   }
 
@@ -98,11 +98,11 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
   private final PropertiesComponent myPropertiesComponent;
   private final String myProperty;
-  private final Supplier<? extends Iterable<JComponent>> myProducer;
+  private final Supplier<? extends Iterable<? extends JComponent>> myProducer;
 
   private ToggleToolbarAction(@NotNull PropertiesComponent propertiesComponent,
                               @NotNull String property,
-                              @NotNull Supplier<? extends Iterable<JComponent>> producer) {
+                              @NotNull Supplier<? extends Iterable<? extends JComponent>> producer) {
     super("Show Toolbar");
     myPropertiesComponent = propertiesComponent;
     myProperty = property;
