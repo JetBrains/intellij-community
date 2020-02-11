@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,11 +61,17 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
   }
 
   @Override
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "typeUseWithType");
+    writeBooleanOption(node, "typeUseWithType", false);
+  }
+
+  @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JCheckBox box =
-      panel.addCheckboxEx(InspectionGadgetsBundle.message("missorted.modifiers.require.option"), "m_requireAnnotationsFirst");
-    panel.addDependentCheckBox("Target TYPE_USE annotations always go before type", "typeUseWithType", box);
+    final JCheckBox box = panel.addCheckboxEx(InspectionGadgetsBundle.message("missorted.modifiers.require.option"),
+                                              "m_requireAnnotationsFirst");
+    panel.addDependentCheckBox(InspectionGadgetsBundle.message("missorted.modifiers.typeuse.before.type.option"), "typeUseWithType", box);
     return panel;
   }
 
