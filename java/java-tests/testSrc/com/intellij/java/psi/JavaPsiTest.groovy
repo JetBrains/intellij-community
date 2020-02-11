@@ -218,6 +218,18 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     assert "record A(String s, int i)" == clazz.text
   }
 
+  void "test add record component after right parenthesis"() {
+    def clazz = configureFile("record A(String s)").classes[0]
+    def factory = JavaPsiFacade.getElementFactory(project)
+    def newComponent = factory.createRecordHeaderFromText("int i", null).recordComponents[0]
+    runCommand {
+      def header = clazz.recordHeader
+      header.addBefore(newComponent, null)
+    }
+
+    assert "record A(String s, int i)" == clazz.text
+  }
+
   private PsiJavaFile configureFile(String text) {
     myFixture.configureByText("a.java", text) as PsiJavaFile
   }

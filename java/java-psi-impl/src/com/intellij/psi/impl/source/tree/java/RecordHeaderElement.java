@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -43,6 +44,17 @@ public class RecordHeaderElement extends CompositeElement implements Constants {
 
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, @Nullable ASTNode anchor, @Nullable Boolean before) {
+    if (anchor == null) {
+      if (before == null || before.booleanValue()) {
+        anchor = findChildByType(JavaTokenType.RPARENTH);
+        before = Boolean.TRUE;
+      }
+      else {
+        anchor = findChildByType(JavaTokenType.LPARENTH);
+        before = Boolean.FALSE;
+      }
+    }
+
     TreeElement firstAdded = super.addInternal(first, last, anchor, before);
 
     if (first == last && first.getElementType() == JavaElementType.RECORD_COMPONENT) {
