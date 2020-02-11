@@ -84,19 +84,10 @@ public final class ConfigImportHelper {
 
     List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
 
-    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
-    dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
-    AppUIUtil.updateWindowIcon(dialog);
+    Pair<Path, Path> oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
 
-    Ref<Pair<Path, Path>> result = new Ref<>();
-    SplashManager.executeWithHiddenSplash(dialog, () -> {
-      dialog.setVisible(true);
-      result.set(dialog.getSelectedFile());
-      dialog.dispose();
-    });
-
-    if (!result.isNull()) {
-      doImport(result.get().first, newConfigDir, result.get().second, log);
+    if (oldConfigDirAndOldIdePath != null) {
+      doImport(oldConfigDirAndOldIdePath.first, newConfigDir, oldConfigDirAndOldIdePath.second, log);
 
       if (settings != null) {
         settings.importFinished(newConfigDir);
@@ -121,6 +112,21 @@ public final class ConfigImportHelper {
 
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
     }
+  }
+
+  @Nullable
+  private static Pair<Path, Path> showDialogAndGetOldConfigPath(@NotNull List<Path> guessedOldConfigDirs) {
+    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
+    dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
+    AppUIUtil.updateWindowIcon(dialog);
+
+    Ref<Pair<Path, Path>> result = new Ref<>();
+    SplashManager.executeWithHiddenSplash(dialog, () -> {
+      dialog.setVisible(true);
+      result.set(dialog.getSelectedFile());
+      dialog.dispose();
+    });
+    return result.get();
   }
 
   /** Returns {@code true} when the IDE is launched for the first time (i.e. there was no config directory). */
