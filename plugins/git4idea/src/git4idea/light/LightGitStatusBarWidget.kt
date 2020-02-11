@@ -2,6 +2,7 @@
 package git4idea.light
 
 import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.*
 import com.intellij.util.Consumer
@@ -53,6 +54,7 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
 
 class LightGitStatusBarWidgetProvider : StatusBarWidgetProvider {
   override fun getWidget(project: Project): StatusBarWidget? {
+    if (project != LightEditUtil.getProjectIfCreated()) return null
     return LightGitStatusBarWidget(LightGitTracker.getInstance())
   }
 
