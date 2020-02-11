@@ -134,14 +134,14 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
     else null
 
     return when (item) {
-      is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryViaTypedEntity(this, index, item, updater)
+      is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryViaTypedEntity(module, index, item, updater)
       is ModuleDependencyItem.Exportable.LibraryDependency -> {
         val library = moduleLibraryTable.libraries.firstOrNull { (it as? LegacyBridgeLibrary)?.libraryId == item.library }
-        LibraryOrderEntryViaTypedEntity(this, index, item, library, updater)
+        LibraryOrderEntryViaTypedEntity(module, index, item, library, updater)
       }
-      is ModuleDependencyItem.SdkDependency -> SdkOrderEntryViaTypedEntity(this, index, item)
-      is ModuleDependencyItem.InheritedSdkDependency -> InheritedSdkOrderEntryViaTypedEntity(this, index, item)
-      is ModuleDependencyItem.ModuleSourceDependency -> ModuleSourceOrderEntryViaTypedEntity(this, index, item)
+      is ModuleDependencyItem.SdkDependency -> SdkOrderEntryViaTypedEntity(module, index, item)
+      is ModuleDependencyItem.InheritedSdkDependency -> InheritedSdkOrderEntryViaTypedEntity(module, index, item)
+      is ModuleDependencyItem.ModuleSourceDependency -> ModuleSourceOrderEntryViaTypedEntity(module, index, item)
     }
   }
 
