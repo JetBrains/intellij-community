@@ -1,11 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.refactoring.suggested
+package com.intellij.java.refactoring.suggested
 
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.ChildRole
 import com.intellij.psi.impl.source.tree.java.MethodElement
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
+import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
 
 class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
     override fun isDeclaration(psiElement: PsiElement): Boolean {

@@ -36,7 +36,7 @@ abstract class SignaturePresentationBuilder(
 
   abstract fun buildPresentation()
 
-  fun effect(value: String, otherValue: String?): Effect {
+  protected fun effect(value: String, otherValue: String?): Effect {
     return if (otherValue.isNullOrEmpty()) {
       if (isOldSignature) Effect.Removed else Effect.Added
     }
@@ -45,13 +45,13 @@ abstract class SignaturePresentationBuilder(
     }
   }
 
-  fun leaf(value: String, otherValue: String?): Leaf {
+  protected fun leaf(value: String, otherValue: String?): Leaf {
     val effect = effect(value, otherValue)
     return Leaf(value, effect)
   }
 
   @JvmOverloads
-  fun buildParameterList(prefix: String = "(", suffix: String = ")", parameterBuilder: ParameterFragmentsBuilder) {
+  protected fun buildParameterList(prefix: String = "(", suffix: String = ")", parameterBuilder: ParameterFragmentsBuilder) {
     fragments += Leaf(prefix)
     if (signature.parameters.isNotEmpty()) {
       fragments += LineBreak("", indentAfter = true)

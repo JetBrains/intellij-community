@@ -1,11 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.refactoring.suggested
+package com.intellij.java.refactoring.suggested
 
 import com.intellij.psi.*
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo
+import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
+import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.util.CanonicalTypes
 
 class JavaSuggestedRefactoringExecution(refactoringSupport: SuggestedRefactoringSupport) :

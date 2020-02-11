@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.refactoring.suggested
+package com.intellij.java.refactoring.suggested
 
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.refactoring.suggested.SignaturePresentationBuilder
+import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParameterValue
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import com.intellij.refactoring.suggested.SuggestedRefactoringUI
 
 object JavaSuggestedRefactoringUI : SuggestedRefactoringUI() {
   override fun createSignaturePresentationBuilder(
