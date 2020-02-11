@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.visibility;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -49,7 +48,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.VISIBILITY_GROUP_NAME;
+    return InspectionsBundle.message("group.names.visibility.issues");
   }
 
   @Override

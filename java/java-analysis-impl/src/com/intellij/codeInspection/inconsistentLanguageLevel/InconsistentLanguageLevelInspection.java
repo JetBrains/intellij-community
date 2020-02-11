@@ -17,7 +17,6 @@
 package com.intellij.codeInspection.inconsistentLanguageLevel;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -84,7 +83,7 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.MODULARIZATION_GROUP_NAME;
+    return InspectionsBundle.message("group.names.modularization.issues");
   }
 
   @Override

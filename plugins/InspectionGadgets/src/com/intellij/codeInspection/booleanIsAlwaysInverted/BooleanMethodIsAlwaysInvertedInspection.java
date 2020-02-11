@@ -4,7 +4,6 @@
 package com.intellij.codeInspection.booleanIsAlwaysInverted;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.util.Key;
@@ -48,7 +47,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.DATA_FLOW_ISSUES;
+    return InspectionsBundle.message("group.names.data.flow.issues");
   }
 
   @Override

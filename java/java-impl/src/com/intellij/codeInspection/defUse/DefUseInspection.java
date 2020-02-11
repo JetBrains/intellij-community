@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.defUse;
 
 import com.intellij.codeInsight.ExpressionUtil;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
@@ -289,7 +288,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.BUGS_GROUP_NAME;
+    return InspectionsBundle.message("group.names.probable.bugs");
   }
 
   @Override

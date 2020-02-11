@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
@@ -356,7 +355,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.CLASS_LAYOUT_GROUP_NAME;
+    return InspectionsBundle.message("group.names.class.structure");
   }
 
   @Override

@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
@@ -637,7 +636,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.BUGS_GROUP_NAME;
+    return InspectionsBundle.message("group.names.probable.bugs");
   }
 
   @Override

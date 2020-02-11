@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.localCanBeFinal;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -301,7 +300,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.STYLE_GROUP_NAME;
+    return InspectionsBundle.message("group.names.code.style.issues");
   }
 
   @Override

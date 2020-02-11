@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.sameReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiElement;
@@ -73,7 +72,7 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
+    return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override

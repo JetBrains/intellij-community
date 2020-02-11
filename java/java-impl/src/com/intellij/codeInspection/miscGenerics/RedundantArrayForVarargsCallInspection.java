@@ -4,7 +4,6 @@ package com.intellij.codeInspection.miscGenerics;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -191,7 +190,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.VERBOSE_GROUP_NAME;
+    return InspectionsBundle.message("group.names.verbose.or.redundant.code.constructs");
   }
 
   @Override

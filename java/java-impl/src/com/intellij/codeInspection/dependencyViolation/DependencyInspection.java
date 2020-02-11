@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dependencyViolation;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.java.JavaLanguage;
@@ -60,7 +59,7 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.DEPENDENCY_GROUP_NAME;
+    return InspectionsBundle.message("group.names.dependency.issues");
   }
 
   @Override

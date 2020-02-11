@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -11,7 +10,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +18,7 @@ public class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocalInspec
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.CONCURRENCY_ANNOTATION_ISSUES;
+    return InspectionsBundle.message("group.names.concurrency.annotation.issues");
   }
 
   @Override

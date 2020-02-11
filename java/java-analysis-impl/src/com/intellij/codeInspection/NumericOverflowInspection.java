@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -36,7 +35,7 @@ public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTo
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GroupNames.NUMERIC_GROUP_NAME;
+    return InspectionsBundle.message("group.names.numeric.issues");
   }
 
   @NotNull

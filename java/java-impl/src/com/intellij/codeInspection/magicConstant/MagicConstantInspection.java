@@ -3,7 +3,6 @@ package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.magicConstant.MagicConstantUtils.AllowedValues;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -72,7 +71,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GroupNames.BUGS_GROUP_NAME;
+    return InspectionsBundle.message("group.names.probable.bugs");
   }
 
   @NotNull

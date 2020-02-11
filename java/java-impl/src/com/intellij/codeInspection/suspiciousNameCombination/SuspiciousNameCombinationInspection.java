@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection.suspiciousNameCombination;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -122,7 +121,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.BUGS_GROUP_NAME;
+    return InspectionsBundle.message("group.names.probable.bugs");
   }
 
   @Override

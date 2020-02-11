@@ -4,7 +4,6 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.TreeClassChooser;
@@ -137,7 +136,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
+    return InspectionsBundle.message("group.names.internationalization.issues");
   }
 
   @Override

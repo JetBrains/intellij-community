@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -35,7 +34,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.CLASS_LAYOUT_GROUP_NAME;
+    return InspectionsBundle.message("group.names.class.structure");
   }
 
   @Override
