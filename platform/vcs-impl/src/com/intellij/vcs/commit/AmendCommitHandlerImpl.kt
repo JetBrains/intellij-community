@@ -71,11 +71,19 @@ class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWorkflow
 
     // if initial message set - only update commit message if user hasn't changed it
     if (initialMessage == null || beforeAmendMessage == initialMessage) {
-      val roots = workflowHandler.ui.getIncludedPaths().mapNotNull { vcsManager.getVcsRootObjectFor(it) }.toSet()
+      val roots = resolveAmendRoots()
       val messages = LoadCommitMessagesTask(workflow.project, roots).load() ?: return
 
       val amendMessage = messages.distinct().joinToString(separator = "\n").takeIf { it.isNotBlank() }
       amendMessage?.let { setAmendMessage(beforeAmendMessage, it) }
+    }
+  }
+
+  private fun resolveAmendRoots(): Collection<VcsRoot> {
+    val singleRoot = vcsManager.allVcsRoots.singleOrNull()
+
+    return listOfNotNull(singleRoot).ifEmpty {
+      workflowHandler.ui.getIncludedPaths().mapNotNull { vcsManager.getVcsRootObjectFor(it) }.toSet()
     }
   }
 
