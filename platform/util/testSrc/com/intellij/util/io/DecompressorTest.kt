@@ -6,9 +6,6 @@ import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
 import com.intellij.testFramework.rules.TempDirectory
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
-import org.apache.commons.compress.archivers.zip.UnixStat
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
@@ -18,8 +15,6 @@ import org.junit.Test
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.nio.file.attribute.FileTime
-import java.time.Instant
 import java.util.*
 import java.util.function.Predicate
 import java.util.zip.ZipEntry
@@ -113,22 +108,6 @@ class DecompressorTest {
     assertThat(File(dir, "dir/rwx")).exists().`is`(Writable).`is`(Executable)
   }
 
-  @Test fun zipFileModes() {
-    val tar = tempDir.newFile("test.tar")
-    ZipArchiveOutputStream(FileOutputStream(tar)).use {
-      writeEntry(it, "dir/r", mode = 0b100_000_000)
-      writeEntry(it, "dir/rw", mode = 0b110_000_000)
-      writeEntry(it, "dir/rx", mode = 0b101_000_000)
-      writeEntry(it, "dir/rwx", mode = 0b111_000_000)
-    }
-    val dir = tempDir.newFolder("unpacked")
-    Decompressor.Zip(tar).extract(dir)
-    assertThat(File(dir, "dir/r")).exists().isNot(Writable).let { if (SystemInfo.isUnix) it.isNot(Executable) }
-    assertThat(File(dir, "dir/rw")).exists().`is`(Writable).let { if (SystemInfo.isUnix) it.isNot(Executable) }
-    assertThat(File(dir, "dir/rx")).exists().isNot(Writable).`is`(Executable)
-    assertThat(File(dir, "dir/rwx")).exists().`is`(Writable).`is`(Executable)
-  }
-
   @Test fun filtering() {
     val zip = tempDir.newFile("test.zip")
     ZipOutputStream(FileOutputStream(zip)).use {
@@ -141,7 +120,7 @@ class DecompressorTest {
     assertThat(File(dir, "d2")).doesNotExist()
   }
 
-  @Test fun tarSymlinks() {
+  @Test fun symlinks() {
     assumeSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")
@@ -151,19 +130,6 @@ class DecompressorTest {
     }
     val dir = tempDir.newFolder("unpacked")
     Decompressor.Tar(tar).withSymlinks().extract(dir)
-    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameContentAs(File(dir, "f").toPath())
-  }
-
-  @Test fun zipSymlinks() {
-    assumeSymLinkCreationIsSupported()
-
-    val tar = tempDir.newFile("test.tar")
-    ZipArchiveOutputStream(FileOutputStream(tar)).use {
-      writeEntry(it, "f")
-      writeEntry(it, "links/ok", link = "../f")
-    }
-    val dir = tempDir.newFolder("unpacked")
-    Decompressor.Zip(tar).withSymlinks().extract(dir)
     assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameContentAs(File(dir, "f").toPath())
   }
 
@@ -328,25 +294,6 @@ class DecompressorTest {
       tar.write('-'.toInt())
     }
     tar.closeArchiveEntry()
-  }
-
-  private fun writeEntry(zip: ZipArchiveOutputStream, name: String, mode: Int = 0, link: String? = null) {
-    val entry = ZipArchiveEntry(name)
-    entry.lastModifiedTime = FileTime.from(Instant.now())
-
-    if (link != null) {
-      entry.lastModifiedTime = FileTime.from(Instant.now())
-      entry.unixMode = UnixStat.LINK_FLAG
-      zip.putArchiveEntry(entry)
-      zip.write(link.toByteArray(Charsets.UTF_8))
-    }
-    else {
-      entry.size = 1
-      if (mode != 0) entry.unixMode = mode
-      zip.putArchiveEntry(entry)
-      zip.write('-'.toInt())
-    }
-    zip.closeArchiveEntry()
   }
 
   private fun testNoTraversal(decompressor: Decompressor, dir: File, unexpected: File) {

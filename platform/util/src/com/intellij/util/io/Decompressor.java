@@ -9,8 +9,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +19,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -98,46 +98,19 @@ public abstract class Decompressor {
     //<editor-fold desc="Implementation">
     private final File mySource;
     private ZipFile myZip;
-    private Enumeration<? extends ZipArchiveEntry> myEntries;
-    private ZipArchiveEntry myEntry;
-    private boolean symlinks;
-
+    private Enumeration<? extends ZipEntry> myEntries;
+    private ZipEntry myEntry;
 
     @Override
     protected void openStream() throws IOException {
       myZip = new ZipFile(mySource);
-      myEntries = myZip.getEntries();
-    }
-
-    @NotNull
-    public Zip withSymlinks() {
-      symlinks = true;
-      return this;
+      myEntries = myZip.entries();
     }
 
     @Override
-    protected Entry nextEntry() throws IOException {
-      while (true) {
-        myEntry = null;
-        if (!myEntries.hasMoreElements()) break;
-
-        myEntry = myEntries.nextElement();
-        if (myEntry.isUnixSymlink() && !symlinks) continue;
-        break;
-      }
-      if (myEntry == null) return null;
-      String linkTarget = myEntry.isUnixSymlink() ? myZip.getUnixSymlink(myEntry) : null;
-
-      //noinspection OctalInteger
-      return new Entry(myEntry.getName(),
-                       type(myEntry),
-                       isSet(myEntry.getUnixMode(), 0200),
-                       isSet(myEntry.getUnixMode(), 0100),
-                       linkTarget);
-    }
-
-    private static Type type(ZipArchiveEntry te) {
-      return te.isUnixSymlink() ? Type.SYMLINK : te.isDirectory() ? Type.DIR : Type.FILE;
+    protected Entry nextEntry() {
+      myEntry = myEntries.hasMoreElements() ? myEntries.nextElement() : null;
+      return myEntry == null ? null : new Entry(myEntry.getName(), myEntry.isDirectory());
     }
 
     @Override
