@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.xml.XmlBundle;
 
 public class EmmetLookupActionProvider implements LookupActionProvider {
   @Override
@@ -33,7 +34,7 @@ public class EmmetLookupActionProvider implements LookupActionProvider {
       CustomTemplateCallback callback = new CustomTemplateCallback(lookup.getEditor(), file);
       final ZenCodingGenerator generator = ZenCodingTemplate.findApplicableDefaultGenerator(callback, false);
       if (generator != null) {
-        consumer.consume(new LookupElementAction(PlatformIcons.EDIT, "Edit Emmet settings") {
+        consumer.consume(new LookupElementAction(PlatformIcons.EDIT, XmlBundle.message("edit.emmet.settings")) {
           @Override
           public Result performLookupAction() {
             final Project project = lookup.getProject();
@@ -48,7 +49,7 @@ public class EmmetLookupActionProvider implements LookupActionProvider {
           }
         });
 
-        consumer.consume(new LookupElementAction(AllIcons.Actions.Cancel, "Disable Emmet") {
+        consumer.consume(new LookupElementAction(AllIcons.Actions.Cancel, XmlBundle.message("disable.emmet")) {
           @Override
           public Result performLookupAction() {
             ApplicationManager.getApplication().invokeLater(generator::disableEmmet);

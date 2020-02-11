@@ -84,7 +84,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       final XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
       Arrays.sort(descriptors, Comparator.comparing(PsiMetaData::getName));
       Consumer<XmlElementDescriptor> consumer = (selected) ->
-        WriteCommandAction.writeCommandAction(project, file).withName("Generate XML Tag").run(() -> {
+        WriteCommandAction.writeCommandAction(project, file).withName(XmlBundle.message("generate.xml.tag")).run(() -> {
           if (selected == null) return;
           XmlTag newTag = createTag(contextTag, selected);
 
