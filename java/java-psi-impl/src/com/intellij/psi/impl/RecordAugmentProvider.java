@@ -78,7 +78,7 @@ public class RecordAugmentProvider extends PsiAugmentProvider implements DumbAwa
     if (componentName == null) return false;
     for (PsiMethod method : ownMethods) {
       // Return type is not checked to avoid unnecessary warning about clashing signatures in case of different return types
-      if (componentName.equals(method.getName())) return false;
+      if (componentName.equals(method.getName()) && method.getParameterList().isEmpty()) return false;
     }
     return true;
   }
