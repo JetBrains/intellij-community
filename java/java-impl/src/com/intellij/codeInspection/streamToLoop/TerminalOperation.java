@@ -156,6 +156,7 @@ abstract class TerminalOperation extends Operation {
   @Contract("_, _, null -> null")
   @Nullable
   private static TerminalOperation fromCollector(@NotNull PsiType elementType, @NotNull PsiType resultType, PsiExpression expr) {
+    expr = PsiUtil.skipParenthesizedExprDown(expr);
     if (!(expr instanceof PsiMethodCallExpression)) return null;
     PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)expr;
     PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
