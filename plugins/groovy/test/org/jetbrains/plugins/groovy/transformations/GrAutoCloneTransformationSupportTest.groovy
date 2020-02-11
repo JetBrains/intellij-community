@@ -78,7 +78,7 @@ class Pojo extends Pogo {
   void foo() {
     Pogo pogo = new Pogo(); 
     <error descr="Unhandled exception: java.lang.CloneNotSupportedException">cloneOrCopyMembers</error>(pogo);
-    cloneOrCopyMembers<error descr="'cloneOrCopyMembers(Pogo)' in '' cannot be applied to '()'">()</error>;
+    cloneOrCopyMembers<error descr="'cloneOrCopyMembers(Pogo)' in 'Pogo' cannot be applied to '()'">()</error>;
   }
 }
 '''
