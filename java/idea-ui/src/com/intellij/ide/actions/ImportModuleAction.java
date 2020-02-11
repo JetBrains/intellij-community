@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PropertiesComponent;
@@ -132,7 +133,7 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
   public static AddModuleWizard selectFileAndCreateWizard(@Nullable Project project, @Nullable Component dialogParent) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     descriptor.setHideIgnored(false);
-    descriptor.setTitle("Select File or Directory to Import");
+    descriptor.setTitle(JavaUiBundle.message("select.file.or.directory.to.import"));
     List<ProjectImportProvider> providers = getProviders(project);
     String description = getFileChooserDescription(providers);
     descriptor.setDescription(description);
@@ -202,7 +203,8 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
                                                    ProjectImportProvider... providers) {
     List<ProjectImportProvider> available = ContainerUtil.filter(providers, provider -> provider.canImport(file, project));
     if (available.isEmpty()) {
-      Messages.showInfoMessage(project, "Cannot import anything from " + file.getPath(), "Cannot Import");
+      Messages.showInfoMessage(project, JavaUiBundle.message("cannot.import.anything.from.0", file.getPath()),
+                               JavaUiBundle.message("cannot.import"));
       return null;
     }
 

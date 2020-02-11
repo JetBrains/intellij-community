@@ -4,6 +4,7 @@ package com.intellij.ide.util.importProject;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.openapi.actionSystem.*;
@@ -486,7 +487,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     @Nullable
     protected JComponent createCenterPanel() {
       FormBuilder builder = FormBuilder.createFormBuilder().setVertical(true);
-      builder.addLabeledComponent("&Name:", myNameField);
+      builder.addLabeledComponent(JavaUiBundle.message("project.layout.panel.name"), myNameField);
       builder.addLabeledComponent(getSplitDialogChooseFilesPrompt(), myChooser);
       myChooser.setPreferredSize(JBUI.size(450, 300));
       return builder.getPanel();

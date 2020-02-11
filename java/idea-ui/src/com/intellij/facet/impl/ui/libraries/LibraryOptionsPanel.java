@@ -7,6 +7,7 @@ import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.frameworkSupport.OldCustomLibraryDescription;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
@@ -438,7 +439,7 @@ public class LibraryOptionsPanel implements Disposable {
     }
 
     if (myLibraryProvider != null) {
-      myUseFromProviderRadioButton.setText("Use library from " + myLibraryProvider.getPresentableName());
+      myUseFromProviderRadioButton.setText(JavaUiBundle.message("use.library.from.0", myLibraryProvider.getPresentableName()));
     }
 
     //show the longest message on the hidden card to ensure that dialog won't jump if user selects another option

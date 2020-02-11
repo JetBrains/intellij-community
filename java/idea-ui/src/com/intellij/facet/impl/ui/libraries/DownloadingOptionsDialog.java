@@ -18,6 +18,7 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.framework.library.DownloadableLibraryFileDescription;
 import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.framework.library.FrameworkLibraryVersion;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
@@ -69,7 +70,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
   public DownloadingOptionsDialog(@NotNull Component parent, @NotNull final LibraryDownloadSettings settings, @NotNull List<? extends FrameworkLibraryVersion> versions,
                                   final boolean showNameAndLevel) {
     super(parent, true);
-    setTitle("Downloading Options");
+    setTitle(JavaUiBundle.message("downloading.options"));
     myLibraryType = settings.getLibraryType();
     LOG.assertTrue(!versions.isEmpty());
 
@@ -82,7 +83,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     myVersionComboBox.setRenderer(SimpleListCellRenderer.create("", FrameworkLibraryVersion::getDefaultLibraryName));
     myVersionComboBox.setSelectedItem(settings.getVersion());
     if (versions.size() > 1) {
-      builder.addLabeledComponent("&Version:", myVersionComboBox);
+      builder.addLabeledComponent(JavaUiBundle.message("downloading.options.dialog.version"), myVersionComboBox);
     }
 
     if (showNameAndLevel) {

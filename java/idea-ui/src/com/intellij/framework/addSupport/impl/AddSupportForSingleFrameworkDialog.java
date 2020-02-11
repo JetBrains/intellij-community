@@ -15,11 +15,13 @@
  */
 package com.intellij.framework.addSupport.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelImpl;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportOptionsComponent;
@@ -106,7 +108,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
       if (!downloaded) {
         int answer = Messages.showYesNoDialog(getRootPane(),
                                               ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              "Libraries Are Required", Messages.getWarningIcon());
+                                              JavaUiBundle.message("libraries.are.required"), Messages.getWarningIcon());
         if (answer != Messages.YES) {
           return false;
         }
@@ -161,8 +163,10 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
         final String name = existingEntries.get(0).getPresentableName();
         message = "There is already a " + myFrameworkType.getPresentableName() + " library '" + name + "'.\n Do you want to replace it?";
       }
-      final int result = Messages.showYesNoCancelDialog(rootModel.getProject(), message, "Library Already Exists",
-                                                        "&Replace", "&Add", "&Cancel", null);
+      final int result = Messages.showYesNoCancelDialog(rootModel.getProject(), message, JavaUiBundle.message("library.already.exists"),
+                                                        CommonBundle.message("button.replace.r"),
+                                                        CommonBundle.message("button.add.a"),
+                                                        CommonBundle.message("button.cancel.c"), null);
       if (result == Messages.YES) {
         for (OrderEntry entry : existingEntries) {
           rootModel.removeOrderEntry(entry);

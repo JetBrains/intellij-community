@@ -3,6 +3,7 @@ package com.intellij.ide.projectView.actions;
 
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -53,7 +54,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     myModulesComboBox = new ModulesComboBox();
     myModulesComboBox.fillModules(myProject);
     myModulesComboBox.setSelectedModule(findModule(roots));
-    builder.addLabeledComponent("&Add to module:", myModulesComboBox);
+    builder.addLabeledComponent(JavaUiBundle.message("add.to.module"), myModulesComboBox);
     myPanel = builder.getPanel();
     myNameAndLevelPanel.getLibraryNameField().selectAll();
     myNameAndLevelPanel.getLevelComboBox().addActionListener(new ActionListener() {

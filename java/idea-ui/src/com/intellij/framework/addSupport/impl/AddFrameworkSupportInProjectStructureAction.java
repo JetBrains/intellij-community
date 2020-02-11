@@ -19,6 +19,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +41,7 @@ public class AddFrameworkSupportInProjectStructureAction extends DumbAwareAction
 
   public AddFrameworkSupportInProjectStructureAction(@NotNull FrameworkTypeEx frameworkType, @NotNull FrameworkSupportInModuleProvider provider,
                                                      @NotNull ModuleStructureConfigurable moduleStructureConfigurable) {
-    super(frameworkType.getPresentableName(), "Add " + frameworkType.getPresentableName() + " support", frameworkType.getIcon());
+    super(frameworkType.getPresentableName(), JavaUiBundle.message("add.0.support", frameworkType.getPresentableName()), frameworkType.getIcon());
     myFrameworkType = frameworkType;
     myProvider = provider;
     myModuleStructureConfigurable = moduleStructureConfigurable;

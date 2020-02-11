@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils.library;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RepositoryLibraryType;
 import com.intellij.notification.Notification;
@@ -97,7 +98,7 @@ public class RepositoryUtils {
         roots == null || roots.isEmpty() ?
         () -> {
           String message = "No files were downloaded for " + properties.getMavenId();
-          Notifications.Bus.notify(new Notification("Repository", "Repository library synchronization",
+          Notifications.Bus.notify(new Notification("Repository", JavaUiBundle.message("repository.library.synchronization"),
                                                     message, NotificationType.ERROR), project);
           promise.setError(message);
         } :
