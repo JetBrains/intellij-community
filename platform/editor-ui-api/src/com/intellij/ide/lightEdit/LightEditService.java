@@ -2,6 +2,7 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,6 +38,9 @@ public interface LightEditService {
 
   @Nullable
   VirtualFile getSelectedFile();
+
+  @Nullable
+  FileEditor getSelectedFileEditor();
 
   void updateFileStatus(@NotNull Collection<VirtualFile> files);
 }

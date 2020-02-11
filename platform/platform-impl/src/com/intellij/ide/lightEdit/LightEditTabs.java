@@ -209,6 +209,18 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
     return null;
   }
 
+  @Nullable
+  FileEditor getSelectedFileEditor() {
+    TabInfo info = getSelectedInfo();
+    if (info != null) {
+      LightEditorInfo editorInfo = ObjectUtils.tryCast(info.getObject(), LightEditorInfo.class);
+      if (editorInfo != null) {
+        return editorInfo.getFileEditor();
+      }
+    }
+    return null;
+  }
+
   private class EditorContainer extends JPanel implements DataProvider {
 
     private EditorContainer(@NotNull FileEditor editor) {

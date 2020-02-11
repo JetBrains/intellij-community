@@ -13,6 +13,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
@@ -241,6 +242,18 @@ public class LightEditServiceImpl implements LightEditService,
     LightEditPanel panel = frameWrapper.getLightEditPanel();
     if (!Disposer.isDisposed(panel)) {
       return panel.getTabs().getSelectedFile();
+    }
+    return null;
+  }
+
+  @Override
+  @Nullable
+  public FileEditor getSelectedFileEditor() {
+    LightEditFrameWrapper frameWrapper = myFrameWrapper;
+    if (frameWrapper == null) return null;
+    LightEditPanel panel = frameWrapper.getLightEditPanel();
+    if (!Disposer.isDisposed(panel)) {
+      return panel.getTabs().getSelectedFileEditor();
     }
     return null;
   }

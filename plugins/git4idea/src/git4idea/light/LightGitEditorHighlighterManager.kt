@@ -1,9 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.light
 
-import com.intellij.ide.lightEdit.*
+import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.ide.lightEdit.LightEditorInfo
+import com.intellij.ide.lightEdit.LightEditorInfoImpl
+import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
@@ -11,8 +15,6 @@ import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.tabs.JBTabs
-import com.intellij.ui.tabs.TabInfo
 import com.intellij.vcs.log.BaseSingleTaskController
 import git4idea.index.isTracked
 import git4idea.index.repositoryPath
@@ -25,13 +27,11 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
 
   private val lightEditService
     get() = LightEditService.getInstance()
-  private val tabs: JBTabs
-    get() = (LightEditService.getInstance() as LightEditServiceImpl).editPanel.tabs
 
   init {
     tracker.addUpdateListener(object : LightGitTrackerListener {
       override fun update() {
-        tabs.selectedInfo?.editorInfo?.let { editorInfo -> updateLst(editorInfo) }
+        lightEditService.selectedFileEditor?.let { fileEditor -> updateLst(fileEditor) }
       }
     }, this)
     lightEditService.editorManager.addListener(object : LightEditorListener {
@@ -42,7 +42,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
         }
         if (editorInfo.file != lst?.virtualFile) {
           dropLst()
-          updateLst(editorInfo)
+          updateLst(editorInfo.fileEditor)
         }
       }
     }, this)
@@ -69,25 +69,26 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
     }
   }
 
-  private fun updateLst(editorInfo: LightEditorInfo) {
-    val status = tracker.getFileStatus(editorInfo.file)
+  private fun updateLst(fileEditor: FileEditor) {
+    val editor = LightEditorInfoImpl.getEditor(fileEditor)
+    if (editor == null) {
+      dropLst()
+      return
+    }
+
+    val file = fileEditor.file ?: return
+    val status = tracker.getFileStatus(file)
 
     if (!status.isTracked()) {
       dropLst()
       return
     }
 
-    val editor = LightEditorInfoImpl.getEditor(editorInfo)
-    if (editor == null) {
-      dropLst()
-      return
-    }
-
     if (lst == null) {
-      lst = SimpleLocalLineStatusTracker.createTracker(lightEditService.project, editor.document, editorInfo.file,
+      lst = SimpleLocalLineStatusTracker.createTracker(lightEditService.project, editor.document, file,
                                                        LocalLineStatusTracker.Mode.DEFAULT)
     }
-    readBaseVersion(editorInfo.file, status.repositoryPath)
+    readBaseVersion(file, status.repositoryPath)
   }
 
   private fun dropLst() {
@@ -117,6 +118,3 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
   private data class Request(val file: VirtualFile, val repositoryPath: String)
   private data class BaseVersion(val file: VirtualFile, val text: String?)
 }
-
-val TabInfo.editorInfo: LightEditorInfo?
-  get() = `object` as? LightEditorInfo

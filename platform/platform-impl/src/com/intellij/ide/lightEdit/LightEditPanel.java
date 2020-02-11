@@ -19,7 +19,7 @@ public final class LightEditPanel extends JPanel implements Disposable {
     add(myTabs, BorderLayout.CENTER);
   }
 
-  public LightEditTabs getTabs() {
+  LightEditTabs getTabs() {
     return myTabs;
   }
 

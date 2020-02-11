@@ -56,7 +56,12 @@ public class LightEditorInfoImpl implements LightEditorInfo {
 
   @Nullable
   public static Editor getEditor(@Nullable LightEditorInfo editorInfo) {
-    TextEditor textEditor = ObjectUtils.tryCast(editorInfo != null ? editorInfo.getFileEditor() : null, TextEditor.class);
+    return getEditor(editorInfo != null ? editorInfo.getFileEditor() : null);
+  }
+
+  @Nullable
+  public static Editor getEditor(@Nullable FileEditor fileEditor) {
+    TextEditor textEditor = ObjectUtils.tryCast(fileEditor, TextEditor.class);
     return textEditor != null ? textEditor.getEditor() : null;
   }
 }
