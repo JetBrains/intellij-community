@@ -57,14 +57,12 @@ import java.util.*;
 import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
 import static com.intellij.vcs.commit.ToggleAmendCommitOption.isAmendCommitOptionSupported;
 import static org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutorKt.isPushAfterCommit;
+import static org.zmlx.hg4idea.provider.commit.HgCommitOptionsKt.*;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
 public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAware {
   @NotNull private final HgVcs myVcs;
   @NotNull private final Project myProject;
-  private boolean myShouldCommitSubrepos;
-  private boolean myMqNewPatch;
-  private boolean myCloseBranch;
   @Nullable private Collection<HgRepository> myRepos;
 
   public HgCheckinEnvironment(@NotNull HgVcs vcs) {
@@ -84,13 +82,10 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
 
     if (!hasSubrepos && !showAmendOption) return null;
 
-    return new HgCommitAdditionalComponent(commitPanel, hasSubrepos, showAmendOption);
+    return new HgCommitAdditionalComponent(commitPanel, commitContext, hasSubrepos, showAmendOption);
   }
 
   private void reset() {
-    myShouldCommitSubrepos = false;
-    myCloseBranch = false;
-    myMqNewPatch = false;
     myRepos = null;
   }
 
@@ -136,10 +131,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
 
       HgRepository repo = entry.getKey();
       Set<HgFile> selectedFiles = entry.getValue();
+      boolean isCloseBranch = isCloseBranch(commitContext);
+      boolean isCommitSubrepositories = isCommitSubrepositories(commitContext);
       HgCommitTypeCommand command =
-        myMqNewPatch
+        isMqNewPatch(commitContext)
         ? new HgQNewCommand(myProject, repo, commitMessage, isAmend)
-        : new HgCommitCommand(myProject, repo, commitMessage, isAmend, myCloseBranch, myShouldCommitSubrepos && !selectedFiles.isEmpty());
+        : new HgCommitCommand(myProject, repo, commitMessage, isAmend, isCloseBranch, isCommitSubrepositories && !selectedFiles.isEmpty());
 
       if (isMergeCommit(repo.getRoot())) {
         //partial commits are not allowed during merges
@@ -300,14 +297,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     hgFiles.add(new HgFile(repo.getRoot(), filePath));
   }
 
-  public void setMqNew() {
-    myMqNewPatch = true;
-  }
-
-  public void setCloseBranch(boolean closeBranch) {
-    myCloseBranch = closeBranch;
-  }
-
   public void setRepos(@NotNull Collection<HgRepository> repos) {
     myRepos = repos;
   }
@@ -324,14 +313,20 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   /**
    * Commit options for hg
    */
+  @SuppressWarnings("InnerClassMayBeStatic") // for compatibility with external plugins
   public class HgCommitAdditionalComponent implements RefreshableOnComponent, AmendCommitModeListener, Disposable {
     @NotNull private final JPanel myPanel;
     @NotNull private final JCheckBox myCommitSubrepos;
     @NotNull private final CheckinProjectPanel myCommitPanel;
+    @NotNull private final CommitContext myCommitContext;
     @Nullable private final ToggleAmendCommitOption myAmendOption;
 
-    HgCommitAdditionalComponent(@NotNull CheckinProjectPanel panel, boolean hasSubrepos, boolean showAmendOption) {
+    HgCommitAdditionalComponent(@NotNull CheckinProjectPanel panel,
+                                @NotNull CommitContext commitContext,
+                                boolean hasSubrepos,
+                                boolean showAmendOption) {
       myCommitPanel = panel;
+      myCommitContext = commitContext;
       myAmendOption = showAmendOption ? new ToggleAmendCommitOption(myCommitPanel, this) : null;
 
       myCommitSubrepos = new JCheckBox("Commit subrepositories", false);
@@ -370,12 +365,11 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
 
     @Override
     public void refresh() {
-      myShouldCommitSubrepos = false;
     }
 
     @Override
     public void saveState() {
-      myShouldCommitSubrepos = myCommitSubrepos.isSelected();
+      setCommitSubrepositories(myCommitContext, myCommitSubrepos.isSelected());
     }
 
     @Override

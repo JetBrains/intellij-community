@@ -14,7 +14,7 @@ class HgCloseBranchExecutor(private val myCheckinEnvironment: HgCheckinEnvironme
   override fun getActionText(): String = "Commit And Close"
 
   override fun createCommitSession(commitContext: CommitContext): CommitSession {
-    myCheckinEnvironment.setCloseBranch(true)
+    commitContext.isCloseBranch = true
     return CommitSession.VCS_COMMIT
   }
 

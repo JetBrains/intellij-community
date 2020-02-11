@@ -7,12 +7,12 @@ import com.intellij.openapi.vcs.changes.CommitSession
 import org.jetbrains.annotations.Nls
 
 //todo:should be moved to create patch dialog as an EP -> create patch with...  MQ
-class HgMQNewExecutor(private val myCheckinEnvironment: HgCheckinEnvironment) : CommitExecutor {
+class HgMQNewExecutor : CommitExecutor {
   @Nls
   override fun getActionText(): String = "Create M&Q Patch"
 
   override fun createCommitSession(commitContext: CommitContext): CommitSession {
-    myCheckinEnvironment.setMqNew()
+    commitContext.isMqNewPatch = true
     return CommitSession.VCS_COMMIT
   }
 }
