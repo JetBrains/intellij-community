@@ -50,7 +50,9 @@ open class LocalChangesCommitter(
   }
 
   override fun afterCommit() {
-    ChangeListManagerImpl.getInstanceImpl(project).showLocalChangesInvalidated()
+    if (pathsToRefresh.isNotEmpty()) {
+      ChangeListManagerImpl.getInstanceImpl(project).showLocalChangesInvalidated()
+    }
 
     myAction = runReadAction { LocalHistory.getInstance().startAction(localHistoryActionName) }
   }

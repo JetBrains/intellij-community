@@ -31,7 +31,7 @@ class ChangesViewCommitWorkflowHandler(
     ProjectManagerListener {
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
-  override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
+  override val amendCommitHandler: ChangesViewAmendCommitHandler = ChangesViewAmendCommitHandler(this)
 
   private fun getCommitState(): ChangeListCommitState {
     val changes = getIncludedChanges()
@@ -97,7 +97,8 @@ class ChangesViewCommitWorkflowHandler(
     return commitOptions
   }
 
-  private fun isDefaultCommitEnabled() = workflow.vcses.isNotEmpty() && !workflow.isExecuting && !isCommitEmpty()
+  private fun isDefaultCommitEnabled() =
+    workflow.vcses.isNotEmpty() && !workflow.isExecuting && (amendCommitHandler.isAmendWithoutChangesAllowed() || !isCommitEmpty())
 
   override fun vcsesChanged() {
     initCommitHandlers()
@@ -115,7 +116,7 @@ class ChangesViewCommitWorkflowHandler(
     // state without blinking.
   }
 
-  private fun updateDefaultCommitActionEnabled() {
+  internal fun updateDefaultCommitActionEnabled() {
     ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
   }
 

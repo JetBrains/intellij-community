@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
@@ -42,6 +43,7 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitChangeUtils.GitDiffChange;
@@ -71,6 +73,7 @@ import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
+import static com.intellij.vcs.commit.LocalChangesCommitterKt.getCommitWithoutChangesRoots;
 import static com.intellij.vcs.commit.ToggleAmendCommitOption.isAmendCommitOptionSupported;
 import static git4idea.GitUtil.*;
 import static git4idea.checkin.GitCommitAndPushExecutorKt.isPushAfterCommit;
@@ -192,14 +195,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
                                    @NotNull Set<String> feedback) {
     updateState(commitContext);
 
-    GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
     Map<GitRepository, Collection<Change>> sortedChanges = sortChangesByGitRoot(myProject, changes, exceptions);
-    LOG.assertTrue(!sortedChanges.isEmpty(), "Trying to commit an empty list of changes: " + changes);
+    Collection<VcsRoot> commitWithoutChangesRoots = getCommitWithoutChangesRoots(commitContext);
+    LOG.assertTrue(!sortedChanges.isEmpty() || !commitWithoutChangesRoots.isEmpty(),
+                   "Trying to commit an empty list of changes: " + changes);
 
-    List<GitRepository> repositories = manager.sortByDependency(sortedChanges.keySet());
+    List<GitRepository> repositories = collectRepositories(sortedChanges.keySet(), commitWithoutChangesRoots);
     for (GitRepository repository : repositories) {
-      Collection<Change> rootChanges = sortedChanges.get(repository);
+      Collection<Change> rootChanges = sortedChanges.getOrDefault(repository, emptyList());
       Collection<CommitChange> toCommit = map(rootChanges, CommitChange::new);
 
       if (isCommitRenamesSeparately(commitContext)) {
@@ -227,6 +231,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
         modality, myProject.getDisposed());
     }
     return exceptions;
+  }
+
+  @NotNull
+  private List<GitRepository> collectRepositories(@NotNull Collection<GitRepository> changesRepositories,
+                                                  @NotNull Collection<VcsRoot> noChangesRoots) {
+    GitRepositoryManager repositoryManager = getRepositoryManager(myProject);
+    GitVcs vcs = GitVcs.getInstance(myProject);
+    Collection<GitRepository> noChangesRepositories =
+      getRepositoriesFromRoots(repositoryManager, mapNotNull(noChangesRoots, it -> it.getVcs() == vcs ? it.getPath() : null));
+
+    return repositoryManager.sortByDependency(union(changesRepositories, noChangesRepositories));
   }
 
   @NotNull
