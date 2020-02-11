@@ -24,12 +24,15 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     println("Dump JDK indexes command:")
     val nameHintKey = "name-infix"
     val jdkHomeKey = "jdk-home"
+    val alias = "alias"
 
     println("")
     println("  [idea] ${commandName} ... (see keys below)")
     println("       --$jdkHomeKey=<home to JDK>    --- path to JDK to index")
     println("       [--$nameHintKey=<infix>]       --- name suffix to for the generated files")
     println("                                         a hint to the later indexes management")
+    println("       [--$alias=<alias>]             --- alias for a given entry, allows multiple usages")
+    println()
     tempKey.usage()
     outputKey.usage()
     println("")
@@ -41,6 +44,7 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     val projectDir = (tempDir / "project").recreateDir()
     val zipsDir = (tempDir / "zips").recreateDir()
     val indexZip = zipsDir / "index.zip"
+    val aliases = args.args(alias)
 
     LOG.info("Resolved jdkHome = $jdkHome")
     LOG.info("Resolved outputDir = $outputDir")
@@ -113,7 +117,7 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     LOG.info("JDK size          = ${StringUtil.formatFileSize(jdkHome.totalSize())}")
     LOG.info("JDK hash          = ${hash}")
 
-    packIndexes(indexKind, indexName, hash, indexZip, infraVersion, outputDir)
+    packIndexes(indexKind, indexName, hash, indexZip, infraVersion, outputDir, aliases = aliases)
     exitProcess(0)
   }
 }

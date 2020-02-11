@@ -43,17 +43,20 @@ object SharedIndexMetadata {
 
       root.putObject("sources").also { sources ->
         sources.put("os", IndexInfrastructureVersion.Os.getOs().osName)
+        sources.put("os_name", SystemInfo.getOsNameAndVersion())
         sources.put("hash", sourcesHash)
         sources.put("kind", indexKind)
         sources.put("name", indexName)
       }
 
-      root.putObject("sources").also { build ->
+      root.putObject("environment").also { build ->
         build.put("os", IndexInfrastructureVersion.Os.getOs().osName)
         build.put("os_name", SystemInfo.getOsNameAndVersion())
-        build.put("intellij_version", ApplicationInfo.getInstance().fullVersion)
-        build.put("intellij_build", ApplicationInfo.getInstance().build.toString())
-        build.put("intellij_product_code", ApplicationInfo.getInstance().build.productCode)
+        root.putObject("intellij").also { ij ->
+          ij.put("product_code", ApplicationInfo.getInstance().build.productCode)
+          ij.put("version", ApplicationInfo.getInstance().fullVersion)
+          ij.put("build", ApplicationInfo.getInstance().build.toString())
+        }
       }
 
       root.putObject("indexes").also { indexes ->
@@ -72,7 +75,7 @@ object SharedIndexMetadata {
 
   private fun ObjectNode.putObjectFromMap(name: String, map: Map<String, String>) {
     putObject(name).also { obj ->
-      map.toSortedMap().forEach { (k, v) -> obj.put(k, v) }
+      map.entries.sortedBy { it.key.toLowerCase() }.forEach { (k, v) -> obj.put(k, v) }
     }
   }
 
