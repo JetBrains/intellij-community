@@ -329,7 +329,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   @NotNull
   @Override
   public PsiSubstitutor putAll(@NotNull PsiSubstitutor another) {
-    if (another instanceof EmptySubstitutorImpl) {
+    if (another instanceof EmptySubstitutor) {
       return this;
     }
     final PsiSubstitutorImpl anotherImpl = (PsiSubstitutorImpl)another;

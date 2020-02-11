@@ -242,17 +242,19 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     // If unchecked conversion was necessary for the method to be applicable, 
     // the parameter types of the invocation type are the parameter types of the method's type,
     // and the return type and thrown types are given by the erasures of the return type and thrown types of the method's type.
-    if (((!languageLevel.isAtLeast(LanguageLevel.JDK_1_8) || call.getTypeArguments().length > 0) && method.hasTypeParameters() ||
-         !method.hasTypeParameters() && JavaVersionService.getInstance().isAtLeast(call, JavaSdkVersion.JDK_1_8)) &&
-        result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isApplicable()) {
-      final PsiType[] args = call.getArgumentList().getExpressionTypes();
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      final boolean varargs = ((MethodCandidateInfo)result).getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
-      for (int i = 0; i < args.length; i++) {
-        final PsiType parameterType = substitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, varargs));
-        final PsiType expressionType = args[i];
-        if (expressionType != null && parameterType != null && JavaGenericsUtil.isRawToGeneric(parameterType, expressionType)) {
-          return TypeConversionUtil.erasure(substitutedReturnType);
+    if ((!languageLevel.isAtLeast(LanguageLevel.JDK_1_8) || call.getTypeArguments().length > 0) && method.hasTypeParameters() ||
+        !method.hasTypeParameters() && JavaVersionService.getInstance().isAtLeast(call, JavaSdkVersion.JDK_1_8)) {
+      PsiType erased = TypeConversionUtil.erasure(substitutedReturnType);
+      if (!substitutedReturnType.equals(erased) && result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isApplicable()) {
+        final PsiType[] args = call.getArgumentList().getExpressionTypes();
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        final boolean varargs = ((MethodCandidateInfo)result).getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
+        for (int i = 0; i < args.length; i++) {
+          final PsiType parameterType = substitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, varargs));
+          final PsiType expressionType = args[i];
+          if (expressionType != null && parameterType != null && JavaGenericsUtil.isRawToGeneric(parameterType, expressionType)) {
+            return erased;
+          }
         }
       }
     }

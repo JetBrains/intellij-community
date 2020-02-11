@@ -20,7 +20,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -51,6 +53,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.lang.CompoundRuntimeException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,8 +135,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       throw new IncorrectOperationException("Must not modify PSI inside save listener");
     }
     final PomModelAspect aspect = transaction.getTransactionAspect();
-    ProgressManager.getInstance().executeNonCancelableSection(()->{
-      startTransaction(transaction);
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      PsiFile containingFileByTree = getContainingFileByTree(transaction.getChangeScope());
+      Document document = startTransaction(transaction, containingFileByTree);
 
       Pair<PomModelAspect,PomTransaction> block = getBlockingTransaction(aspect, transaction);
       if (block != null) {
@@ -196,7 +200,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         }
         finally {
           try {
-            commitTransaction(transaction);
+            if (containingFileByTree != null) {
+              commitTransaction(containingFileByTree, document);
+            }
           }
           catch (ProcessCanceledException e) {
             throw e;
@@ -228,16 +234,13 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     return null;
   }
 
-  private void commitTransaction(final PomTransaction transaction) {
-    final ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+  private void commitTransaction(@NotNull PsiFile containingFileByTree, @Nullable Document document) {
     final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
-    final PsiFile containingFileByTree = getContainingFileByTree(transaction.getChangeScope());
-    Document document = containingFileByTree != null ? manager.getCachedDocument(containingFileByTree) : null;
 
     boolean isFromCommit = ApplicationManager.getApplication().isDispatchThread() &&
                            ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).isCommitInProgress();
-    boolean isPhysicalPsiChange = containingFileByTree != null && !isFromCommit && !synchronizer.isIgnorePsiEvents();
+    boolean isPhysicalPsiChange = !isFromCommit && !synchronizer.isIgnorePsiEvents();
     if (isPhysicalPsiChange) {
       reparseParallelTrees(containingFileByTree, synchronizer);
     }
@@ -294,12 +297,13 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     });
   }
 
-  private void startTransaction(@NotNull PomTransaction transaction) {
+  @Nullable
+  @Contract("_,null -> null")
+  private Document startTransaction(@NotNull PomTransaction transaction, @Nullable PsiFile containingFileByTree) {
     final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
 
-    final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
     if (containingFileByTree != null && !(containingFileByTree instanceof DummyHolder) && !manager.isCommitInProgress()) {
       PsiUtilCore.ensureValid(containingFileByTree);
     }
@@ -326,12 +330,13 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
 
     BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), changeScope, true);
-    Document document = containingFileByTree == null ? null : 
-                        physical ? manager.getDocument(containingFileByTree) : 
+    Document document = containingFileByTree == null ? null :
+                        physical ? manager.getDocument(containingFileByTree) :
                         manager.getCachedDocument(containingFileByTree);
-    if(document != null) {
+    if (document != null) {
       synchronizer.startTransaction(myProject, document, changeScope);
     }
+    return document;
   }
 
   private boolean isDocumentUncommitted(@Nullable PsiFile file) {

@@ -38,11 +38,20 @@ class SingleLanguageInlayHintsConfigurable(project: Project, val language: Langu
     return "inlay.hints." + language.id
   }
 
+  override fun getHelpTopic(): String {
+    return getHelpTopic(language)
+  }
+
   companion object {
     fun getInlayProviderSettingsModels(project: Project, language: Language) : Array<InlayProviderSettingsModel> {
       val models = InlaySettingsProvider.EP.getExtensions().flatMap { it.createModels(project, language) }
       if (models.isEmpty()) throw IllegalStateException("Language panel must have at least one config model")
       return models.toTypedArray()
+    }
+
+    @JvmStatic
+    fun getHelpTopic(language: Language): String {
+      return "settings.inlayhints." + language.id
     }
   }
 

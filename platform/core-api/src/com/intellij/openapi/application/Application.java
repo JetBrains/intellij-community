@@ -423,6 +423,7 @@ public interface Application extends ComponentManager {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   AccessToken acquireReadActionLock();
 
   /**
@@ -430,6 +431,7 @@ public interface Application extends ComponentManager {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
 
   /**

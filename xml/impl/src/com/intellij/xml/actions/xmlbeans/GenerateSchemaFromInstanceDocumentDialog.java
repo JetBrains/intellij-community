@@ -196,6 +196,10 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
       return XmlBundle.message("instance.document.file.is.not.exist");
     }
 
+    if (!generateFromUrl.getText().endsWith(".xml")) {
+      return XmlBundle.message("instance.document.file.should.have.xml.extension");
+    }
+
     try {
       int i = Integer.parseInt(getEnumerationsLimit());
       if (i < 0) return XmlBundle.message("negative.number.validation.problem");

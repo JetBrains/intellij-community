@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.Permission;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -119,7 +120,28 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
         });
     }
 
-    Inst2Xsd.main(ArrayUtilRt.toStringArray(parameters));
+    // Inst2Xsd.main contains exit() calls, so we need to prevent this
+    SecurityManager old = System.getSecurityManager();
+    try {
+      System.setSecurityManager(new SecurityManager() {
+        @Override
+        public void checkExit(int status) {
+          throw new SecurityException();
+        }
+
+        @Override
+        public void checkPermission(Permission perm) {
+        }
+      });
+      Inst2Xsd.main(ArrayUtilRt.toStringArray(parameters));
+    }
+    catch (Exception e) {
+      Messages.showErrorDialog(project, XmlBundle.message("xml2xsd.generator.error.message"), XmlBundle.message("xml2xsd.generator.error"));
+      return;
+    }
+    finally {
+      System.setSecurityManager(old);
+    }
     if (expectedSchemaFile.exists()) {
       final boolean renamed = expectedSchemaFile.renameTo(xsd);
       if (! renamed) {

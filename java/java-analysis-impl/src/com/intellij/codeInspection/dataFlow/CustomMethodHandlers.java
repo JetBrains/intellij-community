@@ -257,8 +257,8 @@ class CustomMethodHandlers {
     if (toPos == null) return null;
     LongRangeSet resultLen = toPos.minus(fromPos, false)
       .intersect(LongRangeSet.point(0).fromRelation(DfaRelationValue.RelationType.GE));
-    if (length != null) {
-      resultLen = resultLen.intersect(length.fromRelation(DfaRelationValue.RelationType.LT));
+    if (length != null && !length.isEmpty()) {
+      resultLen = resultLen.intersect(length.fromRelation(DfaRelationValue.RelationType.LE));
     }
     return factory.getFactFactory().createValue(
       DfaFactMap.EMPTY

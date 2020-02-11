@@ -372,6 +372,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   }
 
   private void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {
+    if (!useModulePath()) return;
     PsiJavaModule testModule = findJavaModule(module, true);
     if (testModule != null) {
       //adding the test module explicitly as it is unreachable from `idea.rt`
@@ -632,4 +633,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   }
 
   public void appendRepeatMode() throws ExecutionException { }
+
+  protected boolean useModulePath() {
+    return true;
+  }
 }

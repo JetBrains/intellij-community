@@ -519,10 +519,11 @@ public class JoiningMigration extends BaseStreamApiMigration {
         if (qualifier instanceof PsiMethodCallExpression) {
           call = (PsiMethodCallExpression)qualifier;
         }
+        else if (ExpressionUtils.isReferenceTo(qualifier, target)) {
+          return new AppendChain(call, topCall);
+        }
         else {
-          if (ExpressionUtils.isReferenceTo(qualifier, target)) {
-            return new AppendChain(call, topCall);
-          }
+          return null;
         }
       }
     }

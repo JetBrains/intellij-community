@@ -273,6 +273,11 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                          "x.get('x', '')"));
   }
 
+  // PY-39404
+  public void testImportedTypedDict() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

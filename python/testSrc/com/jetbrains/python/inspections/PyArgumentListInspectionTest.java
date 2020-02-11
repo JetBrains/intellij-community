@@ -411,4 +411,9 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testTypedDictAlternativeSyntaxUsage() {
     runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
   }
+
+  // PY-39404
+  public void testImportedTypedDict() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doMultiFileTest);
+  }
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
-import net.miginfocom.swing.MigLayout
+import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Container
 import java.awt.Window
@@ -41,7 +41,7 @@ class CustomFrameDialogContent private constructor(window: Window, content: Cont
         }
     }
 
-    private val panel = JPanel(MigLayout("novisualpadding, ins 0, gap 0, fill, flowy", "", "[min!][]"))
+    private val panel = JPanel(BorderLayout())
     private val header: CustomHeader = CustomHeader.create(window)
 
     init {
@@ -49,8 +49,8 @@ class CustomFrameDialogContent private constructor(window: Window, content: Cont
             header.background = it
         }
 
-        panel.add(header, "growx, wmin 100")
-        panel.add(content, "grow")
+        panel.add(header, BorderLayout.NORTH)
+        panel.add(content, BorderLayout.CENTER)
     }
 
     override val content: JComponent

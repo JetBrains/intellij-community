@@ -682,44 +682,43 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final String exprName = expr.getName();
         if (exprName != null) {
           if (qualifier != null) {
-            final PyType type = context.getType(qualifier);
-            if (type instanceof PyClassType) {
-              ContainerUtil.addIfNotNull(result, extractAttributeQNameFromClassType(exprName, (PyClassType)type));
-            }
-            else if (type instanceof PyModuleType) {
-              final PyFile file = ((PyModuleType)type).getModule();
-              final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, element);
-              if (name != null) {
-                ContainerUtil.addIfNotNull(result, name.append(exprName));
-              }
-            }
-            else if (type instanceof PyImportedModuleType) {
-              final PyImportedModule module = ((PyImportedModuleType)type).getImportedModule();
-              final PsiElement resolved = module.resolve();
-              if (resolved != null) {
-                final QualifiedName path = QualifiedNameFinder.findCanonicalImportPath(resolved, element);
-                if (path != null) {
-                  ContainerUtil.addIfNotNull(result, path.append(exprName));
+            final PyType qualifierType = context.getType(qualifier);
+            PyTypeUtil.toStream(qualifierType)
+              .map(type -> {
+                if (type instanceof PyClassType) {
+                  return extractAttributeQNameFromClassType(exprName, (PyClassType)type);
                 }
-              }
-            }
-            else if (type instanceof PyFunctionType) {
-              final PyCallable callable = ((PyFunctionType)type).getCallable();
-              final String callableName = callable.getName();
-              if (callableName != null) {
-                final QualifiedName path = QualifiedNameFinder.findCanonicalImportPath(callable, element);
-                if (path != null) {
-                  result.add(path.append(QualifiedName.fromComponents(callableName, exprName)));
+                else if (type instanceof PyModuleType) {
+                  final PyFile file = ((PyModuleType)type).getModule();
+                  final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, element);
+                  if (name != null) {
+                    return name.append(exprName);
+                  }
                 }
-              }
-            }
-            else if (type instanceof PyUnionType) {
-              for (PyType memberType : ((PyUnionType)type).getMembers()) {
-                if (memberType instanceof PyClassType) {
-                  ContainerUtil.addIfNotNull(result, extractAttributeQNameFromClassType(exprName, (PyClassType)memberType));
+                else if (type instanceof PyImportedModuleType) {
+                  final PyImportedModule module = ((PyImportedModuleType)type).getImportedModule();
+                  final PsiElement resolved = module.resolve();
+                  if (resolved != null) {
+                    final QualifiedName path = QualifiedNameFinder.findCanonicalImportPath(resolved, element);
+                    if (path != null) {
+                      return path.append(exprName);
+                    }
+                  }
                 }
-              }
-            }
+                else if (type instanceof PyFunctionType) {
+                  final PyCallable callable = ((PyFunctionType)type).getCallable();
+                  final String callableName = callable.getName();
+                  if (callableName != null) {
+                    final QualifiedName path = QualifiedNameFinder.findCanonicalImportPath(callable, element);
+                    if (path != null) {
+                      return path.append(QualifiedName.fromComponents(callableName, exprName));
+                    }
+                  }
+                }
+                return null;
+              })
+              .nonNull()
+              .into(result);
           }
           else {
             final PsiElement parent = element.getParent();

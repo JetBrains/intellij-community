@@ -1,6 +1,6 @@
 package org.intellij.plugins.markdown.ui.preview;
 
-import com.intellij.ide.scratch.ScratchFileType;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
@@ -18,7 +18,7 @@ public class MarkdownPreviewFileEditorProvider extends WeighedFileEditorProvider
     final FileType fileType = file.getFileType();
 
     return (fileType == MarkdownFileType.INSTANCE ||
-            fileType == ScratchFileType.INSTANCE && LanguageUtil.getLanguageForPsi(project, file) == MarkdownLanguage.INSTANCE) &&
+            ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file) == MarkdownLanguage.INSTANCE) &&
            MarkdownHtmlPanelProvider.hasAvailableProviders();
   }
 

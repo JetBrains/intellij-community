@@ -521,6 +521,15 @@ class Intf {
     assert gotoFile('resolvecache') == [f1, f2]
   }
 
+  void "test search for long full name"() {
+    def veryLongNameFile = addEmptyFile("aaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbb/cccccccccccccccccc/" +
+                                        "ddddddddddddddddd/eeeeeeeeeeeeeeee/ffffffffffffffffff/" +
+                                        "ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java")
+
+    assert gotoFile("bbbbbbbbbbbbbbbb/cccccccccccccccccc/ddddddddddddddddd/eeeeeeeeeeeeeeee/" +
+                    "ffffffffffffffffff/ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java") == [veryLongNameFile]
+  }
+
   private List<Object> gotoClass(String text, boolean checkboxState = false) {
     return getPopupElements(new GotoClassModel2(project), text, checkboxState)
   }

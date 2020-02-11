@@ -6,7 +6,6 @@ import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
-import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
@@ -144,10 +143,7 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
   @Nullable
   @Override
   public ConfigurationPane createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    final RootType root = ScratchFileService.getInstance().getRootType(file);
-    if (!(root instanceof JShellRootType)) {
-      return null;
-    }
+    if (!(ScratchFileService.findRootType(file) instanceof JShellRootType)) return null;
     return new ConfigurationPane(project);
   }
 

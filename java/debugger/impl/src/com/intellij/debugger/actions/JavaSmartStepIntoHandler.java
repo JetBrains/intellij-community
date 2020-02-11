@@ -401,8 +401,9 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             }
 
             // fix ordinals
+            List<SmartStepTarget> all = ContainerUtil.concat(targets, visitor.getRemoved());
             for (MethodSmartStepTarget target : visitor.getRemoved()) {
-              existingMethodCalls(targets, target.getMethod())
+              existingMethodCalls(all, target.getMethod())
                 .forEach(t -> {
                   int ordinal = t.getOrdinal();
                   if (ordinal > target.getOrdinal()) {

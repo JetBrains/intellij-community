@@ -46,7 +46,9 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
         @Override
         public RandomAccessFile execute(boolean finalAttempt) throws IOException {
           try {
-            return new RandomAccessFile(path, RW);
+            RandomAccessFile raf = new RandomAccessFile(path, RW);
+            FileChannelUtil.unInterruptible(raf.getChannel());
+            return raf;
           }
           catch (FileNotFoundException ex) {
             File parentFile = path.getParentFile();

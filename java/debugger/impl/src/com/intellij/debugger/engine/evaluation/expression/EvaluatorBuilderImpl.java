@@ -1350,13 +1350,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     private Evaluator buildFromJavaCode(String code, String imports, @NotNull PsiElement context) {
       TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, code, imports, StdFileTypes.JAVA);
       JavaCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(text, context, context.getProject());
-      try {
-        ExpressionEvaluator evaluator = new Builder(myPosition).buildElement(codeFragment);
-        return evaluationContext -> evaluator.evaluate(evaluationContext);
-      }
-      catch (EvaluateException e) {
-        throw new EvaluateRuntimeException(e);
-      }
+      return accept(codeFragment);
     }
 
     @Override

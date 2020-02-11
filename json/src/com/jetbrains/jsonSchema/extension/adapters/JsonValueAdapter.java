@@ -39,5 +39,10 @@ public interface JsonValueAdapter {
 
   default boolean shouldCheckIntegralRequirements() { return true; }
   default boolean shouldCheckAsValue() { return true; }
-  default JsonSchemaType substituteTypeForErrorMessage(@Nullable JsonSchemaType type) { return type; }
+
+  /**
+   * For some languages, the same node may represent values of different types depending on the context
+   * This happens, for instance, in YAML, where empty objects and null values are the same thing
+   */
+  default JsonSchemaType getAlternateType(@Nullable JsonSchemaType type) { return type; }
 }
