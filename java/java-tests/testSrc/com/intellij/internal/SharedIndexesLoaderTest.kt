@@ -8,14 +8,15 @@ import java.io.IOException
 import java.lang.RuntimeException
 
 class SharedIndexesLoaderTest : BasePlatformTestCase() {
-  @Test
-  fun test_read_random_hash_ok() {
-    val indexes = networkRetry {
-      SharedIndexesLoader.getInstance()
-        .downloadIndexesList(SharedIndexRequest( "jdk", "9f29c2ba6436e7dc64b011d71f14918f0b7e3e7f"), null)
-    }
-    Assert.assertTrue("$indexes", indexes.isNotEmpty())
-  }
+
+  //@Test
+  //fun test_read_random_hash_ok() {
+  //  val indexes = networkRetry {
+  //    SharedIndexesLoader.getInstance()
+  //      .downloadIndexesList(SharedIndexRequest( "jdk", "9f29c2ba6436e7dc64b011d71f14918f0b7e3e7f"), null)
+  //  }
+  //  Assert.assertTrue("$indexes", indexes.isNotEmpty())
+  //}
 
   @Test
   fun test_read_random_hash_miss() {
