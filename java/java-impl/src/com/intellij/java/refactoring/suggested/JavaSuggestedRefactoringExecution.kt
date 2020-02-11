@@ -12,7 +12,8 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.util.CanonicalTypes
 
 class JavaSuggestedRefactoringExecution(refactoringSupport: SuggestedRefactoringSupport) :
-  SuggestedRefactoringExecution(refactoringSupport) {
+  SuggestedRefactoringExecution(refactoringSupport)
+{
   override fun prepareChangeSignature(data: SuggestedChangeSignatureData): Any? {
     val method = data.declaration as PsiMethod
     return extractTypes(method, method.containingFile)

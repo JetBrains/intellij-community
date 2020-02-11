@@ -7,7 +7,8 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 
 class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactoringSupport) :
-  SuggestedRefactoringAvailability(refactoringSupport) {
+  SuggestedRefactoringAvailability(refactoringSupport)
+{
   // we use resolve to filter out annotations that we don't want to spread over hierarchy
   override fun refineSignaturesWithResolve(state: SuggestedRefactoringState): SuggestedRefactoringState {
     val declaration = state.declaration as? PsiMethod ?: return state

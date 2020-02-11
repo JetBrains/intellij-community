@@ -10,7 +10,8 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 
 class JavaSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactoringSupport) :
-  SuggestedRefactoringStateChanges(refactoringSupport) {
+  SuggestedRefactoringStateChanges(refactoringSupport)
+{
   override fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): Signature? {
     declaration as PsiNameIdentifierOwner
     val name = declaration.name ?: return null
