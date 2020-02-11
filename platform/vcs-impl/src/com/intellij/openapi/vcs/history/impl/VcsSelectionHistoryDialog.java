@@ -14,15 +14,12 @@ import com.intellij.diff.requests.NoDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.IntPair;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.MessageType;
@@ -30,7 +27,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.*;
@@ -62,6 +58,8 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public final class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvider {
+  private static final DataKey<VcsSelectionHistoryDialog> SELECTION_HISTORY_DIALOG_KEY = DataKey.create("VCS_SELECTION_HISTORY_DIALOG");
+
   private static final VcsRevisionNumber LOCAL_REVISION_NUMBER = new VcsRevisionNumber() {
     @NotNull
     @Override
@@ -186,16 +184,8 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       }
     });
 
-    final DefaultActionGroup popupActions = new DefaultActionGroup();
-    popupActions.add(new MyDiffAction());
-    popupActions.add(new MyDiffAfterWithLocalAction());
-    popupActions.add(ShowAllAffectedGenericAction.getInstance());
-    popupActions.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
+    ActionGroup popupActions = (ActionGroup)ActionManager.getInstance().getAction("VcsSelectionHistoryDialog.Popup");
     PopupHandler.installPopupHandler(myList, popupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
-
-    for (AnAction action : popupActions.getChildren(null)) {
-      action.registerCustomShortcutSet(action.getShortcutSet(), mySplitter);
-    }
 
     setTitle(title);
     setComponent(mySplitter);
@@ -463,7 +453,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
+    if (SELECTION_HISTORY_DIALOG_KEY.is(dataId)) {
+      return this;
+    }
+    else if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
@@ -484,61 +477,6 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       return notNull(myVcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
     }
     return null;
-  }
-
-  private class MyDiffAction extends DumbAwareAction {
-    MyDiffAction() {
-      super(VcsBundle.message("action.name.compare"), VcsBundle.message("action.description.compare"), AllIcons.Actions.Diff);
-      setShortcutSet(CommonShortcuts.getDiff());
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-      e.getPresentation().setEnabled(myList.getSelectedRowCount() > 1 ||
-                                     myList.getSelectedRowCount() == 1 && myList.getSelectedObject() != myBlockLoader.getLocalRevision());
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      BlockData blockData = myBlockLoader.getLoadedData();
-      if (blockData.getRevisions().isEmpty()) return;
-
-      IntPair range = getSelectedRevisionsRange(blockData);
-
-      List<VcsFileRevision> revisions = blockData.getRevisions();
-      VcsFileRevision beforeRevision = range.val2 < revisions.size() ? revisions.get(range.val2) : VcsFileRevision.NULL;
-      VcsFileRevision afterRevision = revisions.get(range.val1);
-
-      FilePath filePath = VcsUtil.getFilePath(myFile);
-
-      if (range.val2 - range.val1 > 1) {
-        getDiffHandler().showDiffForTwo(myProject, filePath, beforeRevision, afterRevision);
-      }
-      else {
-        getDiffHandler().showDiffForOne(e, myProject, filePath, beforeRevision, afterRevision);
-      }
-    }
-  }
-
-  private class MyDiffAfterWithLocalAction extends DumbAwareAction {
-    MyDiffAfterWithLocalAction() {
-      ActionUtil.copyFrom(this, "Vcs.ShowDiffWithLocal");
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-      e.getPresentation().setEnabled(myList.getSelectedRowCount() == 1 && myList.getSelectedObject() != myBlockLoader.getLocalRevision());
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      VcsFileRevision revision = myList.getSelectedObject();
-      if (revision == null) return;
-
-      FilePath filePath = VcsUtil.getFilePath(myFile);
-
-      getDiffHandler().showDiffForTwo(myProject, filePath, revision, myBlockLoader.getLocalRevision());
-    }
   }
 
   @NotNull
@@ -717,6 +655,75 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     @NotNull
     private List<VcsFileRevision> getRevisions() {
       return myRevisions;
+    }
+  }
+
+  public static class MyDiffAction implements AnActionExtensionProvider {
+    @Override
+    public boolean isActive(@NotNull AnActionEvent e) {
+      return e.getData(SELECTION_HISTORY_DIALOG_KEY) != null;
+    }
+
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
+      VcsSelectionHistoryDialog dialog = e.getRequiredData(SELECTION_HISTORY_DIALOG_KEY);
+
+      e.getPresentation().setText(VcsBundle.message("action.name.compare"));
+      e.getPresentation().setDescription(VcsBundle.message("action.description.compare"));
+
+      e.getPresentation().setEnabled(dialog.myList.getSelectedRowCount() > 1 ||
+                                     dialog.myList.getSelectedRowCount() == 1 &&
+                                     dialog.myList.getSelectedObject() != dialog.myBlockLoader.getLocalRevision());
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      VcsSelectionHistoryDialog dialog = e.getRequiredData(SELECTION_HISTORY_DIALOG_KEY);
+
+      BlockData blockData = dialog.myBlockLoader.getLoadedData();
+      if (blockData.getRevisions().isEmpty()) return;
+
+      IntPair range = dialog.getSelectedRevisionsRange(blockData);
+
+      List<VcsFileRevision> revisions = blockData.getRevisions();
+      VcsFileRevision beforeRevision = range.val2 < revisions.size() ? revisions.get(range.val2) : VcsFileRevision.NULL;
+      VcsFileRevision afterRevision = revisions.get(range.val1);
+
+      FilePath filePath = VcsUtil.getFilePath(dialog.myFile);
+
+      if (range.val2 - range.val1 > 1) {
+        dialog.getDiffHandler().showDiffForTwo(dialog.myProject, filePath, beforeRevision, afterRevision);
+      }
+      else {
+        dialog.getDiffHandler().showDiffForOne(e, dialog.myProject, filePath, beforeRevision, afterRevision);
+      }
+    }
+  }
+
+  public static class MyDiffAfterWithLocalAction implements AnActionExtensionProvider {
+    @Override
+    public boolean isActive(@NotNull AnActionEvent e) {
+      return e.getData(SELECTION_HISTORY_DIALOG_KEY) != null;
+    }
+
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
+      VcsSelectionHistoryDialog dialog = e.getRequiredData(SELECTION_HISTORY_DIALOG_KEY);
+
+      e.getPresentation().setEnabled(dialog.myList.getSelectedRowCount() == 1 &&
+                                     dialog.myList.getSelectedObject() != dialog.myBlockLoader.getLocalRevision());
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      VcsSelectionHistoryDialog dialog = e.getRequiredData(SELECTION_HISTORY_DIALOG_KEY);
+
+      VcsFileRevision revision = dialog.myList.getSelectedObject();
+      if (revision == null) return;
+
+      FilePath filePath = VcsUtil.getFilePath(dialog.myFile);
+
+      dialog.getDiffHandler().showDiffForTwo(dialog.myProject, filePath, revision, dialog.myBlockLoader.getLocalRevision());
     }
   }
 }

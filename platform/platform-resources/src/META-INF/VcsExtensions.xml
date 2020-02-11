@@ -81,6 +81,9 @@
     <openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider
         implementation="com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction$ShowDiffBeforeWithLocalAction" order="last"/>
 
+    <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAfterWithLocalAction"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAction"/>
+
     <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 
     <search.projectOptionsTopHitProvider implementation="com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProvider"/>

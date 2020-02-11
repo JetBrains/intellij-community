@@ -349,6 +349,13 @@
     <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction"
             icon="AllIcons.Actions.Copy" />
 
+    <group id="VcsSelectionHistoryDialog.Popup">
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
+      <reference id="VcsHistory.ShowAllAffected"/>
+      <reference id="Vcs.CopyRevisionNumberAction"/>
+    </group>
+
     <group id="Shelve.KeymapGroup">
       <reference ref="ChangesView.Shelve"/>
       <reference ref="ChangesView.ShelveSilently"/>
