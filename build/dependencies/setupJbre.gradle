@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import org.gradle.internal.os.OperatingSystem
 
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
 task setupJbre()
@@ -45,8 +46,11 @@ def jbrTasks(String defaultBuild, int version, String targetOs, String prefix = 
       def download = downloadJbrTask(jbrArtifactName, jbrBuild.toString())
       if (platform == 'osx') {
         def untarTask = untarJbrTask(download, jbrArtifactName.capitalize())
-        tarJbrTask("tar${jbrArtifactName.capitalize()}", untarTask, jbrArtifactName)
-        setupJbre.dependsOn("tar${jbrArtifactName.capitalize()}")
+        def patchTask = patchMacOS(jbrArtifactName.capitalize(), file("${download.absolutePath - '.tar.gz'}"))
+        patchTask.dependsOn(untarTask)
+        def tarTask = tarJbrTask("tar${jbrArtifactName.capitalize()}", untarTask, jbrArtifactName)
+        tarTask.dependsOn(patchTask)
+        setupJbre.dependsOn(tarTask)
         cleanSetupJbre.dependsOn("cleanTar${jbrArtifactName.capitalize()}")
       }
     }
@@ -137,4 +141,20 @@ static def platformsToDownload(targetOs) {
 
 static def archToDownload(platform) {
   platform != 'osx' ? ['x86', 'x64'] : ['x64']
+}
+
+/**
+ * See IDEA-231466
+ */
+Task patchMacOS(String jbrArtifactName, File jbrDir) {
+  task("patch$jbrArtifactName") {
+    doFirst {
+      def contents = jbrDir.toPath().resolve('jbr/Contents')
+      def patchedDir = contents.resolve('MacOS')
+      patchedDir.eachFileRecurse { Files.delete(it) }
+      def link = patchedDir.resolve('libjli.dylib')
+      def target = contents.resolve('Home/lib/jli/libjli.dylib')
+      Files.createSymbolicLink(link, link.parent.relativize(target))
+    }
+  }
 }
