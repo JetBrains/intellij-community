@@ -429,7 +429,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   public static void advertiseSecondCompletion(Project project, CompletionResultSet result) {
     if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.SECOND_BASIC_COMPLETION, project)) {
-      result.addLookupAdvertisement("Press " + KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION) + " to see non-imported classes");
+      result.addLookupAdvertisement(CompletionBundle.message("press.0.to.see.non.imported.classes",
+                                                             KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION)));
     }
   }
 
@@ -665,7 +666,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.GLOBAL_MEMBER_NAME)) {
           final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION);
           if (StringUtil.isNotEmpty(shortcut)) {
-            return "Pressing " + shortcut + " twice without a class qualifier would show all accessible static methods";
+            return CompletionBundle.message("pressing.0.twice.without.a.class.qualifier", shortcut);
           }
         }
       }

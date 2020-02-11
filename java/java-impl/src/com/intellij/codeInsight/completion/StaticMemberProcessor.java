@@ -87,7 +87,8 @@ public abstract class StaticMemberProcessor {
     if (!myHintShown && !shouldImport) {
       final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
       if (StringUtil.isNotEmpty(shortcut)) {
-        CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);
+        CompletionService.getCompletionService().setAdvertisementText(
+          CompletionBundle.message("to.import.a.method.statically.press.0", shortcut));
       }
       myHintShown = true;
     }
