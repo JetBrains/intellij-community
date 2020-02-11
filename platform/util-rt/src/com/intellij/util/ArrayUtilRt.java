@@ -42,20 +42,20 @@ public class ArrayUtilRt {
    *         these elements.
    */
   @Contract(pure = true)
-  public static <T> int find(@NotNull final T[] src, @Nullable final T obj) {
+  public static <T> int find(@NotNull T[] src, @Nullable T obj) {
     return indexOf(src, obj, 0, src.length);
   }
 
   @Contract(pure = true)
-  public static int indexOf(@NotNull Object[] objects, Object object, int start, int end) {
-    if (object == null) {
+  public static <T> int indexOf(@NotNull T[] src, @Nullable T obj, int start, int end) {
+    if (obj == null) {
       for (int i = start; i < end; i++) {
-        if (objects[i] == null) return i;
+        if (src[i] == null) return i;
       }
     }
     else {
       for (int i = start; i < end; i++) {
-        if (object.equals(objects[i])) return i;
+        if (obj.equals(src[i])) return i;
       }
     }
     return -1;
