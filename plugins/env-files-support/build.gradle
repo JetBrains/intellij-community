@@ -49,9 +49,9 @@ intellij {
 
 patchPluginXml {
     sinceBuild '192'
-    untilBuild '193.*'
+    untilBuild '201.*'
 }
 
 group 'ru.adelf'
-version '2019.3' // Plugin version
+version '2020.1' // Plugin version
 sourceCompatibility = 1.8
