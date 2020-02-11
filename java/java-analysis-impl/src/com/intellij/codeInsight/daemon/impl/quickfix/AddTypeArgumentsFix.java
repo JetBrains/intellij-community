@@ -91,7 +91,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
             final PsiType substitution;
             if (toType == null) {
               substitution = resolveResult.getSubstitutor().substitute(typeParameter);
-              if (!PsiTypesUtil.isDenotableType(substitution, element)) return null;
+              if (!PsiTypesUtil.isDenotableType(substitution, expression)) return null;
             }
             else {
               substitution = helper.getSubstitutionForTypeParameter(typeParameter, returnType, toType, false, level);

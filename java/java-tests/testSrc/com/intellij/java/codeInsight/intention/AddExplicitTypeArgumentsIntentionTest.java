@@ -17,9 +17,17 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtureTestCase {
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+    super.tuneFixture(moduleBuilder);
+    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
+  }
 
   public void testNoStaticQualifier() {
     doTest("class Test {\n" +
@@ -56,6 +64,30 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
            "    <T> T foo(T t) {\n" +
            "        return t;\n" +
            "    }\n" +
+           "}");
+  }
+
+  public void testContextClass() {
+    doTest("import java.util.Comparator;" +
+           "abstract class UserSession {\n" +
+           "    private static final Comparator<UserSession> USER_SESSION_COMPARATOR = Comparator\n" +
+           "            .comp<caret>aring(new java.util.function.Function<UserSession, String>() {\n" +
+           "                               @Override\n" +
+           "                               public String apply(UserSession userSession) {\n" +
+           "                                  return userSession.toString();\n" +
+           "                               }});\n" +
+           "}",
+           "import java.util.Comparator;\n" +
+           "import java.util.function.Function;\n" +
+           "\n" +
+           "abstract class UserSession {\n" +
+           "    private static final Comparator<UserSession> USER_SESSION_COMPARATOR = Comparator\n" +
+           "            .<UserSession, String>comparing(new Function<UserSession, String>() {\n" +
+           "                @Override\n" +
+           "                public String apply(UserSession userSession) {\n" +
+           "                    return userSession.toString();\n" +
+           "                }\n" +
+           "            });\n" +
            "}");
   }
 
