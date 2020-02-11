@@ -30,8 +30,7 @@
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletion"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletionImpl"/>
 
-    <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
-                    serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
     <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"
                     serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
 

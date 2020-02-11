@@ -344,7 +344,8 @@
     <projectService serviceInterface="com.intellij.ui.FileColorManager"
                     serviceImplementation="com.intellij.ui.tabs.FileColorManagerImpl"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
+    <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
+                    serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
 
     <projectService serviceImplementation="com.intellij.slicer.SliceToolwindowSettings"/>
     <projectService serviceImplementation="com.intellij.slicer.SliceManager"/>

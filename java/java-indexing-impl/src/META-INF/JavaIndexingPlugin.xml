@@ -32,7 +32,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaOutOfSourcesResolveScopeProvider"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaNullMethodArgumentIndex"/>
@@ -58,8 +57,6 @@
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectPackageIndexImpl"/>
     <projectService
                     serviceImplementation="com.intellij.psi.impl.search.HighlightingCaches"/>
-    <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"
-                    serviceImplementation="com.intellij.psi.impl.file.impl.JavaFileManagerImpl"/>
     <implicitToStringSearch implementation="com.intellij.psi.impl.search.ImplicitToStringSearcher"/>
     <functionalExpressionSearch implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>

@@ -39,6 +39,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaOutOfSourcesResolveScopeProvider"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.JavaSoftKeywordHighlightingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.JavaTextBlockIndentPassFactory"/>
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
@@ -60,6 +61,8 @@
                         serviceImplementation="org.jetbrains.java.generate.GenerateToStringActionHandlerImpl"/>
     <filePropertyPusher implementation="com.intellij.openapi.roots.impl.JavaLanguageLevelPusher"/>
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
+    <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"
+                    serviceImplementation="com.intellij.psi.impl.file.impl.JavaFileManagerImpl"/>
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.JavaChangeLocalityDetector"/>
     <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider" order="first,after default"/>
     <applicationService serviceInterface="com.intellij.codeInspection.BatchSuppressManager"
