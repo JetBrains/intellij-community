@@ -19,6 +19,7 @@ import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
 fun toggleDiffPreviewOnPropertyChange(uiProperties: VcsLogUiProperties,
@@ -38,7 +39,7 @@ fun toggleDiffPreviewOnPropertyChange(uiProperties: VcsLogUiProperties,
 abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewDiff: D,
                                                           uiProperties: VcsLogUiProperties,
                                                           mainComponent: JComponent,
-                                                          splitterProportionKey: String,
+                                                          @NonNls splitterProportionKey: String,
                                                           vertical: Boolean = false,
                                                           defaultProportion: Float = 0.7f) {
   private val previewDiffSplitter: Splitter = OnePixelSplitter(vertical, splitterProportionKey, defaultProportion)
