@@ -87,7 +87,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
             NOTIFICATION_GROUP.createNotification(
               CodeInsightBundle.message("java.preview.features.alert.title"),
               CodeInsightBundle.message("java.preview.features.legal.notice", level.getPresentableText(),
-                                        CodeInsightBundle.message("java.preview.features.accept.notification.link")),
+                                        "<br/><br/><a href=''accept''>" + CodeInsightBundle.message("java.preview.features.accept.notification.link") + "</a>"),
               NotificationType.WARNING,
               (notification, event) -> {
                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
