@@ -393,7 +393,8 @@ public abstract class DumbService {
    *
    * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused
    */
-  public abstract void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity);
+  public abstract void suspendIndexingAndRun(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String activityName,
+                                             @NotNull Runnable activity);
 
   /**
    * Checks whether {@link #isDumb()} is true for the current project and if it's currently suspended by user or a {@link #suspendIndexingAndRun} call.
