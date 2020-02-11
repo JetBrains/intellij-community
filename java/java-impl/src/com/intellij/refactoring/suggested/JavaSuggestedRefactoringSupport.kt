@@ -13,7 +13,7 @@ class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
         if (psiElement is PsiParameter && psiElement.parent is PsiParameterList && psiElement.parent.parent is PsiMethod) return false
         return true
     }
-    
+
     override fun signatureRange(declaration: PsiElement): TextRange? {
         val nameIdentifier = (declaration as PsiNameIdentifierOwner).nameIdentifier ?: return null
         return when (declaration) {

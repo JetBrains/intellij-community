@@ -9,46 +9,46 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParam
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 
 object JavaSuggestedRefactoringUI : SuggestedRefactoringUI() {
-    override fun createSignaturePresentationBuilder(
-        signature: Signature,
-        otherSignature: Signature,
-        isOldSignature: Boolean
-    ): SignaturePresentationBuilder {
-        return JavaSignaturePresentationBuilder(signature, otherSignature, isOldSignature)
+  override fun createSignaturePresentationBuilder(
+    signature: Signature,
+    otherSignature: Signature,
+    isOldSignature: Boolean
+  ): SignaturePresentationBuilder {
+    return JavaSignaturePresentationBuilder(signature, otherSignature, isOldSignature)
+  }
+
+  override fun extractNewParameterData(data: SuggestedChangeSignatureData): List<NewParameterData> {
+    val psiMethod = data.declaration as PsiMethod
+    val psiParameters = psiMethod.parameterList.parameters
+    val project = psiMethod.project
+    val factory = JavaCodeFragmentFactory.getInstance(project)
+
+    fun createCodeFragment(parameterType: PsiType) =
+      factory.createExpressionCodeFragment("", psiMethod, parameterType, true)
+
+    return data.newSignature.parameters.zip(psiParameters)
+      .filter { (parameter, _) -> data.oldSignature.parameterById(parameter.id) == null }
+      .map { (parameter, psiParameter) ->
+        val type = psiParameter.type
+        NewParameterData(parameter.name, createCodeFragment(type), offerToUseAnyVariable(type))
+      }
+  }
+
+  private fun offerToUseAnyVariable(parameterType: PsiType): Boolean {
+    return when (parameterType) {
+      is PsiPrimitiveType -> false
+      is PsiClassType -> parameterType.getCanonicalText() != CommonClassNames.JAVA_LANG_OBJECT
+      else -> true
     }
+  }
 
-    override fun extractNewParameterData(data: SuggestedChangeSignatureData): List<NewParameterData> {
-        val psiMethod = data.declaration as PsiMethod
-        val psiParameters = psiMethod.parameterList.parameters
-        val project = psiMethod.project
-        val factory = JavaCodeFragmentFactory.getInstance(project)
-
-        fun createCodeFragment(parameterType: PsiType) =
-            factory.createExpressionCodeFragment("", psiMethod, parameterType, true)
-
-        return data.newSignature.parameters.zip(psiParameters)
-            .filter { (parameter, _) -> data.oldSignature.parameterById(parameter.id) == null }
-            .map { (parameter, psiParameter) ->
-                val type = psiParameter.type
-                NewParameterData(parameter.name, createCodeFragment(type), offerToUseAnyVariable(type))
-            }
+  override fun extractValue(fragment: PsiCodeFragment): NewParameterValue.Expression? {
+    if ((fragment as PsiExpressionCodeFragment).expression == null) return null
+    executeCommand {
+      runUndoTransparentWriteAction {
+        JavaCodeStyleManager.getInstance(fragment.project).qualifyClassReferences(fragment)
+      }
     }
-
-    private fun offerToUseAnyVariable(parameterType: PsiType): Boolean {
-        return when (parameterType) {
-            is PsiPrimitiveType -> false
-            is PsiClassType -> parameterType.getCanonicalText() != CommonClassNames.JAVA_LANG_OBJECT
-            else -> true
-        }
-    }
-
-    override fun extractValue(fragment: PsiCodeFragment): NewParameterValue.Expression? {
-        if ((fragment as PsiExpressionCodeFragment).expression == null) return null
-        executeCommand {
-            runUndoTransparentWriteAction {
-                JavaCodeStyleManager.getInstance(fragment.project).qualifyClassReferences(fragment)
-            }
-        }
-        return NewParameterValue.Expression(fragment.expression!!)
-    }
+    return NewParameterValue.Expression(fragment.expression!!)
+  }
 }

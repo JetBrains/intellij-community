@@ -8,9 +8,9 @@ import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextF
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment.*
 
 typealias ParameterFragmentsBuilder = (
-    fragments: MutableList<TextFragment>,
-    parameter: Parameter,
-    correspondingParameter: Parameter?
+  fragments: MutableList<TextFragment>,
+  parameter: Parameter,
+  correspondingParameter: Parameter?
 ) -> Unit
 
 /**
@@ -25,62 +25,64 @@ typealias ParameterFragmentsBuilder = (
  * @param isOldSignature true if [signature] represents the old signature, or false otherwise
  */
 abstract class SignaturePresentationBuilder(
-    protected val signature: Signature,
-    protected val otherSignature: Signature,
-    protected val isOldSignature: Boolean
+  protected val signature: Signature,
+  protected val otherSignature: Signature,
+  protected val isOldSignature: Boolean
 ) {
-    protected val fragments = mutableListOf<TextFragment>()
+  protected val fragments = mutableListOf<TextFragment>()
 
-    val result: List<TextFragment>
-        get() = fragments
+  val result: List<TextFragment>
+    get() = fragments
 
-    abstract fun buildPresentation()
-    
-    fun effect(value: String, otherValue: String?): Effect {
-        return if (otherValue.isNullOrEmpty()) {
-            if (isOldSignature) Effect.Removed else Effect.Added
-        } else {
-            if (otherValue != value) Effect.Modified else Effect.None
-        }
+  abstract fun buildPresentation()
+
+  fun effect(value: String, otherValue: String?): Effect {
+    return if (otherValue.isNullOrEmpty()) {
+      if (isOldSignature) Effect.Removed else Effect.Added
+    }
+    else {
+      if (otherValue != value) Effect.Modified else Effect.None
+    }
+  }
+
+  fun leaf(value: String, otherValue: String?): Leaf {
+    val effect = effect(value, otherValue)
+    return Leaf(value, effect)
+  }
+
+  @JvmOverloads
+  fun buildParameterList(prefix: String = "(", suffix: String = ")", parameterBuilder: ParameterFragmentsBuilder) {
+    fragments += Leaf(prefix)
+    if (signature.parameters.isNotEmpty()) {
+      fragments += LineBreak("", indentAfter = true)
     }
 
-    fun leaf(value: String, otherValue: String?): Leaf {
-        val effect = effect(value, otherValue)
-        return Leaf(value, effect)
+    for ((index, parameter) in signature.parameters.withIndex()) {
+      if (index > 0) {
+        fragments += Leaf(",")
+        fragments += LineBreak(" ", indentAfter = true)
+      }
+
+      val correspondingParameter = otherSignature.parameterById(parameter.id)
+      val connectionId = correspondingParameter?.id
+
+      val effect = if (isOldSignature) {
+        if (correspondingParameter == null) Effect.Removed else Effect.None
+      }
+      else {
+        if (correspondingParameter == null) Effect.Added else Effect.None
+      }
+
+      fragments += Group(
+        mutableListOf<TextFragment>().also {
+          parameterBuilder(it, parameter, correspondingParameter)
+        },
+        effect,
+        connectionId
+      )
     }
 
-    @JvmOverloads
-    fun buildParameterList(prefix: String = "(", suffix: String = ")", parameterBuilder: ParameterFragmentsBuilder) {
-        fragments += Leaf(prefix)
-        if (signature.parameters.isNotEmpty()) {
-            fragments += LineBreak("", indentAfter = true)
-        }
-
-        for ((index, parameter) in signature.parameters.withIndex()) {
-            if (index > 0) {
-                fragments += Leaf(",")
-                fragments += LineBreak(" ", indentAfter = true)
-            }
-
-            val correspondingParameter = otherSignature.parameterById(parameter.id)
-            val connectionId = correspondingParameter?.id
-
-            val effect = if (isOldSignature) {
-                if (correspondingParameter == null) Effect.Removed else Effect.None
-            } else {
-                if (correspondingParameter == null) Effect.Added else Effect.None
-            }
-
-            fragments += Group(
-                mutableListOf<TextFragment>().also {
-                    parameterBuilder(it, parameter, correspondingParameter)
-                },
-                effect,
-                connectionId
-            )
-        }
-
-        fragments += LineBreak("", indentAfter = false)
-        fragments += Leaf(suffix)
-    }
+    fragments += LineBreak("", indentAfter = false)
+    fragments += Leaf(suffix)
+  }
 }

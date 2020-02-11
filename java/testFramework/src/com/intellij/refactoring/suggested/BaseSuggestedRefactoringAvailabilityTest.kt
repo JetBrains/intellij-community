@@ -6,79 +6,79 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.keymap.KeymapUtil
 
 abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFixtureTestCaseWithUtils() {
-    protected abstract val fileType: LanguageFileType
+  protected abstract val fileType: LanguageFileType
 
-    protected var ignoreErrors = false
+  protected var ignoreErrors = false
 
-    override fun setUp() {
-        ignoreErrors = false
-        super.setUp()
+  override fun setUp() {
+    ignoreErrors = false
+    super.setUp()
+  }
+
+  protected sealed class Availability {
+    object NotAvailable : Availability()
+    object Disabled : Availability()
+    class Available(val tooltip: String) : Availability()
+  }
+
+  protected fun changeSignatureAvailableTooltip(name: String, usages: String): String {
+    return buildString {
+      append("Update $usages of '$name' to reflect signature change...")
+      val shortcut = ActionManager.getInstance().getKeyboardShortcut("ShowIntentionActions")
+      if (shortcut != null) {
+        append(" (")
+        append(KeymapUtil.getShortcutText(shortcut))
+        append(")")
+      }
+    }
+  }
+
+  protected fun doTest(
+    initialText: String,
+    vararg editingActions: () -> Unit,
+    expectedAvailability: Availability,
+    expectedAvailabilityAfterResolve: Availability = expectedAvailability,
+    wrapIntoCommandAndWriteActionAndCommitAll: Boolean = true
+  ) {
+    myFixture.configureByText(fileType, initialText)
+
+    if (!ignoreErrors) {
+      myFixture.testHighlighting(false, false, false, myFixture.file.virtualFile)
     }
 
-    protected sealed class Availability {
-        object NotAvailable : Availability()
-        object Disabled : Availability()
-        class Available(val tooltip: String) : Availability()
+    executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)
+
+    checkAvailability(expectedAvailability, afterResolve = false)
+    checkAvailability(expectedAvailabilityAfterResolve, afterResolve = true)
+  }
+
+  private fun checkAvailability(expectedAvailability: Availability, afterResolve: Boolean) {
+    if (afterResolve) {
+      val intention = myFixture.availableIntentions.firstOrNull { it.familyName == "Suggested Refactoring" }
+      assertEquals(expectedAvailability is Availability.Available, intention != null)
     }
 
-    protected fun changeSignatureAvailableTooltip(name: String, usages: String): String {
-        return buildString{
-            append("Update $usages of '$name' to reflect signature change...")
-            val shortcut = ActionManager.getInstance().getKeyboardShortcut("ShowIntentionActions")
-            if (shortcut != null) {
-                append(" (")
-                append(KeymapUtil.getShortcutText(shortcut))
-                append(")")
-            }
-        }
+    val availabilityIndicator = SuggestedRefactoringProviderImpl.getInstance(project).availabilityIndicator
+    val iconRenderer = editor.markupModel.allHighlighters
+      .map { it.gutterIconRenderer }
+      .singleOrNull { it is RefactoringAvailableGutterIconRenderer || it is RefactoringDisabledGutterIconRenderer }
+    when (expectedAvailability) {
+      is Availability.NotAvailable -> {
+        assertFalse(availabilityIndicator.hasData)
+        assertNull(iconRenderer)
+      }
+
+      is Availability.Disabled -> {
+        assertTrue(availabilityIndicator.hasData)
+        assertTrue(iconRenderer is RefactoringDisabledGutterIconRenderer)
+        assertEquals(SuggestedRefactoringAvailabilityIndicator.disabledRefactoringTooltip, iconRenderer?.tooltipText)
+      }
+
+      is Availability.Available -> {
+        assertTrue(availabilityIndicator.hasData)
+        assertTrue(iconRenderer is RefactoringAvailableGutterIconRenderer)
+        assertEquals(expectedAvailability.tooltip, iconRenderer?.tooltipText)
+      }
     }
-
-    protected fun doTest(
-        initialText: String,
-        vararg editingActions: () -> Unit,
-        expectedAvailability: Availability,
-        expectedAvailabilityAfterResolve: Availability = expectedAvailability,
-        wrapIntoCommandAndWriteActionAndCommitAll: Boolean = true
-    ) {
-        myFixture.configureByText(fileType, initialText)
-
-        if (!ignoreErrors) {
-            myFixture.testHighlighting(false, false, false, myFixture.file.virtualFile)
-        }
-
-        executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)
-
-        checkAvailability(expectedAvailability, afterResolve = false)
-        checkAvailability(expectedAvailabilityAfterResolve, afterResolve = true)
-    }
-
-    private fun checkAvailability(expectedAvailability: Availability, afterResolve: Boolean) {
-        if (afterResolve) {
-            val intention = myFixture.availableIntentions.firstOrNull { it.familyName == "Suggested Refactoring" }
-            assertEquals(expectedAvailability is Availability.Available, intention != null)
-        }
-
-        val availabilityIndicator = SuggestedRefactoringProviderImpl.getInstance(project).availabilityIndicator
-        val iconRenderer = editor.markupModel.allHighlighters
-            .map { it.gutterIconRenderer }
-            .singleOrNull { it is RefactoringAvailableGutterIconRenderer || it is RefactoringDisabledGutterIconRenderer }
-        when (expectedAvailability) {
-            is Availability.NotAvailable -> {
-                assertFalse(availabilityIndicator.hasData)
-                assertNull(iconRenderer)
-            }
-
-            is Availability.Disabled -> {
-                assertTrue(availabilityIndicator.hasData)
-                assertTrue(iconRenderer is RefactoringDisabledGutterIconRenderer)
-                assertEquals(SuggestedRefactoringAvailabilityIndicator.disabledRefactoringTooltip, iconRenderer?.tooltipText)
-            }
-            
-            is Availability.Available -> {
-                assertTrue(availabilityIndicator.hasData)
-                assertTrue(iconRenderer is RefactoringAvailableGutterIconRenderer)
-                assertEquals(expectedAvailability.tooltip, iconRenderer?.tooltipText)
-            }
-        }
-    }
+  }
 }

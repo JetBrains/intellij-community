@@ -11,88 +11,88 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 
 abstract class BaseSuggestedRefactoringChangeListenerTest : LightJavaCodeInsightFixtureTestCase() {
-    private val watcher = Watcher()
-    private lateinit var changeListener: SuggestedRefactoringChangeListener
+  private val watcher = Watcher()
+  private lateinit var changeListener: SuggestedRefactoringChangeListener
 
-    protected abstract val fileType: FileType
+  protected abstract val fileType: FileType
 
-    private fun StringBuilder.appendSignature(declaration: PsiElement) {
-        val refactoringSupport = SuggestedRefactoringSupport.forLanguage(declaration.language)!!
-        val range = refactoringSupport.signatureRange(declaration)!!
-        append("'")
-        val text = declaration.containingFile.text
-            .substring(range.startOffset, range.endOffset)
-            .replace("\n", "\\n")
-        append(text)
-        append("'")
+  private fun StringBuilder.appendSignature(declaration: PsiElement) {
+    val refactoringSupport = SuggestedRefactoringSupport.forLanguage(declaration.language)!!
+    val range = refactoringSupport.signatureRange(declaration)!!
+    append("'")
+    val text = declaration.containingFile.text
+      .substring(range.startOffset, range.endOffset)
+      .replace("\n", "\\n")
+    append(text)
+    append("'")
+  }
+
+  override fun setUp() {
+    super.setUp()
+    changeListener = SuggestedRefactoringChangeListener(project, watcher)
+    changeListener.attach()
+  }
+
+  override fun tearDown() {
+    Disposer.dispose(changeListener)
+    super.tearDown()
+  }
+
+  protected fun setup(fileText: String) {
+    myFixture.configureByText(fileType, fileText)
+  }
+
+  protected fun perform(vararg expectedLog: String, action: () -> Unit) {
+    watcher.check("")
+    action()
+    executeCommand {
+      runWriteAction {
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+      }
+    }
+    watcher.check(expectedLog.joinToString(separator = "\n"))
+  }
+
+  protected fun commitAll() {
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+  }
+
+  protected fun insertString(offset: Int, text: String) {
+    executeCommand {
+      runWriteAction {
+        editor.document.insertString(offset, text)
+      }
+    }
+  }
+
+  private inner class Watcher : SuggestedRefactoringSignatureWatcher {
+    private val log = StringBuilder()
+
+    fun check(expectedLog: String) {
+      TestCase.assertEquals(expectedLog, log.toString().trim())
+      log.clear()
     }
 
-    override fun setUp() {
-        super.setUp()
-        changeListener = SuggestedRefactoringChangeListener(project, watcher)
-        changeListener.attach()
+    override fun editingStarted(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
+      log.append("editingStarted: ")
+      log.appendSignature(declaration)
+      log.append("\n")
     }
 
-    override fun tearDown() {
-        Disposer.dispose(changeListener)
-        super.tearDown()
+    override fun nextSignature(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
+      if (refactoringSupport.hasSyntaxError(declaration)) return
+
+      log.append("nextSignature: ")
+      log.appendSignature(declaration)
+      log.append("\n")
     }
 
-    protected fun setup(fileText: String) {
-        myFixture.configureByText(fileType, fileText)
+    override fun inconsistentState(refactoringSupport: SuggestedRefactoringSupport) {
+      log.append("inconsistentState\n")
     }
 
-    protected fun perform(vararg expectedLog: String, action: () -> Unit) {
-        watcher.check("")
-        action()
-        executeCommand {
-            runWriteAction {
-                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-            }
-        }
-        watcher.check(expectedLog.joinToString(separator = "\n"))
+    override fun reset() {
+      log.append("reset\n")
     }
-
-    protected fun commitAll() {
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
-    }
-
-    protected fun insertString(offset: Int, text: String) {
-        executeCommand {
-            runWriteAction {
-                editor.document.insertString(offset, text)
-            }
-        }
-    }
-
-    private inner class Watcher : SuggestedRefactoringSignatureWatcher {
-        private val log = StringBuilder()
-
-        fun check(expectedLog: String) {
-            TestCase.assertEquals(expectedLog, log.toString().trim())
-            log.clear()
-        }
-
-        override fun editingStarted(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
-            log.append("editingStarted: ")
-            log.appendSignature(declaration)
-            log.append("\n")
-        }
-
-        override fun nextSignature(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
-            if (refactoringSupport.hasSyntaxError(declaration)) return
-
-            log.append("nextSignature: ")
-            log.appendSignature(declaration)
-            log.append("\n")
-        }
-
-        override fun inconsistentState(refactoringSupport: SuggestedRefactoringSupport) {
-            log.append("inconsistentState\n")
-        }
-
-        override fun reset() {
-            log.append("reset\n")
-        }
-    }
+  }
 }
