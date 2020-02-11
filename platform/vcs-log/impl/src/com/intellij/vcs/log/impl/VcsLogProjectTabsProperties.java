@@ -9,6 +9,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -197,7 +198,7 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
   }
 
   public static class CustomBooleanTabProperty extends VcsLogUiProperties.VcsLogUiProperty<Boolean> {
-    public CustomBooleanTabProperty(@NotNull String name) {
+    public CustomBooleanTabProperty(@NotNull @NonNls String name) {
       super(name);
     }
 
