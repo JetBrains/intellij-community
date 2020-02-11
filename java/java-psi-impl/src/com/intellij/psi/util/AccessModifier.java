@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.util.containers.ContainerUtil;
@@ -100,7 +101,7 @@ public enum AccessModifier {
 
   @Override
   public String toString() {
-    return PsiBundle.visibilityPresentation(toPsiModifier());
+    return JavaPsiBundle.visibilityPresentation(toPsiModifier());
   }
 
   @NotNull

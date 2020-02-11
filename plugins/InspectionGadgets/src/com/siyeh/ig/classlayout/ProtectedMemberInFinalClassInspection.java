@@ -16,6 +16,7 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -128,7 +129,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
           assert context != null;
           conflicts.putValue(element1, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                                                  RefactoringUIUtil.getDescription(member, false),
-                                                                 PsiBundle.visibilityPresentation(PRIVATE),
+                                                                 JavaPsiBundle.visibilityPresentation(PRIVATE),
                                                                  RefactoringUIUtil.getDescription(context, true)));
         }
         return true;

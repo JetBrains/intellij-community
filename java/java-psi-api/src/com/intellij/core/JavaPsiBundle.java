@@ -41,4 +41,9 @@ public class JavaPsiBundle extends DynamicBundle {
   public static boolean contains(String key) {
     return INSTANCE.containsKey(key);
   }
+
+  @NotNull
+  public static String visibilityPresentation(@NotNull String modifier) {
+    return message(modifier + ".visibility.presentation");
+  }
 }

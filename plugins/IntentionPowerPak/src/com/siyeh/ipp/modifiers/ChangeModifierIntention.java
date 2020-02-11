@@ -2,6 +2,7 @@
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -423,7 +424,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
         }
         conflicts.putValue(element, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                                               RefactoringUIUtil.getDescription(member, false),
-                                                              PsiBundle.visibilityPresentation(modifier.toPsiModifier()),
+                                                              JavaPsiBundle.visibilityPresentation(modifier.toPsiModifier()),
                                                               RefactoringUIUtil.getDescription(context, true)));
         return true;
       });

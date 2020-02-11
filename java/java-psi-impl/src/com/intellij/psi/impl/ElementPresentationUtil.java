@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconLayerProvider;
 import com.intellij.openapi.project.DumbService;
@@ -210,7 +211,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
     if (list != null) {
       int level = PsiUtil.getAccessLevel(list);
       if (level != PsiUtil.ACCESS_LEVEL_PUBLIC) {
-        adj.append(" ").append(StringUtil.capitalize(PsiBundle.visibilityPresentation(PsiUtil.getAccessModifier(level))));
+        adj.append(" ").append(StringUtil.capitalize(JavaPsiBundle.visibilityPresentation(PsiUtil.getAccessModifier(level))));
       }
     }
     return adj.toString();

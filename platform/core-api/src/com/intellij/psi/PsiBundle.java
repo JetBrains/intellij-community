@@ -37,9 +37,4 @@ public class PsiBundle extends DynamicBundle {
   public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
-
-  @NotNull
-  public static String visibilityPresentation(@NotNull String modifier) {
-    return message(modifier + ".visibility.presentation");
-  }
 }
