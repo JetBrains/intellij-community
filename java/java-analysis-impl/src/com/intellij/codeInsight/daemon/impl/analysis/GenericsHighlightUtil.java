@@ -1448,11 +1448,7 @@ public class GenericsHighlightUtil {
                                                              @NotNull TextRange range,
                                                              boolean checkParameters) {
     final JavaPsiFacade factory = JavaPsiFacade.getInstance(aClass.getProject());
-    PsiElementFactory elementFactory = factory.getElementFactory();
-    for (PsiClassType.ClassResolveResult superClassResolveResult : PsiClassImplUtil.getScopeCorrectedSuperTypes(aClass, resolveScope)) {
-      PsiClass superClass = superClassResolveResult.getElement();
-      if (superClass == null) continue;
-      PsiClassType superType = elementFactory.createType(superClass, superClassResolveResult.getSubstitutor());
+    for (PsiClassType superType : aClass.getSuperTypes()) {
       HashSet<PsiClass> checked = new HashSet<>();
       checked.add(aClass);
       final String notAccessibleErrorMessage = isTypeAccessible(superType, checked, checkParameters, resolveScope, factory);
@@ -1479,10 +1475,10 @@ public class GenericsHighlightUtil {
         final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
         final GlobalSearchScope resolveScope = ref.getResolveScope();
 
-        message = isTypeAccessible(PsiClassImplUtil.correctType(substitutor.substitute(method.getReturnType()), resolveScope), classes, false, resolveScope, facade);
+        message = isTypeAccessible(substitutor.substitute(method.getReturnType()), classes, false, resolveScope, facade);
         if (message == null) {
           for (PsiType type : method.getSignature(substitutor).getParameterTypes()) {
-            message = isTypeAccessible(PsiClassImplUtil.correctType(type, resolveScope), classes, false, resolveScope, facade);
+            message = isTypeAccessible(type, classes, false, resolveScope, facade);
             if (message != null) {
               break;
             }
@@ -1495,7 +1491,7 @@ public class GenericsHighlightUtil {
       if (resolve instanceof PsiField) {
         final GlobalSearchScope resolveScope = ref.getResolveScope();
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(ref.getProject());
-        message = isTypeAccessible(PsiClassImplUtil.correctType(((PsiField)resolve).getType(), resolveScope), new HashSet<>(), false, resolveScope, facade);
+        message = isTypeAccessible(((PsiField)resolve).getType(), new HashSet<>(), false, resolveScope, facade);
       }
     }
 
@@ -1515,6 +1511,8 @@ public class GenericsHighlightUtil {
                                          boolean checkParameters,
                                          @NotNull GlobalSearchScope resolveScope,
                                          @NotNull JavaPsiFacade factory) {
+    type = PsiClassImplUtil.correctType(type, resolveScope);
+
     final PsiClass aClass = PsiUtil.resolveClassInType(type);
     if (aClass != null && classes.add(aClass)) {
       VirtualFile vFile = PsiUtilCore.getVirtualFile(aClass);
