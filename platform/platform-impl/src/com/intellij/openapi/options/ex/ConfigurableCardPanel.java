@@ -124,7 +124,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
               panel.add(BorderLayout.CENTER, component);
               component = panel;
             }
-            component.setBorder(JBUI.Borders.empty(5, 16, 16, 16));
+            component.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
           }
           if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
             JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);

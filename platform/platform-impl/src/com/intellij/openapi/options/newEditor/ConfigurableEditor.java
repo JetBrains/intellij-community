@@ -282,7 +282,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   private JComponent createDefaultContent(Configurable configurable) {
     JComponent content = new JPanel(new BorderLayout());
-    content.setBorder(JBUI.Borders.empty(5, 16, 16, 16));
+    content.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
     String key = configurable == null ? null : ConfigurableVisitor.getId(configurable) + ".settings.description";
     String description = key == null ? null : getString(configurable, key);
     if (description == null) {
