@@ -36,8 +36,7 @@ public final class PropertyAccessor implements MutableAccessor {
         myWriteMethod.setAccessible(true);
       }
     }
-    catch (SecurityException ignored) {
-    }
+    catch (SecurityException ignored) { }
   }
 
   @NotNull
@@ -103,8 +102,11 @@ public final class PropertyAccessor implements MutableAccessor {
     catch (InvocationTargetException e) {
       Throwable cause = e.getCause();
       // see KotlinXmlSerializerTest.nullInMap
-      if (cause instanceof IllegalArgumentException && myGenericType instanceof Class && ((Class)myGenericType).isEnum() && cause.getMessage().contains("Parameter specified as non-null is null:")) {
-        Object[] constants = ((Class)myGenericType).getEnumConstants();
+      if (cause instanceof IllegalArgumentException &&
+          myGenericType instanceof Class &&
+          ((Class<?>)myGenericType).isEnum() &&
+          cause.getMessage().contains("Parameter specified as non-null is null:")) {
+        Object[] constants = ((Class<?>)myGenericType).getEnumConstants();
         if (constants.length > 0) {
           try {
             LOG.warn("Cannot set enum value, will be set to first enum value", e);
