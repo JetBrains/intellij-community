@@ -91,7 +91,7 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
       }
       final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       LOG.assertTrue(nameIdentifier != null);
-      return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier, "Undeclared test \'" + aClass.getName() + "\'",
+      return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier, InspectionsBundle.message("inspection.undeclared.test.problem.descriptor", aClass.getName()),
                                                                      isOnTheFly, new LocalQuickFix[]{new RegisterClassFix(aClass),
                                                                        new CreateTestngFix()},
                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
@@ -109,13 +109,13 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     @NotNull
     public String getName() {
-      return "Register \'" + myClassName + "\'";
+      return InspectionsBundle.message("inspection.undeclared.test.register", myClassName);
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Register test";
+      return InspectionsBundle.message("inspection.undeclared.test.register.test");
     }
 
     @Override
@@ -167,7 +167,7 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Create suite";
+      return InspectionsBundle.message("inspection.undeclared.test.create.suite.fix");
     }
 
     @Override

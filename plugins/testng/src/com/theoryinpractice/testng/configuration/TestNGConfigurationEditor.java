@@ -388,7 +388,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     TextFieldWithBrowseButton outputDirectoryButton = new TextFieldWithBrowseButton();
     outputDirectory.setComponent(outputDirectoryButton);
-    outputDirectoryButton.addBrowseFolderListener("TestNG", "Select test output directory", project,
+    outputDirectoryButton.addBrowseFolderListener(ExecutionBundle.message("testng.output.directory.button.title"), ExecutionBundle.message("testng.select.output.directory"), project,
                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
     moduleClasspath.setEnabled(true);
 
@@ -407,7 +407,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     };
 
     textFieldWithBrowseButton
-      .addBrowseFolderListener("TestNG", "Select .properties file for test properties", project, propertiesFileDescriptor);
+      .addBrowseFolderListener(ExecutionBundle.message("testng.browse.button.title"), ExecutionBundle.message("testng.select.properties.file"), project, propertiesFileDescriptor);
 
     propertiesTableView = new TableView(propertiesTableModel);
 

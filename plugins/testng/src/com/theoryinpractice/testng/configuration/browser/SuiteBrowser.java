@@ -15,6 +15,7 @@
  */
 package com.theoryinpractice.testng.configuration.browser;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -39,8 +40,8 @@ public class SuiteBrowser extends BrowseModuleValueActionListener
                 return virtualFile.isDirectory() || "xml".equals(virtualFile.getExtension()) || "yaml".equals(virtualFile.getExtension());
             }
         };
-        descriptor.setDescription("Please select the xml or yaml suite file");
-        descriptor.setTitle("Select Suite");
+        descriptor.setDescription((ExecutionBundle.message("testng.suite.browser.select.xml.or.yaml.suite.file")));
+        descriptor.setTitle(ExecutionBundle.message("testng.suite.browser.select.suite"));
         VirtualFile file = FileChooser.chooseFile(descriptor, getProject(), null);
         return file != null ? file.getPath() : null;
     }

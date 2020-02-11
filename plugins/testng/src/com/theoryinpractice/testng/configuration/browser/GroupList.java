@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.configuration.browser;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ScrollPaneFactory;
@@ -44,7 +45,7 @@ public class GroupList extends JPanel
         DialogBuilder builder = new DialogBuilder(component);
         builder.setCenterPanel(groupList);
       builder.setPreferredFocusComponent(groupList.list);
-      builder.setTitle("Choose Test Group");
+      builder.setTitle(ExecutionBundle.message("testng.choose.test.group"));
         return builder.show() != 0 ? null : groupList.getSelected();
     }
 }

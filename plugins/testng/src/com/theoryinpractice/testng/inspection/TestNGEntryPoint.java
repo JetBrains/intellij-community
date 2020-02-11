@@ -18,6 +18,7 @@ package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -44,7 +45,7 @@ public class TestNGEntryPoint extends EntryPoint {
   @Override
   @NotNull
   public String getDisplayName() {
-    return "TestNG test cases";
+    return ExecutionBundle.message("testng.entrypoint.test.cases");
   }
 
   @Override

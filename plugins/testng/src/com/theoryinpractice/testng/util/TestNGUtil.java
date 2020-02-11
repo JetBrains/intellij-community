@@ -2,6 +2,7 @@
 package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -362,7 +363,7 @@ public class TestNGUtil {
       for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
         if (filter.isAccepted(psiClass)) {
           if (indicator != null) {
-            indicator.setText2("Found test class " + ReadAction.compute(psiClass::getQualifiedName));
+            indicator.setText2(ExecutionBundle.message("testng.util.found.test.class", ReadAction.compute(psiClass::getQualifiedName)));
           }
           set.add(psiClass);
         }
@@ -370,7 +371,7 @@ public class TestNGUtil {
       holder[0] = set.toArray(PsiClass.EMPTY_ARRAY);
     };
     if (sync) {
-       ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Searching For Tests...", true, filter.getProject());
+       ProgressManager.getInstance().runProcessWithProgressSynchronously(process, ExecutionBundle.message("testng.util.searching.test.progress.title"), true, filter.getProject());
     }
     else {
        process.run();
@@ -402,8 +403,8 @@ public class TestNGUtil {
     if (JavaPsiFacade.getInstance(manager.getProject()).findClass(TestNG.class.getName(), psiElement.getResolveScope()) == null) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         if (Messages.showOkCancelDialog(psiElement.getProject(),
-                                        "TestNG will be added to module classpath",
-                                        "Unable to Convert.",
+                                        ExecutionBundle.message("testng.util.will.be.added.to.module.classpath"),
+                                        ExecutionBundle.message("testng.util.unable.to.convert"),
                                         Messages.getWarningIcon()) != Messages.OK) {
           return false;
         }

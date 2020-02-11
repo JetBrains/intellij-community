@@ -29,7 +29,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return "TestNG";
+    return InspectionsBundle.message("inspection.depends.on.method.name");
   }
 
   @NotNull
@@ -78,7 +78,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
                 element2Highlight = initializers[idx];
               }
             }
-            problemDescriptors.add(manager.createProblemDescriptor(element2Highlight, "Duplicated method name: " + methodName,
+            problemDescriptors.add(manager.createProblemDescriptor(element2Highlight, InspectionsBundle.message("inspection.depends.on.method.duplicated.name.problem", methodName),
                                                                    (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                                    isOnTheFly));
           }
@@ -121,7 +121,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
       if (foundMethods.length == 0) {
         LOGGER.debug("dependsOnMethods method doesn't exist:" + methodName);
         problemDescriptors.add(manager.createProblemDescriptor(
-          value, "Method '" + methodName + "' unknown.", (LocalQuickFix)null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly));
+          value, InspectionsBundle.message("inspection.depends.on.method.unknown.method.problem", methodName), (LocalQuickFix)null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly));
       }
       else {
         boolean hasTestsOrConfigs = false;

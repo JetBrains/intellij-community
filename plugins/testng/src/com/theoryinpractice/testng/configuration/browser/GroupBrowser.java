@@ -15,6 +15,7 @@
  */
 package com.theoryinpractice.testng.configuration.browser;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -51,7 +52,7 @@ public class GroupBrowser extends BrowseModuleValueActionListener
       }
       PsiClass[] classes = TestNGUtil.getAllTestClasses(filter, true);
       if(classes == null || classes.length == 0) {
-        Messages.showMessageDialog(getField(), "No tests found in project", "Cannot Browse Groups", Messages.getInformationIcon());
+        Messages.showMessageDialog(getField(), ExecutionBundle.message("testng.group.browser.no.tests.found.in.project"), ExecutionBundle.message("testng.group.browser.cannot.browse.groups"), Messages.getInformationIcon());
         return null;
       } else {
         return GroupList.showDialog(classes, getField());

@@ -3,6 +3,7 @@ package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -47,7 +48,7 @@ public class TestNGDataProviderInspection extends AbstractBaseJavaLocalInspectio
                     fixes = LocalQuickFix.EMPTY_ARRAY;
                   }
 
-                  holder.registerProblem(provider, "Data provider does not exist", fixes);
+                  holder.registerProblem(provider, InspectionsBundle.message("inspection.testng.data.provider.does.not.exist.problem"), fixes);
                 } else {
                   Version version = TestNGUtil.detectVersion(holder.getProject(), ModuleUtilCore.findModuleForPsiElement(providerClass));
                   if (version != null && version.isOrGreaterThan(6, 9, 13)) {
@@ -55,7 +56,7 @@ public class TestNGDataProviderInspection extends AbstractBaseJavaLocalInspectio
                   }
                   final PsiMethod providerMethod = (PsiMethod)dataProviderMethod;
                   if (providerClass != topLevelClass && !providerMethod.hasModifierProperty(PsiModifier.STATIC)) {
-                    holder.registerProblem(provider, "Data provider from foreign class need to be static");
+                    holder.registerProblem(provider, InspectionsBundle.message("inspection.testng.data.provider.need.to.be.static"));
                   }
                 }
                 break;
