@@ -58,17 +58,33 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   @Override
   @NotNull
   public PsiType getType() {
-    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(calculateType(), PsiModificationTracker.MODIFICATION_COUNT));
+    return getTypeInfo().myType;
+  }
+  
+  private static class TypeInfo {
+    private final PsiType myType;
+    private final boolean myInferred;
+
+    private TypeInfo(PsiType type, boolean inferred) {
+      myType = type;
+      myInferred = inferred;
+    }
+  }
+  
+  private TypeInfo getTypeInfo() {
+    return CachedValuesManager.getCachedValue(
+      this, () -> CachedValueProvider.Result.create(calculateTypeInfo(), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @NotNull
-  private PsiType calculateType() {
+  private TypeInfo calculateTypeInfo() {
     PsiType inferredType = PsiAugmentProvider.getInferredType(this);
     if (inferredType != null) {
-      return inferredType;
+      return new TypeInfo(inferredType, true);
     }
 
     PsiType type = null;
+    boolean inferred = false;
     List<PsiAnnotation> annotations = new SmartList<>();
 
     PsiElement parent = getParent();
@@ -96,6 +112,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       else if (PsiUtil.isJavaToken(child, JavaTokenType.VAR_KEYWORD)) {
         assert type == null : this;
         type = inferVarType(parent);
+        inferred = true;
       }
       else if (child instanceof PsiJavaCodeReferenceElement) {
         assert type == null : this;
@@ -143,13 +160,13 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
     }
 
-    if (type == null) return PsiType.NULL;
+    if (type == null) return new TypeInfo(PsiType.NULL, inferred);
 
     if (parent instanceof PsiModifierListOwner) {
       type = JavaSharedImplUtil.applyAnnotations(type, ((PsiModifierListOwner)parent).getModifierList());
     }
 
-    return type;
+    return new TypeInfo(type, inferred);
   }
 
   private PsiType inferVarType(PsiElement parent) {
@@ -184,8 +201,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   @Override
   public boolean isInferredType() {
-    PsiElement firstChild = getFirstChild();
-    return PsiUtil.isJavaToken(firstChild, JavaTokenType.VAR_KEYWORD);
+    return getTypeInfo().myInferred;
   }
 
   @NotNull
