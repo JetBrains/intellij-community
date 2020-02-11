@@ -3,26 +3,26 @@ package com.intellij.remote;
 
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface RemoteCredentials {
-  String getHost();
+  @NotNull String getHost();
 
   int getPort();
 
-  String getLiteralPort();
+  @NotNull String getLiteralPort();
 
   @Transient
-  String getUserName();
+  @Nullable String getUserName();
 
-  String getPassword();
+  @Nullable String getPassword();
 
   @Transient
-  String getPassphrase();
+  @Nullable String getPassphrase();
 
-  @NotNull
-  AuthType getAuthType();
+  @NotNull AuthType getAuthType();
 
-  String getPrivateKeyFile();
+  @NotNull String getPrivateKeyFile();
 
   boolean isStorePassword();
 

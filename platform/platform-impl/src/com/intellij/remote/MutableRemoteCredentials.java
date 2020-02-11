@@ -5,13 +5,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface MutableRemoteCredentials extends RemoteCredentials {
-  void setHost(String host);
+  void setHost(@Nullable String host);
 
   void setPort(int port);
 
-  void setLiteralPort(String portText);
+  void setLiteralPort(@Nullable String portText);
 
-  void setUserName(String userName);
+  void setUserName(@Nullable String userName);
 
   void setPassword(@Nullable String password);
 
@@ -19,7 +19,7 @@ public interface MutableRemoteCredentials extends RemoteCredentials {
 
   void setStorePassphrase(boolean storePassphrase);
 
-  void setPrivateKeyFile(String privateKeyFile);
+  void setPrivateKeyFile(@Nullable String privateKeyFile);
 
   void setPassphrase(@Nullable String passphrase);
 
