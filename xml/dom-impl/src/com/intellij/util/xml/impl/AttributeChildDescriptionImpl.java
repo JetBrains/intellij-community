@@ -6,7 +6,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,7 @@ import java.util.List;
 /**
  * @author peter
  */
-@Presentation(typeName = XmlBundle.message("attribute"))
+@Presentation(typeName = "Attribute")
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription<Void> {
   private final JavaMethod myGetterMethod;
 

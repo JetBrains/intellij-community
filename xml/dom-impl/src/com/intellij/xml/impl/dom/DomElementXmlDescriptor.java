@@ -27,7 +27,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +94,7 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor imple
     return false;
   }
 
-  @Presentation(typeName = XmlBundle.message("root.tag1"))
+  @Presentation(typeName = "Root Tag")
   private static class MyRootDomChildrenDescription implements DomChildrenDescription {
     private final DomElement myDomElement;
 

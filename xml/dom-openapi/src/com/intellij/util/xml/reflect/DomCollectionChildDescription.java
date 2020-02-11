@@ -18,7 +18,6 @@ package com.intellij.util.xml.reflect;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.JavaMethod;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +26,7 @@ import java.lang.reflect.Type;
 /**
  * @author peter
  */
-@Presentation(typeName = XmlBundle.message("xml.tag"))
+@Presentation(typeName = "XML Tag")
 public interface DomCollectionChildDescription extends DomChildrenDescription {
 
   DomCollectionChildDescription[] EMPTY_ARRAY = new DomCollectionChildDescription[0];
