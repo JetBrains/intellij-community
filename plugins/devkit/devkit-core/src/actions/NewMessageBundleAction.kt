@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -36,7 +37,7 @@ import java.util.function.Predicate
 class NewMessageBundleAction : CreateElementActionBase() {
   override fun invokeDialog(project: Project, directory: PsiDirectory, elementsConsumer: Consumer<Array<PsiElement>>) {
     val module = ModuleUtilCore.findModuleForPsiElement(directory) ?: return
-    if (module.name.endsWith(".impl")) {
+    if (module.name.endsWith(".impl") && ModuleManager.getInstance(project).findModuleByName(module.name.removeSuffix(".impl")) != null) {
       Messages.showErrorDialog(project, DevKitBundle.message("error.message.do.not.put.bundle.to.impl.module"), errorTitle)
       return
     }
