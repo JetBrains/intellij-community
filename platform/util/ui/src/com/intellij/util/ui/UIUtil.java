@@ -1920,7 +1920,6 @@ public final class UIUtil {
     return SwingUtilities.isDescendingFrom(owner, component);
   }
 
-
   public static boolean isCloseClick(@NotNull MouseEvent e) {
     return isCloseClick(e, MouseEvent.MOUSE_PRESSED);
   }

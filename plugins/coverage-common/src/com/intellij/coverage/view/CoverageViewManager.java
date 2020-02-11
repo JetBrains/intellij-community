@@ -95,12 +95,11 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     if (oldView != null) {
       oldView.saveSize();
       Content content = myContentManager.getContent(oldView);
-      Runnable runnable = () -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (content != null) {
           myContentManager.removeContent(content, false);
         }
-      };
-      ApplicationManager.getApplication().invokeLater(runnable);
+      });
     }
     setReady(false);
   }
