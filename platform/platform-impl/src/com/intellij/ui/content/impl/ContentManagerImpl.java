@@ -217,16 +217,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private ActionCallback doRemoveContent(@NotNull Content content, boolean dispose) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int indexToBeRemoved = getIndexOfContent(content);
-    if (indexToBeRemoved == -1) return ActionCallback.REJECTED;
+    if (indexToBeRemoved == -1) {
+      return ActionCallback.REJECTED;
+    }
 
     try {
       Content selection = mySelection.isEmpty() ? null : mySelection.get(mySelection.size() - 1);
       int selectedIndex = selection != null ? myContents.indexOf(selection) : -1;
 
-      if (!fireContentRemoveQuery(content, indexToBeRemoved)) {
-        return ActionCallback.REJECTED;
-      }
-      if (!content.isValid()) {
+      if (!fireContentRemoveQuery(content, indexToBeRemoved) || !content.isValid()) {
         return ActionCallback.REJECTED;
       }
 
@@ -282,13 +281,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       return ActionCallback.DONE;
     }
     finally {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        if (!myDisposed && myContents.isEmpty()) {
-          // Cleanup visibleComponent in TabbedPaneUI only if there is no content left,
-          // otherwise immediate adding of a new content will lead to having visible two TabWrapper component
-          // at at the same time.
-          myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
-        }
+      if (ApplicationManager.getApplication().isDispatchThread() && !myDisposed && myContents.isEmpty()) {
+        // Cleanup visibleComponent in TabbedPaneUI only if there is no content left,
+        // otherwise immediate adding of a new content will lead to having visible two TabWrapper component
+        // at at the same time.
+        myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
       }
     }
   }

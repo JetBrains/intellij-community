@@ -311,9 +311,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
       myDisposer = null;
     }
 
-    myComponent = null;
     myFocusRequest = null;
-    myManager = null;
     clearUserData();
   }
 
