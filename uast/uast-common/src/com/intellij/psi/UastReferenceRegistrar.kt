@@ -3,12 +3,12 @@
 
 package com.intellij.psi
 
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.uast.UElementPattern
-import com.intellij.patterns.uast.capture
 import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.CachedValueProvider
@@ -128,7 +128,10 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
     }
 
     override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
-      val parentVariable = when (val uastParent = element.uastParent) {
+      val sourcePsi = element.sourcePsi ?: return PsiReference.EMPTY_ARRAY
+      val originalUElement = (CompletionUtilCoreImpl.getOriginalElement(sourcePsi) ?: sourcePsi).toUElement() ?: return PsiReference.EMPTY_ARRAY
+
+      val parentVariable = when (val uastParent = originalUElement.uastParent) {
         is UVariable -> uastParent
         is UPolyadicExpression -> uastParent.uastParent as? UVariable // support .withUastParentOrSelf() patterns
         else -> null
@@ -147,7 +150,7 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
 
       context.put(USAGE_PSI_ELEMENT, usage)
 
-      return provider.getReferencesByElement(element, context)
+      return provider.getReferencesByElement(originalUElement, context)
     }
 
     override fun toString(): String = "uastReferenceByUsageAdapter($provider)"
@@ -155,12 +158,22 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
 }
 
 @ApiStatus.Experimental
-fun uInjectionHostInVariable() = injectionHostUExpression().withUastParent(capture(UVariable::class.java))
+fun uInjectionHostInVariable() = injectionHostUExpression().filter {
+  val uastParent = it.uastParent ?: getOriginalUastParent(it)
+  uastParent is UVariable
+}
 
 @ApiStatus.Experimental
 fun uExpressionInVariable() = injectionHostUExpression().filter {
-  val uastParent = it.uastParent
+  val uastParent = it.uastParent ?: getOriginalUastParent(it)
   uastParent is UVariable || (uastParent is UPolyadicExpression && uastParent.uastParent is UVariable)
+}
+
+private fun getOriginalUastParent(element: UElement): UElement? {
+  // Kotlin sends non-original element on completion
+  val src = element.sourcePsi ?: return null
+  val original = CompletionUtilCoreImpl.getOriginalElement(src) ?: src
+  return original.toUElement()?.uastParent
 }
 
 private fun getDirectVariableUsages(uVar: UVariable): Collection<PsiElement> {
