@@ -226,14 +226,14 @@ public final class StartupUtil {
     if (!Main.isHeadless()) {
       Activity activity = StartUpMeasurer.startMainActivity("config importing");
 
+      boolean agreementDialogWasShown = showUserAgreementAndConsentsIfNeeded(log, initUiTask);
+
       if (configImportNeeded) {
         appStarter.beforeImportConfigs();
         Path newConfigDir = PathManager.getConfigDir();
-        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(newConfigDir, log), initUiTask);
+        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, log), initUiTask);
         appStarter.importFinished(newConfigDir);
       }
-
-      showUserAgreementAndConsentsIfNeeded(log, initUiTask);
 
       if (configImportNeeded && !ConfigImportHelper.isConfigImported()) {
         // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
@@ -684,20 +684,23 @@ public final class StartupUtil {
     IconManager.activate();
   }
 
-  private static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log, @NotNull CompletableFuture<?> initUiTask) {
+  private static boolean showUserAgreementAndConsentsIfNeeded(@NotNull Logger log, @NotNull CompletableFuture<?> initUiTask) {
     if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
-      return;
+      return false;
     }
 
+    boolean dialogWasShown = false;
     EndUserAgreement.updateCachedContentToLatestBundledVersion();
     EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
     if (!agreement.isAccepted()) {
       // todo: does not seem to request focus when shown
       runInEdtAndWait(log, () -> AppUIUtil.showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()), initUiTask);
+      dialogWasShown = true;
       EndUserAgreement.setAccepted(agreement);
     }
 
     AppUIUtil.showConsentsAgreementIfNeeded(command -> runInEdtAndWait(log, command, initUiTask));
+    return dialogWasShown;
   }
 
   private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable, @NotNull CompletableFuture<?> initUiTask) {

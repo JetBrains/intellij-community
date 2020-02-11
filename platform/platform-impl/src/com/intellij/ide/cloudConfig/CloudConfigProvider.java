@@ -40,4 +40,6 @@ public abstract class CloudConfigProvider {
   public abstract int initSteps(@NotNull List<AbstractCustomizeWizardStep> steps);
 
   public abstract void startupWizardFinished();
+
+  public abstract boolean importSettingsSilently(@NotNull Path newConfigDir);
 }

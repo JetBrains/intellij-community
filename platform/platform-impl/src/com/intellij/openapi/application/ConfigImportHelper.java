@@ -3,6 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
@@ -66,25 +67,46 @@ public final class ConfigImportHelper {
   private static final String SYSTEM = "system";
 
   private static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)?)");
+  private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
 
   private ConfigImportHelper() { }
 
-  public static void importConfigsTo(@NotNull Path newConfigDir, @NotNull Logger log) {
+  public static void importConfigsTo(boolean veryFirstStartOnThisComputer, @NotNull Path newConfigDir, @NotNull Logger log) {
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
     ConfigImportSettings settings = null;
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
-      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass = (Class<ConfigImportSettings>)Class.forName(customProviderName);
+      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass =
+        (Class<ConfigImportSettings>)Class.forName(customProviderName);
       if (ConfigImportSettings.class.isAssignableFrom(customProviderClass)) {
         settings = ReflectionUtil.newInstance(customProviderClass);
       }
     }
-    catch (Exception ignored) { }
+    catch (Exception ignored) {
+    }
 
     List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
 
-    Pair<Path, Path> oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
+    Pair<Path, Path> oldConfigDirAndOldIdePath = null;
+    if (shouldAskForConfig(log)) {
+      oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
+    }
+    else if (guessedOldConfigDirs.isEmpty()) {
+      boolean importedFromCloud = false;
+      CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+      if (configProvider != null) {
+        importedFromCloud = configProvider.importSettingsSilently(newConfigDir);
+      }
+
+      if (!importedFromCloud && !veryFirstStartOnThisComputer) {
+        oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
+      }
+    }
+     else {
+       Path bestConfigGuess = guessedOldConfigDirs.get(0);
+       oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess); // todo maybe integrate into findConfigDirectories
+     }
 
     if (oldConfigDirAndOldIdePath != null) {
       doImport(oldConfigDirAndOldIdePath.first, newConfigDir, oldConfigDirAndOldIdePath.second, log);
@@ -112,6 +134,19 @@ public final class ConfigImportHelper {
 
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
     }
+  }
+
+  private static boolean shouldAskForConfig(@NotNull Logger log) {
+    try {
+      String val = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
+      if (val != null) {
+        return Boolean.parseBoolean(val);
+      }
+    }
+    catch (Throwable t) {
+      log.error(t);
+    }
+    return false;
   }
 
   @Nullable
