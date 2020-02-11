@@ -18,8 +18,6 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
     return new SmartList<>(types);
   }
 
-  protected abstract YamlMetaType composeTypes(YamlMetaType... types);
-
   protected YamlComposedTypeBase(@NotNull String typeName, List<YamlMetaType> types) {
     super(typeName);
     assert types.size() > 1 : "Nothing to compose: " + types;
@@ -132,11 +130,11 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
 
     final List<YamlMetaType> singularTypes = typesGroupedByMultiplicity.get(false);
     YamlMetaType singularCompositeType = singularTypes != null && !singularTypes.isEmpty() ?
-                                         composeTypes(singularTypes.toArray(new YamlMetaType[0])) : null;
+                                         composeTypes(singularTypes) : null;
 
     final List<YamlMetaType> sequentialTypes = typesGroupedByMultiplicity.get(true);
     YamlMetaType sequentialCompositeType = sequentialTypes != null && !sequentialTypes.isEmpty() ?
-                                           composeTypes(sequentialTypes.toArray(new YamlMetaType[0])): null;
+                                           composeTypes(sequentialTypes): null;
 
     assert singularCompositeType != null || sequentialCompositeType != null;
 
@@ -173,5 +171,16 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
 
   protected static ProblemsHolder makeCopy(@NotNull ProblemsHolder original) {
     return new ProblemsHolder(original.getManager(), original.getFile(), original.isOnTheFly());
+  }
+
+  protected static YamlMetaType composeTypes(@NotNull List<YamlMetaType> types) {
+    if (types.size() == 0) {
+      throw new IllegalArgumentException();
+    }
+    if (types.size() == 1) {
+      return types.iterator().next();
+    }
+    String name = "composed[" + types.stream().map(YamlMetaType::getDisplayName).collect(Collectors.joining(",")) + "]";
+    return new YamlComposedTypeBase(name, types) {};
   }
 }

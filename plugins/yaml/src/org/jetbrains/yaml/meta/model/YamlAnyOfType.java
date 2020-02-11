@@ -29,11 +29,6 @@ public class YamlAnyOfType extends YamlComposedTypeBase {
     return new YamlAnyOfType(name, flattenTypes(types));
   }
 
-  @Override
-  protected YamlMetaType composeTypes(YamlMetaType... types) {
-    return anyOf(types);
-  }
-
   protected YamlAnyOfType(@NotNull String typeName, List<YamlMetaType> types) {
     super(typeName, types);
   }
@@ -51,7 +46,7 @@ public class YamlAnyOfType extends YamlComposedTypeBase {
   @Override
   public void validateValue(@NotNull YAMLValue value, @NotNull ProblemsHolder problemsHolder) {
     List<ProblemsHolder> allProblems = allProblemsOrEmpty(problemsHolder, myTypes,
-                                                          (nextType, nextHolder) -> nextType.validateValue(value, nextHolder));
+                                                          (nextType, nextHolder) -> nextType.validateDeep(value, nextHolder));
 
     allProblems.stream()
       .flatMap(h -> h.getResults().stream())
