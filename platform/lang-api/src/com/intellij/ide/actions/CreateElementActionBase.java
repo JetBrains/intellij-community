@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * The base class for actions which create new file elements.
@@ -46,6 +47,11 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
                                     Icon icon) {
     super(text, description, icon);
   }
+
+  protected CreateElementActionBase(Supplier<String> dynamicText, Supplier<String> dynamicDescription, Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
+  }
+
 
   /**
    * @return created elements. Never null.

@@ -114,7 +114,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JLabel(RefactoringBundle.message("constructor.with.builder.parameters.to.pass.to.the.builder.title")), BorderLayout.CENTER);
 
-    final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(new AnAction(RefactoringBundle.message("constructor.with.builder.rename.setters.prefix.action.name")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {

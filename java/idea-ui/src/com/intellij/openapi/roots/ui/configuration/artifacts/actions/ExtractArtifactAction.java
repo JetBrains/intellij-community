@@ -38,7 +38,7 @@ import java.util.Collection;
 
 public class ExtractArtifactAction extends LayoutTreeActionBase {
   public ExtractArtifactAction(ArtifactEditorEx editor) {
-    super(ProjectBundle.message("action.name.extract.artifact"), editor);
+    super(ProjectBundle.lazyMessage("action.name.extract.artifact"), editor);
   }
 
   @Override

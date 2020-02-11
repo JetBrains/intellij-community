@@ -120,7 +120,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class CopyToProjectAction extends DumbAwareAction {
 
     CopyToProjectAction() {
-      super(ApplicationBundle.message("settings.editor.scheme.copy.to.project"));
+      super(ApplicationBundle.lazyMessage("settings.editor.scheme.copy.to.project"));
     }
 
     @Override
@@ -143,7 +143,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class CopyToIDEAction extends DumbAwareAction {
 
     CopyToIDEAction() {
-      super(ApplicationBundle.message("settings.editor.scheme.copy.to.ide"));
+      super(ApplicationBundle.lazyMessage("settings.editor.scheme.copy.to.ide"));
     }
 
     @Override
@@ -165,7 +165,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class ResetAction extends DumbAwareAction {
     
     ResetAction() {
-      super(ApplicationBundle.message("settings.editor.scheme.reset"));
+      super(ApplicationBundle.lazyMessage("settings.editor.scheme.reset"));
     }
 
     @Override
@@ -194,7 +194,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class CopyAction extends DumbAwareAction {
     CopyAction() {
-      super(ApplicationBundle.message("settings.editor.scheme.copy"));
+      super(ApplicationBundle.lazyMessage("settings.editor.scheme.copy"));
     }
 
     @Override
@@ -238,7 +238,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class DeleteAction extends DumbAwareAction {
     DeleteAction() {
-      super(ApplicationBundle.message("settings.editor.scheme.delete"));
+      super(ApplicationBundle.lazyMessage("settings.editor.scheme.delete"));
     }
 
     @Override

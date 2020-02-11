@@ -708,7 +708,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   private final class ShowAllTargetsAction extends ToggleAction {
     ShowAllTargetsAction() {
-      super(AntBundle.message("filter.ant.targets.action.name"), AntBundle.message("filter.ant.targets.action.description"),
+      super(AntBundle.lazyMessage("filter.ant.targets.action.name"), AntBundle.lazyMessage("filter.ant.targets.action.description"),
             AllIcons.General.Filter);
     }
 

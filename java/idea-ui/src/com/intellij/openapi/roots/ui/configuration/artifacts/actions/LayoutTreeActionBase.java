@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public abstract class LayoutTreeActionBase extends DumbAwareAction {
   protected final ArtifactEditorEx myArtifactEditor;
@@ -31,6 +32,10 @@ public abstract class LayoutTreeActionBase extends DumbAwareAction {
   }
 
   protected LayoutTreeActionBase(String text, ArtifactEditorEx artifactEditor) {
+    this(() -> text, artifactEditor);
+  }
+
+  protected LayoutTreeActionBase(@NotNull Supplier<String> text, ArtifactEditorEx artifactEditor) {
     super(text);
     myArtifactEditor = artifactEditor;
   }

@@ -6,6 +6,7 @@ package com.intellij.lang.properties.create;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public class CreateResourceBundleAction extends CreateElementActionBase {
 
   protected CreateResourceBundleAction() {
-    super(PropertiesBundle.message("create.resource.bundle.dialog.action.title"), null, AllIcons.FileTypes.Properties);
+    super(PropertiesBundle.lazyMessage("create.resource.bundle.dialog.action.title"), Presentation.NULL_STRING, AllIcons.FileTypes.Properties);
   }
 
   @Override

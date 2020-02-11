@@ -19,7 +19,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
   private final String myHelpId;
   private final boolean myVerticalToolbar;
   private boolean myCloseEnabled;
-  private final DefaultActionGroup myToolbarGroup = new DefaultActionGroup(null, false);
+  private final DefaultActionGroup myToolbarGroup = new DefaultActionGroup();
 
   public PanelWithActionsAndCloseButton(ContentManager contentManager, @NonNls String helpId) {
     this(contentManager, helpId, true);

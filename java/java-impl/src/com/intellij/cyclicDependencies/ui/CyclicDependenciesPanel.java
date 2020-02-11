@@ -406,7 +406,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class ShowFilesAction extends ToggleAction {
     ShowFilesAction() {
-      super(AnalysisScopeBundle.message("action.show.files"), AnalysisScopeBundle.message("action.show.files.description"),
+      super(AnalysisScopeBundle.lazyMessage("action.show.files"), AnalysisScopeBundle.lazyMessage("action.show.files.description"),
             AllIcons.FileTypes.Java);
     }
 
@@ -445,7 +445,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
-      super(AnalysisScopeBundle.message("action.group.by.scope.type"), AnalysisScopeBundle.message("action.group.by.scope.type.description"),
+      super(AnalysisScopeBundle.lazyMessage("action.group.by.scope.type"), AnalysisScopeBundle.lazyMessage("action.group.by.scope.type.description"),
             AllIcons.Actions.GroupByTestProduction);
     }
 

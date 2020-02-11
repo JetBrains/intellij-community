@@ -25,8 +25,8 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
   private boolean myRecentGenerateMain;
 
   public CreateDialogAction() {
-    super(UIDesignerBundle.message("action.create.dialog"),
-          UIDesignerBundle.message("action.description.create.dialog"), PlatformIcons.UI_FORM_ICON);
+    super(UIDesignerBundle.lazyMessage("action.create.dialog"),
+          UIDesignerBundle.lazyMessage("action.description.create.dialog"), PlatformIcons.UI_FORM_ICON);
   }
 
   @Override

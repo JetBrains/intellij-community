@@ -25,7 +25,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.IncludedXmlTag;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -41,14 +40,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 /**
  * An base class for actions generating service classes (implementation and optionally interface) and registering new service in {@code plugin.xml}.
  */
 abstract class NewServiceActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
-
-  NewServiceActionBase(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                       @Nls(capitalization = Nls.Capitalization.Sentence) String description) {
+  NewServiceActionBase(@NotNull Supplier<String> text, @NotNull Supplier<String> description) {
     super(text, description, null);
   }
 

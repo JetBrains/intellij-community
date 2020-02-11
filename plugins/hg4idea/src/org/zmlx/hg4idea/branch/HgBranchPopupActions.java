@@ -11,6 +11,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -226,7 +227,7 @@ public class HgBranchPopupActions {
     @NotNull Collection<Hash> myHeads;
 
     public HgShowUnnamedHeadsForCurrentBranchAction(@NotNull HgRepository repository) {
-      super(null, true);
+      super(Presentation.NULL_STRING, true);
       myRepository = repository;
       myCurrentBranchName = repository.getCurrentBranch();
       getTemplatePresentation().setText(String.format("Unnamed heads for %s", myCurrentBranchName));

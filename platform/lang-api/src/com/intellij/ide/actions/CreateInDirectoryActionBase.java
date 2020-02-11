@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * The base abstract class for actions which create new file elements in IDE view
@@ -22,6 +23,10 @@ public abstract class CreateInDirectoryActionBase extends AnAction {
                                         @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                                         Icon icon) {
     super(text, description, icon);
+  }
+
+  protected CreateInDirectoryActionBase(Supplier<String> dynamicText, Supplier<String> dynamicDescription, Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   @Override

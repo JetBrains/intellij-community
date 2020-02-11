@@ -272,7 +272,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private class FlattenPackagesAction extends ToggleAction {
 
     private FlattenPackagesAction() {
-      super(IdeBundle.message("action.flatten.packages"), IdeBundle.message("action.flatten.packages"), AllIcons.ObjectBrowser.FlattenPackages);
+      super(IdeBundle.lazyMessage("action.flatten.packages"), IdeBundle.lazyMessage("action.flatten.packages"), AllIcons.ObjectBrowser.FlattenPackages);
     }
 
     @Override

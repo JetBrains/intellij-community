@@ -155,7 +155,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   private static class RestorePreviewTextAction extends DumbAwareAction {
     private RestorePreviewTextAction() {
-      super(EditorBundle.message("restore.font.preview.text"), null, AllIcons.Actions.Rollback);
+      super(EditorBundle.lazyMessage("restore.font.preview.text"), Presentation.NULL_STRING, AllIcons.Actions.Rollback);
     }
 
     @Override

@@ -16,6 +16,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.function.Supplier;
 
 public abstract class CheckboxAction extends ToggleAction implements CustomComponentAction {
 
@@ -25,8 +26,16 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     super(text);
   }
 
+  protected CheckboxAction(@NotNull Supplier<String> dynamicText) {
+    super(dynamicText);
+  }
+
   protected CheckboxAction(@Nls String text, @Nls(capitalization = Nls.Capitalization.Sentence) String description, final Icon icon) {
     super(text, description, icon);
+  }
+
+  protected CheckboxAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, final Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   @NotNull

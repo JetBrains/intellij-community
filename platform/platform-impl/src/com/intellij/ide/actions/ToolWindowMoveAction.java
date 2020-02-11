@@ -165,7 +165,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction {
   public static final class Group extends DefaultActionGroup {
     private boolean isInitialized = false;
     public Group() {
-      super(UIBundle.message("tool.window.move.to.action.group.name"), true);
+      super(UIBundle.lazyMessage("tool.window.move.to.action.group.name"), true);
     }
 
     @Override

@@ -356,7 +356,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   private class FilterAction extends ToggleAction implements DumbAware {
 
     private FilterAction() {
-      super(CommonBundle.message("action.text.filter"), IdeBundle.message("show.only.threads.containing.a.specific.string"), AllIcons.General.Filter);
+      super(CommonBundle.lazyMessage("action.text.filter"), IdeBundle.lazyMessage("show.only.threads.containing.a.specific.string"), AllIcons.General.Filter);
     }
 
     @Override
@@ -377,7 +377,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
   private class MergeStacktracesAction extends ToggleAction implements DumbAware {
     private MergeStacktracesAction() {
-      super(IdeBundle.message("merge.identical.stacktraces"), IdeBundle.message("group.threads.with.identical.stacktraces"), AllIcons.Actions.Collapseall);
+      super(IdeBundle.lazyMessage("merge.identical.stacktraces"), IdeBundle.lazyMessage("group.threads.with.identical.stacktraces"), AllIcons.Actions.Collapseall);
     }
 
     @Override

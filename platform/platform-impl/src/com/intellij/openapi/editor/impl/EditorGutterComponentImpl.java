@@ -1979,7 +1979,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private class CloseAnnotationsAction extends DumbAwareAction {
     CloseAnnotationsAction() {
-      super(EditorBundle.message("close.editor.annotations.action.name"));
+      super(EditorBundle.lazyMessage("close.editor.annotations.action.name"));
     }
 
     @Override

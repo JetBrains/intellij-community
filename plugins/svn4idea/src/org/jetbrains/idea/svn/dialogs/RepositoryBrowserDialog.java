@@ -934,8 +934,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   protected class BrowseCommittedChangesAction extends DumbAwareAction {
     public BrowseCommittedChangesAction() {
-      super(SvnBundle.message("repository.browser.browse.changes.action"),
-            SvnBundle.message("repository.browser.browse.changes.description"), null);
+      super(SvnBundle.lazyMessage("repository.browser.browse.changes.action"),
+            SvnBundle.lazyMessage("repository.browser.browse.changes.description"), null);
     }
 
     @Override

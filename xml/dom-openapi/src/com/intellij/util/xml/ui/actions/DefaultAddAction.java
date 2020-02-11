@@ -21,7 +21,7 @@ import java.lang.reflect.Type;
 public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
 
   public DefaultAddAction() {
-    super(ApplicationBundle.message("action.add"));
+    super(ApplicationBundle.lazyMessage("action.add"));
   }
 
   public DefaultAddAction(@Nls(capitalization = Nls.Capitalization.Title) String text) {

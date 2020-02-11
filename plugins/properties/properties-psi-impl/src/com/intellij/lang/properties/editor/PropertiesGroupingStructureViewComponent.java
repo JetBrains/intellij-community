@@ -91,7 +91,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     private final class SelectSeparatorAction extends AnAction {
 
       SelectSeparatorAction() {
-        super(PropertiesBundle.message("select.separator.action.with.empty.separator.name"));
+        super(PropertiesBundle.lazyMessage("select.separator.action.with.empty.separator.name"));
       }
 
       @Override

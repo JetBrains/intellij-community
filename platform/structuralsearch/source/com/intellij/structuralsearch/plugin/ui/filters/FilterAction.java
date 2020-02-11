@@ -5,12 +5,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 /**
  * @author Bas Leijdekkers
@@ -25,7 +24,7 @@ public abstract class FilterAction extends AnAction implements Filter {
 
   private boolean myApplicable = true;
 
-  protected FilterAction(@Nls @Nullable String text, FilterTable table) {
+  protected FilterAction(@NotNull Supplier<String> text, FilterTable table) {
     super(text);
     myTable = table;
     myPosition = myFilterCount.incrementAndGet();

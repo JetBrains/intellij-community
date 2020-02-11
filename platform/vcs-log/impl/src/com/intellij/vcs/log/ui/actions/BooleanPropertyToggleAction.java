@@ -20,23 +20,33 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public abstract class BooleanPropertyToggleAction extends ToggleAction implements DumbAware {
   public BooleanPropertyToggleAction() {
   }
 
-  public BooleanPropertyToggleAction(@Nullable String text) {
+  public BooleanPropertyToggleAction(@Nls @Nullable String text) {
     super(text);
   }
 
-  public BooleanPropertyToggleAction(@Nullable String text,
-                                     @Nullable String description,
-                                     @Nullable Icon icon) {
+  public BooleanPropertyToggleAction(@NotNull Supplier<String> dynamicText) {
+    super(dynamicText);
+  }
+
+  public BooleanPropertyToggleAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
+  }
+
+  public BooleanPropertyToggleAction(@NotNull Supplier<String> dynamicText,
+                                     @NotNull Supplier<String> dynamicDescription,
+                                     @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   protected abstract VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty();

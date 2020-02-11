@@ -33,7 +33,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   private final static Logger LOG = Logger.getInstance(ResourceBundleEditorShowQuickFixesAction.class);
 
   public ResourceBundleEditorShowQuickFixesAction() {
-    super(ResourceBundleEditorBundle.message("resource.bundle.editor.show.quick.fixes.action.text"));
+    super(ResourceBundleEditorBundle.lazyMessage("resource.bundle.editor.show.quick.fixes.action.text"));
   }
 
   @Override

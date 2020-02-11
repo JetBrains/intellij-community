@@ -61,8 +61,8 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     private final VcsLogApplicationSettings mySettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
 
     private ToggleCommitDate() {
-      super(VcsBundle.message("prefer.commit.timestamp.action.text"),
-            VcsBundle.message("prefer.commit.timestamp.action.description"), null);
+      super(VcsBundle.lazyMessage("prefer.commit.timestamp.action.text"),
+            VcsBundle.lazyMessage("prefer.commit.timestamp.action.description"), null);
     }
 
     @Override

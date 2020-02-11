@@ -18,7 +18,7 @@ public final class GenerateJavadocAction extends BaseAnalysisAction{
   private JavadocConfigurable myConfigurable;
 
   public GenerateJavadocAction() {
-    super(JavadocBundle.message("javadoc.generate.title"), JavadocBundle.message("javadoc.generate.title"));
+    super(JavadocBundle.lazyMessage("javadoc.generate.title"), JavadocBundle.lazyMessage("javadoc.generate.title"));
   }
 
   @Override

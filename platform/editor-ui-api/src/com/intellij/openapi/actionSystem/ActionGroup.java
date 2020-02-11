@@ -12,6 +12,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Represents a group of actions.
@@ -58,6 +59,10 @@ public abstract class ActionGroup extends AnAction {
    *  otherwise
    */
   public ActionGroup(@Nls(capitalization = Nls.Capitalization.Title) String shortName, boolean popup){
+    this(() -> shortName, popup);
+  }
+
+  public ActionGroup(@NotNull Supplier<String> shortName, boolean popup){
     super(shortName);
     setPopup(popup);
   }
@@ -66,6 +71,10 @@ public abstract class ActionGroup extends AnAction {
                      @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                      Icon icon) {
     super(text, description, icon);
+  }
+
+  public ActionGroup(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   /**

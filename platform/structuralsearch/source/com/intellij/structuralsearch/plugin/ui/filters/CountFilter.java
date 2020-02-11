@@ -22,7 +22,7 @@ public class CountFilter extends FilterAction {
   boolean myMaxUnlimited;
 
   public CountFilter(FilterTable filterTable) {
-    super(SSRBundle.message("count.filter.name"), filterTable);
+    super(SSRBundle.lazyMessage("count.filter.name"), filterTable);
   }
 
   @Override

@@ -46,7 +46,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   private XmlFile pluginDescriptorToPatch;
 
   public NewActionAction() {
-    super(DevKitBundle.message("new.menu.action.text"), DevKitBundle.message("new.menu.action.description"), null);
+    super(DevKitBundle.lazyMessage("new.menu.action.text"), DevKitBundle.lazyMessage("new.menu.action.description"), null);
   }
 
   @Override

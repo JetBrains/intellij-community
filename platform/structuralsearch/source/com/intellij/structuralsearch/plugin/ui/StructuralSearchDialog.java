@@ -1271,7 +1271,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   private class CopyConfigurationAction extends AnAction implements DumbAware {
 
     CopyConfigurationAction() {
-      super(SSRBundle.message("export.template.action"));
+      super(SSRBundle.lazyMessage("export.template.action"));
     }
 
     @Override
@@ -1283,7 +1283,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   private class PasteConfigurationAction extends AnAction implements DumbAware {
 
     PasteConfigurationAction() {
-      super(SSRBundle.message("import.template.action"));
+      super(SSRBundle.lazyMessage("import.template.action"));
     }
 
     @Override

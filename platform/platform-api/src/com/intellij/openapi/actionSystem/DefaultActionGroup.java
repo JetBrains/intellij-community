@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * A default implementation of {@link ActionGroup}. Provides the ability
@@ -43,7 +44,7 @@ public class DefaultActionGroup extends ActionGroup {
   private int myModificationStamp;
 
   public DefaultActionGroup() {
-    this(null, false);
+    this(Presentation.NULL_STRING, false);
   }
 
   /**
@@ -61,15 +62,23 @@ public class DefaultActionGroup extends ActionGroup {
    * @param actions the actions to add to the group
    */
   public DefaultActionGroup(@NotNull List<? extends AnAction> actions) {
-    this(null, actions);
+    this(Presentation.NULL_STRING, actions);
   }
 
-  public DefaultActionGroup(@Nullable String name, @NotNull List<? extends AnAction> actions) {
+  public DefaultActionGroup(@NotNull Supplier<String> name, @NotNull List<? extends AnAction> actions) {
     this(name, false);
     addActions(actions);
   }
 
+  public DefaultActionGroup(@Nullable String name, @NotNull List<? extends AnAction> actions) {
+    this(() -> name, actions);
+  }
+
   public DefaultActionGroup(@Nullable String shortName, boolean popup) {
+    this(() -> shortName, popup);
+  }
+
+  public DefaultActionGroup(@NotNull Supplier<String> shortName, boolean popup) {
     super(shortName, popup);
   }
 

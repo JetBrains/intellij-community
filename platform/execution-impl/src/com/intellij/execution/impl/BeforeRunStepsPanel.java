@@ -275,7 +275,7 @@ final class BeforeRunStepsPanel extends JPanel {
     }
 
     Set<Key> activeProviderKeys = getActiveProviderKeys();
-    DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
     for (final BeforeRunTaskProvider<BeforeRunTask> provider : getBeforeRunTaskProviders()) {
       if (provider.createTask(myRunConfiguration) == null || activeProviderKeys.contains(provider.getId()) && provider.isSingleton()) {
         continue;

@@ -885,7 +885,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     private XDebugSession mySession = null;
 
     ConnectDebuggerAction() {
-      super(PyBundle.message("console.attach.debugger"), PyBundle.message("console.attach.debugger.description"), AllIcons.Actions.StartDebugger);
+      super(PyBundle.lazyMessage("console.attach.debugger"), PyBundle.lazyMessage("console.attach.debugger.description"), AllIcons.Actions.StartDebugger);
     }
 
     @Override
@@ -927,7 +927,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   private static class NewConsoleAction extends AnAction implements DumbAware {
     NewConsoleAction() {
-      super(PyBundle.message("console.new.console"), PyBundle.message("console.new.console.description"), AllIcons.General.Add);
+      super(PyBundle.lazyMessage("console.new.console"), PyBundle.lazyMessage("console.new.console.description"), AllIcons.General.Add);
     }
 
     @Override

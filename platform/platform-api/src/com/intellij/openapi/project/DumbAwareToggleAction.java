@@ -4,20 +4,30 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.actionSystem.ToggleAction;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public abstract class DumbAwareToggleAction extends ToggleAction implements DumbAware {
   protected DumbAwareToggleAction() {
   }
 
   protected DumbAwareToggleAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
+    this(() -> text);
+  }
+
+  protected DumbAwareToggleAction(@NotNull Supplier<String> text) {
     super(text);
   }
 
   protected DumbAwareToggleAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
                                   @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description, @Nullable Icon icon) {
-    super(text, description, icon);
+    this(() -> text, () -> description, icon);
+  }
+
+  protected DumbAwareToggleAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 }

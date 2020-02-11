@@ -37,11 +37,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public abstract class BaseRunConfigurationAction extends ActionGroup {
   protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
 
-  protected BaseRunConfigurationAction(final String text, final String description, final Icon icon) {
+  protected BaseRunConfigurationAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, final Icon icon) {
     super(text, description, icon);
     setPopup(true);
     setEnabledInModalContext(true);

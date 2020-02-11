@@ -138,7 +138,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByUsageTypeAction extends RuleAction {
     private GroupByUsageTypeAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.usage.type"), AllIcons.General.Filter); //TODO: special icon
+      super(view, UsageViewBundle.lazyMessage("action.group.by.usage.type"), AllIcons.General.Filter); //TODO: special icon
     }
     @Override
     protected boolean getOptionValue() {
@@ -152,7 +152,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByScopeAction extends RuleAction {
     private GroupByScopeAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.test.production"), AllIcons.Actions.GroupByTestProduction);
+      super(view, UsageViewBundle.lazyMessage("action.group.by.test.production"), AllIcons.Actions.GroupByTestProduction);
     }
     @Override
     protected boolean getOptionValue() {
@@ -166,7 +166,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByModuleTypeAction extends RuleAction {
     private GroupByModuleTypeAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.module"), AllIcons.Actions.GroupByModule);
+      super(view, UsageViewBundle.lazyMessage("action.group.by.module"), AllIcons.Actions.GroupByModule);
     }
 
     @Override
@@ -182,7 +182,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class FlattenModulesAction extends RuleAction {
     private FlattenModulesAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.flatten.modules"), AllIcons.ObjectBrowser.FlattenModules);
+      super(view, UsageViewBundle.lazyMessage("action.flatten.modules"), AllIcons.ObjectBrowser.FlattenModules);
     }
 
     @Override
@@ -218,7 +218,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByFileStructureAction extends RuleAction {
     private GroupByFileStructureAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.file.structure"), AllIcons.Actions.GroupByMethod);
+      super(view, UsageViewBundle.lazyMessage("action.group.by.file.structure"), AllIcons.Actions.GroupByMethod);
     }
     @Override
     protected boolean getOptionValue() {

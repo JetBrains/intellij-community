@@ -26,7 +26,7 @@ public class TypeFilter extends FilterAction {
   boolean showRegex;
 
   public TypeFilter(FilterTable filterTable) {
-    super(SSRBundle.message("type.filter.name"), filterTable);
+    super(SSRBundle.lazyMessage("type.filter.name"), filterTable);
   }
 
   @Override

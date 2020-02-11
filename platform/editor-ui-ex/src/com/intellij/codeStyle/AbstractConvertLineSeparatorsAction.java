@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
 /**
  * @author Nikolai Matveev
@@ -45,7 +46,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
   @NotNull
   private final String mySeparator;
 
-  protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull LineSeparator separator) {
+  protected AbstractConvertLineSeparatorsAction(@NotNull Supplier<String> text, @NotNull LineSeparator separator) {
     this(separator + " - " + text, separator.getSeparatorString());
   }
 

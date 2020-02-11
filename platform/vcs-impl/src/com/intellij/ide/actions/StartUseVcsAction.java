@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class StartUseVcsAction extends DumbAwareAction {
   public StartUseVcsAction() {
-    super(VcsBundle.message("action.enable.version.control.integration.text"));
+    super(VcsBundle.lazyMessage("action.enable.version.control.integration.text"));
   }
 
   @Override

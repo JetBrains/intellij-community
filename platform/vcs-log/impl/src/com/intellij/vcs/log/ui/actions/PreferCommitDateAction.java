@@ -26,8 +26,8 @@ import java.util.Set;
 
 public class PreferCommitDateAction extends BooleanPropertyToggleAction implements DumbAware {
   public PreferCommitDateAction() {
-    super(VcsBundle.message("prefer.commit.timestamp.action.text"),
-          VcsBundle.message("prefer.commit.timestamp.action.description"), null);
+    super(VcsBundle.lazyMessage("prefer.commit.timestamp.action.text"),
+          VcsBundle.lazyMessage("prefer.commit.timestamp.action.description"), null);
   }
 
   @Override

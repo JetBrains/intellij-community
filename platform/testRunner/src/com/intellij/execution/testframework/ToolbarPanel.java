@@ -43,7 +43,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   public ToolbarPanel(final TestConsoleProperties properties,
                       final JComponent parent) {
     super(new BorderLayout());
-    final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(new DumbAwareToggleInvertedBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"), ExecutionBundle.message("junit.run.hide.passed.action.description"),
                                                                      AllIcons.RunConfigurations.ShowPassed,
                                                                      properties, TestConsoleProperties.HIDE_PASSED_TESTS));

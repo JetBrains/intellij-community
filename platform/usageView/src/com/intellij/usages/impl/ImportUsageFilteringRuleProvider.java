@@ -47,7 +47,7 @@ public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvi
 
   private static class ShowImportsAction extends RuleAction {
     private ShowImportsAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.show.import.statements"), AllIcons.Actions.ShowImportStatements);
+      super(view, UsageViewBundle.lazyMessage("action.show.import.statements"), AllIcons.Actions.ShowImportStatements);
     }
 
     @Override

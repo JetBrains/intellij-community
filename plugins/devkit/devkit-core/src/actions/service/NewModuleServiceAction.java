@@ -19,8 +19,8 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 
 public class NewModuleServiceAction extends NewServiceActionBase {
   public NewModuleServiceAction() {
-    super(DevKitBundle.message("new.menu.module.service.text"),
-          DevKitBundle.message("new.menu.module.service.description"));
+    super(DevKitBundle.lazyMessage("new.menu.module.service.text"),
+          DevKitBundle.lazyMessage("new.menu.module.service.description"));
   }
 
   @Override

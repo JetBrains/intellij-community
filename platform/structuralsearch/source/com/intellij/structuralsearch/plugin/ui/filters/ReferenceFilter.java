@@ -25,7 +25,7 @@ import java.util.List;
 public class ReferenceFilter extends FilterAction {
 
   public ReferenceFilter(FilterTable filterTable) {
-    super(SSRBundle.message("reference.filter.name"), filterTable);
+    super(SSRBundle.lazyMessage("reference.filter.name"), filterTable);
   }
 
   @Override

@@ -82,7 +82,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   }
 
   public ViewAsGroup() {
-    super(null, true);
+    super(Presentation.NULL_STRING, true);
   }
 
   @Override

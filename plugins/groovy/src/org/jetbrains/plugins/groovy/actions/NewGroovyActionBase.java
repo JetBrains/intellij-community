@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public abstract class NewGroovyActionBase extends CreateElementActionBase {
 
@@ -41,6 +42,10 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
   public NewGroovyActionBase(@Nls(capitalization = Nls.Capitalization.Title) String text,
                              @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                              Icon icon) {
+    super(text, description, icon);
+  }
+
+  public NewGroovyActionBase(@NotNull Supplier<String> text, @NotNull Supplier<String> description, Icon icon) {
     super(text, description, icon);
   }
 

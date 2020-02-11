@@ -545,7 +545,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   private class AddExcludedRootActionButton extends AnActionButton {
     AddExcludedRootActionButton() {
-      super(CommonBundle.message("button.exclude"), null, AllIcons.Modules.AddExcludedRoot);
+      super(CommonBundle.lazyMessage("button.exclude"), Presentation.NULL_STRING, AllIcons.Modules.AddExcludedRoot);
     }
 
     @Override

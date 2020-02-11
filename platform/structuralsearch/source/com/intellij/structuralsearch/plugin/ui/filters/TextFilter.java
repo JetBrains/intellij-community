@@ -24,7 +24,7 @@ public class TextFilter extends FilterAction {
   boolean myShowHierarchy;
 
   public TextFilter(FilterTable filterTable) {
-    super(SSRBundle.message("text.filter.name"), filterTable);
+    super(SSRBundle.lazyMessage("text.filter.name"), filterTable);
   }
 
   @Override

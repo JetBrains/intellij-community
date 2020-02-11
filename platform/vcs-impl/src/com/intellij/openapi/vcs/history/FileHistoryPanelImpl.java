@@ -152,11 +152,11 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     listener.installOn(myDualView.getTreeView());
     myDualView.setEmptyText(CommonBundle.getLoadingTreeNodeText());
 
-    setupDualView(fillActionGroup(true, new DefaultActionGroup(null, false)));
+    setupDualView(fillActionGroup(true, new DefaultActionGroup()));
     if (isStaticEmbedded) {
       setIsStaticAndEmbedded(true);
     }
-    DefaultActionGroup toolbarGroup = new DefaultActionGroup(null, false);
+    DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     fillActionGroup(false, toolbarGroup);
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, toolbarGroup,
