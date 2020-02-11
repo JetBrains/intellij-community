@@ -37,7 +37,7 @@
                     interface="com.intellij.ide.structureView.xml.XmlStructureViewElementProvider"/>
 
     <extensionPoint name="xmlStructureViewBuilderProvider"
-                    interface="com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider"/>
+                    interface="com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider" dynamic="true"/>
 
     <extensionPoint name="webBrowserUrlProvider" interface="com.intellij.ide.browsers.WebBrowserUrlProvider" dynamic="true"/>
 

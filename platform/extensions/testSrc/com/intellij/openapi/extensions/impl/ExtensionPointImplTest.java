@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
@@ -286,6 +287,29 @@ public class ExtensionPointImplTest {
     assertThat(extensions).containsExactly(2, 4);
 
     assertThat(extensionPoint.getExtensions()).containsExactly(4, 2);
+  }
+
+  @Test
+  public void keyedExtensionDisposable() {
+    BeanExtensionPoint<KeyedLazyInstance<Integer>> extensionPoint =
+      new BeanExtensionPoint<>("foo", KeyedLazyInstance.class.getName(), new DefaultPluginDescriptor("test"), true);
+    extensionPoint.setComponentManager(new MyComponentManager());
+    KeyedLazyInstance<Integer> extension = new KeyedLazyInstance<Integer>() {
+      @Override
+      public String getKey() {
+        return "one";
+      }
+
+      @NotNull
+      @Override
+      public Integer getInstance() {
+        return 1;
+      }
+    };
+    extensionPoint.registerExtension(extension);
+    Disposable disposable = ExtensionPointUtil.createKeyedExtensionDisposable(extension.getInstance(), extensionPoint);
+    extensionPoint.unregisterExtension(extension);
+    assertThat(Disposer.isDisposed(disposable)).isTrue();
   }
 
   @NotNull

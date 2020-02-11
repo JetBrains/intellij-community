@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,9 +33,7 @@ public class ExtensionPointUtil {
 
   public static <T> Disposable createExtensionDisposable(@NotNull T extensionObject,
                                                          @NotNull ExtensionPoint<T> extensionPoint) {
-    Disposable disposable = Disposer.newDisposable("Disposable for [" + extensionObject.toString() + "]");
-    ComponentManager manager = ((ExtensionPointImpl<T>)extensionPoint).getComponentManager();
-    Disposer.register(manager, disposable);
+    Disposable disposable = createDisposable(extensionObject, extensionPoint);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<T>() {
       @Override
       public void extensionRemoved(@NotNull T removedExtension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -43,6 +42,29 @@ public class ExtensionPointUtil {
         }
       }
     }, false, disposable);
+    return disposable;
+  }
+
+  public static <T> Disposable createKeyedExtensionDisposable(@NotNull T extensionObject,
+                                                              @NotNull ExtensionPoint<KeyedLazyInstance<T>> extensionPoint) {
+    Disposable disposable = createDisposable(extensionObject, extensionPoint);
+    extensionPoint.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {
+      @Override
+      public void extensionRemoved(@NotNull KeyedLazyInstance<T> removedExtension, @NotNull PluginDescriptor pluginDescriptor) {
+        if (extensionObject == removedExtension.getInstance()) {
+          Disposer.dispose(disposable);
+        }
+      }
+    }, false, disposable);
+    return disposable;
+  }
+
+  @NotNull
+  private static <T> Disposable createDisposable(@NotNull T extensionObject,
+                                                 @NotNull ExtensionPoint extensionPoint) {
+    Disposable disposable = Disposer.newDisposable("Disposable for [" + extensionObject.toString() + "]");
+    ComponentManager manager = ((ExtensionPointImpl)extensionPoint).getComponentManager();
+    Disposer.register(manager, disposable);
     return disposable;
   }
 }
