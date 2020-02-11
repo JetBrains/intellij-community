@@ -88,7 +88,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     setHyperlinkText("", text, "");
   }
 
-  public void setHyperlinkText(@Nls String beforeLinkText, String linkText, String afterLinkText) {
+  public void setHyperlinkText(@Nls String beforeLinkText, @Nls String linkText, @Nls String afterLinkText) {
     myUseIconAsLink = beforeLinkText.isEmpty();
     prepareText(beforeLinkText, linkText, afterLinkText);
   }
