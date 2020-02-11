@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -11,7 +11,6 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.parameterInfo.*;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.Disposer;
@@ -24,7 +23,6 @@ import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext;
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext;
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +56,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertTrue(itemsToShow.length > 0);
   }
 
-  public void testParameterInfoDoesNotShowInternalJetbrainsAnnotations() {
+  public void testParameterInfoDoesNotShowInternalJetBrainsAnnotations() {
     myFixture.configureByText("x.java", "class X { void f(@org.intellij.lang.annotations.Flow int i) { f(<caret>0); }}");
 
     CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
@@ -73,7 +71,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
 
   public void testWhenInferenceIsBoundedByEqualsBound() {
     EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
-    myFixture.configureByText("x.java", 
+    myFixture.configureByText("x.java",
                                         "import java.util.function.Function;\n" +
                                         "import java.util.function.Supplier;\n" +
                                         "class X {\n" +
@@ -414,7 +412,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     Object[] items = context.getItemsToShow();
     assertSize(2, items);
     updateParameterInfo(handler, argList, items);
-    
+
     myFixture.completeBasic();
     myFixture.type('\n');
 
@@ -422,7 +420,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     // items now contain references to invalid PSI
     updateParameterInfo(handler, argList, items);
     assertSize(2, context.getItemsToShow());
-    
+
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 

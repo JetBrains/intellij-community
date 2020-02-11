@@ -100,7 +100,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private List<PluginId> myEssentialPluginsIds;
   private String myEventLogSettingsUrl;
-  private String myJetbrainsTvUrl;
+  private String myJetBrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
   private String myKeyConversionUrl = "https://www.jetbrains.com/shop/eform/keys-exchange";
 
@@ -551,8 +551,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getJetbrainsTvUrl() {
-    return myJetbrainsTvUrl;
+  public String getJetBrainsTvUrl() {
+    return myJetBrainsTvUrl;
   }
 
   @Override
@@ -906,7 +906,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     Element tvElement = getChild(parentNode, ELEMENT_JB_TV);
     if (tvElement != null) {
-      myJetbrainsTvUrl = tvElement.getAttributeValue(ATTRIBUTE_URL);
+      myJetBrainsTvUrl = tvElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
     Element evaluationElement = getChild(parentNode, ELEMENT_EVALUATION);

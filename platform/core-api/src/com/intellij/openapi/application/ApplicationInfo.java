@@ -60,7 +60,7 @@ public abstract class ApplicationInfo {
 
   public abstract String getCompanyURL();
 
-  public abstract String getJetbrainsTvUrl();
+  public abstract String getJetBrainsTvUrl();
 
   public abstract String getEvalLicenseUrl();
 

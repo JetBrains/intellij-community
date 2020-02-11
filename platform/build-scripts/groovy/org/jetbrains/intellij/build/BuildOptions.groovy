@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -146,13 +146,13 @@ class BuildOptions {
   String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
 
   /**
-   * Directory path to unpack Jetbrains JDK builds into
+   * Directory path to unpack JetBrains JDK builds into
    */
   static final String JDKS_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
   String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
 
   /**
-   * Specifies Jetbrains JBR version to be used by build scripts, 8 by default.
+   * Specifies JetBrains JDK version to be used by build scripts, 8 by default.
    */
   static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
   int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "8").toInteger()

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.WelcomeWizardUtil;
@@ -307,7 +307,7 @@ public class PluginGroups {
 
   public static void addTeamCityPlugin(Map<String, String> featuredPlugins) {
     featuredPlugins.put("TeamCity Integration",
-                        "Tools Integration:Integration with JetBrains TeamCity - innovative solution for continuous integration and build management:Jetbrains TeamCity Plugin");
+                        "Tools Integration:Integration with JetBrains TeamCity - innovative solution for continuous integration and build management:JetBrains TeamCity Plugin");
   }
 
   private void initIfNeeded() {

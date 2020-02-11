@@ -163,7 +163,7 @@ public final class ToolWindowCollector {
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if ("unknown".equals(data)) return ValidationResultType.ACCEPTED;
-      return acceptWhenReportedByJetbrainsPlugin(context);
+      return acceptWhenReportedByJetBrainsPlugin(context);
     }
   }
 
