@@ -137,7 +137,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
         String name = ((PsiRecordComponent)element).getName();
         if (name != null) {
           PsiMethod explicitGetter = ContainerUtil
-            .find(containingClass.findMethodsByName(name, false), m -> m.getParameters().length == 0);
+            .find(containingClass.findMethodsByName(name, false), m -> m.getParameterList().isEmpty());
 
           if (explicitGetter != null) {
             addOverriddenAndImplemented(explicitGetter, newName, null, newName, JavaCodeStyleManager.getInstance(element.getProject()), allRenames);
