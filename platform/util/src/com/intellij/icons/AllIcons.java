@@ -660,6 +660,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Favorite = load("/nodes/favorite.svg");
     /** 16x16 */ public static final Icon Field = load("/nodes/field.svg");
     /** 16x16 */ public static final Icon FieldPK = load("/nodes/fieldPK.svg");
+    /** 16x16 */ public static final Icon FilePrivate = load("/nodes/filePrivate.svg");
     /** 16x16 */ public static final Icon FinalMark = load("/nodes/finalMark.svg");
     /** 16x16 */ public static final Icon Folder = load("/nodes/folder.svg");
     /** 16x16 */ public static final Icon Function = load("/nodes/function.svg");
@@ -701,6 +702,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon NotFavoriteOnHover = load("/nodes/notFavoriteOnHover.svg");
     /** 16x16 */ public static final Icon ObjectTypeAttribute = load("/nodes/objectTypeAttribute.svg");
     /** 16x16 */ public static final Icon Package = load("/nodes/package.svg");
+    /** 16x16 */ public static final Icon PackageLocal = load("/nodes/packageLocal.svg");
     /** 16x16 */ public static final Icon Padlock = load("/nodes/padlock.svg");
     /** 16x16 */ public static final Icon Parameter = load("/nodes/parameter.svg");
     /** 16x16 */ public static final Icon Plugin = load("/nodes/plugin.svg");
@@ -715,6 +717,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon PpLib = load("/nodes/ppLib.svg");
     /** 16x16 */ public static final Icon PpLibFolder = load("/nodes/ppLibFolder.svg");
     /** 16x16 */ public static final Icon PpWeb = load("/nodes/ppWeb.svg");
+    /** 16x16 */ public static final Icon Private = load("/nodes/private.svg");
     /** 16x16 */ public static final Icon ProcessMark = load("/nodes/processMark.svg");
     /** 16x16 */ public static final Icon Project = load("/nodes/project.svg");
     /** 16x16 */ public static final Icon Property = load("/nodes/property.svg");
@@ -724,6 +727,8 @@ public class AllIcons {
     /** 16x16 */ public static final Icon PropertyReadWriteStatic = load("/nodes/propertyReadWriteStatic.svg");
     /** 16x16 */ public static final Icon PropertyWrite = load("/nodes/propertyWrite.svg");
     /** 16x16 */ public static final Icon PropertyWriteStatic = load("/nodes/propertyWriteStatic.svg");
+    /** 16x16 */ public static final Icon Protected = load("/nodes/protected.svg");
+    /** 16x16 */ public static final Icon Public = load("/nodes/public.svg");
     /** 16x16 */ public static final Icon Read_access = load("/nodes/read-access.svg");
     /** 16x16 */ public static final Icon Record = load("/nodes/record.svg");
     /** 16x16 */ public static final Icon Related = load("/nodes/related.svg");
