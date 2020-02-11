@@ -59,7 +59,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   void setToolwindowTitle(String toolwindowTitle);
 
-  Disposable getDisposer();
+  @Nullable Disposable getDisposer();
 
   void setDisposer(@NotNull Disposable disposer);
 

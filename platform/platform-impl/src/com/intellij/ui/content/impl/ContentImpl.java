@@ -4,10 +4,7 @@ package com.intellij.ui.content.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.util.BusyObject;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
@@ -52,6 +49,12 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private Icon myPopupIcon;
   private long myExecutionId;
   private String myHelpId;
+
+  private static final NotNullLazyValue<Icon> emptyPinIcon = AtomicNotNullLazyValue.createValue(() -> {
+    Icon icon = AllIcons.Nodes.TabPin;
+    int width = icon.getIconWidth();
+    return IconUtil.cropIcon(icon, new Rectangle(width / 2, 0, width - width / 2, icon.getIconHeight()));
+  });
 
   public ContentImpl(JComponent component, @Nullable @Nls(capitalization = Nls.Capitalization.Title) String displayName, boolean isPinnable) {
     myComponent = component;
@@ -111,25 +114,11 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   @Override
   public Icon getIcon() {
     if (myIsLocked) {
-      return myIcon == null ? getEmptyPinIcon() : myLayeredIcon;
+      return myIcon == null ? emptyPinIcon.getValue() : myLayeredIcon;
     }
     else {
       return myIcon;
     }
-  }
-
-  private static class IconHolder {
-    private static final Icon ourEmptyPinIcon;
-    static {
-      Icon icon = AllIcons.Nodes.TabPin;
-      int width = icon.getIconWidth();
-      ourEmptyPinIcon = IconUtil.cropIcon(icon, new Rectangle(width / 2, 0, width - width / 2, icon.getIconHeight()));
-    }
-  }
-
-  @NotNull
-  private static Icon getEmptyPinIcon() {
-    return IconHolder.ourEmptyPinIcon;
   }
 
   @Override
@@ -166,7 +155,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
-  public Disposable getDisposer() {
+  public @Nullable Disposable getDisposer() {
     return myDisposer;
   }
 
@@ -362,7 +351,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
-  public void setSearchComponent(@Nullable final JComponent comp) {
+  public void setSearchComponent(@Nullable JComponent comp) {
     mySearchComponent = comp;
   }
 

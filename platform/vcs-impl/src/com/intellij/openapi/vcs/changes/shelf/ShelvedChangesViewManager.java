@@ -87,6 +87,7 @@ import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 
+// open for Rider
 public class ShelvedChangesViewManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
   @NonNls static final String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
@@ -94,7 +95,8 @@ public class ShelvedChangesViewManager implements Disposable {
 
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
-  private MyShelfContent myContent = null;
+  private ShelfToolWindowPanel myPanel = null;
+  private ContentImpl myContent = null;
   private final MergingUpdateQueue myUpdateQueue;
   private final List<Runnable> myPostUpdateEdtActivity = new ArrayList<>();
 
@@ -128,7 +130,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
   private void updateTreeIfShown(@NotNull Consumer<? super ShelfTree> treeConsumer) {
     if (myContent == null) return;
-    treeConsumer.consume(myContent.myPanel.myTree);
+    treeConsumer.consume(myPanel.myTree);
   }
 
   @CalledInAwt
@@ -142,16 +144,19 @@ public class ShelvedChangesViewManager implements Disposable {
     }
     else {
       if (myContent == null) {
-        ShelfToolWindowPanel panel = new ShelfToolWindowPanel(myProject);
-        myContent = new MyShelfContent(panel, VcsBundle.message("shelf.tab"), false);
+        myPanel = new ShelfToolWindowPanel(myProject);
+        myContent = new ContentImpl(myPanel.myRootPanel, VcsBundle.message("shelf.tab"), false);
+        MyDnDTarget dnDTarget = new MyDnDTarget(myPanel.myProject, myContent);
+        myContent.putUserData(Content.TAB_DND_TARGET_KEY, dnDTarget);
+
         myContent.setCloseable(false);
-        myContent.setDisposer(panel);
+        myContent.setDisposer(myPanel);
         addContent(myContent);
-        DnDSupport.createBuilder(panel.myTree)
-          .setImageProvider(panel::createDraggedImage)
-          .setBeanProvider(panel::createDragStartBean)
-          .setTargetChecker(myContent.myDnDTarget)
-          .setDropHandler(myContent.myDnDTarget)
+        DnDSupport.createBuilder(myPanel.myTree)
+          .setImageProvider(myPanel::createDraggedImage)
+          .setBeanProvider(myPanel::createDragStartBean)
+          .setTargetChecker(dnDTarget)
+          .setDropHandler(dnDTarget)
           .setDisposableParent(myContent)
           .install();
       }
@@ -286,7 +291,7 @@ public class ShelvedChangesViewManager implements Disposable {
       return;
     }
 
-    ChangesViewPreview diffPreview = myContent.myPanel.myDiffPreview;
+    ChangesViewPreview diffPreview = myPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       ((EditorTabPreview)diffPreview).closePreview();
     }
@@ -299,7 +304,7 @@ public class ShelvedChangesViewManager implements Disposable {
       return;
     }
 
-    ChangesViewPreview diffPreview = myContent.myPanel.myDiffPreview;
+    ChangesViewPreview diffPreview = myPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       ((EditorTabPreview)diffPreview).openPreview(false);
     }
@@ -597,42 +602,30 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  private static class MyShelfContent extends ContentImpl {
-    private final MyDnDTarget myDnDTarget;
-    public final ShelfToolWindowPanel myPanel;
-
-    private MyShelfContent(@NotNull ShelfToolWindowPanel panel, @NotNull String displayName, boolean isLockable) {
-      super(panel.myRootPanel, displayName, isLockable);
-      myPanel = panel;
-      myDnDTarget = new MyDnDTarget(myPanel.myProject, this);
-      putUserData(Content.TAB_DND_TARGET_KEY, myDnDTarget);
+  private static final class MyDnDTarget extends VcsToolwindowDnDTarget {
+    private MyDnDTarget(@NotNull Project project, @NotNull Content content) {
+      super(project, content);
     }
 
-    private class MyDnDTarget extends VcsToolwindowDnDTarget {
-      private MyDnDTarget(@NotNull Project project, @NotNull Content content) {
-        super(project, content);
+    @Override
+    public void drop(DnDEvent event) {
+      super.drop(event);
+      Object attachedObject = event.getAttachedObject();
+      if (attachedObject instanceof ChangeListDragBean) {
+        FileDocumentManager.getInstance().saveAllDocuments();
+        List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
+        ShelveChangesManager.getInstance(myProject).shelveSilentlyUnderProgress(changes);
       }
+    }
 
-      @Override
-      public void drop(DnDEvent event) {
-        super.drop(event);
-        Object attachedObject = event.getAttachedObject();
-        if (attachedObject instanceof ChangeListDragBean) {
-          FileDocumentManager.getInstance().saveAllDocuments();
-          List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
-          ShelveChangesManager.getInstance(myPanel.myProject).shelveSilentlyUnderProgress(changes);
-        }
-      }
-
-      @Override
-      public boolean isDropPossible(@NotNull DnDEvent event) {
-        Object attachedObject = event.getAttachedObject();
-        return attachedObject instanceof ChangeListDragBean && ((ChangeListDragBean)attachedObject).getChanges().length > 0;
-      }
+    @Override
+    public boolean isDropPossible(@NotNull DnDEvent event) {
+      Object attachedObject = event.getAttachedObject();
+      return attachedObject instanceof ChangeListDragBean && ((ChangeListDragBean)attachedObject).getChanges().length > 0;
     }
   }
 
-  private static class ShelfToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
+  private static final class ShelfToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
     private final Project myProject;
     private final ShelveChangesManager myShelveChangesManager;
     private final VcsConfiguration myVcsConfiguration;
