@@ -91,14 +91,16 @@ internal open class ChangeEntryStateButtonAction(
     }
   }
 
+  private val buttonPanel = BorderLayoutPanel().addToCenter(button).apply {
+    border = JBUI.Borders.emptyLeft(6)
+  }
+
   override fun actionIsEnabled(e: AnActionEvent, isEnabled: Boolean) {
     super.actionIsEnabled(e, isEnabled)
     button.isEnabled = isEnabled
   }
 
-  override fun createCustomComponent(presentation: Presentation, place: String) = BorderLayoutPanel().addToCenter(button).apply {
-    border = JBUI.Borders.emptyLeft(6)
-  }
+  override fun createCustomComponent(presentation: Presentation, place: String) = buttonPanel
 }
 
 internal class FixupAction(table: GitRebaseCommitsTableView) : ChangeEntryStateButtonAction(GitRebaseEntry.Action.FIXUP, table) {
