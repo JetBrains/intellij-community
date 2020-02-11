@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Contract;
@@ -39,22 +38,22 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link HashMap#HashMap(int)}
-   */
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  @Deprecated
-  public static <K, V> Map<K, V> newHashMap(int initialCapacity) {
-    return new HashMap<K, V>(initialCapacity);
-  }
-
-  /**
    * Use only for {@link Iterable}, for {@link Collection} please use {@link LinkedList#LinkedList(Collection)} directly.
    */
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
     return copy(new LinkedList<T>(), elements);
+  }
+
+  /**
+   * @deprecated Use {@link LinkedList#LinkedList(Collection)} instead.
+   */
+  @NotNull
+  @Contract(value = "_ -> fail", pure = true)
+  @Deprecated
+  public static <T> LinkedList<T> newLinkedList(@SuppressWarnings("unused") @NotNull Collection<? extends T> elements) {
+    throw new AbstractMethodError("Use 'new LinkedList<>(elements)' instead");
   }
 
   /**
@@ -86,16 +85,21 @@ public class ContainerUtilRt {
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull Iterable<? extends T> elements) {
-    if (elements instanceof Collection) {
-      @SuppressWarnings("unchecked")
-      Collection<? extends T> collection = (Collection<? extends T>)elements;
-      return new ArrayList<T>(collection);
-    }
     return copy(new ArrayList<T>(), elements);
   }
 
+  /**
+   * @deprecated Use {@link ArrayList#ArrayList(Collection)} instead
+   */
+  @Deprecated
   @NotNull
-  protected static <T, C extends Collection<? super T>> C copy(@NotNull C collection, @NotNull Iterable<? extends T> elements) {
+  @Contract(value = "_ -> fail", pure = true)
+  public static <T> ArrayList<T> newArrayList(@SuppressWarnings("unused") @NotNull Collection<? extends T> elements) {
+    throw new AbstractMethodError("Use 'new ArrayList<>(elements)' instead");
+  }
+
+  @NotNull
+  static <T, C extends Collection<? super T>> C copy(@NotNull C collection, @NotNull Iterable<? extends T> elements) {
     for (T element : elements) {
       collection.add(element);
     }
@@ -125,10 +129,6 @@ public class ContainerUtilRt {
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> elements) {
-    if (elements instanceof Collection) {
-      @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
-      return new HashSet<T>(collection);
-    }
     Iterator<? extends T> iterator = elements.iterator();
     HashSet<T> set = new HashSet<T>();
     while (iterator.hasNext()) set.add(iterator.next());
@@ -251,31 +251,7 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#mapNotNull(Collection, Function)}
-   * @param collection an input collection to process
-   * @param mapping a side-effect free function which transforms collection elements
-   * @return read-only list consisting of the elements from the array converted by mapping with nulls filtered out
-   */
-  @Deprecated
-  @NotNull
-  @Contract(pure=true)
-  public static <T, V> List<V> mapNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapping) {
-    if (collection.isEmpty()) {
-      return emptyList();
-    }
-
-    List<V> result = new ArrayList<V>(collection.size());
-    for (T t : collection) {
-      final V o = mapping.fun(t);
-      if (o != null) {
-        result.add(o);
-      }
-    }
-    return result.isEmpty() ? ContainerUtilRt.<V>emptyList() : result;
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#map2Set(Collection, Function)}
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#map2List(Collection, Function)}
    * @return read-only list consisting of the elements from collection converted by mapper
    */
   @Deprecated
@@ -288,42 +264,6 @@ public class ContainerUtilRt {
       list.add(mapper.fun(t));
     }
     return list;
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#getLastItem(List)}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public static <T> T getLastItem(@Nullable List<? extends T> list) {
-    return list == null || list.isEmpty() ? null : list.get(list.size() - 1);
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#find(Iterable, Condition)}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public static <T> T find(@NotNull Iterable<? extends T> iterable, @NotNull Condition<? super T> condition) {
-    for (T value : iterable) {
-      if (condition.value(value)) return value;
-    }
-    return null;
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#indexOf(List, Condition)}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public static <T> int indexOf(@NotNull List<? extends T> list, @NotNull Condition<? super T> condition) {
-    for (int i = 0, listSize = list.size(); i < listSize; i++) {
-      T t = list.get(i);
-      if (condition.value(t)) {
-        return i;
-      }
-    }
-    return -1;
   }
 
   // do not use MultiMap (trove lib / SmartList) - only JDK classes should be used to reduce class loading
