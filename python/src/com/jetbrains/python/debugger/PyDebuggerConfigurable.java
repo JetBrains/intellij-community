@@ -119,7 +119,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
       new TooltipWithClickableLinks.ForBrowser(warningIcon,
                                                DEBUGGER_WARNING_MESSAGE));
 
-    myActionLink = new ActionLink("Clear caches", new AnAction() {
+    myActionLink = new ActionLink(PyBundle.message("form.debugger.clear.caches.action"), new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         PySignatureCacheManager.getInstance(myProject).clearCache();
