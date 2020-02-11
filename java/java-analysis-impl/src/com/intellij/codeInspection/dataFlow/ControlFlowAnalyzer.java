@@ -237,6 +237,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     addInstruction(new AssignInstruction(rExpr, myFactory.createValue(lExpr)));
+    addNullCheck(expression);
 
     finishElement(expression);
   }
@@ -815,7 +816,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression returnValue = statement.getReturnValue();
 
     if (myExpressionBlockContext != null) {
-      // We treat return inside switch expression (which is disallowed syntax) as break-with-value
+      // We treat return inside switch expression (which is disallowed syntax) as yield
       myExpressionBlockContext.generateReturn(returnValue, this);
     } else {
 
