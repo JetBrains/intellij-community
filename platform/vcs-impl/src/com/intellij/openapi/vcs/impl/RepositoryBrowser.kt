@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.RemoteFilePath
+import com.intellij.openapi.vcs.VcsActions
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 import com.intellij.openapi.vcs.changes.Change
@@ -96,7 +97,7 @@ class RepositoryBrowserPanel(
 
     val actionGroup = DefaultActionGroup()
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE))
-    actionGroup.add(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal"))
+    actionGroup.add(ActionManager.getInstance().getAction(VcsActions.DIFF_AFTER_WITH_LOCAL))
     fileSystemTree.registerMouseListener(actionGroup)
 
     val scrollPane = ScrollPaneFactory.createScrollPane(fileSystemTree.tree)
