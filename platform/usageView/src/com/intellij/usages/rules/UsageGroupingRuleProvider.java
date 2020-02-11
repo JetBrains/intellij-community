@@ -17,5 +17,7 @@ public interface UsageGroupingRuleProvider {
     return getActiveRules(project);
   }
 
-  AnAction @NotNull [] createGroupingActions(@NotNull UsageView view);
+  default @NotNull AnAction @NotNull [] createGroupingActions(@NotNull UsageView view) {
+    return AnAction.EMPTY_ARRAY;
+  }
 }

@@ -2,7 +2,6 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -96,11 +95,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       @Override
       public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return rules;
-      }
-
-      @Override
-      public AnAction @NotNull [] createGroupingActions(@NotNull UsageView view) {
-        return AnAction.EMPTY_ARRAY;
       }
     };
 

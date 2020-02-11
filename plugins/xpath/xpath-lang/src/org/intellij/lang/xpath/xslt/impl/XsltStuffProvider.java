@@ -17,7 +17,6 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
@@ -61,11 +60,6 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
   @Override
   public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return myUsageGroupingRules;
-    }
-
-    @Override
-    public AnAction @NotNull [] createGroupingActions(@NotNull UsageView view) {
-        return AnAction.EMPTY_ARRAY;
     }
 
     private static class TemplateUsageGroup implements UsageGroup {
