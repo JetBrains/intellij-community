@@ -1041,7 +1041,10 @@ public class ListPluginComponent extends JPanel {
     }
 
     public void removeProgressComponent() {
-      assert myProgressComponent != null;
+      if (myProgressComponent == null) {
+        return;
+      }
+
       remove(myProgressComponent);
       myProgressComponent = null;
 
