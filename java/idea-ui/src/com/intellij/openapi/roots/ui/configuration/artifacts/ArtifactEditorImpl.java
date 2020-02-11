@@ -281,7 +281,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     rightTopPanel.setPreferredSize(new Dimension(-1, toolbarComponent.getPreferredSize().height));
 
     myTabbedPane = new TabbedPaneWrapper(this);
-    myTabbedPane.addTab("Output Layout", splitter);
+    myTabbedPane.addTab(ProjectBundle.message("output.layout"), splitter);
     myPropertiesEditors.addTabs(myTabbedPane);
     myEditorPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 

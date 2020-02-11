@@ -45,11 +45,11 @@ public class LibraryNameAndLevelPanel {
   public LibraryNameAndLevelPanel(@NotNull FormBuilder formBuilder, @NotNull String libraryName, @NotNull List<LibrariesContainer.LibraryLevel> availableLevels,
                                   @Nullable LibrariesContainer.LibraryLevel level) {
     myLibraryNameField = new JTextField(25);
-    formBuilder.addLabeledComponent("&Name:", myLibraryNameField);
+    formBuilder.addLabeledComponent(ProjectBundle.message("label.name"), myLibraryNameField);
     myLibraryNameField.setText(libraryName);
     myLevelComboBox = new ComboBox<>();
     if (level != null && !availableLevels.isEmpty()) {
-      formBuilder.addLabeledComponent("&Level:", myLevelComboBox);
+      formBuilder.addLabeledComponent(ProjectBundle.message("label.level"), myLevelComboBox);
       final Map<LibrariesContainer.LibraryLevel, String> levels = new HashMap<>();
       levels.put(LibrariesContainer.LibraryLevel.GLOBAL, ProjectBundle.message("combobox.item.global.library"));
       levels.put(LibrariesContainer.LibraryLevel.PROJECT, ProjectBundle.message("combobox.item.project.library"));

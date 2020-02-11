@@ -103,7 +103,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
     myNameField = new JTextField(currentName);
     myNameField.selectAll();
 
-    FormBuilder formBuilder = FormBuilder.createFormBuilder().addLabeledComponent("&Name:", myNameField);
+    FormBuilder formBuilder = FormBuilder.createFormBuilder().addLabeledComponent(ProjectBundle.message("label.name"), myNameField);
     addNorthComponents(formBuilder);
     return formBuilder.addVerticalGap(10).getPanel();
   }

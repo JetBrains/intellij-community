@@ -99,7 +99,7 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
       myRelativeOutputPathField = new JTextField();
       myIsGeneratedCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand("For &generated resources"));
       myMainPanel = FormBuilder.createFormBuilder()
-        .addLabeledComponent("Relative output &path:", myRelativeOutputPathField)
+        .addLabeledComponent(ProjectBundle.message("relative.output.path"), myRelativeOutputPathField)
         .addComponent(myIsGeneratedCheckBox)
         .getPanel();
       myRelativeOutputPathField.setText(myProperties.getRelativeOutputPath());

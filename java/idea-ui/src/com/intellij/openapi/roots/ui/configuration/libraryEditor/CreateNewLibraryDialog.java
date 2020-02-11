@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -69,7 +70,7 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
 
   @Override
   protected void addNorthComponents(FormBuilder formBuilder) {
-    formBuilder.addLabeledComponent("&Level:", myLibraryLevelCombobox);
+    formBuilder.addLabeledComponent(ProjectBundle.message("label.level"), myLibraryLevelCombobox);
   }
 
   @Override
