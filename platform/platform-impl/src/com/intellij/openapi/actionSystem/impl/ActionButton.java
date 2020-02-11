@@ -153,18 +153,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       if (component != null && !component.isShowing()) {
         return;
       }
-      JBPopup prevLast = StackingPopupDispatcher.getInstance().getPopupStream().reduce((a, b) -> b).orElse(null);
       actionPerformed(event);
-      JBPopup curLast = StackingPopupDispatcher.getInstance().getPopupStream().reduce((a, b) -> b).orElse(null);
-      if (curLast != null && curLast != prevLast && !curLast.isDisposed()) {
-        ((ActionManagerImpl)manager).addActionPopup(curLast);
-        curLast.addListener(new JBPopupListener() {
-          @Override
-          public void onClosed(@NotNull LightweightWindowEvent event) {
-            ((ActionManagerImpl)manager).removeActionPopup(curLast);
-          }
-        });
-      }
       manager.queueActionPerformedEvent(myAction, dataContext, event);
       if (event.getInputEvent() instanceof MouseEvent) {
         ToolbarClicksCollector.record(myAction, myPlace, e, dataContext);

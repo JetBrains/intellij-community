@@ -1239,7 +1239,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(popupToolbar, null);
     builder.setResizable(false)
       .setMovable(true) // fit the screen automatically
-      .setRequestFocus(false)
+      .setRequestFocus(true)
+      .setMayBeParent(true)
       .setTitle(null)
       .setCancelOnClickOutside(true)
       .setCancelOnOtherWindowOpen(true)
