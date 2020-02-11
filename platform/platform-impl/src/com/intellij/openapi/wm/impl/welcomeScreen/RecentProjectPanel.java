@@ -47,6 +47,7 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -658,12 +659,12 @@ public class RecentProjectPanel extends JPanel {
     }
   }
 
-  private static boolean isPathAvailable(String path) {
-    Path pathRoot = Paths.get(path).getRoot();
+  private static boolean isPathAvailable(String pathStr) {
+    Path path = Paths.get(pathStr), pathRoot = path.getRoot();
     if (pathRoot == null) return false;
     if (SystemInfo.isWindows && pathRoot.toString().startsWith("\\\\")) return true;
     for (Path fsRoot : pathRoot.getFileSystem().getRootDirectories()) {
-      if (pathRoot.equals(fsRoot)) return true;
+      if (pathRoot.equals(fsRoot)) return Files.exists(path);
     }
     return false;
   }
