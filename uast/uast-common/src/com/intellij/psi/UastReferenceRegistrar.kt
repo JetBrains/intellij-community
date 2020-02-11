@@ -94,12 +94,15 @@ fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Cla
  * @see registerReferenceProviderByUsage
  */
 @ApiStatus.Experimental
-fun uastReferenceProviderByUsage(provider: (UExpression, referencePsi: PsiElement, usagePsi: PsiElement) -> Array<PsiReference>): UastReferenceProvider =
-  object : UastReferenceProvider(UExpression::class.java) {
+fun uastReferenceProviderByUsage(provider: (UExpression, referencePsi: PsiLanguageInjectionHost, usagePsi: PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+  object : UastReferenceProvider(UInjectionHost::class.java) {
+
     override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
+      val uLiteral = element as? UExpression ?: return PsiReference.EMPTY_ARRAY
+      val host = context[REQUESTED_PSI_ELEMENT] as? PsiLanguageInjectionHost ?: return PsiReference.EMPTY_ARRAY
       val usagePsi = context[USAGE_PSI_ELEMENT] ?: context[REQUESTED_PSI_ELEMENT]
 
-      return provider(UExpression::class.java.cast(element), context[REQUESTED_PSI_ELEMENT], usagePsi)
+      return provider(uLiteral, host, usagePsi)
     }
 
     override fun toString(): String = "uastByUsageReferenceProvider($provider)"
