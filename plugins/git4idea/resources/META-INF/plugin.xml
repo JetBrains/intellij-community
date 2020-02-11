@@ -33,7 +33,9 @@
       <add-to-group group-id="Vcs.Browse"/>
     </action>
 
-    <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
+    <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog">
+      <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="after" relative-to-action="Vcs.CopyRevisionNumberAction"/>
+    </action>
     <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
 
     <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup"/>
