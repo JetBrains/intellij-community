@@ -14,6 +14,7 @@ import git4idea.test.GitPlatformTest
 import junit.framework.TestCase
 import org.apache.commons.codec.digest.DigestUtils
 import java.io.File
+import java.io.Serializable
 import java.util.*
 
 class GitLogParserTest : GitPlatformTest() {
@@ -340,7 +341,7 @@ private val GIT_LOG_OPTIONS = arrayOf(HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIM
 private fun createTestRecord(vararg parameters: Pair<GitLogOption, Any>,
                              changes: List<GitTestLogRecord.GitTestChange> = emptyList(),
                              newRefsFormat: Boolean = false): GitTestLogRecord {
-  val data = mutableMapOf(Pair(SUBJECT, "Subject"),
+  val data = mutableMapOf<GitLogOption, Any>(Pair(SUBJECT, "Subject"),
                           Pair(BODY, "Body"),
                           Pair(AUTHOR_TIME, Date(1317027817L * 1000)),
                           Pair(AUTHOR_NAME, "John Doe"),
