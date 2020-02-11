@@ -73,6 +73,13 @@ abstract class MacDistributionCustomizer {
   List<String> fileAssociations = []
 
   /**
+   * List of custom icon files for association. Example:
+   * fileAssociationIcons = ["$projectHome/ruby/ideResources/artwork/rubymine.icns"]
+   * See IDEA-211187
+   */
+  List<String> fileAssociationIcons = []
+
+  /**
    * Specify &lt;scheme&gt; here if you want product to be able to open urls like <scheme>://open?file=/some/file/path&line=0
    */
   List<String> urlSchemes = []

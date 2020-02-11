@@ -42,20 +42,25 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 """ : "")
     def associations = ""
     if (!customizer.fileAssociations.empty) {
-      associations = """<dict>
+      for (int i=0; i<customizer.fileAssociations.size(); i++) {
+        def iconFileName = targetIcnsFileName
+        if (customizer.fileAssociationIcons.size() == customizer.fileAssociations.size()) {
+          def iconFile = customizer.fileAssociationIcons[i]
+          iconFileName = iconFile.substring(iconFile.lastIndexOf(File.separator) + 1, iconFile.size())
+        }
+        associations += """<dict>
         <key>CFBundleTypeExtensions</key>
         <array>
 """
-      customizer.fileAssociations.each {
-        associations += "          <string>${it}</string>\n"
-      }
-      associations +=  """        </array>
+          associations += "          <string>${customizer.fileAssociations[i]}</string>\n"
+          associations +=  """        </array>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
         <key>CFBundleTypeIconFile</key>
-        <string>$targetIcnsFileName</string>        
+        <string>$iconFileName</string>        
       </dict>
 """
+      }
     }
     return iprAssociation + associations + customizer.additionalDocTypes
   }
@@ -136,6 +141,12 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     String icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
     buildContext.ant.copy(file: icnsPath, tofile: "$target/Resources/$targetIcnsFileName")
+
+    if (!customizer.fileAssociationIcons.empty) {
+      customizer.fileAssociationIcons.each {
+        buildContext.ant.copy(file: it, todir: "$target/Resources", overwrite: "true")
+      }
+    }
 
     String fullName = buildContext.applicationInfo.productName
 
