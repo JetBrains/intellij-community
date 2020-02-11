@@ -5,6 +5,9 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.util.AccessModifier;
+import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,8 +63,7 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl,
 
   @Override
   public boolean canChangeVisibility() {
-    PsiClass containingClass = myMethod.getContainingClass();
-    return containingClass != null && !containingClass.isInterface();
+    return AccessModifier.getAvailableModifiers(myMethod).size() > 1;
   }
 
   @Override
@@ -77,5 +79,9 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl,
   @Override
   public boolean canChangeName() {
     return !myMethod.isConstructor();
+  }
+
+  public List<AccessModifier> getAllowedModifiers() {
+    return AccessModifier.getAvailableModifiers(myMethod);
   }
 }

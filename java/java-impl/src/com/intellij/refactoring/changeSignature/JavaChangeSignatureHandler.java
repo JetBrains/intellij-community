@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -79,7 +80,9 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
 
     final PsiClass containingClass = method.getContainingClass();
     final PsiReferenceExpression refExpr = editor != null ? JavaTargetElementEvaluator.findReferenceExpression(editor) : null;
-    final boolean allowDelegation = containingClass != null && (!containingClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(containingClass));
+    final boolean allowDelegation = containingClass != null && 
+                                    (!containingClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(containingClass)) &&
+                                    !method.equals(JavaPsiRecordUtil.findCanonicalConstructor(containingClass));
     InplaceChangeSignature inplaceChangeSignature = editor != null ? InplaceChangeSignature.getCurrentRefactoring(editor) : null;
     ChangeInfo initialChange = inplaceChangeSignature != null ? inplaceChangeSignature.getStableChange() : null;
 
@@ -155,6 +158,14 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
   public PsiElement findTargetMember(@NotNull PsiElement element) {
     if (PsiTreeUtil.getParentOfType(element, PsiParameterList.class) != null) {
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    }
+    PsiRecordHeader header = PsiTreeUtil.getParentOfType(element, PsiRecordHeader.class);
+    if (header != null) {
+      PsiClass aClass = header.getContainingClass();
+      if (aClass != null) {
+        return JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+      }
+      return null;
     }
 
     final PsiTypeParameterList typeParameterList = PsiTreeUtil.getParentOfType(element, PsiTypeParameterList.class);

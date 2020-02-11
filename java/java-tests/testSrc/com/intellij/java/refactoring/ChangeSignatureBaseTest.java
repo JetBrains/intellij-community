@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -14,8 +15,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 
 public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
   protected PsiElementFactory myFactory;
@@ -105,6 +104,9 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
     String basePath = getRelativePath() + getTestName(false);
     configureByFile(basePath + ".java");
     PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    if (targetElement instanceof PsiClass) {
+      targetElement = JavaPsiRecordUtil.findCanonicalConstructor((PsiClass)targetElement);
+    }
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod)targetElement;
     PsiType newType = newReturnType != null ? myFactory.createTypeFromText(newReturnType, method) : method.getReturnType();

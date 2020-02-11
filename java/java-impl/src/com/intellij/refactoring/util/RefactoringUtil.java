@@ -1137,11 +1137,18 @@ public class RefactoringUtil {
     fixJavadocsForParams(method, newParameters, eqCondition, Conditions.alwaysTrue());
   }
 
-  public static void fixJavadocsForParams(PsiMethod method,
-                                          Set<? extends PsiParameter> newParameters,
-                                          Condition<? super Pair<PsiParameter, String>> eqCondition,
-                                          Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
-    final PsiDocComment docComment = method.getDocComment();
+  public static void fixJavadocsForParams(@NotNull PsiMethod method,
+                                          @NotNull Set<? extends PsiParameter> newParameters,
+                                          @NotNull Condition<? super Pair<PsiParameter, String>> eqCondition,
+                                          @NotNull Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
+    fixJavadocsForParams(method, method.getDocComment(), newParameters, eqCondition, matchedToOldParam);
+  }
+
+  public static void fixJavadocsForParams(@NotNull PsiMethod method,
+                                          @Nullable PsiDocComment docComment,
+                                          @NotNull Set<? extends PsiParameter> newParameters,
+                                          @NotNull Condition<? super Pair<PsiParameter, String>> eqCondition,
+                                          @NotNull Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
     if (docComment == null) return;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final PsiDocTag[] paramTags = docComment.findTagsByName("param");

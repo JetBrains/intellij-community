@@ -25,6 +25,7 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector;
@@ -37,6 +38,7 @@ import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -161,17 +163,44 @@ class JavaChangeSignatureUsageSearcher {
 
   private void findParametersUsage(final PsiMethod method, ArrayList<? super UsageInfo> result, PsiMethod[] overriders) {
     if (JavaLanguage.INSTANCE.equals(myChangeInfo.getLanguage())) {
+      PsiClass aClass = method.getContainingClass();
+      PsiRecordComponent[] components = null;
+      if (aClass != null && method.equals(JavaPsiRecordUtil.findCanonicalConstructor(aClass))) {
+        components = aClass.getRecordComponents();
+      } 
       PsiParameter[] parameters = method.getParameterList().getParameters();
       for (ParameterInfo info : myChangeInfo.getNewParameters()) {
         if (info.getOldIndex() >= 0) {
           PsiParameter parameter = parameters[info.getOldIndex()];
-          if (!info.getName().equals(parameter.getName())) {
+          boolean nameChanged = !info.getName().equals(parameter.getName());
+          if (nameChanged) {
             addParameterUsages(parameter, result, info);
-
             for (PsiMethod overrider : overriders) {
               PsiParameter parameter1 = overrider.getParameterList().getParameters()[info.getOldIndex()];
               if (parameter1 != null && Comparing.strEqual(parameter.getName(), parameter1.getName())) {
                 addParameterUsages(parameter1, result, info);
+              }
+            }
+          }
+          if (components != null && components.length > info.getOldIndex()) {
+            PsiRecordComponent component = components[info.getOldIndex()];
+            if (nameChanged) {
+              PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
+              if (field != null) {
+                for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(field, aClass)) {
+                  UsageInfo usageInfo = new ChangeSignatureParameterUsageInfo(reference, parameter.getName(), info.getName());
+                  result.add(usageInfo);
+                }
+              }
+            }
+            PsiMethod explicitGetter = ContainerUtil
+              .find(aClass.findMethodsByName(parameter.getName(), false), m -> m.getParameterList().isEmpty());
+            if (explicitGetter != null) {
+              if (nameChanged) {
+                addParameterUsages(explicitGetter, result, info);
+              }
+              if (!(explicitGetter instanceof SyntheticElement) && (nameChanged || !parameter.getType().equalsToText(info.getTypeText()))) {
+                result.add(new RecordGetterDeclarationUsageInfo(explicitGetter, info.getName(), info.getTypeText()));
               }
             }
           }
@@ -297,7 +326,7 @@ class JavaChangeSignatureUsageSearcher {
   }
 
 
-  private static void addParameterUsages(PsiParameter parameter, ArrayList<? super UsageInfo> results, ParameterInfo info) {
+  private static void addParameterUsages(PsiNamedElement parameter, ArrayList<? super UsageInfo> results, ParameterInfo info) {
     PsiManager manager = parameter.getManager();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
     for (PsiReference psiReference : ReferencesSearch.search(parameter, projectScope, false)) {

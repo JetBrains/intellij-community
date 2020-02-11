@@ -11,13 +11,22 @@ import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_14;
 
 /**
  * @author dsl
  */
 public class ChangeSignatureTest extends ChangeSignatureBaseTest {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14;
+  }
 
   private CommonCodeStyleSettings getJavaSettings() {
     return getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
@@ -499,7 +508,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     //String[] ex = {"@TA(42) IllegalArgumentException", "java.lang.@TA(43) IllegalStateException"};
     //doTest("java.util.@TA(0) List<@TA(1) C.@TA(1) Inner>", ps, ex, false);
     String[] ps = {"@TA(2) int @TA(3) []", "@TA(4) List<@TA(5) Class<@TA(6) ?>>", "@TA(7) String @TA(8) ..."};
-    String[] ex = {};
+    String[] ex = ArrayUtil.EMPTY_STRING_ARRAY;
     doTest("@TA(0) List<@TA(1) Inner>", ps, ex, false);
   }
 
@@ -513,6 +522,43 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       };
     };
     doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, false);
+  }
+  
+  public void testRecordHeaderDeleteRename() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withName("yyy").withType(PsiType.LONG)
+      };
+    }, false);
+  }
+  
+  public void testRecordCanonicalConstructorRename() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("y").withType(PsiType.INT),
+        ParameterInfoImpl.create(1).withName("z").withType(PsiType.INT),
+        ParameterInfoImpl.create(2).withName("x").withType(PsiType.INT)
+      };
+    }, false);
+  }
+  
+  public void testRecordCanonicalConstructorReorder() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withName("y").withType(PsiType.INT),
+        ParameterInfoImpl.create(2).withName("z").withType(PsiType.INT),
+        ParameterInfoImpl.create(0).withName("x").withType(PsiType.INT)
+      };
+    }, false);
+  }
+  
+  public void testRecordCanonicalConstructorAddParameter() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("x").withType(PsiType.INT),
+        ParameterInfoImpl.create(-1).withName("y").withType(PsiType.INT)
+      };
+    }, false);
   }
 
   /* workers */

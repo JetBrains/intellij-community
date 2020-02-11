@@ -153,7 +153,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   @Override
   protected VisibilityPanelBase<String> createVisibilityControl() {
-    return new JavaComboBoxVisibilityPanel();
+    return new JavaComboBoxVisibilityPanel(myMethod.getAllowedModifiers());
   }
 
   @Override
