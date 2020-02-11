@@ -463,15 +463,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                 final boolean caseSensitively,
                                 @NotNull String text,
                                 @NotNull Collection<? super VirtualFile> result) {
-    myManager.startBatchFilesProcessingMode();
-    try {
-      Processor<? super VirtualFile> processor = Processors.cancelableCollectProcessor(result);
-      boolean success = processFilesWithText(scope, searchContext, caseSensitively, text, processor);
-      // success == false means exception in index
-    }
-    finally {
-      myManager.finishBatchFilesProcessingMode();
-    }
+    processFilesWithText(scope, searchContext, caseSensitively, text, Processors.cancelableCollectProcessor(result));
   }
 
   public boolean processFilesWithText(@NotNull final GlobalSearchScope scope,
