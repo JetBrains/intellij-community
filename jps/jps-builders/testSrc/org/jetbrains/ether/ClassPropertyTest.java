@@ -62,4 +62,8 @@ public class ClassPropertyTest extends IncrementalTestCase {
   public void testChangeExtends2() {
       doTest();
   }
+
+  public void testConvertToCheckedException() {
+      doTest();
+  }
 }

@@ -309,12 +309,17 @@ public class Mappings {
       myMappings = mappings;
     }
 
-    void appendDependents(final ClassFileRepr c, final TIntHashSet result) {
-      final TIntHashSet depClasses = myClassToClassDependency.get(c.name);
+    TIntHashSet appendDependents(final ClassFileRepr c, final TIntHashSet result) {
+      return appendDependents(c.name, result);
+    }
 
+    @Nullable
+    TIntHashSet appendDependents(int className, TIntHashSet result) {
+      final TIntHashSet depClasses = myClassToClassDependency.get(className);
       if (depClasses != null) {
         addAll(result, depClasses);
       }
+      return depClasses;
     }
 
     void propagateMemberAccessRec(final TIntHashSet acc, final boolean isField, final boolean root, final MemberComparator comparator, final int reflcass) {
@@ -687,10 +692,7 @@ public class Mappings {
         }
       }
 
-      final TIntHashSet depClasses = myClassToClassDependency.get(className);
-      if (depClasses != null) {
-        addAll(dependants, depClasses);
-      }
+      appendDependents(className, dependants);
 
       final TIntHashSet directSubclasses = myClassToSubclasses.get(className);
       if (directSubclasses != null) {
@@ -712,10 +714,7 @@ public class Mappings {
       affectedUsages.add(rootUsage);
 
       classes.forEach(p -> {
-        final TIntHashSet deps = myClassToClassDependency.get(p);
-        if (deps != null) {
-          addAll(dependents, deps);
-        }
+        appendDependents(p, dependents);
         debug("Affect field usage referenced of class ", p);
         affectedUsages.add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(myContext, p) : field.createUsage(myContext, p));
         return true;
@@ -727,10 +726,7 @@ public class Mappings {
       affectedUsages.add(UsageRepr.createImportStaticMemberUsage(myContext, memberName, ownerName));
 
       classes.forEach(cls -> {
-        final TIntHashSet deps = myClassToClassDependency.get(cls);
-        if (deps != null) {
-          addAll(dependents, deps);
-        }
+        appendDependents(cls, dependents);
         debug("Affect static member import usage referenced of class ", cls);
         affectedUsages.add(UsageRepr.createImportStaticMemberUsage(myContext, memberName, cls));
         return true;
@@ -742,24 +738,34 @@ public class Mappings {
       affectedUsages.add(UsageRepr.createImportStaticOnDemandUsage(myContext, ownerClass));
       
       classes.forEach(cls -> {
-        final TIntHashSet deps = myClassToClassDependency.get(cls);
-        if (deps != null) {
-          addAll(dependents, deps);
-        }
+        appendDependents(cls, dependents);
         debug("Affect static member on-demand import usage referenced of class ", cls);
         affectedUsages.add(UsageRepr.createImportStaticOnDemandUsage(myContext, cls));
         return true;
       });
     }
 
+    void affectMethodUsagesThrowing(ClassRepr aClass, TypeRepr.ClassType exceptionClass, final Set<? super UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
+      boolean shouldAffect = false;
+      for (MethodRepr method : aClass.getMethods()) {
+        if (method.myExceptions.contains(exceptionClass)) {
+          shouldAffect = true;
+          affectedUsages.add(method.createUsage(myContext, aClass.name));
+        }
+      }
+      if (shouldAffect) {
+        if (myDebugS.isDebugEnabled()) {
+          debug("Affecting usages of methods throwing "+ myContext.getValue(exceptionClass.className) + " exception; class ", aClass.name);
+        }
+        appendDependents(aClass, dependents);
+      }
+    }
+
     void affectMethodUsages(final MethodRepr method, final TIntHashSet subclasses, final UsageRepr.Usage rootUsage, final Set<? super UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
       affectedUsages.add(rootUsage);
       if (subclasses != null) {
         subclasses.forEach(p -> {
-          final TIntHashSet deps = myClassToClassDependency.get(p);
-          if (deps != null) {
-            addAll(dependents, deps);
-          }
+          appendDependents(p, dependents);
 
           debug("Affect method usage referenced of class ", p);
 
@@ -1225,12 +1231,7 @@ public class Mappings {
               final TIntHashSet yetPropagated = myPresent.propagateMethodAccess(method, it.name);
 
               if (isInheritor) {
-                final TIntHashSet deps = myClassToClassDependency.get(methodClass.name);
-
-                if (deps != null) {
-                  addAll(state.myDependants, deps);
-                }
-
+                myPresent.appendDependents(methodClass, state.myDependants);
                 myFuture.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, methodClass.name), state.myAffectedUsages, state.myDependants);
               }
 
@@ -1590,12 +1591,8 @@ public class Mappings {
             if (f.isStatic()) {
               myFuture.affectStaticMemberOnDemandUsages(subClass, propagated, state.myAffectedUsages, state.myDependants);
             }
+            myFuture.appendDependents(subClass, state.myDependants);
 
-            final TIntHashSet deps = myClassToClassDependency.get(subClass);
-
-            if (deps != null) {
-              addAll(state.myDependants, deps);
-            }
             return true;
           });
         }
@@ -1861,7 +1858,7 @@ public class Mappings {
             continue;
           }
 
-          myPresent.appendDependents(changedClass, state.myDependants);
+          final TIntHashSet directDeps = myPresent.appendDependents(changedClass, state.myDependants);
 
           if (superClassChanged || interfacesChanged || signatureChanged) {
             debug("Superclass changed: ", superClassChanged);
@@ -1875,6 +1872,17 @@ public class Mappings {
             debug("Interfaces removed: ", interfacesRemoved);
 
             myFuture.affectSubclasses(changedClass.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, extendsChanged || interfacesRemoved || signatureChanged, myCompiledFiles, null);
+
+            if (extendsChanged && directDeps != null) {
+              final TypeRepr.ClassType excClass = TypeRepr.createClassType(myContext, changedClass.name);
+              directDeps.forEach(depClass -> {
+                final ClassRepr depClassRepr = myPresent.classReprByName(depClass);
+                if (depClassRepr != null) {
+                  myPresent.affectMethodUsagesThrowing(depClassRepr, excClass, state.myAffectedUsages, state.myDependants);
+                }
+                return true;
+              });
+            }
 
             if (!changedClass.isAnonymous()) {
               final TIntHashSet parents = new TIntHashSet();
@@ -1892,10 +1900,7 @@ public class Mappings {
                     state.myUsageConstraints.put(usage, fileFilterConstraint);
                   }
 
-                  final TIntHashSet depClasses = myClassToClassDependency.get(className);
-                  if (depClasses != null) {
-                    addAll(state.myDependants, depClasses);
-                  }
+                  myPresent.appendDependents(className, state.myDependants);
                   return true;
                 });
               }
