@@ -42,7 +42,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     if (!(file.getFileType() instanceof PlainTextLikeFileType)) {
-      LOG.debug(String.format("File '%s' (type: '%s') is not a plaint text like file", file.getName(), file.getFileType()));
+      LOG.debug(String.format("File '%s' (type: '%s') is not a plain text like file", file.getName(), file.getFileType()));
       return null;
     }
 
@@ -153,6 +153,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   }
 
   private static UnknownFeature createExtensionFeature(String extension) {
+    //noinspection deprecation
     return new UnknownFeature(FileTypeFactory.FILE_TYPE_FACTORY_EP.getName(), "File Type", extension, extension);
   }
 }
