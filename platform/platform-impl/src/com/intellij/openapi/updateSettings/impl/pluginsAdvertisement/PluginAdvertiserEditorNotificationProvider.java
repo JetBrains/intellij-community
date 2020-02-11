@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -86,10 +87,10 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   private EditorNotificationPanel createPanel(final String extension, final Set<? extends PluginsAdvertiser.Plugin> plugins, @NotNull Project project) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
 
-    panel.setText("Plugins supporting " + extension + " files found.");
+    panel.setText(IdeBundle.message("plugins.advertiser.plugins.found", extension));
     final IdeaPluginDescriptor disabledPlugin = PluginsAdvertiser.getDisabledPlugin(plugins);
     if (disabledPlugin != null) {
-      panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", () -> {
+      panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.enable.plugin", disabledPlugin.getName()), () -> {
         myEnabledExtensions.add(extension);
         EditorNotifications.getInstance(project).updateAllNotifications();
         FeatureUsageData data = new FeatureUsageData()
@@ -99,7 +100,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
         PluginsAdvertiser.enablePlugins(project, Collections.singletonList(disabledPlugin));
       });
     } else if (hasNonBundledPlugin(plugins)) {
-      panel.createActionLabel("Install plugins", () -> {
+      panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugins"), () -> {
         Set<PluginId> pluginIds = new HashSet<>();
         for (PluginsAdvertiser.Plugin plugin : plugins) {
           pluginIds.add(PluginId.getId(plugin.myPluginId));
@@ -117,16 +118,16 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       if (PropertiesComponent.getInstance().isTrueValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
         return null;
       }
-      panel.setText(extension + " files are supported by " + PluginsAdvertiser.IDEA_ULTIMATE_EDITION);
+      panel.setText(IdeBundle.message("plugins.advertiser.extensions.supported.in.ultimate", extension));
 
-      panel.createActionLabel(PluginsAdvertiser.CHECK_ULTIMATE_EDITION_TITLE, () -> {
+      panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate"), () -> {
         myEnabledExtensions.add(extension);
         FeatureUsageData data = new FeatureUsageData().addData("source", "editor");
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "open.download.page", data);
         PluginsAdvertiser.openDownloadPage();
       });
 
-      panel.createActionLabel(PluginsAdvertiser.ULTIMATE_EDITION_SUGGESTION, () -> {
+      panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.ultimate"), () -> {
         FeatureUsageData data = new FeatureUsageData().addData("source", "editor");
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.ultimate", data);
         PropertiesComponent.getInstance().setValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION, "true");
@@ -135,7 +136,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     } else {
       return null;
     }
-    panel.createActionLabel("Ignore extension", () -> {
+    panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.extension"), () -> {
       FeatureUsageData data = new FeatureUsageData().addData("source", "editor");
       FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.extensions", data);
       UnknownFeaturesCollector.getInstance(project).ignoreFeature(createExtensionFeature(extension));

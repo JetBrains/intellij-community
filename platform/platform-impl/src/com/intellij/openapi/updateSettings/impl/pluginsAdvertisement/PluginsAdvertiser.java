@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.google.common.collect.ImmutableMap;
@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -47,11 +48,7 @@ public final class PluginsAdvertiser {
   private static final String CASHED_EXTENSIONS = "extensions.xml";
 
   public static final String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
-  public static final String IDEA_ULTIMATE_EDITION = "IntelliJ IDEA Ultimate";
-  public static final String ULTIMATE_EDITION_SUGGESTION = "Do not suggest Ultimate";
-  public static final String CHECK_ULTIMATE_EDITION_TITLE = "Try " + IDEA_ULTIMATE_EDITION;
-  public static final String DISPLAY_ID = "Plugins Suggestion";
-  public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup(DISPLAY_ID, NotificationDisplayType.STICKY_BALLOON, true);
+  public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Plugins Suggestion", NotificationDisplayType.STICKY_BALLOON, true);
   public static final String FUS_GROUP_ID = "plugins.advertiser";
 
   private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
@@ -66,7 +63,7 @@ public final class PluginsAdvertiser {
       request -> {
         final JsonReader jsonReader = new JsonReader(request.getReader());
         jsonReader.setLenient(true);
-        final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
+        final JsonElement jsonRootElement = JsonParser.parseReader(jsonReader);
         final List<Plugin> result = new ArrayList<>();
         for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
           final JsonObject jsonObject = jsonElement.getAsJsonObject();
@@ -90,7 +87,7 @@ public final class PluginsAdvertiser {
     processFeatureRequest(params, request -> {
       JsonReader jsonReader = new JsonReader(request.getReader());
       jsonReader.setLenient(true);
-      JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
+      JsonElement jsonRootElement = JsonParser.parseReader(jsonReader);
       Map<String, Set<Plugin>> result = new HashMap<>();
       for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
@@ -222,7 +219,7 @@ public final class PluginsAdvertiser {
   }
 
   public static void installAndEnable(@Nullable Project project, @NotNull Set<PluginId> pluginIds, boolean showDialog, @NotNull Runnable onSuccess) {
-    ProgressManager.getInstance().run(new Task.Modal(project, "Search for Plugins in Repository", true) {
+    ProgressManager.getInstance().run(new Task.Modal(project, IdeBundle.message("plugins.advertiser.task.searching.for.plugins"), true) {
       private final Set<PluginDownloader> myPlugins = new HashSet<>();
       private List<IdeaPluginDescriptor> myAllPlugins;
 
