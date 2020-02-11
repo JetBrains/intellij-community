@@ -26,7 +26,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
   abstract fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): Signature?
 
   /**
-   * Provides so special "marker ranges" for parameters in the declaration.
+   * Provides "marker ranges" for parameters in the declaration.
    *
    * Marker ranges are used to keep track of parameter identity when its name changes.
    * A good marker range must have high chances of staying the same while editing the signature (with help of a [RangeMarker], of course).
@@ -35,7 +35,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
    * Parameter type range is also a good marker because it's unlikely to change at the same time as the name changes.
    * @param declaration declaration in its current state.
    * Only PsiElement's that are classified as declarations by [SuggestedRefactoringSupport.isDeclaration] may be passed to this parameter.
-   * @return a list containing a marker range for each parameter, or null if no marker can be provided for this parameter
+   * @return a list containing a marker range for each parameter, or *null* if no marker can be provided for this parameter
    */
   abstract fun parameterMarkerRanges(declaration: PsiElement): List<TextRange?>
 
