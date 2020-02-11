@@ -3,6 +3,7 @@ package com.intellij.remote.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -133,6 +134,9 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     T remoteSdkData;
     try {
       remoteSdkData = getInterpreterForm().createSdkData();
+    }
+    catch (ProcessCanceledException ignored) {
+      return;
     }
     catch (RemoteSdkException e) {
       LOG.warn("Failed to create SDK data", e);
