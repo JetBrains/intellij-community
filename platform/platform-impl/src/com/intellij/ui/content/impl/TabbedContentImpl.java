@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -20,7 +20,7 @@ import java.util.Objects;
 /**
  * @author Konstantin Bulenkov
  */
-public class TabbedContentImpl extends ContentImpl implements TabbedContent {
+public final class TabbedContentImpl extends ContentImpl implements TabbedContent {
   private final List<Pair<String, JComponent>> myTabs = new ArrayList<>();
   @NotNull
   private String myPrefix;
@@ -163,11 +163,5 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
     }
 
     return true;
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
-    myTabs.clear();
   }
 }
