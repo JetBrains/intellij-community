@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.Disposable
@@ -26,7 +26,7 @@ class IncomingChangesViewProvider(private val project: Project) : ChangesViewCon
     createIncomingChangesBrowser().let {
       browser = it
       content.component = it
-      content.disposer = Disposable { browser = null }
+      content.setDisposer(Disposable { browser = null })
 
       project.messageBus.connect(it).subscribe(COMMITTED_TOPIC, IncomingChangesListener())
 
