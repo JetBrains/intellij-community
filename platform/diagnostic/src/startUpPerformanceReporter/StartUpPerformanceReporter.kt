@@ -54,6 +54,95 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
         compareTime(o1, o2)
       })
     }
+
+    class StartUpPerformanceReporterValues(val pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
+                                           val lastReport: ByteBuffer,
+                                           val lastMetrics: ObjectIntHashMap<String>)
+
+    fun logStats(projectName: String): StartUpPerformanceReporterValues? {
+      val items = mutableListOf<ActivityImpl>()
+      val instantEvents = mutableListOf<ActivityImpl>()
+      val activities = THashMap<String, MutableList<ActivityImpl>>()
+      val services = mutableListOf<ActivityImpl>()
+
+      val threadNameManager = ThreadNameManager()
+
+      var end = -1L
+
+      StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false),
+                                      Consumer { item ->
+                                        // process it now to ensure that thread will have first name (because report writer can process events in any order)
+                                        threadNameManager.getThreadName(item)
+
+                                        if (item.end == -1L) {
+                                          instantEvents.add(item)
+                                        }
+                                        else {
+                                          val category = item.category
+                                          if (category == null) {
+                                            items.add(item)
+                                            if (item.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
+                                              end = item.end
+                                            }
+                                          }
+                                          else if (category == ActivityCategory.APP_COMPONENT ||
+                                                   category == ActivityCategory.PROJECT_COMPONENT ||
+                                                   category == ActivityCategory.MODULE_COMPONENT ||
+                                                   category == ActivityCategory.APP_SERVICE ||
+                                                   category == ActivityCategory.PROJECT_SERVICE ||
+                                                   category == ActivityCategory.MODULE_SERVICE ||
+                                                   category == ActivityCategory.SERVICE_WAITING) {
+                                            services.add(item)
+                                          }
+                                          else {
+                                            activities.getOrPut(category.jsonName) { mutableListOf() }.add(item)
+                                          }
+                                        }
+                                      })
+
+      if (items.isEmpty()) {
+        return null
+      }
+
+      sortItems(items)
+
+      val pluginCostMap = computePluginCostMap()
+
+      val w = IdeaFormatWriter(activities, pluginCostMap, threadNameManager)
+      val startTime = items.first().start
+      for (item in items) {
+        val pluginId = item.pluginId ?: continue
+        StartUpMeasurer.doAddPluginCost(pluginId, item.category?.name ?: "unknown", item.end - item.start, pluginCostMap)
+      }
+
+      w.write(startTime, items, services, instantEvents, end, projectName)
+
+      val currentReport = w.toByteBuffer()
+
+      val perfFilePath = System.getProperty("idea.log.perf.stats.file")
+      val traceFilePath = System.getProperty("idea.log.perf.trace.file")
+      val mayLogReport = SystemProperties.getBooleanProperty("idea.log.perf.stats",
+                                                             ApplicationManager.getApplication().isInternal
+                                                             || ApplicationInfoEx.getInstanceEx().build.isSnapshot)
+
+      if (!perfFilePath.isNullOrBlank() && !ApplicationManager.getApplication().isUnitTestMode && mayLogReport) {
+        w.writeToLog(LOG)
+      }
+
+      if (!perfFilePath.isNullOrBlank()) {
+        LOG.info("StartUp Measurement report was written to: ${perfFilePath}")
+        Paths.get(perfFilePath).write(currentReport)
+      }
+
+      if (!traceFilePath.isNullOrBlank()) {
+        LOG.info("StartUp trace report was written to: ${traceFilePath}")
+        val traceEventFormat = TraceEventFormatWriter(startTime, instantEvents, threadNameManager)
+        Paths.get(traceFilePath).outputStream().writer().use {
+          traceEventFormat.write(items, activities, services, it)
+        }
+      }
+      return StartUpPerformanceReporterValues(pluginCostMap, currentReport, w.publicStatMetrics)
+    }
   }
 
   override fun getMetrics() = lastMetrics
@@ -131,93 +220,14 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
   @Synchronized
   private fun logStats(projectName: String) {
-    val items = mutableListOf<ActivityImpl>()
-    val instantEvents = mutableListOf<ActivityImpl>()
-    val activities = THashMap<String, MutableList<ActivityImpl>>()
-    val services = mutableListOf<ActivityImpl>()
-
-    val threadNameManager = ThreadNameManager()
-
-    var end = -1L
-
-    StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false), Consumer { item ->
-      // process it now to ensure that thread will have first name (because report writer can process events in any order)
-      threadNameManager.getThreadName(item)
-
-      if (item.end == -1L) {
-        instantEvents.add(item)
-      }
-      else {
-        val category = item.category
-        if (category == null) {
-          items.add(item)
-          if (item.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
-            end = item.end
-          }
-        }
-        else if (category == ActivityCategory.APP_COMPONENT ||
-                 category == ActivityCategory.PROJECT_COMPONENT ||
-                 category == ActivityCategory.MODULE_COMPONENT ||
-                 category == ActivityCategory.APP_SERVICE ||
-                 category == ActivityCategory.PROJECT_SERVICE ||
-                 category == ActivityCategory.MODULE_SERVICE ||
-                 category == ActivityCategory.SERVICE_WAITING) {
-          services.add(item)
-        }
-        else {
-          activities.getOrPut(category.jsonName) { mutableListOf() }.add(item)
-        }
-      }
-    })
-
-    if (items.isEmpty()) {
+    val params = StartUpPerformanceReporter.logStats(projectName)
+    if (params != null) {
+      this.pluginCostMap = params.pluginCostMap
+      lastReport = params.lastReport
+      lastMetrics = params.lastMetrics
+    }
+    else {
       return
-    }
-
-    if (end == -1L) {
-      LOG.warn("Cannot find activity `${Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES}` to compute end of start-up")
-      return
-    }
-
-    sortItems(items)
-
-    val pluginCostMap = computePluginCostMap()
-    this.pluginCostMap = pluginCostMap
-
-    val w = IdeaFormatWriter(activities, pluginCostMap, threadNameManager)
-    val startTime = items.first().start
-    for (item in items) {
-      val pluginId = item.pluginId ?: continue
-      StartUpMeasurer.doAddPluginCost(pluginId, item.category?.name ?: "unknown", item.end - item.start, pluginCostMap)
-    }
-
-    w.write(startTime, items, services, instantEvents, end, projectName)
-
-    val currentReport = w.toByteBuffer()
-    lastReport = currentReport
-    lastMetrics = w.publicStatMetrics
-
-    val perfFilePath = System.getProperty("idea.log.perf.stats.file")
-    val traceFilePath = System.getProperty("idea.log.perf.trace.file")
-    val mayLogReport = SystemProperties.getBooleanProperty("idea.log.perf.stats",
-                                                           ApplicationManager.getApplication().isInternal
-                                                           || ApplicationInfoEx.getInstanceEx().build.isSnapshot)
-
-    if (!perfFilePath.isNullOrBlank() && !ApplicationManager.getApplication().isUnitTestMode && mayLogReport) {
-      w.writeToLog(LOG)
-    }
-
-    if (!perfFilePath.isNullOrBlank()) {
-      LOG.info("StartUp Measurement report was written to: ${perfFilePath}")
-      Paths.get(perfFilePath).write(currentReport)
-    }
-
-    if (!traceFilePath.isNullOrBlank()) {
-      LOG.info("StartUp trace report was written to: ${traceFilePath}")
-      val traceEventFormat = TraceEventFormatWriter(startTime, instantEvents, threadNameManager)
-      Paths.get(traceFilePath).outputStream().writer().use {
-        traceEventFormat.write(items, activities, services, it)
-      }
     }
   }
 }
