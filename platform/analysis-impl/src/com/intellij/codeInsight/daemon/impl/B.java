@@ -132,6 +132,11 @@ class B implements AnnotationBuilder {
       fixes.add(this);
       return B.this;
     }
+
+    @Override
+    public String toString() {
+      return fix+(range==null?"":" at "+range)+(batch == null ? "" : " batch")+(universal == null ? "" : " universal");
+    }
   }
 
   @NotNull
