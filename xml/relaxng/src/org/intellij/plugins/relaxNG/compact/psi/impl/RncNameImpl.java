@@ -150,7 +150,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
-    return "Unresolved namespace prefix ''{0}''";
+    return XmlBundle.message("unresolved.namespace.prefix.0");
   }
 
   @Override

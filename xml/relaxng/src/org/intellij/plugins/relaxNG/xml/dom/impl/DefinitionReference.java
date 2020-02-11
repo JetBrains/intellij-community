@@ -34,6 +34,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.xml.XmlBundle;
 import org.intellij.plugins.relaxNG.model.Define;
 import org.intellij.plugins.relaxNG.model.resolve.DefinitionResolver;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
@@ -138,6 +139,6 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
   @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
-    return "Unresolved pattern reference ''{0}''";
+    return XmlBundle.message("unresolved.pattern.reference.0");
   }
 }

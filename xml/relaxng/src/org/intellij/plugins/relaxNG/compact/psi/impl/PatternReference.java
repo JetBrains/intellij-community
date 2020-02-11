@@ -142,7 +142,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
-    return "Unresolved pattern reference ''{0}''";
+    return XmlBundle.message("unresolved.pattern.reference.0");
   }
 
   @Override
