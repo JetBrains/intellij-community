@@ -13,6 +13,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
@@ -50,8 +52,8 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
       PsiClass containingClass = recordComponent.getContainingClass();
       if (containingClass == null) return null;
 
-      PsiMethod[] methods = containingClass.findMethodsByName(name, false);
-      if (methods.length != 1) return null;
+      List<PsiMethod> methods = ContainerUtil.filter(containingClass.findMethodsByName(name, false), m -> m.getParameterList().isEmpty());
+      if (methods.size() != 1) return null;
 
       PsiField field = containingClass.findFieldByName(name, false);
       if (field == null) return null;
@@ -60,7 +62,7 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
       PsiParameter parameter = compactConstructor != null 
                                ? ContainerUtil.find(compactConstructor.getParameterList().getParameters(), p -> name.equals(p.getName())) 
                                : null;
-      return new RecordNavigationInfo(methods[0], field, parameter, name);
+      return new RecordNavigationInfo(methods.get(0), field, parameter, name);
     });
   }
 

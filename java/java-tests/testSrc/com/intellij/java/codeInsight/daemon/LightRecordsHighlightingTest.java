@@ -50,6 +50,10 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
     doTestRename();
   }
 
+  public void testRenameGetterOverloadPresent() {
+    doTestRename();
+  }
+
   private void doTestRename() {
     doTest();
     myFixture.renameElementAtCaret("baz");
