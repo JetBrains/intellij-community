@@ -55,7 +55,8 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       }
       final PsiClass aClass = method.getContainingClass();
       if (!InheritanceUtil.isInheritor(aClass, "org.slf4j.Logger") &&
-          !InheritanceUtil.isInheritor(aClass, "org.apache.logging.log4j.Logger")) {
+          !InheritanceUtil.isInheritor(aClass, "org.apache.logging.log4j.Logger") &&
+          !InheritanceUtil.isInheritor(aClass, "org.apache.logging.log4j.LogBuilder")) {
         return;
       }
       final PsiParameter[] parameters = method.getParameterList().getParameters();
