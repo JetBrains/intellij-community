@@ -45,9 +45,9 @@ val PsiElement.parentsWithSelf: Sequence<PsiElement>
 val PsiElement.parents: Sequence<PsiElement>
   get() = parentsWithSelf.drop(1)
 
-fun PsiElement.siblings(forward: Boolean = true, withItself: Boolean = true): Sequence<PsiElement> {
+fun PsiElement.siblings(forward: Boolean = true, withSelf: Boolean = true): Sequence<PsiElement> {
   val seed = when {
-    withItself -> this
+    withSelf -> this
     forward -> nextSibling
     else -> prevSibling
   }
