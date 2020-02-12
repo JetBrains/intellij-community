@@ -262,7 +262,9 @@ public class RepositoryHelper {
       }
 
       //if plugin is paid (has `productCode`) and IDE is not JetBrains "ultimate" then MARKETPLACE_PLUGIN_ID is required
-      if (isPaidPluginsRequireMarketplacePlugin && node.getProductCode() != null) {
+      if (isPaidPluginsRequireMarketplacePlugin &&
+          node.getProductCode() != null &&
+          !node.getDepends().contains(PluginId.getId(MARKETPLACE_PLUGIN_ID))) {
         node.addDepends(MARKETPLACE_PLUGIN_ID);
       }
     }
