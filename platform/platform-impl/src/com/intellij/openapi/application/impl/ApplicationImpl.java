@@ -178,8 +178,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @TestOnly
   public void disposeContainer() {
-    startDispose();
-    runWriteAction(() -> Disposer.dispose(this));
+    runWriteAction(() -> {
+      startDispose();
+      Disposer.dispose(this);
+    });
     Disposer.assertIsEmpty();
   }
 
@@ -617,6 +619,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         return;
       }
 
+      stopServicePreloading();
+
       lifecycleListener.appWillBeClosed(restart);
       LifecycleUsageTriggerCollector.onIdeClose(restart);
 
@@ -690,7 +694,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       @NotNull
       @Override
       public String getDoNotShowMessage() {
-        return "Do not ask me again";
+        return IdeBundle.message("do.not.ask.me.again");
       }
     };
 
