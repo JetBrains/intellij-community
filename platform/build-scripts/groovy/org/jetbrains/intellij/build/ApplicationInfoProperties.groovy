@@ -59,10 +59,10 @@ class ApplicationInfoProperties {
     shortCompanyName = companyTag.@shortName ?: shortenCompanyName(companyName)
 
     def svgPath = root.icon.first().@svg
-    svgRelativePath = isEAP && !root."icon-eap".isEmpty() ? (root."icon-eap".first().@svg ?: svgPath) : svgPath
+    svgRelativePath = isEAP ? (root."icon-eap"[0]?.@svg ?: svgPath) : svgPath
     svgProductIcons = (root.icon + root."icon-eap").collectMany { [it?.@"svg", it?.@"svg-small"] }.findAll { it != null }
 
-    patchesUrl = root."update-urls".first()?.@"patches"
+    patchesUrl = root."update-urls"[0]?.@"patches"
   }
 
   String getUpperCaseProductName() { shortProductName.toUpperCase() }
