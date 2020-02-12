@@ -102,6 +102,9 @@ public class DemorgansIntention extends MutablyNamedIntention {
   }
 
   private static String safeText(PsiExpression expression) {
+    if (!(expression instanceof PsiLiteralExpression)) {
+      throw new IllegalArgumentException();
+    }
     final String text = expression.getText(); // don't need CommentTracker because literal can't contain comment
     final int length = text.length();
     if (length != 0 && text.charAt(0) == '"' && (length == 1 || text.charAt(length - 1) != '"')) {
