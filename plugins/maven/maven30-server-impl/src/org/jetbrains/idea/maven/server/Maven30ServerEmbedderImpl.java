@@ -572,7 +572,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     Collection<MavenExecutionResult> results =
       doResolveProject(files, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles),
                        Collections.<ResolutionListener>singletonList(listener));
-    return ContainerUtilRt.mapNotNull(results, new Function<MavenExecutionResult, MavenServerExecutionResult>() {
+    return ContainerUtilRt.map2List(results, new Function<MavenExecutionResult, MavenServerExecutionResult>() {
       @Override
       public MavenServerExecutionResult fun(MavenExecutionResult result) {
         try {
