@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeyMapBundle
-import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
@@ -180,10 +179,12 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
         fullRow { checkBox(cdMoveCursorOnButton) }
         fullRow { checkBox(cdHideNavigationPopups) }
         fullRow { checkBox(cdDnDWithAlt) }
-        fullRow {
-          buttonFromAction(message("background.image.button"), ActionPlaces.UNKNOWN,
-                           ActionManager.getInstance().getAction("Images.SetBackgroundImage"))
-            .applyToComponent { isEnabled = ProjectManager.getInstance().openProjects.isNotEmpty() }
+        val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
+        if (backgroundImageAction != null) {
+          fullRow {
+            buttonFromAction(message("background.image.button"), ActionPlaces.UNKNOWN, backgroundImageAction)
+              .applyToComponent { isEnabled = ProjectManager.getInstance().openProjects.isNotEmpty() }
+          }
         }
       }
       if (Registry.`is`("ide.transparency.mode.for.windows") &&
