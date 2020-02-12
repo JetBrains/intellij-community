@@ -25,7 +25,6 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.FilterComponent
 import com.intellij.ui.JBColor
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.text.DateFormatUtil
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import javax.swing.BorderFactory
@@ -36,7 +35,8 @@ const val eventLogToolWindowsId = "Statistics Event Log"
 
 class StatisticsEventLogToolWindow(project: Project, private val recorderId: String) : SimpleToolWindowPanel(false, true), Disposable {
   private val consoleLog = StatisticsEventLogConsole(project, StatisticsLogFilterModel())
-  private val eventLogListener: (LogEvent) -> Unit = { logEvent -> consoleLog.addLogLine(buildLogMessage(logEvent)) }
+  private val messageBuilder = StatisticsEventLogMessageBuilder()
+  private val eventLogListener: (LogEvent) -> Unit = { logEvent -> consoleLog.addLogLine(messageBuilder.buildLogMessage(logEvent)) }
 
   init {
     val topPanel = JPanel(FlowLayout(FlowLayout.LEFT))
@@ -75,52 +75,7 @@ class StatisticsEventLogToolWindow(project: Project, private val recorderId: Str
   }
 
   companion object {
-    private val systemFields = setOf("last", "created")
-    private const val projectIdPrefixSize = 8
-    private const val projectIdSuffixSize = 2
-    private const val maxProjectIdSize = projectIdPrefixSize + projectIdSuffixSize
     val rejectedValidationTypes = setOf(REJECTED, INCORRECT_RULE, UNDEFINED_RULE, UNREACHABLE_WHITELIST, PERFORMANCE_ISSUE)
-
-    fun buildLogMessage(logEvent: LogEvent): String {
-      return buildString {
-        append(DateFormatUtil.formatTimeWithSeconds(logEvent.time))
-        append(" - [\"${logEvent.group.id}\", v${logEvent.group.version}]: \"${logEvent.event.id}\" ")
-        append("{")
-        append(eventDataToString(logEvent.event.data))
-        append("}")
-      }
-    }
-
-    private fun eventDataToString(eventData: Map<String, Any>): String {
-      return eventData.filter { (key, _) -> !systemFields.contains(key) }
-        .map { (key, value) -> "\"$key\":${valueToString(value, key)}" }
-        .joinToString(", ")
-    }
-
-    private fun valueToString(value: Any, key: String): String =
-      if (value is Collection<*>) {
-        val values = value.joinToString { "\"${it.toString()}\"" }
-        "[$values]"
-      }
-      else {
-        var valueAsString = value.toString()
-        if (key == "project") {
-          valueAsString = shortenProjectId(valueAsString)
-        }
-        "\"$valueAsString\""
-      }
-
-    private fun shortenProjectId(projectId: String): String {
-      val length = projectId.length
-      val isRejected = rejectedValidationTypes.any { it.description == projectId }
-      if (!isRejected && projectId.isNotBlank() && length > maxProjectIdSize) {
-        return "${projectId.substring(0, projectIdPrefixSize)}...${projectId.substring(length - projectIdSuffixSize, length)}"
-      }
-      else {
-        return projectId
-      }
-    }
-
   }
 }
 

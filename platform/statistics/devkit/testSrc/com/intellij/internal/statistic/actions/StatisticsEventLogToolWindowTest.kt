@@ -6,8 +6,8 @@ import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.LogEventAction
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
+import com.intellij.internal.statistic.toolwindow.StatisticsEventLogMessageBuilder
 import com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindow
-import com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindow.Companion.buildLogMessage
 import com.intellij.internal.statistic.toolwindow.StatisticsLogFilterModel
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.DateFormatUtil
@@ -26,9 +26,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     action.addData("project", "5410c65eafb1f0abd78c6d9bdf33752f13c17b17ed57c3ae26801ae6ee7d17ea")
     action.addData("plugin_type", "PLATFORM")
 
-    val actual = buildLogMessage(buildLogEvent(action))
-    assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" {\"plugin_type\":\"PLATFORM\", \"project\":\"5410c65e...ea\"}",
-                 actual)
+    doTestCountCollector("{\"plugin_type\":\"PLATFORM\", \"project\":\"5410c65e...ea\"}", action)
   }
 
   @Test
@@ -37,9 +35,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     val projectId = "12345"
     action.addData("project", projectId)
 
-    val actual = buildLogMessage(buildLogEvent(action))
-    assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" {\"project\":\"$projectId\"}",
-                 actual)
+    doTestCountCollector("{\"project\":\"$projectId\"}", action)
   }
 
   @Test
@@ -48,9 +44,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     action.addData("last", "1564643442610")
     action.addData("created", "1564643442610")
 
-    val actual = buildLogMessage(buildLogEvent(action))
-    assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" {}",
-                 actual)
+    doTestCountCollector("{}", action)
   }
 
   @Test
@@ -59,7 +53,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     val action = LogEventAction(incorrectEventId)
 
     val filterModel = StatisticsLogFilterModel()
-    val processingResult = filterModel.processLine(buildLogMessage(buildLogEvent(action)))
+    val processingResult = filterModel.processLine(StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action)))
     assertEquals(processingResult.key, ProcessOutputType.STDERR)
   }
 
@@ -70,7 +64,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     action.addData("project", UNDEFINED_RULE.description)
 
     val filterModel = StatisticsLogFilterModel()
-    val processingResult = filterModel.processLine(buildLogMessage(buildLogEvent(action)))
+    val processingResult = filterModel.processLine(StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action)))
     assertEquals(processingResult.key, ProcessOutputType.STDERR)
   }
 
@@ -82,16 +76,28 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
                  StatisticsEventLogToolWindow.rejectedValidationTypes.contains(resultType) || correctValidationTypes.contains(resultType))
     }
   }
+
   @Test
   fun testHandleCollectionsInEventData() {
     val action = LogEventAction(eventId)
     action.addData("dataKey", listOf("1", "2", "3"))
 
-    val actual = buildLogMessage(buildLogEvent(action))
-    assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" {\"dataKey\":[\"1\", \"2\", \"3\"]}",
-                 actual)
+    doTestCountCollector("{\"dataKey\":[\"1\", \"2\", \"3\"]}", action)
   }
 
+  @Test
+  fun testLogCountCollectors() {
+    val count = 2
+    val action = LogEventAction(eventId, false, count)
+
+    val actual = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action))
+    assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" (count=${count}) {}", actual)
+  }
+
+  private fun doTestCountCollector(expectedEventDataPart: String, action: LogEventAction) {
+    val actual = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action))
+    assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" $expectedEventDataPart", actual)
+  }
 
   private fun buildLogEvent(action: LogEventAction) = LogEvent("2e5b2e32e061", "193.1801", "176", eventTime,
                                                                eventGroup, groupVersion, "32", action)
