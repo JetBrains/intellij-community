@@ -148,7 +148,12 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   }
 
   void doDispose() {
-    SwingUtilities.invokeLater(() -> super.dispose());
+    if (ProjectFrameHelper.isTemporaryDisposed(this)) {
+      super.dispose();
+    }
+    else {
+      SwingUtilities.invokeLater(() -> super.dispose());
+    }
   }
 
   protected final class AccessibleIdeFrameImpl extends AccessibleJFrame {

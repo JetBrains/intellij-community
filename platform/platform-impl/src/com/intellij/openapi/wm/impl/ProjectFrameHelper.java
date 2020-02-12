@@ -502,9 +502,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     myFrameDecorator = null;
   }
 
-  private static boolean isTemporaryDisposed(@Nullable JFrame frame) {
-    JRootPane rootPane = frame == null ? null : frame.getRootPane();
-    return rootPane != null && rootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) != null;
+  static boolean isTemporaryDisposed(@Nullable JFrame frame) {
+    return UIUtil.isClientPropertyTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
   }
 
   @NotNull
