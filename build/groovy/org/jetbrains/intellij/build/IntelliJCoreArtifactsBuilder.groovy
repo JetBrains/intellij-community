@@ -73,6 +73,8 @@ class IntelliJCoreArtifactsBuilder {
       AntBuilder ant = buildContext.ant
       ant.mkdir(dir: coreArtifactDir)
 
+      ant.echo(message: "These artifacts are deprecated, use artifacts from IntelliJ Artifacts Repository (http://www.jetbrains.org/intellij/sdk/docs/reference_guide/intellij_artifacts.html) instead",
+               file: "$coreArtifactDir/README.txt")
       List<String> analysisModules = ANALYSIS_API_MODULES + ANALYSIS_IMPL_MODULES
       List<String> versionedLibs = VERSIONED_LIBRARIES
       List<String> unversionedLibs = UNVERSIONED_LIBRARIES
@@ -87,7 +89,7 @@ class IntelliJCoreArtifactsBuilder {
           module("intellij.java.psi")
           module("intellij.java.psi.impl")
         }
-        jar("intellij-core-analysis.jar") {
+        jar("intellij-core-analysis-deprecated.jar") {
           analysisModules.each { module it }
         }
         versionedLibs.each { projectLibrary(it) }
