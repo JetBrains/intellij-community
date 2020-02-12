@@ -6,7 +6,7 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.parents
+import com.intellij.psi.util.parentsWithSelf
 
 /**
  * Language extension to implement to support suggested Rename and/or Change Signature refactorings.
@@ -201,6 +201,6 @@ interface SuggestedRefactoringSupport {
 
 fun SuggestedRefactoringSupport.declarationByOffset(psiFile: PsiFile, offset: Int): PsiElement? {
   return psiFile.findElementAt(offset)
-    ?.parents()
+    ?.parentsWithSelf
     ?.firstOrNull { isDeclaration(it) }
 }

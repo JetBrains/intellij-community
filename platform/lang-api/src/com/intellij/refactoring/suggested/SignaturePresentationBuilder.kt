@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
-import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
-import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.Effect
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment.*
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 
 typealias ParameterFragmentsBuilder = (
   fragments: MutableList<TextFragment>,
@@ -37,6 +37,7 @@ abstract class SignaturePresentationBuilder(
   abstract fun buildPresentation()
 
   protected fun effect(value: String, otherValue: String?): Effect {
+    fragments.asSequence()
     return if (otherValue.isNullOrEmpty()) {
       if (isOldSignature) Effect.Removed else Effect.Added
     }

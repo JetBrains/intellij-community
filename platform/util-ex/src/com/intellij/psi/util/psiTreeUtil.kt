@@ -24,11 +24,19 @@ fun <T : PsiElement> PsiElement.parentOfType(vararg classes: KClass<out T>): T? 
 
 inline fun <reified T : PsiElement> PsiElement.parentsOfType(): Sequence<T> = parentsOfType(T::class.java)
 
-fun <T : PsiElement> PsiElement.parentsOfType(clazz: Class<out T>): Sequence<T> = parents().filterIsInstance(clazz)
+fun <T : PsiElement> PsiElement.parentsOfType(clazz: Class<out T>): Sequence<T> = parentsWithSelf.filterIsInstance(clazz)
 
-fun PsiElement.parents(): Sequence<PsiElement> = generateSequence(this) { it.parent }
+@Deprecated("Use PsiElement.parentsWithSelf property", ReplaceWith("parentsWithSelf"))
+fun PsiElement.parents(): Sequence<PsiElement> = parentsWithSelf
 
-fun PsiElement.strictParents(): Sequence<PsiElement> = parents().drop(1)
+@Deprecated("Use PsiElement.parents property", ReplaceWith("parents"))
+fun PsiElement.strictParents(): Sequence<PsiElement> = parents
+
+val PsiElement.parentsWithSelf: Sequence<PsiElement>
+  get() = generateSequence(this) { if (it is PsiFile) null else it.parent }
+
+val PsiElement.parents: Sequence<PsiElement>
+  get() = parentsWithSelf.drop(1)
 
 fun PsiElement.prevLeaf(skipEmptyElements: Boolean = false): PsiElement? = PsiTreeUtil.prevLeaf(this, skipEmptyElements)
 

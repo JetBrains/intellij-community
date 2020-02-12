@@ -39,7 +39,7 @@ internal fun PsiExpression.isWithinConstructorCall(): Boolean {
   val owner = parentOfType<PsiModifierListOwner>() as? PsiMethod ?: return false
   if (!owner.isConstructor) return false
 
-  val parent = parents().firstOrNull { it !is PsiExpression } as? PsiExpressionList ?: return false
+  val parent = parentsWithSelf.firstOrNull { it !is PsiExpression } as? PsiExpressionList ?: return false
   val grandParent = parent.parent as? PsiMethodCallExpression ?: return false
 
   val calleText = grandParent.methodExpression.text
