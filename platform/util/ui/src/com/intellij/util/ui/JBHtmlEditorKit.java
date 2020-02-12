@@ -36,12 +36,22 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   private final StyleSheet style;
   private final HyperlinkListener myHyperlinkListener;
+  private final boolean myDisableLinkedCss;
 
   public JBHtmlEditorKit() {
     this(true);
   }
 
   public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
+    this(noGapsBetweenParagraphs, false);
+  }
+
+  /**
+   * @param disableLinkedCss Disables loading of linked CSS (from URL referenced in {@code <link>} HTML tags). JEditorPane does this loading
+   *                         synchronously during {@link JEditorPane#setText(String)} operation (usually invoked in EDT).
+   */
+  public JBHtmlEditorKit(boolean noGapsBetweenParagraphs, boolean disableLinkedCss) {
+    myDisableLinkedCss = disableLinkedCss;
     style = createStyleSheet();
     if (noGapsBetweenParagraphs) style.addRule("p { margin-top: 0; }");
     myHyperlinkListener = new HyperlinkListener() {
@@ -84,7 +94,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     StyleSheet ss = new StyleSheetCompressionThreshold();
     ss.addStyleSheet(styles);
 
-    HTMLDocument doc = new HTMLDocument(ss);
+    HTMLDocument doc = myDisableLinkedCss ? new HTMLDocumentNoLinkedCss(ss) : new HTMLDocument(ss);
     doc.setParser(getParser());
     doc.setAsynchronousLoadPriority(4);
     doc.setTokenThreshold(100);
@@ -320,6 +330,77 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
           return vAlign;
         }
         return super.getAlignment(axis);
+      }
+    }
+  }
+
+  private static class HTMLDocumentNoLinkedCss extends HTMLDocument {
+    private HTMLDocumentNoLinkedCss(StyleSheet styles) {
+      super(styles);
+    }
+
+    @Override
+    public ParserCallback getReader(int pos) {
+      return new CallbackWrapper(super.getReader(pos));
+    }
+
+    @Override
+    public ParserCallback getReader(int pos, int popDepth, int pushDepth, HTML.Tag insertTag) {
+      return new CallbackWrapper(super.getReader(pos, popDepth, pushDepth, insertTag));
+    }
+
+    private static class CallbackWrapper extends ParserCallback {
+      private final ParserCallback delegate;
+      private int depth;
+
+      private CallbackWrapper(ParserCallback delegate) {this.delegate = delegate;}
+
+      @Override
+      public void flush() throws BadLocationException {
+        delegate.flush();
+      }
+
+      @Override
+      public void handleText(char[] data, int pos) {
+        if (depth > 0) return;
+        delegate.handleText(data, pos);
+      }
+
+      @Override
+      public void handleComment(char[] data, int pos) {
+        if (depth > 0) return;
+        delegate.handleComment(data, pos);
+      }
+
+      @Override
+      public void handleStartTag(HTML.Tag t, MutableAttributeSet a, int pos) {
+        if (t == HTML.Tag.LINK) depth++;
+        if (depth > 0) return;
+        delegate.handleStartTag(t, a, pos);
+      }
+
+      @Override
+      public void handleEndTag(HTML.Tag t, int pos) {
+        if (t == HTML.Tag.LINK) depth--;
+        LOG.assertTrue(depth >= 0);
+        if (depth > 0) return;
+        delegate.handleEndTag(t, pos);
+      }
+
+      @Override
+      public void handleSimpleTag(HTML.Tag t, MutableAttributeSet a, int pos) {
+        if (t == HTML.Tag.LINK) return;
+        delegate.handleSimpleTag(t, a, pos);
+      }
+
+      @Override
+      public void handleError(String errorMsg, int pos) {
+        delegate.handleError(errorMsg, pos);
+      }
+
+      @Override
+      public void handleEndOfLineString(String eol) {
+        delegate.handleEndOfLineString(eol);
       }
     }
   }
