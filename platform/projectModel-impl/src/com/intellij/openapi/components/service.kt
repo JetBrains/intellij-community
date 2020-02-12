@@ -14,8 +14,6 @@ inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getAppl
 
 inline fun <reified T : Any> Project.service(): T = getService(T::class.java)
 
-inline fun <reified T : Any> Project.serviceOrNull(): T? = getService(T::class.java)
-
 inline fun <reified T : Any> Project.serviceIfCreated(): T? = getServiceIfCreated(T::class.java)
 
 val ComponentManager.stateStore: IComponentStore
