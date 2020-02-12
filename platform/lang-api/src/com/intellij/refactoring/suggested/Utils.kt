@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.nextLeaf
 
 val DocumentEvent.oldRange: TextRange
   get() = TextRange(offset, offset + oldLength)
@@ -41,7 +41,7 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
   var leaf = findElementAt(range.startOffset) ?: return false
   var leafRange = leaf.textRange
   if (leafRange.startOffset < range.startOffset) {
-    leaf = PsiTreeUtil.nextLeaf(leaf, true) ?: return false
+    leaf = leaf.nextLeaf(skipEmptyElements = true) ?: return false
     leafRange = leaf.textRange
   }
   assert(leafRange.startOffset >= range.startOffset)
@@ -49,7 +49,7 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
   var endOffset = leafRange.endOffset
   while (endOffset <= range.endOffset) {
     if (leaf is PsiErrorElement || leaf.parent is PsiErrorElement) return true
-    leaf = PsiTreeUtil.nextLeaf(leaf, false) ?: return false
+    leaf = leaf.nextLeaf() ?: return false
     endOffset += leaf.textLength
   }
   return false

@@ -30,6 +30,32 @@ fun PsiElement.parents(): Sequence<PsiElement> = generateSequence(this) { it.par
 
 fun PsiElement.strictParents(): Sequence<PsiElement> = parents().drop(1)
 
+fun PsiElement.prevLeaf(skipEmptyElements: Boolean = false): PsiElement? = PsiTreeUtil.prevLeaf(this, skipEmptyElements)
+
+fun PsiElement.nextLeaf(skipEmptyElements: Boolean = false): PsiElement? = PsiTreeUtil.nextLeaf(this, skipEmptyElements)
+
+val PsiElement.prevLeafs: Sequence<PsiElement>
+  get() = generateSequence({ prevLeaf() }, { it.prevLeaf() })
+
+val PsiElement.nextLeafs: Sequence<PsiElement>
+  get() = generateSequence({ nextLeaf() }, { it.nextLeaf() })
+
+fun PsiElement.prevLeaf(filter: (PsiElement) -> Boolean): PsiElement? {
+  var leaf = prevLeaf()
+  while (leaf != null && !filter(leaf)) {
+    leaf = leaf.prevLeaf()
+  }
+  return leaf
+}
+
+fun PsiElement.nextLeaf(filter: (PsiElement) -> Boolean): PsiElement? {
+  var leaf = nextLeaf()
+  while (leaf != null && !filter(leaf)) {
+    leaf = leaf.nextLeaf()
+  }
+  return leaf
+}
+
 private typealias ElementAndOffset = Pair<PsiElement, Int>
 
 /**
