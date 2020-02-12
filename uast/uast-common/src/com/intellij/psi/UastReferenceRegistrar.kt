@@ -123,7 +123,7 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
                                                            priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
   this.registerUastReferenceProvider(usagePattern, provider, priority)
 
-  if (Registry.`is`("uast.references.by.usage")) {
+  if (Registry.`is`("uast.references.by.usage", false)) {
     this.registerUastReferenceProvider(expressionPattern, object : UastReferenceProvider(UExpression::class.java) {
       override fun acceptsTarget(target: PsiElement): Boolean {
         return !target.project.isDefault && provider.acceptsTarget(target)
