@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -31,6 +32,8 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
       "public interface Logger {" +
       "  void info(String var2);" +
       "  void fatal(String var1);" +
+      "  LogBuilder atDebug();" +
+      "  LogBuilder atInfo();" +
       "}",
 
       "package org.apache.logging.log4j;" +
@@ -38,6 +41,12 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
       "  public static Logger getLogger() {" +
       "    return null;" +
       "  }" +
+      "}",
+
+      "package org.apache.logging.log4j;" +
+      "public interface LogBuilder {" +
+      "  void log(String format, Object p0);" +
+      "  void log(String format, Object... params);" +
       "}"
     };
   }
@@ -72,6 +81,17 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
            "  void m(int i) {" +
            "    LOG./*Non-constant string concatenation as argument to 'info()' logging call*/info/**/(\"hello? \" + i);" +
            "    LOG./*Non-constant string concatenation as argument to 'fatal()' logging call*/fatal/**/(\"you got me \" + i);" +
+           "  }" +
+           "}");
+  }
+
+  public void testLog4j2LogBuilder() {
+    doTest("import org.apache.logging.log4j.*;" +
+           "class Logging {" +
+           "  private static final Logger LOG = LogManager.getLogger();" +
+           "  void m(int i) {" +
+           "    LOG.atDebug()./*Non-constant string concatenation as argument to 'log()' logging call*/log/**/(\"hello? \" + i);" +
+           "    LOG.atInfo()./*Non-constant string concatenation as argument to 'log()' logging call*/log/**/(\"you got me \" + i);" +
            "  }" +
            "}");
   }
