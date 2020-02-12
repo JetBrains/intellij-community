@@ -40,7 +40,10 @@ public class ThisEvaluator implements Evaluator {
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Value objRef = myTraverser.traverse((ObjectReference)context.computeThisObject());
+    Value objRef = context.computeThisObject(); // may be a primitive
+    if (objRef instanceof ObjectReference) {
+      objRef = myTraverser.traverse((ObjectReference)objRef);
+    }
     if(objRef == null) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.this.not.avalilable"));
     }
