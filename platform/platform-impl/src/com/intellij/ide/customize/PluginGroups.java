@@ -182,19 +182,21 @@ public class PluginGroups {
     groups.add(new Group("JavaScript Development", PlatformImplIcons.WebDevelopment,
                          "HTML, style sheets, JavaScript, TypeScript, Node.js...", Arrays.asList(
       "HTML:HtmlTools,W3Validators",
-      "org.jetbrains.plugins.haml",
-      "com.jetbrains.plugins.jade",
+      "JavaScript and TypeScript:JavaScript,JavaScriptDebugger,JSIntentionPowerPack",
+      "Node.js:NodeJS",
+
       "com.intellij.css",
       "org.jetbrains.plugins.less",
       "org.jetbrains.plugins.sass",
+
       "org.jetbrains.plugins.stylus",
-      "JavaScript and TypeScript:JavaScript,JavaScriptDebugger,JSIntentionPowerPack",//TODO: Inspection-JS
-      "org.coffeescript",
-      "Node.js:NodeJS",
+      "org.jetbrains.plugins.haml",
       "AngularJS",
+
+      "org.coffeescript",
       "com.intellij.flex",
-      "com.intellij.plugins.html.instantEditing",
       "com.jetbrains.restClient",
+
       "com.intellij.swagger"
     )));
 
