@@ -463,14 +463,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                 final boolean caseSensitively,
                                 @NotNull String text,
                                 @NotNull Collection<? super VirtualFile> result) {
-    processFilesWithText(scope, searchContext, caseSensitively, text, Processors.cancelableCollectProcessor(result));
+    processCandidateFilesForText(scope, searchContext, caseSensitively, text, Processors.cancelableCollectProcessor(result));
   }
 
-  public boolean processFilesWithText(@NotNull final GlobalSearchScope scope,
-                                      final short searchContext,
-                                      final boolean caseSensitively,
-                                      @NotNull String text,
-                                      @NotNull final Processor<? super VirtualFile> processor) {
+  @Override
+  public boolean processCandidateFilesForText(@NotNull GlobalSearchScope scope,
+                                              short searchContext,
+                                              boolean caseSensitively,
+                                              @NotNull String text,
+                                              @NotNull Processor<? super VirtualFile> processor) {
     List<IdIndexEntry> entries = getWordEntries(text, caseSensitively);
     if (entries.isEmpty()) return true;
 

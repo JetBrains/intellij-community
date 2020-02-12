@@ -5,6 +5,7 @@ import com.intellij.concurrency.AsyncFuture;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -55,6 +56,16 @@ public interface PsiSearchHelper {
    * @return false if processor returned false, true otherwise
    */
   boolean processCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, @NotNull Processor<? super PsiElement> processor);
+
+  /**
+   * Given a text, scope and other search flags, runs the processor on all indexed files that contain all words from the text.
+   * Note that this doesn't mean the files contain the text itself.
+   */
+  boolean processCandidateFilesForText(@NotNull GlobalSearchScope scope,
+                                       short searchContext,
+                                       boolean caseSensitively,
+                                       @NotNull String text,
+                                       @NotNull Processor<? super VirtualFile> processor);
 
   /**
    * Returns the list of files which contain the specified word in "plain text"

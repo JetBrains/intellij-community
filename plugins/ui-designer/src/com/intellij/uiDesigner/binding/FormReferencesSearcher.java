@@ -16,7 +16,6 @@ import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -208,9 +207,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
           return FileTypeRegistry.getInstance().isFileOfType(virtualFile, StdFileTypes.GUI_DESIGNER_FORM);
         }
       };
-      ((PsiSearchHelperImpl)PsiSearchHelper.getInstance(project)).processFilesWithText(
-        scope, UsageSearchContext.IN_PLAIN_TEXT, true, name, collector
-      );
+      PsiSearchHelper.getInstance(project).processCandidateFilesForText(scope, UsageSearchContext.IN_PLAIN_TEXT, true, name, collector);
 
       for (final VirtualFile vfile:collector.getResults()) {
         ProgressManager.checkCanceled();
