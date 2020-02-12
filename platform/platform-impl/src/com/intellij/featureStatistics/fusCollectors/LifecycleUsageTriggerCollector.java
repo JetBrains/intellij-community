@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
@@ -62,6 +62,11 @@ public final class LifecycleUsageTriggerCollector {
   public static void onProjectClosed(@NotNull Project project) {
     final FeatureUsageData data = new FeatureUsageData().addProject(project);
     FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "project.closed", data);
+  }
+
+  public static void onProjectModuleAttached(@NotNull Project project) {
+    final FeatureUsageData data = new FeatureUsageData().addProject(project);
+    FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "project.module.attached", data);
   }
 
   public static void onFrameActivated(@Nullable Project project) {
