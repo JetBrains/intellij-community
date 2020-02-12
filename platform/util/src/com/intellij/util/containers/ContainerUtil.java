@@ -337,8 +337,8 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-    * @deprecated Use {@link SmartList(T)}
-    */
+   * @deprecated Use {@link SmartList(T)}
+   */
   @SafeVarargs
   @NotNull
   @Contract(pure=true)
@@ -944,10 +944,14 @@ public class ContainerUtil extends ContainerUtilRt {
     return Collections.emptyIterator();
   }
 
+  /**
+   * @deprecated Use {@link Collections#emptyList()} instead
+   */
   @NotNull
+  @Deprecated
   @Contract(pure=true)
   public static <T> Iterable<T> emptyIterable() {
-    return EmptyIterable.getInstance();
+    return Collections.emptyList();
   }
 
   @Contract(pure=true)
@@ -1301,7 +1305,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Iterable<T> iterate(@NotNull final Collection<? extends T> collection, @NotNull final Condition<? super T> condition) {
-    if (collection.isEmpty()) return emptyIterable();
+    if (collection.isEmpty()) return Collections.emptyList();
     return () -> new Iterator<T>() {
       private final Iterator<? extends T> impl = collection.iterator();
       private T next = findNext();
@@ -1605,7 +1609,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Iterable<T> concat(final Iterable<? extends T> @NotNull ... iterables) {
-    if (iterables.length == 0) return emptyIterable();
+    if (iterables.length == 0) return Collections.emptyList();
     if (iterables.length == 1) {
       //noinspection unchecked
       return (Iterable<T>)iterables[0];
@@ -2343,25 +2347,6 @@ public class ContainerUtil extends ContainerUtilRt {
       if (condition.value(t)) count++;
     }
     return count;
-  }
-
-  @NotNull
-  @Contract(pure=true)
-  public static <T> List<T> unfold(@Nullable T t, @NotNull NullableFunction<? super T, ? extends T> next) {
-    if (t == null) return emptyList();
-
-    List<T> list = new ArrayList<>();
-    while (t != null) {
-      list.add(t);
-      t = next.fun(t);
-    }
-    return list;
-  }
-
-  @NotNull
-  @Contract(pure=true)
-  public static <T> List<T> dropTail(@NotNull List<T> items) {
-    return items.subList(0, items.size() - 1);
   }
 
   /**

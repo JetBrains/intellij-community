@@ -22,10 +22,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.PriorityQueue;
+import java.util.*;
 
 import static com.intellij.xml.breadcrumbs.BreadcrumbsUtilEx.findProvider;
 
@@ -99,7 +96,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
     Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs =
       getLineElements(document, offset, file, myProject, defaultInfoProvider, true);
 
-    if (pairs == null) return ContainerUtil.emptyIterable();
+    if (pairs == null) return Collections.emptyList();
 
     ArrayList<Crumb> result = new ArrayList<>(pairs.size());
     CrumbPresentation[] presentations = getCrumbPresentations(toPsiElementArray(pairs));

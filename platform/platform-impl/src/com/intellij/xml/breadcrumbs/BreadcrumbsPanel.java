@@ -32,7 +32,6 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -50,6 +49,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
@@ -83,7 +83,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   };
 
   private static final Key<BreadcrumbsPanel> BREADCRUMBS_COMPONENT_KEY = new Key<>("BREADCRUMBS_KEY");
-  private static final Iterable<? extends Crumb> EMPTY_BREADCRUMBS = ContainerUtil.emptyIterable();
+  private static final Iterable<? extends Crumb> EMPTY_BREADCRUMBS = Collections.emptyList();
 
   public BreadcrumbsPanel(@NotNull final Editor editor) {
     myEditor = editor;

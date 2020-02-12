@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NonNls;
@@ -71,7 +70,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @NotNull
   @Override
   public Iterable<VirtualFile> iterInDbChildren() {
-    return ContainerUtil.emptyIterable();
+    return Collections.emptyList();
   }
 
   @Override

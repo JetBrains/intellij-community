@@ -28,7 +28,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.EmptyIterable;
 import com.intellij.util.containers.JBIterable;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Contract;
@@ -988,7 +987,7 @@ public final class PsiUtil extends PsiUtilCore {
       currentOwner = currentOwner.getContainingClass();
     }
 
-    if (result == null) return EmptyIterable.getInstance();
+    if (result == null) return Collections.emptyList();
     return result;
   }
 

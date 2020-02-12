@@ -265,7 +265,7 @@ public class MavenGroovyPolyglotPomMemberContributor extends NonCodeMembersContr
 
     if (!methodCallInfo.isEmpty() &&
         StringUtil.endsWithIgnoreCase(ContainerUtil.getLastItem(methodCallInfo), CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) {
-      key = StringUtil.join(ContainerUtil.dropTail(methodCallInfo), "->");
+      key = StringUtil.join(methodCallInfo.subList(0, methodCallInfo.size() - 1), "->");
       for (String classSource : multiMap.get(key)) {
         DynamicMemberUtils.process(processor, false, place, classSource);
       }
