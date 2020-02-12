@@ -166,6 +166,12 @@ class VfsEventGenerationHelper {
         parentInfos.set(parentInfos.size() - 1, newInfo);
         return FileVisitResult.CONTINUE;
       }
+
+      @Override
+      public FileVisitResult visitFileFailed(Path file, IOException exc) {
+        // ignore exceptions when e.g. compiler quickly creates a temp file, FileWalker tries to read its attributes but by then it already deleted
+        return FileVisitResult.CONTINUE;
+      }
     };
     try {
       Files.walkFileTree(root, visitor);
