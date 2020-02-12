@@ -35,6 +35,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.ui.scale.JBUIScale;
@@ -973,6 +974,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
         final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
+        rootPane.setGlassPane(new IdeGlassPaneImpl(rootPane, true));
         rootPane.putClientProperty(WINDOW_ALPHA, 1.0f);
         rootPane.putClientProperty(cleanupKey, cleanupKey);
         window.addWindowListener(new WindowAdapter() {
