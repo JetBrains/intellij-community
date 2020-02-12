@@ -500,19 +500,23 @@ public class PluginGroups {
       myPluginIdDescription = pluginIdDescription;
     }
 
-    @NotNull String getName() {
+    @NotNull
+    public String getName() {
       return myName;
     }
 
-    @Nullable Icon getIcon() {
+    @Nullable
+    public Icon getIcon() {
       return myIcon;
     }
 
-    @Nullable String getDescription() {
+    @Nullable
+    public String getDescription() {
       return myDescription;
     }
 
-    @NotNull List<String> getPluginIdDescription() {
+    @NotNull
+    public List<String> getPluginIdDescription() {
       return myPluginIdDescription;
     }
   }
