@@ -187,15 +187,20 @@ fun <T : PsiElement> PsiElement.contextOfType(vararg classes: KClass<out T>): T?
   return PsiTreeUtil.getContextOfType(this, *classes.map { it.java }.toTypedArray())
 }
 
-fun PsiElement.siblings(forward: Boolean = true): Sequence<PsiElement> {
-  return generateSequence(this) {
-    if (forward) {
-      it.nextSibling
-    }
-    else {
-      it.prevSibling
-    }
+fun PsiElement.siblings(forward: Boolean = true, withItself: Boolean = true): Sequence<PsiElement> {
+  val seed = when {
+    withItself -> this
+    forward -> nextSibling
+    else -> prevSibling
   }
+  return generateSequence(seed) {
+    if (forward) it.nextSibling else it.prevSibling
+  }
+}
+
+@Deprecated("For binary compatibility with older API", level = DeprecationLevel.HIDDEN)
+fun PsiElement.siblings(forward: Boolean = true): Sequence<PsiElement> {
+  return siblings(forward)
 }
 
 fun <T : PsiElement> Sequence<T>.skipTokens(tokens: TokenSet): Sequence<T> {
