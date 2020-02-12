@@ -29,9 +29,14 @@ fun <T : PsiElement> PsiElement.parentOfTypes(vararg classes: KClass<out T>, wit
   return PsiTreeUtil.getNonStrictParentOfType(start, *classes.map { it.java }.toTypedArray())
 }
 
-inline fun <reified T : PsiElement> PsiElement.parentsOfType(): Sequence<T> = parentsOfType(T::class.java)
+inline fun <reified T : PsiElement> PsiElement.parentsOfType(withSelf: Boolean = true): Sequence<T> = parentsOfType(T::class.java, withSelf)
 
-fun <T : PsiElement> PsiElement.parentsOfType(clazz: Class<out T>): Sequence<T> = parentsWithSelf.filterIsInstance(clazz)
+@Deprecated("For binary compatibility with older API", level = DeprecationLevel.HIDDEN)
+fun <T : PsiElement> PsiElement.parentsOfType(clazz: Class<out T>): Sequence<T> = parentsOfType(clazz, withSelf = true)
+
+fun <T : PsiElement> PsiElement.parentsOfType(clazz: Class<out T>, withSelf: Boolean = true): Sequence<T> {
+  return (if (withSelf) parentsWithSelf else parents).filterIsInstance(clazz)
+}
 
 @Deprecated("Use PsiElement.parentsWithSelf property", ReplaceWith("parentsWithSelf"))
 fun PsiElement.parents(): Sequence<PsiElement> = parentsWithSelf
