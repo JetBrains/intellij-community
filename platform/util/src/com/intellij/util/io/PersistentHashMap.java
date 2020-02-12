@@ -376,6 +376,18 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     IOUtil.deleteAllFilesStartingWith(prefixFile);
   }
 
+  /**
+   * Deletes {@param map} files and trying to close it before.
+   */
+  public static void deleteMap(@NotNull PersistentHashMap<?, ?> map) {
+    Path baseFile = map.getBaseFile();
+    try {
+      map.close();
+    }
+    catch (IOException ignored) {}
+    deleteFilesStartingWith(baseFile.toFile());
+  }
+
   @NotNull
   static Path getDataFile(@NotNull Path file) { // made public for testing
     return file.resolveSibling(file.getFileName() + DATA_FILE_EXTENSION);

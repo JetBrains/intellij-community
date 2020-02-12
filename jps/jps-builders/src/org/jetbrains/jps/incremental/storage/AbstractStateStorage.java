@@ -55,12 +55,7 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
 
   public boolean wipe() {
     synchronized (myDataLock) {
-      try {
-        myMap.close();
-      }
-      catch (IOException ignored) {
-      }
-      PersistentHashMap.deleteFilesStartingWith(myBaseFile);
+      PersistentHashMap.deleteMap(myMap);
       try {
         myMap = createMap(myBaseFile);
       }
