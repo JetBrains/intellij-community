@@ -7,10 +7,13 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.XMap
-import java.util.*
 
-@State(name = "ActionsLocalSummary", storages = [Storage("actionSummary.xml", roamingType = RoamingType.DISABLED)])
+@State(name = "ActionsLocalSummary", storages = [
+  Storage("actionSummary.xml", roamingType = RoamingType.DISABLED),
+  Storage("actions_summary.xml", deprecated = true)
+])
 internal class ActionsLocalSummary : SimplePersistentStateComponent<ActionsLocalSummaryState>(ActionsLocalSummaryState()) {
   companion object {
     val instance: ActionsLocalSummary
@@ -23,20 +26,23 @@ internal class ActionsLocalSummary : SimplePersistentStateComponent<ActionsLocal
 }
 
 internal class ActionsLocalSummaryState : BaseState() {
-  internal data class ActionSummary(var times: Long = 0, var last: Date = Date())
+  internal class ActionSummary {
+    @Attribute
+    @JvmField
+    var times = 0
+
+    @Attribute
+    @JvmField
+    var last = System.currentTimeMillis()
+  }
 
   @get:XMap
   val data by map<String, ActionSummary>()
 
   internal fun updateActionsSummary(actionId: String) {
-    val actionSummary = data[actionId]
-    if (actionSummary == null) {
-      data[actionId] = ActionSummary(1, Date())
-    }
-    else {
-      actionSummary.last = Date()
-      actionSummary.times++
-    }
+    val summary = data.getOrPut(actionId) { ActionSummary() }
+    summary.last = System.currentTimeMillis()
+    summary.times++
     incrementModificationCount()
   }
 }
