@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -14,7 +14,10 @@ import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UIdentifier;
+import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.evaluation.UEvaluationContextKt;
 import org.jetbrains.uast.values.*;
 
@@ -89,7 +92,7 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
   @NotNull
   @Override
   public String getName() {
-    return CodeInsightBundle.message("icon.preview");
+    return JavaBundle.message("icon.preview");
   }
 
   @Override

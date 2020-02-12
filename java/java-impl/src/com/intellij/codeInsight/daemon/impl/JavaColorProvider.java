@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -262,7 +262,7 @@ public class JavaColorProvider implements ElementColorProvider {
       };
     }
     CommandProcessor.getInstance()
-      .executeCommand(element.getProject(), command, IdeBundle.message("change.color.command.text"), null, document);
+      .executeCommand(element.getProject(), command, JavaBundle.message("change.color.command.text"), null, document);
   }
 
   private static void replaceInt(PsiExpression expr, int newValue) {

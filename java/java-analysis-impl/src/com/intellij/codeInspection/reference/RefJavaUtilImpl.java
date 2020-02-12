@@ -2,7 +2,7 @@
 
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
@@ -511,7 +511,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     }
     RefPackage refPackage = getPackage(refEntity);
 
-    return refPackage == null ? InspectionsBundle.message("inspection.reference.default.package") : refPackage.getQualifiedName();
+    return refPackage == null ? JavaAnalysisBundle.message("inspection.reference.default.package") : refPackage.getQualifiedName();
   }
 
   @NotNull

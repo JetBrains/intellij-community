@@ -3,10 +3,11 @@
 // found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.Language;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.I18nUtil;
@@ -244,7 +245,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       super(project, true);
       myProject = project;
       myKeyValuePairs = keyValuePairs;
-      setTitle(CodeInsightBundle.message("i18nize.dialog.title"));
+      setTitle(PropertiesBundle.message("i18nize.dialog.title"));
       init();
     }
 
@@ -260,7 +261,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       myPropertiesFile = new ComboBox<>(ArrayUtil.toStringArray(files));
       new ComboboxSpeedSearch(myPropertiesFile);
       LabeledComponent<JComboBox<String>> component = new LabeledComponent<>();
-      component.setText(InspectionsBundle.message("property.file"));
+      component.setText(JavaI18nBundle.message("property.file"));
       component.setComponent(myPropertiesFile);
       myPropertiesFile.addActionListener(new ActionListener() {
         @Override

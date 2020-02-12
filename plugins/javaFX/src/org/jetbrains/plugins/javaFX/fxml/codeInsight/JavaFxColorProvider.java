@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ElementColorProvider;
@@ -212,7 +212,7 @@ public class JavaFxColorProvider implements ElementColorProvider {
     if (command != null) {
       Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
       CommandProcessor.getInstance()
-        .executeCommand(element.getProject(), command, IdeBundle.message("change.color.command.text"), null, document);
+        .executeCommand(element.getProject(), command, JavaBundle.message("change.color.command.text"), null, document);
     }
   }
 

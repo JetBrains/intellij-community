@@ -10,6 +10,7 @@ import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.ide.util.TreeFileChooserFactory;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.LastSelectedPropertiesFileStore;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
@@ -117,7 +118,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
     myDefaultPropertyValue = defaultPropertyValue;
     myCustomization = customization != null ? customization:new DialogCustomization();
-    setTitle(myCustomization.title != null ? myCustomization.title:CodeInsightBundle.message("i18nize.dialog.title"));
+    setTitle(myCustomization.title != null ? myCustomization.title : PropertiesBundle.message("i18nize.dialog.title"));
 
     myPropertiesFile = new TextFieldWithHistory();
     myPropertiesFile.setHistorySize(-1);
