@@ -6,6 +6,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.*;
@@ -48,24 +49,24 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
       return literalString;
     }
 
-    if (element instanceof PyNamedParameter) return "parameter";  //TODO: replace strings to messages
+    if (element instanceof PyNamedParameter) return PyBundle.message("find.usages.parameter");
     if (element instanceof PyFunction) {
       if (((PyFunction)element).getContainingClass() != null) {
-        return "method";
+        return PyBundle.message("find.usages.method");
       }
-      return "function";
+      return PyBundle.message("find.usages.function");
     }
-    if (element instanceof PyClass) return "class";
-    if (element instanceof PyReferenceExpression) return "variable";
+    if (element instanceof PyClass) return PyBundle.message("find.usages.class");
+    if (element instanceof PyReferenceExpression) return PyBundle.message("find.usages.variable");
     if (element instanceof PyTargetExpression) {
       final PyImportElement importElement = PsiTreeUtil.getParentOfType(element, PyImportElement.class);
       if (importElement != null && importElement.getAsNameElement() == element) {
-        return "imported module alias";
+        return PyBundle.message("find.usages.imported.module.alias");
       }
-      return "variable";
+      return PyBundle.message("find.usages.variable");
     }
     if (element instanceof PyKeywordArgument) {
-      return "keyword argument";
+      return PyBundle.message("find.usages.keyword.argument");
     }
     return "";
   }
@@ -80,12 +81,12 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
 
     if (element instanceof PsiNamedElement) {
       final String name = ((PsiNamedElement)element).getName();
-      return name == null ? "<unnamed>" : name;
+      return name == null ? PyBundle.message("find.usages.unnamed") : name;
     }
     if (element instanceof PyReferenceExpression) {
       String referencedName = ((PyReferenceExpression)element).getReferencedName();
       if (referencedName == null) {
-        return "<unnamed>";
+        return PyBundle.message("find.usages.unnamed");
       }
       return referencedName;
     }
