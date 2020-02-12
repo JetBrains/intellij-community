@@ -159,7 +159,6 @@ class CommunityRepositoryModules {
       withArtifact("maven-event-listener", "")
       withResource("maven36-server-impl/lib/maven3", "lib/maven3")
       withResource("maven3-server-common/lib", "lib/maven3-server-lib")
-      withResource("maven2-server-impl/lib/maven2", "lib/maven2")
       [
         "archetype-common-2.0-alpha-4-SNAPSHOT.jar",
         "commons-beanutils.jar",
