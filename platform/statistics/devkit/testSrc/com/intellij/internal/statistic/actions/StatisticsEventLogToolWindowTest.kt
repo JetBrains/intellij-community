@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.actions
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.LogEventAction
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
 import com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindow
 import com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindow.Companion.buildLogMessage
@@ -15,6 +16,9 @@ import org.junit.Test
 class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
   private val eventId = "third.party"
   private val eventTime = 1564643114456
+  private val eventGroup = "toolwindow"
+  private val groupVersion = "21"
+  private val formattedEventTime = DateFormatUtil.formatTimeWithSeconds(eventTime)
 
   @Test
   fun testShortenProjectId() {
@@ -23,8 +27,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     action.addData("plugin_type", "PLATFORM")
 
     val actual = buildLogMessage(buildLogEvent(action))
-    assertEquals("${DateFormatUtil.formatTimeWithSeconds(
-      eventTime)} - ['toolwindow', v21]: '$eventId' {\"plugin_type\":\"PLATFORM\", \"project\":\"5410c65e...ea\"}",
+    assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" {\"plugin_type\":\"PLATFORM\", \"project\":\"5410c65e...ea\"}",
                  actual)
   }
 
@@ -35,7 +38,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     action.addData("project", projectId)
 
     val actual = buildLogMessage(buildLogEvent(action))
-    assertEquals("${DateFormatUtil.formatTimeWithSeconds(eventTime)} - ['toolwindow', v21]: '$eventId' {\"project\":\"$projectId\"}",
+    assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" {\"project\":\"$projectId\"}",
                  actual)
   }
 
@@ -46,7 +49,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     action.addData("created", "1564643442610")
 
     val actual = buildLogMessage(buildLogEvent(action))
-    assertEquals("${DateFormatUtil.formatTimeWithSeconds(eventTime)} - ['toolwindow', v21]: '$eventId' {}",
+    assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" {}",
                  actual)
   }
 
@@ -74,12 +77,22 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
   @Test
   fun testAllValidationTypesUsed() {
     val correctValidationTypes = setOf(ACCEPTED, THIRD_PARTY)
-    for (resultType in values()) {
+    for (resultType in ValidationResultType.values()) {
       assertTrue("Don't forget to change toolWindow logic in case of a new value in ValidationResult",
                  StatisticsEventLogToolWindow.rejectedValidationTypes.contains(resultType) || correctValidationTypes.contains(resultType))
     }
   }
+  @Test
+  fun testHandleCollectionsInEventData() {
+    val action = LogEventAction(eventId)
+    action.addData("dataKey", listOf("1", "2", "3"))
+
+    val actual = buildLogMessage(buildLogEvent(action))
+    assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" {\"dataKey\":[\"1\", \"2\", \"3\"]}",
+                 actual)
+  }
+
 
   private fun buildLogEvent(action: LogEventAction) = LogEvent("2e5b2e32e061", "193.1801", "176", eventTime,
-                                                               "toolwindow", "21", "32", action)
+                                                               eventGroup, groupVersion, "32", action)
 }

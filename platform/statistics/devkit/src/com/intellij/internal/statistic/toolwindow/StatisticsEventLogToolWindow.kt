@@ -84,25 +84,31 @@ class StatisticsEventLogToolWindow(project: Project, private val recorderId: Str
     fun buildLogMessage(logEvent: LogEvent): String {
       return buildString {
         append(DateFormatUtil.formatTimeWithSeconds(logEvent.time))
-        append(" - ['${logEvent.group.id}', v${logEvent.group.version}]: '${logEvent.event.id}' ")
+        append(" - [\"${logEvent.group.id}\", v${logEvent.group.version}]: \"${logEvent.event.id}\" ")
         append("{")
-        append(buildEventDataMessages(logEvent))
+        append(eventDataToString(logEvent.event.data))
         append("}")
       }
     }
 
-    private fun buildEventDataMessages(logEvent: LogEvent): String {
-      return logEvent.event.data
-        .filter { (key, _) -> !systemFields.contains(key) }
-        .map { (key, value) ->
-          var valueAsString = value.toString()
-          if (key == "project") {
-            valueAsString = shortenProjectId(valueAsString)
-          }
-          "\"$key\":\"$valueAsString\""
-        }
+    private fun eventDataToString(eventData: Map<String, Any>): String {
+      return eventData.filter { (key, _) -> !systemFields.contains(key) }
+        .map { (key, value) -> "\"$key\":${valueToString(value, key)}" }
         .joinToString(", ")
     }
+
+    private fun valueToString(value: Any, key: String): String =
+      if (value is Collection<*>) {
+        val values = value.joinToString { "\"${it.toString()}\"" }
+        "[$values]"
+      }
+      else {
+        var valueAsString = value.toString()
+        if (key == "project") {
+          valueAsString = shortenProjectId(valueAsString)
+        }
+        "\"$valueAsString\""
+      }
 
     private fun shortenProjectId(projectId: String): String {
       val length = projectId.length
