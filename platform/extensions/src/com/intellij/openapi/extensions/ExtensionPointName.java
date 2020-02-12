@@ -21,7 +21,7 @@ import java.util.stream.Stream;
  * For project level extension points please use {@link ProjectExtensionPointName}.
  */
 public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
-  public ExtensionPointName(@NotNull String name) {
+  public ExtensionPointName(@NotNull @NonNls String name) {
     super(name);
   }
 

@@ -3,13 +3,14 @@ package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseExtensionPointName<T> {
   private final String myName;
 
-  public BaseExtensionPointName(@NotNull String name) {
+  public BaseExtensionPointName(@NotNull @NonNls String name) {
     myName = name;
   }
 
