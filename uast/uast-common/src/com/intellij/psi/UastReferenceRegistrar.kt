@@ -6,6 +6,7 @@ package com.intellij.psi
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.uast.UElementPattern
@@ -122,39 +123,42 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
                                                            priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
   this.registerUastReferenceProvider(usagePattern, provider, priority)
 
-  this.registerUastReferenceProvider(expressionPattern, object : UastReferenceProvider(UExpression::class.java) {
-    override fun acceptsTarget(target: PsiElement): Boolean {
-      return !target.project.isDefault && provider.acceptsTarget(target)
-    }
-
-    override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
-      val sourcePsi = element.sourcePsi ?: return PsiReference.EMPTY_ARRAY
-      val originalUElement = (CompletionUtilCoreImpl.getOriginalElement(sourcePsi) ?: sourcePsi).toUElement() ?: return PsiReference.EMPTY_ARRAY
-
-      val parentVariable = when (val uastParent = originalUElement.uastParent) {
-        is UVariable -> uastParent
-        is UPolyadicExpression -> uastParent.uastParent as? UVariable // support .withUastParentOrSelf() patterns
-        else -> null
+  if (Registry.`is`("uast.references.by.usage")) {
+    this.registerUastReferenceProvider(expressionPattern, object : UastReferenceProvider(UExpression::class.java) {
+      override fun acceptsTarget(target: PsiElement): Boolean {
+        return !target.project.isDefault && provider.acceptsTarget(target)
       }
 
-      if (parentVariable == null
-          || parentVariable.name.isNullOrEmpty()
-          || !parentVariable.type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        return PsiReference.EMPTY_ARRAY
+      override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
+        val sourcePsi = element.sourcePsi ?: return PsiReference.EMPTY_ARRAY
+        val originalUElement = (CompletionUtilCoreImpl.getOriginalElement(sourcePsi) ?: sourcePsi).toUElement()
+                               ?: return PsiReference.EMPTY_ARRAY
+
+        val parentVariable = when (val uastParent = originalUElement.uastParent) {
+          is UVariable -> uastParent
+          is UPolyadicExpression -> uastParent.uastParent as? UVariable // support .withUastParentOrSelf() patterns
+          else -> null
+        }
+
+        if (parentVariable == null
+            || parentVariable.name.isNullOrEmpty()
+            || !parentVariable.type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          return PsiReference.EMPTY_ARRAY
+        }
+
+        val usage = getDirectVariableUsages(parentVariable).find { usage ->
+          val refExpression = usage.toUElementOfType<UReferenceExpression>()
+          refExpression != null && usagePattern.accepts(refExpression, context)
+        } ?: return PsiReference.EMPTY_ARRAY
+
+        context.put(USAGE_PSI_ELEMENT, usage)
+
+        return provider.getReferencesByElement(originalUElement, context)
       }
 
-      val usage = getDirectVariableUsages(parentVariable).find { usage ->
-        val refExpression = usage.toUElementOfType<UReferenceExpression>()
-        refExpression != null && usagePattern.accepts(refExpression, context)
-      } ?: return PsiReference.EMPTY_ARRAY
-
-      context.put(USAGE_PSI_ELEMENT, usage)
-
-      return provider.getReferencesByElement(originalUElement, context)
-    }
-
-    override fun toString(): String = "uastReferenceByUsageAdapter($provider)"
-  }, priority)
+      override fun toString(): String = "uastReferenceByUsageAdapter($provider)"
+    }, priority)
+  }
 }
 
 @ApiStatus.Experimental
