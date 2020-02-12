@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -27,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
  * @author peter
  */
 public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCommentFix {
-  private String myKey;
+  private @PropertyKey(resourceBundle = "messages.InspectionsBundle") String myKey;
   private final boolean myForClass;
 
   public SuppressForMemberFix(String toolId, boolean forClass) {
