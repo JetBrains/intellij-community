@@ -3,6 +3,7 @@ package com.jetbrains.python.parsing.console;
 
 import com.intellij.lang.PsiBuilder;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
@@ -126,7 +127,7 @@ public class PyConsoleParsingContext extends ParsingContext {
         return true;
       }
       if (myBuilder.rawLookup(lookupIndex) != PyTokenTypes.IDENTIFIER) {
-        myBuilder.error("Help request must follow the name");
+        myBuilder.error(PyPsiBundle.message("PARSE.console.help.request.warn"));
       }
       ipythonHelp.done(PyElementTypes.EMPTY_EXPRESSION);
       myBuilder.advanceLexer();
@@ -177,7 +178,7 @@ public class PyConsoleParsingContext extends ParsingContext {
         else {
           expr.drop();
           command.drop();
-          myBuilder.error("Identifier expected.");
+          myBuilder.error(PyPsiBundle.message("PARSE.console.identifier.expected"));
           return false;
         }
         while (myBuilder.getTokenType() != null) {
@@ -208,7 +209,7 @@ public class PyConsoleParsingContext extends ParsingContext {
       }
       if (myBuilder.getTokenType() == PyTokenTypes.PERC) {
         if (myBuilder.lookAhead(1) == PyTokenTypes.PERC) {
-          myBuilder.error("Multiline magic can't be used as an expression");
+          myBuilder.error(PyPsiBundle.message("PARSE.console.multiline.magic.warn"));
         }
         captureIPythonExpression();
         return true;
