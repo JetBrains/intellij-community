@@ -15,6 +15,7 @@
  */
 
 import org.gradle.util.GFileUtils
+import javax.inject.Inject
 
 repositories {
   maven { url 'https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/' }
@@ -71,35 +72,53 @@ dependencies {
   kotlinDeps "org.jetbrains.kotlin:kotlin-test-common:${kotlin_version}"
 }
 
-/* First we setup an offline-repo. This will remove all the alien files from .../android-sdk.
-   Later we will create an overlay with Android SDK and KotlinPlugin artifacts */
-task syncOfflineRepo(dependsOn: configurations.androidOfflineRepo, type: VersionedLazyCopyTask) {
-  versionStr android_m2_version
-  from { zipTree(configurations.androidOfflineRepo.singleFile) }
-  into "${project.buildDir}/android-sdk"
+task unzipAndroidSdk(dependsOn: [configurations.androidSdk, configurations.androidOfflineRepo], type: VersionedLazyCopyTask) {
+  CopyUnitOfWork.project = project
+  work = [
+    new CopyData().with {
+      it.from = configurations.androidOfflineRepo.name
+      it.into = "${project.buildDir}/android-sdk"
+      it.setVersionStr android_m2_version
+      it
+    }, new CopyData().with {
+    it.from = configurations.androidSdk.name
+    it.into = "$buildDir/android-sdk/prebuilts/studio/sdk"
+    it.setVersionStr android_sdk_version
+    it
+  },
+  ]
+  onlyIf {
+    work.any {
+      !it.versionStr.exists()
+    }
+  }
+  doFirst {
+    work.each {
+      it.into.deleteDir()
+    }
+  }
 }
 
-task syncToolsBaseTemplates(dependsOn: [configurations.androidToolsBaseTemplates, syncOfflineRepo], type: VersionedLazyCopyTask) {
-  versionStr android_m2_version
-  from { zipTree(configurations.androidToolsBaseTemplates.singleFile) }
-  into "${project.buildDir}/android-sdk/tools-base/templates"
+task syncToolsBaseTemplates(dependsOn: [configurations.androidToolsBaseTemplates, unzipAndroidSdk], type: VersionedLazyCopyTask) {
+  work = [
+    new CopyData().with {
+      it.from = configurations.androidToolsBaseTemplates.name
+      it.into = "${project.buildDir}/android-sdk/tools-base/templates"
+      it.setVersionStr android_m2_version
+      it
+    }
+  ]
 }
 
-task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncOfflineRepo], type: Sync) {
+task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, unzipAndroidSdk], type: Sync) {
   from "$buildDir/kotlin"
   into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
 }
 
-task syncAndroidSdk(dependsOn: [configurations.androidSdk, syncOfflineRepo], type: VersionedLazyCopyTask) {
-  versionStr android_sdk_version
-  from { tarTree(resources.gzip(configurations.androidSdk.singleFile)) }
-  into "$buildDir/android-sdk/prebuilts/studio/sdk"
-}
-
-task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, syncOfflineRepo], type: OfflineMavenRepository) {
+task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, unzipAndroidSdk], type: OfflineMavenRepository) {
   def verFile = "${project.buildDir}/android-sdk/prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/${kotlin_version}"
   onlyIf {
-    !(file(verFile).isFile())
+    !file(verFile).isFile()
   }
   configurationName = "kotlinDeps"
   repoDir = file("$buildDir/android-sdk/prebuilts/tools/common/m2/repository")
@@ -108,57 +127,81 @@ task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, syncOfflineRepo], t
   }
 }
 
-task setupAndroidSdk(dependsOn: [syncOfflineRepo, syncKotlinPluginForAndroid, syncAndroidSdk, updateKotlinLibs, syncToolsBaseTemplates]) {
-  // This is entry point: invoke this task to setup android sdk and all the artifacts required to run android-plugin unit tests
-}
+/**
+ * This is entry point: invoke this task to setup android sdk and all the artifacts required to run android-plugin unit tests
+ */
+task setupAndroidSdk(dependsOn: [unzipAndroidSdk, syncKotlinPluginForAndroid, updateKotlinLibs, syncToolsBaseTemplates])
 
-class VersionedLazyCopyTask extends DefaultTask {
-  /*
-     Default Copy task implementation is not as lazy as we need: dependencies from androidOfflineRepo and androidSdk configurations will be
-     downloaded even if no executable task will use them later.
-     See discussions here: https://discuss.gradle.org/t/lazy-configuration-resolution-with-artifact-repack/12747/5
-     and here: https://discuss.gradle.org/t/lazy-dependency-resolution-completely-conditional-configuration-dependency/5032
-   */
-  private Closure from;
-  private File into;
-
-  File getInto() {
-    return into
-  }
-
-  void setInto(File into) {
-    this.into = into
-  }
-
+class CopyData implements Serializable {
+  String from
+  File into
+  File versionStr
   void setInto(String into) {
-    setInto(new File(into))
-  }
-
-  Closure getFrom() {
-    return from
-  }
-
-  void setFrom(Closure from) {
-    this.from = from
+    this.into = new File(into)
   }
 
   void setVersionStr(String versionStr) {
-    def versionFile = { return new File(into, "${versionStr}.version") }
-    onlyIf {
-      !(versionFile.call().exists())
-    }
+    this.versionStr = new File(into, "${versionStr}.version")
+  }
+}
 
-    doFirst {
-      into.deleteDir()
-    }
+/**
+ * Worker API is an incubating feature and it has already been changed in newer Gradle versions. Have to be rewritten on upgrade
+ */
+class CopyUnitOfWork implements Runnable {
+  static Project project
+  CopyData parameters
 
-    doLast {
-      println ">> copying files into ${into}. Please be patient."
-      getProject().copy {
-        from this.from
-        into this.into
+  @Inject
+  CopyUnitOfWork(CopyData parameters) {
+    this.parameters = parameters
+  }
+
+  @Override
+  void run() {
+    project.copy {
+      File archive = project.configurations."$parameters.from".singleFile
+      if (archive.name.endsWith("tar.gz")) {
+        it.from {
+          project.tarTree(project.resources.gzip(archive))
+        }
       }
-      versionFile.call().write(versionStr)
+      else if (archive.name.endsWith("zip") || archive.name.endsWith("jar")) {
+        it.from {
+          project.zipTree(archive)
+        }
+      }
+      else {
+        throw new Exception(archive.name)
+      }
+      it.into parameters.into
+    }
+    parameters.getVersionStr().createNewFile()
+  }
+}
+
+/**
+ * Default Copy task implementation is not as lazy as we need: dependencies from androidOfflineRepo and androidSdk configurations will be
+ * downloaded even if no executable task will use them later.
+ * See discussions here: https://discuss.gradle.org/t/lazy-configuration-resolution-with-artifact-repack/12747/5
+ * and here: https://discuss.gradle.org/t/lazy-dependency-resolution-completely-conditional-configuration-dependency/5032
+ */
+class VersionedLazyCopyTask extends DefaultTask {
+  Collection<CopyData> work
+  WorkerExecutor workerExecutor
+
+  @Inject
+  VersionedLazyCopyTask(WorkerExecutor workerExecutor) {
+    this.workerExecutor = workerExecutor
+  }
+
+  @TaskAction
+  void copyAll() {
+    work.each { CopyData data ->
+      workerExecutor.submit(CopyUnitOfWork.class) { WorkerConfiguration config ->
+        config.isolationMode = IsolationMode.NONE
+        config.params data
+      }
     }
   }
 }
