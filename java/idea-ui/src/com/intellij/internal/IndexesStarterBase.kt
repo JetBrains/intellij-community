@@ -90,7 +90,7 @@ abstract class IndexesStarterBase(
       val om = ObjectMapper()
       val root = om.createObjectNode()
       val aliasesEl = root.putArray("aliases")
-      aliases.sortedBy { it.toLowerCase() }.forEach { aliasesEl.add(it) }
+      aliases.map { it.toLowerCase() }.toSortedSet().forEach { aliasesEl.add(it) }
 
       val data = om.writerWithDefaultPrettyPrinter().writeValueAsBytes(root)
       FileUtil.writeToFile(indexFile(".alias"), data)
