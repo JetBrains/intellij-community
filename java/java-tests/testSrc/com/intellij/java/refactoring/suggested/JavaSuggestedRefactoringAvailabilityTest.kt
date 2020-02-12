@@ -391,4 +391,67 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       expectedAvailability = Availability.Disabled
     )
   }
+
+  fun testRenameField() {
+    doTest(
+      """
+        class C {
+            public static final int <caret>X = 1;
+        }
+      """.trimIndent(),
+      {
+        replaceTextAtCaret("X", "Y")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("X", "Y"))
+    )
+  }
+
+  fun testDuplicateField() {
+    doTest(
+      """
+        class C {
+            public static final int <caret>CONST1 = 1;
+        }
+      """.trimIndent(),
+      {
+        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE)
+      },
+      {
+        replaceTextAtCaret("CONST1", "CONST2")
+      },
+      expectedAvailability = Availability.NotAvailable
+    )
+  }
+
+  fun testDuplicateMethod() {
+    doTest(
+      """
+        class TestCase {
+            public void <caret>test1() { }
+        }
+      """.trimIndent(),
+      {
+        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE)
+      },
+      {
+        replaceTextAtCaret("test1", "test2")
+      },
+      expectedAvailability = Availability.NotAvailable
+    )
+  }
+
+  fun testNotDuplicateMethod() {
+    doTest(
+      """
+        class TestCase {
+            public void <caret>foo() { }
+            public void foo(int p) { }
+        }
+      """.trimIndent(),
+      {
+        replaceTextAtCaret("foo", "bar")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("foo", "bar"))
+    )
+  }
 }

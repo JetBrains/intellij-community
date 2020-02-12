@@ -4,6 +4,7 @@ package com.intellij.refactoring.suggested
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.refactoring.RefactoringBundle
 
 abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFixtureTestCaseWithUtils() {
   protected abstract val fileType: LanguageFileType
@@ -22,17 +23,27 @@ abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFi
   }
 
   protected fun changeSignatureAvailableTooltip(name: String, usages: String): String {
-    return buildString {
-      append("Update $usages of '$name' to reflect signature change...")
-      val shortcut = ActionManager.getInstance().getKeyboardShortcut("ShowIntentionActions")
-      if (shortcut != null) {
-        append(" (")
-        append(KeymapUtil.getShortcutText(shortcut))
-        append(")")
-      }
-    }
+    return RefactoringBundle.message(
+      "suggested.refactoring.change.signature.gutter.icon.tooltip",
+      usages,
+      name,
+      intentionActionShortcutHint
+    )
   }
 
+  protected fun renameAvailableTooltip(oldName: String, newName: String): String {
+    return RefactoringBundle.message(
+      "suggested.refactoring.rename.gutter.icon.tooltip",
+      oldName,
+      newName,
+      intentionActionShortcutHint
+    )
+  }
+
+  private val intentionActionShortcutHint by lazy {
+    "(${KeymapUtil.getShortcutText(ActionManager.getInstance().getKeyboardShortcut("ShowIntentionActions")!!)})"
+  }
+  
   protected fun doTest(
     initialText: String,
     vararg editingActions: () -> Unit,

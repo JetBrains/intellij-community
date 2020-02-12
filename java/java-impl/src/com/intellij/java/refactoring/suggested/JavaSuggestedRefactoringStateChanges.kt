@@ -12,6 +12,29 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 class JavaSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactoringSupport) :
   SuggestedRefactoringStateChanges(refactoringSupport)
 {
+  override fun createInitialState(declaration: PsiElement): SuggestedRefactoringState? {
+    val state = super.createInitialState(declaration) ?: return null
+    if (declaration is PsiMember && isDuplicate(declaration, state.oldSignature)) return null
+    return state
+  }
+
+  private fun isDuplicate(member: PsiMember, signature: Signature): Boolean {
+    val psiClass = member.containingClass ?: return false
+    val name = member.name!!
+    when (member) {
+      is PsiMethod -> {
+        return psiClass.findMethodsByName(name, false)
+          .any { it != member && signature(it, null) == signature }
+      }
+
+      is PsiField -> {
+        return psiClass.fields.any { it != member && it.name == name }
+      }
+
+      else -> return false
+    }
+  }
+
   override fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): Signature? {
     declaration as PsiNameIdentifierOwner
     val name = declaration.name ?: return null
