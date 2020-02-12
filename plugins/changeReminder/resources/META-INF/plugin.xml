@@ -9,7 +9,7 @@
 <li>Checks which files are often committed together with those you currently have in your active changelist</li>
 <li>Suggests files that may be related to those you already modified</li></ul>
 
-Suggested files are listed as <b>Related Files</b> in the <b>Local Changes</b> tab of the <b>Version Control</b> tool window.
+Suggested files are listed as <b>People who change the files in the active changelist also change</b> in the <b>Local Changes</b> tab of the <b>Version Control</b> tool window.
     ]]></description>
 
   <depends>com.intellij.modules.vcs</depends>
