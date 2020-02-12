@@ -16,10 +16,12 @@
 
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -31,6 +33,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Date;
@@ -84,19 +88,19 @@ public class DefaultPatchBaseVersionProvider {
         try {
           if (finalRevision != null) {
             String message = message("progress.text2.loading.revision", finalRevision.asString());
-            boolean loadedExactRevision = VcsUtil.computeWithModalProgress(myProject, message, true, indicator -> {
-                if (historyProvider instanceof VcsBaseRevisionAdviser) {
-                  VcsBaseRevisionAdviser revisionAdviser = (VcsBaseRevisionAdviser)historyProvider;
-                  return revisionAdviser.getBaseVersionContent(filePath, processor, finalRevision.asString());
-                }
-                else {
-                  DiffProvider diffProvider = myVcs.getDiffProvider();
-                  if (diffProvider == null || filePath.getVirtualFile() == null) return false;
+            boolean loadedExactRevision = computeWithModalProgressIfNeeded(myProject, message, () -> {
+              if (historyProvider instanceof VcsBaseRevisionAdviser) {
+                VcsBaseRevisionAdviser revisionAdviser = (VcsBaseRevisionAdviser)historyProvider;
+                return revisionAdviser.getBaseVersionContent(filePath, processor, finalRevision.asString());
+              }
+              else {
+                DiffProvider diffProvider = myVcs.getDiffProvider();
+                if (diffProvider == null || filePath.getVirtualFile() == null) return false;
 
-                  ContentRevision fileContent = diffProvider.createFileContent(finalRevision, filePath.getVirtualFile());
-                  return fileContent != null && !processor.process(fileContent.getContent());
-                }
-              });
+                ContentRevision fileContent = diffProvider.createFileContent(finalRevision, filePath.getVirtualFile());
+                return fileContent != null && !processor.process(fileContent.getContent());
+              }
+            });
             if (loadedExactRevision) return;
           }
         }
@@ -125,8 +129,8 @@ public class DefaultPatchBaseVersionProvider {
 
     final VcsHistorySession historySession;
     try {
-      historySession = VcsUtil.computeWithModalProgress(myProject, message("loading.file.history.progress"), true,
-                                                        indicator -> historyProvider.createSessionFor(filePath));
+      historySession = computeWithModalProgressIfNeeded(myProject, message("loading.file.history.progress"),
+                                                        () -> historyProvider.createSessionFor(filePath));
     }
     catch (ProcessCanceledException e) {
       return;
@@ -196,5 +200,17 @@ public class DefaultPatchBaseVersionProvider {
       }
     }
     return null;
+  }
+
+  private static <T> T computeWithModalProgressIfNeeded(@Nullable Project project,
+                                                        @NotNull String title,
+                                                        @NotNull ThrowableComputable<T, ? extends VcsException> computable)
+    throws VcsException {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return VcsUtil.computeWithModalProgress(project, title, true, indicator -> computable.compute());
+    }
+    else {
+      return computable.compute();
+    }
   }
 }
