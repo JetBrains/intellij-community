@@ -309,7 +309,7 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
     leaf = leaf.nextLeaf(skipEmptyElements = true) ?: return false
     leafRange = leaf.textRange
   }
-  assert(leafRange.startOffset >= range.startOffset)
+  check(leafRange.startOffset >= range.startOffset)
 
   var endOffset = leafRange.endOffset
   while (endOffset <= range.endOffset) {
