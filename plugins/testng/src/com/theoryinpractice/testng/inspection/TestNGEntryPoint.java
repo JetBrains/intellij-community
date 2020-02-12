@@ -45,7 +45,7 @@ public class TestNGEntryPoint extends EntryPoint {
   @Override
   @NotNull
   public String getDisplayName() {
-    return ExecutionBundle.message("testng.entrypoint.test.cases");
+    return ExecutionBundle.message("testng.entry.point.test.cases");
   }
 
   @Override
