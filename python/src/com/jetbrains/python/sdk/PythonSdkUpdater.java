@@ -22,7 +22,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -177,7 +180,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
           if (sdkInsideTask != null) {
             ourUnderRefresh.put(key);
             try {
-              final String skeletonsPath = getBinarySkeletonsPath(sdk.getHomePath());
+              final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(sdk);
               try {
                 if (PythonSdkUtil.isRemote(sdkInsideTask) && project1 == null && ownerComponent == null) {
                   LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");
@@ -318,7 +321,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   }
 
   private static boolean ensureBinarySkeletonsDirectoryExists(Sdk sdk) {
-    final String skeletonsPath = getBinarySkeletonsPath(sdk.getHomePath());
+    final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(sdk);
     if (skeletonsPath != null) {
       if (new File(skeletonsPath).mkdirs()) {
         return true;
@@ -425,7 +428,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   @NotNull
   private static List<VirtualFile> getSkeletonsPaths(@NotNull Sdk sdk) {
     final List<VirtualFile> results = Lists.newArrayList();
-    final String skeletonsPath = getBinarySkeletonsPath(sdk.getHomePath());
+    final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(sdk);
     if (skeletonsPath != null) {
       final VirtualFile skeletonsDir = StandardFileSystems.local().refreshAndFindFileByPath(skeletonsPath);
       if (skeletonsDir != null) {
@@ -446,11 +449,6 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     final String homePath = sdk.getHomePath();
     final String name = sdk.getName();
     return homePath != null ? name + " (" + homePath + ")" : name;
-  }
-
-  @Nullable
-  private static String getBinarySkeletonsPath(@Nullable String path) {
-    return path != null ? PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), path) : null;
   }
 
   /**

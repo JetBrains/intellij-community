@@ -36,7 +36,6 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
@@ -51,6 +50,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Handles a refresh of SDK's skeletons.
@@ -256,7 +256,11 @@ public class PySkeletonRefresher {
   @NotNull
   public String getSkeletonsPath() throws InvalidSdkException {
     if (mySkeletonsPath == null) {
-      mySkeletonsPath = PySdkUtil.getOrCreateSkeletonsPath(mySdk);
+      mySkeletonsPath = Objects.requireNonNull(PythonSdkUtil.getSkeletonsPath(mySdk));
+      final File skeletonsDir = new File(mySkeletonsPath);
+      if (!skeletonsDir.exists() && !skeletonsDir.mkdirs()) {
+        throw new InvalidSdkException("Can't create skeleton dir " + mySkeletonsPath);
+      }
     }
     return mySkeletonsPath;
   }

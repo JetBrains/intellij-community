@@ -189,6 +189,12 @@ public class PythonSdkUtil {
     return getSkeletonsRootPath(basePath) + sep + FileUtil.toSystemIndependentName(sdkHome).hashCode() + sep;
   }
 
+  @Nullable
+  public static String getSkeletonsPath(@NotNull Sdk sdk) {
+    String path = sdk.getHomePath();
+    return path != null ? getSkeletonsPath(PathManager.getSystemPath(), path) : null;
+  }
+
   @NotNull
   public static String getSkeletonsRootPath(String basePath) {
     return basePath + File.separator + SKELETON_DIR_NAME;

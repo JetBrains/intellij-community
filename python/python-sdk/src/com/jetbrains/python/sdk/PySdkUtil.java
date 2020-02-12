@@ -7,7 +7,6 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -211,14 +210,5 @@ public class PySdkUtil {
     }
 
     return Collections.emptyMap();
-  }
-
-  public static String getOrCreateSkeletonsPath(Sdk sdk) throws InvalidSdkException {
-    String path = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
-    final File skeletonsDir = new File(path);
-    if (!skeletonsDir.exists() && !skeletonsDir.mkdirs()) {
-      throw new InvalidSdkException("Can't create skeleton dir " + path);
-    }
-    return path;
   }
 }
