@@ -13,6 +13,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -109,9 +110,13 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   @NotNull
   public UUID getUuid() {
     if (uuid == null) {
-      return uuid = UUID.randomUUID();
+      return uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
     }
     return uuid;
+  }
+
+  public void setUuidFromName() {
+    uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
   }
 
   public void setUuid(@NotNull UUID uuid) {
@@ -199,7 +204,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     if (created > 0) {
       element.setAttribute(CREATED_ATTRIBUTE_NAME, String.valueOf(created));
     }
-    if (uuid != null) {
+    if (uuid != null && !uuid.equals(UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8)))) {
       element.setAttribute(UUID_ATTRIBUTE_NAME, uuid.toString());
     }
     if (!StringUtil.isEmpty(description)) {

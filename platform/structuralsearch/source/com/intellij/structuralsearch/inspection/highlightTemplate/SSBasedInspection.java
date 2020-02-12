@@ -170,11 +170,11 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   @Override
-  public List<LocalInspectionToolWrapper> getChildren() {
+  public List<LocalInspectionToolWrapper> getChildren(boolean parentIsEnabled) {
     if (Registry.is("ssr.separate.inspections")) {
       return getConfigurations().stream()
         .filter(configuration -> configuration.getOrder() == 0)
-        .map(configuration -> new StructuralSearchInspectionToolWrapper(configuration))
+        .map(configuration -> new StructuralSearchInspectionToolWrapper(configuration, parentIsEnabled))
         .collect(Collectors.toList());
     }
     return Collections.emptyList();

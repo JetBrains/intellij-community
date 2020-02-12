@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWrapper {
-  public StructuralSearchInspectionToolWrapper(Configuration configuration) {
-    super(new StructuralSearchFakeInspection(configuration));
+  public StructuralSearchInspectionToolWrapper(Configuration configuration, boolean enabled) {
+    super(new StructuralSearchFakeInspection(configuration, enabled));
   }
 
   private StructuralSearchInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
@@ -34,7 +34,7 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
 
   @Override
   public boolean isEnabledByDefault() {
-    return true;
+    return getTool().isEnabledByDefault();
   }
 
   @Override

@@ -19,6 +19,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -491,10 +492,32 @@ public class InspectionProfileImpl extends NewInspectionProfile {
           //some settings were read for the tool, so it must be initialized,
           //otherwise no dynamic tools are expected
           toolWrapper.isInitialized()) {
-        List<LocalInspectionToolWrapper> children = ((DynamicGroupTool)toolWrapper.getTool()).getChildren();
+        final boolean parentEnabled = myTools.get(toolWrapper.getShortName()).isEnabled();
+        List<LocalInspectionToolWrapper> children = ((DynamicGroupTool)toolWrapper.getTool()).getChildren(parentEnabled);
         if (tools.stream().noneMatch(i -> children.stream().anyMatch(l -> i.getShortName().equals(l.getShortName())))) {
           for (LocalInspectionToolWrapper wrapper : children) {
             addTool(project, wrapper, dependencies);
+            final String shortName = wrapper.getShortName();
+            if (InspectionElementsMerger.getMerger(shortName) != null) continue;
+            InspectionElementsMerger.addMerger(shortName, new InspectionElementsMergerBase() {
+              @Override
+              public @NotNull String getMergedToolName() {
+                return shortName;
+              }
+
+              @Override
+              public String @NotNull [] getSourceToolNames() {
+                return ArrayUtil.EMPTY_STRING_ARRAY;
+              }
+
+              @Override
+              protected boolean areSettingsMerged(@NotNull Map<String, Element> settings, @NotNull Element element) {
+                // returns true when settings are default, so defaults will not be saved in profile
+                return Boolean.parseBoolean(element.getAttributeValue("enabled")) == wrapper.isEnabledByDefault() &&
+                       wrapper.getDefaultLevel().toString().equals(element.getAttributeValue("level")) &&
+                       Boolean.parseBoolean(element.getAttributeValue("enabled_by_default")) == wrapper.isEnabledByDefault();
+              }
+            });
           }
         }
       }

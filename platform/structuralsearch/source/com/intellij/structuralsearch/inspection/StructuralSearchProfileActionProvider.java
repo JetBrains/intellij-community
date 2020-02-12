@@ -139,7 +139,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     assert wrapper != null;
     final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
 
-    configuration.setUuid(UUID.randomUUID());
+    configuration.setUuidFromName();
     if (!saveInspection(project, inspection, configuration)) {
       return false;
     }
@@ -155,7 +155,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       // already added
       return;
     }
-    final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
+    final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration, true);
     wrapped.setProfile(profile);
     profile.addTool(project, wrapped, null);
 

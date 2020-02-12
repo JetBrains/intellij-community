@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -28,6 +28,10 @@ public abstract class InspectionElementsMerger {
       }
     }
     return ourMergers.get(shortName);
+  }
+
+  static void addMerger(@NotNull String shortName, @NotNull InspectionElementsMerger merger) {
+    ourMergers.put(shortName, merger);
   }
 
   /**
