@@ -48,15 +48,8 @@ public class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void visitPyFile(PyFile node) {
-      if (isFileIgnored(node)) return;
-      Module module = ModuleUtilCore.findModuleForPsiElement(node);
-      if (module == null) {
-        Module[] modules = ModuleManager.getInstance(node.getProject()).getModules();
-        if (modules.length != 1) {
-          return;
-        }
-        module = modules[0];
-      }
+      Module module = guessModule(node);
+      if (module == null || isFileIgnored(node)) return;
       final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
 
       final boolean pyCharm = PythonIdeLanguageCustomization.isMainlyPythonIde();
@@ -101,6 +94,19 @@ public class PyInterpreterInspection extends PyInspection {
         }
       }
     }
+  }
+
+  @Nullable
+  private static Module guessModule(@NotNull PsiElement element) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module == null) {
+      Module[] modules = ModuleManager.getInstance(element.getProject()).getModules();
+      if (modules.length != 1) {
+        return null;
+      }
+      module = modules[0];
+    }
+    return module;
   }
 
   private static boolean isFileIgnored(@NotNull PyFile pyFile) {
@@ -149,7 +155,7 @@ public class PyInterpreterInspection extends PyInspection {
       final PsiElement element = descriptor.getPsiElement();
       if (element == null) return;
 
-      final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+      final Module module = guessModule(element);
       if (module == null) return;
 
       PySdkPopupFactory.Companion.createAndShow(project, module);
