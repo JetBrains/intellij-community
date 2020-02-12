@@ -203,6 +203,10 @@ fun PsiElement.siblings(forward: Boolean = true): Sequence<PsiElement> {
   return siblings(forward)
 }
 
+fun PsiElement?.isAncestor(element: PsiElement, strict: Boolean = false): Boolean {
+  return PsiTreeUtil.isAncestor(this, element, strict)
+}
+
 fun <T : PsiElement> Sequence<T>.skipTokens(tokens: TokenSet): Sequence<T> {
   return filter { it.node.elementType !in tokens }
 }
