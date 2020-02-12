@@ -84,7 +84,7 @@ public class VfsRootAccess {
         }
       }
 
-      //assert isUnder : "File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<>(allowed);
+      assert isUnder : "File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<>(allowed);
     }
   }
 
