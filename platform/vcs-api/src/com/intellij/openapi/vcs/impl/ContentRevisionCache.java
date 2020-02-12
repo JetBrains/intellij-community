@@ -124,7 +124,7 @@ public class ContentRevisionCache {
     }
   }
 
-  @Nullable
+  @NotNull
   public static String getOrLoadAsString(@NotNull Project project,
                                          @NotNull FilePath file,
                                          VcsRevisionNumber number,
@@ -134,12 +134,11 @@ public class ContentRevisionCache {
                                          @Nullable Charset charset)
     throws VcsException, IOException {
     final byte[] bytes = getOrLoadAsBytes(project, file, number, key, type, loader);
-    if (bytes == null) return null;
     return getAsString(bytes, file, charset);
   }
 
 
-  @Nullable
+  @NotNull
   public static String getOrLoadAsString(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
                                          @NotNull UniqueType type, final Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader)
     throws VcsException, IOException {
@@ -185,7 +184,7 @@ public class ContentRevisionCache {
   }
 
   public static byte @NotNull [] getOrLoadAsBytes(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
-                                                  @NotNull UniqueType type, final Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader)
+                                                  @NotNull UniqueType type, final Throwable2Computable<byte @NotNull [], ? extends VcsException, ? extends IOException> loader)
     throws VcsException, IOException {
     ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(project).getContentRevisionCache();
     byte[] bytes = cache.getBytes(path, number, vcsKey, type);
