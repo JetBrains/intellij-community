@@ -849,7 +849,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           JLabel cmp = (JLabel)delegate;
           cmp.setHorizontalAlignment(SwingConstants.LEFT);
           Border border = cmp.getBorder();
-          JBEmptyBorder indent = JBUI.Borders.emptyLeft(JBUI.scale(8));
+          JBEmptyBorder indent = JBUI.Borders.emptyLeft(8);
           border = JBUI.Borders.merge(border, indent, true);
           cmp.setBorder(border);
           return cmp;
