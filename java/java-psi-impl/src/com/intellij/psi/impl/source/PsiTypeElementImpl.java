@@ -25,6 +25,7 @@ import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -321,7 +322,30 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
-    throw new UnsupportedOperationException();//todo
+    PsiAnnotation annotation = JavaPsiFacade.getElementFactory(getProject()).createAnnotationFromText('@' + qualifiedName, this);
+    PsiElement firstChild = getFirstChild();
+    for (PsiElement child = getLastChild(); child != firstChild; child = child.getPrevSibling()) {
+      if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET) || PsiUtil.isJavaToken(child, JavaTokenType.ELLIPSIS)) {
+        return (PsiAnnotation)addBefore(annotation, child);
+      }
+    }
+    if (firstChild instanceof PsiJavaCodeReferenceElement) {
+      PsiIdentifier identifier = PsiTreeUtil.getChildOfType(firstChild, PsiIdentifier.class);
+      if (identifier != null) {
+        return (PsiAnnotation)firstChild.addBefore(annotation, identifier);
+      }
+    }
+    PsiElement parent = getParent();
+    if (parent instanceof PsiModifierListOwner) {
+      PsiModifierList modifierList = ((PsiModifierListOwner)parent).getModifierList();
+      if (modifierList != null) {
+        PsiTypeParameterList list = parent instanceof PsiTypeParameterListOwner ? ((PsiTypeParameterListOwner)parent).getTypeParameterList() : null;
+        if (list == null || list.textMatches("")) {
+          return (PsiAnnotation)modifierList.add(annotation);
+        }
+      }
+    }
+    return (PsiAnnotation)addBefore(annotation, firstChild);
   }
 
   @Override

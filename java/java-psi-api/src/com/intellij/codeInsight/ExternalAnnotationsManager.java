@@ -17,9 +17,28 @@ public abstract class ExternalAnnotationsManager {
 
   public static final Topic<ExternalAnnotationsListener> TOPIC = Topic.create("external annotations", ExternalAnnotationsListener.class);
 
+  /**
+   * Describes where to place the new annotation
+   */
   public enum AnnotationPlace {
+    /**
+     * Annotation must be placed right in the code
+     */
     IN_CODE,
+    /**
+     * Annotation must be placed externally
+     */
     EXTERNAL,
+    /**
+     * User should be asked to decide whether they want to create new annotation root for external annotation.
+     * {@link ExternalAnnotationsManager#chooseAnnotationsPlace(PsiElement)} asks user automatically, so this result is never returned,
+     * but it requires EDT thread. On the other hand, {@link ExternalAnnotationsManager#chooseAnnotationsPlaceNoUi(PsiElement)}
+     * never display UI but may return this result.
+     */
+    NEED_ASK_USER,
+    /**
+     * User actively cancelled the annotation addition, so it should not be added at all. 
+     */
     NOWHERE
   }
 
@@ -106,6 +125,18 @@ public abstract class ExternalAnnotationsManager {
                                                  @NotNull String annotationFQN,
                                                  PsiNameValuePair @Nullable [] value);
 
+  /**
+   * @param element element to add new annotation for
+   * @return place where the annotation must be added. No UI is displayed, so can be called inside any read-action.
+   * May return {@link AnnotationPlace#NEED_ASK_USER} if the user confirmation is necessary.
+   */
+  @NotNull
+  public abstract AnnotationPlace chooseAnnotationsPlaceNoUi(@NotNull PsiElement element);
+
+  /**
+   * @param element element to add new annotation for
+   * @return place where the annotation must be added. Must be called in EDT.
+   */
   @NotNull
   public abstract AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
 

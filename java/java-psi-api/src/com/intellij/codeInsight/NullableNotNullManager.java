@@ -315,6 +315,10 @@ public abstract class NullableNotNullManager {
                                ? findAnnotationInHierarchy(owner, qualifiedNames)
                                : findAnnotation(owner, qualifiedNames);
     PsiType type = getOwnerType(owner);
+    if (memberAnno != null && type instanceof PsiArrayType && AnnotationTargetUtil.isTypeAnnotation(memberAnno)) {
+      // Ambiguous TYPE_USE annotation on array type: we consider that it annotates an array component instead. 
+      memberAnno = null;
+    }
     if (memberAnno != null) {
       PsiAnnotation annotation = preferTypeAnnotation(memberAnno, type);
       if (annotation != memberAnno && !qualifiedNames.contains(annotation.getQualifiedName())) return null;
