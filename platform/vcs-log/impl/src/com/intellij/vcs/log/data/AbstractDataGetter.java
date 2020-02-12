@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -235,7 +236,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     // even if it will be loaded within a previous query
     if (!myCache.isKeyCached(commitId)) {
       IndexDataGetter dataGetter = myIndex.getDataGetter();
-      if (dataGetter != null) {
+      if (dataGetter != null && Registry.is("vcs.log.use.indexed.details")) {
         myCache.put(commitId, (T)new IndexedDetails(dataGetter, myStorage, commitId, taskNumber));
       }
       else {
