@@ -66,7 +66,9 @@ internal class CircletCloneComponentViewModel(
 
             mutableListOf<CircletCloneListItem?>().apply {
                 addAll(items)
-                if (size < allProjectRefs.size) {
+
+                // hack to avoid a limitation of `xTransformedPagedListOnFlux`
+                while (size < allProjectRefs.size) {
                     add(null)
                 }
             }
