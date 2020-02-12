@@ -7,7 +7,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -98,7 +97,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   static String getValueString(PsiPolyadicExpression concatenation, List<PsiExpression> args) {
     String formatString = "";
     try {
-      formatString = StringUtil.escapeStringCharacters(PsiConcatenationUtil.buildUnescapedFormatString(concatenation, false, args));
+      formatString = PsiConcatenationUtil.buildUnescapedFormatString(concatenation, false, args);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

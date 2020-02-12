@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -146,7 +145,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
       TextRange intersection = literalRange.intersection(mySelectionRange);
       value = literalExpression.getText().substring(intersection.getStartOffset() - literalRange.getStartOffset(), intersection.getEndOffset() - literalRange.getStartOffset());
     }
-    value = StringUtil.escapeStringCharacters(value);
+    value = value.replace("'", "''");
     return new JavaI18nizeQuickFixDialog(project, context, literalExpression, value, null, true, true);
   }
 
