@@ -46,6 +46,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.EnumeratorLongDescriptor;
 import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -171,13 +172,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     File file = ProjectUtil.getProjectCachePath(project, "recentFilesTimeStamps.dat").toFile();
     PersistentHashMap<String, Long> map;
     try {
-      map = new PersistentHashMap<>(file.toPath(), EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
+      map = createMap(file);
     }
     catch (IOException e) {
       LOG.info("Cannot create PersistentHashMap in "+file, e);
       PersistentHashMap.deleteFilesStartingWith(file);
       try {
-        map = new PersistentHashMap<>(file.toPath(), EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
+        map = createMap(file);
       }
       catch (IOException e1) {
         LOG.error("Cannot create PersistentHashMap in " + file + " even after deleting old files", e1);
@@ -194,6 +195,16 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       }
     });
     return map;
+  }
+
+  @NotNull
+  private static PersistentHashMap<String, Long> createMap(File file) throws IOException {
+    return new PersistentHashMap<>(file.toPath(),
+                                   EnumeratorStringDescriptor.INSTANCE,
+                                   EnumeratorLongDescriptor.INSTANCE,
+                                   256,
+                                   0,
+                                   new PagedFileStorage.StorageLockContext(true));
   }
 
   private void registerViewed(@NotNull VirtualFile file) {
