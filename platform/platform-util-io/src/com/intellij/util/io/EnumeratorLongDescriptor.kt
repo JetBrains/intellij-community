@@ -4,7 +4,7 @@ package com.intellij.util.io
 import java.io.DataInput
 import java.io.DataOutput
 
-open class LongKeyDescriptor: KeyDescriptor<Long> {
+object EnumeratorLongDescriptor: KeyDescriptor<Long> {
 
     override fun getHashCode(value: Long): Int = value.hashCode()
 
@@ -14,5 +14,3 @@ open class LongKeyDescriptor: KeyDescriptor<Long> {
 
     override fun read(`in`: DataInput): Long = `in`.readLong()
 }
-
-object EnumeratorLongDescriptor : LongKeyDescriptor()
