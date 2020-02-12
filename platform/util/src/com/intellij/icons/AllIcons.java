@@ -395,12 +395,13 @@ public class AllIcons {
     /** 16x16 */ public static final Icon InlineAddHover = load("/general/inlineAddHover.svg");
     /** 16x16 */ public static final Icon InlineVariables = load("/general/inlineVariables.svg");
     /** 16x16 */ public static final Icon InlineVariablesHover = load("/general/inlineVariablesHover.svg");
-    /** 14x14 */ public static final Icon InspectionsError = load("/general/inspectionsError.svg");
-    /** 14x14 */ public static final Icon InspectionsEye = load("/general/inspectionsEye.svg");
-    /** 14x14 */ public static final Icon InspectionsOK = load("/general/inspectionsOK.svg");
-    /** 14x14 */ public static final Icon InspectionsPause = load("/general/inspectionsPause.svg");
-    /** 14x14 */ public static final Icon InspectionsTrafficOff = load("/general/inspectionsTrafficOff.svg");
-    /** 14x14 */ public static final Icon InspectionsTypos = load("/general/inspectionsTypos.svg");
+    /** 16x16 */ public static final Icon InspectionsError = load("/general/inspectionsError.svg");
+    /** 16x16 */ public static final Icon InspectionsEye = load("/general/inspectionsEye.svg");
+    /** 16x16 */ public static final Icon InspectionsOK = load("/general/inspectionsOK.svg");
+    /** 16x16 */ public static final Icon InspectionsPause = load("/general/inspectionsPause.svg");
+    /** 16x16 */ public static final Icon InspectionsPowerSaveMode = load("/general/inspectionsPowerSaveMode.svg");
+    /** 16x16 */ public static final Icon InspectionsTrafficOff = load("/general/inspectionsTrafficOff.svg");
+    /** 16x16 */ public static final Icon InspectionsTypos = load("/general/inspectionsTypos.svg");
     /** 16x16 */ public static final Icon Layout = load("/general/layout.svg");
     /** 16x16 */ public static final Icon LayoutEditorOnly = load("/general/layoutEditorOnly.svg");
     /** 16x16 */ public static final Icon LayoutEditorPreview = load("/general/layoutEditorPreview.svg");
@@ -546,6 +547,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon OutgoingChangesOn = load("/ide/outgoingChangesOn.svg");
     /** 16x16 */ public static final Icon Pipette = load("/ide/pipette.svg");
     /** 16x16 */ public static final Icon Pipette_rollover = load("/ide/pipette_rollover.svg");
+    /** 16x16 */ public static final Icon PowerSaveMode = load("/ide/powerSaveMode.svg");
     /** 11x11 */ public static final Icon Rating = load("/ide/rating.svg");
     /** 11x11 */ public static final Icon Rating1 = load("/ide/rating1.svg");
     /** 11x11 */ public static final Icon Rating2 = load("/ide/rating2.svg");
