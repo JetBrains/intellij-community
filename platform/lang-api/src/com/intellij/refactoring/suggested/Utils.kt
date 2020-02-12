@@ -54,28 +54,3 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
   }
   return false
 }
-
-inline fun <reified T : PsiElement> PsiElement.findDescendantOfType(noinline predicate: (T) -> Boolean = { true }): T? {
-  return findDescendantOfType({ true }, predicate)
-}
-
-inline fun <reified T : PsiElement> PsiElement.findDescendantOfType(
-  crossinline canGoInside: (PsiElement) -> Boolean,
-  noinline predicate: (T) -> Boolean = { true }
-): T? {
-  var result: T? = null
-  this.accept(object : PsiRecursiveElementWalkingVisitor() {
-    override fun visitElement(element: PsiElement) {
-      if (element is T && predicate(element)) {
-        result = element
-        stopWalking()
-        return
-      }
-
-      if (canGoInside(element)) {
-        super.visitElement(element)
-      }
-    }
-  })
-  return result
-}

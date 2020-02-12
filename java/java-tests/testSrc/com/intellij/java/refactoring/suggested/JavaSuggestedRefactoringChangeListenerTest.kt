@@ -10,9 +10,9 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.util.findDescendantOfType
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringChangeListenerTest
 import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.findDescendantOfType
 
 class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChangeListenerTest() {
   override val fileType: FileType

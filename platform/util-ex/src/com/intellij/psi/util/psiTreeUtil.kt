@@ -4,6 +4,7 @@ package com.intellij.psi.util
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil.lastChild
@@ -165,4 +166,29 @@ fun PsiElement.siblings(forward: Boolean = true): Sequence<PsiElement> {
 
 fun <T : PsiElement> Sequence<T>.skipTokens(tokens: TokenSet): Sequence<T> {
   return filter { it.node.elementType !in tokens }
+}
+
+inline fun <reified T : PsiElement> PsiElement.findDescendantOfType(noinline predicate: (T) -> Boolean = { true }): T? {
+  return findDescendantOfType({ true }, predicate)
+}
+
+inline fun <reified T : PsiElement> PsiElement.findDescendantOfType(
+  crossinline canGoInside: (PsiElement) -> Boolean,
+  noinline predicate: (T) -> Boolean = { true }
+): T? {
+  var result: T? = null
+  this.accept(object : PsiRecursiveElementWalkingVisitor() {
+    override fun visitElement(element: PsiElement) {
+      if (element is T && predicate(element)) {
+        result = element
+        stopWalking()
+        return
+      }
+
+      if (canGoInside(element)) {
+        super.visitElement(element)
+      }
+    }
+  })
+  return result
 }
