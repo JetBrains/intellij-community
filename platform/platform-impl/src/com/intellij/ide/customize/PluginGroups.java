@@ -191,6 +191,7 @@ public class PluginGroups {
       "JavaScript and TypeScript:JavaScript,JavaScriptDebugger,JSIntentionPowerPack",//TODO: Inspection-JS
       "org.coffeescript",
       "Node.js:NodeJS",
+      "AngularJS",
       "com.intellij.flex",
       "com.intellij.plugins.html.instantEditing",
       "com.jetbrains.restClient",
