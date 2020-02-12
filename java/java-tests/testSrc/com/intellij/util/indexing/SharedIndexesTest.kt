@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.GlobalSearchScope
@@ -219,7 +221,8 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
       }
     }
 
-    private fun dropIndexingStampsRecursively(file: VirtualFile) {
+    @JvmStatic
+    fun dropIndexingStampsRecursively(file: VirtualFile) {
       file as VirtualFileSystemEntry
       file.isFileIndexed = false;
       IndexingStamp.dropIndexingTimeStamps(file.id)
