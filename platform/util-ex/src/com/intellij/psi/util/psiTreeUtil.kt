@@ -4,6 +4,7 @@ package com.intellij.psi.util
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
@@ -211,6 +212,40 @@ fun <T : PsiElement> Sequence<T>.skipTokens(tokens: TokenSet): Sequence<T> {
   return filter { it.node.elementType !in tokens }
 }
 
+// -------------------- Recursive tree visiting --------------------------------------------------------------------------------------------
+
+inline fun <reified T : PsiElement> PsiElement.forEachDescendantOfType(noinline action: (T) -> Unit) {
+  forEachDescendantOfType({ true }, action)
+}
+
+inline fun <reified T : PsiElement> PsiElement.forEachDescendantOfType(
+  crossinline canGoInside: (PsiElement) -> Boolean,
+  noinline action: (T) -> Unit
+) {
+  this.accept(object : PsiRecursiveElementVisitor() {
+    override fun visitElement(element: PsiElement) {
+      if (canGoInside(element)) {
+        super.visitElement(element)
+      }
+
+      if (element is T) {
+        action(element)
+      }
+    }
+  })
+}
+
+inline fun <reified T : PsiElement> PsiElement.anyDescendantOfType(noinline predicate: (T) -> Boolean = { true }): Boolean {
+  return findDescendantOfType(predicate) != null
+}
+
+inline fun <reified T : PsiElement> PsiElement.anyDescendantOfType(
+  crossinline canGoInside: (PsiElement) -> Boolean,
+  noinline predicate: (T) -> Boolean = { true }
+): Boolean {
+  return findDescendantOfType(canGoInside, predicate) != null
+}
+
 inline fun <reified T : PsiElement> PsiElement.findDescendantOfType(noinline predicate: (T) -> Boolean = { true }): T? {
   return findDescendantOfType({ true }, predicate)
 }
@@ -233,5 +268,22 @@ inline fun <reified T : PsiElement> PsiElement.findDescendantOfType(
       }
     }
   })
+  return result
+}
+
+inline fun <reified T : PsiElement> PsiElement.collectDescendantsOfType(noinline predicate: (T) -> Boolean = { true }): List<T> {
+  return collectDescendantsOfType({ true }, predicate)
+}
+
+inline fun <reified T : PsiElement> PsiElement.collectDescendantsOfType(
+  crossinline canGoInside: (PsiElement) -> Boolean,
+  noinline predicate: (T) -> Boolean = { true }
+): List<T> {
+  val result = ArrayList<T>()
+  forEachDescendantOfType<T>(canGoInside) {
+    if (predicate(it)) {
+      result.add(it)
+    }
+  }
   return result
 }
