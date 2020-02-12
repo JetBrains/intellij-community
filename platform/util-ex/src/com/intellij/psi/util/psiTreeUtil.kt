@@ -15,12 +15,18 @@ import kotlin.reflect.KClass
 
 // ----------- Walking children/siblings/parents -------------------------------------------------------------------------------------------
 
-inline fun <reified T : PsiElement> PsiElement.parentOfType(): T? {
-  return PsiTreeUtil.getParentOfType(this, T::class.java)
+inline fun <reified T : PsiElement> PsiElement.parentOfType(withSelf: Boolean = true): T? {
+  return PsiTreeUtil.getParentOfType(this, T::class.java, !withSelf)
 }
 
+@Deprecated("Use parentOfTypes()", ReplaceWith("parentOfTypes(*classes)"))
 fun <T : PsiElement> PsiElement.parentOfType(vararg classes: KClass<out T>): T? {
-  return PsiTreeUtil.getParentOfType(this, *classes.map { it.java }.toTypedArray())
+  return parentOfTypes(*classes)
+}
+
+fun <T : PsiElement> PsiElement.parentOfTypes(vararg classes: KClass<out T>, withSelf: Boolean = true): T? {
+  val start = if (withSelf) this else this.parent
+  return PsiTreeUtil.getNonStrictParentOfType(start, *classes.map { it.java }.toTypedArray())
 }
 
 inline fun <reified T : PsiElement> PsiElement.parentsOfType(): Sequence<T> = parentsOfType(T::class.java)

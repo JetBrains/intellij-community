@@ -9,7 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.createSmartPointer
-import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.util.RefactoringUtil
 
 internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
@@ -45,5 +45,5 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
 
   override fun getParameters() = getParameters(expectedParameters, project)
 
-  val context get() = call.parentOfType(PsiMethod::class, PsiClass::class)
+  val context get() = call.parentOfTypes(PsiMethod::class, PsiClass::class)
 }
