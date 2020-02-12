@@ -44,7 +44,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return getFamilyName() + " " + getPreposition() + " \'@" + ClassUtil.extractClassName(myAnnotation) + "\'";
+    return getFamilyName() + " " + getPreposition() + " '@" + ClassUtil.extractClassName(myAnnotation) + "'";
   }
 
   @NotNull
