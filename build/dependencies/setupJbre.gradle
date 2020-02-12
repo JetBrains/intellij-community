@@ -144,17 +144,18 @@ static def archToDownload(platform) {
 }
 
 /**
- * See IDEA-231466
+ * Required to pass Apple Notarization,
+ * cannot be done on JBR side without breaking JBR as standalone application,
+ * see IDEA-231466
  */
 Task patchMacOS(String jbrArtifactName, File jbrDir) {
   task("patch$jbrArtifactName") {
     doFirst {
       def contents = jbrDir.toPath().resolve('jbr/Contents')
-      def patchedDir = contents.resolve('MacOS')
-      patchedDir.eachFileRecurse { Files.delete(it) }
-      def link = patchedDir.resolve('libjli.dylib')
+      def origin = contents.resolve('MacOS/libjli.dylib')
+      Files.deleteIfExists(origin)
       def target = contents.resolve('Home/lib/jli/libjli.dylib')
-      Files.createSymbolicLink(link, link.parent.relativize(target))
+      Files.createSymbolicLink(origin, origin.parent.relativize(target))
     }
   }
 }
