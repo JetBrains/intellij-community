@@ -11,6 +11,5 @@ import org.jetbrains.annotations.NotNull;
 public class SensitiveProgressWrapper extends ProgressWrapper {
   public SensitiveProgressWrapper(@NotNull ProgressIndicator indicator) {
     super(indicator, true);
-    setIndeterminate(indicator.isIndeterminate());
   }
 }
