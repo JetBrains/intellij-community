@@ -9,7 +9,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.ui.popup.ListPopup
@@ -19,12 +18,11 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetProvider
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidget
-import com.intellij.util.text.trimMiddle
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonIdeLanguageCustomization
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PySdkPopupFactory.Companion.descriptionInPopup
-import com.jetbrains.python.sdk.PySdkPopupFactory.Companion.nameInPopup
+import com.jetbrains.python.sdk.PySdkPopupFactory.Companion.shortenNameInPopup
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.noInterpreterMarker
 
@@ -65,7 +63,7 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
       WidgetState("", noInterpreterMarker, true)
     }
     else {
-      WidgetState(PyBundle.message("current.interpreter", descriptionInPopup(sdk)), shortenNameInBar(sdk), true)
+      WidgetState(PyBundle.message("current.interpreter", descriptionInPopup(sdk)), shortenNameInPopup(sdk, 50), true)
     }
   }
 
@@ -88,6 +86,4 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
   override fun requiresWritableFile(): Boolean = false
 
   override fun createInstance(project: Project): StatusBarWidget = PySdkStatusBar(project)
-
-  private fun shortenNameInBar(sdk: Sdk) = nameInPopup(sdk).trimMiddle(50)
 }

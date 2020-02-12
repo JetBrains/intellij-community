@@ -100,6 +100,20 @@ fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDat
 fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module)
 
+fun findExistingAssociatedSdk(module: Module, existingSdks: List<Sdk>): Sdk? {
+  return existingSdks
+    .asSequence()
+    .filter { it.sdkType is PythonSdkType && it.isAssociatedWithModule(module) }
+    .sortedByDescending { it.homePath }
+    .firstOrNull()
+}
+
+fun findDetectedAssociatedEnvironment(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): PyDetectedSdk? {
+  detectVirtualEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let { return it }
+  detectCondaEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let { return it }
+  return null
+}
+
 fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,
                             existingSdks: List<Sdk>,
                             baseSdk: Sdk?,
@@ -218,6 +232,9 @@ fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
 }
 
 private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
+  // please don't forget to update com.jetbrains.python.inspections.PyInterpreterInspection.Visitor#getSuitableSdkFix
+  // after changing this method
+
   val baseSdkName = PythonSdkType.suggestBaseSdkName(sdkHome) ?: return null
   val venvRoot = PythonSdkUtil.getVirtualEnvRoot(sdkHome)?.path
   val condaRoot = CondaEnvSdkFlavor.getCondaEnvRoot(sdkHome)?.path
@@ -265,7 +282,7 @@ private fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
   return FileUtil.isAncestor(basePath, homePath, true)
 }
 
-private val PyDetectedSdk.guessedLanguageLevel: LanguageLevel?
+val PyDetectedSdk.guessedLanguageLevel: LanguageLevel?
   get() {
     val path = homePath ?: return null
     val result = Regex(""".*python(\d\.\d)""").find(path) ?: return null

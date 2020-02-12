@@ -36,20 +36,6 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     private val BALLOON_NOTIFICATIONS = NotificationGroup("Python interpreter configuring", NotificationDisplayType.BALLOON, true)
     private val LOGGER = Logger.getInstance(PythonSdkConfigurator::class.java)
 
-    private fun findExistingAssociatedSdk(module: Module, existingSdks: List<Sdk>): Sdk? {
-      return existingSdks
-        .asSequence()
-        .filter { it.sdkType is PythonSdkType && it.isAssociatedWithModule(module) }
-        .sortedByDescending { it.homePath }
-        .firstOrNull()
-    }
-
-    private fun findDetectedAssociatedEnvironment(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): PyDetectedSdk? {
-      detectVirtualEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let { return it }
-      detectCondaEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let { return it }
-      return null
-    }
-
     private fun getDefaultProjectSdk(): Sdk? {
       return ProjectRootManager.getInstance(ProjectManager.getInstance().defaultProject).projectSdk?.takeIf { it.sdkType is PythonSdkType }
     }

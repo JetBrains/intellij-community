@@ -24,10 +24,12 @@ import java.util.function.Consumer
 class PySdkPopupFactory(val project: Project, val module: Module) {
 
   companion object {
-    fun nameInPopup(sdk: Sdk): String {
+    private fun nameInPopup(sdk: Sdk): String {
       val (_, primary, secondary) = name(sdk)
       return if (secondary == null) primary else "$primary [$secondary]"
     }
+
+    fun shortenNameInPopup(sdk: Sdk, maxLength: Int) = nameInPopup(sdk).trimMiddle(maxLength)
 
     fun descriptionInPopup(sdk: Sdk) = "${nameInPopup(sdk)} [${path(sdk)}]".trimMiddle(150)
 
@@ -85,8 +87,6 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     ).apply { setHandleAutoSelectionBeforeShow(true) }
   }
 
-  private fun shortenNameInPopup(sdk: Sdk) = nameInPopup(sdk).trimMiddle(100)
-
   private fun switchToSdk(sdk: Sdk) {
     (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
     project.pythonSdk = sdk
@@ -97,7 +97,7 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
 
     init {
       val presentation = templatePresentation
-      presentation.setText(shortenNameInPopup(sdk), false)
+      presentation.setText(shortenNameInPopup(sdk, 100), false)
       presentation.description = PyBundle.message("python.sdk.switch.to", descriptionInPopup(sdk))
       presentation.icon = icon(sdk)
     }
