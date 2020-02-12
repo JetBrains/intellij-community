@@ -47,6 +47,7 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.suggested.SuggestedRefactoringProvider;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -344,11 +345,12 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   }
 
   private static void changeModifier(PsiModifierList modifierList, AccessModifier modifier, boolean hasConflicts) {
+    Project project = modifierList.getProject();
     PsiElement parent = modifierList.getParent();
     if (parent instanceof PsiMethod && hasConflicts) {
       PsiMethod method = (PsiMethod)parent;
       //no myPrepareSuccessfulSwingThreadCallback means that the conflicts when any, won't be shown again
-      new ChangeSignatureProcessor(parent.getProject(),
+      new ChangeSignatureProcessor(project,
                                    method,
                                    false,
                                    modifier.toPsiModifier(),
@@ -360,21 +362,21 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       return;
     }
     PsiFile file = modifierList.getContainingFile();
-    WriteCommandAction.writeCommandAction(file.getProject(), file)
+    WriteCommandAction.writeCommandAction(project, file)
       .withName(IntentionPowerPackBundle.message("change.modifier.intention.name"))
       .run(() -> {
-      modifierList.setModifierProperty(modifier.toPsiModifier(), true);
-      if (modifier != AccessModifier.PACKAGE_LOCAL) {
-        final Project project = modifierList.getProject();
-        final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(" ");
-        final PsiElement sibling = modifierList.getNextSibling();
-        if (sibling instanceof PsiWhiteSpace) {
-          sibling.replace(whitespace);
-          CodeStyleManager.getInstance(project).reformatRange(parent, modifierList.getTextOffset(),
-                                                              modifierList.getNextSibling().getTextOffset());
+        modifierList.setModifierProperty(modifier.toPsiModifier(), true);
+        if (modifier != AccessModifier.PACKAGE_LOCAL) {
+          final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(" ");
+          final PsiElement sibling = modifierList.getNextSibling();
+          if (sibling instanceof PsiWhiteSpace) {
+            sibling.replace(whitespace);
+            CodeStyleManager.getInstance(project).reformatRange(parent, modifierList.getTextOffset(),
+                                                                modifierList.getNextSibling().getTextOffset());
+          }
         }
-      }
-    });
+        SuggestedRefactoringProvider.getInstance(project).reset();
+      });
   }
 
   @Nullable
