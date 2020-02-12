@@ -5,8 +5,9 @@ package com.intellij.refactoring.suggested
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
-import com.intellij.psi.util.nextLeaf
+import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 
 val DocumentEvent.oldRange: TextRange
   get() = TextRange(offset, offset + oldLength)
@@ -36,21 +37,3 @@ val PsiElement.endOffset: Int
 
 fun <E : PsiElement> E.createSmartPointer(): SmartPsiElementPointer<E> =
   SmartPointerManager.getInstance(project).createSmartPsiElementPointer(this)
-
-fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
-  var leaf = findElementAt(range.startOffset) ?: return false
-  var leafRange = leaf.textRange
-  if (leafRange.startOffset < range.startOffset) {
-    leaf = leaf.nextLeaf(skipEmptyElements = true) ?: return false
-    leafRange = leaf.textRange
-  }
-  assert(leafRange.startOffset >= range.startOffset)
-
-  var endOffset = leafRange.endOffset
-  while (endOffset <= range.endOffset) {
-    if (leaf is PsiErrorElement || leaf.parent is PsiErrorElement) return true
-    leaf = leaf.nextLeaf() ?: return false
-    endOffset += leaf.textLength
-  }
-  return false
-}

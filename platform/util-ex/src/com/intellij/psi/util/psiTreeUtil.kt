@@ -2,10 +2,8 @@
 package com.intellij.psi.util
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiRecursiveElementVisitor
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.*
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.containers.stopAfter
@@ -303,3 +301,21 @@ fun <T : PsiElement> Sequence<T>.skipTokens(tokens: TokenSet): Sequence<T> {
 
 val PsiElement?.elementType: IElementType?
   get() = PsiUtilCore.getElementType(this)
+
+fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
+  var leaf = findElementAt(range.startOffset) ?: return false
+  var leafRange = leaf.textRange
+  if (leafRange.startOffset < range.startOffset) {
+    leaf = leaf.nextLeaf(skipEmptyElements = true) ?: return false
+    leafRange = leaf.textRange
+  }
+  assert(leafRange.startOffset >= range.startOffset)
+
+  var endOffset = leafRange.endOffset
+  while (endOffset <= range.endOffset) {
+    if (leaf is PsiErrorElement || leaf.parent is PsiErrorElement) return true
+    leaf = leaf.nextLeaf() ?: return false
+    endOffset += leaf.textLength
+  }
+  return false
+}
