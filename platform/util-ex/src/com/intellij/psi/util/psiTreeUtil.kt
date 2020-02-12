@@ -15,7 +15,9 @@ import kotlin.reflect.KClass
 
 // ----------- Walking children/siblings/parents -------------------------------------------------------------------------------------------
 
-inline fun <reified T : PsiElement> PsiElement.parentOfType(): T? = parentOfType(T::class)
+inline fun <reified T : PsiElement> PsiElement.parentOfType(): T? {
+  return PsiTreeUtil.getParentOfType(this, T::class.java)
+}
 
 fun <T : PsiElement> PsiElement.parentOfType(vararg classes: KClass<out T>): T? {
   return PsiTreeUtil.getParentOfType(this, *classes.map { it.java }.toTypedArray())
