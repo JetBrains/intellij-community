@@ -310,6 +310,7 @@ public class ExtensionPointImplTest {
     Disposable disposable = ExtensionPointUtil.createKeyedExtensionDisposable(extension.getInstance(), extensionPoint);
     extensionPoint.unregisterExtension(extension);
     assertThat(Disposer.isDisposed(disposable)).isTrue();
+    Disposer.dispose(extensionPoint.getComponentManager());
   }
 
   @NotNull
