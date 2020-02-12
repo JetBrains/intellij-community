@@ -4,17 +4,26 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
-data class SignatureInferenceOptions(val searchScope: SearchScope? = null,
-                                     val signatureInferenceContext: SignatureInferenceContext = DefaultInferenceContext)
+data class SignatureInferenceOptions(val searchScope: SearchScope,
+                                     val signatureInferenceContext: SignatureInferenceContext,
+                                     val calls: Lazy<List<PsiReference>>) {
+
+  override fun equals(other: Any?): Boolean = other is SignatureInferenceOptions &&
+                                              this.searchScope == other.searchScope &&
+                                              this.signatureInferenceContext == other.signatureInferenceContext
+
+  override fun hashCode(): Int = searchScope.hashCode() * 31 + signatureInferenceContext.hashCode()
+}
 
 
-interface SignatureInferenceContext {
+open class SignatureInferenceContext(val ignored: List<GrMethod>) {
 
-  fun PsiClassType.getTypeArguments(): Array<PsiType?> = parameters
+  open fun PsiClassType.getTypeArguments(): Array<PsiType?> = parameters
 
-  fun filterType(type: PsiType, context: PsiElement): PsiType {
+  open fun filterType(type: PsiType, context: PsiElement): PsiType {
     return if (type is PsiPrimitiveType) {
       type.getBoxedType(context) ?: type
     }
@@ -22,11 +31,16 @@ interface SignatureInferenceContext {
       type
     }
   }
+
+  open fun ignoreMethod(method: GrMethod): SignatureInferenceContext {
+    return SignatureInferenceContext(listOf(method, *ignored.toTypedArray()))
+  }
 }
 
-object DefaultInferenceContext : SignatureInferenceContext
+object DefaultInferenceContext : SignatureInferenceContext(emptyList())
 
-class ClosureIgnoringInferenceContext(private val manager: PsiManager) : SignatureInferenceContext {
+class ClosureIgnoringInferenceContext(private val manager: PsiManager, ignored: List<GrMethod> = emptyList()) : SignatureInferenceContext(
+  ignored) {
   override fun PsiClassType.getTypeArguments(): Array<PsiType?> {
     return if (this.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
       arrayOf(PsiWildcardType.createUnbounded(manager))
@@ -43,8 +57,12 @@ class ClosureIgnoringInferenceContext(private val manager: PsiManager) : Signatu
     return super.filterType(type, context)
   }
 
-  override fun equals(other: Any?): Boolean = if (other is ClosureIgnoringInferenceContext) this.manager == other.manager else false
-  override fun hashCode(): Int {
-    return manager.hashCode()
+  override fun ignoreMethod(method: GrMethod): SignatureInferenceContext {
+    return ClosureIgnoringInferenceContext(manager, listOf(method, *ignored.toTypedArray()))
   }
+
+  override fun equals(other: Any?): Boolean =
+    other is ClosureIgnoringInferenceContext && this.manager == other.manager && this.ignored == other.ignored
+
+  override fun hashCode(): Int = manager.hashCode() * 31 + ignored.hashCode()
 }

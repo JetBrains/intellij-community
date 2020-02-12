@@ -6,10 +6,6 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
-import org.jetbrains.plugins.groovy.intentions.style.inference.properResolve
-import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
-import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
-import org.jetbrains.plugins.groovy.intentions.style.inference.upperBound
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
@@ -174,6 +170,9 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
 
 
   override fun visitCallExpression(callExpression: GrCallExpression) {
+    if (callExpression.resolveMethod() in builder.signatureInferenceContext.ignored) {
+      return
+    }
     processMethod(callExpression.advancedResolve())
     builder.addConstrainingExpression(callExpression)
     super.visitCallExpression(callExpression)

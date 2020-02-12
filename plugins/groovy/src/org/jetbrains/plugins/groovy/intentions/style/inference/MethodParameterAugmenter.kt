@@ -26,7 +26,7 @@ class MethodParameterAugmenter : TypeAugmenter() {
         return null
       }
       val scope = getFileScope(method) ?: return null
-      val options = SignatureInferenceOptions(scope, ClosureIgnoringInferenceContext(method.manager))
+      val options = SignatureInferenceOptions(scope, ClosureIgnoringInferenceContext(method.manager), lazy { unreachable() })
       return computeInferredMethod(method, options)
     }
 
