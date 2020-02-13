@@ -22,7 +22,7 @@ task setupCidr
 
 [
   clang: [
-    version: "9.0.0.c68508",
+    version: "10.0.0.143e87",
     platforms: [
       win: ["x64"],
       linux: ["x64"],
@@ -31,7 +31,7 @@ task setupCidr
     path: "CIDR/clion/bin/clang"
   ],
   lldbkit: [
-    version: "298f1e",
+    version: "016244",
     platforms: [
       win: ["x64", "x86"],
       linux: ["x64"],
@@ -48,7 +48,7 @@ task setupCidr
     no_platform_subdir: true
   ],
   jbdevice: [
-    version: "c7f4ca1",
+    version: "810660",
     platforms: [
       "mac": ["x64"],
     ],
@@ -56,7 +56,7 @@ task setupCidr
     no_platform_subdir: true
   ],
   objchelper: [
-    version: "e1d1af7",
+    version: "e9b1fe3",
     platforms: [
       "mac": ["x64"],
       "linux": ["x64"]
