@@ -1,30 +1,80 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal
 
+import com.intellij.internal.SharedIndexesLogger.logDownloadNotifications
+import com.intellij.internal.SharedIndexesLogger.logNotification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallRequest
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerListener
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.indexing.hash.SharedIndexChunkConfiguration
+import com.intellij.util.indexing.hash.SharedIndexChunkConfigurationImpl
 import com.intellij.util.indexing.provided.SharedIndexChunkLocator
 import com.intellij.util.indexing.provided.SharedIndexChunkLocator.ChunkDescriptor
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.concurrency.await
 import java.nio.file.Path
 
+private fun isSharedIndexesDownloadEnabled() = ApplicationManager.getApplication()?.isUnitTestMode == false && Registry.`is`("shared.indexes.download")
+
+class SharedJdkIndexChunkLocatorInit : StartupActivity.DumbAware {
+  override fun runActivity(project: Project) {
+    if (!isSharedIndexesDownloadEnabled()) return
+
+    project.messageBus.connect().subscribe(JdkInstaller.TOPIC, object: JdkInstallerListener {
+      override fun onJdkDownloadStarted(request: JdkInstallRequest) {
+        if (!isSharedIndexesDownloadEnabled()) return
+
+        val jdk = request.item
+        val task = object: Task.Backgroundable(project, "Downloading Shared Indexes for ${jdk.fullPresentationText}", true, PerformInBackgroundOption.ALWAYS_BACKGROUND){
+          override fun run(indicator: ProgressIndicator) {
+            prefetchSharedIndex(jdk, indicator, project)
+          }
+        }
+
+        ProgressManager.getInstance().run(task)
+      }
+    })
+  }
+
+  private fun prefetchSharedIndex(jdk: JdkItem,
+                                  indicator: ProgressIndicator,
+                                  project: Project) {
+    val request = SharedIndexRequest(kind = "jdk", aliases = listOf(jdk.installFolderName, jdk.suggestedSdkName, "${jdk.jdkMajorVersion}"))
+    val info = SharedIndexesLoader.getInstance().lookupSharedIndex(request, indicator)
+
+    logNotification(project,"Shared Index entry for downloading ${jdk.fullPresentationText} is found with $info\n${info?.url}")
+    if (info == null) return
+
+    val descriptor = logDownloadNotifications(project, jdk.fullPresentationText, info.toChunkDescriptor(emptySet()))
+    val service = ApplicationManager.getApplication()
+      .getService(SharedIndexChunkConfiguration::class.java) as SharedIndexChunkConfigurationImpl
+
+    runBlocking {
+      service.preloadIndex(project, descriptor, indicator).await()
+    }
+  }
+}
+
 class SharedJdkIndexChunkLocator: SharedIndexChunkLocator {
-  private val LOG = logger<SharedJdkIndexChunkLocator>()
 
   override fun locateIndex(project: Project,
                            entries: MutableCollection<out OrderEntry>,
                            indicator: ProgressIndicator): List<ChunkDescriptor> {
-    if (ApplicationManager.getApplication().isUnitTestMode) return emptyList()
-    if (!Registry.`is`("shared.indexes.download")) return emptyList()
+    if (!isSharedIndexesDownloadEnabled()) return emptyList()
 
     //TODO: it should cache the known objects to return them offline first
     //TODO: what if I have a fresh index update for an already downloaded chunk?
@@ -38,45 +88,81 @@ class SharedJdkIndexChunkLocator: SharedIndexChunkLocator {
     if (jdkToEntries.isEmpty()) return emptyList()
     val type = JavaSdk.getInstance() as JavaSdkImpl
 
-    val sharedIndexType = "jdk"
-    return jdkToEntries.mapNotNull { (sdk, sdkEntries) ->
+    indicator.text = "Resolving shared indexes..."
+
+    val result = mutableListOf<ChunkDescriptor>()
+    jdkToEntries.entries.forEachWithProgress(indicator) { (sdk, sdkEntries) ->
       val sdkHash = type.computeJdkFingerprint(sdk)
       logNotification(project, "Hash for JDK \"${sdk.name}\" is $sdkHash")
+      if (sdkHash == null) {
+        return@forEachWithProgress
+      }
 
-      sdkHash ?: return@mapNotNull null
+      val aliases = sequence {
+        yield(sdk.name)
 
-      val info = SharedIndexesLoader.getInstance().lookupSharedIndex(SharedIndexRequest(kind = sharedIndexType, hash = sdkHash), indicator)
-      logNotification(project, "Shared Index entry for JDK \"${sdk.name}\" is found with $info\n${info?.url}")
-
-      info ?: return@mapNotNull null
-
-      object: ChunkDescriptor {
-        override fun getChunkUniqueId() = "jdk-$sdkHash-${info.version.weakVersionHash}"
-        override fun getSupportedInfrastructureVersion() = info.version
-
-        override fun getOrderEntries() = sdkEntries
-
-        override fun downloadChunk(targetFile: Path, indicator: ProgressIndicator) {
-          logNotification(project, "Downloading Shared Index for JDK \"${sdk.name}\" with $info...")
-          try {
-            SharedIndexesLoader.getInstance().downloadSharedIndex(info, indicator, targetFile.toFile())
-          } finally {
-            logNotification(project, "Completed Downloading Shared Index for JDK \"${sdk.name}\" with $info")
-          }
+        val javaVersion = runCatching { type.getJavaVersion(sdk) }.getOrNull()
+        if (javaVersion != null) {
+          yield(javaVersion.toFeatureMinorUpdateString())
+          yield(javaVersion.toFeatureString())
         }
+      }.distinct().toList()
+
+      val request = SharedIndexRequest(kind = "jdk", hash = sdkHash, aliases = aliases)
+      val info = SharedIndexesLoader.getInstance().lookupSharedIndex(request, indicator)
+      logNotification(project, "Shared Index entry for JDK \"${sdk.name}\" is found with $info\n${info?.url}")
+      if (info == null) {
+        return@forEachWithProgress
+      }
+
+      result += logDownloadNotifications(project, "JDK \"${sdk.name}\" with $info", info.toChunkDescriptor(sdkEntries))
+    }
+
+    return result
+  }
+}
+
+private object SharedIndexesLogger {
+  private val LOG = logger<SharedJdkIndexChunkLocator>()
+
+  val notificationGroup by lazy {
+    NotificationGroup.logOnlyGroup("SharedIndexes")
+  }
+
+  fun logDownloadNotifications(project: Project, name: String, descriptor: ChunkDescriptor) = object: ChunkDescriptor by descriptor {
+    override fun downloadChunk(targetFile: Path, indicator: ProgressIndicator) {
+      logNotification(project, "Downloading Shared Index for $name")
+      try {
+        return descriptor.downloadChunk(targetFile, indicator)
+      } finally {
+        logNotification(project, "Completed Downloading Shared Index for $name")
       }
     }
   }
 
-  private val notificationGroup by lazy {
-    NotificationGroup.logOnlyGroup("SharedIndexes")
-  }
-
-  private fun logNotification(project: Project, message: String) {
+  fun logNotification(project: Project, message: String) {
     LOG.warn("SharedIndexes: $message")
     if (ApplicationManager.getApplication().isInternal || Registry.`is`("shared.indexes.eventLogMessages")) {
       val msg = notificationGroup.createNotification(message, NotificationType.INFORMATION)
       Notifications.Bus.notify(msg, project)
     }
+  }
+}
+
+
+inline fun <T> Collection<T>.forEachWithProgress(indicator: ProgressIndicator, action: (T) -> Unit) {
+  indicator.pushState()
+  try {
+    indicator.isIndeterminate = false
+    indicator.fraction = 0.0
+
+    val count = this.size
+    this.forEachIndexed { index, t ->
+      indicator.checkCanceled()
+      action(t)
+      indicator.fraction = index.toDouble() / count
+    }
+  } finally {
+    indicator.popState()
   }
 }

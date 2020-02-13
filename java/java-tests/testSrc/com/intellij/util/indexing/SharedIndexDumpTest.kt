@@ -5,6 +5,7 @@ import com.intellij.index.SharedIndexExtensions
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
@@ -26,28 +27,28 @@ import com.intellij.util.indexing.snapshot.OneRecordValueContainer
 import com.intellij.util.indexing.zipFs.UncompressedZipFileSystem
 import gnu.trove.THashMap
 import junit.framework.AssertionFailedError
-import junit.framework.TestCase
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.stream.Collectors
 
 private const val CHUNK_NAME = "source"
 
 @SkipSlowTestLocally
 class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
-  private var tempDir: Path? = null
+  private lateinit var tempDir: Path
 
   override fun setUp() {
     super.setUp()
     tempDir = FileUtil.createTempDirectory("shared-indexes-test", "").toPath()
+    FileUtil.delete(tempDir)
+    FileUtil.createDirectory(tempDir.toFile())
   }
 
   override fun tearDown() {
     try {
       super.tearDown()
     } finally {
-      FileUtil.delete(tempDir!!)
+      FileUtil.delete(tempDir)
     }
   }
 
@@ -230,8 +231,15 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun `test shared index layout when version doesn't exactly match`() {
-    val indexZipPath = generateTestSharedIndex()
-    val appendStorage = tempDir!!.resolve("append-index.zip")
+    doSharedIndexMountTest(generateTestSharedIndex())
+  }
+
+  fun `test shared index chunk layout when version doesn't exactly match`() {
+    doSharedIndexMountTest(generateTestSharedIndexChunk())
+  }
+
+  private fun doSharedIndexMountTest(indexZipPath: Path) {
+    val appendStorage = tempDir.resolve("append-index.zip")
 
     val ideVersion = IndexInfrastructureVersion.getIdeVersion()
 
@@ -346,27 +354,41 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
   private fun getSourceFile() = myFixture.findClass("A").containingFile.virtualFile
 
   private fun generateTestSharedIndex(): Path {
-    val file = myFixture.configureByText("A.java", """
-        public class A { 
-          public void foo() {
-            //Comment
-            methodCall(null)
-          }
-          
-          public String getName() {
-            return name;
-          }
-        }
-      """.trimIndent()).virtualFile
+    val file = setupProject()
 
-    val indexZipPath = tempDir!!.resolve("shared-index.zip")
-
-    val chunks = arrayListOf<IndexChunk>()
-    chunks += IndexChunk(setOf(file), CHUNK_NAME)
+    val indexZipPath = tempDir.resolve("shared-index.zip")
+    val chunks = listOf(IndexChunk(setOf(file), CHUNK_NAME))
 
     IndexesExporter
       .getInstance(project)
       .exportIndices(chunks, indexZipPath, EmptyProgressIndicator())
     return indexZipPath
+  }
+
+  private fun generateTestSharedIndexChunk(): Path {
+    val file = setupProject()
+    val indexZipPath = tempDir.resolve("shared-index-chunk.zip")
+    val chunk = IndexChunk(setOf(file), CHUNK_NAME)
+
+    IndexesExporter
+      .getInstance(project)
+      .exportIndexesChunk(chunk, indexZipPath)
+
+    return indexZipPath
+  }
+
+  private fun setupProject(): VirtualFile? {
+    return myFixture.configureByText("A.java", """
+          public class A { 
+            public void foo() {
+              //Comment
+              methodCall(null)
+            }
+            
+            public String getName() {
+              return name;
+            }
+          }
+        """.trimIndent()).virtualFile
   }
 }

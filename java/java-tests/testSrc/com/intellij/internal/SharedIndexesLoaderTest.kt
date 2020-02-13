@@ -23,7 +23,7 @@ class SharedIndexesLoaderTest : BasePlatformTestCase() {
     val indexes = networkRetry {
       SharedIndexesLoader.getInstance()
         .downloadIndexesList(SharedIndexRequest("jdk", "9f29c2ba6436__missing__e71f14918f0b7e3e7f"), null)
-    }
+    }.flatten().toList()
 
     Assert.assertTrue("$indexes", indexes.isEmpty())
   }

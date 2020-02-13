@@ -358,7 +358,7 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @Nullable
-  private JavaVersion getJavaVersion(@NotNull Sdk sdk) {
+  public JavaVersion getJavaVersion(@NotNull Sdk sdk) {
     String versionString = sdk.getVersionString();
     return getJavaVersion(versionString);
   }

@@ -4,6 +4,10 @@ package com.intellij.internal
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.progress.PerformInBackgroundOption
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -11,8 +15,9 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.ui.Messages
+import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.concurrency.compute
 import java.nio.file.Path
 
 class DownloadJdkSharedIndexAction : DumbAwareAction() {
@@ -52,9 +57,27 @@ class DownloadJdkSharedIndexAction : DumbAwareAction() {
   }
 
   private fun downloadIndexForJdk(project: Project, sdk: Sdk): Promise<Path?> {
-    //TODO: better of the UI thread!
-    val type = JavaSdk.getInstance() as JavaSdkImpl
-    val sdkHash = type.computeJdkFingerprint(sdk) ?: return rejectedPromise("Failed to compute hash for $sdk!")
-    return SharedIndexesLoader.getInstance().lookupIndexes(project, SharedIndexRequest("jdk", sdkHash))
+    val promise = AsyncPromise<Path?>()
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project,
+                                                                   "Looking for Shared Indexes",
+                                                                   true,
+                                                                   PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+      override fun run(indicator: ProgressIndicator) {
+        promise.compute {
+          val type = JavaSdk.getInstance() as JavaSdkImpl
+          val sdkHash = type.computeJdkFingerprint(sdk) ?: error("Failed to compute hash for $sdk!")
+          val request = SharedIndexRequest("jdk", sdkHash)
+
+          val info = SharedIndexesLoader.getInstance().lookupSharedIndex(request, indicator) ?: return@compute null
+          val version = info.version
+
+          val targetFile = SharedIndexesLoader.getInstance().selectIndexFileDestination(info, version)
+          SharedIndexesLoader.getInstance().downloadSharedIndex(info, indicator, targetFile)
+          targetFile.toPath()
+        }
+      }
+    })
+
+    return promise
   }
 }

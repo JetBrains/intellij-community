@@ -10,15 +10,13 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.indexing.IndexInfrastructureVersion
+import com.intellij.util.indexing.provided.SharedIndexChunkLocator
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.compute
 import org.tukaani.xz.XZInputStream
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -31,14 +29,28 @@ private object SharedIndexesCdn {
   private val indexesCdnUrl
     get() = Registry.stringValue("shared.indexes.url").trimEnd('/')
 
-  fun hashIndexUrl(request: SharedIndexRequest) = request.run {
-    "$indexesCdnUrl/$innerVersion/$kind/$hash/index.json.xz"
-  }
+  fun hashIndexUrls(request: SharedIndexRequest) = sequence {
+    request.run {
+      if (hash != null) {
+        yield("$indexesCdnUrl/$innerVersion/$kind/$hash/index.json.xz")
+      }
+
+      for (alias in request.aliases) {
+        yield("$indexesCdnUrl/$innerVersion/$kind/-$alias/index.json.xz")
+      }
+
+      //TODO[jo] remove prefix!
+      for (alias in request.aliases) {
+        yield("$indexesCdnUrl/$innerVersion/$kind/-$kind-$alias/index.json.xz")
+      }
+    }
+  }.toList().distinct()
 }
 
 data class SharedIndexRequest(
   val kind: String,
-  val hash: String
+  val hash: String? = null,
+  val aliases: List<String> = listOf()
 )
 
 data class SharedIndexInfo(
@@ -48,12 +60,24 @@ data class SharedIndexInfo(
 )
 
 data class SharedIndexResult(
-  val request: SharedIndexRequest,
+  val kind: String,
   val url: String,
   val sha256: String,
   val version: IndexInfrastructureVersion
 ) {
+  val chunkUniqueId get() = "$kind-$sha256-${version.weakVersionHash}"
+
   override fun toString(): String = "SharedIndex sha=${sha256.take(8)}, wv=${version.weakVersionHash.take(8)}"
+}
+
+fun SharedIndexResult.toChunkDescriptor(sdkEntries: Collection<OrderEntry>) = object: SharedIndexChunkLocator.ChunkDescriptor {
+  override fun getChunkUniqueId() = this@toChunkDescriptor.chunkUniqueId
+  override fun getSupportedInfrastructureVersion() = this@toChunkDescriptor.version
+  override fun getOrderEntries() = sdkEntries
+
+  override fun downloadChunk(targetFile: Path, indicator: ProgressIndicator) {
+    SharedIndexesLoader.getInstance().downloadSharedIndex(this@toChunkDescriptor, indicator, targetFile.toFile())
+  }
 }
 
 class SharedIndexesLoader {
@@ -64,49 +88,40 @@ class SharedIndexesLoader {
     fun getInstance() = service<SharedIndexesLoader>()
   }
 
-  fun lookupIndexes(project: Project,
-                    request: SharedIndexRequest): Promise<Path?> {
-    val promise = AsyncPromise<Path?>()
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project,
-                                                                   "Looking for Shared Indexes",
-                                                                   true,
-                                                                   PerformInBackgroundOption.ALWAYS_BACKGROUND) {
-      override fun run(indicator: ProgressIndicator) {
-        promise.compute {
-          val info  = lookupSharedIndex(request, indicator) ?: return@compute null
-          val version = info.version
-
-          val targetFile = selectIndexFileDestination(request, version)
-          downloadSharedIndex(info, indicator, targetFile)
-          targetFile.toPath()
-        }
-      }
-    })
-    return promise
-  }
-
   fun lookupSharedIndex(request: SharedIndexRequest,
                         indicator: ProgressIndicator): SharedIndexResult? {
     indicator.text = "Looking for Shared Indexes..."
-    val entries = downloadIndexesList(request, indicator)
-    indicator.checkCanceled()
-
-    indicator.text = "Inspecting Shared Indexes..."
     val ourVersion = IndexInfrastructureVersion.getIdeVersion()
-    val best = SharedIndexMetadata.selectBestSuitableIndex(ourVersion, entries)
-    if (best == null) {
-      LOG.info("No matching index found $request")
-      return null
+
+    for (entries in downloadIndexesList(request, indicator)) {
+      indicator.checkCanceled()
+      if (entries.isEmpty()) continue
+      indicator.pushState()
+
+      try {
+        indicator.text = "Inspecting Shared Indexes..."
+        val best = SharedIndexMetadata.selectBestSuitableIndex(ourVersion, entries)
+        if (best == null) {
+          LOG.info("No matching index found $request")
+          continue
+        }
+
+        val (info, metadata) = best
+        LOG.info("Selected index ${info} for $request")
+        return SharedIndexResult(request.kind, info.url, info.sha256, metadata)
+      }
+      finally {
+        indicator.popState()
+      }
     }
 
-    LOG.info("Selected index ${best.first} for $request")
-    return SharedIndexResult(request, best.first.url, best.first.sha256, best.second)
+    return null
   }
 
   fun downloadSharedIndex(info: SharedIndexResult,
                           indicator: ProgressIndicator,
                           targetFile: File) {
-    val downloadFile = selectDownloadIndexFileDestination(info.request, info.version)
+    val downloadFile = selectNewFileName(info, info.version, File(PathManager.getTempPath()), ".ijx.xz")
     indicator.text = "Downloading Shared Index..."
     indicator.checkCanceled()
     try {
@@ -125,13 +140,13 @@ class SharedIndexesLoader {
     }
   }
 
-  private fun selectNewFileName(request: SharedIndexRequest,
+  private fun selectNewFileName(info: SharedIndexResult,
                                 version: IndexInfrastructureVersion,
                                 basePath: File,
                                 ext: String): File {
     var infix = 0
     while (true) {
-      val name = request.kind + "-" + request.hash + "-" + version.weakVersionHash + "-" + infix + ext
+      val name = info.kind + "-" + info.sha256 + "-" + version.weakVersionHash + "-" + infix + ext
       val resultFile = File(basePath, name)
       if (!resultFile.isFile) {
         resultFile.parentFile?.mkdirs()
@@ -141,14 +156,9 @@ class SharedIndexesLoader {
     }
   }
 
-  private fun selectIndexFileDestination(request: SharedIndexRequest,
-                                         version: IndexInfrastructureVersion) =
-    selectNewFileName(request, version, File(PathManager.getSystemPath(), "shared-indexes"), ".ijx")
-
-
-  private fun selectDownloadIndexFileDestination(request: SharedIndexRequest,
-                                                 version: IndexInfrastructureVersion) =
-    selectNewFileName(request, version, File(PathManager.getTempPath()), ".ijx.xz")
+  fun selectIndexFileDestination(info: SharedIndexResult,
+                                 version: IndexInfrastructureVersion) =
+    selectNewFileName(info, version, File(PathManager.getSystemPath(), "shared-indexes"), ".ijx")
 
 
   @TestOnly
@@ -193,11 +203,28 @@ class SharedIndexesLoader {
     }
   }
 
-  @TestOnly
   fun downloadIndexesList(request: SharedIndexRequest,
                           indicator: ProgressIndicator?
-  ): List<SharedIndexInfo> {
-    val indexUrl = SharedIndexesCdn.hashIndexUrl(request)
+  ): Sequence<List<SharedIndexInfo>> {
+    val urls = SharedIndexesCdn.hashIndexUrls(request)
+
+    return urls.asSequence().mapIndexedNotNull { idx, indexUrl ->
+      indicator?.pushState()
+
+      indicator?.text = when {
+        urls.size > 1 -> "Looking for shared indexes (${idx + 1} of ${urls.size})"
+        else -> "Looking for shared indexes"
+      }
+      val result = downloadIndexList(request, indexUrl, indicator)
+
+      indicator?.popState()
+      result
+    }
+  }
+
+  private fun downloadIndexList(request: SharedIndexRequest,
+                                indexUrl: String,
+                                indicator: ProgressIndicator?) : List<SharedIndexInfo> {
     LOG.info("Checking index at $indexUrl...")
 
     val rawDataXZ = try {
