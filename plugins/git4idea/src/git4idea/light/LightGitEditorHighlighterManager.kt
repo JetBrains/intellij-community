@@ -71,14 +71,14 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
 
   private fun updateLst(fileEditor: FileEditor) {
     val editor = LightEditorInfoImpl.getEditor(fileEditor)
-    if (editor == null) {
+    val file = fileEditor.file
+
+    if (editor == null || file == null) {
       dropLst()
       return
     }
 
-    val file = fileEditor.file ?: return
     val status = tracker.getFileStatus(file)
-
     if (!status.isTracked()) {
       dropLst()
       return
