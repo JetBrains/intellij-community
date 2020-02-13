@@ -19,6 +19,16 @@ package com.intellij.openapi.fileEditor;
  * This object is used to store/restore editor state between restarts.
  * For example, text editor can store caret position, scroll position,
  * information about folded regions, etc.
+ * <p>
+ * Undo subsystem expects a sensible implementation of {@link Object#equals(Object)} method of state instances.
+ * In particular, {@code state1} and {@code state2} in the following situation
+ * <pre><code>
+ *   FileEditorState state1 = fileEditor.getState(FileEditorStateLevel.UNDO);
+ *   ...
+ *   fileEditor.setState(state1);
+ *   FileEditorState state2 = fileEditor.getState(FileEditorStateLevel.UNDO);
+ * </code></pre>
+ * are expected to be 'equal'.
  *
  * @author Vladimir Kondratyev
  */
