@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.FileIndexUtil
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -50,6 +51,7 @@ class ProblemAnalyzer(private val project: Project) : DaemonCodeAnalyzer.DaemonL
 
   override fun selectionChanged(event: FileEditorManagerEvent) {
     val file = event.newFile ?: return
+    if (!FileIndexUtil.isJavaSourceFile(project, file)) return
     val psiFile = psiManager.findFile(file) as? PsiClassOwner ?: return
     val scope = psiFile.useScope as? GlobalSearchScope ?: return
     DumbService.getInstance(project).smartInvokeLater { reportBrokenUsages(psiFile, scope, false) }
@@ -60,6 +62,7 @@ class ProblemAnalyzer(private val project: Project) : DaemonCodeAnalyzer.DaemonL
     for (event in events) {
       if (event !is VFileDeleteEvent && event !is VFileMoveEvent) continue
       val file = event.file ?: continue
+      if (!FileIndexUtil.isJavaSourceFile(project, file)) continue
       var psiFile = psiManager.findFile(file) as? PsiClassOwner ?: continue
       problemsView.removeProblems(file)
       val scope = psiFile.useScope as? GlobalSearchScope ?: continue
@@ -72,6 +75,7 @@ class ProblemAnalyzer(private val project: Project) : DaemonCodeAnalyzer.DaemonL
     for (event in events) {
       if (event !is VFileCreateEvent && event !is VFileMoveEvent) continue
       val file = event.file ?: continue
+      if (!FileIndexUtil.isJavaSourceFile(project, file)) continue
       val psiFile = psiManager.findFile(file) as? PsiClassOwner ?: continue
       val scope = psiFile.useScope as? GlobalSearchScope ?: continue
       DumbService.getInstance(project).smartInvokeLater { reportBrokenUsages(psiFile, scope, false) }
@@ -90,7 +94,7 @@ class ProblemAnalyzer(private val project: Project) : DaemonCodeAnalyzer.DaemonL
   }
 
   private fun analyzeFile(file: VirtualFile) {
-    if (!file.isValid) return
+    if (!file.isValid || !FileIndexUtil.isJavaSourceFile(project, file)) return
     val psiFile = psiManager.findFile(file) as? PsiClassOwner ?: return
     for (psiClass in psiFile.classes) {
       val changes = SnapshotUpdater.update(psiClass)
