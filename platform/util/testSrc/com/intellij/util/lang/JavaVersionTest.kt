@@ -82,6 +82,36 @@ class JavaVersionTest {
     assertThat(JavaVersion.compose(9, 1, 2, 3, true).toString()).isEqualTo("9.1.2-ea+3")
   }
 
+  @Test fun formattingFeatureMinorUpdate() {
+    assertThat(JavaVersion.compose(8, 0, 0, 0, false).toFeatureMinorUpdateString()).isEqualTo("1.8")
+    assertThat(JavaVersion.compose(8, 1, 0, 0, false).toFeatureMinorUpdateString()).isEqualTo("1.8.1")
+    assertThat(JavaVersion.compose(8, 0, 1, 0, false).toFeatureMinorUpdateString()).isEqualTo("1.8.0_1")
+    assertThat(JavaVersion.compose(8, 0, 0, 1, false).toFeatureMinorUpdateString()).isEqualTo("1.8.0")
+    assertThat(JavaVersion.compose(8, 0, 0, 0, true).toFeatureMinorUpdateString()).isEqualTo("1.8.0")
+    assertThat(JavaVersion.compose(8, 1, 2, 3, true).toFeatureMinorUpdateString()).isEqualTo("1.8.1_2")
+    assertThat(JavaVersion.compose(9, 0, 0, 0, false).toFeatureMinorUpdateString()).isEqualTo("9")
+    assertThat(JavaVersion.compose(9, 1, 0, 0, false).toFeatureMinorUpdateString()).isEqualTo("9.1")
+    assertThat(JavaVersion.compose(9, 0, 1, 0, false).toFeatureMinorUpdateString()).isEqualTo("9.0.1")
+    assertThat(JavaVersion.compose(9, 0, 0, 1, false).toFeatureMinorUpdateString()).isEqualTo("9")
+    assertThat(JavaVersion.compose(9, 0, 0, 0, true).toFeatureMinorUpdateString()).isEqualTo("9")
+    assertThat(JavaVersion.compose(9, 1, 2, 3, true).toFeatureMinorUpdateString()).isEqualTo("9.1.2")
+  }
+
+  @Test fun formattingProductOnly() {
+    assertThat(JavaVersion.compose(8, 0, 0, 0, false).toFeatureString()).isEqualTo("1.8")
+    assertThat(JavaVersion.compose(8, 1, 0, 0, false).toFeatureString()).isEqualTo("1.8")
+    assertThat(JavaVersion.compose(8, 0, 1, 0, false).toFeatureString()).isEqualTo("1.8")
+    assertThat(JavaVersion.compose(8, 0, 0, 1, false).toFeatureString()).isEqualTo("1.8")
+    assertThat(JavaVersion.compose(8, 0, 0, 0, true).toFeatureString()).isEqualTo("1.8")
+    assertThat(JavaVersion.compose(8, 1, 2, 3, true).toFeatureString()).isEqualTo("1.8")
+    assertThat(JavaVersion.compose(9, 0, 0, 0, false).toFeatureString()).isEqualTo("9")
+    assertThat(JavaVersion.compose(9, 1, 0, 0, false).toFeatureString()).isEqualTo("9")
+    assertThat(JavaVersion.compose(9, 0, 1, 0, false).toFeatureString()).isEqualTo("9")
+    assertThat(JavaVersion.compose(9, 0, 0, 1, false).toFeatureString()).isEqualTo("9")
+    assertThat(JavaVersion.compose(9, 0, 0, 0, true).toFeatureString()).isEqualTo("9")
+    assertThat(JavaVersion.compose(9, 1, 2, 3, true).toFeatureString()).isEqualTo("9")
+  }
+
   private fun doTest(versionString: String,
                      feature: Int,
                      minor: Int = 0,
