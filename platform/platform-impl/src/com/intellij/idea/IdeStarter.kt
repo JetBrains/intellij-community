@@ -56,12 +56,6 @@ open class IdeStarter : ApplicationStarter {
 
   override fun getCommandName(): String? = null
 
-  private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
-    val currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
-    Logger.getInstance("#com.intellij.idea.ApplicationLoader").info("ApplicationLoader.loadProject (CWD=${currentDirectory})")
-    return CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory).first
-  }
-
   override fun main(args: Array<String>) {
     main(args.toList())
   }
@@ -175,6 +169,12 @@ open class IdeStarter : ApplicationStarter {
     showWelcomeFrame.run()
     return false
   }
+}
+
+private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
+  val currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
+  Logger.getInstance("#com.intellij.idea.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
+  return CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory).first
 }
 
 private fun postOpenUiTasks(app: Application) {

@@ -24,7 +24,7 @@ public interface LightEditService {
 
   Project getProject();
 
-  Project getOrCreateProject();
+  @NotNull Project getOrCreateProject();
 
   boolean openFile(@NotNull VirtualFile file);
 

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible {
+final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
   public @NotNull String getText() {

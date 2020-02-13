@@ -9,7 +9,7 @@ import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LightEditProjectManager {
+public final class LightEditProjectManager {
   private static final Logger LOG = Logger.getInstance(LightEditServiceImpl.class);
   private static final Object LOCK = new Object();
 
@@ -20,8 +20,7 @@ public class LightEditProjectManager {
     return myProject;
   }
 
-  @NotNull
-  public Project getOrCreateProject() {
+  public @NotNull Project getOrCreateProject() {
     if (myProject != null) {
       return myProject;
     }
