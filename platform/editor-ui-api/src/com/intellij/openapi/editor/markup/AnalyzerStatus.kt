@@ -3,10 +3,4 @@ package com.intellij.openapi.editor.markup
 
 import javax.swing.Icon
 
-class AnalyzerStatus(val icon: Icon?, val showNavigation: Boolean) {
-  companion object {
-    fun icon(analyzerStatus: AnalyzerStatus?): Icon? = analyzerStatus?.icon
-    fun showNavigation(analyzerStatus: AnalyzerStatus?):Boolean = analyzerStatus?.showNavigation ?: false
-    fun otherIcon(otherIcon: Icon?, analyzerStatus: AnalyzerStatus?):Boolean = icon(analyzerStatus) != otherIcon
-  }
-}
+class AnalyzerStatus(val icon: Icon?, val showNavigation: Boolean)

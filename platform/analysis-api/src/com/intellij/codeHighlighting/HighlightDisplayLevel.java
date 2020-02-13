@@ -35,6 +35,16 @@ public class HighlightDisplayLevel {
       public void paintIcon(Component c, Graphics g, int x, int y) {
         IconManager.getInstance().colorize((Graphics2D)g, AllIcons.General.InspectionsError, getColor()).paintIcon(c, g, x, y);
       }
+
+      @Override
+      public int getIconWidth() {
+        return AllIcons.General.InspectionsError.getIconWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return AllIcons.General.InspectionsError.getIconHeight();
+      }
     };
   }
 

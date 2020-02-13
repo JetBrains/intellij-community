@@ -135,7 +135,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     DefaultActionGroup navigateGroup = new DefaultActionGroup(Separator.create(), nextErrorAction, prevErrorAction) {
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(AnalyzerStatus.Companion.showNavigation(analyzerStatus));
+        e.getPresentation().setEnabledAndVisible(analyzerStatus != null && analyzerStatus.getShowNavigation());
       }
     };
 
@@ -175,7 +175,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                            Math.max(icon.getIconHeight(), DEFAULT_MINIMUM_BUTTON_SIZE.height));
 
             if (getIcon() instanceof LayeredIcon) {
-              JBInsets.addTo(size, JBUI.insets(0, 4));
+              JBInsets.addTo(size, JBUI.insets(0, 7));
             }
             JBInsets.addTo(size, getInsets());
             return size;
@@ -1488,8 +1488,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (AnalyzerStatus.Companion.otherIcon(e.getPresentation().getIcon(), analyzerStatus)) {
-        e.getPresentation().setIcon(AnalyzerStatus.Companion.icon(analyzerStatus));
+      Icon newIcon = analyzerStatus != null ? analyzerStatus.getIcon() : null;
+      if (!Objects.equals(e.getPresentation().getIcon(), newIcon)) {
+        e.getPresentation().setIcon(newIcon);
       }
     }
   }
