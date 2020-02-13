@@ -403,7 +403,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         forceReload(virtualFile, viewProvider);
       }
       finally {
-        LOG.error(e);
+        LOG.error("Exception while committing " + viewProvider + ", eventSystemEnabled=" + isEventSystemEnabled(document), e);
       }
     }
     finally {
