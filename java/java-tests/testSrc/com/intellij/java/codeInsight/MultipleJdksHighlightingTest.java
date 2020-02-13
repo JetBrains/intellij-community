@@ -105,6 +105,17 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     doTest();
   }
 
+  public void testAutoCloseable() {
+    ModuleRootModificationUtil.updateModel(myJava8Module, model -> model.setSdk(IdeaTestUtil.getMockJdk14()));
+    addDependencies_37_78();
+    final String name = getTestName(false);
+    for (Module module : new Module[] {myJava7Module, myJava8Module}) {
+      ModuleRootModificationUtil.updateModel(module, model -> ClsGenericsHighlightingTest.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar"));
+    }
+    myFixture.configureByFile("java8/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+
   public void testWrongSuperInLibrary() {
     addDependencies_37_78();
     final String name = getTestName(false);

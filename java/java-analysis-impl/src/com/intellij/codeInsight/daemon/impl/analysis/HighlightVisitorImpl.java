@@ -38,6 +38,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import gnu.trove.THashMap;
@@ -1373,21 +1374,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
     final PsiExpression qualifierExpression = expression.getQualifierExpression();
     myHolder.add(HighlightUtil.checkUnqualifiedSuperInDefaultMethod(myLanguageLevel, expression, qualifierExpression));
-    if (!myHolder.hasErrorResults() && qualifierExpression != null && myJavaModule == null) {
-      PsiType type = qualifierExpression.getType();
-      if (type instanceof PsiCapturedWildcardType) {
-        type = ((PsiCapturedWildcardType)type).getUpperBound();
-      }
-      PsiClass psiClass = PsiUtil.resolveClassInType(type);
-      if (psiClass == null && qualifierExpression instanceof PsiReferenceExpression) {
-        PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
-        if (resolve instanceof PsiClass) {
-          psiClass = (PsiClass)resolve;
-        }
-      }
+    if (!myHolder.hasErrorResults() && myJavaModule == null) {
+      PsiClass psiClass = RefactoringChangeUtil.getQualifierClass(expression);
       if (psiClass != null) {
-        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(psiClass, expression));
-        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
+        myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(psiClass, expression));
+      }
+      if (!myHolder.hasErrorResults()) {
+        myHolder.add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
       }
     }
   }
