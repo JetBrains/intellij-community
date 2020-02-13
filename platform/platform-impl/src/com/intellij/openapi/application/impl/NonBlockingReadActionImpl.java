@@ -126,7 +126,7 @@ public class NonBlockingReadActionImpl<T>
   }
 
   @Override
-  public NonBlockingReadAction<T> cancelWith(@NotNull ProgressIndicator progressIndicator) {
+  public NonBlockingReadAction<T> wrapProgress(@NotNull ProgressIndicator progressIndicator) {
     LOG.assertTrue(myProgressIndicator == null, "Unspecified behaviour. Outer progress indicator is already set for the action.");
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, getConstraints(), getCancellationConditions(), getExpirationSet(),
                                            myCoalesceEquality, progressIndicator);
@@ -431,6 +431,9 @@ public class NonBlockingReadActionImpl<T>
           return creationModality;
         }
       } : new EmptyProgressIndicator(creationModality);
+      if (myProgressIndicator != null) {
+        indicator.setIndeterminate(myProgressIndicator.isIndeterminate());
+      }
 
       currentIndicator = indicator;
       try {

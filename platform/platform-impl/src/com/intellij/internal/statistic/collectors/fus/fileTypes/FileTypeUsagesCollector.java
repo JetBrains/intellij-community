@@ -68,7 +68,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
           }
           return true;
         }, GlobalSearchScope.projectScope(project));
-      }).cancelWith(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
+      }).wrapProgress(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
     }
     return ((CancellablePromise<Set<MetricEvent>>)Promises.all(promises).then(o -> events));
   }

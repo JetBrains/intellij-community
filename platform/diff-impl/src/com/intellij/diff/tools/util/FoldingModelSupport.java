@@ -958,7 +958,7 @@ public class FoldingModelSupport {
               if (result.description != null) repaintEditor();
             })
             .withDocumentsCommitted(myProject)
-            .cancelWith(myDescriptionsIndicator)
+            .wrapProgress(myDescriptionsIndicator)
             .submit(NonUrgentExecutor.getInstance());
         }
         return myDescription.description;

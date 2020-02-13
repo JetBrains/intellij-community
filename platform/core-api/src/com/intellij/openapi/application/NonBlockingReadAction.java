@@ -59,10 +59,21 @@ public interface NonBlockingReadAction<T> {
   NonBlockingReadAction<T> expireWhen(@NotNull BooleanSupplier expireCondition);
 
   /**
-   * @return a copy of this builder that cancels submitted read actions once the specified progress indicator is cancelled.
+   * @deprecated use {@link #wrapProgress}
    */
   @Contract(pure = true)
-  NonBlockingReadAction<T> cancelWith(@NotNull ProgressIndicator progressIndicator);
+  @Deprecated
+  default NonBlockingReadAction<T> cancelWith(@NotNull ProgressIndicator progressIndicator) {
+    return wrapProgress(progressIndicator);
+  }
+
+  /**
+   * @return a copy of this builder that synchronizes the specified progress indicator with the inner one created by {@link NonBlockingReadAction}.
+   * This means that submitted read actions are cancelled once the outer indicator is cancelled,
+   * and the visual changes (e.g. {@link ProgressIndicator#setText}) are propagated from the inner to the outer indicator.
+   */
+  @Contract(pure = true)
+  NonBlockingReadAction<T> wrapProgress(@NotNull ProgressIndicator progressIndicator);
 
   /**
    * @return a copy of this builder that cancels submitted read actions once the specified disposable is disposed.
@@ -117,7 +128,7 @@ public interface NonBlockingReadAction<T> {
    * {@link #finishOnUiThread} and {@link #coalesceBy} are not supported with synchronous non-blocking read actions.
    *
    * @return the result of the computation
-   * @throws ProcessCanceledException if the computation got expired due to {@link #expireWhen} or {@link #expireWith} or {@link #cancelWith}.
+   * @throws ProcessCanceledException if the computation got expired due to {@link #expireWhen} or {@link #expireWith} or {@link #wrapProgress}.
    * @throws IllegalStateException if current thread already has read access and the constraints (e.g. {@link #inSmartMode} are not satisfied)
    * @throws RuntimeException when the computation throws an exception. If it's a checked one, it's wrapped into a {@link RuntimeException}.
    */

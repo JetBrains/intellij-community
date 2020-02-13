@@ -99,6 +99,30 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
     }
   }
 
+  @Override
+  public void setText(String text) {
+    super.setText(text);
+    myOriginal.setText(text);
+  }
+
+  @Override
+  public void setText2(String text) {
+    super.setText2(text);
+    myOriginal.setText2(text);
+  }
+
+  @Override
+  public void setFraction(double fraction) {
+    super.setFraction(fraction);
+    myOriginal.setFraction(fraction);
+  }
+
+  @Override
+  public void setIndeterminate(boolean indeterminate) {
+    super.setIndeterminate(indeterminate);
+    myOriginal.setIndeterminate(indeterminate);
+  }
+
   @NotNull
   @Override
   public ModalityState getModalityState() {

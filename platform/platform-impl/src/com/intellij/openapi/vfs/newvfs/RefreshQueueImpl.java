@@ -85,7 +85,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
       startRefreshActivity();
       ReadAction
         .nonBlocking(() -> runAsyncListeners(session))
-        .cancelWith(myRefreshIndicator)
+        .wrapProgress(myRefreshIndicator)
         .finishOnUiThread(modality, Runnable::run)
         .submit(myEventProcessingQueue)
         .onProcessed(__ -> finishRefreshActivity())

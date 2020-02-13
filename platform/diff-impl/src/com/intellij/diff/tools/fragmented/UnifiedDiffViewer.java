@@ -361,7 +361,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     UnifiedEditorRangeHighlighter rangeHighlighter = ReadAction.nonBlocking(() -> {
       return new UnifiedEditorRangeHighlighter(myProject, content1, content2, builder.getRanges());
     })
-      .cancelWith(indicator)
+      .wrapProgress(indicator)
       .executeSynchronously();
 
     LineNumberConvertor convertor1 = builder.getConvertor1();
@@ -1316,7 +1316,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
               rangeHighlighter.apply(myProject, myDocument);
             })
             .withDocumentsCommitted(myProject)
-            .cancelWith(myUpdateIndicator)
+            .wrapProgress(myUpdateIndicator)
             .submit(NonUrgentExecutor.getInstance());
         }
       });

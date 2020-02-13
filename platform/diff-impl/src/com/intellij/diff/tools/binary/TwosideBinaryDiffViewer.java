@@ -151,7 +151,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
           return ComparisonData.ERROR;
         }
       })
-        .cancelWith(indicator)
+        .wrapProgress(indicator)
         .executeSynchronously();
 
       return applyNotification(comparisonData);

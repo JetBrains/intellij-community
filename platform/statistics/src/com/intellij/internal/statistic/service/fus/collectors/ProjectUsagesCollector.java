@@ -69,7 +69,7 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
   public CancellablePromise<? extends Set<MetricEvent>> getMetrics(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     if (requiresReadAccess()) {
       return ReadAction.nonBlocking(() -> getMetrics(project))
-        .cancelWith(indicator)
+        .wrapProgress(indicator)
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance());
     }

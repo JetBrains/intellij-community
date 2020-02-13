@@ -94,10 +94,29 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
           ProgressManager.getInstance().getProgressIndicator().checkCanceled();
         }
       })
-      .cancelWith(outerIndicator)
+      .wrapProgress(outerIndicator)
       .submit(AppExecutorUtil.getAppExecutorService());
     outerIndicator.cancel();
     waitForPromise(promise);
+  }
+
+  public void testPropagateVisualChangesToOuterIndicator() {
+    ProgressIndicator outerIndicator = new ProgressIndicatorBase();
+    outerIndicator.setIndeterminate(false);
+    waitForPromise(ReadAction
+      .nonBlocking(() -> {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        indicator.setText("X");
+        indicator.setFraction(0.5);
+
+        assertEquals("X", outerIndicator.getText());
+        assertEquals(0.5, outerIndicator.getFraction());
+
+        indicator.setIndeterminate(true);
+        assertTrue(outerIndicator.isIndeterminate());
+      })
+      .wrapProgress(outerIndicator)
+      .submit(AppExecutorUtil.getAppExecutorService()));
   }
 
   public void testDoNotSpawnZillionThreadsForManyCoalescedSubmissions() {
