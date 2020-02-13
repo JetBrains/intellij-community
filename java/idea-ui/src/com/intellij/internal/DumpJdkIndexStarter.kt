@@ -3,6 +3,7 @@ package com.intellij.internal
 
 import com.google.common.primitives.Longs.max
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -110,7 +111,7 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     val indexChunk = IndexChunk(allRoots, indexName)
 
     LOG.info("Indexing...")
-    val infraVersion = IndexesExporter.getInstance(project).exportIndexesChunk(indexChunk, indexZip.toPath())
+    val infraVersion = IndexesExporter.getInstance(project).exportIndexesChunk(indexChunk, indexZip.toPath(), EmptyProgressIndicator())
 
     val indexingTime = max(0L, System.currentTimeMillis() - indexingStartTime)
     LOG.info("Indexes build completed in ${StringUtil.formatDuration(indexingTime)}")

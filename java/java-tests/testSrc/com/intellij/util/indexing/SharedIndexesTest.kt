@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
@@ -18,7 +17,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.GlobalSearchScope
@@ -85,6 +83,8 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testSharedFileContentHashIndex() {
+    //note, this test is unstable
+
     val internalHashId = 123
     val indexId = 456
     val inputId1 = 100
@@ -164,12 +164,11 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent()).virtualFile
 
-      val chunks = arrayListOf<IndexChunk>()
-      chunks += IndexChunk(setOf(virtualFile), "test-shared-index.ijx")
+      val chunk = IndexChunk(setOf(virtualFile), "test-shared-index.ijx")
 
       IndexesExporter
         .getInstance(project)
-        .exportIndices(chunks, indexZip, EmptyProgressIndicator())
+        .exportIndexesChunk(chunk, indexZip, EmptyProgressIndicator())
 
       restartFileBasedIndex(indexZip, project)
 
@@ -191,6 +190,7 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
     val hashId = index.getOrCreateFileContentHashIndex().getHashId(fileId)
     assertTrue(hashId != FileContentHashIndexExtension.NULL_HASH_ID)
   }
+
 
   companion object {
     @JvmStatic
