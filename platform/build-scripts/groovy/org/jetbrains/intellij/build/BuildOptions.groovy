@@ -22,7 +22,7 @@ class BuildOptions {
   static final String OS_WINDOWS = "windows"
   static final String OS_MAC = "mac"
   static final String OS_ALL = "all"
-  static final String CURRENT = "current"
+  static final String OS_CURRENT = "current"
 
   /**
    * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#setPluginModulesToPublish non-bundled plugins}
@@ -167,13 +167,13 @@ class BuildOptions {
 
   BuildOptions() {
     targetOS = System.getProperty("intellij.build.target.os")
-    if (targetOS == "current") {
+    if (targetOS == OS_CURRENT) {
       targetOS = SystemInfo.isWindows ? OS_WINDOWS :
                  SystemInfo.isMac ? OS_MAC :
                  SystemInfo.isLinux ? OS_LINUX : null
     }
     else if (targetOS == null || targetOS.isEmpty()) {
-      targetOS = CURRENT
+      targetOS = OS_ALL
     }
   }
 }
