@@ -15,12 +15,12 @@
  */
 package com.intellij.spi;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -45,7 +45,7 @@ public class SPIAnnotator implements Annotator{
       else if (element instanceof SPIClassProviderReferenceElement) {
         final PsiElement resolve = ((SPIClassProviderReferenceElement)element).resolve();
         if (resolve == null) {
-          holder.newAnnotation(HighlightSeverity.ERROR, PsiBundle.message("cannot.resolve.symbol", element.getText())).create();
+          holder.newAnnotation(HighlightSeverity.ERROR, AnalysisBundle.message("cannot.resolve.symbol", element.getText())).create();
         }
         else if (resolve instanceof PsiClass && psiClass != null) {
           if (!((PsiClass)resolve).isInheritor(psiClass, true)) {

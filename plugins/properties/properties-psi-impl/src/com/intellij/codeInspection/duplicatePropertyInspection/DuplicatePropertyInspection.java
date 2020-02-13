@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicatePropertyInspection;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.reference.RefManager;
@@ -90,7 +91,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       if (vFile != null) {
         Document doc = FileDocumentManager.getInstance().getDocument(vFile);
         final int lineNumber = doc.getLineNumber(psiElement.getTextOffset()) + 1;
-        lineAnchor.append(" ").append(InspectionsBundle.message("inspection.export.results.at.line")).append(" ");
+        lineAnchor.append(" ").append(AnalysisBundle.message("inspection.export.results.at.line")).append(" ");
         lineAnchor.append("<a HREF=\"");
         int offset = doc.getLineStartOffset(lineNumber - 1);
         offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");

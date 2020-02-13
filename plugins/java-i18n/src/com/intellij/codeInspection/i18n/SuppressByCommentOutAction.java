@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.i18n;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
@@ -88,7 +89,7 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("suppress.inspection.family");
+    return AnalysisBundle.message("suppress.inspection.family");
   }
 
   @NotNull

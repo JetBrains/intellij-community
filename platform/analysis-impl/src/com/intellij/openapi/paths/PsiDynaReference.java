@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.paths;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
@@ -188,7 +189,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
     return reference instanceof EmptyResolveMessageProvider ?
            ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern() :
-            PsiBundle.message("cannot.resolve.symbol");
+            AnalysisBundle.message("cannot.resolve.symbol");
   }
 
   @Override

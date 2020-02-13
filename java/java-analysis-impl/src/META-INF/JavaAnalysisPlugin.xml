@@ -164,11 +164,11 @@
                      groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.DeprecatedIsStillUsedInspection" />
     <localInspection groupPath="Java" language="JAVA" suppressId="removal" shortName="MarkedForRemoval"
-                     key="inspection.marked.for.removal.display.name" bundle="messages.InspectionsBundle"
+                     key="inspection.marked.for.removal.display.name" bundle="messages.AnalysisBundle"
                      groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="ERROR" implementationClass="com.intellij.codeInspection.deprecation.MarkedForRemovalInspection"/>
     <localInspection groupPath="Java" language="UAST" suppressId="deprecation" shortName="Deprecation"
-                     key="inspection.deprecated.display.name" bundle="messages.InspectionsBundle"
+                     key="inspection.deprecated.display.name" bundle="messages.AnalysisBundle"
                      groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deprecation.DeprecationInspection"/>

@@ -2,9 +2,9 @@
 
 package com.intellij.codeInspection.reference;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
@@ -683,7 +683,7 @@ public class RefManagerImpl extends RefManager {
   @Override
   public String getQualifiedName(RefEntity refEntity) {
     if (refEntity == null || refEntity instanceof RefElementImpl && !refEntity.isValid()) {
-      return InspectionsBundle.message("inspection.reference.invalid");
+      return AnalysisBundle.message("inspection.reference.invalid");
     }
 
     return refEntity.getQualifiedName();

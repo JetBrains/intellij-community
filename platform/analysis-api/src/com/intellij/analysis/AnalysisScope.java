@@ -153,7 +153,7 @@ public class AnalysisScope {
   protected PsiElementVisitor createFileSearcher(@NotNull Collection<? super VirtualFile> addTo) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
+      indicator.setText(AnalysisBundle.message("scanning.scope.progress.title"));
     }
     return new PsiElementVisitor() {
       @Override
@@ -458,23 +458,23 @@ public class AnalysisScope {
         return myScope.getDisplayName();
 
       case MODULE:
-        return AnalysisScopeBundle.message("scope.option.module", pathToName(myModule.getModuleFilePath()));
+        return AnalysisBundle.message("scope.option.module", pathToName(myModule.getModuleFilePath()));
 
       case MODULES:
         String modules = StringUtil.join(myModules, module -> pathToName(module.getModuleFilePath()), ", ");
 
-        return AnalysisScopeBundle.message("scope.module.list", modules, myModules.size());
+        return AnalysisBundle.message("scope.module.list", modules, myModules.size());
 
       case PROJECT:
-        return AnalysisScopeBundle.message("scope.project", myProject.getName());
+        return AnalysisBundle.message("scope.project", myProject.getName());
 
       case FILE:
-        return AnalysisScopeBundle.message("scope.file", displayProjectRelativePath((PsiFileSystemItem)myElement));
+        return AnalysisBundle.message("scope.file", displayProjectRelativePath((PsiFileSystemItem)myElement));
       case DIRECTORY:
-        return AnalysisScopeBundle.message("scope.directory", displayProjectRelativePath((PsiFileSystemItem)myElement));
+        return AnalysisBundle.message("scope.directory", displayProjectRelativePath((PsiFileSystemItem)myElement));
 
       case VIRTUAL_FILES:
-        return AnalysisScopeBundle.message("scope.virtual.files");
+        return AnalysisBundle.message("scope.virtual.files");
     }
 
     return "";
@@ -487,25 +487,25 @@ public class AnalysisScope {
         return myScope.getDisplayName();
 
       case MODULE:
-        return AnalysisScopeBundle.message("scope.option.module", myModule.getName());
+        return AnalysisBundle.message("scope.option.module", myModule.getName());
 
       case MODULES:
         String modules = StringUtil.join(myModules, Module::getName, ", ");
-        return AnalysisScopeBundle.message("scope.module.list", modules, myModules.size());
+        return AnalysisBundle.message("scope.module.list", modules, myModules.size());
 
       case PROJECT:
-        return AnalysisScopeBundle.message("scope.project", myProject.getName());
+        return AnalysisBundle.message("scope.project", myProject.getName());
 
       case FILE:
         final String relativePath = getRelativePath();
-        return AnalysisScopeBundle.message("scope.file", relativePath);
+        return AnalysisBundle.message("scope.file", relativePath);
 
       case DIRECTORY:
         final String relativeDirPath = getRelativePath();
-        return AnalysisScopeBundle.message("scope.directory", relativeDirPath);
+        return AnalysisBundle.message("scope.directory", relativeDirPath);
 
       case VIRTUAL_FILES:
-        return AnalysisScopeBundle.message("scope.selected.files");
+        return AnalysisBundle.message("scope.selected.files");
     }
 
     return "";

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection;
 
-public class DeprecationUtil {
+import com.intellij.analysis.AnalysisBundle;public class DeprecationUtil {
   public static final String DEPRECATION_SHORT_NAME = "Deprecation";
 
   public static final String DEPRECATION_ID = "deprecation";
@@ -25,10 +25,10 @@ public class DeprecationUtil {
   public static final String FOR_REMOVAL_ID = "removal";
 
   public static String getDeprecationDisplayName() {
-    return InspectionsBundle.message("inspection.deprecated.display.name");
+    return AnalysisBundle.message("inspection.deprecated.display.name");
   }
 
   public static String getForRemovalDisplayName() {
-    return InspectionsBundle.message("inspection.marked.for.removal.display.name");
+    return AnalysisBundle.message("inspection.marked.for.removal.display.name");
   }
 }

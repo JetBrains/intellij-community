@@ -2,7 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.BundleBase;
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -79,7 +79,7 @@ public class ProblemsHolder {
     String description = XmlStringUtil.stripHtml(problem.getDescriptionTemplate());
 
     final String template =
-      InspectionsBundle.message("inspection.redirect.template",
+      AnalysisBundle.message("inspection.redirect.template",
                                 description, path, original.getTextRange().getStartOffset(), vFile.getName());
 
 
@@ -129,7 +129,7 @@ public class ProblemsHolder {
       }
     }
     else {
-      message = CodeInsightBundle.message("error.cannot.resolve.default.message", reference.getCanonicalText());
+      message = AnalysisBundle.message("error.cannot.resolve.default.message", reference.getCanonicalText());
     }
     return message;
   }

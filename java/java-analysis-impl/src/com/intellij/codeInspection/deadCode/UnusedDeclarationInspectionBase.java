@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
@@ -697,6 +698,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   public static String getDisplayNameText() {
-    return InspectionsBundle.message("inspection.dead.code.display.name");
+    return AnalysisBundle.message("inspection.dead.code.display.name");
   }
 }

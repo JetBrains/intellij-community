@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.BundleBase;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.IdeValidationHost;
 import com.intellij.codeInsight.daemon.Validator;
@@ -503,7 +504,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
     else {
       //noinspection UnresolvedPropertyKey
-      message = PsiBundle.message("cannot.resolve.symbol");
+      message = AnalysisBundle.message("cannot.resolve.symbol");
     }
 
     String description;

@@ -2,6 +2,7 @@
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -36,7 +37,7 @@ public class FileReferenceSet {
   public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>>
     DEFAULT_PATH_EVALUATOR_OPTION =
     new CustomizableReferenceProvider.CustomizationKey<>(
-      PsiBundle.message("default.path.evaluator.option"));
+      AnalysisBundle.message("default.path.evaluator.option"));
   public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL = new AbsoluteTopLevelEvaluator();
 
   public static final Condition<PsiFileSystemItem> FILE_FILTER = item -> item instanceof PsiFile;

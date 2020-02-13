@@ -2,6 +2,7 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInspection.*;
@@ -206,7 +207,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     LOG.info("Code inspection started");
-    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), InspectionsBundle.message("inspection.progress.title"), true,
+    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), AnalysisBundle.message("inspection.progress.title"), true,
                                                               createOption()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

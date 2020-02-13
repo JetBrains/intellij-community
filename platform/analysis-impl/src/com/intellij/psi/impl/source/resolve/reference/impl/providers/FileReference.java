@@ -2,10 +2,10 @@
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -545,7 +545,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   @NotNull
   @Override
   public String getUnresolvedMessagePattern() {
-    return LangBundle.message("error.cannot.resolve")
+    return AnalysisBundle.message("error.cannot.resolve")
            + " " + IndexingBundle.message(isLast() ? "terms.file" : "terms.directory")
            + " '" + StringUtil.escapePattern(decode(getCanonicalText())) + "'";
   }

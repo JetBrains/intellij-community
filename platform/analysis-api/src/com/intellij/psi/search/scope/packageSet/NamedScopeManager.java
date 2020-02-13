@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -48,7 +48,7 @@ public class NamedScopeManager extends NamedScopesHolder {
   @NotNull
   @Override
   public String getDisplayName() {
-    return IdeBundle.message("local.scopes.node.text");
+    return AnalysisBundle.message("local.scopes.node.text");
   }
 
   @Override

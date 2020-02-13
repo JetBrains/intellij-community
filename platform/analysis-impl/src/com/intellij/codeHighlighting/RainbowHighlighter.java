@@ -15,6 +15,7 @@
  */
 package com.intellij.codeHighlighting;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.Language;
@@ -30,7 +31,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -142,7 +142,7 @@ public class RainbowHighlighter {
 
   @NotNull
   private static String getKey(@Nullable Language language) {
-    return RAINBOW_TYPE + " " + (language == null ? UIBundle.message("color.settings.common.default.language") : language.getID());
+    return RAINBOW_TYPE + " " + (language == null ? AnalysisBundle.message("color.settings.common.default.language") : language.getID());
   }
 
   @Contract(value = "null -> false", pure = true)
@@ -165,8 +165,8 @@ public class RainbowHighlighter {
     int stopCount = RAINBOW_COLOR_KEYS.length;
     StringBuilder sb = new StringBuilder();
 
-    sb.append(indent).append(UIBundle.message("color.settings.rainbow.demo.header.1"))
-      .append(indent).append(UIBundle.message("color.settings.rainbow.demo.header.2"))
+    sb.append(indent).append(AnalysisBundle.message("color.settings.rainbow.demo.header.1"))
+      .append(indent).append(AnalysisBundle.message("color.settings.rainbow.demo.header.2"))
       .append(indent);
     String tagRainbow = RAINBOW_GRADIENT_DEMO.getExternalName();
     boolean needLineBreak = true;

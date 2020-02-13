@@ -2,9 +2,9 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.RainbowHighlighter;
-import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.RainbowVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
@@ -597,6 +597,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private static String getPresentableNameText() {
-    return DaemonBundle.message("pass.syntax");
+    return AnalysisBundle.message("pass.syntax");
   }
 }
