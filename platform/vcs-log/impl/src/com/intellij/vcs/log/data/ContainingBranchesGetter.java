@@ -29,7 +29,7 @@ import java.util.*;
 public class ContainingBranchesGetter {
   private static final Logger LOG = Logger.getInstance(ContainingBranchesGetter.class);
 
-  @NotNull private final SequentialLimitedLifoExecutor<Task> myTaskExecutor;
+  @NotNull private final SequentialLimitedLifoExecutor<CachingTask> myTaskExecutor;
   @NotNull private final VcsLogData myLogData;
 
   // other fields accessed only from EDT
@@ -41,15 +41,7 @@ public class ContainingBranchesGetter {
   ContainingBranchesGetter(@NotNull VcsLogData logData, @NotNull Disposable parentDisposable) {
     myLogData = logData;
     myConditionsCache = new CurrentBranchConditionCache(logData, parentDisposable);
-    myTaskExecutor = new SequentialLimitedLifoExecutor<>(parentDisposable, 10, task -> {
-      List<String> branches = task.getContainingBranches();
-      ApplicationManager.getApplication().invokeLater(() -> {
-        // if cache is cleared (because of log refresh) during this task execution,
-        // this will put obsolete value into the old instance we don't care anymore
-        task.myCache.put(new CommitId(task.myHash, task.myRoot), branches);
-        notifyListeners();
-      });
-    });
+    myTaskExecutor = new SequentialLimitedLifoExecutor<>(parentDisposable, 10, CachingTask::run);
     myLogData.addDataPackChangeListener(dataPack -> {
       Collection<VcsRef> currentBranches = dataPack.getRefsModel().getBranches();
       int checksum = currentBranches.hashCode();
@@ -97,8 +89,7 @@ public class ContainingBranchesGetter {
     LOG.assertTrue(EventQueue.isDispatchThread());
     List<String> refs = getContainingBranchesFromCache(root, hash);
     if (refs == null) {
-      DataPack dataPack = myLogData.getDataPack();
-      myTaskExecutor.queue(createTask(root, hash, dataPack));
+      myTaskExecutor.queue(new CachingTask(createTask(root, hash, myLogData.getDataPack()), myCache));
     }
     return refs;
   }
@@ -158,9 +149,9 @@ public class ContainingBranchesGetter {
   private ContainingBranchesGetter.Task createTask(@NotNull VirtualFile root, @NotNull Hash hash, @NotNull DataPack dataPack) {
     VcsLogProvider provider = myLogData.getLogProvider(root);
     if (canUseGraphForComputation(provider)) {
-      return new GraphTask(provider, root, hash, myCache, dataPack);
+      return new GraphTask(provider, root, hash, dataPack);
     }
-    return new ProviderTask(provider, root, hash, myCache);
+    return new ProviderTask(provider, root, hash);
   }
 
   private static boolean canUseGraphForComputation(@NotNull VcsLogProvider logProvider) {
@@ -171,14 +162,11 @@ public class ContainingBranchesGetter {
     @NotNull private final VcsLogProvider myProvider;
     @NotNull private final VirtualFile myRoot;
     @NotNull private final Hash myHash;
-    @NotNull private final SLRUMap<CommitId, List<String>> myCache;
 
-    Task(@NotNull VcsLogProvider provider, @NotNull VirtualFile root, @NotNull Hash hash,
-         @NotNull SLRUMap<CommitId, List<String>> cache) {
+    Task(@NotNull VcsLogProvider provider, @NotNull VirtualFile root, @NotNull Hash hash) {
       myProvider = provider;
       myRoot = root;
       myHash = hash;
-      myCache = cache;
     }
 
     @NotNull
@@ -205,11 +193,8 @@ public class ContainingBranchesGetter {
     @NotNull private final RefsModel myRefs;
     @NotNull private final PermanentGraph<Integer> myGraph;
 
-    GraphTask(@NotNull VcsLogProvider provider, @NotNull VirtualFile root,
-              @NotNull Hash hash,
-              @NotNull SLRUMap<CommitId, List<String>> cache,
-              @NotNull DataPack dataPack) {
-      super(provider, root, hash, cache);
+    GraphTask(@NotNull VcsLogProvider provider, @NotNull VirtualFile root, @NotNull Hash hash, @NotNull DataPack dataPack) {
+      super(provider, root, hash);
       myGraph = dataPack.getPermanentGraph();
       myRefs = dataPack.getRefsModel();
     }
@@ -234,10 +219,8 @@ public class ContainingBranchesGetter {
 
   private static class ProviderTask extends Task {
 
-    ProviderTask(@NotNull VcsLogProvider provider, @NotNull VirtualFile root,
-                 @NotNull Hash hash,
-                 @NotNull SLRUMap<CommitId, List<String>> cache) {
-      super(provider, root, hash, cache);
+    ProviderTask(@NotNull VcsLogProvider provider, @NotNull VirtualFile root, @NotNull Hash hash) {
+      super(provider, root, hash);
     }
 
     @Override
@@ -246,6 +229,26 @@ public class ContainingBranchesGetter {
       List<String> branches = new ArrayList<>(provider.getContainingBranches(root, hash));
       Collections.sort(branches);
       return branches;
+    }
+  }
+
+  private class CachingTask {
+    @NotNull private final Task myTask;
+    @NotNull private final SLRUMap<CommitId, List<String>> myCache;
+
+    CachingTask(@NotNull Task task, @NotNull SLRUMap<CommitId, List<String>> cache) {
+      myTask = task;
+      myCache = cache;
+    }
+
+    public void run() {
+      List<String> branches = myTask.getContainingBranches();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        // if cache is cleared (because of log refresh) during this task execution,
+        // this will put obsolete value into the old instance we don't care anymore
+        myCache.put(new CommitId(myTask.myHash, myTask.myRoot), branches);
+        notifyListeners();
+      });
     }
   }
 }
