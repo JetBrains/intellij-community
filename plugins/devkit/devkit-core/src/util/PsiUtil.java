@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.StringExpressionHelper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -29,6 +30,7 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -98,7 +100,7 @@ public class PsiUtil {
     String text = expr.getText();
     if (text == null) return false;
     if (!StringUtil.contains(text, "getSimpleName")) return false;
-    
+
     text = text.replaceAll(" ", "")
       .replaceAll("\n", "")
       .replaceAll("\t", "")
@@ -125,7 +127,7 @@ public class PsiUtil {
             }
           }
         }
-        else if (value instanceof PsiMethodCallExpression && 
+        else if (value instanceof PsiMethodCallExpression &&
                  !isSimpleClassNameExpression((PsiMethodCallExpression)value)) {
           final PsiMethod calledMethod = ((PsiMethodCallExpression)value).resolveMethod();
           return calledMethod != null ? getReturnedExpression(calledMethod) : null;
@@ -158,6 +160,19 @@ public class PsiUtil {
       if (annotation != null) return annotation;
     }
     return null;
+  }
+
+  @Nullable
+  public static String getAnnotationStringAttribute(final PsiAnnotation annotation,
+                                                    final String name,
+                                                    String defaultValueIfEmpty) {
+    final String value = AnnotationUtil.getDeclaredStringAttributeValue(annotation, name);
+    return StringUtil.defaultIfEmpty(value, defaultValueIfEmpty);
+  }
+
+  public static boolean getAnnotationBooleanAttribute(final PsiAnnotation annotation,
+                                                      final String name) {
+    return ObjectUtils.notNull(AnnotationUtil.getBooleanAttributeValue(annotation, name), Boolean.FALSE);
   }
 
   public static boolean isIdeaProject(@Nullable Project project) {
