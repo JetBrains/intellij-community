@@ -356,8 +356,14 @@
     <action id="ToggleInlayHintsGloballyAction" class="com.intellij.codeInsight.hints.ToggleInlayHintsGloballyAction"/>
 
     <!-- Analyze -->
-    <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
-    <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>
+    <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction">
+      <override-text place="MainMenu"/>
+      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+    </action>
+    <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction">
+      <override-text place="MainMenu"/>
+      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+    </action>
 
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
