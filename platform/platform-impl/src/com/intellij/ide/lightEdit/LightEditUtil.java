@@ -106,7 +106,7 @@ public final class LightEditUtil {
     }
   }
 
-  static boolean isLightEditEnabled() {
+  public static boolean isLightEditEnabled() {
     return Registry.is(ENABLED_FILE_OPEN_KEY);
   }
 }

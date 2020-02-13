@@ -3,6 +3,8 @@ package com.intellij.ide;
 
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.application.*;
@@ -71,10 +73,15 @@ public final class CommandLineProcessor {
     else {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
-      Navigatable navigatable = line > 0
-        ? new OpenFileDescriptor(project, file, line - 1, Math.max(column, 0))
-        : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1);
-      navigatable.navigate(true);
+      if (LightEdit.owns(project)) {
+        LightEdit.openFile(file);
+      }
+      else {
+        Navigatable navigatable = line > 0
+                                  ? new OpenFileDescriptor(project, file, line - 1, Math.max(column, 0))
+                                  : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1);
+        navigatable.navigate(true);
+      }
 
       return new Pair<>(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : CliResult.OK_FUTURE);
     }
@@ -87,15 +94,20 @@ public final class CommandLineProcessor {
       }
     }
 
-    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-    if (frame != null) {
-      Project project = frame.getProject();
-      if (project != null) {
-        return project;
-      }
+    if (LightEditUtil.isLightEditEnabled()) {
+      return LightEditUtil.getProject();
     }
+    else {
+      IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+      if (frame != null) {
+        Project project = frame.getProject();
+        if (project != null) {
+          return project;
+        }
+      }
 
-    return projects[0];
+      return projects[0];
+    }
   }
 
   public static @NotNull Pair<Project, Future<CliResult>> processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
