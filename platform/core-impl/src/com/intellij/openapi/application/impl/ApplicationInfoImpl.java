@@ -412,7 +412,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getWelcomeScreenLogoUrl() {
+  public @Nullable String getWelcomeScreenLogoUrl() {
     return myWelcomeScreenLogoUrl;
   }
 

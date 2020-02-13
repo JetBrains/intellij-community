@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -66,7 +66,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getToolWindowIconUrl();
 
-  public abstract String getWelcomeScreenLogoUrl();
+  public abstract @Nullable String getWelcomeScreenLogoUrl();
 
   /**
    * This method is used to detect that the product isn't meant to be used as an IDE but is embedded to another product or used as a
