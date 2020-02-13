@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -20,13 +20,12 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.xml.util.XmlUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -135,7 +134,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
   }
 
   private static class DocCommentHandler extends Handler {
-    private static Map<Character, String> ourEntities;
+    private static TIntObjectHashMap<String> ourEntities;
 
     @Override
     PsiElement findApplicable(PsiElement element) {
@@ -191,7 +190,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
         return;
       }
 
-      Map<Character, String> entities = new HashMap<>();
+      TIntObjectHashMap<String> entities = new TIntObjectHashMap<>();
       Pattern pattern = Pattern.compile("&#(\\d+);");
       XmlUtil.processXmlElements(file, element -> {
         if (element instanceof XmlEntityDecl) {
