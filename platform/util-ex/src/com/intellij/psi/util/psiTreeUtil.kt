@@ -46,7 +46,10 @@ val PsiElement.parentsWithSelf: Sequence<PsiElement>
   get() = generateSequence(this) { if (it is PsiFile) null else it.parent }
 
 val PsiElement.parents: Sequence<PsiElement>
-  get() = parentsWithSelf.drop(1)
+  get() {
+    val seed = if (this is PsiFile) null else parent
+    return generateSequence(seed) { if (it is PsiFile) null else it.parent }
+  }
 
 fun PsiElement.siblings(forward: Boolean = true, withSelf: Boolean = true): Sequence<PsiElement> {
   val seed = when {
