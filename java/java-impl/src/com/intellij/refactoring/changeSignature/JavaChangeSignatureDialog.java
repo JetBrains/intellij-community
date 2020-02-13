@@ -358,7 +358,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
               ((PsiExpressionCodeFragment)item.defaultValueCodeFragment).setExpectedType(getRowType(item));
               myDefaultValueEditor.setPreferredWidth(getTable().getWidth() / 2);
               myDefaultValueEditor.addDocumentListener(new RowEditorChangeListener(2));
-              additionalPanel.add(createLabeledPanel("Default value:", myDefaultValueEditor), BorderLayout.WEST);
+              String message = RefactoringBundle.message("changeSignature.default.value.label");
+              additionalPanel.add(createLabeledPanel(message, myDefaultValueEditor), BorderLayout.WEST);
 
               if (!isGenerateDelegate()) {
                 myAnyVar = new JCheckBox(RefactoringBundle.message("change.signature.use.any.checkbox"));
