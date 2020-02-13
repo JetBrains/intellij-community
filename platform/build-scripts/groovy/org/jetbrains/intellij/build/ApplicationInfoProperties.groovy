@@ -58,7 +58,7 @@ class ApplicationInfoProperties {
     companyName = companyTag.@name
     shortCompanyName = companyTag.@shortName ?: shortenCompanyName(companyName)
 
-    def svgPath = root.icon.first().@svg
+    def svgPath = root.icon[0]?.@svg
     svgRelativePath = isEAP ? (root."icon-eap"[0]?.@svg ?: svgPath) : svgPath
     svgProductIcons = (root.icon + root."icon-eap").collectMany { [it?.@"svg", it?.@"svg-small"] }.findAll { it != null }
 
