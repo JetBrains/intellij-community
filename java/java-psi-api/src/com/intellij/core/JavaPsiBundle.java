@@ -44,6 +44,6 @@ public class JavaPsiBundle extends DynamicBundle {
 
   @NotNull
   public static String visibilityPresentation(@NotNull String modifier) {
-    return message(modifier + ".visibility.presentation");
+    return message("visibility.presentation." + modifier);
   }
 }
