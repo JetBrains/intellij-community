@@ -1906,6 +1906,6 @@ java_library(
 java_library(
     name = "emulator-proto",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/android-emulator/grpc:emulator_java_proto"],
-    runtime_deps = ["//prebuilts/android-emulator/grpc:emulator_java_proto"],
+    exports = ["//tools/base/emulator/proto:emulator_java_proto"],
+    runtime_deps = ["//tools/base/emulator/proto:emulator_java_proto"],
 )
