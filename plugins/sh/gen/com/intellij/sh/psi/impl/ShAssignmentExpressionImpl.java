@@ -91,4 +91,40 @@ public class ShAssignmentExpressionImpl extends ShBinaryExpressionImpl implement
     return findChildByType(SHIFT_RIGHT_ASSIGN);
   }
 
+  @Override
+  @NotNull
+  public ShExpression getLeft() {
+    List<ShExpression> p1 = PsiTreeUtil.getChildrenOfTypeAsList(this, ShExpression.class);
+    return p1.get(0);
+  }
+
+  @Override
+  @Nullable
+  public ShExpression getRight() {
+    List<ShExpression> p1 = PsiTreeUtil.getChildrenOfTypeAsList(this, ShExpression.class);
+    return p1.size() < 2 ? null : p1.get(1);
+  }
+
+  @Override
+  public int getTextOffset() {
+    return ShPsiImplUtil.getTextOffset(this);
+  }
+
+  @Override
+  @Nullable
+  public String getName() {
+    return ShPsiImplUtil.getName(this);
+  }
+
+  @Override
+  public PsiElement setName(String name) {
+    return ShPsiImplUtil.setName(this, name);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getNameIdentifier() {
+    return ShPsiImplUtil.getNameIdentifier(this);
+  }
+
 }

@@ -49,4 +49,25 @@ public class ShAssignmentCommandImpl extends ShCommandImpl implements ShAssignme
     return findChildByType(PLUS_ASSIGN);
   }
 
+  @Override
+  public int getTextOffset() {
+    return ShPsiImplUtil.getTextOffset(this);
+  }
+
+  @Override
+  @Nullable
+  public String getName() {
+    return ShPsiImplUtil.getName(this);
+  }
+
+  @Override
+  public PsiElement setName(String name) {
+    return ShPsiImplUtil.setName(this, name);
+  }
+
+  @Override
+  public PsiElement getNameIdentifier() {
+    return ShPsiImplUtil.getNameIdentifier(this);
+  }
+
 }

@@ -217,7 +217,11 @@ private pipeline_command_list ::= pipeline_command (pipeline_command_list_separa
 } // todo with pin
 private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') newlines
 
-function_definition ::= &(function | word '(') function_definition_inner {extends=command}
+function_definition ::= &(function | word '(') function_definition_inner {
+  extends=command
+  implements="com.intellij.psi.PsiNameIdentifierOwner"
+  methods=[getTextOffset getName setName getNameIdentifier]
+}
 private function_definition_inner ::=           word argument_list  newlines block
                                      | function (word | <<keywordsRemapped>>) argument_list? newlines block {pin(".*")="function|argument_list"}
 private argument_list ::= '(' ')' {recoverWhile = argument_list_recover}
@@ -288,7 +292,11 @@ private end_of_list ::= '\n' | ';' | '&'
 shell_parameter_expansion ::= '{' parameter_expansion_body (composed_var parameter_expansion_body?)* '}' {pin=1}
 
 left assignment_command ::= array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
-                            {'=' <<parseUntilSpace literal >>}* {pin=0}
+                            {'=' <<parseUntilSpace literal >>}* {
+  pin=0
+  implements="com.intellij.psi.PsiNameIdentifierOwner"
+  methods=[getTextOffset getName setName getNameIdentifier]
+}
 assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines
 
@@ -333,7 +341,10 @@ expression ::=
   | parentheses_expression
 
 comma_expression ::= expression ',' expression
-assignment_expression ::= expression ('=' |'*=' |'/=' |'%=' |'+=' |'-=' |'<<=' |'>>=' |'&=' |'^=' |'|=') expression
+assignment_expression ::= expression ('=' |'*=' |'/=' |'%=' |'+=' |'-=' |'<<=' |'>>=' |'&=' |'^=' |'|=') expression {
+  implements="com.intellij.psi.PsiNameIdentifierOwner"
+  methods=[left="expression[0]" right="expression[1]" getTextOffset getName setName getNameIdentifier]
+}
 conditional_expression ::= expression '?' expression ':' expression
 logical_or_expression ::= expression '||' expression
 logical_and_expression ::= expression '&&' expression
@@ -356,7 +367,9 @@ index_expression ::= expression '[' expression ']'
 array_expression ::= '[' expression ']'
 parentheses_expression ::= '(' expression ')' {pin=1}
 
-literal_expression ::= w+
+literal_expression ::= w+ {
+  methods=[getReferences]
+}
 
 condition ::=
     assignment_condition

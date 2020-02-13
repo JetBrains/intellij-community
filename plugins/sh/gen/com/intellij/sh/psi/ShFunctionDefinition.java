@@ -4,8 +4,9 @@ package com.intellij.sh.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 
-public interface ShFunctionDefinition extends ShCommand {
+public interface ShFunctionDefinition extends ShCommand, PsiNameIdentifierOwner {
 
   @Nullable
   ShBlock getBlock();
@@ -21,5 +22,15 @@ public interface ShFunctionDefinition extends ShCommand {
 
   @Nullable
   PsiElement getWord();
+
+  int getTextOffset();
+
+  @Nullable
+  String getName();
+
+  PsiElement setName(String name);
+
+  @Nullable
+  PsiElement getNameIdentifier();
 
 }

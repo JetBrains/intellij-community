@@ -4,8 +4,9 @@ package com.intellij.sh.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 
-public interface ShAssignmentCommand extends ShCommand {
+public interface ShAssignmentCommand extends ShCommand, PsiNameIdentifierOwner {
 
   @Nullable
   ShArrayExpression getArrayExpression();
@@ -18,5 +19,14 @@ public interface ShAssignmentCommand extends ShCommand {
 
   @Nullable
   PsiElement getPlusAssign();
+
+  int getTextOffset();
+
+  @Nullable
+  String getName();
+
+  PsiElement setName(String name);
+
+  PsiElement getNameIdentifier();
 
 }
