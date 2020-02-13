@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Supplier;
 
 /**
  * Provides the Content tab to the ChangesView log toolwindow.
@@ -162,6 +163,13 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     @Override
     public Boolean fun(@NotNull Project project) {
       return !VcsProjectLog.getLogProviders(project).isEmpty();
+    }
+  }
+
+  public static class DisplayNameSupplier implements Supplier<String> {
+    @Override
+    public String get() {
+      return "Log"; // todo
     }
   }
 }

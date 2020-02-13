@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -20,6 +21,7 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
 import com.intellij.vcs.commit.CommitWorkflowManager
+import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 import kotlin.properties.Delegates.observable
 
@@ -30,6 +32,7 @@ internal val Project.isCommitToolWindow: Boolean
   get() = ChangesViewContentManager.getInstanceImpl(this)?.isCommitToolWindow == true
 
 class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
+  private val LOG: Logger = Logger.getInstance(ChangesViewContentManager::class.java)
 
   private val toolWindows = mutableSetOf<ToolWindow>()
   private val addedContents = mutableListOf<Content>()
@@ -143,6 +146,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   fun selectContent(tabName: String, requestFocus: Boolean) {
+    LOG.debug("select content: $tabName")
     val content = contentManagers.flatMap { it.contents.asList() }.find { it.tabName == tabName } ?: return
     content.manager?.setSelectedContent(content, requestFocus)
   }
@@ -217,10 +221,19 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     @JvmField
     val ORDER_WEIGHT_KEY = Key.create<Int>("ChangesView.ContentOrderWeight")
 
+    @NonNls
     const val LOCAL_CHANGES = "Local Changes"
+
+    @NonNls
     const val REPOSITORY = "Repository"
+
+    @NonNls
     const val INCOMING = "Incoming"
+
+    @NonNls
     const val SHELF = "Shelf"
+
+    @NonNls
     const val BRANCHES = "Branches"
 
     private fun getContentWeight(content: Content): Int {

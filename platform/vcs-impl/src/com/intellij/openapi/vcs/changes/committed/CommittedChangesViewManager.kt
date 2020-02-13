@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
+import java.util.function.Supplier
 
 private fun Project.getCommittedChangesProvider(): CommittedChangesProvider<*, *>? =
   ProjectLevelVcsManager.getInstance(this).allActiveVcss
@@ -82,6 +83,10 @@ class CommittedChangesViewManager(private val project: Project) : ChangesViewCon
   class VisibilityPredicate : NotNullFunction<Project, Boolean> {
     override fun `fun`(project: Project): Boolean =
       ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isCommittedChangesAvailable(it) }
+  }
+
+  class DisplayNameSupplier : Supplier<String> {
+    override fun get(): String = VcsBundle.getString("committed.changes.tab")
   }
 
   companion object {

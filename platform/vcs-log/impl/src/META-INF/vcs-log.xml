@@ -12,8 +12,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <changesViewContent tabName="Log" className="com.intellij.vcs.log.impl.VcsLogContentProvider"
-                        predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"/>
+    <changesViewContent tabName="Log"
+                        className="com.intellij.vcs.log.impl.VcsLogContentProvider"
+                        predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"
+                        displayNameSupplierClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$DisplayNameSupplier"/>
 
     <applicationService serviceImplementation="com.intellij.vcs.log.impl.VcsLogApplicationSettings"/>
     <applicationService serviceImplementation="com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList"/>

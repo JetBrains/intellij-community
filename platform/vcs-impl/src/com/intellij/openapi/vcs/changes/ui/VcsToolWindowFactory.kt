@@ -89,14 +89,18 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> =
     ChangesViewContentEP.EP_NAME.getExtensions(project).filter { getToolWindowIdFor(project, it.tabName) == toolWindow.id }
 
-  private fun createExtensionContent(project: Project, extension: ChangesViewContentEP): Content =
-    ContentFactory.SERVICE.getInstance().createContent(JPanel(null), extension.getTabName(), false).apply {
+  private fun createExtensionContent(project: Project, extension: ChangesViewContentEP): Content {
+    val displayName: String = extension.newDisplayNameSupplierInstance(project)?.get() ?: extension.tabName
+
+    return ContentFactory.SERVICE.getInstance().createContent(JPanel(null), displayName, false).apply {
       isCloseable = false
+      tabName = extension.tabName
       putUserData(CHANGES_VIEW_EXTENSION, extension)
       putUserData(CONTENT_PROVIDER_SUPPLIER_KEY) { extension.getInstance(project) }
 
       extension.newPreloaderInstance(project)?.preloadTabContent(this)
     }
+  }
 
   companion object {
     internal val Project.vcsManager: ProjectLevelVcsManager get() = ProjectLevelVcsManager.getInstance(this)

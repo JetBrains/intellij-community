@@ -147,6 +147,7 @@ public class ShelvedChangesViewManager implements Disposable {
       if (myContent == null) {
         myPanel = new ShelfToolWindowPanel(myProject);
         myContent = new ContentImpl(myPanel.myRootPanel, VcsBundle.message("shelf.tab"), false);
+        myContent.setTabName(SHELF);
         MyDnDTarget dnDTarget = new MyDnDTarget(myPanel.myProject, myContent);
         myContent.putUserData(Content.TAB_DND_TARGET_KEY, dnDTarget);
 

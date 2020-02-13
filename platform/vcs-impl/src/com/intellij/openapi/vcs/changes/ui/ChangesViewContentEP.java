@@ -9,9 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * @author yole
@@ -21,8 +22,12 @@ public class ChangesViewContentEP implements PluginAware {
 
   public static final ProjectExtensionPointName<ChangesViewContentEP> EP_NAME = new ProjectExtensionPointName<>("com.intellij.changesViewContent");
 
+  /**
+   * Used to determine specific tab content in {@link com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager#selectContent}
+   * <p>
+   * To provide localized tab name use {@link #displayNameSupplierClassName}
+   */
   @Attribute("tabName")
-  @Nls(capitalization = Nls.Capitalization.Title)
   public String tabName;
 
   @Attribute("className")
@@ -33,6 +38,9 @@ public class ChangesViewContentEP implements PluginAware {
 
   @Attribute("preloaderClassName")
   public String preloaderClassName;
+
+  @Attribute("displayNameSupplierClassName")
+  public String displayNameSupplierClassName;
 
   private PluginDescriptor myPluginDescriptor;
   private ChangesViewContentProvider myInstance;
@@ -74,6 +82,14 @@ public class ChangesViewContentEP implements PluginAware {
     this.preloaderClassName = preloaderClassName;
   }
 
+  public String getDisplayNameSupplierClassName() {
+    return displayNameSupplierClassName;
+  }
+
+  public void setDisplayNameSupplierClassName(String displayNameSupplierClassName) {
+    this.displayNameSupplierClassName = displayNameSupplierClassName;
+  }
+
   public ChangesViewContentProvider getInstance(@NotNull Project project) {
     if (myInstance == null) {
       myInstance = (ChangesViewContentProvider)newClassInstance(project, className);
@@ -101,6 +117,15 @@ public class ChangesViewContentEP implements PluginAware {
       return null;
     }
     return (ChangesViewContentProvider.Preloader)newClassInstance(project, preloaderClassName);
+  }
+
+  @Nullable
+  public Supplier<String> newDisplayNameSupplierInstance(@NotNull Project project) {
+    if (displayNameSupplierClassName == null) {
+      return null;
+    }
+    //noinspection unchecked
+    return (Supplier<String>)newClassInstance(project, displayNameSupplierClassName);
   }
 
   @Nullable

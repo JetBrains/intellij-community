@@ -65,6 +65,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
@@ -118,6 +119,13 @@ public class ChangesViewManager implements ChangesViewEx,
     @Override
     public void preloadTabContent(@NotNull Content content) {
       content.putUserData(Content.TAB_DND_TARGET_KEY, new MyContentDnDTarget(myProject, content));
+    }
+  }
+
+  public static class DisplayNameSupplier implements Supplier<String> {
+    @Override
+    public String get() {
+      return VcsBundle.getString("local.changes.tab");
     }
   }
 
