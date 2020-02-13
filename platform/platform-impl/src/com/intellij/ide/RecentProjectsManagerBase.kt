@@ -23,7 +23,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
@@ -377,7 +376,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  override fun reopenLastProjectsOnStart() {
+  override fun reopenLastProjectsOnStart(): Boolean {
     val openPaths = lastOpenedProjects
     var someProjectWasOpened = false
     for ((key, value) in openPaths) {
@@ -388,9 +387,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       }
     }
 
-    if (!someProjectWasOpened) {
-      WelcomeFrame.showIfNoProjectOpened()
-    }
+    return someProjectWasOpened
   }
 
   protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>

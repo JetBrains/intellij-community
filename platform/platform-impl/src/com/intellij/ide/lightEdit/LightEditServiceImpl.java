@@ -69,7 +69,7 @@ public final class LightEditServiceImpl implements LightEditService,
 
   private void init() {
     if (myFrameWrapper == null) {
-      myFrameWrapper = LightEditFrameWrapper.allocate(()->closeEditorWindow());
+      myFrameWrapper = LightEditFrameWrapper.allocate(() -> closeEditorWindow());
       LOG.info("Frame created");
     }
     else {
@@ -78,6 +78,7 @@ public final class LightEditServiceImpl implements LightEditService,
     }
   }
 
+  @Override
   public void showEditorWindow() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       init();

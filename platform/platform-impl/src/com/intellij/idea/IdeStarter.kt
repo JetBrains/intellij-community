@@ -10,6 +10,7 @@ import com.intellij.ide.*
 import com.intellij.ide.customize.CustomizeIDEWizardDialog
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerConfigurableProxy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
@@ -27,6 +28,7 @@ import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchBarsManager
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
@@ -74,12 +76,8 @@ open class IdeStarter : ApplicationStarter {
       }
     }
 
+    val isStandaloneLightEdit = "LightEdit" == System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)
     val app = ApplicationManager.getApplication()
-
-    val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
-    frameInitActivity.runChild("app frame created callback") {
-      lifecyclePublisher.appFrameCreated(args)
-    }
 
     // temporary check until the JRE implementation has been checked and bundled
     if (java.lang.Boolean.getBoolean("ide.popup.enablePopupType")) {
@@ -87,14 +85,25 @@ open class IdeStarter : ApplicationStarter {
       System.setProperty("jbre.popupwindow.settype", "true")
     }
 
-    // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
-    val willOpenProject = args.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
-    val needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
+    val needToOpenProject: Boolean
+    if (isStandaloneLightEdit) {
+      needToOpenProject = true
+    }
+    else {
+      val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
+      frameInitActivity.runChild("app frame created callback") {
+        lifecyclePublisher.appFrameCreated(args)
+      }
 
-    frameInitActivity.end()
+      // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
+      val willOpenProject = args.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
+      needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
 
-    NonUrgentExecutor.getInstance().execute {
-      LifecycleUsageTriggerCollector.onIdeStart()
+      frameInitActivity.end()
+
+      NonUrgentExecutor.getInstance().execute {
+        LifecycleUsageTriggerCollector.onIdeStart()
+      }
     }
 
     val project = when {
@@ -106,10 +115,23 @@ open class IdeStarter : ApplicationStarter {
 
     app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project)
 
-    if (needToOpenProject && project == null) {
+    if (needToOpenProject && project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
       val recentProjectManager = RecentProjectsManager.getInstance()
-      if (recentProjectManager.willReopenProjectOnStart() && !JetBrainsProtocolHandler.appStartedWithCommand()) {
-        recentProjectManager.reopenLastProjectsOnStart()
+      var openLightEditFrame = isStandaloneLightEdit
+      if (recentProjectManager.willReopenProjectOnStart()) {
+        if (recentProjectManager.reopenLastProjectsOnStart()) {
+          openLightEditFrame = false
+        }
+        else if (!openLightEditFrame) {
+          WelcomeFrame.showIfNoProjectOpened()
+        }
+      }
+
+      // due to historical reasons, not safe to show welcome screen if willReopenProjectOnStart returns false, so, not possible to extract common branch
+      if (openLightEditFrame) {
+        ApplicationManager.getApplication().invokeLater {
+          LightEditService.getInstance().showEditorWindow()
+        }
       }
     }
 
