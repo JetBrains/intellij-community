@@ -18,6 +18,17 @@ import java.util.*;
  */
 public class ContainerUtilRt {
   /**
+   * @deprecated Use {@link HashMap#HashMap(int)}
+   */
+  @NotNull
+  @Contract(value = "_ -> new", pure = true)
+  @Deprecated
+  public static <K, V> Map<K, V> newHashMap(int initialCapacity) {
+    return new HashMap<K, V>(initialCapacity);
+  }
+
+
+  /**
    * @deprecated Use {@link HashMap#HashMap()}
    */
   @NotNull
