@@ -43,6 +43,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.Topic;
@@ -414,11 +415,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return true;
     }
 
-    final ProgressWindow progress = new ProgressWindow(canBeCanceled, false, project, parentComponent, cancelText);
-    // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
-    // does not have a chance to run, and as a result the progress won't be disposed
-    Disposer.register(this, progress);
-    progress.setTitle(progressTitle);
+    final CompletableFuture<ProgressWindow> progress =
+      createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, project, parentComponent, cancelText);
 
     ProgressRunner<?, ?> progressRunner = new ProgressRunner<>(process)
       .sync()
@@ -451,11 +449,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
 
-    final ProgressWindow progress = new ProgressWindow(canBeCanceled, false, project, parentComponent, cancelText);
-    // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
-    // does not have a chance to run, and as a result the progress won't be disposed
-    Disposer.register(this, progress);
-    progress.setTitle(progressTitle);
+    final CompletableFuture<ProgressWindow> progress =
+      createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, project, parentComponent, cancelText);
 
     ProgressResult<?> result = new ProgressRunner<>(() -> runReadAction(process))
       .sync()
@@ -463,8 +458,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       .withProgress(progress)
       .withBlockingEdtStart(ProgressWindow::startBlocking)
       .submitAndGet();
-
-    LOG.assertTrue(!progress.isRunning());
 
     return !result.isCanceled();
   }
@@ -652,6 +645,34 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     finally {
       myExitInProgress = false;
     }
+  }
+
+  @NotNull
+  private CompletableFuture<ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull String progressTitle,
+                                                                              boolean canBeCanceled,
+                                                                              @Nullable Project project,
+                                                                              JComponent parentComponent,
+                                                                              String cancelText) {
+    if (SwingUtilities.isEventDispatchThread()) {
+      return CompletableFuture.completedFuture(createProgressWindow(progressTitle, canBeCanceled, project, parentComponent, cancelText));
+    }
+    else {
+      return CompletableFuture.supplyAsync(() -> createProgressWindow(progressTitle, canBeCanceled, project, parentComponent, cancelText),
+                                           EdtExecutorService.getInstance());
+    }
+  }
+
+  @NotNull
+  private ProgressWindow createProgressWindow(@NotNull String progressTitle,
+                                              boolean canBeCanceled,
+                                              @Nullable Project project,
+                                              JComponent parentComponent, String cancelText) {
+    final ProgressWindow progress = new ProgressWindow(canBeCanceled, false, project, parentComponent, cancelText);
+    // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
+    // does not have a chance to run, and as a result the progress won't be disposed
+    Disposer.register(this, progress);
+    progress.setTitle(progressTitle);
+    return progress;
   }
 
   /**
@@ -922,11 +943,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       });
     }
 
-    final ProgressWindow progress = new ProgressWindow(cancelText != null, false, project, parentComponent, cancelText);
-    // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
-    // does not have a chance to run, and as a result the progress won't be disposed
-    Disposer.register(this, progress);
-    progress.setTitle(title);
+    final ProgressWindow progress = createProgressWindow(title, cancelText != null, project, parentComponent, cancelText);
 
     ProgressResult<Object> result = new ProgressRunner<>(() -> runWriteAction(() -> action.consume(progress)))
       .sync()

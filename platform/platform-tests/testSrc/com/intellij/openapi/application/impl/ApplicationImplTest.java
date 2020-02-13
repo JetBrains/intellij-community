@@ -7,7 +7,7 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -492,8 +492,27 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     assertNotNull(exception);
   }
 
+  public void testRunProcessWithProgressFromPooledThread() throws Throwable {
+    Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(()-> {
+      try {
+        boolean result = ApplicationManagerEx.getApplicationEx()
+          .runProcessWithProgressSynchronously(EmptyRunnable.getInstance(), "title", true, getProject());
+        assertTrue(result);
+      }
+      catch (Throwable e) {
+        exception = e;
+      }
+    });
+    TestTimeOut p = setTimeout(500, TimeUnit.MILLISECONDS);
+    while (!p.timedOut()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    joinWithTimeout(Collections.singletonList(thread));
+    if (exception != null) throw exception;
+  }
+
   public void testRunProcessWithProgressSynchronouslyInReadAction() throws Throwable {
-    boolean result = ((ApplicationEx)ApplicationManager.getApplication())
+    boolean result = ApplicationManagerEx.getApplicationEx()
       .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null, () -> {
         try {
           assertFalse(SwingUtilities.isEventDispatchThread());
@@ -507,10 +526,32 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     if (exception != null) throw exception;
   }
 
+  public void testRunProcessWithProgressSynchronouslyInReadActionFromPooledThread() throws Throwable {
+    Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(()-> {
+      boolean result = ApplicationManagerEx.getApplicationEx()
+        .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null, () -> {
+          try {
+            assertFalse(SwingUtilities.isEventDispatchThread());
+            assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
+          }
+          catch (Throwable e) {
+            exception = e;
+          }
+        });
+      assertTrue(result);
+    });
+    TestTimeOut p = setTimeout(500, TimeUnit.MILLISECONDS);
+    while (!p.timedOut()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    joinWithTimeout(Collections.singletonList(thread));
+    if (exception != null) throw exception;
+  }
+
   public void testRunProcessWithProgressSynchronouslyInReadActionWithPendingWriteAction() throws Throwable {
     SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()));
     AtomicBoolean ran = new AtomicBoolean();
-    boolean result = ((ApplicationEx)ApplicationManager.getApplication())
+    boolean result = ApplicationManagerEx.getApplicationEx()
       .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null,
                                                        () -> ran.set(true));
     assertTrue(result);
