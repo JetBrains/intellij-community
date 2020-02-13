@@ -52,7 +52,7 @@ private class UastReferenceContributorChunk(private val supportedUElementTypes: 
     val uElement = getOrCreateCachedElement(element, context, supportedUElementTypes) ?: return PsiReference.EMPTY_ARRAY
 
     val references = providers.asSequence()
-      .filter { it.provider.acceptsTarget(element) && it.pattern.invoke(uElement, context) }
+      .filter { it.pattern.invoke(uElement, context) }
       .flatMap {
         val referencesByElement = it.provider.getReferencesByElement(uElement, context)
 
@@ -69,9 +69,13 @@ private class UastReferenceContributorChunk(private val supportedUElementTypes: 
         referencesByElement.asSequence()
       }
       .toList()
-    if (references.isEmpty()) return PsiReference.EMPTY_ARRAY
 
+    if (references.isEmpty()) return PsiReference.EMPTY_ARRAY
     return references.toTypedArray()
+  }
+
+  override fun acceptsTarget(target: PsiElement): Boolean {
+    return providers.any { it.provider.acceptsTarget(target) }
   }
 }
 
