@@ -137,12 +137,7 @@ public class ContainingBranchesGetter {
   @CalledInAny
   @NotNull
   public List<String> getContainingBranchesSynchronously(@NotNull VirtualFile root, @NotNull Hash hash) {
-    return doGetContainingBranches(myLogData.getDataPack(), root, hash);
-  }
-
-  @NotNull
-  private List<String> doGetContainingBranches(@NotNull DataPack dataPack, @NotNull VirtualFile root, @NotNull Hash hash) {
-    return createTask(root, hash, dataPack).getContainingBranches();
+    return createTask(root, hash, myLogData.getDataPack()).getContainingBranches();
   }
 
   @NotNull
