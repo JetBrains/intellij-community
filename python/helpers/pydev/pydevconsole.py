@@ -354,7 +354,7 @@ def start_server(port):
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = do_exit
 
-    from pydev_console.protocol import PythonConsoleBackendService, PythonConsoleFrontendService
+    from pydev_console.pydev_protocol import PythonConsoleBackendService, PythonConsoleFrontendService
 
     enable_thrift_logging()
 
@@ -386,7 +386,7 @@ def start_client(host, port):
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = do_exit
 
-    from pydev_console.protocol import PythonConsoleBackendService, PythonConsoleFrontendService
+    from pydev_console.pydev_protocol import PythonConsoleBackendService, PythonConsoleFrontendService
 
     enable_thrift_logging()
 
