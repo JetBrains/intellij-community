@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
@@ -62,7 +61,7 @@ abstract class IndexesStarterBase(
     LOG.info("Generated index in $indexZip")
 
     val indexMetadata = runAndCatchNotNull("extract JSON metadata from $indexZip") {
-      SharedIndexMetadata.writeIndexMetadata(indexName, indexKind, hash, infraVersion)
+      SharedIndexMetadata.writeIndexMetadata(indexName, indexKind, hash, infraVersion, aliases)
     }
 
     // we generate production layout here:
@@ -85,16 +84,6 @@ abstract class IndexesStarterBase(
     FileUtil.copy(indexZipXZ, indexFile(".ijx.xz"))
     FileUtil.writeToFile(indexFile(".json"), indexMetadata)
     FileUtil.writeToFile(indexFile(".sha256"), indexZipXZ.sha256())
-
-    if (aliases.isNotEmpty()) {
-      val om = ObjectMapper()
-      val root = om.createObjectNode()
-      val aliasesEl = root.putArray("aliases")
-      aliases.map { it.toLowerCase() }.toSortedSet().forEach { aliasesEl.add(it) }
-
-      val data = om.writerWithDefaultPrettyPrinter().writeValueAsBytes(root)
-      FileUtil.writeToFile(indexFile(".alias"), data)
-    }
   }
 
   private fun xz(file: File, output: File) {

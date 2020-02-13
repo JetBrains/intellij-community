@@ -33,7 +33,8 @@ object SharedIndexMetadata {
   fun writeIndexMetadata(indexName: String,
                          indexKind: String,
                          sourcesHash: String,
-                         infrastructureVersion: IndexInfrastructureVersion): ByteArray {
+                         infrastructureVersion: IndexInfrastructureVersion,
+                         aliases: Collection<String> = setOf()): ByteArray {
     try {
       val om = ObjectMapper()
 
@@ -47,6 +48,9 @@ object SharedIndexMetadata {
         sources.put("hash", sourcesHash)
         sources.put("kind", indexKind)
         sources.put("name", indexName)
+        sources.putArray("aliases").let { aliasesNode ->
+          aliases.map { it.toLowerCase().trim() }.toSortedSet().forEach { aliasesNode.add(it) }
+        }
       }
 
       root.putObject("environment").also { build ->

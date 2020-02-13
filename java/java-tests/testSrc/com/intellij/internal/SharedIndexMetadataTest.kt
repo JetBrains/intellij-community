@@ -2,6 +2,7 @@
 package com.intellij.internal
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.internal.SharedIndexMetadata.writeIndexMetadata
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -11,6 +12,35 @@ import org.junit.Assert
 import org.junit.Test
 
 class SharedIndexMetadataTest : BasePlatformTestCase() {
+
+  @Test
+  fun testAliasesAreIncluded() {
+    val selfVersion = getIdeVersion()
+    val data = writeIndexMetadata("mock1", "jdk", "123", selfVersion, aliases = setOf("jonnyzzz", "intellij", "jdk"))
+
+    val om = ObjectMapper()
+    val root = om.readTree(data) as ObjectNode
+    val aliases = root["sources"]["aliases"] as ArrayNode
+    val texts = aliases.elements().asSequence().map { it.asText() }.toSet()
+
+    Assert.assertEquals(setOf("jonnyzzz", "intellij", "jdk"), texts)
+  }
+
+  @Test
+  fun testSourcesAreIncluded() {
+    val selfVersion = getIdeVersion()
+    val data = writeIndexMetadata("mock1", "jdk2", "123", selfVersion)
+
+    val om = ObjectMapper()
+    val root = om.readTree(data) as ObjectNode
+
+    val hash = root["sources"]["hash"].asText()
+    val kind = root["sources"]["kind"].asText()
+
+    Assert.assertEquals("123", hash)
+    Assert.assertEquals("jdk2", kind)
+  }
+
   @Test
   fun testSelfVersionShouldMatch() = doMatchTest(true) { this }
 
