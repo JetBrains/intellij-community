@@ -57,12 +57,7 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     else remove(index)
   }
 
-  override fun addDeletionListener(listener: () -> Unit) =
-    deletionEventDispatcher.addListener(object : SimpleEventListener {
-      override fun eventOccurred() {
-        listener()
-      }
-    })
+  override fun addDeletionListener(listener: () -> Unit) = SimpleEventListener.addListener(deletionEventDispatcher, listener)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

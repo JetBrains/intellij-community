@@ -43,13 +43,7 @@ class GHPRReviewCommentModel(val id: String, dateCreated: Date, body: String,
     return updated
   }
 
-  fun addChangesListener(listener: () -> Unit) {
-    changeEventDispatcher.addListener(object : SimpleEventListener {
-      override fun eventOccurred() {
-        listener()
-      }
-    })
-  }
+  fun addChangesListener(listener: () -> Unit) = SimpleEventListener.addListener(changeEventDispatcher, listener)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

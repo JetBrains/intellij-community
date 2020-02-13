@@ -207,9 +207,7 @@ object GHPRSubmittableTextField {
       }
     }
 
-    fun addStateListener(listener: () -> Unit) = stateEventDispatcher.addListener(object : SimpleEventListener {
-      override fun eventOccurred() = listener()
-    })
+    fun addStateListener(listener: () -> Unit) = SimpleEventListener.addListener(stateEventDispatcher, listener)
   }
 
   private class Controller(private val model: Model,

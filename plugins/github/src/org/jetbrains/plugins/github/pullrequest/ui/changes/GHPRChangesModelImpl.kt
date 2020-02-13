@@ -52,13 +52,7 @@ class GHPRChangesModelImpl(private val project: Project) : GHPRChangesModel {
     return builder.build()
   }
 
-  override fun addStateChangesListener(listener: () -> Unit) {
-    eventDispatcher.addListener(object : SimpleEventListener {
-      override fun eventOccurred() {
-        listener()
-      }
-    })
-  }
+  override fun addStateChangesListener(listener: () -> Unit) = SimpleEventListener.addListener(eventDispatcher, listener)
 
   private class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory) : TreeModelBuilder(project, grouping) {
     fun addCommit(commit: GHCommit, changes: List<Change>) {
