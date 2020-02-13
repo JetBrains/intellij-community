@@ -24,7 +24,7 @@ public abstract class PsiReferenceRegistrar implements UserDataHolder {
   public static final double HIGHER_PRIORITY = 100.0;
   public static final double LOWER_PRIORITY = -100.0;
 
-  protected final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
+  private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   /**
    * Register reference provider with default priority ({@link #DEFAULT_PRIORITY}).

@@ -4,6 +4,7 @@ package com.intellij.psi
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
 import com.intellij.util.ProcessingContext
+import gnu.trove.THashMap
 import org.jetbrains.uast.UElement
 
 /**
@@ -11,8 +12,7 @@ import org.jetbrains.uast.UElement
  * Enables proper caching of UElement for underlying reference contributors.
  */
 internal class UastReferenceContributorManager(private val registrar: PsiReferenceRegistrar) {
-  private val chunks: MutableMap<ChunkTag, UastReferenceContributorChunk> = mutableMapOf()
-  private val anyUElement: (UElement, ProcessingContext) -> Boolean = { _, _ -> true }
+  private val chunks: MutableMap<ChunkTag, UastReferenceContributorChunk> = THashMap()
 
   fun register(pattern: (UElement, ProcessingContext) -> Boolean,
                provider: UastReferenceProvider,
@@ -26,6 +26,7 @@ internal class UastReferenceContributorManager(private val registrar: PsiReferen
   }
 
   companion object {
+    private val anyUElement: (UElement, ProcessingContext) -> Boolean = { _, _ -> true }
     private val MANAGER_KEY: Key<UastReferenceContributorManager> = Key.create("UastReferenceContributorManager")
 
     fun get(registrar: PsiReferenceRegistrar): UastReferenceContributorManager {
