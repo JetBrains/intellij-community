@@ -6,6 +6,7 @@ import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.*
 import com.intellij.util.Consumer
+import git4idea.i18n.GitBundle
 import git4idea.index.getPresentation
 import java.awt.Component
 import java.awt.event.MouseEvent
@@ -30,11 +31,11 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
   override fun getPresentation(): StatusBarWidget.WidgetPresentation? = this
 
   override fun getText(): String {
-    return lightGitTracker.currentLocation?.let { "Git: $it" } ?: ""
+    return lightGitTracker.currentLocation?.let { GitBundle.message("git.light.status.bar.text", it) } ?: ""
   }
 
   override fun getTooltipText(): String? {
-    val locationText = lightGitTracker.currentLocation?.let { "Current Git Branch: $it" } ?: ""
+    val locationText = lightGitTracker.currentLocation?.let { GitBundle.message("git.light.status.bar.tooltip", it) } ?: ""
     if (locationText.isBlank()) return locationText
 
     val selectedFile = LightEditService.getInstance().selectedFile
