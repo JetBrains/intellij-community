@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 
@@ -16,11 +17,13 @@ class BuildOptions {
   /**
    * Specifies for which operating systems distributions should be built.
    */
-  String targetOS = System.getProperty("intellij.build.target.os", OS_ALL)
+  String targetOS
   static final String OS_LINUX = "linux"
   static final String OS_WINDOWS = "windows"
   static final String OS_MAC = "mac"
   static final String OS_ALL = "all"
+  static final String CURRENT = "current"
+
   /**
    * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#setPluginModulesToPublish non-bundled plugins}
    * will be built.
@@ -161,4 +164,16 @@ class BuildOptions {
    * Specifies an algorithm to build distribution checksums.
    */
   String hashAlgorithm = "SHA-384"
+
+  BuildOptions() {
+    targetOS = System.getProperty("intellij.build.target.os")
+    if (targetOS == "current") {
+      targetOS = SystemInfo.isWindows ? OS_WINDOWS :
+                 SystemInfo.isMac ? OS_MAC :
+                 SystemInfo.isLinux ? OS_LINUX : null
+    }
+    else if (targetOS == null || targetOS.isEmpty()) {
+      targetOS = CURRENT
+    }
+  }
 }
