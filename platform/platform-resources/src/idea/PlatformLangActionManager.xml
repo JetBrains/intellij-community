@@ -36,7 +36,10 @@
 
     <group id="AnalyzePlatformMenu">
       <separator/>
-      <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction"/>
+      <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction">
+        <override-text place="MainMenu"/>
+        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+      </action>
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>

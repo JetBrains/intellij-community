@@ -326,12 +326,18 @@
     </action>
 
     <group id="AnalyzeJavaMenu">
-      <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
+      <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction">
+        <override-text place="MainMenu"/>
+        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+      </action>
       <separator/>
       <reference id="SliceBackward"/>
       <reference id="SliceForward"/>
       <separator/>
-      <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" overrides="true"/>
+      <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" overrides="true">
+        <override-text place="MainMenu"/>
+        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+      </action>
       <add-to-group group-id="AnalyzeMenu" anchor="last"/>
     </group>
 
@@ -694,16 +700,24 @@
     </group>
 
     <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction">
+      <override-text place="MainMenu"/>
+      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       <add-to-group group-id="ShowPackageDepsGroup" anchor="first"/>
       <add-to-group group-id="AnalyzeActions" anchor="first"/>
     </action>
     <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction">
+      <override-text place="MainMenu"/>
+      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       <add-to-group group-id="AnalyzeActions" relative-to-action="ShowPackageDeps" anchor="after"/>
     </action>
     <action id="ShowDependenciesOnTarget" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesOnSpecifiedTargetAction">
-        <add-to-group group-id="AnalyzeActions" relative-to-action="ShowBackwardPackageDeps" anchor="after"/>
+      <override-text place="MainMenu"/>
+      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+      <add-to-group group-id="AnalyzeActions" relative-to-action="ShowBackwardPackageDeps" anchor="after"/>
     </action>
     <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction">
+      <override-text place="MainMenu"/>
+      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       <add-to-group group-id="AnalyzeActions" anchor="last"/>
     </action>
     <action id="FileChooser.GotoJDK" class="com.intellij.openapi.projectRoots.JdkPopupAction" >
