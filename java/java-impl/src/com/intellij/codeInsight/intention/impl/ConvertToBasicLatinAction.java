@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -129,7 +130,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
 
     @Override
     protected void convert(StringBuilder sb, char ch) {
-      sb.append(String.format("\\u%04x", (int)ch));
+      sb.append(String.format("\\u%04X", (int)ch));
     }
   }
 
@@ -154,7 +155,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
         sb.append('&').append(entity).append(';');
       }
       else {
-        sb.append("&#x").append(Integer.toHexString(ch)).append(';');
+        sb.append("&#x").append(Integer.toHexString(ch).toUpperCase(Locale.ENGLISH)).append(';');
       }
     }
 
