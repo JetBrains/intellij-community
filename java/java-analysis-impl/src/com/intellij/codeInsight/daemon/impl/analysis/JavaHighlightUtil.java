@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -187,7 +187,7 @@ public class JavaHighlightUtil {
   @NotNull
   @Nls
   public static String invalidJavaTypeMessage() {
-    return CodeInsightBundle.message("invalid.java.type");
+    return JavaAnalysisBundle.message("invalid.java.type");
   }
 
   @NotNull
@@ -207,9 +207,9 @@ public class JavaHighlightUtil {
   @Nls
   private static String getClassInaccessibleMessage(@NotNull PsiElement context, @NotNull String className) {
     Module module = ModuleUtilCore.findModuleForPsiElement(context);
-    return CodeInsightBundle.message("get.class.in.accessible.message.class.0.is.not.accessible.1", className,
-                                     module == null ? CodeInsightBundle.message("get.class.in.accessible.message.here")
-                                                    : CodeInsightBundle.message("get.class.in.accessible.message.from.module.0", module.getName()));
+    return JavaAnalysisBundle.message("get.class.in.accessible.message.class.0.is.not.accessible.1", className,
+                                     module == null ? JavaAnalysisBundle.message("get.class.in.accessible.message.here")
+                                                    : JavaAnalysisBundle.message("get.class.in.accessible.message.from.module.0", module.getName()));
   }
 
   static class ConstructorVisitorInfo {
