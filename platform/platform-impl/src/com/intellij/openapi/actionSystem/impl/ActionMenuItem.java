@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -272,15 +272,16 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     }
 
     @Override
-    public void actionPerformed(final ActionEvent e) {
-      final IdeFocusManager fm = IdeFocusManager.findInstanceByContext(myContext);
-      final ActionCallback typeAhead = new ActionCallback();
-      final String id = ActionManager.getInstance().getId(myAction.getAction());
+    public void actionPerformed(@NotNull ActionEvent e) {
+      IdeFocusManager focusManager = IdeFocusManager.findInstanceByContext(myContext);
+      ActionCallback typeAhead = new ActionCallback();
+      String id = ActionManager.getInstance().getId(myAction.getAction());
       if (id != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
       }
-      fm.typeAheadUntil(typeAhead, getText());
-      fm.runOnOwnContext(myContext, () -> {
+
+      focusManager.typeAheadUntil(typeAhead, getText());
+      focusManager.runOnOwnContext(myContext, () -> {
         AWTEvent currentEvent = IdeEventQueue.getInstance().getTrueCurrentEvent();
         final AnActionEvent event = new AnActionEvent(
           currentEvent instanceof InputEvent ? (InputEvent)currentEvent : null,
@@ -290,7 +291,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {
           ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
           actionManager.fireBeforeActionPerformed(menuItemAction, myContext, event);
-          fm.doWhenFocusSettlesDown(typeAhead::setDone);
+          focusManager.doWhenFocusSettlesDown(typeAhead::setDone);
           ActionUtil.performActionDumbAware(menuItemAction, event);
           actionManager.queueActionPerformedEvent(menuItemAction, myContext, event);
         }

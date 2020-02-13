@@ -35,8 +35,6 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
   private CumulativeStatistics myFixesStats = new CumulativeStatistics();
   boolean HAVE_BEEN_SHOWN = false;
 
-  private final ProductivityFeaturesRegistry myRegistry;
-
   @NonNls private static final String FEATURE_TAG = "feature";
   @NonNls private static final String ATT_SHOW_IN_OTHER = "show-in-other";
   @NonNls private static final String ATT_SHOW_IN_COMPILATION = "show-in-compilation";
@@ -45,10 +43,6 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
   @NonNls private static final String COMPLETION_STATS_TAG = "completionStatsTag";
   @NonNls private static final String FIXES_STATS_TAG = "fixesStatsTag";
   @NonNls private static final String ATT_HAVE_BEEN_SHOWN = "have-been-shown";
-
-  public FeatureUsageTrackerImpl() {
-    myRegistry = ProductivityFeaturesRegistry.getInstance();
-  }
 
   @Override
   public boolean isToBeShown(String featureId, Project project) {
@@ -112,14 +106,17 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
   }
 
   @Override
-  public void loadState(@NotNull final Element element) {
-    List featuresList = element.getChildren(FEATURE_TAG);
-    for (Object aFeaturesList : featuresList) {
-      Element featureElement = (Element)aFeaturesList;
-      FeatureDescriptor descriptor =
-        myRegistry.getFeatureDescriptor(featureElement.getAttributeValue(ATT_ID));
-      if (descriptor != null) {
-        descriptor.readStatistics(featureElement);
+  public void loadState(@NotNull Element element) {
+    List<Element> featuresList = element.getChildren(FEATURE_TAG);
+    if (!featuresList.isEmpty()) {
+      ProductivityFeaturesRegistry featureRegistry = ProductivityFeaturesRegistry.getInstance();
+      if (featureRegistry != null) {
+        for (Element itemElement : featuresList) {
+          FeatureDescriptor descriptor = featureRegistry.getFeatureDescriptor(itemElement.getAttributeValue(ATT_ID));
+          if (descriptor != null) {
+            descriptor.readStatistics(itemElement);
+          }
+        }
       }
     }
 
@@ -149,13 +146,15 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
   public Element getState() {
     Element element = new Element("state");
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-    Set<String> ids = registry.getFeatureIds();
-    for (String id: ids) {
-      Element featureElement = new Element(FEATURE_TAG);
-      featureElement.setAttribute(ATT_ID, id);
-      FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
-      descriptor.writeStatistics(featureElement);
-      element.addContent(featureElement);
+    if (registry != null) {
+      Set<String> ids = registry.getFeatureIds();
+      for (String id: ids) {
+        Element featureElement = new Element(FEATURE_TAG);
+        featureElement.setAttribute(ATT_ID, id);
+        FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
+        descriptor.writeStatistics(featureElement);
+        element.addContent(featureElement);
+      }
     }
 
     Element statsTag = new Element(COMPLETION_STATS_TAG);
@@ -175,22 +174,21 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
   }
 
   @Override
-  public void triggerFeatureUsed(String featureId) {
+  public void triggerFeatureUsed(@NotNull String featureId) {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-    FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
+    FeatureDescriptor descriptor = registry == null ? null : registry.getFeatureDescriptor(featureId);
     if (descriptor == null) {
-     // TODO: LOG.error("Feature '" + featureId +"' must be registered prior triggerFeatureUsed() is called");
+      // TODO: LOG.error("Feature '" + featureId +"' must be registered prior triggerFeatureUsed() is called");
+      return;
     }
-    else {
-      descriptor.triggerUsed();
 
-      final Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
-      final String id = provider == null || getPluginType(provider).isDevelopedByJetBrains() ? descriptor.getId() : "third.party";
-      final String group = descriptor.getGroupId();
-      final FeatureUsageData data = new FeatureUsageData().addData("id", id).
-        addData("group", StringUtil.notNullize(group, "unknown"));
-      FUCounterUsageLogger.getInstance().logEvent("productivity", "feature.used", data);
-    }
+    descriptor.triggerUsed();
+
+    Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
+    String id = provider == null || getPluginType(provider).isDevelopedByJetBrains() ? descriptor.getId() : "third.party";
+    String group = descriptor.getGroupId();
+    FeatureUsageData data = new FeatureUsageData().addData("id", id).addData("group", StringUtil.notNullize(group, "unknown"));
+    FUCounterUsageLogger.getInstance().logEvent("productivity", "feature.used", data);
   }
 
   @Override
@@ -216,8 +214,8 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
       final String id = getEventDataField(context, "id");
       final String group = getEventDataField(context, "group");
       if (isValid(data, id, group)) {
-        final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-        final FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
+        ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
+        FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
         if (descriptor != null) {
           final String actualGroup = descriptor.getGroupId();
           if (StringUtil.equals(group, "unknown") || StringUtil.equals(group, actualGroup)) {
