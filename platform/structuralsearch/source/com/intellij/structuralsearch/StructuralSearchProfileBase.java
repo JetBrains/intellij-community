@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
@@ -313,9 +313,9 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     private void initTopLevelElement(PsiElement element) {
       final CompiledPattern pattern = myGlobalVisitor.getContext().getPattern();
 
-      final PsiElement newElement = SkippingHandler.skipNodeIfNeccessary(element);
+      final PsiElement newElement = SkippingHandler.skipNodeIfNecessary(element);
 
-      if (element != newElement && newElement != null) {
+      if (element != newElement) {
         // way to support partial matching (ex. if ($condition$) )
         newElement.accept(this);
         pattern.setHandler(element, new LightTopLevelMatchingHandler(pattern.getHandler(element)));
@@ -395,10 +395,10 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
           !shouldIgnoreVarNode(element)) {
 
         PsiElement matchedElement = myGlobalVisitor.getElement();
-        PsiElement newElement = SkippingHandler.skipNodeIfNeccessary(matchedElement);
+        PsiElement newElement = SkippingHandler.skipNodeIfNecessary(matchedElement);
         while (newElement != matchedElement) {
           matchedElement = newElement;
-          newElement = SkippingHandler.skipNodeIfNeccessary(matchedElement);
+          newElement = SkippingHandler.skipNodeIfNecessary(matchedElement);
         }
 
         myGlobalVisitor.setResult(myGlobalVisitor.handleTypedElement(element, matchedElement));

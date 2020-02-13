@@ -56,8 +56,8 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
         return !nodes.hasNext() && !nodes2.hasNext();
       }
 
-      skipIfNeccessary(nodes, nodes2);
-      skipIfNeccessary(nodes2, nodes);
+      skipIfNecessary(nodes, nodes2);
+      skipIfNecessary(nodes2, nodes);
 
       if (!nodes.hasNext() || !nodes2.hasNext()) {
         return !nodes.hasNext() && !nodes2.hasNext();
@@ -72,7 +72,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
     }
   }
 
-  private static void skipIfNeccessary(NodeIterator nodes, NodeIterator nodes2) {
+  private static void skipIfNecessary(NodeIterator nodes, NodeIterator nodes2) {
     while (DuplocatorUtil.shouldSkip(nodes2.current(), nodes.current())) {
       nodes2.advance();
     }
@@ -116,8 +116,8 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
     EquivalenceDescriptor descriptor1 = descriptorProvider != null ? descriptorProvider.buildDescriptor(element1) : null;
     EquivalenceDescriptor descriptor2 = descriptorProvider != null ? descriptorProvider.buildDescriptor(element2) : null;
 
-    PsiElement newElement1 = DuplocatorUtil.skipNodeIfNeccessary(element1, descriptor1, myNodeFilter);
-    PsiElement newElement2 = DuplocatorUtil.skipNodeIfNeccessary(element2, descriptor2, myNodeFilter);
+    PsiElement newElement1 = DuplocatorUtil.skipNodeIfNecessary(element1, descriptor1, myNodeFilter);
+    PsiElement newElement2 = DuplocatorUtil.skipNodeIfNecessary(element2, descriptor2, myNodeFilter);
 
     if (newElement1 != element1 || newElement2 != element2) {
       return match(newElement1, newElement2);

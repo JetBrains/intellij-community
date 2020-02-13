@@ -16,6 +16,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,8 +85,9 @@ public class DuplocatorUtil {
     return false;
   }
 
+  @Contract("null, _, _ -> null;!null, _, _ -> !null;")
   @Nullable
-  public static PsiElement skipNodeIfNeccessary(PsiElement element, EquivalenceDescriptor descriptor, NodeFilter filter) {
+  public static PsiElement skipNodeIfNecessary(PsiElement element, EquivalenceDescriptor descriptor, NodeFilter filter) {
     if (element == null) {
       return null;
     }
@@ -94,7 +96,7 @@ public class DuplocatorUtil {
       return element;
     }*/
 
-    // todo optimize! (this method is often invokated for the same node)
+    // todo optimize! (this method is often invoked for the same node)
 
     if (descriptor == null) {
       final EquivalenceDescriptorProvider provider = EquivalenceDescriptorProvider.getInstance(element);
@@ -144,7 +146,7 @@ public class DuplocatorUtil {
       final MultiChildDescriptor descriptor = multiChildren.get(0);
       final PsiElement[] children = descriptor.getElements();
 
-      if (children != null && children.length == 1 && descriptor.getType() != MultiChildDescriptor.MyType.OPTIONALLY) {
+      if (children.length == 1 && descriptor.getType() != MultiChildDescriptor.MyType.OPTIONALLY) {
         return children[0];
       }
     }
@@ -292,7 +294,11 @@ public class DuplocatorUtil {
   }
 
   @Nullable
+  @Contract("null -> null")
   public static DuplocatorState getDuplocatorState(PsiFragment frag) {
+    if (frag == null) {
+      return null;
+    }
     final Language language = frag.getLanguage();
     if (language == null) {
       return null;
