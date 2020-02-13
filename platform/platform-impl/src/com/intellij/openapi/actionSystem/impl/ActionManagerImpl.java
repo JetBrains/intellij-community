@@ -1447,7 +1447,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return myPrevPerformedActionId;
   }
 
-  public Set<String> getActionIds() {
+  public @NotNull Set<String> getActionIds() {
     synchronized (myLock) {
       return new HashSet<>(myId2Action.keySet());
     }
