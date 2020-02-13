@@ -275,24 +275,7 @@ data class AnnotatingResult(val parameter: GrParameter, val annotationText: Stri
 
 fun getBlock(parameter: GrParameter): GrClosableBlock? = when (parameter) {
   is ClosureSyntheticParameter -> parameter.closure
-  else -> {
-    with(parameter.parentOfType<GrClosableBlock>()) { return if (this == null) null else extractBlock(this, parameter) }
-  }
-}
-
-private fun extractBlock(block: GrClosableBlock, parameter: GrParameter): GrClosableBlock? {
-  if (block.parameterList.getParameterNumber(parameter) == -1) {
-    val outerBlock = block.parentOfType<GrClosableBlock>()
-    if (outerBlock != null) {
-      return extractBlock(outerBlock, parameter)
-    }
-    else {
-      return null
-    }
-  }
-  else {
-    return block
-  }
+  else -> parameter.parentOfType<GrClosableBlock>()?.takeIf { it.parameterList.getParameterNumber(parameter) != -1 }
 }
 
 internal infix fun PsiSubstitutor.compose(right: PsiSubstitutor): PsiSubstitutor {
