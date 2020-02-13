@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.diagnostic.IdeMessagePanel;
@@ -662,25 +662,31 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     @NotNull
     private JComponent createLogo() {
+      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-      ApplicationInfoEx app = ApplicationInfoEx.getInstanceEx();
-      JLabel logo = new JLabel(IconLoader.getIcon(app.getWelcomeScreenLogoUrl()));
-      logo.setBorder(JBUI.Borders.empty(30,0,10,0));
-      logo.setHorizontalAlignment(SwingConstants.CENTER);
-      panel.add(logo, BorderLayout.NORTH);
-      final String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
-                                     ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
-                                     : ApplicationNamesInfo.getInstance().getFullProductName();
+
+      String welcomeScreenLogoUrl = appInfo.getWelcomeScreenLogoUrl();
+      if (welcomeScreenLogoUrl != null) {
+        JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl));
+        logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
+        logo.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(logo, BorderLayout.NORTH);
+      }
+
+      String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
+                               ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
+                               : ApplicationNamesInfo.getInstance().getFullProductName();
       JLabel appName = new JLabel(applicationName);
       appName.setForeground(JBColor.foreground());
       appName.setFont(getProductFont(36).deriveFont(Font.PLAIN));
       appName.setHorizontalAlignment(SwingConstants.CENTER);
       String appVersion = "Version ";
 
-      appVersion += app.getFullVersion();
+      appVersion += appInfo.getFullVersion();
 
-      if (app.isEAP() && !app.getBuild().isSnapshot()) {
-        appVersion += " (" + app.getBuild().asStringWithoutProductCode() + ")";
+      if (appInfo.isEAP() && !appInfo.getBuild().isSnapshot()) {
+        appVersion += " (" + appInfo.getBuild().asStringWithoutProductCode() + ")";
       }
 
       JLabel version = new JLabel(appVersion);
