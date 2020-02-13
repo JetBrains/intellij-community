@@ -33,17 +33,15 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.util.Pair.pair;
 
 public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance(ConvertToBasicLatinAction.class);
-
-  @NotNull
   @Override
-  public String getFamilyName() {
+  @SuppressWarnings("DialogTitleCapitalization" /* "Basic Latin" is a proper noun */)
+  public @NotNull String getFamilyName() {
     return CodeInsightBundle.message("intention.convert.to.basic.latin");
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  @SuppressWarnings("DialogTitleCapitalization" /* "Basic Latin" is a proper noun */)
+  public @NotNull String getText() {
     return getFamilyName();
   }
 
@@ -172,15 +170,25 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
       XmlFile file;
       try {
         String url = ExternalResourceManager.getInstance().getResourceLocation(XmlUtil.HTML4_LOOSE_URI, project);
-        if (url == null) { LOG.error("Namespace not found: " + XmlUtil.HTML4_LOOSE_URI); return; }
+        if (url == null) {
+          Logger.getInstance(ConvertToBasicLatinAction.class).error("Namespace not found: " + XmlUtil.HTML4_LOOSE_URI);
+          return;
+        }
         VirtualFile vFile = VfsUtil.findFileByURL(new URL(url));
-        if (vFile == null) { LOG.error("Resource not found: " + url); return; }
+        if (vFile == null) {
+          Logger.getInstance(ConvertToBasicLatinAction.class).error("Resource not found: " + url);
+          return;
+        }
         PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
-        if (!(psiFile instanceof XmlFile)) { LOG.error("Unexpected resource: " + psiFile); return; }
+        if (!(psiFile instanceof XmlFile)) {
+          Logger.getInstance(ConvertToBasicLatinAction.class).error("Unexpected resource: " + psiFile);
+          return;
+        }
         file = (XmlFile)psiFile;
       }
       catch (MalformedURLException e) {
-        LOG.error(e); return;
+        Logger.getInstance(ConvertToBasicLatinAction.class).error(e);
+        return;
       }
 
       Map<Character, String> entities = new HashMap<>();
