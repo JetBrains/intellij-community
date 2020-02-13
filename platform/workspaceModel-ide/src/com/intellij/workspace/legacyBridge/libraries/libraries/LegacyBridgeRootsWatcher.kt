@@ -40,7 +40,7 @@ class LegacyBridgeRootsWatcher(
 
   init {
     val messageBusConnection = project.messageBus.connect()
-    messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+    WorkspaceModelTopics.getInstance(project).subscribeImmediately(messageBusConnection, object : WorkspaceModelChangeListener {
       override fun changed(event: EntityStoreChanged) = LOG.bracket("LibraryRootsWatcher.EntityStoreChange") {
         // TODO It's also possible to calculate it on diffs
 

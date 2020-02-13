@@ -46,7 +46,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
 
     LOG.info("Project Model Cache at $cacheFile")
 
-    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+    WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(this), object : WorkspaceModelChangeListener {
       override fun changed(event: EntityStoreChanged) = LOG.bracket("${javaClass.simpleName}.EntityStoreChange") {
         saveAlarm.request()
       }

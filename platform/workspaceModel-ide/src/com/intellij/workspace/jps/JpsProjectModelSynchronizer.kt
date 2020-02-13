@@ -103,7 +103,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         }
       }
     })
-    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+    WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
       override fun changed(event: EntityStoreChanged) {
         event.getAllChanges().forEach {
           when (it) {

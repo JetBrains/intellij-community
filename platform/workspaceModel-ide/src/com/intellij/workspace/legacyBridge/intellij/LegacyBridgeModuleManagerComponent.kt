@@ -68,6 +68,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
         .filter { !unloadedNames.contains(it.name) }
         .toList()
       manager.loadModules(entities)
+      WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
     }
   }
 
@@ -94,7 +95,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
         }
       })
 
-      busConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
         override fun changed(event: EntityStoreChanged) = LOG.bracket("ModuleManagerComponent.EntityStoreChange") {
           val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
           val changes = event.getChanges(ModuleEntity::class.java)
@@ -155,7 +156,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
                     (alreadyCreatedModule as LegacyBridgeModuleImpl).entityStore = entityStore
                     alreadyCreatedModule.diff = null
-                    addModule(alreadyCreatedModule)
+                    if (WorkspaceModelTopics.getInstance(project).modulesAreLoaded) addModule(alreadyCreatedModule)
                     alreadyCreatedModule
                   }
                   else {
@@ -164,7 +165,8 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                       continue@nextChange
                     }
 
-                    addModule(change.entity)
+                    if (WorkspaceModelTopics.getInstance(project).modulesAreLoaded) addModule(change.entity)
+                    else continue@nextChange
                   }
 
                   if (project.isOpen) {
@@ -243,7 +245,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
           }
         }
       })
-      busConnection.subscribe(WorkspaceModelTopics.CHANGED, FacetEntityChangeListener(project))
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, FacetEntityChangeListener(project))
     }
   }
 

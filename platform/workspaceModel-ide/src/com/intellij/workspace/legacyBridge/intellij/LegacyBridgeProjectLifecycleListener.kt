@@ -15,6 +15,7 @@ import com.intellij.serviceContainer.PlatformComponentManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelImpl
 import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
+import com.intellij.workspace.ide.WorkspaceModelTopics
 import com.intellij.workspace.jps.JpsProjectModelSynchronizer
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeProjectLibraryTableImpl
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeRootsWatcher
@@ -54,5 +55,6 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     container.registerService(WorkspaceModel::class.java, WorkspaceModelImpl::class.java, pluginDescriptor, false)
     container.registerService(ProjectLibraryTable::class.java, LegacyBridgeProjectLibraryTableImpl::class.java, pluginDescriptor, true)
     container.registerService(ModifiableModelCommitterService::class.java, LegacyBridgeModifiableModelCommitterService::class.java, pluginDescriptor, true)
+    container.registerService(WorkspaceModelTopics::class.java, WorkspaceModelTopics::class.java, pluginDescriptor, false)
   }
 }

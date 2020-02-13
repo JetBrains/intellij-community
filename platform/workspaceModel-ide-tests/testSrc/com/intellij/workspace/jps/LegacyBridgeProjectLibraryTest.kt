@@ -48,7 +48,7 @@ class LegacyBridgeProjectLibraryTest {
 
     events = mutableListOf()
     val messageBusConnection = project.messageBus.connect(disposableRule.disposable)
-    messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+    WorkspaceModelTopics.getInstance(project).subscribeImmediately(messageBusConnection, object : WorkspaceModelChangeListener {
       override fun changed(event: EntityStoreChanged) {
         events.addAll(event.getChanges(LibraryEntity::class.java))
       }

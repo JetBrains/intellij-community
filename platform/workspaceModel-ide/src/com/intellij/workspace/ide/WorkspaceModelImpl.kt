@@ -75,14 +75,14 @@ class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
 
     override fun onBeforeChanged(before: TypedEntityStorage, after: TypedEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
       if (project.isDisposed || Disposer.isDisposing(project) || !notificationsEnabled) return
-      project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).beforeChanged(
+      WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).beforeChanged(
         EntityStoreChangedImpl(entityStore = this, storageBefore = before, storageAfter = after, changes = changes)
       )
     }
 
     override fun onChanged(before: TypedEntityStorage, after: TypedEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
       if (project.isDisposed || Disposer.isDisposing(project) || !notificationsEnabled) return
-      project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(
+      WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).changed(
         EntityStoreChangedImpl(entityStore = this, storageBefore = before, storageAfter = after, changes = changes)
       )
     }

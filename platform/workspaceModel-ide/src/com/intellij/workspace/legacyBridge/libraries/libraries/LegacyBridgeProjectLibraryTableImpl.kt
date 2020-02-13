@@ -3,7 +3,6 @@ package com.intellij.workspace.legacyBridge.libraries.libraries
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
@@ -74,7 +73,7 @@ internal class LegacyBridgeProjectLibraryTableImpl(
   init {
     val messageBusConnection = project.messageBus.connect(this)
 
-    messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(messageBusConnection, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: EntityStoreChanged) {
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
           .filterIsInstance<EntityChange.Removed<LibraryEntity>>()

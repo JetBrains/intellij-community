@@ -29,7 +29,7 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
   init {
     val bus = project.messageBus.connect(this)
 
-    bus.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(bus, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: EntityStoreChanged) {
         if (myProject.isDisposed || Disposer.isDisposing(myProject)) return
 
