@@ -142,7 +142,7 @@ public final class Main {
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
-    isLightEdit = args.length > 0 && Files.isRegularFile(Paths.get(args[0]));
+    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || (args.length > 0 && Files.isRegularFile(Paths.get(args[0])));
   }
 
   public static boolean isHeadless(String @NotNull [] args) {
