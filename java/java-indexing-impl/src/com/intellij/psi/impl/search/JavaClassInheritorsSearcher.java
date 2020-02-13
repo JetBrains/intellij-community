@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
+import com.intellij.java.indexing.JavaIndexingBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
@@ -38,8 +39,8 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       progress.pushState();
       String className = ReadAction.compute(baseClass::getName);
       progress.setText(className != null ?
-                       PsiBundle.message("psi.search.inheritors.of.class.progress", className) :
-                       PsiBundle.message("psi.search.inheritors.progress"));
+                       JavaIndexingBundle.message("psi.search.inheritors.of.class.progress", className) :
+                       JavaIndexingBundle.message("psi.search.inheritors.progress"));
     }
 
     try {
