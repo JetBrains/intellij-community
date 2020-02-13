@@ -26,7 +26,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
@@ -128,12 +127,12 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       return null;
     }
 
-    ASTNode tagName = TemplateLanguageUtil.getSameLanguageTreeNext(startTagStart);
+    ASTNode tagName = startTagStart.getTreeNext();
     if (tagName == null || (tagName.getElementType() != XmlTokenType.XML_NAME && tagName.getElementType() != XmlTokenType.XML_TAG_NAME)) {
       return null;
     }
 
-    ASTNode next = TemplateLanguageUtil.getSameLanguageTreeNext(tagName);
+    ASTNode next = tagName.getTreeNext();
     if (next != null && next.getElementType() == XmlTokenType.XML_TAG_END) {
       tagName = next;
     }
@@ -150,7 +149,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
     ASTNode endTagEnd = endTagStart;
     while (endTagEnd != null && endTagEnd.getElementType() != XmlTokenType.XML_TAG_END) {
-      endTagEnd = TemplateLanguageUtil.getSameLanguageTreeNext(endTagEnd);
+      endTagEnd = endTagEnd.getTreeNext();
     }
 
     if (endTagEnd == null) {
