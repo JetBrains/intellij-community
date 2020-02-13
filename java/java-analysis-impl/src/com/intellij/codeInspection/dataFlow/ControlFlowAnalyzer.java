@@ -102,8 +102,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new FlushFieldsInstruction());
   }
 
-  @Nullable
-  public ControlFlow buildControlFlow() {
+  public @Nullable ControlFlow buildControlFlow() {
     myCurrentFlow = new ControlFlow(myFactory);
     try {
       if(myCodeFragment instanceof PsiClass) {
@@ -133,8 +132,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return myFactory;
   }
 
-  @NotNull
-  private PsiClassType createClassType(GlobalSearchScope scope, String fqn) {
+  private @NotNull PsiClassType createClassType(GlobalSearchScope scope, String fqn) {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(fqn, scope);
     if (aClass != null) return JavaPsiFacade.getElementFactory(myProject).createType(aClass);
     return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(fqn, scope);
@@ -174,8 +172,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  @NotNull
-  private List<DfaVariableValue> getSynthetics(PsiElement element) {
+  private @NotNull List<DfaVariableValue> getSynthetics(PsiElement element) {
     int startOffset = getStartOffset(element).getInstructionOffset();
     List<DfaVariableValue> synthetics = new ArrayList<>();
     for (DfaValue value : myFactory.getValues()) {
@@ -432,14 +429,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new ControlTransferInstruction(myFactory.controlTransfer(target, traps)));
   }
 
-  @NotNull
-  private FList<Trap> getTrapsInsideElement(PsiElement element) {
+  private @NotNull FList<Trap> getTrapsInsideElement(PsiElement element) {
     return FList.createFromReversed(ContainerUtil.reverse(
       ContainerUtil.findAll(myTrapStack, cd -> PsiTreeUtil.isAncestor(element, cd.getAnchor(), true))));
   }
 
-  @NotNull
-  private List<DfaVariableValue> getVariablesInside(PsiElement exitedStatement) {
+  private @NotNull List<DfaVariableValue> getVariablesInside(PsiElement exitedStatement) {
     return ContainerUtil.map(PsiTreeUtil.findChildrenOfType(exitedStatement, PsiVariable.class),
                              myFactory.getVarFactory()::createVariableValue);
   }
@@ -639,8 +634,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  @Nullable
-  private static Long asLong(PsiExpression expression) {
+  private static @Nullable Long asLong(PsiExpression expression) {
     Object value = ExpressionUtils.computeConstantExpression(expression);
     if(value instanceof Integer || value instanceof Long) {
       return ((Number)value).longValue();
@@ -1242,8 +1236,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  @Nullable
-  private DfaVariableValue getTargetVariable(PsiExpression expression) {
+  private @Nullable DfaVariableValue getTargetVariable(PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (expression instanceof PsiArrayInitializerExpression && parent instanceof PsiNewExpression) {
       parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
@@ -1712,15 +1705,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  /**
-   * @deprecated use {@link JavaMethodContractUtil#findContractAnnotation(PsiMethod)}.
-   */
-  @Deprecated
-  @Nullable
-  public static PsiAnnotation findContractAnnotation(@NotNull PsiMethod method) {
-    return JavaMethodContractUtil.findContractAnnotation(method);
-  }
-
   @Override
   public void visitEnumConstant(PsiEnumConstant enumConstant) {
     if (enumConstant.getArgumentList() == null) return;
@@ -1841,8 +1825,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  @Nullable
-  private PsiMethod pushConstructorArguments(PsiConstructorCall call) {
+  private @Nullable PsiMethod pushConstructorArguments(PsiConstructorCall call) {
     PsiExpressionList args = call.getArgumentList();
     PsiMethod ctr = call.resolveConstructor();
     if (args != null) {
@@ -2126,15 +2109,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       myType = type;
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return "tmp$" + myLocation;
     }
 
-    @Nullable
     @Override
-    public PsiType getType(@Nullable DfaVariableValue qualifier) {
+    public @Nullable PsiType getType(@Nullable DfaVariableValue qualifier) {
       return myType;
     }
 

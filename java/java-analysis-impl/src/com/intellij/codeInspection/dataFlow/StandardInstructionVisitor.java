@@ -121,8 +121,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     processArrayStoreTypeMismatch(assignmentExpression, sourceType, componentType);
   }
 
-  @Nullable
-  private static PsiType getType(@Nullable PsiExpression expression, @Nullable DfaValue value, @NotNull DfaMemoryState memState) {
+  private static @Nullable PsiType getType(@Nullable PsiExpression expression, @Nullable DfaValue value, @NotNull DfaMemoryState memState) {
     PsiType type = value == null ? null : memState.getPsiType(value);
     if (type != null) return type;
     return expression == null ? null : expression.getType();
@@ -244,13 +243,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
   }
 
-  @NotNull
-  private static DfaCallArguments getMethodReferenceCallArguments(PsiMethodReferenceExpression methodRef,
-                                                                  DfaValue qualifier,
-                                                                  DataFlowRunner runner,
-                                                                  PsiMethod sam,
-                                                                  PsiMethod method,
-                                                                  PsiSubstitutor substitutor) {
+  private static @NotNull DfaCallArguments getMethodReferenceCallArguments(PsiMethodReferenceExpression methodRef,
+                                                                           DfaValue qualifier,
+                                                                           DataFlowRunner runner,
+                                                                           PsiMethod sam,
+                                                                           PsiMethod method,
+                                                                           PsiSubstitutor substitutor) {
     PsiParameter[] samParameters = sam.getParameterList().getParameters();
     boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
     boolean instanceBound = !isStatic && !PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
@@ -386,8 +384,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return result;
   }
 
-  @NotNull
-  protected DfaCallArguments popCall(MethodCallInstruction instruction, DfaValueFactory factory, DfaMemoryState memState) {
+  protected @NotNull DfaCallArguments popCall(MethodCallInstruction instruction, DfaValueFactory factory, DfaMemoryState memState) {
     PsiMethod method = instruction.getTargetMethod();
     MutationSignature sig = MutationSignature.fromMethod(method);
     DfaValue[] argValues = popCallArguments(instruction, factory, memState, sig);
@@ -472,7 +469,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return value;
   }
 
-  private boolean mayLeakFromType(PsiType type) {
+  private static boolean mayLeakFromType(PsiType type) {
     // Complex value from field or method return call may contain back-reference to the object, so
     // local value could leak. Do not drop locality only for some simple values.
     if (type == null) return true;
@@ -563,11 +560,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return value;
   }
 
-  @NotNull
-  private static PsiMethod findSpecificMethod(PsiElement context,
-                                              @NotNull PsiMethod method,
-                                              @NotNull DfaMemoryState state,
-                                              @Nullable DfaValue qualifier) {
+  private static @NotNull PsiMethod findSpecificMethod(PsiElement context,
+                                                       @NotNull PsiMethod method,
+                                                       @NotNull DfaMemoryState state,
+                                                       @Nullable DfaValue qualifier) {
     if (qualifier == null || !PsiUtil.canBeOverridden(method)) return method;
     PsiExpression qualifierExpression = null;
     if (context instanceof PsiMethodCallExpression) {
@@ -580,10 +576,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return MethodUtils.findSpecificMethod(method, type);
   }
 
-  @NotNull
-  private static DfaValue getMethodResultValue(MethodCallInstruction instruction,
-                                               @NotNull DfaCallArguments callArguments,
-                                               DfaMemoryState state, DfaValueFactory factory) {
+  private static @NotNull DfaValue getMethodResultValue(MethodCallInstruction instruction,
+                                                        @NotNull DfaCallArguments callArguments,
+                                                        DfaMemoryState state, DfaValueFactory factory) {
     if (callArguments.myArguments != null) {
       PsiMethod method = instruction.getTargetMethod();
       if (method != null) {
@@ -831,12 +826,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static DfaValue concatStrings(DfaValue left,
-                                        DfaValue right,
-                                        DfaMemoryState memState,
-                                        PsiType stringType,
-                                        DfaValueFactory factory) {
+  private static @NotNull DfaValue concatStrings(DfaValue left,
+                                                 DfaValue right,
+                                                 DfaMemoryState memState,
+                                                 PsiType stringType,
+                                                 DfaValueFactory factory) {
     String leftString = DfConstantType.getConstantOfType(memState.getDfType(left), String.class);
     String rightString = DfConstantType.getConstantOfType(memState.getDfType(right), String.class);
     if (leftString != null && rightString != null &&

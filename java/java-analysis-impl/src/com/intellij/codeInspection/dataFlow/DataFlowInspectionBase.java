@@ -83,8 +83,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitClass(PsiClass aClass) {
@@ -231,16 +230,14 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
   }
 
-  @NotNull
-  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
-                                                PsiType realType,
-                                                boolean onTheFly,
-                                                boolean alwaysFails) {
+  protected @NotNull List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
+                                                         PsiType realType,
+                                                         boolean onTheFly,
+                                                         boolean alwaysFails) {
     return Collections.emptyList();
   }
 
-  @NotNull
-  protected List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
+  protected @NotNull List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     return Collections.emptyList();
   }
 
@@ -248,13 +245,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return Collections.emptyList();
   }
 
-  @Nullable
-  protected LocalQuickFix createUnwrapSwitchLabelFix() {
+  protected @Nullable LocalQuickFix createUnwrapSwitchLabelFix() {
     return null;
   }
 
-  @Nullable
-  protected LocalQuickFix createIntroduceVariableFix() {
+  protected @Nullable LocalQuickFix createIntroduceVariableFix() {
     return null;
   }
 
@@ -639,15 +634,14 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     });
   }
 
-  @NotNull
-  private static String getContractMessage(List<? extends MethodContract> contracts) {
+  private static @NotNull String getContractMessage(List<? extends MethodContract> contracts) {
     if (contracts.stream().allMatch(mc -> mc.getConditions().stream().allMatch(ContractValue::isBoundCheckingCondition))) {
       return InspectionsBundle.message("dataflow.message.contract.fail.index");
     }
     return InspectionsBundle.message("dataflow.message.contract.fail");
   }
 
-  @NotNull private static PsiElement getElementToHighlight(@NotNull PsiCall call) {
+  private static @NotNull PsiElement getElementToHighlight(@NotNull PsiCall call) {
     PsiJavaCodeReferenceElement ref;
     if (call instanceof PsiNewExpression) {
       ref = ((PsiNewExpression)call).getClassReference();
@@ -703,8 +697,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
   }
 
-  @Nullable
-  private static PsiField getAssignedField(PsiElement assignedValue) {
+  private static @Nullable PsiField getAssignedField(PsiElement assignedValue) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(assignedValue.getParent());
     if (parent instanceof PsiAssignmentExpression) {
       PsiExpression lExpression = ((PsiAssignmentExpression)parent).getLExpression();
@@ -782,8 +775,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     reporter.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 
-  @Nullable
-  protected LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
+  protected @Nullable LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
     return null;
   }
 
@@ -874,8 +866,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return LocalQuickFix.EMPTY_ARRAY;
   }
 
-  @Nullable
-  private static PsiMethod getScopeMethod(PsiElement block) {
+  private static @Nullable PsiMethod getScopeMethod(PsiElement block) {
     PsiElement parent = block.getParent();
     if (parent instanceof PsiMethod) return (PsiMethod)parent;
     if (parent instanceof PsiLambdaExpression) return LambdaUtil.getFunctionalInterfaceMethod(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
@@ -1080,15 +1071,13 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return expr instanceof PsiExpression && ExpressionUtils.isNullLiteral((PsiExpression)expr);
   }
 
-  @Nullable
-  private LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
+  private @Nullable LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
     LocalQuickFixOnPsiElement fix = createSimplifyBooleanFix(element, value);
     if (fix == null) return null;
     final String text = fix.getText();
     return new LocalQuickFix() {
       @Override
-      @NotNull
-      public String getName() {
+      public @NotNull String getName() {
         return text;
       }
 
@@ -1108,15 +1097,13 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       }
 
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return InspectionsBundle.message("inspection.data.flow.simplify.boolean.expression.quickfix");
       }
     };
   }
 
-  @NotNull
-  protected static LocalQuickFix createSimplifyToAssignmentFix() {
+  protected static @NotNull LocalQuickFix createSimplifyToAssignmentFix() {
     return new SimplifyToAssignmentFix();
   }
 
@@ -1125,23 +1112,20 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.probable.bugs");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
   protected enum ConstantResult {
     TRUE, FALSE, NULL, UNKNOWN;
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return StringUtil.toLowerCase(name());
     }
 
@@ -1158,16 +1142,14 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       }
     }
 
-    @NotNull
-    static ConstantResult fromDfType(@NotNull DfType dfType) {
+    static @NotNull ConstantResult fromDfType(@NotNull DfType dfType) {
       if (dfType == DfTypes.NULL) return NULL;
       if (dfType == DfTypes.TRUE) return TRUE;
       if (dfType == DfTypes.FALSE) return FALSE;
       return UNKNOWN;
     }
 
-    @NotNull
-    static ConstantResult mergeValue(@Nullable ConstantResult state, @NotNull DfaMemoryState memState, @Nullable DfaValue value) {
+    static @NotNull ConstantResult mergeValue(@Nullable ConstantResult state, @NotNull DfaMemoryState memState, @Nullable DfaValue value) {
       if (state == UNKNOWN || value == null) return UNKNOWN;
       ConstantResult nextState = fromDfType(memState.getUnboxedDfType(value));
       return state == null || state == nextState ? nextState : UNKNOWN;
