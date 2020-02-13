@@ -24,21 +24,18 @@ import org.jetbrains.uast.expressions.UInjectionHost
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-  this.registerReferenceProvider(adaptPattern(pattern, provider.supportedUElementTypes),
-                                 UastReferenceProviderAdapter(provider),
-                                 priority)
+  val adapter = UastReferenceContributorManager.get(this)
+  adapter.register(pattern, provider, priority)
 }
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-  this.registerReferenceProvider(adaptPattern(pattern::accepts, provider.supportedUElementTypes),
-                                 UastReferenceProviderAdapter(provider), priority)
+  this.registerUastReferenceProvider(pattern::accepts, provider, priority)
 }
 
 fun uastInjectionHostReferenceProvider(provider: (UExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastInjectionHostReferenceProvider =
   object : UastInjectionHostReferenceProvider() {
-
     override fun getReferencesForInjectionHost(uExpression: UExpression,
                                                host: PsiLanguageInjectionHost,
                                                context: ProcessingContext): Array<PsiReference> = provider(uExpression, host)
@@ -69,7 +66,7 @@ internal fun getOrCreateCachedElement(element: PsiElement,
     element.toUElement(it)
   }.firstOrNull()?.also { context?.put(cachedUElement, it) }
 
-private fun adaptPattern(
+internal fun adaptPattern(
   predicate: (UElement, ProcessingContext) -> Boolean,
   supportedUElementTypes: List<Class<out UElement>>
 ): ElementPattern<out PsiElement> {
@@ -123,7 +120,7 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
                                                            priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
   this.registerUastReferenceProvider(usagePattern, provider, priority)
 
-  if (Registry.`is`("uast.references.by.usage", false)) {
+  if (Registry.`is`("uast.references.by.usage", true)) {
     this.registerUastReferenceProvider(expressionPattern, object : UastReferenceProvider(UExpression::class.java) {
       override fun acceptsTarget(target: PsiElement): Boolean {
         return !target.project.isDefault && provider.acceptsTarget(target)
