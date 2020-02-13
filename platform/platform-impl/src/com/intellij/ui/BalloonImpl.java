@@ -1068,10 +1068,11 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         if (myAnimator != null) {
           Disposer.dispose(myAnimator);
         }
-
-        myLayeredPane.remove(myComp);
-        myLayeredPane.revalidate();
-        myLayeredPane.repaint();
+        if (myComp != null) {
+          myLayeredPane.remove(myComp);
+          myLayeredPane.revalidate();
+          myLayeredPane.repaint();
+        }
         disposeRunnable.run();
       }
     }
