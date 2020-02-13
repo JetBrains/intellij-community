@@ -2,17 +2,19 @@
 package git4idea
 
 import com.google.common.collect.HashMultiset
-import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.addBoolIfDiffers
-import com.intellij.internal.statistic.beans.addEnumIfDiffers
-import com.intellij.internal.statistic.beans.newMetric
+import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Comparing
 import com.intellij.util.io.URLUtil
+import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
+import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.VcsLogUiImpl
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRemote
+import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
 import java.util.*
 
 class GitStatisticsCollector : ProjectUsagesCollector() {
@@ -61,7 +63,29 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       set.add(metric)
     }
 
+    addGitLogMetrics(project, set)
+
     return set
+  }
+
+  private fun addGitLogMetrics(project: Project, metrics: MutableSet<MetricEvent>) {
+    val projectLog = VcsProjectLog.getInstance(project) ?: return
+    val ui = projectLog.mainLogUi ?: return
+
+    addPropertyMetricIfDiffers(metrics, ui, SHOW_GIT_BRANCHES_LOG_PROPERTY, "showGitBranchesInLog")
+  }
+
+  private fun addPropertyMetricIfDiffers(metrics: MutableSet<MetricEvent>,
+                                         ui: VcsLogUiImpl,
+                                         property: VcsLogProjectTabsProperties.CustomBooleanTabProperty,
+                                         eventId: String) {
+    val properties = ui.properties
+    val defaultValue = property.defaultValue(ui.id)
+    val value = if (properties.exists(property)) properties[property] else defaultValue
+
+    if (!Comparing.equal(value, defaultValue)) {
+      metrics.add(newBooleanMetric(eventId, value))
+    }
   }
 
   companion object {
