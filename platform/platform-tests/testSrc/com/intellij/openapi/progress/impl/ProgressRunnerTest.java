@@ -1,37 +1,84 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.idea.IdeaLogger;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.model.Statement;
 
+import javax.swing.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
+import static org.apache.commons.lang.StringUtils.substringBefore;
+
+@RunWith(Parameterized.class)
 public class ProgressRunnerTest extends LightPlatformTestCase {
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      UIUtil.dispatchAllInvocationEvents();
+  @Parameterized.Parameter
+  public boolean myOnEdt;
+
+  @Rule
+  public final TestRule myBaseRule = (base, description) -> new Statement() {
+    @Override
+    public void evaluate() throws Throwable {
+      setName(substringBefore(description.getMethodName(), "["));
+      runBare();
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  };
+
+  @Parameterized.Parameters(name = "onEdt = {0}")
+  public static List<Boolean> data() {
+    return Arrays.asList(true, false);
   }
 
-  public void testEdtToWriteThreadWithEmptyIndicatorSync() {
+  @Override
+  protected boolean runInDispatchThread() {
+    return myOnEdt;
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      try {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      catch (Throwable e) {
+        addSuppressedException(e);
+      }
+      finally {
+        super.tearDown();
+      }
+    });
+  }
+
+  @Test
+  public void testToWriteThreadWithEmptyIndicatorSync() {
     TestTask task = new TestTask().withAssertion(() -> ApplicationManager.getApplication().isWriteThread());
     ProgressResult<?> result = new ProgressRunner<>(task)
       .onThread(ProgressRunner.ThreadToUse.WRITE)
@@ -43,11 +90,12 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     task.assertFinished();
   }
 
-  public void testEdtToWriteThreadWithProgressWindowSync() {
+  @Test
+  public void testToWriteThreadWithProgressWindowSync() {
     TestTask task = new TestTask().withAssertion(() -> ApplicationManager.getApplication().isWriteThread());
     ProgressResult<?> result = new ProgressRunner<>(task)
       .onThread(ProgressRunner.ThreadToUse.WRITE)
-      .withProgress(new ProgressWindow(false, getProject()))
+      .withProgress(createProgressWindow())
       .withBlockingEdtStart(ProgressWindow::startBlocking)
       .sync()
       .submitAndGet();
@@ -56,8 +104,11 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     task.assertFinished();
   }
 
-  public void testEdtToWriteThreadWithEmptyIndicatorAsync() throws Exception {
-    TestTask task = new TestTask().withAssertion(() -> ApplicationManager.getApplication().isWriteThread());
+  @Test
+  public void testToWriteThreadWithEmptyIndicatorAsync() throws Exception {
+    TestTask task = new TestTask()
+      .withAssertion(() -> ApplicationManager.getApplication().isWriteThread())
+      .lock();
     CompletableFuture<ProgressResult<Object>> future = new ProgressRunner<>(task)
       .onThread(ProgressRunner.ThreadToUse.WRITE)
       .withProgress(new EmptyProgressIndicator())
@@ -65,16 +116,24 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     assertFalse(future.isDone());
     task.assertNotFinished();
 
-    UIUtil.dispatchAllInvocationEvents();
-    ProgressResult<?> result = future.get(1, TimeUnit.MILLISECONDS);
+    task.release();
+
+    if (EDT.isCurrentThreadEdt()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+
+    ProgressResult<?> result = future.get(10, TimeUnit.MILLISECONDS);
     assertFalse(result.isCanceled());
     assertNull(result.getThrowable());
     task.assertFinished();
   }
 
-  // Running sync task on pooled thread from EDT w/o event polling can lead to deadlock if pooled thread will try to invokeAndWait.
-  public void testEdtToPooledThreadWithEmptyIndicatorSync() {
-    TestTask task = new TestTask().withAssertion(() -> ApplicationManager.getApplication().isWriteThread());
+  @Test
+  public void testToPooledThreadWithEmptyIndicatorSync() {
+    // Running sync task on pooled thread from EDT w/o event polling can lead to deadlock if pooled thread will try to invokeAndWait.
+    BooleanSupplier assertion = EDT.isCurrentThreadEdt() ? () -> ApplicationManager.getApplication().isWriteThread()
+                                                         : () -> !ApplicationManager.getApplication().isWriteThread();
+    TestTask task = new TestTask().withAssertion(assertion);
     ProgressResult<?> result = new ProgressRunner<>(task)
       .onThread(ProgressRunner.ThreadToUse.POOLED)
       .withProgress(new EmptyProgressIndicator())
@@ -85,11 +144,12 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     task.assertFinished();
   }
 
-  public void testEdtToPooledThreadWithProgressWindowSync() {
+  @Test
+  public void testToPooledThreadWithProgressWindowSync() {
     TestTask task = new TestTask().withAssertion(() -> !ApplicationManager.getApplication().isWriteThread());
     ProgressResult<?> result = new ProgressRunner<>(task)
       .onThread(ProgressRunner.ThreadToUse.POOLED)
-      .withProgress(new ProgressWindow(false, getProject()))
+      .withProgress(createProgressWindow())
       .withBlockingEdtStart(ProgressWindow::startBlocking)
       .sync()
       .submitAndGet();
@@ -98,7 +158,18 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     task.assertFinished();
   }
 
-  public void testEdtToPooledThreadWithEmptyIndicatorAsync() throws Exception {
+  @NotNull
+  private CompletableFuture<ProgressWindow> createProgressWindow() {
+    if (EDT.isCurrentThreadEdt()) {
+      return CompletableFuture.completedFuture(new ProgressWindow(false, getProject()));
+    }
+    else {
+      return CompletableFuture.supplyAsync(() -> new ProgressWindow(false, getProject()), EdtExecutorService.getInstance());
+    }
+  }
+
+  @Test
+  public void testToPooledThreadWithEmptyIndicatorAsync() throws Exception {
     TestTask task = new TestTask()
       .withAssertion(() -> !ApplicationManager.getApplication().isWriteThread())
       .lock();
@@ -117,7 +188,8 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     task.assertFinished();
   }
 
-  public void testEdtToPooledThreadWithEmptyIndicatorAsyncWithCancel() throws Exception {
+  @Test
+  public void testToPooledThreadWithEmptyIndicatorAsyncWithCancel() throws Exception {
     TestTask task = new TestTask()
       .withAssertion(() -> !ApplicationManager.getApplication().isWriteThread())
       .lock();
@@ -142,13 +214,14 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     task.assertNotFinished();
   }
 
-  public void testEdtToPooledThreadWithProgressWindowAsync() throws Exception {
+  @Test
+  public void testToPooledThreadWithProgressWindowAsync() throws Exception {
     TestTask task = new TestTask()
       .withAssertion(() -> !ApplicationManager.getApplication().isWriteThread())
       .lock();
     CompletableFuture<ProgressResult<Object>> future = new ProgressRunner<>(task)
       .onThread(ProgressRunner.ThreadToUse.POOLED)
-      .withProgress(new ProgressWindow(false, getProject()))
+      .withProgress(createProgressWindow())
       .submit();
     assertFalse(future.isDone());
     task.assertNotFinished();
@@ -161,11 +234,12 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     task.assertFinished();
   }
 
-  public void testEdtToPooledThreadWithProgressWindowAsyncWithCancel() throws Exception {
+  @Test
+  public void testToPooledThreadWithProgressWindowAsyncWithCancel() throws Exception {
     TestTask task = new TestTask()
       .withAssertion(() -> !ApplicationManager.getApplication().isWriteThread())
       .lock();
-    ProgressWindow progressIndicator = new ProgressWindow(true, getProject());
+    CompletableFuture<ProgressWindow> progressIndicator = createProgressWindow();
 
     CompletableFuture<ProgressResult<Object>> future = new ProgressRunner<>(task)
       .onThread(ProgressRunner.ThreadToUse.POOLED)
@@ -174,10 +248,10 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     assertFalse(future.isDone());
     task.assertNotFinished();
 
-    for (int iter = 0; iter < 100 && !progressIndicator.isRunning(); ++iter) {
+    for (int iter = 0; iter < 100 && !progressIndicator.get().isRunning(); ++iter) {
       TimeoutUtil.sleep(1);
     }
-    progressIndicator.cancel();
+    progressIndicator.get().cancel();
     task.release();
 
     ProgressResult<?> result = future.get(100, TimeUnit.MILLISECONDS);
@@ -186,12 +260,13 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     task.assertNotFinished();
   }
 
+  @Test
   public void testNoAsyncExecWithBlockingEdtPumping() {
     boolean hasException = false;
     try {
       new ProgressRunner<>(EmptyRunnable.getInstance())
         .onThread(ProgressRunner.ThreadToUse.POOLED)
-        .withProgress(new ProgressWindow(false, getProject()))
+        .withProgress(createProgressWindow())
         .withBlockingEdtStart(ProgressWindow::startBlocking)
         .submit();
     }
@@ -200,6 +275,49 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     }
 
     assertTrue("Exception must be thrown", hasException);
+  }
+
+  @Override
+  protected void runBareImpl(ThrowableRunnable<?> start) throws Exception {
+    if (!shouldRunTest()) {
+      return;
+    }
+
+    TestRunnerUtil.replaceIdeEventQueueSafely();
+    if (runInDispatchThread()) {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        start.run();
+      });
+    }
+    else {
+      try {
+        start.run();
+      }
+      catch (Throwable throwable) {
+        ExceptionUtil.rethrow(throwable);
+      }
+    }
+
+    EdtTestUtil.runInEdtAndWait(() -> {
+      try {
+        Application application = ApplicationManager.getApplication();
+        if (application instanceof ApplicationEx) {
+          HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
+        }
+        resetAllFields();
+      }
+      catch (Throwable e) {
+        //noinspection CallToPrintStackTrace
+        e.printStackTrace();
+      }
+    });
+
+    // just to make sure all deferred Runnables to finish
+    SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
+
+    if (IdeaLogger.ourErrorsOccurred != null) {
+      throw IdeaLogger.ourErrorsOccurred;
+    }
   }
 
   private static class TestTask implements Runnable {
@@ -248,11 +366,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
       }
       mySemaphore.waitFor();
       ProgressManager.checkCanceled();
-      try {
-        Thread.sleep(1);
-      }
-      catch (InterruptedException ignore) {
-      }
+      TimeoutUtil.sleep(1);
       if (!myAssertion.getAsBoolean()) {
         throw new AssertionError("Supplied assertion failed", myStacktrace);
       }
