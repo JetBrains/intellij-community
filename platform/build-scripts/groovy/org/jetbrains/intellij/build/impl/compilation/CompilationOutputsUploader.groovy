@@ -102,15 +102,6 @@ class CompilationOutputsUploader {
 
   def uploadCompilationOutputs(File root, Map<String, Map<String, BuildTargetState>> currentSourcesState,
                                JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
-    currentSourcesState.each { type, map ->
-      if (PRODUCTION_TYPES.contains(type) || TEST_TYPES.contains(type)) return
-      map.each { name, state ->
-        def outputPath = state.relativePath.replace(IDENTIFIER, root.getAbsolutePath())
-
-        uploadCompilationOutput(name, type, state.hash, new File(outputPath), uploader, executor)
-      }
-    }
-
     uploadCompilationOutputsByParams(PRODUCTION, PRODUCTION_TYPES[0], PRODUCTION_TYPES[1], root, currentSourcesState, uploader, executor)
     uploadCompilationOutputsByParams(TEST, TEST_TYPES[0], TEST_TYPES[1], root, currentSourcesState, uploader, executor)
   }
