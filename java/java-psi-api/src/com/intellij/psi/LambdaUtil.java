@@ -1100,4 +1100,50 @@ public class LambdaUtil {
     }
     return actualClass;
   }
+
+  public static @Nullable String createLambdaParameterListWithFormalTypes(PsiType functionalInterfaceType,
+                                                                          PsiLambdaExpression lambdaExpression,
+                                                                          boolean checkApplicability) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    final StringBuilder buf = new StringBuilder();
+    buf.append("(");
+    final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(functionalInterfaceType);
+    if (interfaceMethod == null) return null;
+    final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
+    final PsiParameter[] lambdaParameters = lambdaExpression.getParameterList().getParameters();
+    if (parameters.length != lambdaParameters.length) return null;
+    final PsiSubstitutor substitutor = getSubstitutor(interfaceMethod, resolveResult);
+    for (int i = 0; i < parameters.length; i++) {
+      PsiType psiType = substitutor.substitute(parameters[i].getType());
+      if (psiType == null) return null;
+      if (!PsiTypesUtil.isDenotableType(psiType, lambdaExpression)) {
+        return null;
+      }
+
+      buf.append(checkApplicability ? psiType.getPresentableText() : psiType.getCanonicalText())
+        .append(" ")
+        .append(lambdaParameters[i].getName());
+      if (i < parameters.length - 1) {
+        buf.append(", ");
+      }
+    }
+    buf.append(")");
+    return buf.toString();
+  }
+
+  public static @Nullable PsiParameterList specifyLambdaParameterTypes(PsiLambdaExpression lambdaExpression) {
+    return specifyLambdaParameterTypes(lambdaExpression.getFunctionalInterfaceType(), lambdaExpression);
+  }
+
+  public static @Nullable PsiParameterList specifyLambdaParameterTypes(PsiType functionalInterfaceType,
+                                                                       @NotNull PsiLambdaExpression lambdaExpression) {
+    String typedParamList = createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false);
+    if (typedParamList != null) {
+      PsiParameterList paramListWithFormalTypes = JavaPsiFacade.getElementFactory(lambdaExpression.getProject())
+        .createMethodFromText("void foo" + typedParamList, lambdaExpression).getParameterList();
+      return (PsiParameterList)JavaCodeStyleManager.getInstance(lambdaExpression.getProject())
+        .shortenClassReferences(lambdaExpression.getParameterList().replace(paramListWithFormalTypes));
+    }
+    return null;
+  }
 }

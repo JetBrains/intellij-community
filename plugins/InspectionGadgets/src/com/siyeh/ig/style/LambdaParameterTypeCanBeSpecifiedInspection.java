@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -62,8 +61,8 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
       final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
       if (functionalInterfaceType != null &&
           LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null) {
-        final String inferredTypesText = LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression,
-                                                                                                        true);
+        final String inferredTypesText = LambdaUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression,
+                                                                                             true);
         if (inferredTypesText != null) {
           PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(parameterList);
           if (PsiUtil.isJavaToken(nextElement, JavaTokenType.ARROW)) {
@@ -100,7 +99,7 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiLambdaExpression) {
-        LambdaRefactoringUtil.specifyLambdaParameterTypes((PsiLambdaExpression)element);
+        LambdaUtil.specifyLambdaParameterTypes((PsiLambdaExpression)element);
       }
     }
   }
