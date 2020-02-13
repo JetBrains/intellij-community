@@ -17,9 +17,8 @@ import java.util.Collections;
 public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(RedundantLambdaParameterTypeInspection.class);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitParameterList(PsiParameterList parameterList) {
@@ -107,9 +106,8 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
 
   private static class LambdaParametersFix implements LocalQuickFix {
     @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionsBundle.message("remove.redundant.parameter.types");
     }
 

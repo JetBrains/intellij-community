@@ -47,9 +47,8 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
     }
   }
 
-  @NotNull
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_14;
   }
 
@@ -97,8 +96,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
-  @NotNull
-  private Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
+  private @NotNull Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
     return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
   }
 

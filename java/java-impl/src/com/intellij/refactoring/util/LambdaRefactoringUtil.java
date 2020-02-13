@@ -33,16 +33,14 @@ import java.util.Map;
 public class LambdaRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(LambdaRefactoringUtil.class);
 
-  @Nullable
-  public static PsiExpression convertToMethodCallInLambdaBody(PsiMethodReferenceExpression element) {
+  public static @Nullable PsiExpression convertToMethodCallInLambdaBody(PsiMethodReferenceExpression element) {
     final PsiLambdaExpression lambdaExpression = convertMethodReferenceToLambda(element, false, true);
     return lambdaExpression != null ? LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody()) : null;
   }
 
-  @Nullable
-  public static PsiLambdaExpression convertMethodReferenceToLambda(final PsiMethodReferenceExpression referenceExpression,
-                                                                   final boolean ignoreCast, 
-                                                                   final boolean simplifyToExpressionLambda) {
+  public static @Nullable PsiLambdaExpression convertMethodReferenceToLambda(final PsiMethodReferenceExpression referenceExpression,
+                                                                             final boolean ignoreCast,
+                                                                             final boolean simplifyToExpressionLambda) {
     PsiLambdaExpression lambdaExpression = createLambda(referenceExpression, ignoreCast);
     if (lambdaExpression == null) return null;
     lambdaExpression = (PsiLambdaExpression)new CommentTracker().replaceAndRestoreComments(referenceExpression, lambdaExpression);
@@ -287,10 +285,9 @@ public class LambdaRefactoringUtil {
     return false;
   }
 
-  @Nullable
-  public static String createLambdaParameterListWithFormalTypes(PsiType functionalInterfaceType,
-                                                                PsiLambdaExpression lambdaExpression,
-                                                                boolean checkApplicability) {
+  public static @Nullable String createLambdaParameterListWithFormalTypes(PsiType functionalInterfaceType,
+                                                                          PsiLambdaExpression lambdaExpression,
+                                                                          boolean checkApplicability) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final StringBuilder buf = new StringBuilder();
     buf.append("(");
@@ -318,14 +315,12 @@ public class LambdaRefactoringUtil {
     return buf.toString();
   }
 
-  @Nullable
-  public static PsiParameterList specifyLambdaParameterTypes(PsiLambdaExpression lambdaExpression) {
+  public static @Nullable PsiParameterList specifyLambdaParameterTypes(PsiLambdaExpression lambdaExpression) {
     return specifyLambdaParameterTypes(lambdaExpression.getFunctionalInterfaceType(), lambdaExpression);
   }
 
-    @Nullable
-  public static PsiParameterList specifyLambdaParameterTypes(PsiType functionalInterfaceType,
-                                                             @NotNull PsiLambdaExpression lambdaExpression) {
+  public static @Nullable PsiParameterList specifyLambdaParameterTypes(PsiType functionalInterfaceType,
+                                                                       @NotNull PsiLambdaExpression lambdaExpression) {
     String typedParamList = createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false);
     if (typedParamList != null) {
       PsiParameterList paramListWithFormalTypes = JavaPsiFacade.getElementFactory(lambdaExpression.getProject())
@@ -336,7 +331,7 @@ public class LambdaRefactoringUtil {
     return null;
   }
 
-  public static void simplifyToExpressionLambda(@NotNull final PsiLambdaExpression lambdaExpression) {
+  public static void simplifyToExpressionLambda(@NotNull PsiLambdaExpression lambdaExpression) {
     final PsiElement body = lambdaExpression.getBody();
     final PsiExpression singleExpression = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(body);
     if (singleExpression != null) {
