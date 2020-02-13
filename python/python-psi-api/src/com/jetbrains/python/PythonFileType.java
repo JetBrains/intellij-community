@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.text.CharSequenceReader;
 import icons.PythonPsiApiIcons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ public class PythonFileType extends LanguageFileType {
 
   @Override
   @NotNull
+  @NonNls
   public String getName() {
     return "Python";
   }

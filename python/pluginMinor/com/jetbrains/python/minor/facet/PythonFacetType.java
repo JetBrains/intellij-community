@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
@@ -38,7 +39,7 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetType.Pyth
   }
 
   public PythonFacetType() {
-    super(PythonFacet.ID, ID, "Python");
+    super(PythonFacet.ID, ID, PyBundle.message("python.facet.name"));
   }
 
   @Override

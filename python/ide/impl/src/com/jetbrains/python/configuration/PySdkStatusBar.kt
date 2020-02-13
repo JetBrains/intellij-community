@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.StatusBarWidgetProvider
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidget
 import com.intellij.util.text.trimMiddle
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonIdeLanguageCustomization
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PySdkPopupFactory.Companion.descriptionInPopup
@@ -64,7 +65,7 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
       WidgetState("", noInterpreterMarker, true)
     }
     else {
-      WidgetState("Current Interpreter: ${descriptionInPopup(sdk)}]", shortenNameInBar(sdk), true)
+      WidgetState(PyBundle.message("current.interpreter", descriptionInPopup(sdk)), shortenNameInBar(sdk), true)
     }
   }
 

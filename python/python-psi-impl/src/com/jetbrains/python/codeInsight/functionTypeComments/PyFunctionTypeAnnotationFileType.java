@@ -16,6 +16,7 @@
 package com.jetbrains.python.codeInsight.functionTypeComments;
 
 import com.jetbrains.python.PythonFileType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +31,7 @@ public class PyFunctionTypeAnnotationFileType extends PythonFileType {
 
   @NotNull
   @Override
+  @NonNls
   public String getName() {
     return "PythonFunctionTypeComment";
   }

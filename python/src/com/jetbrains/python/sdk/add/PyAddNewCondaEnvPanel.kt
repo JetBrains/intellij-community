@@ -65,7 +65,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     addBrowseFolderListener(PyBundle.message("python.sdk.select.location.for.conda.title"), null, project,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
-  private val makeSharedField = JBCheckBox("Make available to all projects")
+  private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))
 
   override var newProjectPath: String? = newProjectPath
     set(value) {
@@ -88,7 +88,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent("Location:", pathField)
       .addLabeledComponent("Python version:", languageLevelsField)
-      .addLabeledComponent("Conda executable:", condaPathField)
+      .addLabeledComponent(PyBundle.message("python.sdk.conda.path"), condaPathField)
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)

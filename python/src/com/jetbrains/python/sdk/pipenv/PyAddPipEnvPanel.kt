@@ -109,9 +109,9 @@ class PyAddPipEnvPanel(private val project: Project?,
         val associatedObject = if (PlatformUtils.isPyCharm()) "project" else "module"
         addLabeledComponent("Associated $associatedObject:", moduleField)
       }
-      addLabeledComponent("Base interpreter:", baseSdkField)
+      addLabeledComponent(PyBundle.message("base.interpreter"), baseSdkField)
       addComponent(installPackagesCheckBox)
-      addLabeledComponent("Pipenv executable:", pipEnvPathField)
+      addLabeledComponent(PyBundle.message("python.sdk.pipenv.executable"), pipEnvPathField)
     }
     add(builder.panel, BorderLayout.NORTH)
     update()

@@ -148,7 +148,7 @@ public class ExpressionParsing extends Parsing {
           break;
         }
         else {
-          builder.error("unexpected f-string token");
+          builder.error(message("unexpected.f.string.token"));
           break;
         }
       }
@@ -178,7 +178,7 @@ public class ExpressionParsing extends Parsing {
         recovery = true;
       }
       if (recovery) {
-        recoveryMarker.error(parsedExpression ? "unexpected expression part" : "expression expected");
+        recoveryMarker.error(parsedExpression ? message("unexpected.expression.part") : message("PARSE.expected.expression"));
         recoveryMarker.setCustomEdgeTokenBinders(null, CONSUME_COMMENTS_AND_SPACES_TO_LEFT);
       }
       else {
@@ -242,7 +242,7 @@ public class ExpressionParsing extends Parsing {
     else {
       while (builder.getTokenType() != PyTokenTypes.RBRACKET) {
         if (!matchToken(PyTokenTypes.COMMA)) {
-          builder.error("expected ',' or ']'");
+          builder.error(message("rbracket.or.comma.expected"));
         }
         if (atToken(PyTokenTypes.RBRACKET)) {
           break;
@@ -284,7 +284,7 @@ public class ExpressionParsing extends Parsing {
   }
 
   protected void parseComprehensionRange(boolean generatorExpression) {
-    checkMatches(PyTokenTypes.IN_KEYWORD, "'in' expected");
+    checkMatches(PyTokenTypes.IN_KEYWORD, message("PARSE.expected.in"));
     boolean result;
     if (generatorExpression) {
       result = parseORTestExpression(false, false);
@@ -293,7 +293,7 @@ public class ExpressionParsing extends Parsing {
       result = parseTupleExpression(false, false, true);
     }
     if (!result) {
-      myBuilder.error("expression expected");
+      myBuilder.error(message("PARSE.expected.expression"));
     }
   }
 
@@ -309,7 +309,7 @@ public class ExpressionParsing extends Parsing {
 
     if (atToken(PyTokenTypes.EXP)) {
       if (!parseDoubleStarExpression(false)) {
-        myBuilder.error("expression expected");
+        myBuilder.error(message("PARSE.expected.expression"));
         expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
         return;
       }
@@ -319,7 +319,7 @@ public class ExpressionParsing extends Parsing {
 
     final PsiBuilder.Marker firstExprMarker = myBuilder.mark();
     if (!parseSingleExpression(false)) {
-      myBuilder.error("expression expected");
+      myBuilder.error(message("PARSE.expected.expression"));
       firstExprMarker.drop();
       expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
       return;
@@ -337,7 +337,7 @@ public class ExpressionParsing extends Parsing {
       parseComprehension(expr, PyTokenTypes.RBRACE, PyElementTypes.SET_COMP_EXPRESSION);
     }
     else {
-      myBuilder.error("expression expected");
+      myBuilder.error(message("PARSE.expected.expression"));
       firstExprMarker.drop();
       expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
     }
@@ -345,7 +345,7 @@ public class ExpressionParsing extends Parsing {
 
   private void parseDictLiteralTail(PsiBuilder.Marker startMarker, PsiBuilder.Marker firstKeyValueMarker) {
     if (!parseSingleExpression(false)) {
-      myBuilder.error("expression expected");
+      myBuilder.error(message("PARSE.expected.expression"));
       firstKeyValueMarker.done(PyElementTypes.KEY_VALUE_EXPRESSION);
       if (atToken(PyTokenTypes.RBRACE)) {
         myBuilder.advanceLexer();
@@ -388,7 +388,7 @@ public class ExpressionParsing extends Parsing {
     }
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
     if (!parseSingleExpression(false)) {
-      myBuilder.error("value expression expected");
+      myBuilder.error(message("value.expression.expected"));
       marker.drop();
       return false;
     }
@@ -432,7 +432,7 @@ public class ExpressionParsing extends Parsing {
           empty = false;
         }
         if (!empty) {
-          err.error("Unexpected expression syntax");
+          err.error(message("unexpected.expression.syntax"));
         }
         else {
           err.drop();
@@ -508,7 +508,7 @@ public class ExpressionParsing extends Parsing {
               if (!parseSliceListTail(expr, sliceOrTupleStart)) {
                 sliceOrTupleStart.rollbackTo();
                 if (!parseTupleExpression(false, false, false)) {
-                  myBuilder.error("tuple expression expected");
+                  myBuilder.error(message("tuple.expression.expected"));
                 }
                 checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
                 expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
@@ -516,7 +516,7 @@ public class ExpressionParsing extends Parsing {
             }
             else {
               if (!hadExpression) {
-                myBuilder.error("expression expected");
+                myBuilder.error(message("PARSE.expected.expression"));
               }
               sliceOrTupleStart.drop();
               sliceItemStart.drop();
@@ -590,7 +590,7 @@ public class ExpressionParsing extends Parsing {
 
       sliceItemStart.done(PyElementTypes.SLICE_ITEM);
       if (!BRACKET_OR_COMMA.contains(myBuilder.getTokenType())) {
-        myBuilder.error("']' or ',' expected");
+        myBuilder.error(message("rbracket.or.comma.expected"));
       }
     }
 
@@ -612,7 +612,7 @@ public class ExpressionParsing extends Parsing {
       }
       sliceItemStart.done(PyElementTypes.SLICE_ITEM);
       if (!BRACKET_OR_COMMA.contains(myBuilder.getTokenType())) {
-        myBuilder.error("']' or ',' expected");
+        myBuilder.error(message("rbracket.or.comma.expected"));
         break;
       }
     }
@@ -1159,7 +1159,7 @@ public class ExpressionParsing extends Parsing {
       }
       else {
         if (isTargetExpression) {
-          expr.error("can't assign to await expression");
+          expr.error(message("can.t.assign.to.await.expression"));
         }
         else {
           expr.done(PyElementTypes.PREFIX_EXPRESSION);
@@ -1182,7 +1182,7 @@ public class ExpressionParsing extends Parsing {
         return true;
       }
       else {
-        myBuilder.error("'for' expected");
+        myBuilder.error(message("for.expected"));
         return false;
       }
     }

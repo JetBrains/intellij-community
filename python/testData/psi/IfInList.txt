@@ -11,7 +11,7 @@ PyFile:IfInList.py
         PsiWhiteSpace(' ')
         PyStringLiteralExpression: string
           PsiElement(Py:SINGLE_QUOTED_STRING)('"string"')
-      PsiErrorElement:Colon expected
+      PsiErrorElement:':' expected
         PsiElement(Py:COMMA)(',')
         PsiWhiteSpace(' ')
         PsiElement(Py:SINGLE_QUOTED_STRING)('"string2"')

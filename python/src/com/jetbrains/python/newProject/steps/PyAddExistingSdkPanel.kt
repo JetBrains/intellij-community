@@ -80,7 +80,7 @@ class PyAddExistingSdkPanel(project: Project?,
       }
     }
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Interpreter:", sdkChooserCombo)
+      .addLabeledComponent(PyBundle.message("interpreter"), sdkChooserCombo)
       .addComponent(remotePathField.mainPanel)
       .panel
     add(formPanel, BorderLayout.NORTH)

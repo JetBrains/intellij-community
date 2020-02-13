@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.ProjectGeneratorPeer;
 import com.intellij.util.BooleanFunction;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
       if (beforeProjectGenerated != null) {
         final boolean result = beforeProjectGenerated.fun((PythonProjectGenerator)generator);
         if (!result) {
-          Messages.showWarningDialog("Project can not be generated", "Error in Project Generation");
+          Messages.showWarningDialog(PyBundle.message("project.cannot.be.generated"), PyBundle.message("error.in.project.generation"));
           return;
         }
       }

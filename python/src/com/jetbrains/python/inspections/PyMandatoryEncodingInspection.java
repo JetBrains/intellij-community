@@ -26,7 +26,6 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +120,7 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   @NotNull
   private JPanel onlyPython2Box() {
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(new CheckBox("Enable in Python 3+", this, "myAllPythons"));
+    panel.add(new CheckBox(PyBundle.message("enable.in.python.3"), this, "myAllPythons"));
     return panel;
   }
 

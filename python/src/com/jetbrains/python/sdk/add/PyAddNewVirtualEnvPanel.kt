@@ -65,13 +65,13 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
   private val inheritSitePackagesField = JBCheckBox("Inherit global site-packages")
-  private val makeSharedField = JBCheckBox("Make available to all projects")
+  private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))
 
   init {
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent("Location:", pathField)
-      .addLabeledComponent("Base interpreter:", baseSdkField)
+      .addLabeledComponent(PyBundle.message("base.interpreter"), baseSdkField)
       .addComponent(inheritSitePackagesField)
       .addComponent(makeSharedField)
       .panel

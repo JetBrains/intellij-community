@@ -19,10 +19,11 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyElementType;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,7 @@ public class Parsing {
     return getParsingContext().getFunctionParser();
   }
 
-  protected boolean checkMatches(final IElementType token, @NotNull String message) {
+  protected boolean checkMatches(final IElementType token, @NotNull @Nls String message) {
     if (myBuilder.getTokenType() == token) {
       myBuilder.advanceLexer();
       return true;

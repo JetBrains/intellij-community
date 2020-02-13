@@ -57,7 +57,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
                             FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor())
   }
 
-  private val makeSharedField = JBCheckBox("Make available to all projects")
+  private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))
 
   init {
     sdkComboBox.childComponent.addItemListener {
@@ -69,8 +69,8 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
 
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Interpreter:", sdkComboBox)
-      .addLabeledComponent("Conda executable:", condaPathField)
+      .addLabeledComponent(PyBundle.message("interpreter"), sdkComboBox)
+      .addLabeledComponent(PyBundle.message("python.sdk.conda.path"), condaPathField)
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)

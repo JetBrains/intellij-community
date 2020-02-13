@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.*
 import icons.PythonIcons
 import java.awt.BorderLayout
@@ -38,12 +39,12 @@ class PyAddExistingVirtualEnvPanel(private val project: Project?,
   override val panelName: String = "Existing environment"
   override val icon: Icon = PythonIcons.Python.Virtualenv
   private val sdkComboBox = PySdkPathChoosingComboBox()
-  private val makeSharedField = JBCheckBox("Make available to all projects")
+  private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))
 
   init {
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Interpreter:", sdkComboBox)
+      .addLabeledComponent(PyBundle.message("interpreter"), sdkComboBox)
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)

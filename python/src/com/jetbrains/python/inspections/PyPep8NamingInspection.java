@@ -54,8 +54,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -95,7 +97,7 @@ public class PyPep8NamingInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     final JPanel rootPanel = new JPanel(new BorderLayout());
-    rootPanel.add(new CheckBox("Ignore overridden functions", this, "ignoreOverriddenFunctions"), BorderLayout.NORTH);
+    rootPanel.add(new CheckBox(PyBundle.message("ignore.overridden.functions"), this, "ignoreOverriddenFunctions"), BorderLayout.NORTH);
 
     final OnePixelSplitter splitter = new OnePixelSplitter(false);
     splitter.setFirstComponent(new ListEditForm("Excluded base classes", ignoredBaseClasses).getContentPanel());
