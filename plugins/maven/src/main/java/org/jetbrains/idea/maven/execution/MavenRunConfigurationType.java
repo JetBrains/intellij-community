@@ -227,6 +227,11 @@ public final class MavenRunConfigurationType implements ConfigurationType {
       return new MavenRunConfiguration(project, this, "");
     }
 
+    @Override
+    public @NotNull String getId() {
+      return "Maven";
+    }
+
     @NotNull
     @Override
     public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {

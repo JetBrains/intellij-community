@@ -34,6 +34,11 @@ public final class PythonConfigurationType implements ConfigurationType {
     public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new PythonRunConfiguration(project, this);
     }
+
+    @Override
+    public @NotNull String getId() {
+      return "Python";
+    }
   }
 
   @NotNull

@@ -36,6 +36,11 @@ public final class XsltRunConfigType implements ConfigurationType {
       public RunConfiguration createTemplateConfiguration(@NotNull final Project project) {
         return new XsltRunConfiguration(project, this);
       }
+
+      @Override
+      public @NotNull String getId() {
+        return "XSLT";
+      }
     };
   }
 

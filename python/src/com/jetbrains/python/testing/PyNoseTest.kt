@@ -52,5 +52,7 @@ class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) :
 class PyNoseTestFactory : PyAbstractTestFactory<PyNoseTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project) = PyNoseTestConfiguration(project, this)
 
+  override fun getId(): String = "Nosetests"
+
   override fun getName(): String = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST)
 }

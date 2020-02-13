@@ -28,6 +28,11 @@ public class JUnitConfigurationType implements ConfigurationType {
       public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new JUnitConfiguration("", project, this);
       }
+
+      @Override
+      public @NotNull String getId() {
+        return "JUnit";
+      }
     };
   }
 

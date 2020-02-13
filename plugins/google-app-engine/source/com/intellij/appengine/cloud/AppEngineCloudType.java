@@ -50,6 +50,11 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     return "Google App Engine";
   }
 
+  @Override
+  public @NotNull String getDeploymentConfigurationFactoryId() {
+    return "Google App Engine Deployment";
+  }
+
   @NotNull
   @Override
   public Icon getIcon() {

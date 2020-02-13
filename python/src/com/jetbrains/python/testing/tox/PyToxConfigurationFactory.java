@@ -24,6 +24,11 @@ public final  class PyToxConfigurationFactory extends PythonConfigurationFactory
     return "Tox";
   }
 
+  @Override
+  public @NotNull String getId() {
+    return "Tox";
+  }
+
   @NotNull
   @Override
   public RunConfiguration createTemplateConfiguration(@NotNull final Project project) {

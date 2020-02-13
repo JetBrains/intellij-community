@@ -478,6 +478,11 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new ProcessAttachRunConfiguration(project);
       }
+
+      @Override
+      public @NotNull String getId() {
+        return INSTANCE.getId();
+      }
     };
 
     @NotNull
