@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ActionsCollector;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -142,6 +143,11 @@ public final class ActionUtil {
    */
   public static boolean performDumbAwareUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
     final Presentation presentation = e.getPresentation();
+    if (LightEdit.owns(e.getProject()) && !LightEdit.isActionCompatible(action)) {
+      presentation.setEnabledAndVisible(false);
+      return false;
+    }
+
     final Boolean wasEnabledBefore = (Boolean)presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB);
     final boolean dumbMode = isDumbMode(e.getProject());
     if (wasEnabledBefore != null && !dumbMode) {
