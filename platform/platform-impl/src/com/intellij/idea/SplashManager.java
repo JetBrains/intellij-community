@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
@@ -36,11 +36,6 @@ public final class SplashManager {
   private static Splash SPLASH_WINDOW;
 
   public static void show(String @NotNull [] args) {
-    if (Main.isLightEdit()) return;
-    if (Boolean.getBoolean(NO_SPLASH)) {
-      return;
-    }
-
     for (String arg : args) {
       if (NO_SPLASH.equals(arg)) {
         System.setProperty(NO_SPLASH, "true");

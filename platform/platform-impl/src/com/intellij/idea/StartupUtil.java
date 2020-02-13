@@ -291,11 +291,14 @@ public final class StartupUtil {
           activity = activity.endAndStart("init JBUIScale");
           JBUIScale.scale(1f);
 
-          Activity prepareSplashActivity = activity.endAndStart("splash preparation");
-          EventQueue.invokeLater(() -> {
-            SplashManager.show(args);
-            prepareSplashActivity.end();
-          });
+          if (!Main.isLightEdit() && !Boolean.getBoolean(SplashManager.NO_SPLASH)) {
+            Activity prepareSplashActivity = activity.endAndStart("splash preparation");
+            EventQueue.invokeLater(() -> {
+              SplashManager.show(args);
+              prepareSplashActivity.end();
+            });
+            return;
+          }
 
           // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater (to allow other queued events to be executed)
           EventQueue.invokeLater(() -> StartupUiUtil.configureHtmlKitStylesheet());
