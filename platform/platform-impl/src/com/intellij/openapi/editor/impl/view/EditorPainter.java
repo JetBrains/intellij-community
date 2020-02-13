@@ -206,7 +206,7 @@ public class EditorPainter implements TextDrawingCallback {
                                                     SwingUtilities.calculateInnerArea(editorComponent, null), // account for insets
                                                     new Rectangle(), new Rectangle(), 0);
       EditorFontType fontType = EditorFontType.PLAIN;
-      Color color = myEditor.getFoldingModel().getPlaceholderAttributes().getForegroundColor();
+      Color color = JBColor.namedColor("Component.infoForeground", myEditor.getColorsScheme().getDefaultForeground());
       TextAttributes attributes = myEditor.getPlaceholderAttributes();
       if (attributes != null) {
         int type = attributes.getFontType();
