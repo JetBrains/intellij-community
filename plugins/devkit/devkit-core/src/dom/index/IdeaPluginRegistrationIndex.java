@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -171,22 +172,28 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
                                                 GlobalSearchScope scope,
                                                 EnumSet<RegistrationType> types,
                                                 Processor<? super ActionOrGroup> processor) {
-    return FileBasedIndex.getInstance().processValues(NAME, actionOrGroupId, null, (file, value) -> {
-      return ContainerUtil.process(value, entry -> {
+    List<XmlTag> tags = new SmartList<>();
+    FileBasedIndex.getInstance().processValues(NAME, actionOrGroupId, null, (file, value) -> {
+      for (RegistrationEntry entry : value) {
         if (!types.contains(entry.getRegistrationType())) {
-          return true;
+          continue;
         }
 
         final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-        if (!(psiFile instanceof XmlFile)) return true;
+        if (!(psiFile instanceof XmlFile)) continue;
 
         PsiElement psiElement = psiFile.findElementAt(entry.getOffset());
         XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
-        final DomElement domElement = DomManager.getDomManager(project).getDomElement(xmlTag);
-
-        if (!(domElement instanceof ActionOrGroup)) return true;
-        return processor.process((ActionOrGroup)domElement);
-      });
+        tags.add(xmlTag);
+      }
+      return true;
     }, scope);
+
+    return ContainerUtil.process(tags, tag -> {
+      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
+
+      if (!(domElement instanceof ActionOrGroup)) return true;
+      return processor.process((ActionOrGroup)domElement);
+    });
   }
 }
