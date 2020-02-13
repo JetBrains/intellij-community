@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
@@ -8,7 +8,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,7 @@ final class PluginLoadingResult {
   @Nullable
   Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateModuleMap;
 
-  final Map<PluginId, String> errors = ContainerUtil.newConcurrentMap();
+  private final Map<PluginId, String> errors = ContainerUtil.newConcurrentMap();
 
   private IdeaPluginDescriptorImpl[] sortedPlugins;
   private List<IdeaPluginDescriptorImpl> sortedEnabledPlugins;
@@ -114,8 +113,35 @@ final class PluginLoadingResult {
     this.disabledRequiredIds = disabledRequiredIds;
   }
 
+  void addIncompletePlugin(@NotNull IdeaPluginDescriptorImpl plugin) {
+    if (!idMap.containsKey(plugin.getPluginId())) {
+      incompletePlugins.put(plugin.getPluginId(), plugin);
+    }
+  }
+
+  void reportIncompatiblePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @Nullable String since, @Nullable String until) {
+    // do not report if some compatible plugin were already added
+    // no race condition here — plugins from classpath are loaded before and not in parallel to loading from plugin dir
+    if (idMap.containsKey(plugin.getPluginId())) {
+      return;
+    }
+
+    if (since == null) {
+      since = "0.0";
+    }
+    if (until == null) {
+      until = "*.*";
+    }
+
+    String message = "is incompatible (target build " +
+                     (since.equals(until) ? ("is " + since) : ("range is " + since + " to " + until)) +
+                     ")";
+
+    errors.put(plugin.getPluginId(), plugin.formatErrorMessage(message));
+  }
+
   @SuppressWarnings("UnusedReturnValue")
-  boolean add(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull DescriptorListLoadingContext context) {
+  boolean add(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull DescriptorListLoadingContext context, boolean overrideUseIfCompatible) {
     PluginId pluginId = descriptor.getPluginId();
     if (pluginId == null) {
       pluginsWithoutId.add(descriptor);
@@ -154,7 +180,8 @@ final class PluginLoadingResult {
       return true;
     }
 
-    if (isCompatible(descriptor) && VersionComparatorUtil.compare(descriptor.getVersion(), prevDescriptor.getVersion()) > 0) {
+    if (isCompatible(descriptor) &&
+        (overrideUseIfCompatible || VersionComparatorUtil.compare(descriptor.getVersion(), prevDescriptor.getVersion()) > 0)) {
       context.getLogger().info(descriptor.getPluginPath() + " overrides " + prevDescriptor.getPluginPath());
       idMap.put(pluginId, descriptor);
       return true;
@@ -163,12 +190,6 @@ final class PluginLoadingResult {
       plugins.put(pluginId, prevDescriptor);
       return false;
     }
-  }
-
-  @Contract(pure = true)
-  boolean contains(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    PluginId pluginId = descriptor.getPluginId();
-    return (pluginId != null && plugins.containsKey(pluginId));
   }
 
   private boolean isCompatible(@NotNull IdeaPluginDescriptorImpl descriptor) {

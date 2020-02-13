@@ -394,16 +394,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     markAsIncomplete(context);
-
-    if (since == null) {
-      since = "0.0";
-    }
-
-    if (until == null) {
-      until = "*.*";
-    }
-    context.parentContext.result.errors.put(getPluginId(), formatErrorMessage("is incompatible (target build " +
-                                            (since.equals(until) ? "is " + since : "range is " + since + " to " + until) + ")"));
+    context.parentContext.result.reportIncompatiblePlugin(this, since, until);
     return false;
   }
 
@@ -424,7 +415,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     incomplete = true;
     setEnabled(false);
     if (myId != null) {
-      context.parentContext.result.incompletePlugins.put(myId, this);
+      context.parentContext.result.addIncompletePlugin(this);
     }
   }
 

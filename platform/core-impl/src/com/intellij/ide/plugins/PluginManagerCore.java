@@ -33,7 +33,6 @@ import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
-import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
@@ -84,7 +83,6 @@ public final class PluginManagerCore {
   @SuppressWarnings("StaticNonFinalField")
   public static String BUILD_NUMBER;
 
-  private static final TObjectIntHashMap<PluginId> ourIdToIndex = new TObjectIntHashMap<>();
   private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
 
   private static final PluginId SPECIAL_IDEA_PLUGIN_ID = PluginId.getId("IDEA CORE");
@@ -442,10 +440,6 @@ public final class PluginManagerCore {
     savePluginsList(ids, plugins, append);
     ourDisabledPlugins = null;
     fireEditDisablePlugins();
-  }
-
-  public static int getPluginLoadingOrder(@NotNull PluginId id) {
-    return ourIdToIndex.get(id);
   }
 
   public static boolean isModuleDependency(@NotNull PluginId dependentPluginId) {
@@ -1076,7 +1070,7 @@ public final class PluginManagerCore {
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor != null) {
-        context.result.add(descriptor, context);
+        context.result.add(descriptor, context, /* overrideUseIfCompatible = */ false);
       }
     }
   }
@@ -1137,7 +1131,7 @@ public final class PluginManagerCore {
     for (Path file : paths) {
       IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, /* isBundled */ false, context);
       if (descriptor != null) {
-        context.result.add(descriptor, context);
+        context.result.add(descriptor, context, /* overrideUseIfCompatible = */ false);
       }
     }
 
@@ -1164,10 +1158,9 @@ public final class PluginManagerCore {
     PluginLoadingResult result = context.parentContext.result;
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
-      // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-      if (descriptor != null && !result.contains(descriptor)) {
+      if (descriptor != null) {
         descriptor.setUseCoreClassLoader();
-        result.add(descriptor, context.parentContext);
+        result.add(descriptor, context.parentContext, /* overrideUseIfCompatible = */ false);
       }
     }
   }
@@ -1273,7 +1266,8 @@ public final class PluginManagerCore {
       String s = t.nextToken();
       IdeaPluginDescriptorImpl descriptor = loadDescriptor(Paths.get(s), false, context);
       if (descriptor != null) {
-        result.add(descriptor, context);
+        // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
+        result.add(descriptor, context, /* overrideUseIfCompatible = */ true);
       }
     }
   }
@@ -1303,7 +1297,6 @@ public final class PluginManagerCore {
 
     DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, disabledPlugins(), result);
     try {
-      loadDescriptorsFromProperty(result, context);
       try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, /* isBundled = */ true, /* isEssential, doesn't matter = */ true, new ClassPathXmlPathResolver(classLoader))) {
         loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, platformPluginURL);
       }
@@ -1313,6 +1306,8 @@ public final class PluginManagerCore {
       if (!isUnitTestMode) {
         loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), /* isBundled = */ true, context);
       }
+
+      loadDescriptorsFromProperty(result, context);
 
       if (isUnitTestMode && result.enabledPluginCount() <= 1) {
         // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
@@ -1861,12 +1856,6 @@ public final class PluginManagerCore {
       ourPluginsToDisable = result.getEffectiveDisabledIds();
       ourPluginsToEnable = result.getDisabledRequiredIds();
       ourLoadedPlugins = result.getSortedEnabledPlugins();
-
-      int count = 0;
-      ourIdToIndex.ensureCapacity(result.getSortedEnabledPlugins().size());
-      for (IdeaPluginDescriptor descriptor : result.getSortedEnabledPlugins()) {
-        ourIdToIndex.put(descriptor.getPluginId(), count++);
-      }
 
       loadPluginsActivity.end();
       loadPluginsActivity.setDescription("plugin count: " + ourLoadedPlugins.size());
