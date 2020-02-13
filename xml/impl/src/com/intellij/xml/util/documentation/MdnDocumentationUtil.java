@@ -115,7 +115,7 @@ public class MdnDocumentationUtil {
         url = urlCandidate;
       }
     }
-    if (url == null || url.contains("#attr-")) return null;
+    if (url == null || url.contains(HtmlDocumentationProvider.ATTR_PREFIX)) return null;
     
     File targetDir = PathManager.getConfigDir().resolve("mdn").toFile();
     File targetFile = new File(targetDir, makeUniqueFileName(url));

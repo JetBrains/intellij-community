@@ -41,8 +41,8 @@ import static com.intellij.codeInsight.documentation.DocumentationManager.ORIGIN
  */
 public class HtmlDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider {
   public static final ExtensionPointName<DocumentationProvider> SCRIPT_PROVIDER_EP_NAME = ExtensionPointName.create("com.intellij.html.scriptDocumentationProvider");
-
-  private static final String ATTR_PREFIX = "#attr-";
+  public static final String ATTR_PREFIX = "#attr-";
+  
   private final boolean myUseStyleProvider;
 
   @NonNls public static final String ELEMENT_ELEMENT_NAME = "element";
