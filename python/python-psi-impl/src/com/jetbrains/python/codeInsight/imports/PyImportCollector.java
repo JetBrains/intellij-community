@@ -108,19 +108,19 @@ public class PyImportCollector {
     Project project = myNode.getProject();
     List<PsiElement> symbols = new ArrayList<>(PyClassNameIndex.find(myRefText, project, true));
     GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(myNode);
-    if (!isQualifier(myNode)) {
+    if (!isQualifier()) {
       symbols.addAll(PyFunctionNameIndex.find(myRefText, project, scope));
     }
     symbols.addAll(PyVariableNameIndex.find(myRefText, project, scope));
-    if (isPossibleModuleReference(myNode)) {
-      symbols.addAll(findImportableModules(myNode.getContainingFile(), myRefText, project, scope));
+    if (isPossibleModuleReference()) {
+      symbols.addAll(findImportableModules(project, scope));
     }
     if (!symbols.isEmpty()) {
       for (PsiElement symbol : symbols) {
         if (isIndexableTopLevel(symbol)) { // we only want top-level symbols
           PsiFileSystemItem srcfile =
             symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
-          if (srcfile != null && isAcceptableForImport(myNode, existingImportFile, srcfile)) {
+          if (srcfile != null && isAcceptableForImport(existingImportFile, srcfile)) {
             QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(symbol, myNode);
             if (importPath == null) {
               continue;
@@ -144,8 +144,8 @@ public class PyImportCollector {
     return myNode;
   }
 
-  private static boolean isAcceptableForImport(PyElement node, PsiFile existingImportFile, PsiFileSystemItem srcfile) {
-    return srcfile != existingImportFile && srcfile != node.getContainingFile() &&
+  private boolean isAcceptableForImport(PsiFile existingImportFile, PsiFileSystemItem srcfile) {
+    return srcfile != existingImportFile && srcfile != myNode.getContainingFile() &&
            (PyUtil.isRoot(srcfile) || PyNames.isIdentifier(FileUtilRt.getNameWithoutExtension(srcfile.getName()))) &&
            !isShadowedModule(srcfile);
   }
@@ -163,19 +163,19 @@ public class PyImportCollector {
     return packageDir != null && packageDir.findFile(PyNames.INIT_DOT_PY) != null;
   }
 
-  private static boolean isQualifier(PyElement node) {
-    return node.getParent() instanceof PyReferenceExpression && node == ((PyReferenceExpression)node.getParent()).getQualifier();
+  private boolean isQualifier() {
+    return myNode.getParent() instanceof PyReferenceExpression && myNode == ((PyReferenceExpression)myNode.getParent()).getQualifier();
   }
 
-  private static boolean isPossibleModuleReference(PyElement node) {
-    final PyCallExpression callExpression = as(node.getParent(), PyCallExpression.class);
-    if (callExpression != null && node == callExpression.getCallee()) {
+  private boolean isPossibleModuleReference() {
+    final PyCallExpression callExpression = as(myNode.getParent(), PyCallExpression.class);
+    if (callExpression != null && myNode == callExpression.getCallee()) {
       final PyDecorator decorator = as(callExpression, PyDecorator.class);
       // getArgumentList() still returns empty (but not null) element in this case
       return decorator != null && !decorator.hasArgumentList();
     }
-    if (node.getParent() instanceof PyArgumentList) {
-      final PyArgumentList argumentList = (PyArgumentList)node.getParent();
+    if (myNode.getParent() instanceof PyArgumentList) {
+      final PyArgumentList argumentList = (PyArgumentList)myNode.getParent();
       if (argumentList.getParent() instanceof PyClass) {
         final PyClass pyClass = (PyClass)argumentList.getParent();
         if (pyClass.getSuperClassExpressionList() == argumentList) {
@@ -186,11 +186,10 @@ public class PyImportCollector {
     return true;
   }
 
-  private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String refText, Project project,
-                                                              GlobalSearchScope scope) {
+  private Collection<PsiElement> findImportableModules(Project project, GlobalSearchScope scope) {
     List<PsiElement> result = new ArrayList<>();
     // Add packages
-    FilenameIndex.processFilesByName(refText, true, item -> {
+    FilenameIndex.processFilesByName(myRefText, true, item -> {
       ProgressManager.checkCanceled();
       final PsiDirectory candidatePackageDir = as(item, PsiDirectory.class);
       if (candidatePackageDir != null && candidatePackageDir.findFile(PyNames.INIT_DOT_PY) != null) {
@@ -199,9 +198,9 @@ public class PyImportCollector {
       return true;
     }, scope, project, null);
     // Add modules
-    FilenameIndex.processFilesByName(refText + ".py", false, true, item -> {
+    FilenameIndex.processFilesByName(myRefText + ".py", false, true, item -> {
       ProgressManager.checkCanceled();
-      if (PyUtil.isImportable(targetFile, item)) {
+      if (PyUtil.isImportable(myNode.getContainingFile(), item)) {
         result.add(item);
       }
       return true;

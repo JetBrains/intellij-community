@@ -35,7 +35,6 @@ public class PyImportChooser implements ImportChooser {
       .setRenderer(new CellRenderer(name))
       .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
       .setItemChosenCallback((item) -> {
-        PsiDocumentManager.getInstance(target.getProject()).commitAllDocuments();
         result.setResult(item);
       })
       .setNamerForFiltering(o -> o.getPresentableText(name))
