@@ -552,7 +552,7 @@ public class ChangesViewManager implements ChangesViewEx,
       actions.add(Separator.getInstance());
       actions.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
 
-      DefaultActionGroup viewOptionsGroup = new DefaultActionGroup("View Options", true);
+      DefaultActionGroup viewOptionsGroup = DefaultActionGroup.createPopupGroup(() -> "View Options");
       viewOptionsGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
       viewOptionsGroup.add(new ToggleShowIgnoredAction());
       viewOptionsGroup.add(ActionManager.getInstance().getAction("ChangesView.ViewOptions"));

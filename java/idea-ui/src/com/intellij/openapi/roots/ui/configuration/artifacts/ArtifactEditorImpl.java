@@ -376,7 +376,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   private ActionGroup createAddNonCompositeElementGroup() {
-    DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("artifacts.add.copy.action"), true);
+    DefaultActionGroup group = DefaultActionGroup.createPopupGroup(() -> ProjectBundle.message("artifacts.add.copy.action"));
     group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
     for (PackagingElementType<?> type : PackagingElementFactory.getInstance().getNonCompositeElementTypes()) {
       group.add(new AddNewPackagingElementAction(type, this));

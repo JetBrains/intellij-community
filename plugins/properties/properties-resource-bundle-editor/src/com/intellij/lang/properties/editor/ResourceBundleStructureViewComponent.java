@@ -81,7 +81,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
   }
 
   private ActionGroup createSettingsActionGroup() {
-    DefaultActionGroup actionGroup = new DefaultActionGroup(ResourceBundleEditorBundle.message("resource.bundle.editor.settings.action.title"), true);
+    DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(() -> ResourceBundleEditorBundle.message("resource.bundle.editor.settings.action.title"));
     final Presentation presentation = actionGroup.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.GearPlain);
     actionGroup.add(new ResourceBundleEditorKeepEmptyValueToggleAction());

@@ -182,7 +182,7 @@ final class EventLogConsole {
   }
 
   private static void addConfigureNotificationAction(@NotNull DefaultActionGroup actions, @NotNull String groupId) {
-    DefaultActionGroup displayTypeGroup = new DefaultActionGroup("Notification Display Type", true);
+    DefaultActionGroup displayTypeGroup = DefaultActionGroup.createPopupGroup(() -> "Notification Display Type");
     NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
     NotificationDisplayType current = settings.getDisplayType();
 

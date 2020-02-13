@@ -145,7 +145,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
 
     if (parentDomElement instanceof MergedObject) {
       final List<DomElement> implementations = (List<DomElement>)((MergedObject)parentDomElement).getImplementations();
-      final DefaultActionGroup actionGroup = new DefaultActionGroup(name, true);
+      final DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(() -> name);
 
       for (DomElement implementation : implementations) {
         final XmlFile xmlFile = DomUtil.getFile(implementation);

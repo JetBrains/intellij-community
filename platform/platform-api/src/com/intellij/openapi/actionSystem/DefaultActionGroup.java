@@ -78,8 +78,16 @@ public class DefaultActionGroup extends ActionGroup {
     this(() -> shortName, popup);
   }
 
-  public DefaultActionGroup(@NotNull Supplier<String> shortName, boolean popup) {
+  protected DefaultActionGroup(@NotNull Supplier<String> shortName, boolean popup) {
     super(shortName, popup);
+  }
+
+  public static DefaultActionGroup createPopupGroup(@NotNull Supplier<String> shortName) {
+    return new DefaultActionGroup(shortName, true);
+  }
+
+  public static DefaultActionGroup createFlatGroup(@NotNull Supplier<String> shortName) {
+    return new DefaultActionGroup(shortName, false);
   }
 
   private void incrementModificationStamp() {

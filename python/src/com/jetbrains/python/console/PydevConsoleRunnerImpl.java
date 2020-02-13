@@ -190,7 +190,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     // Attach Debugger
     toolbarActions.add(new ConnectDebuggerAction());
     // Settings
-    DefaultActionGroup settings = new DefaultActionGroup("Settings", true);
+    DefaultActionGroup settings = DefaultActionGroup.createPopupGroup(() -> "Settings");
     settings.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     settings.add(new PyVariableViewSettings.SimplifiedView(null));
     settings.add(new PyVariableViewSettings.VariablesPolicyGroup());

@@ -91,7 +91,7 @@ public class MorphingAction extends AnAction {
       return;
     }
 
-    DefaultActionGroup morphingGroup = new DefaultActionGroup("Morphing", true);
+    DefaultActionGroup morphingGroup = DefaultActionGroup.createPopupGroup(() -> "Morphing");
     for (MetaModel morphingModel : models) {
       morphingGroup.add(new MorphingAction(designer, area, selection, morphingModel));
     }

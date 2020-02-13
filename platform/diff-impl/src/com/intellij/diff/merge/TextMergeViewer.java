@@ -250,7 +250,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     protected List<AnAction> createToolbarActions() {
       List<AnAction> group = new ArrayList<>();
 
-      DefaultActionGroup diffGroup = new DefaultActionGroup("Compare Contents", true);
+      DefaultActionGroup diffGroup = DefaultActionGroup.createPopupGroup(() -> "Compare Contents");
       diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
       diffGroup.add(Separator.create("Compare Contents"));
       diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_MIDDLE, true));

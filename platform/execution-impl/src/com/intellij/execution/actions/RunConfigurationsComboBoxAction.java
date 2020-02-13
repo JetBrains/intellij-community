@@ -207,7 +207,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
         String folderName = entry.getKey();
-        DefaultActionGroup group = folderName == null ? actionGroup : new DefaultActionGroup(folderName, true);
+        DefaultActionGroup group = folderName == null ? actionGroup : DefaultActionGroup.createPopupGroup(() -> folderName);
         group.getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
         for (RunnerAndConfigurationSettings settings : entry.getValue()) {
           group.add(new SelectConfigAction(settings, project));

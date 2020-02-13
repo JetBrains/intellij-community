@@ -116,7 +116,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
 
   public static ActionPopupMenu createShortPopupForRepositoryDialog(RepositoryBrowserComponent browserComponent) {
     DefaultActionGroup group = new DefaultActionGroup();
-    DefaultActionGroup newGroup = new DefaultActionGroup("_New", true);
+    DefaultActionGroup newGroup = DefaultActionGroup.createPopupGroup(() -> "_New");
     newGroup.add(new AddLocationAction(browserComponent));
     newGroup.add(new MkDirAction(browserComponent));
     group.add(newGroup);

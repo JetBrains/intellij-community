@@ -326,7 +326,7 @@ public class LightToolWindow extends JPanel {
     group.add(myManager.createGearActions());
     if (myManager.getAnchor() == null) {
       group.addSeparator();
-      DefaultActionGroup viewModeGroup = new DefaultActionGroup(ActionsBundle.groupText("ViewMode"), true);
+      DefaultActionGroup viewModeGroup = DefaultActionGroup.createPopupGroup(() -> ActionsBundle.groupText("ViewMode"));
       for (ToolWindowViewModeAction.ViewMode viewMode : ToolWindowViewModeAction.ViewMode.values()) {
         viewModeGroup.add(new MyViewModeAction(viewMode));
       }

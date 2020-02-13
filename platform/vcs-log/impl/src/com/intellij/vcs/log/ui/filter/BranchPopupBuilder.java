@@ -75,7 +75,7 @@ public abstract class BranchPopupBuilder {
       actionGroup.add(createAction(entry.getKey(), entry.getValue()));
     }
     if (!groups.recentGroups.isEmpty()) {
-      DefaultActionGroup recentGroup = new DefaultActionGroup("Recent", true);
+      DefaultActionGroup recentGroup = DefaultActionGroup.createPopupGroup(() -> "Recent");
       for (List<String> recentItem : groups.recentGroups) {
         createRecentAction(recentGroup, recentItem);
       }
@@ -96,7 +96,7 @@ public abstract class BranchPopupBuilder {
     }
     actionGroup.addSeparator();
     for (Map.Entry<String, TreeMap<String, Collection<VcsRef>>> group : groups.collapsedGroups.entrySet()) {
-      DefaultActionGroup popupGroup = new DefaultActionGroup(group.getKey(), true);
+      DefaultActionGroup popupGroup = DefaultActionGroup.createPopupGroup(() -> group.getKey());
       for (Map.Entry<String, Collection<VcsRef>> entry : group.getValue().entrySet()) {
         popupGroup.add(createCollapsedAction(entry.getKey(), entry.getValue()));
       }

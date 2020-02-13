@@ -137,7 +137,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     else {
       fillCharsetActions(group, myVirtualFile, favorites, charsetFilter);
 
-      DefaultActionGroup more = new DefaultActionGroup("more", true);
+      DefaultActionGroup more = DefaultActionGroup.createPopupGroup(() -> "more");
       group.add(more);
       fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), charsetFilter);
     }

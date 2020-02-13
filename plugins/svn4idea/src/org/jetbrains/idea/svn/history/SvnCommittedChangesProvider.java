@@ -250,7 +250,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     RootsAndBranches rootsAndBranches = new RootsAndBranches(myVcs, manager, location);
     refreshMergeInfo(rootsAndBranches);
 
-    DefaultActionGroup popup = new DefaultActionGroup(myVcs.getDisplayName(), true);
+    DefaultActionGroup popup = DefaultActionGroup.createPopupGroup(() -> myVcs.getDisplayName());
     popup.add(rootsAndBranches.getIntegrateAction());
     popup.add(rootsAndBranches.getUndoIntegrateAction());
     popup.add(new ConfigureBranchesAction());

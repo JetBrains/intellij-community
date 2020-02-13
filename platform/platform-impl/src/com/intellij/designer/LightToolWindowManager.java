@@ -126,7 +126,7 @@ public abstract class LightToolWindowManager implements Disposable {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   public AnAction createGearActions() {
-    DefaultActionGroup group = new DefaultActionGroup("In Editor Mode", true);
+    DefaultActionGroup group = DefaultActionGroup.createPopupGroup(() -> "In Editor Mode");
 
     group.add(createToggleAction(ToolWindowAnchor.LEFT));
     group.add(createToggleAction(ToolWindowAnchor.RIGHT));

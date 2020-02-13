@@ -258,7 +258,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     if (templates.isEmpty()) {
       return new AddArtifactAction(type, emptyTemplate, type.getPresentableName(), type.getIcon());
     }
-    final DefaultActionGroup group = new DefaultActionGroup(type.getPresentableName(), true);
+    final DefaultActionGroup group = DefaultActionGroup.createPopupGroup(() -> type.getPresentableName());
     group.getTemplatePresentation().setIcon(type.getIcon());
     group.add(new AddArtifactAction(type, emptyTemplate, emptyTemplate.getPresentableName(), null));
     group.addSeparator();

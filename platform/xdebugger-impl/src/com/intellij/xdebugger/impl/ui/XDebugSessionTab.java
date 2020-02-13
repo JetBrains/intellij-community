@@ -288,7 +288,7 @@ public final class XDebugSessionTab extends DebuggerSessionTabBase {
 
     leftToolbar.add(myUi.getOptions().getLayoutActions());
     final AnAction[] commonSettings = myUi.getOptions().getSettingsActionsList();
-    DefaultActionGroup settings = new DefaultActionGroup(ActionsBundle.message("group.XDebugger.settings.text"), true);
+    DefaultActionGroup settings = DefaultActionGroup.createPopupGroup(() -> ActionsBundle.message("group.XDebugger.settings.text"));
     settings.getTemplatePresentation().setIcon(myUi.getOptions().getSettingsActions().getTemplatePresentation().getIcon());
     settings.addAll(commonSettings);
     leftToolbar.add(settings);

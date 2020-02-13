@@ -796,10 +796,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       };
 
-      DefaultActionGroup actions = new DefaultActionGroup("Simple group", false);
+      DefaultActionGroup actions = DefaultActionGroup.createFlatGroup(() -> "Simple group");
       actions.addAll(actionsArray);
 
-      DefaultActionGroup subActions = new DefaultActionGroup("Ratings", true);
+      DefaultActionGroup subActions = DefaultActionGroup.createPopupGroup(() -> "Ratings");
       subActions.getTemplatePresentation().setIcon(AllIcons.Ide.Rating);
       subActions.addAll(new MyAction("Rating one", AllIcons.Ide.Rating1).withDefaultDescription(),
                         new MyAction("Rating two", AllIcons.Ide.Rating2).withDefaultDescription(),

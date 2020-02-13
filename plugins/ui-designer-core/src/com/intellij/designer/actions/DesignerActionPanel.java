@@ -101,7 +101,7 @@ public class DesignerActionPanel implements DataProvider {
 
   @NotNull
   private ActionGroup createSelectActionGroup(DesignerEditorPanel designer) {
-    final DefaultActionGroup group = new DefaultActionGroup("_Select", true);
+    final DefaultActionGroup group = DefaultActionGroup.createPopupGroup(() -> "_Select");
 
     AnAction selectParent = new AnAction(UIBundle.lazyMessage("action.DesignerActionPanel.Anonymous.text.select.parent"),
                                          UIBundle.lazyMessage("action.DesignerActionPanel.Anonymous.description.select.parent"), null) {

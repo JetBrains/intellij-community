@@ -183,7 +183,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   protected JPopupMenu createPopup(boolean toolWindow) {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
-    DefaultActionGroup newGroup = new DefaultActionGroup("_New", true);
+    DefaultActionGroup newGroup = DefaultActionGroup.createPopupGroup(() -> "_New");
     final RepositoryBrowserComponent browser = getRepositoryBrowser();
     newGroup.add(new AddLocationAction(browser));
     newGroup.add(new MkDirAction(browser));
