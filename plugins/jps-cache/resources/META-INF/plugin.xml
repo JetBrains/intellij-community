@@ -1,12 +1,14 @@
 <idea-plugin>
   <id>com.jetbrains.jps.cache</id>
-  <vendor>JetBrains</vendor>
   <name>JPS Cache</name>
+  <vendor>JetBrains</vendor>
+  <idea-version since-build="201.3803.71"/>
 
-  <depends>Git4Idea</depends>
   <description><![CDATA[
   Adds support for working with JPS portable caches
 ]]></description>
+
+  <depends>Git4Idea</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager"/>
