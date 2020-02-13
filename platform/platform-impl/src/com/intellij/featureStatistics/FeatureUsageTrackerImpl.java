@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -27,7 +27,7 @@ import java.util.Set;
 import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getPluginType;
 
 @State(name = "FeatureUsageStatistics", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
-public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
+public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
   private static final int HOUR = 1000 * 60 * 60;
   private static final long DAY = HOUR * 24;
   private long FIRST_RUN_TIME = 0;
@@ -58,7 +58,9 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
   private boolean isToBeShown(String featureId, Project project, final long timeUnit) {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
-    if (descriptor == null || !descriptor.isUnused()) return false;
+    if (descriptor == null || !descriptor.isUnused()) {
+      return false;
+    }
 
     String[] dependencyFeatures = descriptor.getDependencyFeatures();
     boolean locked = dependencyFeatures.length > 0;

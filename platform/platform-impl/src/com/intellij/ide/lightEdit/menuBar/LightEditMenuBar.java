@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.menuBar;
 
 import com.intellij.ide.lightEdit.actions.LightEditExitAction;
@@ -7,15 +7,12 @@ import com.intellij.ide.lightEdit.actions.LightEditSaveAsAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class LightEditMenuBar extends IdeMenuBar {
-
+public final class LightEditMenuBar extends IdeMenuBar {
   @Override
-  @Nullable
-  public ActionGroup getMainMenuActionGroup() {
+  public @NotNull ActionGroup getMainMenuActionGroup() {
     return new DefaultActionGroup(
       createActionGroup("&File",
                         new LightEditNewFileAction(),
@@ -51,7 +48,7 @@ public class LightEditMenuBar extends IdeMenuBar {
   }
 
   @NotNull
-  protected ActionGroup createActionGroup(@NotNull String title, AnAction... actions) {
+  private static ActionGroup createActionGroup(@NotNull String title, AnAction... actions) {
     return new DefaultActionGroup(title, Arrays.asList(actions));
   }
 

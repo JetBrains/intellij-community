@@ -18,7 +18,7 @@ import static com.intellij.util.ObjectUtils.notNull;
  * Provides information about operating system, system-wide settings, and Java Runtime.
  */
 @SuppressWarnings("unused")
-public class SystemInfo extends SystemInfoRt {
+public final class SystemInfo extends SystemInfoRt {
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
   public static final String OS_ARCH = System.getProperty("os.arch");
