@@ -116,6 +116,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final String UNREGISTER_ELEMENT_NAME = "unregister";
   private static final String OVERRIDE_TEXT_ELEMENT_NAME = "override-text";
   private static final String PLACE_ATTR_NAME = "place";
+  private static final String USE_TEXT_OF_PLACE_ATTR_NAME = "use-text-of-place";
   private static final String RESOURCE_BUNDLE_ATTR_NAME = "resource-bundle";
 
   private static final Logger LOG = Logger.getInstance(ActionManagerImpl.class);
@@ -927,13 +928,19 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, stub.getId() + ": override-text specified without place");
       return;
     }
-    String text = element.getAttributeValue(TEXT_ATTR_NAME, "");
-    if (text.isEmpty() && bundle != null) {
-      String key = "action." + stub.getId() + "." + place + ".text";
-      text = BundleBase.message(bundle, key);
+    String useTextOfPlace = element.getAttributeValue(USE_TEXT_OF_PLACE_ATTR_NAME);
+    if (useTextOfPlace != null) {
+      stub.copyActionTextOverride(useTextOfPlace, place);
     }
+    else {
+      String text = element.getAttributeValue(TEXT_ATTR_NAME, "");
+      if (text.isEmpty() && bundle != null) {
+        String key = "action." + stub.getId() + "." + place + ".text";
+        text = BundleBase.message(bundle, key);
+      }
 
-    stub.addActionTextOverride(place, text);
+      stub.addActionTextOverride(place, text);
+    }
   }
 
   /**

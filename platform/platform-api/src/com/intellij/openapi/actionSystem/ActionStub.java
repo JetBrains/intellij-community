@@ -50,6 +50,10 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     myActionTextOverrides = myActionTextOverrides.plus(place, text);
   }
 
+  public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace) {
+    myActionTextOverrides = myActionTextOverrides.plus(toPlace, myActionTextOverrides.get(fromPlace));
+  }
+
   @NotNull
   @Override
   public IdeaPluginDescriptor getPlugin() {

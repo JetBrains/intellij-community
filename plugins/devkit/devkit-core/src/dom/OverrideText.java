@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.codeInspection.dataFlow.StringExpressionHelper;
@@ -22,6 +22,11 @@ public interface OverrideText extends DomElement {
   @Required
   @Convert(PlaceConverter.class)
   GenericAttributeValue<String> getPlace();
+
+  @NotNull
+  @Required
+  @Convert(PlaceConverter.class)
+  GenericAttributeValue<String> getUseTextOfPlace();
 
   @NotNull
   @Required(value = false)

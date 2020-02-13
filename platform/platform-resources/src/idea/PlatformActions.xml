@@ -591,6 +591,7 @@
         <separator/>
         <action id="GotoLine" class="com.intellij.ide.actions.GotoLineAction">
           <override-text place="MainMenu"/>
+          <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
         </action>
         <separator/>
 
