@@ -114,7 +114,7 @@ internal class LegacyBridgeLibraryImpl(
     storage.resolve(id)
   }
 
-  private val libraryEntity
+  internal val libraryEntity
     get() = entityStore.cachedValue(libraryEntityValue, entityId)
 
   internal val snapshotValue = CachedValueWithParameter { storage, id: LibraryId ->

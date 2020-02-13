@@ -246,18 +246,9 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
       return
     }
 
-    val state = properties?.state
-    val propertiesString = if (state != null) {
-        val propertiesElement = serialize(state)
-        if (propertiesElement != null && !JDOMUtil.isEmpty(propertiesElement)) {
-          propertiesElement.name = LibraryImpl.PROPERTIES_ELEMENT
-          JDOMUtil.writeElement(propertiesElement)
-        } else null
-      } else null
-
     updateProperties {
       libraryType = kind.kindId
-      propertiesXmlTag = propertiesString
+      propertiesXmlTag = serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, properties)
     }
 
     if (assertChangesApplied && currentLibrary.properties != properties) {

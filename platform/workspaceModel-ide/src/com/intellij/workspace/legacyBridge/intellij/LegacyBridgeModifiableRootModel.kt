@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.util.Disposer
@@ -566,6 +567,14 @@ class LegacyBridgeModifiableRootModel(
       get() = modifiableModel.entityStoreOnDiff.cachedValue(librariesValue, librariesToAdd to librariesToRemove)
 
     override fun commit() {
+      librariesToAdd.forEach { library ->
+        val componentAsString = modifiableModel.serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, library.properties) ?: return@forEach
+        library.libraryEntity?.getCustomProperties()?.let { property ->
+          modifiableModel.diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, property) {
+            propertiesXmlTag = componentAsString
+          }
+        }
+      }
     }
 
     override fun dispose() {
