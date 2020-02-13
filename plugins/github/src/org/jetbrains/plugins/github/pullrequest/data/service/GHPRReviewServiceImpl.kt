@@ -20,7 +20,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                             private val requestExecutor: GithubApiRequestExecutor,
                             private val repository: GHRepositoryCoordinates) : GHPRReviewService {
 
-  override fun canComment() = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
+  override fun canComment() = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)
 
   override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String> {
     return progressManager.submitIOTask(progressIndicator) {
