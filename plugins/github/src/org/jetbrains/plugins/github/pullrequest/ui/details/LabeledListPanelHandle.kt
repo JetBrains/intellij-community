@@ -2,14 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.pullrequest.data.GHPRBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.ui.WrapLayout
@@ -23,9 +21,9 @@ import javax.swing.JLabel
 
 internal abstract class LabeledListPanelHandle<T>(private val model: SingleValueModel<GHPullRequest?>,
                                                   private val securityService: GHPRSecurityService,
-                                                  private val busyStateTracker: GHPRBusyStateTracker,
-                                                  emptyText: String, notEmptyText: String)
-  : Disposable {
+                                                  emptyText: String, notEmptyText: String) {
+
+  private val busyStateModel = SingleValueModel(false)
 
   val label = JLabel().apply {
     foreground = UIUtil.getContextHelpForeground()
@@ -70,17 +68,17 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
       updateButton()
     }
 
-    model.addValueChangedListener(this) {
+    model.addValueChangedListener {
       update()
     }
-    busyStateTracker.addPullRequestBusyStateListener(this) {
+    busyStateModel.addValueChangedListener {
       updateButton()
     }
     update()
   }
 
   private fun updateButton() {
-    editButton.isEnabled = !(model.value?.number?.let(busyStateTracker::isBusy) ?: true)
+    editButton.isEnabled = !busyStateModel.value
   }
 
   private fun getListItemComponent(item: T, last: Boolean = false) =
@@ -94,6 +92,4 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
   abstract fun getItemComponent(item: T): JComponent
 
   abstract fun editList()
-
-  override fun dispose() {}
 }

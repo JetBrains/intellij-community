@@ -177,12 +177,11 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     Disposer.register(loaderPanel, timelinePanel)
     Disposer.register(timelinePanel, loadingIcon)
 
-    val statePanel = GHPRStatePanel.create(project, detailsModel,
+    val busyStateModel = SingleValueModel(false)
+    val statePanel = GHPRStatePanel.create(project, detailsModel, busyStateModel,
                                            dataProvider,
                                            context.securityService,
-                                           context.busyStateTracker,
-                                           context.stateService,
-                                           disposable)
+                                           context.stateService)
 
     val contentPanel = JBUI.Panels.simplePanel(loaderPanel).addToBottom(statePanel).andTransparent()
 

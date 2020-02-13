@@ -153,7 +153,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     return ghprVirtualFile ?: error("error")
   }
-  
+
   fun tryOpenGHPREditorTab() {
     val file = getOrCreateGHPRViewFile() ?: return
 
@@ -179,7 +179,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     val detailsLoadingModel = createDetailsLoadingModel(dataProviderModel, disposable)
     val detailsModel = createValueModel(detailsLoadingModel)
 
-    val detailsPanel = createDetailsPanel(dataContext, detailsModel, avatarIconsProviderFactory, disposable)
+    val detailsPanel = createDetailsPanel(dataContext, detailsModel, avatarIconsProviderFactory)
     val detailsLoadingPanel = GHLoadingPanel(detailsLoadingModel, detailsPanel, disposable,
                                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
                                                                                    "Can't load details")).apply {
@@ -270,16 +270,13 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private fun createDetailsPanel(dataContext: GHPRDataContext,
                                  detailsModel: SingleValueModel<GHPullRequest?>,
-                                 avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
-                                 parentDisposable: Disposable): JBPanelWithEmptyText {
+                                 avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JBPanelWithEmptyText {
+
     val metaPanel = GHPRMetadataPanel(project, detailsModel,
                                       dataContext.securityService,
-                                      dataContext.busyStateTracker,
                                       dataContext.metadataService,
                                       avatarIconsProviderFactory).apply {
       border = JBUI.Borders.empty(4, 8, 4, 8)
-    }.also {
-      Disposer.register(parentDisposable, it)
     }
 
     val descriptionPanel = GHPRDescriptionPanel(detailsModel).apply {

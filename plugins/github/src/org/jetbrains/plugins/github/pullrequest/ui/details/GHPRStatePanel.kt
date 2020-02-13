@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.ui.SimpleTextAttributes
@@ -16,7 +15,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
-import org.jetbrains.plugins.github.pullrequest.data.GHPRBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
@@ -32,11 +30,10 @@ import javax.swing.JLabel
 object GHPRStatePanel {
   fun create(project: Project,
              model: SingleValueModel<out GHPullRequestShort>,
+             busyStateModel: SingleValueModel<Boolean>,
              dataProvider: GHPRDataProvider,
              securityService: GHPRSecurityService,
-             busyStateTracker: GHPRBusyStateTracker,
-             stateService: GHPRStateService,
-             parentDisposable: Disposable): JComponent {
+             stateService: GHPRStateService): JComponent {
 
     val stateLabel = JLabel().apply {
       border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
@@ -45,8 +42,7 @@ object GHPRStatePanel {
       foreground = UIUtil.getContextHelpForeground()
     }
     val buttonsPanel = createButtons(project, model,
-                                     dataProvider, securityService, busyStateTracker, stateService,
-                                     parentDisposable).apply {
+                                     busyStateModel, dataProvider, securityService, stateService).apply {
       border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
     }
 
@@ -61,11 +57,10 @@ object GHPRStatePanel {
 
   private fun createButtons(project: Project,
                             model: SingleValueModel<out GHPullRequestShort>,
+                            busyStateModel: SingleValueModel<Boolean>,
                             dataProvider: GHPRDataProvider,
                             securityService: GHPRSecurityService,
-                            busyStateTracker: GHPRBusyStateTracker,
-                            stateService: GHPRStateService,
-                            parentDisposable: Disposable): JComponent {
+                            stateService: GHPRStateService): JComponent {
     val closeButton = JButton()
     val reopenButton = JButton()
 
@@ -75,7 +70,7 @@ object GHPRStatePanel {
       foreground = SimpleTextAttributes.ERROR_ATTRIBUTES.fgColor
     }
 
-    ButtonsController(project, model, dataProvider, securityService, busyStateTracker, stateService, parentDisposable,
+    ButtonsController(project, model, busyStateModel, dataProvider, securityService, stateService,
                       closeButton, reopenButton, mergeButton, errorPanel)
 
     return NonOpaquePanel(FlowLayout(FlowLayout.LEADING, 0, 0)).apply {
@@ -140,22 +135,21 @@ object GHPRStatePanel {
 
   private class ButtonsController(project: Project,
                                   private val model: SingleValueModel<out GHPullRequestShort>,
+                                  private val busyStateModel: SingleValueModel<Boolean>,
                                   dataProvider: GHPRDataProvider,
                                   private val securityService: GHPRSecurityService,
-                                  private val busyStateTracker: GHPRBusyStateTracker,
                                   stateService: GHPRStateService,
-                                  parentDisposable: Disposable,
                                   private val closeButton: JButton,
                                   private val reopenButton: JButton,
                                   private val mergeButton: JBOptionButton,
                                   errorPanel: HtmlEditorPane) {
 
-    val closeAction = GHPRCloseAction(model.value.number, busyStateTracker, stateService, errorPanel)
-    val reopenAction = GHPRReopenAction(model.value.number, busyStateTracker, stateService, errorPanel)
+    val closeAction = GHPRCloseAction(model.value.number, busyStateModel, stateService, errorPanel)
+    val reopenAction = GHPRReopenAction(model.value.number, busyStateModel, stateService, errorPanel)
 
-    val mergeAction = GHPRMergeAction(project, model, busyStateTracker, stateService, errorPanel)
-    val rebaseMergeAction = GHPRRebaseMergeAction(model, busyStateTracker, stateService, errorPanel)
-    val squashMergeAction = GHPRSquashMergeAction(project, dataProvider, model, busyStateTracker, stateService, errorPanel)
+    val mergeAction = GHPRMergeAction(project, model, busyStateModel, stateService, errorPanel)
+    val rebaseMergeAction = GHPRRebaseMergeAction(model, busyStateModel, stateService, errorPanel)
+    val squashMergeAction = GHPRSquashMergeAction(project, dataProvider, model, busyStateModel, stateService, errorPanel)
 
     init {
       updateActions()
@@ -163,7 +157,7 @@ object GHPRStatePanel {
       model.addValueChangedListener {
         updateActions()
       }
-      busyStateTracker.addPullRequestBusyStateListener(parentDisposable) {
+      busyStateModel.addValueChangedListener {
         updateActions()
       }
       closeButton.action = closeAction
@@ -176,16 +170,16 @@ object GHPRStatePanel {
                     securityService.currentUser == value.author
 
       reopenButton.isVisible = canEdit && value.state == GHPullRequestState.CLOSED
-      reopenAction.isEnabled = reopenButton.isVisible && !busyStateTracker.isBusy(value.number)
+      reopenAction.isEnabled = reopenButton.isVisible && !busyStateModel.value
 
       closeButton.isVisible = canEdit && value.state == GHPullRequestState.OPEN
-      closeAction.isEnabled = closeButton.isVisible && !busyStateTracker.isBusy(value.number)
+      closeAction.isEnabled = closeButton.isVisible && !busyStateModel.value
 
       val canMerge = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)
 
       mergeButton.isVisible = canMerge && value.state == GHPullRequestState.OPEN && value is GHPullRequest
       val mergeable = mergeButton.isVisible && value is GHPullRequest && value.mergeable == GHPullRequestMergeableState.MERGEABLE &&
-                      !busyStateTracker.isBusy(value.number) &&
+                      !busyStateModel.value &&
                       !securityService.isMergeForbiddenForProject()
 
       mergeAction.isEnabled = mergeable

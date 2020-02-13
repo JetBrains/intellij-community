@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
-import org.jetbrains.plugins.github.pullrequest.data.GHPRBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
@@ -22,7 +21,7 @@ import javax.swing.AbstractAction
 internal class GHPRSquashMergeAction(private val project: Project,
                                      private val dataProvider: GHPRDataProvider,
                                      private val detailsModel: SingleValueModel<out GHPullRequestShort>,
-                                     private val busyStateTracker: GHPRBusyStateTracker,
+                                     private val busyStateModel: SingleValueModel<Boolean>,
                                      private val stateService: GHPRStateService,
                                      private val errorPanel: HtmlEditorPane)
   : AbstractAction("Squash and Merge...") {
@@ -30,7 +29,8 @@ internal class GHPRSquashMergeAction(private val project: Project,
   override fun actionPerformed(e: ActionEvent) {
     detailsModel.value.let {
       if (it !is GHPullRequest) return
-      if (!busyStateTracker.acquire(it.number)) return
+      if (busyStateModel.value) return
+      busyStateModel.value = true
       errorPanel.setBody("")
 
 
@@ -50,7 +50,7 @@ internal class GHPRSquashMergeAction(private val project: Project,
         //language=HTML
         errorPanel.setBody("<p>Error occurred while merging pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
       }.handleOnEdt { _, _ ->
-        busyStateTracker.release(it.number)
+        busyStateModel.value = false
       }
     }
   }

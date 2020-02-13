@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
-import org.jetbrains.plugins.github.pullrequest.data.GHPRBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -17,7 +16,7 @@ import javax.swing.AbstractAction
 
 internal class GHPRMergeAction(private val project: Project,
                                private val detailsModel: SingleValueModel<out GHPullRequestShort>,
-                               private val busyStateTracker: GHPRBusyStateTracker,
+                               private val busyStateModel: SingleValueModel<Boolean>,
                                private val stateService: GHPRStateService,
                                private val errorPanel: HtmlEditorPane)
   : AbstractAction("Merge...") {
@@ -25,7 +24,8 @@ internal class GHPRMergeAction(private val project: Project,
   override fun actionPerformed(e: ActionEvent) {
     detailsModel.value.let {
       if (it !is GHPullRequest) return
-      if (!busyStateTracker.acquire(it.number)) return
+      if (busyStateModel.value) return
+      busyStateModel.value = true
       errorPanel.setBody("")
 
       val dialog = GithubMergeCommitMessageDialog(project,
@@ -33,7 +33,7 @@ internal class GHPRMergeAction(private val project: Project,
                                                   "Merge pull request #${it.number}",
                                                   it.title)
       if (!dialog.showAndGet()) {
-        busyStateTracker.release(it.number)
+        busyStateModel.value = false
         return
       }
 
@@ -43,7 +43,7 @@ internal class GHPRMergeAction(private val project: Project,
           errorPanel.setBody("<p>Error occurred while merging pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
         }
         .handleOnEdt { _, _ ->
-          busyStateTracker.release(it.number)
+          busyStateModel.value = false
         }
     }
   }

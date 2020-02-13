@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.action
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.data.GHPRBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -14,7 +13,7 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 
 internal class GHPRRebaseMergeAction(private val detailsModel: SingleValueModel<out GHPullRequestShort>,
-                                     private val busyStateTracker: GHPRBusyStateTracker,
+                                     private val busyStateModel: SingleValueModel<Boolean>,
                                      private val stateService: GHPRStateService,
                                      private val errorPanel: HtmlEditorPane)
   : AbstractAction("Rebase and Merge") {
@@ -22,7 +21,8 @@ internal class GHPRRebaseMergeAction(private val detailsModel: SingleValueModel<
   override fun actionPerformed(e: ActionEvent) {
     detailsModel.value.let {
       if (it !is GHPullRequest) return
-      if (!busyStateTracker.acquire(it.number)) return
+      if (busyStateModel.value) return
+      busyStateModel.value = true
       errorPanel.setBody("")
 
       stateService.rebaseMerge(EmptyProgressIndicator(), it.number, it.headRefOid)
@@ -31,7 +31,7 @@ internal class GHPRRebaseMergeAction(private val detailsModel: SingleValueModel<
           errorPanel.setBody("<p>Error occurred while merging pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
         }
         .handleOnEdt { _, _ ->
-          busyStateTracker.release(it.number)
+          busyStateModel.value = false
         }
     }
   }

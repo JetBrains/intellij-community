@@ -7,7 +7,6 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
@@ -19,7 +18,6 @@ interface GHPRActionDataContext {
   val account: GithubAccount
 
   val securityService: GHPRSecurityService
-  val busyStateTracker: GHPRBusyStateTracker
   val stateService: GHPRStateService
   val reviewService: GHPRReviewService
   val commentService: GHPRCommentService
