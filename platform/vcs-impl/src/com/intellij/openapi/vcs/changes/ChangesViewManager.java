@@ -593,10 +593,14 @@ public class ChangesViewManager implements ChangesViewEx,
       ApplicationManager.getApplication().assertIsDispatchThread();
       myTreeUpdateAlarm.cancelAllRequests();
 
-      ProgressManager.getInstance().executeNonCancelableSection(() -> refreshView());
+      refreshView(false);
     }
 
     private void refreshView() {
+      refreshView(true);
+    }
+
+    private void refreshView(boolean canBeCancelled) {
       ProgressIndicator indicator = new EmptyProgressIndicator();
       synchronized (myTreeUpdateIndicatorLock) {
         myTreeUpdateIndicator.cancel();
@@ -642,7 +646,7 @@ public class ChangesViewManager implements ChangesViewEx,
           }
           myDiffPreview.updatePreview(true);
         });
-      }, indicator);
+      }, canBeCancelled ? indicator : null);
     }
 
     public void setGrouping(@NotNull String groupingKey) {

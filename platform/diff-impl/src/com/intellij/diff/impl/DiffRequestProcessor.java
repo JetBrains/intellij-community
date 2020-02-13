@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -335,21 +336,23 @@ public abstract class DiffRequestProcessor implements Disposable {
       myActiveRequest = request;
       myActiveRequest.onAssigned(true);
 
-      try {
-        myState = createState();
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
         try {
-          myState.init();
+          myState = createState();
+          try {
+            myState.init();
+          }
+          catch (Throwable e) {
+            myState.destroy();
+            throw e;
+          }
         }
         catch (Throwable e) {
-          myState.destroy();
-          throw e;
+          LOG.error(e);
+          myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool(true));
+          myState.init();
         }
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-        myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool(true));
-        myState.init();
-      }
+      });
     });
   }
 
