@@ -301,9 +301,7 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
       }
 
       if (!isSupportRangeValid(document, leaderRange, support)) return findSupportForTagList(leader, element, document);
-
-      TextRange realRange = InjectedLanguageManager.getInstance(file.getProject()).injectedToHost(element.getContainingFile(), support);
-      return document.createRangeMarker(realRange.getStartOffset(), realRange.getEndOffset(), true);
+      return document.createRangeMarker(support.getStartOffset(), support.getEndOffset(), true);
     }
 
     private boolean isValidTagNameChar(char c) {
@@ -346,7 +344,8 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
       if (support == null) return null;
       final int start = findSupportRangeStart(support);
       final int end = findSupportRangeEnd(support);
-      return TextRange.create(start, end);
+      final TextRange supportRange = TextRange.create(start, end);
+      return InjectedLanguageManager.getInstance(leader.getProject()).injectedToHost(leader.getContainingFile(), supportRange);
     }
 
     private static int findSupportRangeStart(@NotNull PsiElement support) {
