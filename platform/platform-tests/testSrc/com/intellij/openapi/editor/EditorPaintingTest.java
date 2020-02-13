@@ -215,6 +215,13 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
+  public void testBlockInlayWithLineHighlighterEndingAtEmptyLine() throws Exception {
+    initText("\n");
+    addBlockInlay(0);
+    addLineHighlighter(0, 1, HighlighterLayer.SELECTION + 1, null, Color.green);
+    checkResult();
+  }
+
   private void runIndentsPass() {
     IndentsPass indentsPass = new IndentsPass(getProject(), getEditor(), getFile());
     indentsPass.doCollectInformation(new EmptyProgressIndicator());

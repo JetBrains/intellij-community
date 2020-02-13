@@ -1193,7 +1193,8 @@ public class EditorPainter implements TextDrawingCallback {
           int layer = highlighterEx.getLayer();
           if (layer > this.layer &&
               highlighterEx.getAffectedAreaStartOffset() < bottomVisualLineStartOffset &&
-              highlighterEx.getAffectedAreaEndOffset() > bottomVisualLineStartOffset) {
+              highlighterEx.getAffectedAreaEndOffset() > bottomVisualLineStartOffset -
+                                                         (highlighterEx.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? 0 : 1)) {
             TextAttributes attributes = highlighterEx.getTextAttributes();
             Color backgroundColor = attributes == null ? null : attributes.getBackgroundColor();
             if (backgroundColor != null) {
