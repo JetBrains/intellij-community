@@ -6,6 +6,7 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
@@ -15,7 +16,10 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.*;
+import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -30,6 +34,7 @@ import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.awt.font.FontRenderContext;
 import java.awt.font.LineMetrics;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.text.Bidi;
 
@@ -40,6 +45,7 @@ import java.text.Bidi;
  * Also contains a cache of several font-related quantities (line height, space width, etc).
  */
 public class EditorView implements TextDrawingCallback, Disposable, Dumpable, HierarchyListener, VisibleAreaListener {
+  private static final Logger LOG = Logger.getInstance(EditorView.class);
   private static final Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
 
   private final EditorImpl myEditor;
@@ -554,7 +560,15 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private boolean setFontRenderContext(FontRenderContext context) {
     FontRenderContext contextToSet = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
     if (areEqualContexts(myFontRenderContext, contextToSet)) return false;
-    myFontRenderContext = contextToSet.getFractionalMetricsHint() == myEditor.myFractionalMetricsHintValue 
+
+    AffineTransform transform = contextToSet.getTransform();
+    if (transform.getDeterminant() == 0) {
+      LOG.error("Incorrect transform in FontRenderContext" + (context == null ? " obtained from component" : "") + ": " + transform);
+      contextToSet = new FontRenderContext(new AffineTransform(),
+                                           contextToSet.getAntiAliasingHint(), contextToSet.getFractionalMetricsHint());
+    }
+
+    myFontRenderContext = contextToSet.getFractionalMetricsHint() == myEditor.myFractionalMetricsHintValue
                           ? contextToSet
                           : new FontRenderContext(contextToSet.getTransform(), 
                                                   contextToSet.getAntiAliasingHint(), 
