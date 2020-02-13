@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
@@ -85,7 +86,7 @@ public class AnnotationsPanel {
     myTable = new JBTable(myTableModel, columnModel);
 
     if (showInstrumentationOptions) {
-      columnModel.getColumn(0).setHeaderValue(CodeInsightBundle.message("node.annotation.tooltip"));
+      columnModel.getColumn(0).setHeaderValue(JavaPsiBundle.message("node.annotation.tooltip"));
 
       TableColumn checkColumn = new TableColumn(1, 100, new BooleanTableCellRenderer(), new BooleanTableCellEditor());
       columnModel.addColumn(checkColumn);

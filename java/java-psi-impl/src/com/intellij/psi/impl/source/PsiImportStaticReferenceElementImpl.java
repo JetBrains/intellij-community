@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -138,7 +138,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
       final LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
       newRef.rawInsertAfterMe(dot);
       final CompositeElement errorElement = Factory.createErrorElement(
-        JavaErrorBundle.message("import.statement.identifier.or.asterisk.expected."));
+        JavaPsiBundle.message("import.statement.identifier.or.asterisk.expected."));
       dot.rawInsertAfterMe(errorElement);
       final CompositeElement parentComposite = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(getParent());
       parentComposite.addInternal(newRef, errorElement, this, Boolean.TRUE);

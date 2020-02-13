@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -202,7 +203,7 @@ public abstract class ElementPresentation {
     @Override
     public String getQualifiedName() {
       PsiClass psiClass = PsiTreeUtil.getParentOfType(myPsiAnonymousClass, PsiClass.class);
-      if (psiClass != null) return PsiBundle.message("anonymous.class.context.display", forElement(psiClass).getQualifiedName());
+      if (psiClass != null) return JavaPsiBundle.message("anonymous.class.context.display", forElement(psiClass).getQualifiedName());
       return PsiBundle.message("anonymous.class.display");
     }
 

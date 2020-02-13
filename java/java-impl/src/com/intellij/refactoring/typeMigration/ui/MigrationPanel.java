@@ -2,6 +2,7 @@
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.Disposable;
@@ -432,7 +433,7 @@ public class MigrationPanel extends JPanel implements Disposable {
             else {
               location = null;
             }
-            if (location != null) location = PsiBundle.message("aux.context.display", location);
+            if (location != null) location = JavaPsiBundle.message("aux.context.display", location);
           }
           if (location != null) {
             append(location, SimpleTextAttributes.GRAYED_ATTRIBUTES);

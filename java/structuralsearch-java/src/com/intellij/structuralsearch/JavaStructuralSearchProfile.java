@@ -2,9 +2,9 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -489,7 +489,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final PsiElement parent = error.getParent();
 
     if (parent instanceof PsiClass && !(parent instanceof PsiCodeFragment) &&
-        JavaErrorBundle.message("expected.identifier").equals(description)) {
+        JavaPsiBundle.message("expected.identifier").equals(description)) {
       final PsiElement prev = error.getPrevSibling();
       if (prev instanceof PsiTypeElement) {
         final String text = prev.getText();
@@ -500,7 +500,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         }
       }
     }
-    if (parent instanceof PsiTryStatement && JavaErrorBundle.message("expected.catch.or.finally").equals(description)) {
+    if (parent instanceof PsiTryStatement && JavaPsiBundle.message("expected.catch.or.finally").equals(description)) {
       // searching for naked try allowed
       return false;
     }
@@ -511,15 +511,15 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         final PsiStatement statement = (PsiStatement)parent;
         if (statement instanceof PsiExpressionStatement || statement instanceof PsiDeclarationStatement) {
           // search for expression, type, annotation or symbol
-          if (JavaErrorBundle.message("expected.semicolon").equals(description) && error.getNextSibling() == null) {
+          if (JavaPsiBundle.message("expected.semicolon").equals(description) && error.getNextSibling() == null) {
             // expression
             return false;
           }
-          if (JavaErrorBundle.message("expected.identifier.or.type").equals(description)) {
+          if (JavaPsiBundle.message("expected.identifier.or.type").equals(description)) {
             // annotation
             return false;
           }
-          if (JavaErrorBundle.message("expected.identifier").equals(description)) {
+          if (JavaPsiBundle.message("expected.identifier").equals(description)) {
             // type
             return false;
           }
@@ -944,7 +944,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           final PsiElement child = variableNode.getLastChild();
           if (child instanceof PsiErrorElement) {
             final PsiErrorElement errorElement = (PsiErrorElement)child;
-            return JavaErrorBundle.message("expected.semicolon").equals(errorElement.getErrorDescription());
+            return JavaPsiBundle.message("expected.semicolon").equals(errorElement.getErrorDescription());
           }
         }
         return variableNode != null && variableNode.getParent() instanceof PsiExpression;

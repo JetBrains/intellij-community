@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.lang.LangBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -42,7 +42,7 @@ public class HighlightMessageUtil {
 
     if (symbol instanceof PsiClass) {
       if (symbol instanceof PsiAnonymousClass) {
-        symbolName = LangBundle.message("java.terms.anonymous.class");
+        symbolName = JavaPsiBundle.message("java.terms.anonymous.class");
       }
       else {
         symbolName = ((PsiClass)symbol).getQualifiedName();

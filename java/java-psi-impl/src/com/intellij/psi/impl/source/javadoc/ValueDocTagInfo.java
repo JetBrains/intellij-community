@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.javadoc;
 
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -49,7 +49,7 @@ public class ValueDocTagInfo implements JavadocTagInfo {
     boolean hasReference = (value != null && value.getFirstChild() != null);
     if (hasReference) {
       if (!PsiUtil.isLanguageLevel5OrHigher(value)) {
-        return JavaErrorBundle.message("javadoc.value.tag.jdk15.required");
+        return JavaPsiBundle.message("javadoc.value.tag.jdk15.required");
       }
     }
 
@@ -59,15 +59,15 @@ public class ValueDocTagInfo implements JavadocTagInfo {
         PsiElement target = reference.resolve();
         if (target != null) {
           if (!(target instanceof PsiField)) {
-            return JavaErrorBundle.message("javadoc.value.field.required");
+            return JavaPsiBundle.message("javadoc.value.field.required");
           }
           PsiField field = (PsiField) target;
           if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-            return JavaErrorBundle.message("javadoc.value.static.field.required");
+            return JavaPsiBundle.message("javadoc.value.static.field.required");
           }
           if (field.getInitializer() == null ||
               JavaConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), false) == null) {
-            return JavaErrorBundle.message("javadoc.value.field.with.initializer.required");
+            return JavaPsiBundle.message("javadoc.value.field.with.initializer.required");
           }
         }
       }

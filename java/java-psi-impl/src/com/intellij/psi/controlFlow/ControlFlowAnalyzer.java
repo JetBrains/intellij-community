@@ -2,7 +2,7 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -224,7 +224,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       ProgressManager.checkCanceled();
       if (child instanceof PsiErrorElement &&
-          !Comparing.strEqual(((PsiErrorElement)child).getErrorDescription(), JavaErrorBundle.message("expected.semicolon"))) {
+          !Comparing.strEqual(((PsiErrorElement)child).getErrorDescription(), JavaPsiBundle.message("expected.semicolon"))) {
         // do not perform control flow analysis for incomplete code
         throw new AnalysisCanceledSoftException(element);
       }

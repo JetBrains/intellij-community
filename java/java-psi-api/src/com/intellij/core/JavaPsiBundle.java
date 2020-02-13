@@ -23,8 +23,8 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class JavaPsiBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.JavaPsiBundle";
-  private static final JavaPsiBundle INSTANCE = new JavaPsiBundle();
+  @NonNls public static final String BUNDLE = "messages.JavaPsiBundle";
+  public static final JavaPsiBundle INSTANCE = new JavaPsiBundle();
 
   private JavaPsiBundle() { super(BUNDLE); }
 

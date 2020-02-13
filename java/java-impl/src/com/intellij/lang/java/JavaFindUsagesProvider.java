@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.find.impl.HelpID;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.lang.LangBundle;
@@ -69,7 +70,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       return LangBundle.message("java.terms.exception");
     }
     if (element instanceof PsiPackage) {
-      return LangBundle.message("java.terms.package");
+      return JavaPsiBundle.message("java.terms.package");
     }
     if (element instanceof PsiLabeledStatement) {
       return LangBundle.message("java.terms.label");
@@ -82,21 +83,21 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
         return LangBundle.message("java.terms.enum");
       }
       if (((PsiClass)element).isInterface()) {
-        return LangBundle.message("java.terms.interface");
+        return JavaPsiBundle.message("java.terms.interface");
       }
       if (element instanceof PsiTypeParameter) {
         return LangBundle.message("java.terms.type.parameter");
       }
-      return LangBundle.message("java.terms.class");
+      return JavaPsiBundle.message("java.terms.class");
     }
     if (element instanceof PsiField) {
-      return LangBundle.message("java.terms.field");
+      return JavaPsiBundle.message("java.terms.field");
     }
     if (element instanceof PsiParameter) {
-      return LangBundle.message("java.terms.parameter");
+      return JavaPsiBundle.message("java.terms.parameter");
     }
     if (element instanceof PsiLocalVariable) {
-      return LangBundle.message("java.terms.variable");
+      return JavaPsiBundle.message("java.terms.variable");
     }
     if (element instanceof PsiMethod) {
       final PsiMethod psiMethod = (PsiMethod)element;
@@ -104,7 +105,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       if (isConstructor) {
         return LangBundle.message("java.terms.constructor");
       }
-      return LangBundle.message("java.terms.method");
+      return JavaPsiBundle.message("java.terms.method");
     }
     if (element instanceof PsiExpression) {
       return LangBundle.message("java.terms.expression");

@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -28,6 +27,7 @@ import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.ExpressionUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -190,7 +190,7 @@ public class CreateFromUsageUtils {
     if (oldBody == null) {
       PsiElement last = method.getLastChild();
       if (last instanceof PsiErrorElement &&
-          JavaErrorBundle.message("expected.lbrace.or.semicolon").equals(((PsiErrorElement)last).getErrorDescription())) {
+          JavaPsiBundle.message("expected.lbrace.or.semicolon").equals(((PsiErrorElement)last).getErrorDescription())) {
         oldBody = last;
       }
     }

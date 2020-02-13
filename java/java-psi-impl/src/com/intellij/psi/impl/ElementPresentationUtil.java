@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.icons.AllIcons;
@@ -171,8 +170,8 @@ public final class ElementPresentationUtil implements PlatformIcons {
   public static String getDescription(PsiModifierListOwner member) {
     String noun;
     if (member instanceof PsiClass) noun = getClassNoun((PsiClass)member);
-    else if (member instanceof PsiMethod) noun = CodeInsightBundle.message("node.method.tooltip");
-    else if (member instanceof PsiField) noun = CodeInsightBundle.message("node.field.tooltip");
+    else if (member instanceof PsiMethod) noun = JavaPsiBundle.message("node.method.tooltip");
+    else if (member instanceof PsiField) noun = JavaPsiBundle.message("node.field.tooltip");
     else return null;
     String adj = getFlagsDescription(member);
     return (adj + " " + noun).trim();
@@ -182,16 +181,16 @@ public final class ElementPresentationUtil implements PlatformIcons {
     String noun;
     int kind = getClassKind(aClass);
     switch (kind) {
-      case CLASS_KIND_ANNOTATION: noun = CodeInsightBundle.message("node.annotation.tooltip"); break;
-      case CLASS_KIND_ANONYMOUS: noun = CodeInsightBundle.message("node.anonymous.class.tooltip"); break;
-      case CLASS_KIND_ENUM: noun = CodeInsightBundle.message("node.enum.tooltip"); break;
-      case CLASS_KIND_RECORD: noun = CodeInsightBundle.message("node.record.tooltip"); break;
-      case CLASS_KIND_EXCEPTION: noun = CodeInsightBundle.message("node.exception.tooltip"); break;
-      case CLASS_KIND_INTERFACE: noun = CodeInsightBundle.message("node.interface.tooltip"); break;
-      case CLASS_KIND_JUNIT_TEST: noun = CodeInsightBundle.message("node.junit.test.tooltip"); break;
-      case CLASS_KIND_RUNNABLE: noun = CodeInsightBundle.message("node.runnable.class.tooltip"); break;
+      case CLASS_KIND_ANNOTATION: noun = JavaPsiBundle.message("node.annotation.tooltip"); break;
+      case CLASS_KIND_ANONYMOUS: noun = JavaPsiBundle.message("node.anonymous.class.tooltip"); break;
+      case CLASS_KIND_ENUM: noun = JavaPsiBundle.message("node.enum.tooltip"); break;
+      case CLASS_KIND_RECORD: noun = JavaPsiBundle.message("node.record.tooltip"); break;
+      case CLASS_KIND_EXCEPTION: noun = JavaPsiBundle.message("node.exception.tooltip"); break;
+      case CLASS_KIND_INTERFACE: noun = JavaPsiBundle.message("node.interface.tooltip"); break;
+      case CLASS_KIND_JUNIT_TEST: noun = JavaPsiBundle.message("node.junit.test.tooltip"); break;
+      case CLASS_KIND_RUNNABLE: noun = JavaPsiBundle.message("node.runnable.class.tooltip"); break;
       default:
-      case CLASS_KIND_CLASS: noun = CodeInsightBundle.message("node.class.tooltip"); break;
+      case CLASS_KIND_CLASS: noun = JavaPsiBundle.message("node.class.tooltip"); break;
     }
     return noun;
   }
@@ -204,9 +203,9 @@ public final class ElementPresentationUtil implements PlatformIcons {
         adj.append(" ").append(provider.getLayerDescription());
       }
     }
-    if (BitUtil.isSet(flags, FLAGS_ABSTRACT)) adj.append(" ").append(CodeInsightBundle.message("node.abstract.flag.tooltip"));
-    if (BitUtil.isSet(flags, FLAGS_FINAL)) adj.append(" ").append(CodeInsightBundle.message("node.final.flag.tooltip"));
-    if (BitUtil.isSet(flags, FLAGS_STATIC)) adj.append(" ").append(CodeInsightBundle.message("node.static.flag.tooltip"));
+    if (BitUtil.isSet(flags, FLAGS_ABSTRACT)) adj.append(" ").append(JavaPsiBundle.message("node.abstract.flag.tooltip"));
+    if (BitUtil.isSet(flags, FLAGS_FINAL)) adj.append(" ").append(JavaPsiBundle.message("node.final.flag.tooltip"));
+    if (BitUtil.isSet(flags, FLAGS_STATIC)) adj.append(" ").append(JavaPsiBundle.message("node.static.flag.tooltip"));
     PsiModifierList list = aClass.getModifierList();
     if (list != null) {
       int level = PsiUtil.getAccessLevel(list);
