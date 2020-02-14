@@ -2,6 +2,7 @@
 package com.intellij.java.refactoring.suggested
 
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.suggested.*
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
@@ -39,10 +40,8 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
 
     if (hasParameterAddedRemovedOrReordered(oldSignature, newSignature)) return updateUsagesData
 
-    val updateOverridesData = if (declaration.canHaveOverrides(oldSignature, newSignature))
-      updateUsagesData.copy(
-        nameOfStuffToUpdate = if (declaration.hasModifierProperty(PsiModifier.ABSTRACT)) IMPLEMENTATIONS else OVERRIDES
-      )
+    val updateOverridesData = if (declaration.canHaveOverrides(oldSignature))
+      updateUsagesData.copy(nameOfStuffToUpdate = if (declaration.hasModifierProperty(PsiModifier.ABSTRACT)) IMPLEMENTATIONS else OVERRIDES)
     else
       null
 
@@ -60,12 +59,8 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
     }
   }
 
-  private fun PsiMethod.canHaveOverrides(oldSignature: Signature, newSignature: Signature): Boolean {
-    if (isConstructor) return false
-    if (oldSignature.visibility == PsiModifier.PRIVATE || newSignature.visibility == PsiModifier.PRIVATE) return false
-    if (hasModifierProperty(PsiModifier.STATIC) || hasModifierProperty(PsiModifier.FINAL)) return false
-    if ((containingClass ?: return false).hasModifierProperty(PsiModifier.FINAL)) return false
-    return true
+  private fun PsiMethod.canHaveOverrides(oldSignature: Signature): Boolean {
+    return PsiUtil.canBeOverridden(this) && oldSignature.visibility != PsiModifier.PRIVATE
   }
 
   override fun hasTypeChanges(oldSignature: Signature, newSignature: Signature): Boolean {
