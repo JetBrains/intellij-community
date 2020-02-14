@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class CollectionInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Key,Value> {
+public class CollectionInputDataDiffBuilder<Key, Value> extends DirectInputDataDiffBuilder<Key,Value> {
   @NotNull
   private final Collection<Key> mySeq;
 
@@ -42,7 +42,8 @@ public class CollectionInputDataDiffBuilder<Key, Value> extends InputDataDiffBui
   }
 
   @NotNull
-  public Collection<Key> getSeq() {
+  @Override
+  public Collection<Key> getKeys() {
     return mySeq;
   }
 
