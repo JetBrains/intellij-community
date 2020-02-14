@@ -83,7 +83,7 @@ public class BuildRunner {
     BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
     BuildTargetsState targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
 
-    PathRelativizerService relativizer = new PathRelativizerService(jpsModel.getProject(), dataPaths.getDataStorageRoot());
+    PathRelativizerService relativizer = new PathRelativizerService(jpsModel.getProject());
 
     ProjectTimestamps projectStamps = null;
     BuildDataManager dataManager = null;
