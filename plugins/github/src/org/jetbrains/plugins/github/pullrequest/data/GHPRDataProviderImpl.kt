@@ -7,13 +7,10 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.util.Consumer
 import com.intellij.util.EventDispatcher
-import git4idea.GitCommit
 import git4idea.commands.Git
 import git4idea.fetch.GitFetchSupport
 import git4idea.history.GitHistoryUtils
-import git4idea.history.GitLogUtil
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -83,24 +80,6 @@ internal class GHPRDataProviderImpl(private val project: Project,
   }
   override val apiCommitsRequest by backgroundProcessValue(apiCommitsRequestValue)
 
-  private val logCommitsRequestValue = backingValue<List<GitCommit>> {
-    val baseFetch = baseBranchFetchRequestValue.value
-    val headFetch = headBranchFetchRequestValue.value
-    val detailsRequest = detailsRequestValue.value
-
-    baseFetch.joinCancellable()
-    headFetch.joinCancellable()
-    val details = detailsRequest.joinCancellable()
-
-    val gitCommits = mutableListOf<GitCommit>()
-    GitLogUtil.readFullDetails(project, gitRemote.repository.root, Consumer {
-      gitCommits.add(it)
-    }, "${details.baseRefOid}..${details.headRefOid}")
-
-    gitCommits.asReversed()
-  }
-  override val logCommitsRequest by backgroundProcessValue(logCommitsRequestValue)
-
   private val changesProviderValue = backingValue {
     val baseFetch = baseBranchFetchRequestValue.value
     val headFetch = headBranchFetchRequestValue.value
@@ -160,7 +139,6 @@ internal class GHPRDataProviderImpl(private val project: Project,
   override fun reloadChanges() {
     baseBranchFetchRequestValue.drop()
     headBranchFetchRequestValue.drop()
-    logCommitsRequestValue.drop()
     changesProviderValue.drop()
     requestsChangesEventDispatcher.multicaster.commitsRequestChanged()
     reloadReviewThreads()
