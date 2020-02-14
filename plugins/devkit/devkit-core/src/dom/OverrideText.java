@@ -24,12 +24,12 @@ public interface OverrideText extends DomElement {
   GenericAttributeValue<String> getPlace();
 
   @NotNull
-  @Required
+  @Required(false)
   @Convert(PlaceConverter.class)
   GenericAttributeValue<String> getUseTextOfPlace();
 
   @NotNull
-  @Required(value = false)
+  @Required(false)
   GenericAttributeValue<String> getText();
 
   class PlaceConverter extends ResolvingConverter.StringConverter {
