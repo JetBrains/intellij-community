@@ -37,6 +37,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,13 +50,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class DfaAssist implements DebuggerContextListener {
+public class DfaAssist implements DebuggerContextListener, Disposable {
   private final @NotNull Project myProject;
   private InlaySet myInlays = new InlaySet(null, Collections.emptyList()); // modified from EDT only
   private volatile CancellablePromise<?> myPromise;
-
-  private DfaAssist(@NotNull Project project) {
+  private final DebuggerStateManager myManager;
+  private volatile boolean myActive;
+  
+  private DfaAssist(@NotNull Project project, @NotNull DebuggerStateManager manager) {
     myProject = project;
+    myManager = manager;
+    myActive = true;
   }
 
   private static class InlaySet implements Disposable {
@@ -82,12 +88,14 @@ public class DfaAssist implements DebuggerContextListener {
   
   @Override
   public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
-    if (!ViewsGeneralSettings.getInstance().USE_DFA_ASSIST) {
-      shutDown(newContext);
+    if (event == DebuggerSession.Event.DISPOSE) {
+      Disposer.dispose(this);
       return;
     }
-    if (event == DebuggerSession.Event.DETACHED || event == DebuggerSession.Event.DISPOSE) {
+    if (!myActive) return;
+    if (event == DebuggerSession.Event.DETACHED) {
       cleanUp();
+      return;
     }
     if (event != DebuggerSession.Event.PAUSE && event != DebuggerSession.Event.REFRESH) {
       cancelComputation();
@@ -121,12 +129,11 @@ public class DfaAssist implements DebuggerContextListener {
         }
         myPromise = ReadAction.nonBlocking(() -> computeHints(runner)).withDocumentsCommitted(myProject)
           .coalesceBy(DfaAssist.this)
-          .finishOnUiThread(ModalityState.NON_MODAL, hints -> DfaAssist.this.displayInlays(hints, newContext))
+          .finishOnUiThread(ModalityState.NON_MODAL, hints -> DfaAssist.this.displayInlays(hints))
           .submit(AppExecutorUtil.getAppExecutorService());
       }
 
-      @Nullable
-      private DebuggerDfaRunner createRunner(StackFrameProxyImpl proxy) {
+      private @Nullable DebuggerDfaRunner createRunner(StackFrameProxyImpl proxy) {
         Callable<DebuggerDfaRunner> action = () -> {
           try {
             StackFrame frame = proxy.getStackFrame();
@@ -141,6 +148,26 @@ public class DfaAssist implements DebuggerContextListener {
     });
   }
 
+  private void setActive(boolean active) {
+    if (myActive != active) {
+      myActive = active;
+      if (!myActive) {
+        cleanUp();
+      } else {
+        DebuggerSession session = myManager.getContext().getDebuggerSession();
+        if (session != null) {
+          session.refresh(false);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void dispose() {
+    myManager.removeListener(this);
+    cleanUp();
+  }
+
   private void cancelComputation() {
     CancellablePromise<?> promise = myPromise;
     if (promise != null) {
@@ -153,7 +180,7 @@ public class DfaAssist implements DebuggerContextListener {
     ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myInlays));
   }
 
-  private void displayInlays(Map<PsiExpression, DfaHint> hints, DebuggerContextImpl context) {
+  private void displayInlays(Map<PsiExpression, DfaHint> hints) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Disposer.dispose(myInlays);
     if (hints.isEmpty()) return;
@@ -165,7 +192,7 @@ public class DfaAssist implements DebuggerContextListener {
     if (expectedFile == null || !expectedFile.equals(editor.getVirtualFile())) return;
     InlayModel model = editor.getInlayModel();
     List<Inlay<?>> newInlays = new ArrayList<>();
-    AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction(context);
+    AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction();
     hints.forEach((expr, hint) -> {
       Segment range = expr.getTextRange();
       if (range == null) return;
@@ -180,8 +207,7 @@ public class DfaAssist implements DebuggerContextListener {
     }
   }
 
-  @NotNull
-  private static Map<PsiExpression, DfaHint> computeHints(@NotNull DebuggerDfaRunner runner) {
+  private static @NotNull Map<PsiExpression, DfaHint> computeHints(@NotNull DebuggerDfaRunner runner) {
     DebuggerInstructionVisitor visitor = new DebuggerInstructionVisitor();
     RunnerResult result = runner.interpret(visitor);
     if (result != RunnerResult.OK) return Collections.emptyMap();
@@ -189,8 +215,7 @@ public class DfaAssist implements DebuggerContextListener {
     return visitor.getHints();
   }
 
-  @Nullable
-  static DebuggerDfaRunner createDfaRunner(@NotNull StackFrame frame, @Nullable PsiElement element) {
+  static @Nullable DebuggerDfaRunner createDfaRunner(@NotNull StackFrame frame, @Nullable PsiElement element) {
     if (element == null || !element.isValid() || DumbService.isDumb(element.getProject())) return null;
 
     if (!locationMatches(element, frame.location())) return null;
@@ -231,8 +256,7 @@ public class DfaAssist implements DebuggerContextListener {
     return false;
   }
 
-  @Nullable
-  private static PsiStatement getAnchorStatement(@NotNull PsiElement element) {
+  private static @Nullable PsiStatement getAnchorStatement(@NotNull PsiElement element) {
     while (element instanceof PsiWhiteSpace || element instanceof PsiComment) {
       element = element.getNextSibling();
     }
@@ -243,8 +267,7 @@ public class DfaAssist implements DebuggerContextListener {
     return statement;
   }
 
-  @Nullable
-  private static PsiElement getCodeBlock(@NotNull PsiStatement statement) {
+  private static @Nullable PsiElement getCodeBlock(@NotNull PsiStatement statement) {
     if (statement instanceof PsiWhileStatement || statement instanceof PsiDoWhileStatement) {
       return statement;
     }
@@ -274,36 +297,35 @@ public class DfaAssist implements DebuggerContextListener {
   }
 
   private class TurnOffDfaProcessorAction extends AnAction {
-    private final DebuggerContextImpl myContext;
-
-    private TurnOffDfaProcessorAction(DebuggerContextImpl context) {
+    private TurnOffDfaProcessorAction() {
       super(DebuggerBundle.message("action.TurnOffDfaAssist.text"),
             DebuggerBundle.message("action.TurnOffDfaAssist.description"), AllIcons.Actions.Cancel);
-      myContext = context;
     }
     @Override
     public void actionPerformed(@NotNull AnActionEvent evt) {
-      shutDown(myContext);
+      Disposer.dispose(DfaAssist.this);
     }
   }
   
-  private void shutDown(DebuggerContextImpl context) {
-    DebuggerSession session = context.getDebuggerSession();
-    if (session != null) {
-      session.getContextManager().removeListener(this);
-      cleanUp();
-    }
-  }
-
   /**
    * Install dataflow assistant to the specified debugging session 
    * @param javaSession JVM debugger session to install an assistant to
+   * @param session X debugger session
    */
-  public static void installDfaAssist(@NotNull DebuggerSession javaSession) {
+  public static void installDfaAssist(@NotNull DebuggerSession javaSession,
+                                      @NotNull XDebugSession session) {
     DebuggerStateManager manager = javaSession.getContextManager();
     DebuggerContextImpl context = manager.getContext();
-    if (context.getProject() != null) {
-      manager.addListener(new DfaAssist(context.getProject()));
+    Project project = context.getProject();
+    if (project != null) {
+      DfaAssist assist = new DfaAssist(project, manager);
+      manager.addListener(assist);
+      session.addSessionListener(new XDebugSessionListener() {
+        @Override
+        public void settingsChanged() {
+          assist.setActive(ViewsGeneralSettings.getInstance().USE_DFA_ASSIST);
+        }
+      }, assist);
     }
   }
 }
