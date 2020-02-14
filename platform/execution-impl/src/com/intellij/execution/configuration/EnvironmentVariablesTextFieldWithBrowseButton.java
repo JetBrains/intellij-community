@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.EnvVariablesTable;
 import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -24,6 +23,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.IdeUtilIoBundle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import net.miginfocom.swing.MigLayout;
@@ -232,8 +232,8 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
         String name = variable.getName(), value = variable.getValue();
         if (StringUtil.isEmpty(name) && StringUtil.isEmpty(value)) continue;
 
-        if (!EnvironmentUtil.isValidName(name)) return new ValidationInfo(IdeBundle.message("run.configuration.invalid.env.name", name));
-        if (!EnvironmentUtil.isValidValue(value)) return new ValidationInfo(IdeBundle.message("run.configuration.invalid.env.value", name, value));
+        if (!EnvironmentUtil.isValidName(name)) return new ValidationInfo(IdeUtilIoBundle.message("run.configuration.invalid.env.name", name));
+        if (!EnvironmentUtil.isValidValue(value)) return new ValidationInfo(IdeUtilIoBundle.message("run.configuration.invalid.env.value", name, value));
       }
       return super.doValidate();
     }

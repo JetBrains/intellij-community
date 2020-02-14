@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.IllegalEnvVarException;
 import com.intellij.execution.Platform;
 import com.intellij.execution.process.ProcessNotCreatedException;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -18,6 +17,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.CommandLineArgumentEncoder;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.io.IdeUtilIoBundle;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -379,15 +379,15 @@ public class GeneralCommandLine implements UserDataHolder {
     try {
       if (myWorkDirectory != null) {
         if (!myWorkDirectory.exists()) {
-          throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
+          throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
         }
         if (!myWorkDirectory.isDirectory()) {
-          throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
+          throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
         }
       }
 
       if (StringUtil.isEmptyOrSpaces(myExePath)) {
-        throw new ExecutionException(IdeBundle.message("run.configuration.error.executable.not.specified"));
+        throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.executable.not.specified"));
       }
     }
     catch (ExecutionException e) {
@@ -397,8 +397,8 @@ public class GeneralCommandLine implements UserDataHolder {
 
     for (Map.Entry<String, String> entry : myEnvParams.entrySet()) {
       String name = entry.getKey(), value = entry.getValue();
-      if (!EnvironmentUtil.isValidName(name)) throw new IllegalEnvVarException(IdeBundle.message("run.configuration.invalid.env.name", name));
-      if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeBundle.message("run.configuration.invalid.env.value", name, value));
+      if (!EnvironmentUtil.isValidName(name)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.name", name));
+      if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.value", name, value));
     }
 
     String exePath = myExePath;

@@ -16,10 +16,10 @@
 
 package com.intellij.execution;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.util.io.IdeUtilIoBundle;
 
 public class RunCanceledByUserException extends ExecutionException {
   public RunCanceledByUserException() {
-    super(IdeBundle.message("run.canceled.by.user.message"));
+    super(IdeUtilIoBundle.message("run.canceled.by.user.message"));
   }
 }
