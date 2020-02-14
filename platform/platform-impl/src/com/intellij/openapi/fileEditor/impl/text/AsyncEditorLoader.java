@@ -167,6 +167,8 @@ public class AsyncEditorLoader {
       myEditor.getScrollingModel().disableAnimation();
       runnable.run();
     }
+    myDelayedActions.clear();
+
     myEditor.getScrollingModel().enableAnimation();
 
     if (FileEditorManager.getInstance(myProject).getSelectedTextEditor() == myEditor) {
