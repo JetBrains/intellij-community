@@ -2,6 +2,7 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.HTMLComposer;
 import com.intellij.codeInspection.HTMLJavaHTMLComposer;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -25,18 +26,18 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   public void appendClassOrInterface(@NotNull StringBuilder buf, RefClass refClass, boolean capitalizeFirstLetter) {
     if (refClass.isInterface()) {
       buf.append(capitalizeFirstLetter
-                 ? InspectionsBundle.message("inspection.export.results.capitalized.interface")
-                 : InspectionsBundle.message("inspection.export.results.interface"));
+                 ? AnalysisBundle.message("inspection.export.results.capitalized.interface")
+                 : AnalysisBundle.message("inspection.export.results.interface"));
     }
     else if (refClass.isAbstract()) {
       buf.append(capitalizeFirstLetter
-                 ? InspectionsBundle.message("inspection.export.results.capitalized.abstract.class")
-                 : InspectionsBundle.message("inspection.export.results.abstract.class"));
+                 ? AnalysisBundle.message("inspection.export.results.capitalized.abstract.class")
+                 : AnalysisBundle.message("inspection.export.results.abstract.class"));
     }
     else {
       buf.append(capitalizeFirstLetter
-                 ? InspectionsBundle.message("inspection.export.results.capitalized.class")
-                 : InspectionsBundle.message("inspection.export.results.class"));
+                 ? AnalysisBundle.message("inspection.export.results.capitalized.class")
+                 : AnalysisBundle.message("inspection.export.results.class"));
     }
   }
 
