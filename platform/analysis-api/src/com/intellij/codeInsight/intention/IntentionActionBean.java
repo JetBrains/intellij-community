@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.Nls;
@@ -16,6 +17,7 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean<I
   private static final Logger LOG = Logger.getInstance(IntentionActionBean.class);
 
   @Tag
+  @RequiredElement
   public String className;
 
   @Tag

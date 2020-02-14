@@ -59,10 +59,12 @@
 
     <intentionAction>
       <categoryKey>my.key</categoryKey>
+      <className>com.intellij.codeInsight.intention.IntentionAction</className>
     </intentionAction>
     <intentionAction>
       <categoryKey><error descr="Cannot resolve property key">INVALID_KEY</error></categoryKey>
       <bundleName><error descr="Cannot resolve property bundle">INVALID_BUNDLE</error></bundleName>
+      <className>com.intellij.codeInsight.intention.IntentionAction</className>
     </intentionAction>
   </extensions>
   
