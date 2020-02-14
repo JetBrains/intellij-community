@@ -552,8 +552,20 @@ BOOL validationJavaVersion(){
 
     jint create_vm_rc = create_vm(&jvm, &env, &args);
     if (create_vm_rc != JNI_OK || jvm == NULL) {
-        NSLog(@"JNI_CreateJavaVM (%@) failed: %ld", vm.bundlePath, create_vm_rc);
-        exit(-1);
+        NSString *serverLibUrl = [vm.bundlePath stringByAppendingPathComponent:@"Contents/Home/lib/server/libjvm.dylib"];
+
+        void *libHandle = dlopen(serverLibUrl.UTF8String, RTLD_NOW + RTLD_GLOBAL);
+        if (libHandle) {
+            create_vm = dlsym(libHandle, "JNI_CreateJavaVM");
+        }
+        
+        if (create_vm != NULL) {
+            create_vm_rc = create_vm(&jvm, &env, &args);
+        }
+        if (create_vm == NULL || create_vm_rc != JNI_OK) {
+            NSLog(@"JNI_CreateJavaVM (%@) failed: %ld", vm.bundlePath, create_vm_rc);
+            exit(-1);
+        }
     }
 
     jclass string_class = (*env)->FindClass(env, "java/lang/String");
