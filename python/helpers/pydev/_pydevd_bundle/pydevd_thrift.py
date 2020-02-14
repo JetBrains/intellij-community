@@ -15,7 +15,8 @@ from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K,
     NUMPY_NUMERIC_TYPES
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_numeric_container, is_pandas_container, pandas_to_str, is_string
-from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE
+from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE, \
+    get_column_formatter_by_type, DEFAULT_DF_FORMAT
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
     UnsupportedArrayTypeException, ExceedingArrayDimensionsException
 
@@ -529,7 +530,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
                     kind = "O"
             format = array_default_format(kind)
         else:
-            format = array_default_format("f")
+            format = array_default_format(DEFAULT_DF_FORMAT)
     array_chunk.format = "%" + format
 
     if (rows, cols) == (-1, -1):
@@ -560,7 +561,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
     cols = df.shape[1] if dim > 1 else 1
 
     def col_to_format(c):
-        return format if dtypes[c] in NUMPY_NUMERIC_TYPES and format else array_default_format(dtypes[c])
+        return get_column_formatter_by_type(format, dtypes[c])
 
     iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
 

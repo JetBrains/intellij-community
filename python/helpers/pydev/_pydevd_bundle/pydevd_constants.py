@@ -83,6 +83,12 @@ IS_PYTHON_STACKLESS = "stackless" in sys.version.lower()
 CYTHON_SUPPORTED = False
 
 NUMPY_NUMERIC_TYPES = "biufc"
+NUMPY_FLOATING_POINT_TYPES = "fc"
+# b boolean
+# i signed integer
+# u unsigned integer
+# f floating-point
+# c complex floating-point
 
 try:
     import platform

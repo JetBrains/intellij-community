@@ -4,9 +4,9 @@
 import math
 import pickle
 
-from _pydev_imps._pydev_saved_modules import thread
 from _pydev_bundle.pydev_imports import quote
-from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES
+from _pydev_imps._pydev_saved_modules import thread
+from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES, NUMPY_FLOATING_POINT_TYPES
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
 
@@ -28,6 +28,7 @@ from _pydev_bundle.pydev_imports import Exec, execfile
 from _pydevd_bundle.pydevd_utils import to_string, VariableWithOffset
 
 SENTINEL_VALUE = []
+DEFAULT_DF_FORMAT = "s"
 
 # ------------------------------------------------------------------------------------------------------ class for errors
 
@@ -584,6 +585,16 @@ def array_to_meta_xml(array, name, format):
     return array, slice_to_xml(slice, rows, cols, format, type, bounds), rows, cols, format
 
 
+def get_column_formatter_by_type(initial_format, column_type):
+    if column_type in NUMPY_NUMERIC_TYPES and initial_format:
+        if column_type in NUMPY_FLOATING_POINT_TYPES and initial_format.strip() == DEFAULT_DF_FORMAT:
+            # use custom formatting for floats when default formatting is set
+            return array_default_format(column_type)
+        return initial_format
+    else:
+        return array_default_format(column_type)
+
+
 def array_default_format(type):
     if type == 'f':
         return '.5f'
@@ -625,7 +636,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
                     kind = 'O'
             format = array_default_format(kind)
         else:
-            format = array_default_format('f')
+            format = array_default_format(DEFAULT_DF_FORMAT)
 
     xml = slice_to_xml(name, num_rows, num_cols, format, "", (0, 0))
 
@@ -657,7 +668,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     cols = df.shape[1] if dim > 1 else 1
 
     def col_to_format(c):
-        return format if dtypes[c] in NUMPY_NUMERIC_TYPES and format else array_default_format(dtypes[c])
+        return get_column_formatter_by_type(format, dtypes[c])
 
     iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
 
