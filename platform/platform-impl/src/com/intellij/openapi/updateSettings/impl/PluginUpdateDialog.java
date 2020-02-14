@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -200,7 +201,12 @@ public class PluginUpdateDialog extends DialogWrapper {
             final PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, getContentPanel(), true);
             if (result.getPluginsInstalled().size() > 0) {
               if (result.getRestartRequired()) {
-                PluginManagerMain.notifyPluginsUpdated(null);
+                if (WelcomeFrame.getInstance() == null) {
+                  PluginManagerMain.notifyPluginsUpdated(null);
+                }
+                else {
+                  PluginManagerConfigurable.shutdownOrRestartApp();
+                }
               }
               else {
                 String message;
