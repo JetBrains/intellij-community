@@ -24,7 +24,11 @@ class JavaSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactor
     when (member) {
       is PsiMethod -> {
         return psiClass.findMethodsByName(name, false)
-          .any { it != member && signature(it, null) == signature }
+          .any {
+            if (it == member) return@any false
+            val otherSignature = signature(it, null) ?: return@any false
+            areDuplicateSignatures(otherSignature, signature)
+          }
       }
 
       is PsiField -> {
@@ -32,6 +36,16 @@ class JavaSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactor
       }
 
       else -> return false
+    }
+  }
+
+  // we can't compare signatures by equals here because it takes into account parameter id's and they will be different in our case
+  private fun areDuplicateSignatures(signature1: Signature, signature2: Signature): Boolean {
+    if (signature1.name != signature2.name) return false
+    if (signature1.type != signature2.type) return false
+    if (signature1.parameters.size != signature2.parameters.size) return false
+    return signature1.parameters.zip(signature2.parameters).all { (p1, p2) ->
+      p1.type == p2.type && p1.name == p2.name
     }
   }
 

@@ -426,15 +426,15 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
   fun testDuplicateMethod() {
     doTest(
       """
-        class TestCase {
-            public void <caret>test1() { }
+        class Test {
+            public void <caret>foo(int p) { }
         }
       """.trimIndent(),
       {
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE)
       },
       {
-        replaceTextAtCaret("test1", "test2")
+        replaceTextAtCaret("foo", "bar")
       },
       expectedAvailability = Availability.NotAvailable
     )
