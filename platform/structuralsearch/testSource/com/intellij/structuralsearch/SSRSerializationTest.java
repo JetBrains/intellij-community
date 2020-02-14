@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolsSupplier;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -10,7 +13,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +23,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class SSRSerializationTest extends CodeInsightFixtureTestCase {
+public class SSRSerializationTest extends LightPlatformTestCase {
 
   private InspectionProfileImpl myProfile;
   private SSBasedInspection myInspection;
@@ -50,8 +53,16 @@ public class SSRSerializationTest extends CodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    InspectionProfileImpl.INIT_INSPECTIONS = false;
-    super.tearDown();
+    try {
+      InspectionProfileImpl.INIT_INSPECTIONS = false;
+      myProfile.getProfileManager().deleteProfile(myProfile);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private String buildXmlFromProfile() {
