@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui
 
 import com.intellij.dvcs.push.PushSupport
@@ -10,8 +10,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.xml.util.XmlStringUtil
 
-class ForcePushAction : PushActionBase() {
-
+private class ForcePushAction : PushActionBase() {
   override fun actionPerformed(project: Project, ui: VcsPushUi) {
     if (confirmForcePush(project, ui)) {
       ui.push(true)
@@ -31,13 +30,18 @@ class ForcePushAction : PushActionBase() {
   }
 
   private fun confirmForcePush(project: Project, ui: VcsPushUi): Boolean {
-    val silentForcePushIsNotAllowed = ui.selectedPushSpecs.mapValues { (support, pushInfos) ->
-      pushInfos.filter { it -> !support.isSilentForcePushAllowed(it.pushSpec.target) }
-    }.filterValues { it.isNotEmpty() }
+    val silentForcePushIsNotAllowed = ui.selectedPushSpecs
+      .mapValues { (support, pushInfos) ->
+        pushInfos.filter { !support.isSilentForcePushAllowed(it.pushSpec.target) }
+      }
+      .filterValues { it.isNotEmpty() }
 
-    if (silentForcePushIsNotAllowed.isEmpty()) return true
+    if (silentForcePushIsNotAllowed.isEmpty()) {
+      return true
+    }
 
     // get common target if everything is pushed "synchronously" into a single place
+
     val commonTarget: PushTarget?
     val aSupport: PushSupport<*, *, PushTarget>?
     if (silentForcePushIsNotAllowed.size > 1) {

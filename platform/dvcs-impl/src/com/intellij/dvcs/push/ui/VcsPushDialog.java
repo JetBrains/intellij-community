@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -44,7 +44,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvider {
-
   private static final String DIMENSION_KEY = "Vcs.Push.Dialog.v2";
   private static final String HELP_ID = "Vcs.Push.Dialog";
   private static final int CENTER_PANEL_HEIGHT = 450;
@@ -53,7 +52,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   protected final Project myProject;
   private final PushLog myListPanel;
   protected final PushController myController;
-  private final Map<PushSupport, VcsPushOptionsPanel> myAdditionalPanels;
+  private final Map<PushSupport<?, ?, ?>, VcsPushOptionsPanel> myAdditionalPanels;
 
   private Action myPushAction;
   @NotNull private final List<ActionWrapper> myAdditionalActions;
@@ -187,8 +186,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
-  @NotNull
-  public Map<PushSupport, Collection<PushInfo>> getSelectedPushSpecs() {
+  public @NotNull Map<PushSupport<Repository, PushSource, PushTarget>, Collection<PushInfo>> getSelectedPushSpecs() {
     return myController.getSelectedPushSpecs();
   }
 

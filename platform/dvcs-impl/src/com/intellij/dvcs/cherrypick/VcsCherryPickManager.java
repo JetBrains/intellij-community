@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.cherrypick;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class VcsCherryPickManager {
+public final class VcsCherryPickManager {
   private static final Logger LOG = Logger.getInstance(VcsCherryPickManager.class);
   @NotNull private final Project myProject;
   @NotNull private final Set<CommitId> myIdsInProgress = ContainerUtil.newConcurrentSet();
@@ -116,7 +115,7 @@ public class VcsCherryPickManager {
 
         if (isOk) {
           for (Map.Entry<VcsCherryPicker, Collection<VcsFullCommitDetails>> entry : groupedCommits.entrySet()) {
-            entry.getKey().cherryPick(Lists.newArrayList(entry.getValue()));
+            entry.getKey().cherryPick(new ArrayList<>(entry.getValue()));
           }
         }
       }
