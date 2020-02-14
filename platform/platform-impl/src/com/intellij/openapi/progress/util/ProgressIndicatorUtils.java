@@ -295,7 +295,7 @@ public class ProgressIndicatorUtils {
                                                                               int timeout,
                                                                               @NotNull TimeUnit timeUnit,
                                                                               @NotNull ThrowableComputable<T, E> computable) throws E, ProcessCanceledException {
-    awaitWithCheckCancelled(lock, timeout, timeUnit);
+    awaitWithCheckCanceled(lock, timeout, timeUnit);
 
     try {
       return computable.compute();
@@ -332,7 +332,7 @@ public class ProgressIndicatorUtils {
     }
   }
 
-  public static void awaitWithCheckCancelled(@NotNull Lock lock, int timeout, @NotNull TimeUnit timeUnit) {
+  public static void awaitWithCheckCanceled(@NotNull Lock lock, int timeout, @NotNull TimeUnit timeUnit) {
     awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUnit));
   }
 
