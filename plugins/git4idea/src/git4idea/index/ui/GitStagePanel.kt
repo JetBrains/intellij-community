@@ -2,9 +2,11 @@
 package git4idea.index.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import git4idea.index.GitStageTracker
@@ -12,7 +14,10 @@ import git4idea.index.GitStageTrackerListener
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
-internal class GitStagePanel(private val tracker: GitStageTracker, disposableParent: Disposable) : JPanel(BorderLayout()), Disposable {
+val GIT_STAGE_TRACKER = DataKey.create<GitStageTracker>("GitStageTracker")
+
+internal class GitStagePanel(private val tracker: GitStageTracker, disposableParent: Disposable) :
+  JPanel(BorderLayout()), DataProvider, Disposable {
   private val project = tracker.project
 
   private val tree: GitStageTree
@@ -23,7 +28,17 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
   init {
     tree = MyChangesTree(project)
 
+    val toolbarGroup = DefaultActionGroup()
+    toolbarGroup.add(ActionManager.getInstance().getAction("Git.Stage.Toolbar"))
+    toolbarGroup.addSeparator()
+    toolbarGroup.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
+    toolbarGroup.addSeparator()
+    toolbarGroup.addAll(TreeActionsToolbarPanel.createTreeActions(tree))
+    val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true)
+    toolbar.setTargetComponent(tree)
+
     val scrolledTree = ScrollPaneFactory.createScrollPane(tree, SideBorder.TOP)
+    add(toolbar.component, BorderLayout.NORTH)
     add(scrolledTree, BorderLayout.CENTER)
 
     tracker.addListener(MyGitStageTrackerListener(), this)
@@ -34,6 +49,11 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
 
   fun update() {
     tree.update()
+  }
+
+  override fun getData(dataId: String): Any? {
+    if (GIT_STAGE_TRACKER.`is`(dataId)) return tracker
+    return null
   }
 
   override fun dispose() {

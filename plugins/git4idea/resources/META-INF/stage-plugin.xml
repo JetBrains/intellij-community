@@ -6,4 +6,13 @@
 
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
   </extensions>
+
+  <actions>
+    <action id="Git.Stage.Refresh" class="git4idea.index.actions.GitRefreshStageAction" icon="AllIcons.Actions.Refresh"
+            use-shortcut-of="Refresh"/>
+
+    <group id="Git.Stage.Toolbar">
+      <reference id="Git.Stage.Refresh"/>
+    </group>
+  </actions>
 </idea-plugin>
