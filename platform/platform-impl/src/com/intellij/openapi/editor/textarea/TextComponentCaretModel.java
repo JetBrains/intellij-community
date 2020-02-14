@@ -87,13 +87,12 @@ class TextComponentCaretModel implements CaretModel {
 
   @Nullable
   @Override
-  public Caret addCaret(@NotNull VisualPosition pos) {
+  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     return null;
   }
 
-  @Nullable
   @Override
-  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
+  public @Nullable Caret addCaret(@NotNull LogicalPosition pos, boolean makePrimary) {
     return null;
   }
 
