@@ -3,4 +3,4 @@ package com.intellij.openapi.editor.markup
 
 import javax.swing.Icon
 
-class AnalyzerStatus(val icon: Icon?, val showNavigation: Boolean)
+class AnalyzerStatus(val icon: Icon?, val showNavigation: Boolean, val statusText: String)

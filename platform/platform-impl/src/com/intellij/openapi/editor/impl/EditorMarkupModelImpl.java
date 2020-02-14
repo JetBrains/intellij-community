@@ -30,8 +30,12 @@ import com.intellij.openapi.editor.markup.AnalyzerStatus;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ProperTextRange;
@@ -43,6 +47,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
 import javax.swing.plaf.ScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
@@ -123,6 +129,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private final ActionToolbar statusToolbar;
   private AnalyzerStatus analyzerStatus;
+  private InspectionPopupManager myPopupManager = new InspectionPopupManager();;
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
@@ -541,6 +548,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myErrorStripeRenderer = null;
     myTooltipRendererProvider = new BasicTooltipRendererProvider();
     myEditorPreviewHint = null;
+
+    myPopupManager.hidePopup();
+    myPopupManager = null;
     super.dispose();
   }
 
@@ -1483,7 +1493,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private class StatusAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      System.out.println("StatusAction");
+      myPopupManager.showPopup(e);
     }
 
     @Override
@@ -1525,4 +1535,124 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       super.paintIcon(g, actionButton, IconLoader.getDarkIcon(icon, isDark), x, y);
     }
   }
+
+  private static final int DELTA_X = 6;
+  private static final int DELTA_Y = 6;
+
+  private class InspectionPopupManager {
+    private AnalyzerStatus myCurrentStatus;
+    private ComponentPopupBuilder myPopupBuilder;
+    private Dimension preferredPopupSize = JBUI.emptySize();
+    private JBPopup myPopup;
+
+    private void showPopup(AnActionEvent event) {
+      hidePopup();
+
+      if (myCurrentStatus != analyzerStatus) {
+        myCurrentStatus = analyzerStatus;
+        myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(createContent(), null);
+
+        myEditor.getComponent().addAncestorListener(new AncestorListenerAdapter() {
+          @Override
+          public void ancestorMoved(AncestorEvent event) {
+            hidePopup();
+          }
+        });
+      }
+
+      myPopup = myPopupBuilder.createPopup();
+
+      JComponent owner = (JComponent)event.getInputEvent().getComponent();
+      RelativePoint point = new RelativePoint(owner,
+            new Point(owner.getWidth() - owner.getInsets().right + JBUIScale.scale(DELTA_X) - preferredPopupSize.width,
+                      owner.getHeight() + JBUIScale.scale(DELTA_Y)));
+      myPopup.show(point);
+    }
+
+    private void hidePopup() {
+      if (myPopup != null && !myPopup.isDisposed()) {
+        myPopup.cancel();
+      }
+      myPopup = null;
+    }
+
+    private JComponent createContent() {
+      JPanel contentPanel = new JPanel(new GridBagLayout());
+      contentPanel.setOpaque(true);
+      contentPanel.setBackground(UIUtil.getToolTipBackground());
+
+      GridBag gc = new GridBag();
+      contentPanel.add(new JLabel(myCurrentStatus.getStatusText()),
+                       gc.nextLine().next().
+                         anchor(GridBagConstraints.LINE_START).
+                         weightx(1).
+                         fillCellHorizontally().
+                         insets(10, 10, 10, 0));
+
+      MenuAction menuAction = new MenuAction();
+      menuAction.add(new DumbAwareAction("Action 1") {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          System.out.println("Action 1");
+        }
+      });
+
+      menuAction.add(new DumbAwareAction("Action 2") {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          System.out.println("Action 2");
+        }
+      });
+
+      Presentation presentation = new Presentation();
+      presentation.setIcon(AllIcons.Actions.More);
+      presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+
+      ActionButton menuButton = new ActionButton(menuAction, presentation, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+      contentPanel.add(menuButton,
+                       gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
+
+      DropDownLink<String> inspectionLevel = new DropDownLink<>("Highlight: Inspections",
+                  Arrays.asList("Highlight: Inspections", "Highlight: Syntax", "No highlighting"),
+                  i -> System.out.println(i + " selected"), true);
+
+      JPanel lowerPanel = JBUI.Panels.simplePanel(inspectionLevel);
+      lowerPanel.setOpaque(true);
+      //lowerPanel.setBackground(JBColor.YELLOW);
+      lowerPanel.setBorder(JBUI.Borders.empty(4, 10));
+
+      contentPanel.add(lowerPanel,
+                       gc.nextLine().next().
+                         anchor(GridBagConstraints.LINE_START).
+                         fillCellHorizontally().coverLine().
+                         weightx(1));
+
+      preferredPopupSize = contentPanel.getPreferredSize();
+      preferredPopupSize.width = Math.max(preferredPopupSize.width, JBUIScale.scale(296));
+      contentPanel.setPreferredSize(preferredPopupSize);
+      return contentPanel;
+    }
+  }
+
+  private static class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
+    private MenuAction() {
+      setPopup(true);
+    }
+  }
+
+  //private static class DelegatedAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
+  //  private final AnAction delegateAction;
+  //  private DelegatedAction(AnAction action) {
+  //    delegateAction = action;
+  //    getTemplatePresentation().setText(delegateAction.getTemplateText(), true);
+  //    copyShortcutFrom(delegateAction);
+  //  }
+  //
+  //  @Override
+  //  public void actionPerformed(@NotNull AnActionEvent e) {
+  //    if (e.getPlace() == ActionPlaces.EDITOR_POPUP) {
+  //      delegateAction.actionPerformed(e);
+  //    }
+  //  }
+  //}
 }
