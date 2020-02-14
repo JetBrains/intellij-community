@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -174,6 +175,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
   public void testStaticCallOnChildWithNotAccessibleParent() {
     addDependencies_37_78();
+    ModuleRootModificationUtil.updateModel(myJava3Module, m -> m.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5));
     doTest3Modules();
   }
 

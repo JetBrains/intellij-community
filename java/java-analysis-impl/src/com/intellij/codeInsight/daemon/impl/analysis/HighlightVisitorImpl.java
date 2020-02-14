@@ -659,6 +659,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitImportStaticStatement(PsiImportStaticStatement statement) {
     myHolder.add(checkFeature(statement, Feature.STATIC_IMPORTS));
     if (!myHolder.hasErrorResults()) myHolder.add(ImportsHighlightUtil.checkStaticOnDemandImportResolvesToClass(statement));
+    if (!myHolder.hasErrorResults()) {
+      PsiJavaCodeReferenceElement importReference = statement.getImportReference();
+      PsiClass targetClass = statement.resolveTargetClass();
+      if (importReference != null) {
+        PsiElement referenceNameElement = importReference.getReferenceNameElement();
+        if (referenceNameElement != null && targetClass != null) {
+          myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(targetClass, referenceNameElement));
+        }
+      }
+    }
   }
 
   @Override
@@ -1374,10 +1384,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
     final PsiExpression qualifierExpression = expression.getQualifierExpression();
     myHolder.add(HighlightUtil.checkUnqualifiedSuperInDefaultMethod(myLanguageLevel, expression, qualifierExpression));
-    if (!myHolder.hasErrorResults() && myJavaModule == null) {
-      PsiClass psiClass = RefactoringChangeUtil.getQualifierClass(expression);
-      if (psiClass != null) {
-        myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(psiClass, expression));
+    if (!myHolder.hasErrorResults() && myJavaModule == null && qualifierExpression != null) {
+      if (parent instanceof PsiMethodCallExpression) {
+        PsiClass psiClass = RefactoringChangeUtil.getQualifierClass(expression);
+        if (psiClass != null) {
+          myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(psiClass, expression));
+        }
       }
       if (!myHolder.hasErrorResults()) {
         myHolder.add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));

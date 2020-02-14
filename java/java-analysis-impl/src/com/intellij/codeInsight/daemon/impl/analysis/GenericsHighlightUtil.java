@@ -1436,11 +1436,8 @@ public class GenericsHighlightUtil {
     return checkClassSupersAccessibility(aClass, aClass.getResolveScope(), HighlightNamesUtil.getClassDeclarationTextRange(aClass), true);
   }
 
-  static HighlightInfo checkClassSupersAccessibility(@NotNull PsiClass aClass, @NotNull PsiReferenceExpression ref) {
-    if (ref.getParent() instanceof PsiMethodCallExpression) {
-      return checkClassSupersAccessibility(aClass, ref.getResolveScope(), ref.getTextRange(), false);
-    }
-    return null;
+  static HighlightInfo checkClassSupersAccessibility(@NotNull PsiClass aClass, @NotNull PsiElement ref) {
+    return checkClassSupersAccessibility(aClass, ref.getResolveScope(), ref.getTextRange(), false);
   }
 
   private static HighlightInfo checkClassSupersAccessibility(@NotNull PsiClass aClass,
@@ -1529,21 +1526,22 @@ public class GenericsHighlightUtil {
         return "Cannot access " + HighlightUtil.formatClass(aClass);
       }
 
-      if (checkParameters) {
-        if (type instanceof PsiClassType) {
-          for (PsiType parameterType : ((PsiClassType)type).getParameters()) {
-            final String notAccessibleMessage = isTypeAccessible(parameterType, classes, true, resolveScope, factory);
-            if (notAccessibleMessage != null) {
-              return notAccessibleMessage;
-            }
+      if (!checkParameters){
+        return null;
+      }
+
+      if (type instanceof PsiClassType) {
+        for (PsiType parameterType : ((PsiClassType)type).getParameters()) {
+          final String notAccessibleMessage = isTypeAccessible(parameterType, classes, true, resolveScope, factory);
+          if (notAccessibleMessage != null) {
+            return notAccessibleMessage;
           }
         }
-
       }
 
       boolean isInLibrary = !index.isInContent(vFile);
       for (PsiClassType superType : aClass.getSuperTypes()) {
-        final String notAccessibleMessage = isTypeAccessible(superType, classes, checkParameters && !isInLibrary, resolveScope, factory);
+        final String notAccessibleMessage = isTypeAccessible(superType, classes, !isInLibrary, resolveScope, factory);
         if (notAccessibleMessage != null) {
           return notAccessibleMessage;
         }

@@ -3,11 +3,13 @@ package p;
 import ppp.*;
 
 class Foo {
-  {
-    final ByteArrayOStream baos = alloc();
+  void foo(Bar bar) {
+    final ByteArrayOStream baos = bar.alloc();
   }
 
-  ByteArrayOStream alloc() {
-    return null;
+  class Bar {
+    ByteArrayOStream alloc() {
+      return null;
+    }
   }
 }
