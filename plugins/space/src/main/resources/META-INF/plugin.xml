@@ -10,12 +10,18 @@
         ]]>
     </description>
 
-    <change-notes><![CDATA[]]>
+    <change-notes><![CDATA[		
+<ul>
+<li>Share a project on Space directly from the IntelliJ-based IDE</li>
+<li>Configure the method of clonning HTTP/SSH. HTTP is set by default</li>
+<li>UI improvements</li>
+</ul>
+		]]>
 
     </change-notes>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="193.5233.12" until-build="201.*"/>
+    <idea-version since-build="193.5233.12" until-build="193.*"/>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
