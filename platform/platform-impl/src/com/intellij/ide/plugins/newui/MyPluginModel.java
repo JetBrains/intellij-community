@@ -55,7 +55,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private static final Set<IdeaPluginDescriptor> myInstallingPlugins = new HashSet<>();
   private static final Set<IdeaPluginDescriptor> myInstallingWithUpdatesPlugins = new HashSet<>();
-  private static final Map<PluginId, InstallPluginInfo> myInstallingInfos = new HashMap<>();
+  static final Map<PluginId, InstallPluginInfo> myInstallingInfos = new HashMap<>();
 
   public boolean needRestart;
   public boolean createShutdownCallback = true;
