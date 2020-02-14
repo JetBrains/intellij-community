@@ -458,15 +458,16 @@ object UpdateChecker {
         PluginUpdateDialog(updatedPlugins).show()
       }
       else {
+        val runnable = { PluginManagerConfigurable.showPluginConfigurable(project, updatedPlugins) }
+
         val ideFrame = WelcomeFrame.getInstance()
         if (ideFrame is WelcomeFrameUpdater) {
-          ideFrame.showPluginUpdates { PluginUpdateDialog(updatedPlugins).show() }
+          ideFrame.showPluginUpdates(runnable)
         }
         else {
           val title = IdeBundle.message("updates.plugins.ready.short.title.available")
           val plugins = updatedPlugins.joinToString { downloader -> downloader.pluginName }
           val message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size, plugins)
-          val runnable = { PluginManagerConfigurable.showPluginConfigurable(project, updatedPlugins) }
           showNotification(project, title, message, runnable, { notification ->
             notification.addAction(object : NotificationAction(
               IdeBundle.message(if (updatedPlugins.size == 1) "updates.ignore.update.button" else "updates.ignore.updates.button")) {
