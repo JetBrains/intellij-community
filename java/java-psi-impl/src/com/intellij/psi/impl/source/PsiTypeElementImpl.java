@@ -336,6 +336,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
     }
     PsiElement parent = getParent();
+    while (parent instanceof PsiTypeElement && ((PsiTypeElement)parent).getType() instanceof PsiArrayType) {
+      parent = parent.getParent();
+    }
     if (parent instanceof PsiModifierListOwner) {
       PsiModifierList modifierList = ((PsiModifierListOwner)parent).getModifierList();
       if (modifierList != null) {
