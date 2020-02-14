@@ -10,5 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.jvm.analysis" exported="" />
     <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="library" name="StreamEx" level="project" />
   </component>
 </module>

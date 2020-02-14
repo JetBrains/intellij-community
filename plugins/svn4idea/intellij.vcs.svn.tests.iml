@@ -19,5 +19,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
   </component>
 </module>

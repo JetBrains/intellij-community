@@ -28,5 +28,6 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
+    <orderEntry type="library" name="StreamEx" level="project" />
   </component>
 </module>

@@ -35,6 +35,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="jb-jdi" level="project" />
+    <orderEntry type="library" name="StreamEx" level="project" />
   </component>
   <component name="copyright">
     <Base>

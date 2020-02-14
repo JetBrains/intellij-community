@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.JUnitPatcher;
@@ -36,10 +36,7 @@ import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
-public class MavenJUnitPatcher extends JUnitPatcher {
+public final class MavenJUnitPatcher extends JUnitPatcher {
   public static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)}");
   public static final Pattern ARG_LINE_PATTERN = Pattern.compile("@\\{(.+?)}");
   private static final Logger LOG = Logger.getInstance(MavenJUnitPatcher.class);

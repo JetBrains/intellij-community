@@ -64,7 +64,6 @@ import java.util.regex.Pattern;
  * HgUtil is a collection of static utility methods for Mercurial.
  */
 public abstract class HgUtil {
-
   public static final Pattern URL_WITH_PASSWORD = Pattern.compile("(?:.+)://(?:.+)(:.+)@(?:.+)");      //http(s)://username:password@url
   public static final int MANY_FILES = 100;
   private static final Logger LOG = Logger.getInstance(HgUtil.class);

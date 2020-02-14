@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.core" />
+    <orderEntry type="library" name="StreamEx" level="project" />
   </component>
 </module>

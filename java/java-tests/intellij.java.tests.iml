@@ -6,14 +6,14 @@
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData" />
     </content>
-    <content url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/testsrc">
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/testsrc" isTestSource="true" />
+    <content url="file://$IDEA_PROJECT_HOME$/community/plugins/InspectionGadgets/testsrc">
+      <sourceFolder url="file://$IDEA_PROJECT_HOME$/community/plugins/InspectionGadgets/testsrc" isTestSource="true" />
     </content>
-    <content url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak/testSrc">
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak/testSrc" isTestSource="true" />
+    <content url="file://$IDEA_PROJECT_HOME$/community/plugins/IntentionPowerPak/testSrc">
+      <sourceFolder url="file://$IDEA_PROJECT_HOME$/community/plugins/IntentionPowerPak/testSrc" isTestSource="true" />
     </content>
-    <content url="file://$MODULE_DIR$/../../plugins/generate-tostring/testSrc">
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/testSrc" isTestSource="true" />
+    <content url="file://$IDEA_PROJECT_HOME$/community/plugins/generate-tostring/testSrc">
+      <sourceFolder url="file://$IDEA_PROJECT_HOME$/community/plugins/generate-tostring/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -65,5 +65,6 @@
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="library" name="StreamEx" level="project" />
   </component>
 </module>

@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 /**
  * @author Eugene.Kudelevsky
  */
-public class StructuralSearchUtil {
+public final class StructuralSearchUtil {
   private static final String REG_EXP_META_CHARS = ".$|()[]{}^?*+\\";
   private static final Key<StructuralSearchProfile> STRUCTURAL_SEARCH_PROFILE_KEY = new Key<>("Structural Search Profile");
   private static final Pattern ACCENTS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");

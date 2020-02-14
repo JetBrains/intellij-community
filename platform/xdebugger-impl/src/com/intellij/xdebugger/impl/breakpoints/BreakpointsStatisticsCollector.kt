@@ -29,7 +29,8 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val breakpointManager = XDebuggerManagerImpl.getInstance(project).breakpointManager as XBreakpointManagerImpl
 
-    val res = XBreakpointUtil.breakpointTypes()
+    val res = XBreakpointType.EXTENSION_POINT_NAME.extensionList
+      .asSequence()
       .filter { it.isSuspendThreadSupported() }
       .filter { breakpointManager.getBreakpointDefaults(it).getSuspendPolicy() != it.getDefaultSuspendPolicy() }
       .map {

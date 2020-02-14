@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction {
+public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction {
   private final boolean myUnknownMembersAsNullable;
   private final boolean myIgnoreAssertStatements;
   private final SmartPsiElementPointer<PsiExpression> myAnchor;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushSettings;
@@ -55,8 +55,7 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 
-public class PushLog extends JPanel implements DataProvider {
-
+public final class PushLog extends JPanel implements DataProvider {
   private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
   private static final String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";

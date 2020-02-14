@@ -15,5 +15,6 @@
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="library" name="StreamEx" level="project" />
   </component>
 </module>

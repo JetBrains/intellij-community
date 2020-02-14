@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.resources;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -6,7 +6,10 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlAttributeValue;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +21,7 @@ import java.util.Set;
 /**
  * @author Pavel.Dolgov
  */
-public class JavaFxResourcePropertyValueInspection extends XmlSuppressableInspectionTool {
+public final class JavaFxResourcePropertyValueInspection extends XmlSuppressableInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
