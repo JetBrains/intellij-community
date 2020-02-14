@@ -2,10 +2,10 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -37,15 +37,15 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   protected void buildDialog(final Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(IdeBundle.message("action.create.new.class"))
-      .addKind(CodeInsightBundle.message("node.class.tooltip"), PlatformIcons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
-      .addKind(CodeInsightBundle.message("node.interface.tooltip"), PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
+      .addKind(JavaPsiBundle.message("node.class.tooltip"), PlatformIcons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
+      .addKind(JavaPsiBundle.message("node.interface.tooltip"), PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
     if (HighlightUtil.Feature.RECORDS.isAvailable(directory)) {
-      builder.addKind(CodeInsightBundle.message("node.record.tooltip"), PlatformIcons.RECORD_ICON, JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME);
+      builder.addKind(JavaPsiBundle.message("node.record.tooltip"), PlatformIcons.RECORD_ICON, JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME);
     }
     LanguageLevel level = PsiUtil.getLanguageLevel(directory);
     if (level.isAtLeast(LanguageLevel.JDK_1_5)) {
-      builder.addKind(CodeInsightBundle.message("node.enum.tooltip"), PlatformIcons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
-      builder.addKind(CodeInsightBundle.message("node.annotation.tooltip"), PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
+      builder.addKind(JavaPsiBundle.message("node.enum.tooltip"), PlatformIcons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
+      builder.addKind(JavaPsiBundle.message("node.annotation.tooltip"), PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }
 
     for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
