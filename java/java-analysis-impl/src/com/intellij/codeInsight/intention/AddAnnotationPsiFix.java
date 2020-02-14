@@ -187,12 +187,18 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     Project project = modifierListOwner.getProject();
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(myAnnotation, modifierListOwner.getResolveScope());
-    if (aClass != null && BaseIntentionAction.canModify(modifierListOwner) &&
-        (AnnotationsHighlightUtil.getRetentionPolicy(aClass) == RetentionPolicy.RUNTIME ||
-         !CommonClassNames.DEFAULT_PACKAGE.equals(StringUtil.getPackageName(myAnnotation)) && 
-         JavaPsiFacade.getInstance(project).getResolveHelper()//if class is already imported in current file
-           .resolveReferencedClass(StringUtil.getShortName(myAnnotation), modifierListOwner) != null)) {
-      return ExternalAnnotationsManager.AnnotationPlace.IN_CODE;
+    if (aClass != null && BaseIntentionAction.canModify(modifierListOwner)) {
+      if (AnnotationsHighlightUtil.getRetentionPolicy(aClass) == RetentionPolicy.RUNTIME) {
+        return ExternalAnnotationsManager.AnnotationPlace.IN_CODE;
+      }
+      if (!CommonClassNames.DEFAULT_PACKAGE.equals(StringUtil.getPackageName(myAnnotation))) {
+        PsiClass resolvedBySimpleName = JavaPsiFacade.getInstance(project).getResolveHelper()
+          .resolveReferencedClass(StringUtil.getShortName(myAnnotation), modifierListOwner);
+        if (resolvedBySimpleName != null && resolvedBySimpleName.getManager().areElementsEquivalent(resolvedBySimpleName, aClass)) {
+          // if class is already imported in current file
+          return ExternalAnnotationsManager.AnnotationPlace.IN_CODE;
+        }
+      }
     }
     return annotationsManager.chooseAnnotationsPlaceNoUi(modifierListOwner);
   }
