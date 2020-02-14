@@ -41,6 +41,7 @@ public class VfsUtilCore {
 
   public static final String LOCALHOST_URI_PATH_PREFIX = "localhost/";
   public static final char VFS_SEPARATOR_CHAR = '/';
+  public static final String VFS_SEPARATOR = "/";
 
   private static final String PROTOCOL_DELIMITER = ":";
 
