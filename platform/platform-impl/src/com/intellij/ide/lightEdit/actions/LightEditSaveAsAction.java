@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class LightEditSaveAsAction extends DumbAwareAction {
   public LightEditSaveAsAction() {
-    super(ActionsBundle.lazyMessage("action.LightEditSaveAsAction.text"));
+    super(ActionsBundle.lazyMessage("action.SaveAs.text"));
   }
 
   @Override

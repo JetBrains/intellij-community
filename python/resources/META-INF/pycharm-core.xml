@@ -37,7 +37,7 @@
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
-    <action id="SaveAs" class="com.intellij.ide.actions.SaveAsAction" text="Save As...">
+    <action id="SaveAs" class="com.intellij.ide.actions.SaveAsAction">
       <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="OpenFile"/>
     </action>
 
