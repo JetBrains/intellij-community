@@ -210,7 +210,8 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }
     final PsiCodeBlock containerBlock = PsiTreeUtil.getParentOfType(local, PsiCodeBlock.class);
     if (containerBlock == null) {
-      final String message = RefactoringBundle.getCannotRefactorMessage("Variable is declared outside a code block");
+      final String message = RefactoringBundle.getCannotRefactorMessage(
+        RefactoringBundle.message("inline.local.variable.declared.outside.cannot.refactor.message"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(local), HelpID.INLINE_VARIABLE);
       return null;
     }
@@ -332,7 +333,8 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
     if (Arrays.stream(refsToInline).anyMatch(ref -> ref.getParent() instanceof PsiResourceExpression)) {
       CommonRefactoringUtil
-        .showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage("Variable is used as resource reference"),
+        .showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(
+          RefactoringBundle.message("inline.local.used.as.resource.cannot.refactor.message")),
                        getRefactoringName(local), HelpID.INLINE_VARIABLE);
       return null;
     }

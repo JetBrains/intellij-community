@@ -121,7 +121,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     for (PsiExpression occurrence : occurrences) {
       if (RefactoringUtil.isAssignmentLHS(occurrence)) {
         String message =
-          RefactoringBundle.getCannotRefactorMessage("Selected expression is used for write");
+          RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("introduce.constant.used.for.write.cannot.refactor.message"));
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
         highlightError(project, editor, occurrence);
         return null;

@@ -81,7 +81,8 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     }
     final PsiElement parent = anonymousClass.getParent();
     if (parent instanceof PsiEnumConstant) {
-      showErrorMessage(editor, RefactoringBundle.getCannotRefactorMessage("Enum constant can't be converted to inner class"));
+      showErrorMessage(editor, RefactoringBundle.getCannotRefactorMessage(
+        RefactoringBundle.message("anonymous.to.inner.enum.constant.cannot.refactor.message")));
       return;
     }
     invoke(project, editor, anonymousClass);
