@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.configurationStore.StateStorageManager
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.messages.MessageBus
 
 internal val testPluginDescriptor = DefaultPluginDescriptor("test")
@@ -29,7 +30,7 @@ private class TestComponentStore : IComponentStore {
   override fun setPath(path: String) {
   }
 
-  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?) {
+  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
   }
 
   override fun initPersistencePlainComponent(component: Any, key: String) {

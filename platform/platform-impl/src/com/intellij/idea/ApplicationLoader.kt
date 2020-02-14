@@ -26,7 +26,6 @@ import com.intellij.ui.AppIcon
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.touchbar.TouchBarsManager
-import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.write
@@ -215,14 +214,14 @@ private fun startApp(app: ApplicationImpl,
       // not good, so force execution out of EDT
                       nonEdtExecutor)
     .thenRun(Runnable {
-      if (starter is IdeStarter) {
+      if (starter.modalityState == ApplicationStarter.NOT_IN_EDT) {
         starter.main(args)
       }
       else {
         // backward compatibility
         ApplicationManager.getApplication().invokeLater(Runnable {
           (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-            starter.main(ArrayUtilRt.toStringArray(args))
+            starter.main(args)
           }
         })
       }
@@ -311,10 +310,14 @@ private fun addActivateAndWindowsCliListeners() {
 
   MainRunner.LISTENER = WindowsCommandLineListener { currentDirectory, args ->
     LOG.info("External Windows command received")
-    if (args.isEmpty()) return@WindowsCommandLineListener 0
+    if (args.isEmpty()) {
+      return@WindowsCommandLineListener 0
+    }
 
     val app = ApplicationManager.getApplication()
-    val anyState = ApplicationStarter.EP_NAME.iterable.any { it.canProcessExternalCommandLine() && args[0] == it.commandName && it.allowAnyModalityState() }
+    val anyState = ApplicationStarter.EP_NAME.iterable.any {
+      it.canProcessExternalCommandLine() && args[0] == it.commandName && it.modalityState != ApplicationStarter.NON_MODAL
+    }
     val state = if (anyState) app.anyModalityState else app.defaultModalityState
 
     val ref = AtomicReference<Future<CliResult>>()

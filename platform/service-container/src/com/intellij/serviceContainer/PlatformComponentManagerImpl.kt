@@ -297,11 +297,10 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
   }
 
-  @Internal
-  fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?) {
+  internal fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
     if (serviceDescriptor == null || !(component is PathMacroManager || component is IComponentStore || component is MessageBusFactory)) {
       LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
-      componentStore.initComponent(component, serviceDescriptor)
+      componentStore.initComponent(component, serviceDescriptor, pluginId)
     }
   }
 
@@ -503,9 +502,9 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       Disposer.register(serviceParentDisposable, result)
     }
 
-    initializeComponent(result, null)
-    val pluginClassLoader = serviceClass.classLoader as? PluginClassLoader
-    StartUpMeasurer.addCompletedActivity(startTime, serviceClass, getServiceActivityCategory(this), pluginClassLoader?.pluginIdString)
+    val pluginId = (serviceClass.classLoader as? PluginClassLoader)?.pluginId
+    initializeComponent(result, null, pluginId)
+    StartUpMeasurer.addCompletedActivity(startTime, serviceClass, getServiceActivityCategory(this), pluginId?.idString)
     return result
   }
 

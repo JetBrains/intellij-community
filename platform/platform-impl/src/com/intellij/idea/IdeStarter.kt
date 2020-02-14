@@ -58,11 +58,9 @@ open class IdeStarter : ApplicationStarter {
 
   override fun getCommandName(): String? = null
 
-  override fun main(args: Array<String>) {
-    main(args.toList())
-  }
+  override fun getModalityState() = ApplicationStarter.NOT_IN_EDT
 
-  internal fun main(args: List<String>) {
+  override fun main(args: List<String>) {
     val frameInitActivity = StartUpMeasurer.startMainActivity("frame initialization")
 
     // Event queue should not be changed during initialization of application components.

@@ -39,7 +39,7 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
         Disposer.register(componentManager.serviceParentDisposable, instance)
       }
 
-      componentManager.initializeComponent(instance, null)
+      componentManager.initializeComponent(instance, serviceDescriptor = null, pluginId = pluginId)
       @Suppress("DEPRECATION")
       if (instance is BaseComponent) {
         @Suppress("DEPRECATION")
