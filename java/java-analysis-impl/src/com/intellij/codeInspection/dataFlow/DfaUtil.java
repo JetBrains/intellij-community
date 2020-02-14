@@ -18,6 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,8 +33,8 @@ import static com.intellij.util.ObjectUtils.tryCast;
  */
 public class DfaUtil {
 
-  @Nullable("null means DFA analysis has failed (too complex to analyze)")
-  public static Collection<PsiExpression> getCachedVariableValues(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
+  public static @Nullable("null means DFA analysis has failed (too complex to analyze)") Collection<PsiExpression> 
+  getCachedVariableValues(final @Nullable PsiVariable variable, final @Nullable PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
 
     final PsiElement codeBlock = DfaPsiUtil.getEnclosingCodeBlock(variable, context);
@@ -50,8 +51,8 @@ public class DfaUtil {
     return Collections.emptyList();
   }
 
-  @Nullable("null means DFA analysis has failed (too complex to analyze)")
-  private static Map<PsiElement, ValuableInstructionVisitor.PlaceResult> getCachedPlaceResults(@NotNull final PsiElement codeBlock) {
+  private static @Nullable("null means DFA analysis has failed (too complex to analyze)") Map<PsiElement, ValuableInstructionVisitor.PlaceResult> getCachedPlaceResults(
+    final @NotNull PsiElement codeBlock) {
     return CachedValuesManager.getCachedValue(codeBlock, () -> {
       final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor();
       RunnerResult runnerResult = new ValuableDataFlowRunner(codeBlock.getProject()).analyzeMethod(codeBlock, visitor);
@@ -61,18 +62,18 @@ public class DfaUtil {
 
   /**
    * @deprecated use {@link NullabilityUtil#getExpressionNullability(PsiExpression, boolean)}
+   * Note that variable parameter is not used at all now.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
-  @NotNull
-  public static Nullability checkNullability(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
+  public static @NotNull Nullability checkNullability(final @Nullable PsiVariable variable, final @Nullable PsiElement context) {
     if (context instanceof PsiExpression) {
       return NullabilityUtil.getExpressionNullability((PsiExpression)context, true);
     }
     return Nullability.UNKNOWN;
   }
 
-  @NotNull
-  public static Collection<PsiExpression> getPossibleInitializationElements(@NotNull PsiElement qualifierExpression) {
+  public static @NotNull Collection<PsiExpression> getPossibleInitializationElements(@NotNull PsiElement qualifierExpression) {
     if (qualifierExpression instanceof PsiMethodCallExpression) {
       return Collections.singletonList((PsiMethodCallExpression)qualifierExpression);
     }
@@ -93,8 +94,7 @@ public class DfaUtil {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public static Nullability inferMethodNullability(PsiMethod method) {
+  public static @NotNull Nullability inferMethodNullability(PsiMethod method) {
     if (PsiUtil.resolveClassInType(method.getReturnType()) == null) {
       return Nullability.UNKNOWN;
     }
@@ -113,8 +113,7 @@ public class DfaUtil {
     return false;
   }
 
-  @NotNull
-  public static Nullability inferLambdaNullability(PsiLambdaExpression lambda) {
+  public static @NotNull Nullability inferLambdaNullability(PsiLambdaExpression lambda) {
     if (LambdaUtil.getFunctionalInterfaceReturnType(lambda) == null) {
       return Nullability.UNKNOWN;
     }
@@ -122,8 +121,7 @@ public class DfaUtil {
     return inferBlockNullability(lambda, false);
   }
 
-  @NotNull
-  private static Nullability inferBlockNullability(@NotNull PsiParameterListOwner owner, boolean suppressNullable) {
+  private static @NotNull Nullability inferBlockNullability(@NotNull PsiParameterListOwner owner, boolean suppressNullable) {
     PsiElement body = owner.getBody();
     if (body == null) return Nullability.UNKNOWN;
 
@@ -278,8 +276,7 @@ public class DfaUtil {
    * @param expression expression to cover
    * @return a dataflow context; null if no applicable context found.
    */
-  @Nullable
-  static PsiElement getDataflowContext(PsiExpression expression) {
+  static @Nullable PsiElement getDataflowContext(PsiExpression expression) {
     PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMember.class);
     if (member instanceof PsiField || member instanceof PsiClassInitializer) return member.getContainingClass();
     if (member instanceof PsiMethod) {
@@ -295,8 +292,7 @@ public class DfaUtil {
    * @param condition condition to evaluate
    * @return evaluated value or null if cannot be evaluated
    */
-  @Nullable
-  public static Boolean evaluateCondition(@Nullable PsiExpression condition) {
+  public static @Nullable Boolean evaluateCondition(@Nullable PsiExpression condition) {
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(condition);
     if (result == null) return null;
     return tryCast(ContainerUtil.getOnlyItem(result.getExpressionValues(condition)), Boolean.class);
@@ -317,9 +313,8 @@ public class DfaUtil {
     return value;
   }
 
-  @NotNull
-  public static List<? extends MethodContract> addRangeContracts(@Nullable PsiMethod method,
-                                                                 @NotNull List<? extends MethodContract> contracts) {
+  public static @NotNull List<? extends MethodContract> addRangeContracts(@Nullable PsiMethod method,
+                                                                          @NotNull List<? extends MethodContract> contracts) {
     if (method == null) return contracts;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     List<MethodContract> rangeContracts = new ArrayList<>();
