@@ -1,10 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -13,25 +11,21 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.impl.compilation.cache.BuildTargetState
+import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
+import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 
-import java.lang.reflect.Type
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
 class CompilationOutputsUploader {
   private static final String SOURCES_STATE_FILE_NAME = "target_sources_state.json"
-  private static final List<String> PRODUCTION_TYPES = ["java-production", "resources-production"]
-  private static final List<String> TEST_TYPES = ["java-test", "resources-test"]
-  private static final String IDENTIFIER = "\$PROJECT_DIR\$"
-  private static final String PRODUCTION = "production"
-  private static final String TEST = "test"
+
   private final String agentPersistentStorage
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
   private final String commitHash
-  private final Type myTokenType
   private final Gson gson
 
   CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, String commitHash, String agentPersistentStorage) {
@@ -41,8 +35,6 @@ class CompilationOutputsUploader {
     this.commitHash = commitHash
     this.context = context
     gson = new Gson()
-
-    myTokenType = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType()
   }
 
   def upload() {
@@ -62,7 +54,7 @@ class CompilationOutputsUploader {
         return
       }
       Map<String, Map<String, BuildTargetState>> currentSourcesState = (Map<String, Map<String, BuildTargetState>>)gson
-        .fromJson(FileUtil.loadFile(sourceStateFile, CharsetToolkit.UTF8), myTokenType)
+        .fromJson(FileUtil.loadFile(sourceStateFile, CharsetToolkit.UTF8), SourcesStateProcessor.SOURCES_STATE_TYPE)
 
       executor.submit {
         // Upload jps caches started first because of the significant size of the output
@@ -102,61 +94,21 @@ class CompilationOutputsUploader {
 
   def uploadCompilationOutputs(File root, Map<String, Map<String, BuildTargetState>> currentSourcesState,
                                JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
-    uploadCompilationOutputsByParams(PRODUCTION, PRODUCTION_TYPES[0], PRODUCTION_TYPES[1], root, currentSourcesState, uploader, executor)
-    uploadCompilationOutputsByParams(TEST, TEST_TYPES[0], TEST_TYPES[1], root, currentSourcesState, uploader, executor)
-  }
-
-  private void uploadCompilationOutputsByParams(String prefix, String firstUploadParam, String secondUploadParam, File root,
-                                               Map<String, Map<String, BuildTargetState>> currentSourcesState,
-                                               JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
-    def firstParamMap = currentSourcesState.get(firstUploadParam)
-    def secondParamMap = currentSourcesState.get(secondUploadParam)
-
-    def firstParamKeys = new HashSet<>(firstParamMap.keySet())
-    def secondParamKeys = new HashSet<>(secondParamMap.keySet())
-    def intersection = firstParamKeys.intersect(secondParamKeys)
-
-    intersection.each { buildTargetName ->
-      def firstParamState = firstParamMap.get(buildTargetName)
-      def secondParamState = secondParamMap.get(buildTargetName)
-      def outputPath = firstParamState.relativePath.replace(IDENTIFIER, root.getAbsolutePath())
-
-      def hash = calculateStringHash(firstParamState.hash + secondParamState.hash)
-      uploadCompilationOutput(buildTargetName, prefix, hash, new File(outputPath), uploader, executor)
-    }
-
-    firstParamKeys.removeAll(intersection)
-    firstParamKeys.each { buildTargetName ->
-      def firstParamState = firstParamMap.get(buildTargetName)
-      def outputPath = firstParamState.relativePath.replace(IDENTIFIER, root.getAbsolutePath())
-
-      uploadCompilationOutput(buildTargetName, firstUploadParam, firstParamState.hash, new File(outputPath), uploader, executor)
-    }
-
-    secondParamKeys.removeAll(intersection)
-    secondParamKeys.each { buildTargetName ->
-      def secondParamState = secondParamMap.get(buildTargetName)
-      def outputPath = secondParamState.relativePath.replace(IDENTIFIER, root.getAbsolutePath())
-
-      uploadCompilationOutput(buildTargetName, secondUploadParam, secondParamState.hash, new File(outputPath), uploader, executor)
+    SourcesStateProcessor.getAllCompilationOutputs(SourcesStateProcessor.IDENTIFIER, root, currentSourcesState).forEach { CompilationOutput it ->
+      uploadCompilationOutput(it, uploader, executor)
     }
   }
 
-  private void uploadCompilationOutput(String buildTargetName, String prefix, String hash, File outputFolder,
-                                       JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
+  private void uploadCompilationOutput(CompilationOutput compilationOutput, JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
     executor.submit {
-      def sourcePath = "$prefix/$buildTargetName/$hash"
+      def sourcePath = "${compilationOutput.type}/${compilationOutput.name}/${compilationOutput.hash}"
       if (uploader.isExist(sourcePath)) return
-      File zipFile = new File(outputFolder.getParent(), hash)
+      def outputFolder = new File(compilationOutput.path)
+      File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
       uploader.upload(sourcePath, zipFile)
       FileUtil.delete(zipFile)
     }
-  }
-
-  private static String calculateStringHash(String content) {
-    def hasher = Hashing.murmur3_128().newHasher()
-    return hasher.putString(content, StandardCharsets.UTF_8).hash().toString()
   }
 
   private void zipBinaryData(File zipFile, File dir) {
@@ -190,16 +142,6 @@ class CompilationOutputsUploader {
 
     boolean upload(@NotNull final String path, @NotNull final File file) {
       return super.upload(path, file, false)
-    }
-  }
-
-  private class BuildTargetState {
-    private final String hash
-    private final String relativePath
-
-    private BuildTargetState(String hash, String relativePath) {
-      this.hash = hash
-      this.relativePath = relativePath
     }
   }
 }
