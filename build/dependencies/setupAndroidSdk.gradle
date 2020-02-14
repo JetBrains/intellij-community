@@ -72,7 +72,7 @@ dependencies {
   kotlinDeps "org.jetbrains.kotlin:kotlin-test-common:${kotlin_version}"
 }
 
-task unzipAndroidSdk(dependsOn: [configurations.androidSdk, configurations.androidOfflineRepo], type: UnzipAndroidSdkTask) {
+task syncAndroidSdk(dependsOn: [configurations.androidSdk, configurations.androidOfflineRepo], type: SyncAndroidSdkTask) {
   CopyUnitOfWork.project = project
   work = [
     new CopyData().with {
@@ -99,18 +99,18 @@ task unzipAndroidSdk(dependsOn: [configurations.androidSdk, configurations.andro
   }
 }
 
-task syncToolsBaseTemplates(dependsOn: [configurations.androidToolsBaseTemplates, unzipAndroidSdk], type: VersionedLazyCopyTask) {
+task syncToolsBaseTemplates(dependsOn: [configurations.androidToolsBaseTemplates, syncAndroidSdk], type: VersionedLazyCopyTask) {
   from { zipTree(configurations.androidToolsBaseTemplates.singleFile) }
   into "${project.buildDir}/android-sdk/tools-base/templates"
   versionFile = android_m2_version
 }
 
-task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, unzipAndroidSdk], type: Sync) {
+task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncAndroidSdk], type: Sync) {
   from "$buildDir/kotlin"
   into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
 }
 
-task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, unzipAndroidSdk], type: OfflineMavenRepository) {
+task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, syncAndroidSdk], type: OfflineMavenRepository) {
   def verFile = "${project.buildDir}/android-sdk/prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/${kotlin_version}"
   onlyIf {
     !file(verFile).isFile()
@@ -125,7 +125,7 @@ task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, unzipAndroidSdk], t
 /**
  * This is entry point: invoke this task to setup android sdk and all the artifacts required to run android-plugin unit tests
  */
-task setupAndroidSdk(dependsOn: [unzipAndroidSdk, syncKotlinPluginForAndroid, updateKotlinLibs, syncToolsBaseTemplates])
+task setupAndroidSdk(dependsOn: [syncAndroidSdk, syncKotlinPluginForAndroid, updateKotlinLibs, syncToolsBaseTemplates])
 
 class CopyData implements Serializable {
   String from
@@ -244,12 +244,12 @@ class VersionedLazyCopyTask extends DefaultTask {
   }
 }
 
-class UnzipAndroidSdkTask extends DefaultTask {
+class SyncAndroidSdkTask extends DefaultTask {
   Collection<CopyData> work
   WorkerExecutor workerExecutor
 
   @Inject
-  UnzipAndroidSdkTask(WorkerExecutor workerExecutor) {
+  SyncAndroidSdkTask(WorkerExecutor workerExecutor) {
     this.workerExecutor = workerExecutor
   }
 
