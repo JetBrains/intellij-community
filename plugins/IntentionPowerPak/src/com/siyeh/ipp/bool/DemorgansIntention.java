@@ -108,10 +108,22 @@ public class DemorgansIntention extends MutablyNamedIntention {
     final String text = expression.getText(); // don't need CommentTracker because literal can't contain comment
     final int length = text.length();
     if (text.charAt(0) == '"') {
-      if (length == 1 || !text.endsWith("\"") || (text.endsWith("\\\"") && !text.endsWith("\\\\\""))) {
+      if (length == 1 || !text.endsWith("\"") || endsWithEscapedQuote(text)) {
         return text + '"';
       }
     }
     return text;
+  }
+
+  private static boolean endsWithEscapedQuote(String text) {
+    final int length = text.length();
+    if (text.charAt(length - 1) == '"') {
+      boolean escaped = false;
+      for (int i = length - 2; i > 0; i--) {
+        if (text.charAt(i) == '\\') escaped = !escaped;
+      }
+      return escaped;
+    }
+    return false;
   }
 }
