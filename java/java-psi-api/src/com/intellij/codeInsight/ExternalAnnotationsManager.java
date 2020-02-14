@@ -33,7 +33,7 @@ public abstract class ExternalAnnotationsManager {
      * User should be asked to decide whether they want to create new annotation root for external annotation.
      * {@link ExternalAnnotationsManager#chooseAnnotationsPlace(PsiElement)} asks user automatically, so this result is never returned,
      * but it requires EDT thread. On the other hand, {@link ExternalAnnotationsManager#chooseAnnotationsPlaceNoUi(PsiElement)}
-     * never display UI but may return this result.
+     * never displays UI but may return this result.
      */
     NEED_ASK_USER,
     /**
