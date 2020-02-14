@@ -3,6 +3,7 @@ package org.jetbrains.plugins.javaFX.codeInsight;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
@@ -88,7 +89,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
 
     SearchUsagesTask(@NotNull Project project,
                             @NotNull PropertyInfo property) {
-      super(project, "Searching for usages of '" + property.myFieldName + "'", true);
+      super(project, InspectionsBundle.message("javafx.field.to.property.intention.search.for.usages", property.myFieldName), true);
       myProperty = property;
     }
 

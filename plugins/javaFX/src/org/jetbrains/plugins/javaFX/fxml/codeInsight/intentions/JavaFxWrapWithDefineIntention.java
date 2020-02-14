@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -37,12 +38,12 @@ public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Wrap with fx:define";
+    return InspectionsBundle.message("javafx.wrap.with.fx.define.intention.family.name");
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    setText("Wrap \"" + myId + "\" with fx:define");
+    setText( InspectionsBundle.message("javafx.wrap.id.with.fx.define.intention",myId));
     return myTag.isValid();
   }
 

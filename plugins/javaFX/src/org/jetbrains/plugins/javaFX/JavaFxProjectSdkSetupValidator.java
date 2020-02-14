@@ -3,6 +3,7 @@ package org.jetbrains.plugins.javaFX;
 
 import com.intellij.codeInsight.daemon.ProjectSdkSetupValidator;
 import com.intellij.codeInsight.daemon.impl.JavaProjectSdkSetupValidator;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
@@ -41,8 +42,7 @@ public class JavaFxProjectSdkSetupValidator implements ProjectSdkSetupValidator 
     final PsiClass nodeClass =
       JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_SCENE_NODE, GlobalSearchScope.allScope(project));
     if (nodeClass == null) {
-      return "The JavaFX runtime is not configured. " +
-             "Either use a JDK that has the JavaFX built in, or add a JavaFX library to the classpath";
+      return ExecutionBundle.message("javafx.project.sdk.setup.validator.runtime.not.configured.error");
     }
     return null;
   }

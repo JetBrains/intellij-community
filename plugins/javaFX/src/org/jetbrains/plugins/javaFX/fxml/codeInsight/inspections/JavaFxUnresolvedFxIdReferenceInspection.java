@@ -53,7 +53,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
                 if (fieldClass != null) {
                   final String text = reference.getCanonicalText();
                   boolean validName = LanguageNamesValidation.isIdentifier(fieldClass.getLanguage(), text, fieldClass.getProject());
-                  holder.registerProblem(reference.getElement(), reference.getRangeInElement(), "Unresolved fx:id reference",
+                  holder.registerProblem(reference.getElement(), reference.getRangeInElement(), InspectionsBundle.message("inspection.javafx.unresolved.fx.id.reference.problem"),
                                          isOnTheFly && validName ? new LocalQuickFix[]{new CreateFieldFromUsageQuickFix(text)} : LocalQuickFix.EMPTY_ARRAY);
                 }
               }

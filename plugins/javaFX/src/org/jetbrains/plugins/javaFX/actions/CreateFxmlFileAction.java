@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.actions;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -45,7 +46,7 @@ public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
   private static final String INTERNAL_TEMPLATE_NAME = "FxmlFile.fxml";
 
   public CreateFxmlFileAction() {
-    super("FXML File", "Create New FXML File", AllIcons.FileTypes.Xml);
+    super(ExecutionBundle.message("javafx.create.new.fxml.file.title"), ExecutionBundle.message("javafx.create.new.fxml.file.description"), AllIcons.FileTypes.Xml);
   }
 
   @Override

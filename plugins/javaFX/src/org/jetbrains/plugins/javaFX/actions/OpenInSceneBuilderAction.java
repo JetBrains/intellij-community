@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.javaFX.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -53,7 +54,7 @@ public class OpenInSceneBuilderAction extends AnAction {
       commandLine.createProcess();
     }
     catch (Throwable ex) {
-      Messages.showErrorDialog("Failed to start SceneBuilder: " + commandLine.getCommandLineString(), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(ExecutionBundle.message("javafx.failed.to.start.scene.builder.error", commandLine.getCommandLineString()), CommonBundle.getErrorTitle());
     }
   }
 

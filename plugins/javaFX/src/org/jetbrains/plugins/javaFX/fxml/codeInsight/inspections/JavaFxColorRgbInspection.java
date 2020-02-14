@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
@@ -69,7 +70,7 @@ public class JavaFxColorRgbInspection extends XmlSuppressableInspectionTool {
           try {
             double value = Double.parseDouble(propertyValue);
             if (value < 0.0 || value > 1.0) {
-              holder.registerProblem(location, "Color component has to be a number between 0.0 and 1.0, inclusively");
+              holder.registerProblem(location, InspectionsBundle.message("inspection.javafx.color.component.out.of.range.problem"));
             }
           }
           catch (NumberFormatException ignored) {

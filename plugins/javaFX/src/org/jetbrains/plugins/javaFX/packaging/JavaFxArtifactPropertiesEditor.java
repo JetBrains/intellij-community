@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.util.ListTableWithButtons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -61,9 +62,9 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProperties = properties;
     JavaFxApplicationClassBrowser.appClassBrowser(project, artifact).setField(myAppClass);
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.PROPERTIES);
-    myHtmlParams.addBrowseFolderListener("Choose Properties File", "Parameters for the resulting application to run standalone.", project, descriptor);
-    myParams.addBrowseFolderListener("Choose Properties File", "Parameters for the resulting application to run in the browser.", project, descriptor);
-    myHtmlTemplate.addBrowseFolderListener("Choose HTML File", "HTML template for application entry point to run in browser", project,
+    myHtmlParams.addBrowseFolderListener(ExecutionBundle.message("javafx.artifact.properties.editor.choose.file.standalone.title" ), ExecutionBundle.message("javafx.artifact.properties.editor.choose.file.standalone.description"), project, descriptor);
+    myParams.addBrowseFolderListener(ExecutionBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.title"), ExecutionBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.description"), project, descriptor);
+    myHtmlTemplate.addBrowseFolderListener(ExecutionBundle.message("javafx.artifact.properties.editor.choose.html.file.title"), ExecutionBundle.message("javafx.artifact.properties.editor.choose.html.file.description"), project,
                                            FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.HTML));
     myEditSignCertificateButton.addActionListener(new ActionListener() {
       @Override
@@ -260,7 +261,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       myTable = new AttributesTable();
       myTable.setValues(attrs);
       myWholePanel.add(myTable.getComponent(), BorderLayout.CENTER);
-      setTitle("Edit Custom Manifest Attributes");
+      setTitle(ExecutionBundle.message("javafx.artifact.properties.editor.edit.custom.manifest.attributes"));
       init();
     }
 

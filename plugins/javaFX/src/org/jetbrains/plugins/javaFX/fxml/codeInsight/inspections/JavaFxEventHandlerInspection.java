@@ -55,7 +55,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
         final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
         if (eventHandlerMethods.size() == 0) return;
         if (eventHandlerMethods.size() != 1) {
-          holder.registerProblem(xmlAttributeValue, "Ambiguous event handler name: more than one matching method found");
+          holder.registerProblem(xmlAttributeValue, InspectionsBundle.message("inspection.javafx.event.handler.ambiguous.problem"));
         }
 
         if (myDetectNonVoidReturnType) {
@@ -63,7 +63,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
             .map(PsiMethod::getReturnType)
             .filter(returnType -> !PsiType.VOID.equals(returnType))
             .findAny()
-            .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue, "Return type of event handler should be void"));
+            .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue, InspectionsBundle.message("inspection.javafx.event.handler.return.type.problem")));
         }
 
         final PsiClassType declaredType = JavaFxPsiUtil.getDeclaredEventType(attribute);
@@ -83,14 +83,14 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
                   quickFixes.add(parameterTypeFix);
                   collectFieldTypeFixes(attribute, (PsiClassType)actualType, quickFixes);
                   holder.registerProblem(xmlAttributeValue,
-                                         "Incompatible generic parameter of event handler argument: " + actualType.getCanonicalText() +
-                                         " is not assignable from " + declaredType.getCanonicalText(),
+                                         InspectionsBundle.message("inspection.javafx.event.handler.incompatible.generic.parameter.problem",
+                                                                   actualType.getCanonicalText(), declaredType.getCanonicalText()),
                                          quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
                 }
                 else {
                   holder.registerProblem(xmlAttributeValue,
-                                         "Incompatible event handler argument: " + actualRawType.getCanonicalText() +
-                                         " is not assignable from " + expectedRawType.getCanonicalText(),
+                                         InspectionsBundle.message("inspection.javafx.event.handler.incompatible.handler.argument",
+                                                                   actualRawType.getCanonicalText(), expectedRawType.getCanonicalText()),
                                          parameterTypeFix);
                 }
               }
@@ -125,7 +125,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Detect event handler method having non-void return type", this, "myDetectNonVoidReturnType");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.javafx.event.handler.create.options.panel"), this, "myDetectNonVoidReturnType");
   }
 
   private static void collectFieldTypeFixes(@NotNull XmlAttribute attribute,
@@ -193,7 +193,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Change parameter type of event handler method";
+      return InspectionsBundle.message("inspection.javafx.event.handler.change.parameter.type");
     }
 
     @Override

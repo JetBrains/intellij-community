@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
@@ -64,7 +65,8 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     if (reference == null) return;
     if (reference instanceof JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase &&
         ((JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase)reference).isBuiltIn()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot rename built-in property", "Cannot rename", null);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("javafx.property.rename.handler.error.message"),
+                                          RefactoringBundle.message("javafx.property.rename.handler.error.title"), null);
       return;
     }
     if (reference instanceof JavaFxPropertyReference && reference.resolve() != null) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -121,7 +122,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
           List<Pair<VirtualFile, DownloadableFileDescription>>
             list = downloader.downloadWithProgress(tempDir.toString(), myProject, myErrorPanel);
           if (list == null || list.isEmpty()) {
-            myErrorLabel.setHyperlinkText("Failed to download Scene Builder Kit", "","");
+            myErrorLabel.setHyperlinkText(ExecutionBundle.message("javafx.scene.builder.editor.failed.to.download.kit.error"), "", "");
             myErrorLabel.setIcon(Messages.getErrorIcon());
             return;
           }
@@ -136,8 +137,8 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
           LOG.warn("Can't download SceneBuilderKit", e2);
          }
       });
-      myErrorLabel.setHyperlinkText("Failed to open the file in the Scene Builder. ",
-                                    "Download Scene Builder Kit", "");
+      myErrorLabel.setHyperlinkText(ExecutionBundle.message("javafx.scene.builder.editor.failed.to.open.file.error"),
+                                    ExecutionBundle.message("javafx.scene.builder.editor.download.scene.builder.kit"), "");
       myErrorLabel.setIcon(Messages.getErrorIcon());
       myLayout.show(myPanel, ERROR_CARD);
       return;
@@ -162,7 +163,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       description = "Unknown error occurred";
     }
 
-    myErrorLabel.setHyperlinkText("Failed to open the file in the Scene Builder", "", "");
+    myErrorLabel.setHyperlinkText(ExecutionBundle.message("javafx.scene.builder.editor.failed.to.open.file.error"), "", "");
     myErrorLabel.setIcon(Messages.getErrorIcon());
     myErrorStack.setText(description);
     myErrorStack.setVisible(true);
@@ -198,7 +199,8 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
           // XXX: strange behavior with undo/redo
 
-          ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> myDocument.setText(content), "JavaFX Scene Builder edit operation", null));
+          ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance()
+            .executeCommand(myProject, () -> myDocument.setText(content), ExecutionBundle.message("javafx.scene.builder.editor.scene.builder.edit.operation"), null));
         }
         finally {
           myChangeListener.setRunState(true);
