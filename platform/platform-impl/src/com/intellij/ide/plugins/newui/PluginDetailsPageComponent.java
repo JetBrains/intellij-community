@@ -402,7 +402,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
     updateButtons();
 
     boolean bundled = myPlugin.isBundled() && !myPlugin.allowBundledUpdate();
-    String version = bundled ? "bundled" : myPlugin.getVersion();
+    String version = myPlugin.getVersion();
+    if (bundled) {
+      version = "bundled" + (StringUtil.isEmptyOrSpaces(version) ? "" : " " + version);
+    }
     if (myUpdateDescriptor != null) {
       version = myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + myUpdateDescriptor.getVersion();
     }
