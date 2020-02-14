@@ -18,15 +18,15 @@ import java.util.List;
 public interface AnnotationPackageSupport {
   /**
    * Returns nullability by a container annotation
-   * @param anno annotation to check
-   * @param types target types
+   *
+   * @param anno         annotation to check
+   * @param types        target types
    * @param superPackage if true then the annotation is applied to the super-package
    * @return NullabilityAnnotationInfo object if given annotation is recognized default annotation; null otherwise
    */
-  @Nullable
-  default NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
-                                                                        PsiAnnotation.TargetType @NotNull [] types,
-                                                                        boolean superPackage) {
+  default @Nullable NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
+                                                                                  PsiAnnotation.TargetType @NotNull [] types,
+                                                                                  boolean superPackage) {
     return null;
   }
 
@@ -34,8 +34,7 @@ public interface AnnotationPackageSupport {
    * @param nullability desired nullability
    * @return list of explicit annotations which denote given nullability (and may denote additional semantics)
    */
-  @NotNull
-  default List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
+  default @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return Collections.emptyList();
   }
 
@@ -46,7 +45,8 @@ public interface AnnotationPackageSupport {
   static AnnotationPackageSupport @NotNull [] getAnnotationPackages(@NotNull NullableNotNullManager manager) {
     return new AnnotationPackageSupport[]{
       new JetBrainsAnnotationSupport(), new FindBugsAnnotationSupport(), new AndroidAnnotationSupport(),
-      new Jsr305Support(manager), new CheckerFrameworkSupport(), new CodeAnalysisAnnotationSupport()
+      new Jsr305Support(manager), new CheckerFrameworkSupport(), new EclipseAnnotationSupport(),
+      new CodeAnalysisAnnotationSupport()
     };
   }
 }
