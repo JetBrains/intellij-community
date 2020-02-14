@@ -16,12 +16,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -66,14 +67,18 @@ public class UnusedPropertyUtil {
       if (key == null) return;
       final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(myRepresentativePointer.getContainingFile());
       LOG.assertTrue(file != null);
-      file.getResourceBundle()
-        .getPropertiesFiles()
+      List<PropertiesFile> propertiesFiles = file.getResourceBundle().getPropertiesFiles();
+      if (!FileModificationService.getInstance()
+        .preparePsiElementsForWrite(ContainerUtil.map2List(propertiesFiles, p -> p.getContainingFile()))) {
+        return;
+      }
+      WriteAction.run(() -> propertiesFiles
         .stream()
         .flatMap(f -> f.findPropertiesByKey(key).stream())
         .filter(Objects::nonNull)
         .map(IProperty::getPsiElement)
-        .filter(FileModificationService.getInstance()::preparePsiElementForWrite)
-        .forEach(e -> WriteAction.run(() -> e.delete()));
+        .forEach(e -> e.delete())
+      );
     }
   }
 }
