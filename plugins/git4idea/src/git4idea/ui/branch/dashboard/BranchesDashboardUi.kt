@@ -71,8 +71,9 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val branchesSearchFieldPanel = simplePanel()
   private val branchesSearchField = NonOpaquePanel(tree.installSearchField(JBUI.Borders.emptyLeft(5))).apply(UIUtil::setNotOpaqueRecursively)
 
-  private val treeSelectionListener = TreeSelectionListener {
+  private val treeSelectionListener = TreeSelectionListener { e ->
     if (!branchesTreeWithToolbarPanel.isVisible) return@TreeSelectionListener
+    if (e.paths.none(e::isAddedPath)) return@TreeSelectionListener
 
     val ui = logUi
     val branchNames = tree.getSelectedBranchNames()
