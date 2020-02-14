@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.compound
 
 import com.intellij.execution.*
@@ -56,7 +56,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
   }
 
   fun setConfigurationsWithoutTargets(value: Collection<RunConfiguration>) {
-    setConfigurationsWithTargets(value.associate { it to null })
+    setConfigurationsWithTargets(value.associateWith { null })
   }
 
   private fun initIfNeeded(runManager: RunManagerImpl) {
@@ -142,8 +142,9 @@ class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
 
   override fun getState(): CompoundRunConfigurationOptions? {
     if (isDirty.compareAndSet(true, false)) {
-      options.configurations = sortedConfigurationsWithTargets.mapTo(ArrayList()) { entry ->
-        TypeNameTarget(entry.key.type.id, entry.key.name, entry.value?.id)
+      options.configurations.clear()
+      for (entry in sortedConfigurationsWithTargets) {
+        options.configurations.add(TypeNameTarget(entry.key.type.id, entry.key.name, entry.value?.id))
       }
     }
     return options
@@ -192,9 +193,9 @@ class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
 }
 
 class CompoundRunConfigurationOptions : BaseState() {
-  @get:XCollection()
+  @get:XCollection
   @get:Property(surroundWithTag = false)
-  var configurations by list<TypeNameTarget>()
+  val configurations by list<TypeNameTarget>()
 }
 
 @Tag("toRun")

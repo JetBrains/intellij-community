@@ -3,12 +3,13 @@ package com.intellij.configurationScript.schemaGenerators
 import com.intellij.configurationScript.LOG
 import com.intellij.configurationScript.SchemaGenerator
 import com.intellij.configurationStore.ComponentSerializationUtil
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.serviceContainer.ServiceManagerImpl
 import com.intellij.util.ReflectionUtil
 import gnu.trove.THashMap
 import org.jetbrains.io.JsonObjectBuilder
@@ -16,9 +17,13 @@ import org.jetbrains.io.JsonObjectBuilder
 internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
   private val pathToStateClass: MutableMap<String, Class<out BaseState>> = THashMap()
 
-  // well, schema is generated without project - we cannot rely on created component adapter for services
+  // schema is generated without project - we cannot rely on created component adapter for services
   override fun generate(rootBuilder: JsonObjectBuilder) {
-    ServiceManagerImpl.processProjectDescriptors(::processServiceDescriptor)
+    for (plugin in PluginManagerCore.getLoadedPlugins()) {
+      for (serviceDescriptor in (plugin as IdeaPluginDescriptorImpl).project.services) {
+        processServiceDescriptor(serviceDescriptor, plugin)
+      }
+    }
     doGenerate(rootBuilder, pathToStateClass)
   }
 

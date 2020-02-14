@@ -18,7 +18,6 @@ internal class ConfigurationScriptProjectStoreFactory : ProjectStoreFactory {
 }
 
 private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(project) {
-
   override fun doCreateStateGetter(reloadData: Boolean,
                                    storage: StateStorage,
                                    info: ComponentInfo,

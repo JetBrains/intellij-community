@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
@@ -54,6 +55,19 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     @Internal
     fun <T> isLightService(serviceClass: Class<T>): Boolean {
       return Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)
+    }
+
+    @ApiStatus.Internal
+    fun processAllDescriptors(componentManager: ComponentManager, consumer: (ServiceDescriptor) -> Unit) {
+      for (plugin in PluginManagerCore.getLoadedPlugins()) {
+        val pluginDescriptor = plugin as IdeaPluginDescriptorImpl
+        val containerDescriptor = when (componentManager) {
+          is Application -> pluginDescriptor.app
+          is Project -> pluginDescriptor.project
+          else -> pluginDescriptor.module
+        }
+        containerDescriptor.services.forEach(consumer)
+      }
     }
   }
 
@@ -381,7 +395,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   @Internal
   fun getServiceImplementationClassNames(prefix: String): List<String> {
     val result = ArrayList<String>()
-    ServiceManagerImpl.processAllDescriptors(this) { serviceDescriptor ->
+    processAllDescriptors(this) { serviceDescriptor ->
       val implementation = serviceDescriptor.implementation ?: return@processAllDescriptors
       if (implementation.startsWith(prefix)) {
         result.add(implementation)
