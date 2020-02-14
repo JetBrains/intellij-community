@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics
 import com.intellij.concurrency.JobSchedulerImpl
 import com.intellij.configurationStore.ModuleStoreBase
 import com.intellij.configurationStore.saveComponentManager
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -61,6 +62,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
   internal class MyProjectServiceContainerInitializedListener : ProjectServiceContainerInitializedListener {
     override fun serviceCreated(project: Project) {
+      val activity = StartUpMeasurer.startMainActivity("[WM] module loading")
       val manager = ModuleManagerComponent.getInstance(project) as? LegacyBridgeModuleManagerComponent ?: return
 
       val unloadedNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
@@ -69,6 +71,8 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
         .toList()
       manager.loadModules(entities)
       WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
+      activity.end()
+      activity.setDescription("[WM] module count: ${manager.modules.size}")
     }
   }
 
