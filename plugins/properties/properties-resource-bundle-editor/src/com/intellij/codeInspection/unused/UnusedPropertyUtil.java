@@ -11,6 +11,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -53,6 +54,11 @@ public class UnusedPropertyUtil {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ResourceBundleEditorProblemDescriptor descriptor) {
       final Property element = myRepresentativePointer.getElement();
       if (element == null) return;
@@ -67,7 +73,7 @@ public class UnusedPropertyUtil {
         .filter(Objects::nonNull)
         .map(IProperty::getPsiElement)
         .filter(FileModificationService.getInstance()::preparePsiElementForWrite)
-        .forEach(PsiElement::delete);
+        .forEach(e -> WriteAction.run(() -> e.delete()));
     }
   }
 }
