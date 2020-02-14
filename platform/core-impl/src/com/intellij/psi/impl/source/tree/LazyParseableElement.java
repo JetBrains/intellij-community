@@ -266,7 +266,7 @@ public class LazyParseableElement extends CompositeElement {
     ourParsingAllowed = allowed;
   }
 
-  public void waitForLock(@NotNull ReentrantLock ml) {
+  private static void waitForLock(@NotNull ReentrantLock ml) {
     while (true) {
       try {
         if (ml.tryLock(10, TimeUnit.MILLISECONDS)) {
