@@ -15,6 +15,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
@@ -3255,7 +3256,7 @@ public class HighlightUtil extends HighlightUtilBase {
     @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
     private final String key;
 
-    Feature(LanguageLevel level, @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key) {
+    Feature(LanguageLevel level, @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String key) {
       this.level = level;
       this.key = key;
     }
@@ -3310,7 +3311,7 @@ public class HighlightUtil extends HighlightUtilBase {
                                                      @NotNull Feature feature,
                                                      @NotNull LanguageLevel level,
                                                      @NotNull PsiFile file) {
-    String name = JavaErrorBundle.message(feature.key);
+    String name = JavaAnalysisBundle.message(feature.key);
     String version = JavaSdkVersion.fromLanguageLevel(level).getDescription();
     String message = JavaErrorBundle.message("insufficient.language.level", name, version);
 

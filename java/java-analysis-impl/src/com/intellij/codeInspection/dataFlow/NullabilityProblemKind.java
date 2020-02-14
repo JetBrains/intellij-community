@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -22,7 +23,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static com.intellij.codeInspection.InspectionsBundle.BUNDLE;
+import static com.intellij.java.analysis.JavaAnalysisBundle.BUNDLE;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -57,8 +58,8 @@ public class NullabilityProblemKind<T extends PsiElement> {
                                  @NotNull @PropertyKey(resourceBundle = BUNDLE) String normalMessage) {
     myException = exception;
     myName = name;
-    myAlwaysNullMessage = InspectionsBundle.message(alwaysNullMessage);
-    myNormalMessage = InspectionsBundle.message(normalMessage);
+    myAlwaysNullMessage = JavaAnalysisBundle.message(alwaysNullMessage);
+    myNormalMessage = JavaAnalysisBundle.message(normalMessage);
   }
 
   public static final NullabilityProblemKind<PsiMethodCallExpression> callNPE =

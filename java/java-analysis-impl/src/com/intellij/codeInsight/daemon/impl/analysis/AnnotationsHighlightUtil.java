@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -220,7 +221,7 @@ public class AnnotationsHighlightUtil {
         PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(owner);
         PsiAnnotation.TargetType applicable = AnnotationTargetUtil.findAnnotationTarget(container, targets);
         if (applicable == null) {
-          String target = JavaErrorBundle.message("annotation.target." + targets[0]);
+          String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
           String message = JavaErrorBundle.message("annotation.container.not.applicable", container.getName(), target);
           return annotationError(annotationToCheck, message);
         }
@@ -361,7 +362,7 @@ public class AnnotationsHighlightUtil {
     if (applicable == PsiAnnotation.TargetType.UNKNOWN) return null;
 
     if (applicable == null) {
-      String target = JavaErrorBundle.message("annotation.target." + targets[0]);
+      String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
       String message = JavaErrorBundle.message("annotation.not.applicable", nameRef.getText(), target);
       return annotationError(annotation, message);
     }
