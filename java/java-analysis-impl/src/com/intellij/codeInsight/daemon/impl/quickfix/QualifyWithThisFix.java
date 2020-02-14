@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,7 +36,7 @@ public class QualifyWithThisFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("qualify.with.0.this", myContainingClass.getName());
+    return JavaAnalysisBundle.message("qualify.with.0.this", myContainingClass.getName());
   }
 
   @NotNull

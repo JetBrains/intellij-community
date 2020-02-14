@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.JavaSuppressionUtil;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +46,6 @@ public class SuppressLocalWithCommentFix extends SuppressByJavaCommentFix {
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("suppress.for.statement.with.comment");
+    return JavaAnalysisBundle.message("suppress.for.statement.with.comment");
   }
 }

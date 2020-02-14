@@ -1,13 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.find.findUsages.JavaFindUsagesHelper;
 import com.intellij.find.findUsages.JavaMethodFindUsagesOptions;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -23,7 +23,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 
 public abstract class MethodThrowsFix extends LocalQuickFixOnPsiElement {
@@ -139,9 +142,9 @@ public abstract class MethodThrowsFix extends LocalQuickFixOnPsiElement {
             }
           }
           return true;
-        }), CodeInsightBundle.message("processing.method.usages"), true, project);
+        }), JavaAnalysisBundle.message("processing.method.usages"), true, project);
 
-        if (breakSourceCode && Messages.showYesNoDialog(project, CodeInsightBundle
+        if (breakSourceCode && Messages.showYesNoDialog(project, JavaAnalysisBundle
           .message("exception.removal.will.break.source.code.proceed.anyway"), RefactoringBundle.getCannotRefactorMessage(null), null) == Messages.NO) {
           return;
         }

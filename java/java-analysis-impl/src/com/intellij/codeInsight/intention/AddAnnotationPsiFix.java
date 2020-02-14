@@ -5,6 +5,7 @@ import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -57,16 +58,16 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
       if (name != null) {
         String type = LanguageFindUsages.getType(modifierListOwner);
         if (shortName == null) {
-          return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.element", type, name);
+          return JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate.element", type, name);
         }
-        return CodeInsightBundle
+        return JavaAnalysisBundle
           .message("inspection.i18n.quickfix.annotate.element.as", type, name, shortName);
       }
     }
     if (shortName == null) {
-      return CodeInsightBundle.message("inspection.i18n.quickfix.annotate");
+      return JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate");
     }
-    return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.as", shortName);
+    return JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate.as", shortName);
   }
 
   public static @Nullable PsiModifierListOwner getContainer(PsiFile file, int offset) {

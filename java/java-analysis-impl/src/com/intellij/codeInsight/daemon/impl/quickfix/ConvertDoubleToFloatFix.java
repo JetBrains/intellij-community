@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -39,7 +39,7 @@ public class ConvertDoubleToFloatFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("convert.0.to.float", myExpression.getText());
+    return JavaAnalysisBundle.message("convert.0.to.float", myExpression.getText());
   }
 
   @NotNull
