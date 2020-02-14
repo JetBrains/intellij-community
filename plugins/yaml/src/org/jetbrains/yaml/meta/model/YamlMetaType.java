@@ -2,12 +2,15 @@
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.*;
+import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.*;
 
 import javax.swing.*;
@@ -85,6 +88,7 @@ public abstract class YamlMetaType {
 
   /**
    * Validates the value not only at current level but also goes recursively through its children if it's a compound YAML value
+   * TODO: unfinished experimental feature to support JSON Schema like features (anyOf, oneOf, allOf, not). Used in Kubernetes plugin. WIP
    */
   public void validateDeep(@NotNull YAMLValue value, @NotNull ProblemsHolder problemsHolder) {
     validateValue(value, problemsHolder);
@@ -96,12 +100,30 @@ public abstract class YamlMetaType {
 
       Collection<YAMLKeyValue> keyValues = mapping.getKeyValues();
 
+      // check for missing keys
+      // TODO reuse with YamlMissingKeysInspectionBase
+      final Collection<String> missingKeys =
+        computeMissingFields(keyValues.stream().map(it -> it.getKeyText().trim()).collect(Collectors.toSet()));
+
+      if (!missingKeys.isEmpty()) {
+        String msg = YAMLBundle.message("YamlMissingKeysInspectionBase.missing.keys", String.join(", ", missingKeys));
+        problemsHolder.registerProblem(mapping, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      }
+
       for (YAMLKeyValue keyValue : keyValues) {
-        String featureName = keyValue.getKeyText();
+        String featureName = keyValue.getKeyText().trim();
+
+        if(featureName.isEmpty())
+          continue;
 
         Field feature = findFeatureByName(featureName);
-        if(feature == null)
+        if(feature == null) {
+          String msg = YAMLBundle.message("YamlUnknownKeysInspectionBase.unknown.key", keyValue.getKeyText());
+          final PsiElement key = keyValue.getKey();
+          assert key != null;
+          problemsHolder.registerProblem(key, msg, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
           continue;
+        }
 
         YAMLValue subValue = keyValue.getValue();
 

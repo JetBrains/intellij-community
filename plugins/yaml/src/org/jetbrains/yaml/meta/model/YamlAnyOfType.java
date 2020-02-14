@@ -25,8 +25,13 @@ public class YamlAnyOfType extends YamlComposedTypeBase {
     if (types.length == 1) {
       return types[0];
     }
-    String name = "AnyOf[" + Stream.of(types).map(YamlMetaType::getDisplayName).collect(Collectors.joining(",")) + "]";
+    String name = "AnyOf[" + Stream.of(types).map(YamlMetaType::getDisplayName).collect(Collectors.joining()) + "]";
     return new YamlAnyOfType(name, flattenTypes(types));
+  }
+
+  @Override
+  protected YamlMetaType composeTypes(YamlMetaType... types) {
+    return anyOf(types);
   }
 
   protected YamlAnyOfType(@NotNull String typeName, List<YamlMetaType> types) {
@@ -35,7 +40,7 @@ public class YamlAnyOfType extends YamlComposedTypeBase {
 
   @Override
   public void validateKey(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
-    List<ProblemsHolder> allProblems = allProblemsOrEmpty(problemsHolder, myTypes,
+    List<ProblemsHolder> allProblems = allProblemsOrEmpty(problemsHolder, listNonScalarSubTypes(),
                                                           (nextType, nextHolder) -> nextType.validateKey(keyValue, nextHolder));
 
     allProblems.stream()
@@ -45,8 +50,22 @@ public class YamlAnyOfType extends YamlComposedTypeBase {
 
   @Override
   public void validateValue(@NotNull YAMLValue value, @NotNull ProblemsHolder problemsHolder) {
-    List<ProblemsHolder> allProblems = allProblemsOrEmpty(problemsHolder, myTypes,
-                                                          (nextType, nextHolder) -> nextType.validateDeep(value, nextHolder));
+    List<YamlMetaType> types;
+    if (value instanceof YAMLScalar) {
+      types = listScalarSubTypes();
+      if (types.isEmpty()) { // value kind does not match, let some scalar component to report it
+        types = Collections.singletonList(listNonScalarSubTypes().get(0));
+      }
+    }
+    else {
+      types = listNonScalarSubTypes();
+      if (types.isEmpty()) {
+        // only scalar components, let one of them report it
+        types = Collections.singletonList(listScalarSubTypes().get(0));
+      }
+    }
+    List<ProblemsHolder> allProblems = allProblemsOrEmpty(problemsHolder, types,
+                                                          (nextType, nextHolder) -> nextType.validateValue(value, nextHolder));
 
     allProblems.stream()
       .flatMap(h -> h.getResults().stream())
@@ -61,7 +80,6 @@ public class YamlAnyOfType extends YamlComposedTypeBase {
       .collect(Collectors.toList());
   }
 
-  @NotNull
   private static List<ProblemsHolder> allProblemsOrEmpty(@NotNull ProblemsHolder problemsHolder, @NotNull List<YamlMetaType> types,
                                                          @NotNull BiConsumer<YamlMetaType, ProblemsHolder> oneValidation) {
     List<ProblemsHolder> problems = new SmartList<>();
