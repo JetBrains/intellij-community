@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
