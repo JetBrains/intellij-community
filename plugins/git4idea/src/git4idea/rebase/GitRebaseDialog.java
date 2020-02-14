@@ -355,7 +355,11 @@ public class GitRebaseDialog extends DialogWrapper {
         }, "Loading Branch Configuration...", true, myProject);
         String remote = remoteAndMerge.first;
         String mergeBranch = remoteAndMerge.second;
-        GitRepository repository = GitUtil.getRepositoryForRoot(myProject, root);
+        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRootQuick(root);
+        if (repository == null) {
+          LOG.error(GitBundle.message("repository.not.found.error", root.getPresentableUrl()));
+          return;
+        }
 
         if (remote == null || mergeBranch == null) {
           trackedBranch = repository.getBranches().findBranchByName("master");

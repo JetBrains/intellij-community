@@ -1026,14 +1026,13 @@ public class GitUtil {
   }
 
   private static class GitRepositoryNotFoundException extends VcsException {
-    private static final String MESSAGE = "Can't find configured git repository for %s";
 
     private GitRepositoryNotFoundException(@NotNull VirtualFile file) {
-      super(String.format(MESSAGE, file.getPresentableUrl()));
+      super(GitBundle.message("repository.not.found.error", file.getPresentableUrl()));
     }
 
     private GitRepositoryNotFoundException(@NotNull FilePath filePath) {
-      super(String.format(MESSAGE, filePath.getPresentableUrl()));
+      super(GitBundle.message("repository.not.found.error", filePath.getPresentableUrl()));
     }
   }
 
