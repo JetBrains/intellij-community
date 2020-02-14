@@ -306,6 +306,9 @@ val PsiElement?.elementType: IElementType?
   get() = PsiUtilCore.getElementType(this)
 
 fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
+  require(range.startOffset >= 0)
+  require(range.endOffset <= textLength)
+
   var leaf = findElementAt(range.startOffset) ?: return false
   var leafRange = leaf.textRange
   if (leafRange.startOffset < range.startOffset) {
@@ -314,9 +317,21 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
   }
   check(leafRange.startOffset >= range.startOffset)
 
+  val stopAt = leaf.parents.first { range in it.textRange }
+  if (stopAt is PsiErrorElement) return true
+
+  fun PsiElement.isInsideErrorElement(): Boolean {
+    var element = this
+    while (element != stopAt) {
+      if (element is PsiErrorElement) return true
+      element = element.parent
+    }
+    return false
+  }
+
   var endOffset = leafRange.endOffset
   while (endOffset <= range.endOffset) {
-    if (leaf is PsiErrorElement || leaf.parent is PsiErrorElement) return true
+    if (leaf.isInsideErrorElement()) return true
     leaf = leaf.nextLeaf() ?: return false
     endOffset += leaf.textLength
   }

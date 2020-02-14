@@ -454,4 +454,18 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       expectedAvailability = Availability.Available(renameAvailableTooltip("foo", "bar"))
     )
   }
+
+  fun testSyntaxError() {
+    doTest(
+      """
+        class C {
+            void foo(Runtime<caret>Exception x) { }
+        }
+      """.trimIndent(),
+      {
+        myFixture.type(" ")
+      },
+      expectedAvailability = Availability.Disabled
+    )
+  }
 }
