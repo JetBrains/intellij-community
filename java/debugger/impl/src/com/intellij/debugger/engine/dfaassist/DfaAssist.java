@@ -60,7 +60,7 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
   private DfaAssist(@NotNull Project project, @NotNull DebuggerStateManager manager) {
     myProject = project;
     myManager = manager;
-    myActive = true;
+    setActive(ViewsGeneralSettings.getInstance().USE_DFA_ASSIST);
   }
 
   private static class InlaySet implements Disposable {
