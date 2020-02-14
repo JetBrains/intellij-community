@@ -2,45 +2,10 @@
 package com.intellij.psi
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.Key
 import com.intellij.util.ProcessingContext
-import gnu.trove.THashMap
 import org.jetbrains.uast.UElement
 
-/**
- * Groups all UAST-based reference contributors by chunks with the same priority and supported UElement types.
- * Enables proper caching of UElement for underlying reference contributors.
- */
-internal class UastReferenceContributorManager(private val registrar: PsiReferenceRegistrar) {
-  private val chunks: MutableMap<ChunkTag, UastReferenceContributorChunk> = THashMap()
-
-  fun register(pattern: (UElement, ProcessingContext) -> Boolean,
-               provider: UastReferenceProvider,
-               priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-    val chunk = chunks.getOrPut(ChunkTag(priority, provider.supportedUElementTypes)) {
-      val newChunk = UastReferenceContributorChunk(provider.supportedUElementTypes)
-      registrar.registerReferenceProvider(adaptPattern(anyUElement, provider.supportedUElementTypes), newChunk, priority)
-      newChunk
-    }
-    chunk.register(pattern, provider)
-  }
-
-  companion object {
-    private val anyUElement: (UElement, ProcessingContext) -> Boolean = { _, _ -> true }
-    private val MANAGER_KEY: Key<UastReferenceContributorManager> = Key.create("UastReferenceContributorManager")
-
-    fun get(registrar: PsiReferenceRegistrar): UastReferenceContributorManager {
-      val userData = registrar.getUserData(MANAGER_KEY)
-      if (userData != null) return userData
-
-      val adapter = UastReferenceContributorManager(registrar)
-      registrar.putUserData(MANAGER_KEY, adapter)
-      return adapter
-    }
-  }
-}
-
-private class UastReferenceContributorChunk(private val supportedUElementTypes: List<Class<out UElement>>) : PsiReferenceProvider() {
+internal class UastReferenceContributorChunk(private val supportedUElementTypes: List<Class<out UElement>>) : PsiReferenceProvider() {
   private val providers: MutableList<ProviderRegistration> = mutableListOf()
 
   fun register(pattern: (UElement, ProcessingContext) -> Boolean,
@@ -79,7 +44,7 @@ private class UastReferenceContributorChunk(private val supportedUElementTypes: 
   }
 }
 
-private data class ChunkTag(val priority: Double,
+internal data class ChunkTag(val priority: Double,
                             val supportedUElementTypes: List<Class<out UElement>>)
 
 private class ProviderRegistration(val pattern: (UElement, ProcessingContext) -> Boolean,

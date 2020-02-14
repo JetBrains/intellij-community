@@ -9,18 +9,24 @@ import com.intellij.util.ProcessingContext
 import org.jetbrains.uast.UElement
 
 internal class UastPatternAdapter(
-  val predicate: (UElement, ProcessingContext) -> Boolean,
-  private val supportedUElementTypes: List<Class<out UElement>>
+  private val supportedUElementTypes: List<Class<out UElement>>,
+  val predicate: ((UElement, ProcessingContext) -> Boolean)?
 ) : ElementPattern<PsiElement> {
+
+  constructor(supportedUElementTypes: List<Class<out UElement>>) : this(supportedUElementTypes, null)
+
   override fun accepts(o: Any?): Boolean = accepts(o, null)
 
-  override fun accepts(o: Any?, context: ProcessingContext?): Boolean = when (o) {
-    is PsiElement -> RecursionManager.doPreventingRecursion(this, false) {
-      getOrCreateCachedElement(o, context, supportedUElementTypes)
-        ?.let { predicate(it, (context ?: ProcessingContext()).apply { put(REQUESTED_PSI_ELEMENT, o) }) }
-      ?: false
+  override fun accepts(o: Any?, context: ProcessingContext?): Boolean {
+    if (o !is PsiElement) return false
+
+    return RecursionManager.doPreventingRecursion(this, false) {
+      val uElement = getOrCreateCachedElement(o, context, supportedUElementTypes)
+      if (uElement == null) return@doPreventingRecursion false
+
+      val currentContext = (context ?: ProcessingContext()).apply { put(REQUESTED_PSI_ELEMENT, o) }
+      predicate == null || predicate.invoke(uElement, currentContext)
     } ?: false
-    else -> false
   }
 
   private val condition = ElementPatternCondition(object : InitialPatternCondition<PsiElement>(PsiElement::class.java) {

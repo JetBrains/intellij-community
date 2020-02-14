@@ -17,15 +17,33 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ProcessingContext
+import gnu.trove.THashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 
+private val CONTRIBUTOR_CHUNKS_KEY: Key<MutableMap<ChunkTag, UastReferenceContributorChunk>> = Key.create("uast.psiReferenceContributor.chunks")
+
+/**
+ * Groups all UAST-based reference providers by chunks with the same priority and supported UElement types.
+ * Enables proper caching of UElement for underlying reference providers.
+ */
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-  val adapter = UastReferenceContributorManager.get(this)
-  adapter.register(pattern, provider, priority)
+  val registrar = this
+  var chunks = registrar.getUserData(CONTRIBUTOR_CHUNKS_KEY)
+  if (chunks == null) {
+    chunks = THashMap()
+    registrar.putUserData(CONTRIBUTOR_CHUNKS_KEY, chunks)
+  }
+
+  val chunk = chunks.getOrPut(ChunkTag(priority, provider.supportedUElementTypes)) {
+    val newChunk = UastReferenceContributorChunk(provider.supportedUElementTypes)
+    registrar.registerReferenceProvider(uastTypePattern(provider.supportedUElementTypes), newChunk, priority)
+    newChunk
+  }
+  chunk.register(pattern, provider)
 }
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
@@ -66,23 +84,20 @@ internal fun getOrCreateCachedElement(element: PsiElement,
     element.toUElement(it)
   }.firstOrNull()?.also { context?.put(cachedUElement, it) }
 
-internal fun adaptPattern(
-  predicate: (UElement, ProcessingContext) -> Boolean,
-  supportedUElementTypes: List<Class<out UElement>>
-): ElementPattern<out PsiElement> {
-  val uastPatternAdapter = UastPatternAdapter(predicate, supportedUElementTypes)
+internal fun uastTypePattern(supportedUElementTypes: List<Class<out UElement>>): ElementPattern<out PsiElement> {
+  val uastTypePattern = UastPatternAdapter(supportedUElementTypes)
 
   // optimisation until IDEA-211738 is implemented
   if (supportedUElementTypes == listOf(UInjectionHost::class.java)) {
-    return StandardPatterns.instanceOf(PsiLanguageInjectionHost::class.java).and(uastPatternAdapter)
+    return StandardPatterns.instanceOf(PsiLanguageInjectionHost::class.java).and(uastTypePattern)
   }
 
-  return uastPatternAdapter
+  return uastTypePattern
 }
 
 fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Class<out UElement>): ElementPattern<PsiElement> = UastPatternAdapter(
-  this::accepts,
-  if (supportedUElementTypes.isNotEmpty()) supportedUElementTypes.toList() else listOf(UElement::class.java)
+  if (supportedUElementTypes.isNotEmpty()) supportedUElementTypes.toList() else listOf(UElement::class.java),
+  this::accepts
 )
 
 /**
