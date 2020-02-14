@@ -116,19 +116,22 @@ public final class ConfigImportHelper {
       }
 
       if (Files.isRegularFile(newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName()))) {
-        String title = ApplicationBundle.message("title.import.settings", ApplicationNamesInfo.getInstance().getFullProductName());
-        String message = ApplicationBundle.message("restart.import.settings");
-        String yes = ApplicationBundle.message("restart.import.now"), no = ApplicationBundle.message("restart.import.later");
-        if (Messages.showYesNoDialog(message, title, yes, no, Messages.getQuestionIcon()) == Messages.YES) {
-          if (Restarter.isSupported()) {
-            try {
-              Restarter.scheduleRestart(false);
-            }
-            catch (IOException e) {
-              Main.showMessage("Restart failed", e);
-            }
+        if (Restarter.isSupported()) {
+          try {
+            Restarter.scheduleRestart(false);
+          }
+          catch (IOException e) {
+            Main.showMessage("Restart failed", e);
           }
           System.exit(0);
+        }
+        else {
+          String title = ApplicationBundle.message("title.import.settings", ApplicationNamesInfo.getInstance().getFullProductName());
+          String message = ApplicationBundle.message("restart.import.settings");
+          String yes = ApplicationBundle.message("restart.import.now"), no = ApplicationBundle.message("restart.import.later");
+          if (Messages.showYesNoDialog(message, title, yes, no, Messages.getQuestionIcon()) == Messages.YES) {
+            System.exit(0);
+          }
         }
       }
 
