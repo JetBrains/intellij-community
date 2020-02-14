@@ -57,8 +57,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return getTypeInfo().myType;
   }
   
@@ -77,8 +76,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       this, () -> CachedValueProvider.Result.create(calculateTypeInfo(), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  @NotNull
-  private TypeInfo calculateTypeInfo() {
+  private @NotNull TypeInfo calculateTypeInfo() {
     PsiType inferredType = PsiAugmentProvider.getInferredType(this);
     if (inferredType != null) {
       return new TypeInfo(inferredType, true);
@@ -205,8 +203,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return PsiUtil.isJavaToken(getFirstChild(), JavaTokenType.VAR_KEYWORD) || getTypeInfo().myInferred;
   }
 
-  @NotNull
-  private ClassReferencePointer getReferenceComputable(@NotNull PsiJavaCodeReferenceElement ref) {
+  private @NotNull ClassReferencePointer getReferenceComputable(@NotNull PsiJavaCodeReferenceElement ref) {
     final PsiElement parent = getParent();
     if (parent instanceof PsiMethod || parent instanceof PsiVariable) {
       return computeFromTypeOwner(parent, new WeakReference<>(ref));
@@ -215,14 +212,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return ClassReferencePointer.constant(ref);
   }
 
-  @NotNull
-  private static ClassReferencePointer computeFromTypeOwner(PsiElement parent, @NotNull WeakReference<PsiJavaCodeReferenceElement> ref) {
+  private static @NotNull ClassReferencePointer computeFromTypeOwner(PsiElement parent, @NotNull WeakReference<PsiJavaCodeReferenceElement> ref) {
     return new ClassReferencePointer() {
       volatile WeakReference<PsiJavaCodeReferenceElement> myCache = ref;
 
-      @Nullable
       @Override
-      public PsiJavaCodeReferenceElement retrieveReference() {
+      public @Nullable PsiJavaCodeReferenceElement retrieveReference() {
         PsiJavaCodeReferenceElement result = myCache.get();
         if (result == null) {
           PsiTypeElement typeElement = calcTypeElement();
@@ -234,14 +229,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         return result;
       }
 
-      @Nullable
-      private PsiTypeElement calcTypeElement() {
+      private @Nullable PsiTypeElement calcTypeElement() {
         return parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnTypeElement() : ((PsiVariable)parent).getTypeElement();
       }
 
-      @NotNull
       @Override
-      public PsiJavaCodeReferenceElement retrieveNonNullReference() {
+      public @NotNull PsiJavaCodeReferenceElement retrieveNonNullReference() {
         PsiJavaCodeReferenceElement result = retrieveReference();
         if (result == null) {
           PsiTypeElement typeElement = calcTypeElement();
@@ -266,13 +259,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     };
   }
 
-  @NotNull
-  private static TypeAnnotationProvider createProvider(@NotNull List<PsiAnnotation> annotations) {
+  private static @NotNull TypeAnnotationProvider createProvider(@NotNull List<PsiAnnotation> annotations) {
     return TypeAnnotationProvider.Static.create(ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true));
   }
 
-  @NotNull
-  private List<PsiType> collectTypes() {
+  private @NotNull List<PsiType> collectTypes() {
     List<PsiTypeElement> typeElements = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiTypeElement.class);
     return ContainerUtil.map(typeElements, typeElement -> typeElement.getType());
   }
@@ -287,8 +278,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return getReferenceElement();
   }
 
-  @Nullable
-  private PsiJavaCodeReferenceElement getReferenceElement() {
+  private @Nullable PsiJavaCodeReferenceElement getReferenceElement() {
     ASTNode ref = findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
     if (ref == null) return null;
     return (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(ref);
@@ -320,8 +310,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @NotNull PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(getProject()).createAnnotationFromText('@' + qualifiedName, this);
     PsiElement firstChild = getFirstChild();
     for (PsiElement child = getLastChild(); child != firstChild; child = child.getPrevSibling()) {

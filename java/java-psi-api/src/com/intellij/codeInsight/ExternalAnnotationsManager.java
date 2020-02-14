@@ -52,8 +52,7 @@ public abstract class ExternalAnnotationsManager {
 
   public abstract boolean isExternalAnnotation(@NotNull PsiAnnotation annotation);
 
-  @Nullable
-  public abstract PsiAnnotation findExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
+  public abstract @Nullable PsiAnnotation findExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
   /**
    * Returns external annotations with fully qualified name of {@code annotationFQN}
@@ -66,8 +65,7 @@ public abstract class ExternalAnnotationsManager {
    * @param annotationFQN fully qualified name of the annotation to search for
    * @return external annotations of the {@code listOwner}
    */
-  @NotNull
-  public abstract List<PsiAnnotation> findExternalAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
+  public abstract @NotNull List<PsiAnnotation> findExternalAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
 
   // Method used in Kotlin plugin
@@ -93,8 +91,7 @@ public abstract class ExternalAnnotationsManager {
    * @return external annotations of the default constructor of {@code aClass} or {@code null}
    * if the class doesn't have a default constructor
    */
-  @Nullable
-  public abstract List<PsiAnnotation> findDefaultConstructorExternalAnnotations(@NotNull PsiClass aClass);
+  public abstract @Nullable List<PsiAnnotation> findDefaultConstructorExternalAnnotations(@NotNull PsiClass aClass);
 
   /**
    * Returns external annotations with fully qualified name of {@code annotationFQN}
@@ -109,8 +106,7 @@ public abstract class ExternalAnnotationsManager {
    * class doesn't have a default constructor.
    * @see #findDefaultConstructorExternalAnnotations(PsiClass)
    */
-  @Nullable
-  public abstract List<PsiAnnotation> findDefaultConstructorExternalAnnotations(@NotNull PsiClass aClass, @NotNull String annotationFQN);
+  public abstract @Nullable List<PsiAnnotation> findDefaultConstructorExternalAnnotations(@NotNull PsiClass aClass, @NotNull String annotationFQN);
 
   public abstract void annotateExternally(@NotNull PsiModifierListOwner listOwner,
                                           @NotNull String annotationFQName,
@@ -130,18 +126,15 @@ public abstract class ExternalAnnotationsManager {
    * @return place where the annotation must be added. No UI is displayed, so can be called inside any read-action.
    * May return {@link AnnotationPlace#NEED_ASK_USER} if the user confirmation is necessary.
    */
-  @NotNull
-  public abstract AnnotationPlace chooseAnnotationsPlaceNoUi(@NotNull PsiElement element);
+  public abstract @NotNull AnnotationPlace chooseAnnotationsPlaceNoUi(@NotNull PsiElement element);
 
   /**
    * @param element element to add new annotation for
    * @return place where the annotation must be added. Must be called in EDT.
    */
-  @NotNull
-  public abstract AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
+  public abstract @NotNull AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
 
-  @Nullable
-  public abstract List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner);
+  public abstract @Nullable List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner);
 
   public static class CanceledConfigurationException extends RuntimeException {}
 }
