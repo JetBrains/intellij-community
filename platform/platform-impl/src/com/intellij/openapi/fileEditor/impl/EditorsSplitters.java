@@ -294,14 +294,25 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     mySplittersElement = element;
   }
 
-  public VirtualFile @NotNull [] getOpenFiles() {
-    Set<VirtualFile> files = new ArrayListSet<>();
+  public @NotNull List<VirtualFile> getOpenFileList() {
+    List<VirtualFile> files = new ArrayList<>();
     for (EditorWindow myWindow : myWindows) {
       for (EditorWithProviderComposite editor : myWindow.getEditors()) {
-        files.add(editor.getFile());
+        VirtualFile file = editor.getFile();
+        if (!files.contains(file)) {
+          files.add(file);
+        }
       }
     }
-    return VfsUtilCore.toVirtualFileArray(files);
+    return files;
+  }
+
+  /**
+   * @deprecated Use {@link #getOpenFileList()}
+   */
+  @Deprecated
+  public @NotNull VirtualFile @NotNull [] getOpenFiles() {
+    return VfsUtilCore.toVirtualFileArray(getOpenFileList());
   }
 
   public VirtualFile @NotNull [] getSelectedFiles() {
@@ -561,7 +572,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return;
     }
 
-    for (VirtualFile file : getOpenFiles()) {
+    for (VirtualFile file : getOpenFileList()) {
       updateFileBackgroundColor(file);
       updateFileIcon(file);
       updateFileColor(file);

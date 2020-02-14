@@ -1915,8 +1915,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   public void closeAllFiles() {
     runBulkTabChange(getSplitters(), splitters -> {
-      final VirtualFile[] openFiles = splitters.getOpenFiles();
-      for (VirtualFile openFile : openFiles) {
+      for (VirtualFile openFile : splitters.getOpenFileList()) {
         closeFile(openFile);
       }
     });

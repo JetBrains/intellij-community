@@ -197,13 +197,13 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
 
   @Override
   public void closeAll() {
-    for (VirtualFile each : mySplitters.getOpenFiles()) {
+    for (VirtualFile each : mySplitters.getOpenFileList()) {
       close(each);
     }
   }
 
   @Override
-  public void addListener(final Listener listener, Disposable parent) {
+  public void addListener(@NotNull Listener listener, Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, new Disposable() {
       @Override

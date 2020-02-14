@@ -48,7 +48,7 @@ public interface DockContainer {
   default void closeAll() {
   }
 
-  default void addListener(Listener listener, Disposable parent) {
+  default void addListener(@NotNull Listener listener, Disposable parent) {
   }
 
   boolean isEmpty();

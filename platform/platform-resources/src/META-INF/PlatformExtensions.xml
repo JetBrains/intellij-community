@@ -753,8 +753,6 @@
     <registryKey key="credentialStore.linux.prefer.kwallet" defaultValue="false" restartRequired="true"
                  description="Use KWallet if KWallet &amp; SecretService are both available."/>
 
-    <projectService serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
-
     <applicationService
       serviceInterface="com.intellij.openapi.projectRoots.JdkFinder"
       serviceImplementation="com.intellij.openapi.projectRoots.impl.JdkFinderImpl"/>

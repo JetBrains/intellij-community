@@ -557,7 +557,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   @Override
-  public void addListener(final Listener listener, Disposable parent) {
+  public void addListener(@NotNull Listener listener, Disposable parent) {
     myDockingListeners.add(listener);
     Disposer.register(parent, () -> myDockingListeners.remove(listener));
   }

@@ -53,9 +53,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   private final Project myProject;
 
   private final Map<String, DockContainerFactory> myFactories = new HashMap<>();
-
   private final Set<DockContainer> myContainers = new HashSet<>();
-
   private final MutualMap<DockContainer, DockWindow> myWindows = new MutualMap<>();
 
   private MyDragSession myCurrentDragSession;
@@ -133,11 +131,12 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   @Override
   public String getDimensionKeyForFocus(@NotNull String key) {
     Component owner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-    if (owner == null) return key;
+    if (owner == null) {
+      return key;
+    }
 
-    DockWindow wnd = myWindows.getValue(getContainerFor(owner));
-
-    return wnd != null ? key + "#" + wnd.myId : key;
+    DockWindow window = myWindows.getValue(getContainerFor(owner));
+    return window != null ? key + "#" + window.myId : key;
   }
 
   @Override
