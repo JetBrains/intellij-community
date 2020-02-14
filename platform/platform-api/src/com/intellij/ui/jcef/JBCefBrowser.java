@@ -27,7 +27,7 @@ public class JBCefBrowser implements JBCefDisposable {
   @NotNull private final MyComponent myComponent;
   @NotNull private final CefBrowser myCefBrowser;
   @NotNull private final CefFocusHandler myCefFocusHandler;
-  @NotNull private final CefLifeSpanHandler myLifeSpanHandler;
+  @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
   private final boolean myIsDefaultClient;
@@ -68,7 +68,15 @@ public class JBCefBrowser implements JBCefDisposable {
     this(client, false, url);
   }
 
+  public JBCefBrowser(@NotNull CefBrowser cefBrowser) {
+    this(cefBrowser, new JBCefClient(cefBrowser.getClient()), false, null);
+  }
+
   private JBCefBrowser(@NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
+    this(null, client, isDefaultClient, url);
+  }
+
+  private JBCefBrowser(@Nullable CefBrowser cefBrowser, @NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
     if (client.isDisposed()) {
       throw new IllegalArgumentException("JBCefClient is disposed");
     }
@@ -78,22 +86,27 @@ public class JBCefBrowser implements JBCefDisposable {
     myComponent = new MyComponent(new BorderLayout());
     myComponent.setBackground(JBColor.background());
 
-    myCefBrowser = myCefClient.getCefClient().createBrowser(url != null ? url : "about:blank", false, false);
+    myCefBrowser = cefBrowser != null ?
+      cefBrowser : myCefClient.getCefClient().createBrowser(url != null ? url : "about:blank", false, false);
     myComponent.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
 
-    myCefClient.
-      addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
-      @Override
-      public void onAfterCreated(CefBrowser browser) {
-        myIsCefBrowserCreated = true;
-        URLLoadDeferrer loader = myLoadDeferrer;
-        if (loader != null) {
-          loader.load(browser);
-          myLoadDeferrer = null;
-        }
-      }
-    }, myCefBrowser).
-      addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
+    if (cefBrowser == null) {
+      myCefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
+          @Override
+          public void onAfterCreated(CefBrowser browser) {
+            myIsCefBrowserCreated = true;
+            URLLoadDeferrer loader = myLoadDeferrer;
+            if (loader != null) {
+              loader.load(browser);
+              myLoadDeferrer = null;
+            }
+          }
+        }, myCefBrowser);
+    }
+    else {
+      myLifeSpanHandler = null;
+    }
+    myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
         if (source == FocusSource.FOCUS_SOURCE_NAVIGATION) return true;
@@ -177,7 +190,7 @@ public class JBCefBrowser implements JBCefDisposable {
   public void dispose() {
     myDisposeHelper.dispose(() -> {
       myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
-      myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
+      if (myLifeSpanHandler != null) myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
       myCefBrowser.stopLoad();
       myCefBrowser.close(false);
       if (myIsDefaultClient) {

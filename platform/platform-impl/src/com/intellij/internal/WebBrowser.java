@@ -28,7 +28,6 @@ public class WebBrowser extends AnAction implements DumbAware {
     if (activeFrame == null) return;
 
     if (!Registry.is("ide.browser.jcef.enabled")) {
-      //noinspection HardCodedStringLiteral
       JBPopupFactory.getInstance().createComponentPopupBuilder(
         new JTextArea("Set the reg key to enable JCEF:\n\"ide.browser.jcef.enabled=true\""), null).
         setTitle("JCEF web browser is not available").
@@ -53,6 +52,21 @@ public class WebBrowser extends AnAction implements DumbAware {
         Disposer.dispose(browser);
       }
     });
+
+    JMenuItem item = new JMenuItem("Show Dev Tools");
+    item.addActionListener((event) -> {
+      JBCefBrowser devTools = new JBCefBrowser(browser.getCefBrowser().getDevTools());
+      JDialog dialog = new JDialog(frame, "JCEF Dev Tools");
+      dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+      dialog.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);
+      dialog.add(devTools.getComponent());
+      dialog.setVisible(true);
+    });
+
+    JMenu menu = new JMenu("Tools");
+    menu.add(item);
+    frame.setJMenuBar(new JMenuBar());
+    frame.getJMenuBar().add(menu);
 
     JTextField urlBar = new JTextField(URL);
     urlBar.addActionListener(event -> browser.loadURL(urlBar.getText()));
