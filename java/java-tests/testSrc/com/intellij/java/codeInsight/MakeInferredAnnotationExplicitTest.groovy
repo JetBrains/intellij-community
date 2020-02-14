@@ -93,6 +93,28 @@ class Foo {
 }
 '''
   }
+  
+  void "test type use"() {
+    myFixture.addClass("package foo; import java.lang.annotation.*;@Target(ElementType.TYPE_USE)public @interface MyNotNull {}")
+    NullableNotNullManager.getInstance(project).notNulls = ['foo.MyNotNull']
+    NullableNotNullManager.getInstance(project).defaultNotNull = 'foo.MyNotNull'
+    myFixture.configureByText 'a.java', '''
+class Foo {
+    static void foo(String[] ar<caret>ray) {
+      System.out.println(array.length);
+    }
+}
+'''
+    myFixture.launchAction(myFixture.findSingleIntention("Insert '@MyNotNull'"))
+    myFixture.checkResult '''import foo.MyNotNull;
+
+class Foo {
+    static void foo(String @MyNotNull [] array) {
+      System.out.println(array.length);
+    }
+}
+'''
+  }
 
   @Override
   protected void tearDown() throws Exception {

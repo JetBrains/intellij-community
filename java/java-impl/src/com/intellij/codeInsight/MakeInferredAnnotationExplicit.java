@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction;
 import com.intellij.lang.java.JavaLanguage;
@@ -45,14 +46,13 @@ import java.util.Collections;
 public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
 
   @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return CodeInsightBundle.message("make.inferred.annotations.explicit");
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
     if (leaf == null) return false;
     final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
@@ -76,8 +76,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     return false;
   }
 
-  @NotNull
-  private static String getAnnotationPresentation(PsiAnnotation annotation) {
+  private static @NotNull String getAnnotationPresentation(PsiAnnotation annotation) {
     final PsiJavaCodeReferenceElement nameRef = correctAnnotation(annotation).getNameReferenceElement();
     final String name = nameRef != null ? nameRef.getReferenceName() : annotation.getQualifiedName();
     return "@" + name + annotation.getParameterList().getText();
@@ -91,7 +90,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
     assert leaf != null;
     final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
@@ -100,8 +99,6 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   }
 
   public void makeAnnotationsExplicit(@NotNull Project project, PsiFile file, PsiModifierListOwner owner) {
-    final PsiModifierList modifierList = owner.getModifierList();
-    assert modifierList != null;
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
 
@@ -119,13 +116,17 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
         return;
       }
 
-      WriteCommandAction.runWriteCommandAction(project, () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
-        () -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.addAfter(toInsert, null))));
+      WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
+        () -> {
+          PsiAnnotationOwner target = AddAnnotationPsiFix.getTarget(owner, qname);
+          assert target != null;
+          PsiElement element = target.addAnnotation(qname).replace(toInsert);
+          JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
+        }), file);
     }
   }
 
-  @NotNull
-  private static PsiAnnotation correctAnnotation(@NotNull PsiAnnotation annotation) {
+  private static @NotNull PsiAnnotation correctAnnotation(@NotNull PsiAnnotation annotation) {
     Project project = annotation.getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     GlobalSearchScope allScope = GlobalSearchScope.allScope(project);

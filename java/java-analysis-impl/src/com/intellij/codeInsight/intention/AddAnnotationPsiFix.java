@@ -149,7 +149,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
                      @NotNull PsiElement endElement) {
     final PsiModifierListOwner myModifierListOwner = (PsiModifierListOwner)startElement;
 
-    PsiAnnotationOwner target = getTarget(project, myModifierListOwner);
+    PsiAnnotationOwner target = getTarget(myModifierListOwner, myAnnotation);
     if (target == null || target.hasAnnotation(myAnnotation)) return;
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     ExternalAnnotationsManager.AnnotationPlace place = myAnnotationPlace == ExternalAnnotationsManager.AnnotationPlace.NEED_ASK_USER ?
@@ -203,10 +203,17 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     return annotationsManager.chooseAnnotationsPlaceNoUi(modifierListOwner);
   }
 
-  private @Nullable PsiAnnotationOwner getTarget(@NotNull Project project, @NotNull PsiModifierListOwner modifierListOwner) {
+  /**
+   * @param modifierListOwner modifier list owner
+   * @param annotation annotation to add
+   * @return a target annotation owner to add the annotation (either modifier list or type element depending on the annotation target)
+   * Returns null if {@code modifierListOwner.getModifierList()} is null.
+   */
+  public static @Nullable PsiAnnotationOwner getTarget(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String annotation) {
     PsiModifierList list = modifierListOwner.getModifierList();
     if (list == null) return null;
-    PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(myAnnotation, modifierListOwner.getResolveScope());
+    PsiClass annotationClass = JavaPsiFacade.getInstance(modifierListOwner.getProject())
+      .findClass(annotation, modifierListOwner.getResolveScope());
     if (annotationClass != null &&
         AnnotationTargetUtil.findAnnotationTarget(annotationClass, PsiAnnotation.TargetType.TYPE_USE) != null) {
       PsiElement parent = list.getParent();
