@@ -77,7 +77,8 @@ public abstract class ConfigurationFactory {
    */
   @NotNull @NonNls
   public String getId() {
-    DeprecatedMethodException.report("Override ConfigurationFactory::getId method. The default implementation delegates to 'getName' which may be localized but return value of this method must not depend on current localization.");
+    DeprecatedMethodException.reportDefaultImplementation("ConfigurationFactory.getId",
+                                                          "The default implementation delegates to 'getName' which may be localized but return value of this method must not depend on current localization.", getClass());
     return getName();
   }
 

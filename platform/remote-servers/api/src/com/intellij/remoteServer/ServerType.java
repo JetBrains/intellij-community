@@ -50,7 +50,8 @@ public abstract class ServerType<C extends ServerConfiguration> {
    */
   @NotNull @NonNls
   public String getDeploymentConfigurationFactoryId() {
-    DeprecatedMethodException.report("Override ServerType::getDeploymentConfigurationFactoryId method. The default implementation delegates to 'getDeploymentConfigurationTypePresentableName' which is supposed to be localized but return value of this method must not be localized.");
+    DeprecatedMethodException.reportDefaultImplementation("ServerType.getDeploymentConfigurationFactoryId",
+                                                          "The default implementation delegates to 'getDeploymentConfigurationTypePresentableName' which is supposed to be localized but return value of this method must not be localized.", getClass());
     return getDeploymentConfigurationTypePresentableName();
   }
 

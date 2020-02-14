@@ -21,4 +21,11 @@ public class DeprecatedMethodException extends RuntimeException {
       LOG.warn(new DeprecatedMethodException(text));
     }
   }
+
+  public static void reportDefaultImplementation(@NotNull String methodName, @NotNull String message, @NotNull Class<?> implementationClass) {
+    String text = "The default implementation of " + methodName + " is deprecated, you need to override it in " + implementationClass.getName() + ". " + message;
+    if (BEAT_DEAD_HORSE.add(text)) {
+      LOG.warn(new DeprecatedMethodException(text));
+    }
+  }
 }
