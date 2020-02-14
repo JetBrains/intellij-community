@@ -5,8 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.JBColor;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import org.cef.CefApp;
@@ -17,8 +17,8 @@ import org.cef.handler.CefAppHandlerAdapter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.awt.*;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -76,7 +76,7 @@ public abstract class JBCefApp {
    */
   @NotNull
   public static JBCefApp getInstance() {
-    if (!Registry.is("ide.browser.jcef.enabled")) {
+    if (!isEnabled()) {
       throw new IllegalStateException("JCEF is disabled");
     }
     if (!ourInitialized.getAndSet(true)) {
@@ -94,6 +94,14 @@ public abstract class JBCefApp {
       }
     }
     return INSTANCE;
+  }
+
+  /**
+   * @deprecated temporary
+   */
+  @Deprecated
+  public static boolean isEnabled() {
+    return Registry.is("ide.browser.jcef.enabled");
   }
 
   public static class CefAppConfig {
