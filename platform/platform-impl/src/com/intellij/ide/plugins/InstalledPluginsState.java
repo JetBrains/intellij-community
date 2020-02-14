@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.LoadingState;
@@ -33,6 +33,7 @@ public final class InstalledPluginsState {
   private final Set<PluginId> myUpdatedPlugins = new HashSet<>();
   private final Set<PluginId> myUninstalledWithoutRestartPlugins = new HashSet<>();
   private final Set<String> myOutdatedPlugins = new SmartHashSet<>();
+  private boolean myInstallationInProgress = false;
 
   @NotNull
   public Collection<IdeaPluginDescriptor> getInstalledPlugins() {
@@ -132,7 +133,22 @@ public final class InstalledPluginsState {
   }
 
   public void resetChangesAppliedWithoutRestart() {
-    myInstalledWithoutRestartPlugins.clear();
-    myUninstalledWithoutRestartPlugins.clear();
+    // The plugins configurable may be recreated when installing a plugin that registers any configurables,
+    // and this leads to a call of disposeUIResources() that lands here. In this case we must not forget
+    // the list of plugins installed/uninstalled without restart (IDEA-233045)
+    if (!myInstallationInProgress) {
+      myInstalledWithoutRestartPlugins.clear();
+      myUninstalledWithoutRestartPlugins.clear();
+    }
+  }
+
+  public void trackPluginInstallation(Runnable runnable) {
+    myInstallationInProgress = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      myInstallationInProgress = false;
+    }
   }
 }

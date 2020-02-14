@@ -167,8 +167,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     for (PendingDynamicPluginInstall pendingPluginInstall : myDynamicPluginsToInstall.values()) {
       if (!uninstallsRequiringRestart.contains(pendingPluginInstall.getPluginDescriptor().getPluginId())) {
-        PluginInstaller.installAndLoadDynamicPlugin(pendingPluginInstall.getFile(), parent,
-                                                    pendingPluginInstall.getPluginDescriptor());
+        InstalledPluginsState.getInstance().trackPluginInstallation(() ->
+          PluginInstaller.installAndLoadDynamicPlugin(pendingPluginInstall.getFile(), parent,
+                                                      pendingPluginInstall.getPluginDescriptor())
+        );
       }
       else {
         try {
