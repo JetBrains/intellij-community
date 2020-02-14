@@ -33,6 +33,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcsUtil.VcsUtil;
+import org.apache.commons.lang.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,11 +214,24 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     public void setFilter(@Nullable BranchFilters filters) {
-      triggerFilterSet(filters, BranchFilters::getBranchFilter, myFilter, BRANCH_FILTER.getName());
-      triggerFilterSet(filters, BranchFilters::getRevisionFilter, myFilter, REVISION_FILTER.getName());
-      triggerFilterSet(filters, BranchFilters::getRangeFilter, myFilter, RANGE_FILTER.getName());
+      boolean anyFilterDiffers = false;
 
-      super.setFilter(filters);
+      if (filterDiffers(filters, BranchFilters::getBranchFilter, myFilter)) {
+        triggerFilterSet(filters, BranchFilters::getBranchFilter, BRANCH_FILTER.getName());
+        anyFilterDiffers = true;
+      }
+      if (filterDiffers(filters, BranchFilters::getRevisionFilter, myFilter)) {
+        triggerFilterSet(filters, BranchFilters::getRevisionFilter, REVISION_FILTER.getName());
+        anyFilterDiffers = true;
+      }
+      if (filterDiffers(filters, BranchFilters::getRangeFilter, myFilter)) {
+        triggerFilterSet(filters, BranchFilters::getRangeFilter, RANGE_FILTER.getName());
+        anyFilterDiffers = true;
+      }
+
+      if (anyFilterDiffers) {
+        super.setFilter(filters);
+      }
     }
 
     @Override
@@ -517,6 +531,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     public void setFilter(@Nullable FilterPair<VcsLogTextFilter, VcsLogHashFilter> filter) {
+      if (ObjectUtils.equals(myFilter, filter)) return;
+
       super.setFilter(filter);
       myText = null;
     }
