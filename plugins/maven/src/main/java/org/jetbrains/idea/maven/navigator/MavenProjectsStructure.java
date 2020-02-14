@@ -1515,67 +1515,26 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private class UpdatePluginsTreeTask implements Runnable {
     @NotNull private final PluginsNode myParentNode;
     private final List<MavenPlugin> myPlugins;
-    private final List<PluginNode> myNodes;
 
     UpdatePluginsTreeTask(PluginsNode parentNode, List<MavenPlugin> plugins) {
-      myNodes = new ArrayList<>(parentNode.myPluginNodes);
       myParentNode = parentNode;
       myPlugins = plugins;
     }
 
-    private boolean hasNodeFor(MavenPlugin plugin) {
-      for (PluginNode each : myNodes) {
-        if (each.getPlugin().getMavenId().equals(plugin.getMavenId())) {
-          return true;
-        }
-      }
-      return false;
-    }
 
     @Override
     public void run() {
-      Map<MavenPlugin, MavenPluginInfo> pluginsToUpdate = new HashMap<>();
-      Map<MavenPlugin, MavenPluginInfo> pluginsToAdd = new HashMap<>();
-      List<MavenPlugin> pluginsToDelete = new ArrayList<>();
-
       File localRepository = myProjectsManager.getLocalRepository();
-      for (Iterator<PluginNode> itr = myNodes.iterator(); itr.hasNext(); ) {
-        PluginNode note = itr.next();
-        if (myPlugins.contains(note.getPlugin())) {
-          pluginsToUpdate.put(note.getPlugin(), MavenArtifactUtil.readPluginInfo(localRepository, note.getPlugin().getMavenId()));
-        }
-        else {
-          pluginsToDelete.add(note.getPlugin());
-        }
-      }
+      List<PluginNode> pluginInfos = ContainerUtil.map(myPlugins, it -> new PluginNode(myParentNode, it, MavenArtifactUtil
+        .readPluginInfo(localRepository, it.getMavenId())));
 
-      for (MavenPlugin each : myPlugins) {
-        if (!hasNodeFor(each)) {
-          pluginsToAdd.put(each, MavenArtifactUtil.readPluginInfo(localRepository, each.getMavenId()));
-        }
-      }
-
-      updateNodesInEDT(pluginsToUpdate, pluginsToAdd, pluginsToDelete);
+      updateNodesInEDT(pluginInfos);
     }
 
-    private void updateNodesInEDT(Map<MavenPlugin, MavenPluginInfo> pluginsToUpdate,
-                                  Map<MavenPlugin, MavenPluginInfo> pluginsToAdd,
-                                  List<MavenPlugin> nodesToDelete) {
+    private void updateNodesInEDT(List<PluginNode> pluginNodes) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        myParentNode.myPluginNodes.removeIf(it -> nodesToDelete.contains(it.myPlugin));
-        for (PluginNode node : myParentNode.myPluginNodes) {
-          MavenPluginInfo info = pluginsToUpdate.get(node.myPlugin);
-          if (info != null) {
-            node.updatePlugin(info);
-          }
-        }
-
-        for (Map.Entry<MavenPlugin, MavenPluginInfo> entry : pluginsToAdd.entrySet()) {
-          if (!hasNodeFor(entry.getKey())) {
-            myParentNode.myPluginNodes.add(new PluginNode(myParentNode, entry.getKey(), entry.getValue()));
-          }
-        }
-
+        myParentNode.myPluginNodes.clear();
+        myParentNode.myPluginNodes.addAll(pluginNodes);
         myParentNode.sort(myParentNode.myPluginNodes);
         myParentNode.childrenChanged();
       });
