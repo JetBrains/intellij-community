@@ -12,6 +12,17 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
  */
 abstract class SuggestedRefactoringAvailability(protected val refactoringSupport: SuggestedRefactoringSupport) {
   /**
+   * Detects if we should suppress refactoring suggestion for this declaration.
+   *
+   * This method is supposed to use [SuggestedRefactoringState.restoredDeclarationCopy] in order to analyze the original declaration.
+   * It's allowed to use reference resolve in this method.
+   * If resolve is not needed then it's recommended to override [SuggestedRefactoringStateChanges.createInitialState] and do the checks there.
+   * @return true, if the refactoring suggestion should be permanently disabled for this declaration
+   * and all further changes in the signature ignored.
+   */
+  open fun shouldSuppressRefactoringForDeclaration(state: SuggestedRefactoringState): Boolean = false
+
+  /**
    * Refines the old and the new signatures with use of resolve.
    *
    * Resolve may be useful, for example, to filter out annotation changes that are not supposed to be copied across method hierarchy.

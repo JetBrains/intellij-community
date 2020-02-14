@@ -9,14 +9,21 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactoringSupport) :
   SuggestedRefactoringAvailability(refactoringSupport)
 {
+  // disable refactoring suggestion for method which overrides another method
+  override fun shouldSuppressRefactoringForDeclaration(state: SuggestedRefactoringState): Boolean {
+    if (state.declaration !is PsiMethod) return false
+    val declaration = state.restoredDeclarationCopy() as PsiMethod
+    return declaration.findSuperMethods().isNotEmpty()
+  }
+
   // we use resolve to filter out annotations that we don't want to spread over hierarchy
   override fun refineSignaturesWithResolve(state: SuggestedRefactoringState): SuggestedRefactoringState {
     val declaration = state.declaration as? PsiMethod ?: return state
-    val restoredDeclarationCopy = state.createRestoredDeclarationCopy(refactoringSupport) as PsiMethod
+    val restoredDeclarationCopy = state.restoredDeclarationCopy() as PsiMethod
     val psiFile = declaration.containingFile
-    val oldSignature = extractAnnotationsWithResolve(state.oldSignature, restoredDeclarationCopy, psiFile)
-    val newSignature = extractAnnotationsWithResolve(state.newSignature, declaration, psiFile)
-    return state.copy(oldSignature = oldSignature, newSignature = newSignature)
+    return state
+      .withOldSignature(extractAnnotationsWithResolve(state.oldSignature, restoredDeclarationCopy, psiFile))
+      .withNewSignature(extractAnnotationsWithResolve(state.newSignature, declaration, psiFile))
   }
 
   override fun detectAvailableRefactoring(state: SuggestedRefactoringState): SuggestedRefactoringData? {

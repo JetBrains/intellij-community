@@ -62,7 +62,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
 
   open fun updateState(state: SuggestedRefactoringState, declaration: PsiElement): SuggestedRefactoringState {
     val newSignature = signature(declaration, state)
-                       ?: return state.copy(declaration = declaration, syntaxError = true)
+                       ?: return state.withDeclaration(declaration).withSyntaxError(true)
 
     val idsPresent = newSignature.parameters.map { it.id }.toSet()
     val disappearedParameters = state.disappearedParameters.entries
@@ -75,13 +75,12 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
       }
     }
 
-    return state.copy(
-      declaration = declaration,
-      newSignature = newSignature,
-      parameterMarkers = parameterMarkers(declaration),
-      syntaxError = refactoringSupport.hasSyntaxError(declaration),
-      disappearedParameters = disappearedParameters
-    )
+    return state
+      .withDeclaration(declaration)
+      .withNewSignature(newSignature)
+      .withSyntaxError(refactoringSupport.hasSyntaxError(declaration))
+      .withParameterMarkers(parameterMarkers(declaration))
+      .withDisappearedParameters(disappearedParameters)
   }
 
   protected fun matchParametersWithPrevState(signature: Signature,

@@ -468,4 +468,42 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       expectedAvailability = Availability.Disabled
     )
   }
+
+  fun testRenameOverrideMethod() {
+    doTest(
+      """
+        interface I {
+            void foo();
+        }
+        
+        class C implements I {
+            public void <caret>foo() { }
+        }
+      """.trimIndent(),
+      {
+        replaceTextAtCaret("foo", "bar")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("foo", "bar")),
+      expectedAvailabilityAfterResolve = Availability.NotAvailable
+    )
+  }
+
+  fun testOverrideMethod() {
+    doTest(
+      """
+        interface I {
+            void foo();
+        }
+        
+        class C implements I {
+            public void foo(<caret>) { }
+        }
+      """.trimIndent(),
+      {
+        myFixture.type("String s")
+      },
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
+      expectedAvailabilityAfterResolve = Availability.NotAvailable
+    )
+  }
 }

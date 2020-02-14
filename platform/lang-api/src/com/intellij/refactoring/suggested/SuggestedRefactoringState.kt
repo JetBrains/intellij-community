@@ -12,6 +12,7 @@ private var nextFeatureUsageId = 0
 /**
  * Data class representing state of accumulated signature changes.
  */
+//TODO: drop data modifier
 data class SuggestedRefactoringState(
   val declaration: PsiElement,
   val refactoringSupport: SuggestedRefactoringSupport,
@@ -24,7 +25,82 @@ data class SuggestedRefactoringState(
   val disappearedParameters: Map<String, Any> = emptyMap() /* last known parameter name to its id */,
   val featureUsageId: Int = nextFeatureUsageId++
 ) {
+  fun withDeclaration(declaration: PsiElement): SuggestedRefactoringState {
+    val state = SuggestedRefactoringState(
+      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId
+    )
+    copyRestoredDeclaration(state)
+    return state
+  }
+
+  fun withSyntaxError(syntaxError: Boolean): SuggestedRefactoringState {
+    val state = SuggestedRefactoringState(
+      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId
+    )
+    copyRestoredDeclaration(state)
+    return state
+  }
+
+  fun withOldSignature(oldSignature: Signature): SuggestedRefactoringState {
+    val state = SuggestedRefactoringState(
+      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId
+    )
+    copyRestoredDeclaration(state)
+    return state
+  }
+
+  fun withNewSignature(newSignature: Signature): SuggestedRefactoringState {
+    val state = SuggestedRefactoringState(
+      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId
+    )
+    copyRestoredDeclaration(state)
+    return state
+  }
+
+  fun withParameterMarkers(parameterMarkers: List<RangeMarker?>): SuggestedRefactoringState {
+    val state = SuggestedRefactoringState(
+      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId
+    )
+    copyRestoredDeclaration(state)
+    return state
+  }
+
+  fun withDisappearedParameters(disappearedParameters: Map<String, Any>): SuggestedRefactoringState {
+    val state = SuggestedRefactoringState(
+      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId
+    )
+    copyRestoredDeclaration(state)
+    return state
+  }
+
+  private fun copyRestoredDeclaration(toState: SuggestedRefactoringState) {
+    if (toState.declaration == this.declaration) {
+      // do not reset lazy calculated declaration copy for performance reasons
+      toState.restoredDeclarationCopy = this.restoredDeclarationCopy
+    }
+  }
+
+  private var restoredDeclarationCopy: PsiElement? = null
+
+  fun restoredDeclarationCopy(): PsiElement {
+    if (restoredDeclarationCopy == null) {
+      restoredDeclarationCopy = createRestoredDeclarationCopy()
+    }
+    return restoredDeclarationCopy!!
+  }
+
+  @Deprecated("Use restoredDeclarationCopy()", ReplaceWith("restoredDeclarationCopy()"))
   fun createRestoredDeclarationCopy(refactoringSupport: SuggestedRefactoringSupport): PsiElement {
+    return restoredDeclarationCopy()
+  }
+
+  private fun createRestoredDeclarationCopy(): PsiElement {
     val psiFile = declaration.containingFile
     val signatureRange = refactoringSupport.signatureRange(declaration)!!
     val importsRange = refactoringSupport.importsRange(psiFile)
