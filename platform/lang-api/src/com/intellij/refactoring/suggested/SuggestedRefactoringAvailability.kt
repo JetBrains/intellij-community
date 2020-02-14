@@ -30,6 +30,16 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
   open fun refineSignaturesWithResolve(state: SuggestedRefactoringState): SuggestedRefactoringState = state
 
   /**
+   * Amends state with additional information by performing potentially slow computations such as usage search.
+   *
+   * Normally, the state is amended by modifying [SuggestedRefactoringState.additionalData]
+   * (see [SuggestedRefactoringState.withAdditionalData]). The additional data can be retrieved later and used by
+   * implementations of [detectAvailableRefactoring] and [shouldSuppressRefactoringForDeclaration].
+   * @return lazy iterator over sequence of amended states
+   */
+  open fun amendStateInBackground(state: SuggestedRefactoringState): Iterator<SuggestedRefactoringState> = iterator { }
+
+  /**
    * Determines refactoring availability for a given state and returns instance of [SuggestedRefactoringData],
    * providing information for presentation and execution of the refactoring.
    *
@@ -43,7 +53,7 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
   /**
    * Use this implementation of [SuggestedRefactoringAvailability], if only Rename refactoring is supported for the language.
    */
-  class RenameOnly(refactoringSupport: SuggestedRefactoringSupport) : SuggestedRefactoringAvailability(refactoringSupport) {
+  open class RenameOnly(refactoringSupport: SuggestedRefactoringSupport) : SuggestedRefactoringAvailability(refactoringSupport) {
     override fun detectAvailableRefactoring(state: SuggestedRefactoringState): SuggestedRefactoringData? {
       val namedElement = state.declaration as? PsiNamedElement ?: return null
       return SuggestedRenameData(namedElement, state.oldSignature.name)

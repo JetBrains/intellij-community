@@ -49,6 +49,7 @@ abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFi
     vararg editingActions: () -> Unit,
     expectedAvailability: Availability,
     expectedAvailabilityAfterResolve: Availability = expectedAvailability,
+    expectedAvailabilityAfterBackgroundAmend: Availability = expectedAvailabilityAfterResolve,
     wrapIntoCommandAndWriteActionAndCommitAll: Boolean = true
   ) {
     myFixture.configureByText(fileType, initialText)
@@ -57,10 +58,22 @@ abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFi
       myFixture.testHighlighting(false, false, false, myFixture.file.virtualFile)
     }
 
-    executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)
+    val provider = SuggestedRefactoringProviderImpl.getInstance(project)
+    try {
+      provider._amendStateInBackgroundEnabled = false
 
-    checkAvailability(expectedAvailability, afterResolve = false)
-    checkAvailability(expectedAvailabilityAfterResolve, afterResolve = true)
+      executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)
+
+      checkAvailability(expectedAvailability, afterResolve = false)
+      checkAvailability(expectedAvailabilityAfterResolve, afterResolve = true)
+
+      provider._amendStateInBackgroundEnabled = true
+
+      checkAvailability(expectedAvailabilityAfterBackgroundAmend, afterResolve = true)
+    }
+    finally {
+      provider._amendStateInBackgroundEnabled = true
+    }
   }
 
   private fun checkAvailability(expectedAvailability: Availability, afterResolve: Boolean) {

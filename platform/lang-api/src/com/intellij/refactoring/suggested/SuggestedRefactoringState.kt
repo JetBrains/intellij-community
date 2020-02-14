@@ -3,6 +3,7 @@
 package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import org.jetbrains.annotations.Nls
@@ -23,12 +24,13 @@ data class SuggestedRefactoringState(
   val newSignature: Signature,
   val parameterMarkers: List<RangeMarker?>,
   val disappearedParameters: Map<String, Any> = emptyMap() /* last known parameter name to its id */,
-  val featureUsageId: Int = nextFeatureUsageId++
+  val featureUsageId: Int = nextFeatureUsageId++,
+  val additionalData: AdditionalData = AdditionalData.Empty
 ) {
   fun withDeclaration(declaration: PsiElement): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
       declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
-      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
     return state
@@ -37,7 +39,7 @@ data class SuggestedRefactoringState(
   fun withSyntaxError(syntaxError: Boolean): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
       declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
-      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
     return state
@@ -46,7 +48,7 @@ data class SuggestedRefactoringState(
   fun withOldSignature(oldSignature: Signature): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
       declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
-      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
     return state
@@ -55,7 +57,7 @@ data class SuggestedRefactoringState(
   fun withNewSignature(newSignature: Signature): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
       declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
-      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
     return state
@@ -64,7 +66,7 @@ data class SuggestedRefactoringState(
   fun withParameterMarkers(parameterMarkers: List<RangeMarker?>): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
       declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
-      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
     return state
@@ -73,7 +75,17 @@ data class SuggestedRefactoringState(
   fun withDisappearedParameters(disappearedParameters: Map<String, Any>): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
       declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
-      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
+    )
+    copyRestoredDeclaration(state)
+    return state
+  }
+
+  fun <T : Any> withAdditionalData(key: Key<T>, value: T): SuggestedRefactoringState {
+    val state = SuggestedRefactoringState(
+      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId,
+      additionalData.withData(key, value)
     )
     copyRestoredDeclaration(state)
     return state
@@ -123,6 +135,23 @@ data class SuggestedRefactoringState(
     }
 
     return refactoringSupport.declarationByOffset(fileCopy, originalSignatureStart)!!
+  }
+
+  class AdditionalData private constructor(private val map: Map<Key<Any>, Any>){
+    @Suppress("UNCHECKED_CAST")
+    operator fun <T : Any> get(key: Key<T>): T? = map[key as Key<Any>] as T?
+
+    fun <T : Any> withData(key: Key<T>, data: T): AdditionalData {
+      val newMap = map.toMutableMap().apply {
+        @Suppress("UNCHECKED_CAST")
+        put(key as Key<Any>, data)
+      }
+      return AdditionalData(newMap)
+    }
+
+    companion object {
+      val Empty: AdditionalData = AdditionalData(emptyMap())
+    }
   }
 }
 

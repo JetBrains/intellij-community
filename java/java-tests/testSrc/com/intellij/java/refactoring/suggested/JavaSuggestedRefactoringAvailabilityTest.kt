@@ -188,7 +188,8 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       {
         replaceTextAtCaret("public", "protected")
       },
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides"))
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 
@@ -203,7 +204,8 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       {
         replaceTextAtCaret("void", "int")
       },
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides"))
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 
@@ -267,6 +269,67 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
     )
   }
 
+  fun testChangeReturnTypeNoOverride() {
+    doTest(
+      """
+        class C {
+            <caret>void foo() { }
+        }
+        
+        class D extends C {
+            void foo(int p) { }
+        }
+      """.trimIndent(),
+      {
+        replaceTextAtCaret("void", "int")
+      },
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+    )
+  }
+
+  fun testChangeReturnTypeWithOverride() {
+    doTest(
+      """
+        class C {
+            <caret>void foo() { }
+        }
+      
+        class D extends C {
+        }
+        
+        class E extends D {
+            void foo() { }
+        }
+      """.trimIndent(),
+      {
+        replaceTextAtCaret("void", "int")
+      },
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides"))
+    )
+  }
+
+  fun testSiblingInheritedMethod() {
+    doTest(
+      """
+        interface I {
+            <caret>void foo();
+        }
+      
+        class C {
+            public void foo() {}
+        }
+      
+        class D extends C implements I {
+        }
+      """.trimIndent(),
+      {
+        replaceTextAtCaret("void", "int")
+      },
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations"))
+    )
+  }
+
   fun testChangeParameterTypeAndName() {
     doTest(
       """
@@ -300,7 +363,8 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
         editor.caretModel.moveToOffset(editor.caretModel.offset + "long ".length)
         replaceTextAtCaret("p", "pNew")
       },
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations"))
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 
@@ -355,7 +419,8 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
         editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New, int ".length)
         replaceTextAtCaret("p2", "p2New")
       },
-      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations"))
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 
@@ -504,6 +569,39 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
       expectedAvailabilityAfterResolve = Availability.NotAvailable
+    )
+  }
+
+  fun testUnusedLocal() {
+    doTest(
+      """
+        class C {
+            public void foo() {
+                int local<caret> = 0;
+            }
+        }
+      """.trimIndent(),
+      {
+        myFixture.type("123")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("local", "local123")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+    )
+  }
+
+  fun testPrivateMethod() {
+    doTest(
+      """
+        class C {
+            private void foo(<caret>) {
+            }
+        }
+      """.trimIndent(),
+      {
+        myFixture.type("int p")
+      },
+      expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
+      expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
   }
 }

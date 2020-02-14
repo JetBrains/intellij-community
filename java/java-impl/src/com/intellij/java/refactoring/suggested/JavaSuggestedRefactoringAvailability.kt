@@ -1,7 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring.suggested
 
+import com.intellij.openapi.util.Key
 import com.intellij.psi.*
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.OverridingMethodsSearch
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.suggested.*
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
@@ -10,11 +14,36 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactoringSupport) :
   SuggestedRefactoringAvailability(refactoringSupport)
 {
+  private val HAS_OVERRIDES = Key<Boolean>("JavaSuggestedRefactoringAvailability.HAS_OVERRIDES")
+  private val HAS_USAGES = Key<Boolean>("JavaSuggestedRefactoringAvailability.HAS_USAGES")
+
   // disable refactoring suggestion for method which overrides another method
   override fun shouldSuppressRefactoringForDeclaration(state: SuggestedRefactoringState): Boolean {
     if (state.declaration !is PsiMethod) return false
     val declaration = state.restoredDeclarationCopy() as PsiMethod
     return declaration.findSuperMethods().isNotEmpty()
+  }
+
+  override fun amendStateInBackground(state: SuggestedRefactoringState): Iterator<SuggestedRefactoringState> {
+    return iterator {
+      if (state.additionalData[HAS_OVERRIDES] == null) {
+        val method = state.declaration as? PsiMethod
+        if (method != null && method.canHaveOverrides(state.oldSignature)) {
+          val restoredMethod = state.restoredDeclarationCopy() as PsiMethod
+          val hasOverrides = OverridingMethodsSearch.search(restoredMethod, false).findFirst() != null
+          yield(state.withAdditionalData(HAS_OVERRIDES, hasOverrides))
+        }
+      }
+
+      if (state.additionalData[HAS_USAGES] == null) {
+        val declarationCopy = state.restoredDeclarationCopy()
+        val useScope = declarationCopy.useScope
+        if (useScope is LocalSearchScope) {
+          val hasUsages = ReferencesSearch.search(declarationCopy, useScope).findFirst() != null
+          yield(state.withAdditionalData(HAS_USAGES, hasUsages))
+        }
+      }
+    }
   }
 
   // we use resolve to filter out annotations that we don't want to spread over hierarchy
@@ -33,14 +62,18 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
     val newSignature = state.newSignature
 
     if (declaration !is PsiMethod) {
+      if (state.additionalData[HAS_USAGES] == false) return null
       return SuggestedRenameData(declaration as PsiNamedElement, oldSignature.name)
     }
+
+    val canHaveOverrides = declaration.canHaveOverrides(oldSignature) && state.additionalData[HAS_OVERRIDES] != false
+    if (state.additionalData[HAS_USAGES] == false && !canHaveOverrides) return null
 
     val updateUsagesData = SuggestedChangeSignatureData.create(state, USAGES)
 
     if (hasParameterAddedRemovedOrReordered(oldSignature, newSignature)) return updateUsagesData
 
-    val updateOverridesData = if (declaration.canHaveOverrides(oldSignature))
+    val updateOverridesData = if (canHaveOverrides)
       updateUsagesData.copy(nameOfStuffToUpdate = if (declaration.hasModifierProperty(PsiModifier.ABSTRACT)) IMPLEMENTATIONS else OVERRIDES)
     else
       null
