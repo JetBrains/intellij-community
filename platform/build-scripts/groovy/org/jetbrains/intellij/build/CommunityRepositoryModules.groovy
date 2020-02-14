@@ -389,14 +389,7 @@ class CommunityRepositoryModules {
         return dstFile
       }
 
-      withGeneratedResources(new ResourcesGenerator() {
-        @Override
-        File generateResources(BuildContext context) {
-          return unzipProjectLib(
-            context, "org.jetbrains.intellij.deps.android.tools.base:layoutlib-resources", "$context.paths.temp/andorid-plugin/layoutlib-resources"
-          )
-        }
-      }, "lib/layoutlib")
+      // contents of "/plugins/android/lib/layoutlib/" will be downloaded by the AndroidPlugin on demand
 
       withGeneratedResources(new ResourcesGenerator() {
         @Override
