@@ -116,10 +116,11 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       }
 
       @Override
-      public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName) {
+      public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, boolean required) {
         final DomExtension extension =
           registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class)
             .setDeclaringElement(field);
+        if (required) extension.addCustomAnnotation(MyRequired.INSTANCE);
 
         final With withElement = findWithElement(elements, field);
         markAsClass(extension, Extension.isClassField(field.getName()), withElement);
@@ -129,16 +130,19 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       }
 
       @Override
-      public void visitXCollection(@NotNull PsiField field, @Nullable String tagName, @NotNull PsiAnnotation collectionAnnotation) {
+      public void visitXCollection(@NotNull PsiField field,
+                                   @Nullable String tagName,
+                                   @NotNull PsiAnnotation collectionAnnotation,
+                                   boolean required) {
         if (tagName == null) {
-          registerCollectionBinding(field.getType(), registrar, collectionAnnotation);
+          registerCollectionBinding(field, registrar, collectionAnnotation, required);
           return;
         }
 
         registrar.registerFixedNumberChildExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
           @Override
           public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-            registerCollectionBinding(field.getType(), registrar, collectionAnnotation);
+            registerCollectionBinding(field, registrar, collectionAnnotation, required);
           }
         });
       }
@@ -171,23 +175,31 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  private static void registerCollectionBinding(PsiType type,
+  private static void registerCollectionBinding(PsiField field,
                                                 DomExtensionsRegistrar registrar,
-                                                PsiAnnotation collectionAnnotation) {
+                                                PsiAnnotation collectionAnnotation,
+                                                boolean required) {
     final boolean surroundWithTag = PsiUtil.getAnnotationBooleanAttribute(collectionAnnotation, "surroundWithTag");
     if (surroundWithTag) return; // todo Set, List, Array
 
     final String tagName = PsiUtil.getAnnotationStringAttribute(collectionAnnotation, "elementTag", null);
     final String attrName = PsiUtil.getAnnotationStringAttribute(collectionAnnotation, "elementValueAttribute", null);
-    final PsiType elementType = getElementType(type);
+    final PsiType elementType = getElementType(field.getType());
     if (elementType == null || TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(elementType)
         || CommonClassNames.JAVA_LANG_STRING.equals(elementType.getCanonicalText())
         || TypeConversionUtil.isEnumType(elementType)) {
       if (tagName != null && attrName == null) {
-        registrar.registerCollectionChildrenExtension(new XmlName(tagName), SimpleTagValue.class);
+        final DomExtension extension = registrar
+          .registerCollectionChildrenExtension(new XmlName(tagName), SimpleTagValue.class)
+          .setDeclaringElement(field);
+        if (required) extension.addCustomAnnotation(MyRequired.INSTANCE);
       }
       else if (tagName != null) {
-        registrar.registerCollectionChildrenExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
+        final DomExtension extension = registrar
+          .registerCollectionChildrenExtension(new XmlName(tagName), DomElement.class)
+          .setDeclaringElement(field);
+        if (required) extension.addCustomAnnotation(MyRequired.INSTANCE);
+        extension.addExtender(new DomExtender() {
           @Override
           public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
             registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), String.class);
@@ -196,16 +208,21 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       }
     }
     else {
-      final PsiClass psiClass = PsiTypesUtil.getPsiClass(elementType);
-      if (psiClass != null) {
-        final PsiModifierList modifierList = psiClass.getModifierList();
+      final PsiClass elementPsiClass = PsiTypesUtil.getPsiClass(elementType);
+      if (elementPsiClass != null) {
+        final PsiModifierList modifierList = elementPsiClass.getModifierList();
         final PsiAnnotation tagAnno = modifierList == null ? null : modifierList.findAnnotation(Tag.class.getName());
-        final String classTagName = tagAnno == null ? psiClass.getName() : PsiUtil.getAnnotationStringAttribute(tagAnno, "value", null);
+        final String classTagName = tagAnno == null ? elementPsiClass.getName() :
+                                    PsiUtil.getAnnotationStringAttribute(tagAnno, "value", null);
         if (classTagName != null) {
-          registrar.registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class).addExtender(new DomExtender() {
+          final DomExtension extension = registrar
+            .registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class)
+            .setDeclaringElement(field);
+          if (required) extension.addCustomAnnotation(MyRequired.INSTANCE);
+          extension.addExtender(new DomExtender() {
             @Override
             public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-              registerXmlb(registrar, psiClass, Collections.emptyList());
+              registerXmlb(registrar, elementPsiClass, Collections.emptyList());
             }
           });
         }

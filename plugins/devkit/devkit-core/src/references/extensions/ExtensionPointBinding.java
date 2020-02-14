@@ -37,18 +37,18 @@ public class ExtensionPointBinding {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
       final PsiMethod getter = PropertyUtilBase.findGetterForField(field);
       final PsiMethod setter = PropertyUtilBase.findSetterForField(field);
-      if (!field.hasModifierProperty(PsiModifier.PUBLIC) && (getter == null || setter == null)) continue;
+      if ((getter == null || setter == null) && !field.hasModifierProperty(PsiModifier.PUBLIC)) continue;
 
+      boolean required = PsiUtil.findAnnotation(RequiredElement.class, field, getter, setter) != null;
       final PsiAnnotation attributeAnnotation = PsiUtil.findAnnotation(Attribute.class, field, getter, setter);
       if (attributeAnnotation != null) {
         String fieldName = PsiUtil.getAnnotationStringAttribute(attributeAnnotation, "value", field.getName());
         if (fieldName != null) {
-          visitor.visitAttribute(field, fieldName, PsiUtil.findAnnotation(RequiredElement.class, field) != null);
+          visitor.visitAttribute(field, fieldName, required);
         }
       }
       else {
         final PsiAnnotation tagAnno = PsiUtil.findAnnotation(Tag.class, field, getter, setter);
-        final PsiAnnotation propAnno = PsiUtil.findAnnotation(Property.class, field, getter, setter);
         final PsiAnnotation collectionAnnotation = PsiUtil.findAnnotation(XCollection.class, field, getter, setter);
         //final PsiAnnotation colAnno = modifierList.findAnnotation(Collection.class.getName()); // todo
 
@@ -58,14 +58,15 @@ public class ExtensionPointBinding {
           tagName = PsiUtil.getAnnotationStringAttribute(tagAnno, "value", fieldName);
         }
         else {
+          final PsiAnnotation propAnno = PsiUtil.findAnnotation(Property.class, field, getter, setter);
           tagName = propAnno != null && PsiUtil.getAnnotationBooleanAttribute(propAnno, "surroundWithTag") ? Constants.OPTION : null;
         }
 
         if (tagName != null && collectionAnnotation == null) {
-          visitor.visitTagOrProperty(field, tagName);
+          visitor.visitTagOrProperty(field, tagName, required);
         }
         else if (collectionAnnotation != null) {
-          visitor.visitXCollection(field, tagName, collectionAnnotation);
+          visitor.visitXCollection(field, tagName, collectionAnnotation, required);
         }
       }
     }
@@ -75,8 +76,8 @@ public class ExtensionPointBinding {
 
     void visitAttribute(@NotNull PsiField field, @NotNull String attributeName, boolean required);
 
-    void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName);
+    void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, boolean required);
 
-    void visitXCollection(@NotNull PsiField field, @Nullable String tagName, @NotNull PsiAnnotation collectionAnnotation);
+    void visitXCollection(@NotNull PsiField field, @Nullable String tagName, @NotNull PsiAnnotation collectionAnnotation, boolean required);
   }
 }
