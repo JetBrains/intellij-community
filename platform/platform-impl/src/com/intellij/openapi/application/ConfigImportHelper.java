@@ -105,7 +105,7 @@ public final class ConfigImportHelper {
     }
      else {
        Path bestConfigGuess = guessedOldConfigDirs.get(0);
-       oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess); // todo maybe integrate into findConfigDirectories
+       oldConfigDirAndOldIdePath = pair(bestConfigGuess, null);
      }
 
     if (oldConfigDirAndOldIdePath != null) {
@@ -207,7 +207,6 @@ public final class ConfigImportHelper {
       if (productName != null) prefix = productName.replace(" ", "");
     }
     if (prefix == null) prefix = PlatformUtils.getPlatformPrefix();
-    String dotPrefix = '.' + prefix;
 
     List<Path> candidates = new ArrayList<>();
     for (Path home : homes) {
@@ -216,8 +215,7 @@ public final class ConfigImportHelper {
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(home)) {
         for (Path path : stream) {
           if (!path.equals(newConfigDir)) {
-            String name = path.getFileName().toString();
-            if ((StringUtil.startsWithIgnoreCase(name, prefix) || StringUtil.startsWithIgnoreCase(name, dotPrefix)) && Files.isDirectory(path)) {
+            if (Files.isDirectory(path) && isConfigDirectory(path)) {
               candidates.add(path);
             }
           }
@@ -249,7 +247,17 @@ public final class ConfigImportHelper {
     }
 
     List<Path> result = new ArrayList<>(lastModified.keySet());
+    String productPrefix = prefix;
     result.sort((o1, o2) -> {
+      String name1 = o1.getFileName().toString();
+      String name2 = o2.getFileName().toString();
+      if (isThisProduct(name1, productPrefix) && !isThisProduct(name2, productPrefix)){
+        return -1;
+      }
+      if (!isThisProduct(name1, productPrefix) && isThisProduct(name2, productPrefix)){
+        return 1;
+      }
+
       int diff = lastModified.get(o2).compareTo(lastModified.get(o1));
       if (diff == 0) {
         diff = StringUtil.naturalCompare(o2.toString(), o1.toString());
@@ -257,6 +265,12 @@ public final class ConfigImportHelper {
       return diff;
     });
     return result;
+  }
+
+  private static boolean isThisProduct(@NotNull String configDirName, @NotNull String productPrefix) {
+    String dotPrefix = '.' + productPrefix;
+    return StringUtil.startsWithIgnoreCase(configDirName, productPrefix) ||
+           StringUtil.startsWithIgnoreCase(configDirName, dotPrefix);
   }
 
   private static String getNameWithVersion(Path configDir) {
