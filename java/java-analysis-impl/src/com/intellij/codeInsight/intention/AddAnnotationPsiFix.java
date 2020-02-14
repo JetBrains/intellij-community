@@ -172,7 +172,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
         WriteCommandAction.runWriteCommandAction(project, null, null, () -> {
           removePhysicalAnnotations(myModifierListOwner, myAnnotationsToRemove);
 
-          PsiAnnotation inserted = addPhysicalAnnotation(myAnnotation, myPairs, target);
+          PsiAnnotation inserted = addPhysicalAnnotationTo(myAnnotation, myPairs, target);
           JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
         }, containingFile);
 
@@ -217,10 +217,10 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   }
 
   public static PsiAnnotation addPhysicalAnnotation(String fqn, PsiNameValuePair[] pairs, PsiModifierList modifierList) {
-    return addPhysicalAnnotation(fqn, pairs, (PsiAnnotationOwner)modifierList);
+    return addPhysicalAnnotationTo(fqn, pairs, modifierList);
   }
 
-  public static PsiAnnotation addPhysicalAnnotation(String fqn, PsiNameValuePair[] pairs, PsiAnnotationOwner owner) {
+  public static PsiAnnotation addPhysicalAnnotationTo(String fqn, PsiNameValuePair[] pairs, PsiAnnotationOwner owner) {
     owner = expandParameterIfNecessary(owner);
     PsiAnnotation inserted = owner.addAnnotation(fqn);
     for (PsiNameValuePair pair : pairs) {
