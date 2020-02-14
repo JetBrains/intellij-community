@@ -15,10 +15,12 @@
  */
 package com.intellij.usageView;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,14 +50,15 @@ public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvi
       else if (element instanceof PsiClass) {
         if (element instanceof PsiAnonymousClass) {
           String name = ((PsiAnonymousClass)element).getBaseClassReference().getReferenceName();
-          return "anonymous " + StringUtil.notNullize(name, "class");
+          return name != null ? JavaPsiBundle.message("java.terms.anonymous.class.base.ref", name) 
+                              : JavaPsiBundle.message("java.terms.anonymous.class");
         }
         else {
           String ret = ((PsiClass)element).getQualifiedName(); // It happens for local classes
           if (ret == null) {
             ret = ((PsiClass)element).getName();
           }
-          return ret;
+          return ObjectUtils.notNull(ret, "");
         }
       }
       else if (element instanceof PsiVariable) {

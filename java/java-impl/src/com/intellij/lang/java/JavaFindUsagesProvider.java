@@ -8,7 +8,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
@@ -16,6 +15,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -145,12 +145,13 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (element instanceof PsiClass) {
       if (element instanceof PsiAnonymousClass) {
         String name = ((PsiAnonymousClass)element).getBaseClassReference().getReferenceName();
-        return "anonymous " + StringUtil.notNullize(name, "class");
+        return name != null ? JavaPsiBundle.message("java.terms.anonymous.class.base.ref", name) 
+                            : JavaPsiBundle.message("java.terms.anonymous.class");
       }
       else {
         PsiClass aClass = (PsiClass)element;
         String qName = aClass.getQualifiedName();
-        return qName != null ? qName : aClass.getName() != null ? aClass.getName() : "<unknown>";
+        return qName != null ? qName : ObjectUtils.notNull(aClass.getName(), "");
       }
     }
     if (element instanceof PsiMethod) {
