@@ -16,6 +16,7 @@
 
 package com.intellij.psi.templateLanguages;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -52,5 +53,23 @@ public class TemplateLanguageUtil {
     FileViewProvider viewProvider = file.getViewProvider();
     return viewProvider instanceof TemplateLanguageFileViewProvider &&
                 file == viewProvider.getPsi(((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage());
+  }
+
+  @Nullable
+  public static ASTNode getSameLanguageTreePrev(@NotNull ASTNode node) {
+    ASTNode current = node.getTreePrev();
+    while (current instanceof OuterLanguageElement) {
+      current = current.getTreePrev();
+    }
+    return current;
+  }
+
+  @Nullable
+  public static ASTNode getSameLanguageTreeNext(@NotNull ASTNode node) {
+    ASTNode current = node.getTreeNext();
+    while (current instanceof OuterLanguageElement) {
+      current = current.getTreeNext();
+    }
+    return current;
   }
 }
