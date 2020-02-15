@@ -346,17 +346,23 @@ idea.fatal.error.notification=disabled
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
-      List<BuildTaskRunnable<String>> tasks = [
-        createDistributionForOsTask("win", { BuildContext context ->
-          context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
-        }),
-        createDistributionForOsTask("linux", { BuildContext context ->
+      List<BuildTaskRunnable<String>> tasks = new ArrayList<>()
+      if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_WINDOWS)) {
+        tasks.add(createDistributionForOsTask("win", { BuildContext context ->
+          context.windowsDistributionCustomizer?.
+            with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
+        }))
+      }
+      if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_LINUX)) {
+        tasks.add(createDistributionForOsTask("linux", { BuildContext context ->
           context.linuxDistributionCustomizer?.with { new LinuxDistributionBuilder(context, it, propertiesFile) }
-        }),
-        createDistributionForOsTask("mac", { BuildContext context ->
+        }))
+      }
+      if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_MAC)) {
+        tasks.add(createDistributionForOsTask("mac", { BuildContext context ->
           context.macDistributionCustomizer?.with { new MacDistributionBuilder(context, it, propertiesFile) }
-        })
-      ]
+        }))
+      }
 
       List<String> paths = runInParallel(tasks).findAll { it != null }
 
