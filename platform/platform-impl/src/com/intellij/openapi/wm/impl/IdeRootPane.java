@@ -268,7 +268,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   @NotNull
   protected IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
-    return new IdeStatusBarImpl(frame);
+    return new IdeStatusBarImpl(frame, true);
   }
 
   private void setMemoryIndicatorVisible(boolean visible) {

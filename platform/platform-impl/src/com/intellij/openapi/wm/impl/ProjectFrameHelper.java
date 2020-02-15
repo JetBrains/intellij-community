@@ -5,6 +5,7 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
@@ -14,8 +15,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -23,15 +22,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarPopupActionGroup;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
+import com.intellij.ui.*;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -52,7 +53,8 @@ import java.awt.event.WindowEvent;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -431,44 +433,9 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     addWidget(project, statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(encodingPanel.ID()));
     addWidget(project, statusBar, new ToggleReadOnlyAttributePanel(), StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
 
-    Map<StatusBarWidgetProvider, Disposable> providerToWidgetDisposable = new HashMap<>();
-    StatusBarWidgetProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetProvider>() {
-      @Override
-      public void extensionAdded(@NotNull StatusBarWidgetProvider widgetProvider, @NotNull PluginDescriptor pluginDescriptor) {
-        if (!widgetProvider.isCompatibleWith(ProjectFrameHelper.this)) {
-          return;
-        }
-
-        StatusBarWidget widget = widgetProvider.getWidget(project);
-        if (widget == null) {
-          return;
-        }
-
-        Disposable widgetDisposable = new Disposable() {
-          @Override
-          public void dispose() {
-            providerToWidgetDisposable.remove(widgetProvider);
-          }
-        };
-
-        if (addWidget(widgetDisposable, statusBar, widget, widgetProvider.getAnchor())) {
-          Disposer.register(project, widgetDisposable);
-          providerToWidgetDisposable.put(widgetProvider, widgetDisposable);
-        }
-        statusBar.repaint();
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull StatusBarWidgetProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
-        if (!provider.isCompatibleWith(ProjectFrameHelper.this)) {
-          return;
-        }
-
-        assert providerToWidgetDisposable.containsKey(provider);
-        Disposer.dispose(providerToWidgetDisposable.get(provider));
-        statusBar.repaint();
-      }
-    }, true, project);
+    StatusBarWidgetsManager widgetsManager = project.getService(StatusBarWidgetsManager.class);
+    widgetsManager.updateAllWidgets();
+    PopupHandler.installPopupHandler(statusBar, new StatusBarPopupActionGroup(widgetsManager), ActionPlaces.STATUS_BAR_PLACE);
   }
 
   @Override

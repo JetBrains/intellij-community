@@ -8,12 +8,19 @@ import com.intellij.ide.lightEdit.statusBar.LightEditEncodingWidgetWrapper;
 import com.intellij.ide.lightEdit.statusBar.LightEditLineSeparatorWidgetWrapper;
 import com.intellij.ide.lightEdit.statusBar.LightEditPositionWidget;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.LightEditFrame;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarPopupActionGroup;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.platform.ProjectFrameAllocatorKt;
+import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,15 +62,10 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
               StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
     addWidget(this, statusBar, new LightEditLineSeparatorWidgetWrapper(),
               StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID));
-    for (StatusBarWidgetProvider provider : StatusBarWidgetProvider.EP_NAME.getExtensionList()) {
-      if (provider.isCompatibleWith(this)) {
-        final StatusBarWidget widget = provider.getWidget(project);
-        if (widget != null) {
-          addWidget(this, statusBar, widget, provider.getAnchor());
-        }
-      }
-    }
-    statusBar.updateWidgets();
+
+    StatusBarWidgetsManager widgetsManager = project.getService(StatusBarWidgetsManager.class);
+    widgetsManager.updateAllWidgets();
+    PopupHandler.installPopupHandler(statusBar, new StatusBarPopupActionGroup(widgetsManager), ActionPlaces.STATUS_BAR_PLACE);
   }
 
   @Override

@@ -5,6 +5,9 @@ import com.intellij.ide.HelpTooltipManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -45,7 +48,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
-public final class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher {
+public final class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher, DataProvider {
   private static final int MIN_ICON_HEIGHT = JBUI.scale(18 + 1 + 1);
   private final InfoAndProgressPanel myInfoAndProgressPanel;
   @NotNull
@@ -155,10 +158,6 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     IdeEventQueue.getInstance().addPostprocessor(this, this);
   }
 
-  public IdeStatusBarImpl(@NotNull IdeFrame frame) {
-    this(frame, true);
-  }
-
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
@@ -167,6 +166,17 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     Insets insets = getInsets();
     int minHeight = insets.top + insets.bottom + MIN_ICON_HEIGHT;
     return new Dimension(size.width, Math.max(size.height, minHeight));
+  }
+
+  @Override
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return getProject();
+    }
+    if (PlatformDataKeys.STATUS_BAR.is(dataId)) {
+      return this;
+    }
+    return null;
   }
 
   @Override
