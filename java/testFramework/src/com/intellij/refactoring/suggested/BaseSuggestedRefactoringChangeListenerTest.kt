@@ -87,7 +87,7 @@ abstract class BaseSuggestedRefactoringChangeListenerTest : LightJavaCodeInsight
       log.append("\n")
     }
 
-    override fun inconsistentState(refactoringSupport: SuggestedRefactoringSupport) {
+    override fun inconsistentState() {
       log.append("inconsistentState\n")
     }
 
