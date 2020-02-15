@@ -139,6 +139,15 @@ class BuildOptions {
   List<String> bundledPluginDirectoriesToSkip = System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", "").split(",") as List<String>
 
   /**
+   * Specifies list of names of directories of non-bundled plugins (determined by {@link ProductModulesLayout#pluginsToPublish} and
+   * {@link ProductModulesLayout#buildAllCompatiblePlugins}) which should be actually built. This option can be used to speed up updating
+   * the IDE from sources. By default all plugins determined by {@link ProductModulesLayout#pluginsToPublish} and
+   * {@link ProductModulesLayout#buildAllCompatiblePlugins} are built. In order to skip building all non-bundled plugins, set the property to
+   * {@code none}.
+   */
+  List<String> nonBundledPluginDirectoriesToInclude = System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", "").split(",") as List<String>
+
+  /**
    * Specifies JRE version to be bundled with distributions, 11 by default.
    */
   int bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()

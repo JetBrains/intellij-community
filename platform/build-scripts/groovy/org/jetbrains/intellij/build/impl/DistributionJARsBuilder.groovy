@@ -48,7 +48,7 @@ class DistributionJARsBuilder {
                           LinkedHashSet<PluginLayout> pluginsToPublish = []) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
-    this.pluginsToPublish = pluginsToPublish
+    this.pluginsToPublish = filterPluginsToPublish(pluginsToPublish)
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*Bundle*.properties")
       include(name: "**/*Messages.properties")
@@ -196,6 +196,13 @@ class DistributionJARsBuilder {
         removeVersionFromProjectLibraryJarNames(toRemoveVersion)
       }
     }
+  }
+
+  LinkedHashSet<PluginLayout> filterPluginsToPublish(LinkedHashSet<PluginLayout> plugins) {
+    def toInclude = buildContext.options.nonBundledPluginDirectoriesToInclude as Set<String>
+    if (toInclude.isEmpty()) return plugins
+    if (toInclude.size() == 1 && toInclude.contains("none")) return new LinkedHashSet<PluginLayout>()
+    return plugins.findAll { toInclude.contains(it.directoryName) }
   }
 
   private static Set<String> getLibsToRemoveVersion() {

@@ -35,7 +35,7 @@ class UpdateFromSourcesDialog(private val project: Project,
                                   FileChooserDescriptorFactory.createSingleFolderDescriptor())
       }
       row {
-        checkBox("Build disabled and non-bundled plugins", state::buildDisabledPlugins)
+        checkBox("Build enabled plugins only", { !state.buildDisabledPlugins }, { state.buildDisabledPlugins = !it })
       }
       row {
         checkBox("Do not show this dialog again", { !state.showSettings }, { state.showSettings = !it },

@@ -75,23 +75,30 @@ internal open class UpdateIdeFromSourcesAction
       return error("The build scripts is out-of-date, please update to the latest 'master' sources.")
     }
 
-    val bundledPluginDirsToSkip: List<String> = if (state.buildDisabledPlugins) {
-      emptyList()
-    }
-    else {
+    val bundledPluginDirsToSkip: List<String>
+    val nonBundledPluginDirsToInclude: List<String>
+    val buildEnabledPluginsOnly = !state.buildDisabledPlugins
+    if (buildEnabledPluginsOnly) {
       val pluginDirectoriesToSkip = LinkedHashSet(state.pluginDirectoriesForDisabledPlugins)
       pluginDirectoriesToSkip.removeAll(PluginManagerCore.getLoadedPlugins().asSequence().filter { it.isBundled }.map { it.path }.filter { it.isDirectory }.map { it.name })
       PluginManagerCore.getPlugins().filter { it.isBundled && !it.isEnabled }.map { it.path }.filter { it.isDirectory }.mapTo(pluginDirectoriesToSkip) { it.name }
       val list = pluginDirectoriesToSkip.toMutableList()
       state.pluginDirectoriesForDisabledPlugins = list
-      list
+      bundledPluginDirsToSkip = list
+      nonBundledPluginDirsToInclude = PluginManagerCore.getPlugins().filter {
+        !it.isBundled && it.isEnabled && it.version != null && it.version.contains("SNAPSHOT")
+      }.map { it.path }.filter { it.isDirectory }.map { it.name }
+    }
+    else {
+      bundledPluginDirsToSkip = emptyList()
+      nonBundledPluginDirsToInclude = emptyList()
     }
 
     val deployDir = "$devIdeaHome/out/deploy"
     val distRelativePath = "dist"
     val backupDir = "$devIdeaHome/out/backup-before-update-from-sources"
     val params = createScriptJavaParameters(devIdeaHome, project, deployDir, distRelativePath, scriptFile,
-                                            bundledPluginDirsToSkip, state.buildDisabledPlugins) ?: return
+                                            buildEnabledPluginsOnly, bundledPluginDirsToSkip, nonBundledPluginDirsToInclude) ?: return
     ProjectTaskManager.getInstance(project)
       .buildAllModules()
       .onSuccess {
@@ -268,8 +275,9 @@ internal open class UpdateIdeFromSourcesAction
                                          deployDir: String,
                                          @Suppress("SameParameterValue") distRelativePath: String,
                                          scriptFile: File,
+                                         buildEnabledPluginsOnly: Boolean,
                                          bundledPluginDirsToSkip: List<String>,
-                                         buildNonBundledPlugins: Boolean): JavaParameters? {
+                                         nonBundledPluginDirsToInclude: List<String>): JavaParameters? {
     val sdk = ProjectRootManager.getInstance(project).projectSdk
     if (sdk == null) {
       LOG.warn("Project SDK is not defined")
@@ -310,10 +318,16 @@ internal open class UpdateIdeFromSourcesAction
     params.programParametersList.add("update-from-sources")
     params.vmParametersList.add("-D$includeBinAndRuntimeProperty=true")
     params.vmParametersList.add("-Dintellij.build.bundled.jre.prefix=jbrsdk-")
-    if (bundledPluginDirsToSkip.isNotEmpty()) {
-      params.vmParametersList.add("-Dintellij.build.bundled.plugin.dirs.to.skip=${bundledPluginDirsToSkip.joinToString(",")}")
+
+    if (buildEnabledPluginsOnly) {
+      if (bundledPluginDirsToSkip.isNotEmpty()) {
+        params.vmParametersList.add("-Dintellij.build.bundled.plugin.dirs.to.skip=${bundledPluginDirsToSkip.joinToString(",")}")
+      }
+      val nonBundled = if (nonBundledPluginDirsToInclude.isNotEmpty()) nonBundledPluginDirsToInclude.joinToString(",") else "none"
+      params.vmParametersList.add("-Dintellij.build.non.bundled.plugin.dirs.to.include=$nonBundled")
     }
-    if (buildNonBundledPlugins) {
+
+    if (!buildEnabledPluginsOnly || nonBundledPluginDirsToInclude.isNotEmpty()) {
       params.vmParametersList.add("-Dintellij.build.local.plugins.repository=true")
     }
     params.vmParametersList.add("-Dintellij.build.output.root=$deployDir")
