@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.XMap
 
@@ -14,28 +15,19 @@ import com.intellij.util.xmlb.annotations.XMap
   Storage("actionSummary.xml", roamingType = RoamingType.DISABLED),
   Storage("actions_summary.xml", deprecated = true)
 ])
-internal class ActionsLocalSummary : SimplePersistentStateComponent<ActionsLocalSummaryState>(ActionsLocalSummaryState()) {
-  companion object {
-    val instance: ActionsLocalSummary
-      get() = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
-  }
+private class ActionsLocalSummary : SimplePersistentStateComponent<ActionsLocalSummaryState>(ActionsLocalSummaryState())
 
-  fun updateActionsSummary(actionId: String) {
-    state.updateActionsSummary(actionId)
-  }
+private class ActionSummary {
+  @Attribute
+  @JvmField
+  var times = 0
+
+  @Attribute
+  @JvmField
+  var last = System.currentTimeMillis()
 }
 
-internal class ActionsLocalSummaryState : BaseState() {
-  internal class ActionSummary {
-    @Attribute
-    @JvmField
-    var times = 0
-
-    @Attribute
-    @JvmField
-    var last = System.currentTimeMillis()
-  }
-
+private class ActionsLocalSummaryState : BaseState() {
   @get:XMap
   val data by map<String, ActionSummary>()
 
@@ -48,7 +40,9 @@ internal class ActionsLocalSummaryState : BaseState() {
 }
 
 private class ActionsLocalSummaryListener : AnActionListener {
+  private val service = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java) ?: throw ExtensionNotApplicableException.INSTANCE
+
   override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
-    ActionsLocalSummary.instance.updateActionsSummary(event.actionManager.getId(action) ?: action.javaClass.name)
+    service.state.updateActionsSummary(event.actionManager.getId(action) ?: action.javaClass.name)
   }
 }
