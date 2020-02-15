@@ -95,7 +95,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
   public void testFromSrcToExternal() {
     myFixture.configureByFiles("src/fromSrc/Foo.java", "content/anno/fromSrc/annotations.xml");
 
-    IntentionAction action = myFixture.findSingleIntention(CodeInsightBundle.message("annotate.externally"));
+    IntentionAction action = myFixture.findSingleIntention(CodeInsightBundle.message("intention.text.annotate.externally"));
     assertNotNull(action);
 
     myFixture.launchAction(action);

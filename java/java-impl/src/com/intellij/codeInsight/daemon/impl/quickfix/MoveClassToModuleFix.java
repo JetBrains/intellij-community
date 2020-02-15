@@ -85,7 +85,7 @@ public class MoveClassToModuleFix implements IntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("move.it");
+    return CodeInsightBundle.message("intention.family.move.it");
   }
 
   @Override

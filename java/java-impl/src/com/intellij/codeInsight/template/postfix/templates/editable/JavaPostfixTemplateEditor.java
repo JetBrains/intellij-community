@@ -113,8 +113,8 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     private final Project myProject;
 
     protected ChooseClassAction(@Nullable Project project) {
-      super((project != null && !project.isDefault() ? CodeInsightBundle.message("choose.class.in.0", project.getName())
-                                                     : CodeInsightBundle.message("enter.class.name")));
+      super((project != null && !project.isDefault() ? CodeInsightBundle.message("action.text.choose.class.in.0", project.getName())
+                                                     : CodeInsightBundle.message("action.text.enter.class.name")));
       myProject = project;
     }
 
@@ -129,8 +129,8 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     private String getFqn() {
       String title = "Choose Class";
       if (myProject == null || myProject.isDefault()) {
-        return Messages.showInputDialog(myPanel, CodeInsightBundle.message("enter.fully.qualified.class.name"),
-                                        CodeInsightBundle.message("choose.class"), null);
+        return Messages.showInputDialog(myPanel, CodeInsightBundle.message("label.enter.fully.qualified.class.name"),
+                                        CodeInsightBundle.message("dialog.title.choose.class"), null);
       }
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(title);
       chooser.showDialog();

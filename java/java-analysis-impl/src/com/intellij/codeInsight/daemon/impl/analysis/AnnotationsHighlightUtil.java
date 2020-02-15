@@ -770,7 +770,7 @@ public class AnnotationsHighlightUtil {
     @NotNull
     @Override
     public String getText() {
-      return CodeInsightBundle.message("remove");
+      return CodeInsightBundle.message("intention.text.remove.annotation");
     }
 
     @NotNull

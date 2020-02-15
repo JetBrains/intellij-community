@@ -40,7 +40,7 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("expand.static.import");
+    return CodeInsightBundle.message("intention.family.expand.static.import");
   }
 
   @Override
@@ -55,7 +55,7 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
     if (resolveScope instanceof PsiImportStaticStatement) {
       final PsiClass targetClass = ((PsiImportStaticStatement)resolveScope).resolveTargetClass();
       if (targetClass == null) return false;
-      setText(CodeInsightBundle.message("replace.static.import.with.qualified.access.to.0", targetClass.getName()));
+      setText(CodeInsightBundle.message("intention.text.replace.static.import.with.qualified.access.to.0", targetClass.getName()));
       return true;
     }
     return false;

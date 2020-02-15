@@ -41,7 +41,7 @@ public class JavaChopParametersAction extends AbstractJavaChopListAction<PsiPara
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("put.parameters.on.separate.lines");
+    return CodeInsightBundle.message("intention.family.put.parameters.on.separate.lines");
   }
 
   @NotNull

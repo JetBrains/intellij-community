@@ -82,7 +82,7 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
   @NotNull
   @Override
   public String getName() {
-    return CodeInsightBundle.message("recursive.call");
+    return CodeInsightBundle.message("line.marker.recursive.call");
   }
 
   @Nullable

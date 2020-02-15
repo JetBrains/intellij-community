@@ -86,14 +86,14 @@ public class SameErasureButDifferentMethodsFix extends LocalQuickFixAndIntention
   public String getText() {
     PsiMethod method = methodPtr.getElement();
     if (method == null || !method.isValid()) return getFamilyName();
-    return CodeInsightBundle.message("fix.method.0.parameters.with.bounded.wildcards", method.getName());
+    return CodeInsightBundle.message("intention.text.fix.method.0.parameters.with.bounded.wildcards", method.getName());
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("fix.bounded.wildcards");
+    return CodeInsightBundle.message("intention.family.fix.bounded.wildcards");
   }
 
   @Override

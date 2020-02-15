@@ -70,7 +70,7 @@ public class SwapIfStatementsIntentionAction extends PsiElementBaseIntentionActi
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("swap.if.statements");
+    return CodeInsightBundle.message("intention.family.swap.if.statements");
   }
 
   @NotNull

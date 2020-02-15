@@ -59,14 +59,14 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("create.a.class.in.0", myPackageName);
+    return CodeInsightBundle.message("intention.text.create.a.class.in.0", myPackageName);
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("create.a.class.in.package");
+    return CodeInsightBundle.message("intention.family.create.a.class.in.package");
   }
 
   @Override
@@ -142,7 +142,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     CreateClassInPackageDialog(@Nullable Project project, PsiDirectory @NotNull [] rootDirs) {
       super(project);
       myProject = project;
-      setTitle(CodeInsightBundle.message("create.class.in.package"));
+      setTitle(CodeInsightBundle.message("dialog.title.create.class.in.package"));
 
       myRootDirCombo.setRenderer(new CreateServiceClassFixBase.PsiDirectoryListCellRenderer());
       myRootDirCombo.setModel(new DefaultComboBoxModel<>(rootDirs));
@@ -176,7 +176,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
       PanelGridBuilder builder = UI.PanelFactory.grid();
       builder.add(UI.PanelFactory.panel(myNameTextField)
                     .withLabel(CommonBundle.message("label.name") + ":")
-                    .withComment(CodeInsightBundle.message("the.class.will.be.created.in.the.package.0", myPackageName)));
+                    .withComment(CodeInsightBundle.message("comment.the.class.will.be.created.in.the.package.0", myPackageName)));
       if (myRootDirCombo.getModel().getSize() > 1) {
         builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("label.source.root") + ":"));
       }
@@ -194,7 +194,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
       if (PsiNameHelper.getInstance(myProject).isIdentifier(name, level)) {
         return null;
       }
-      return new ValidationInfo(CodeInsightBundle.message("this.is.not.a.valid.java.class.name"), myNameTextField);
+      return new ValidationInfo(CodeInsightBundle.message("error.text.this.is.not.a.valid.java.class.name"), myNameTextField);
     }
 
     @NotNull

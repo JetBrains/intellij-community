@@ -55,7 +55,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
   @NotNull
   @Override
   public String getErrorHint() {
-    return CodeInsightBundle.message("no.expression.found");
+    return CodeInsightBundle.message("error.hint.no.expression.found");
   }
 
   @NotNull

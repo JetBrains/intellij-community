@@ -209,7 +209,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
                                            ParameterClassMember @NotNull [] members) {
     final MemberChooser<ParameterClassMember> chooser = new MemberChooser<>(members, false, true, project);
     chooser.selectElements(getInitialSelection(method, members));
-    chooser.setTitle(CodeInsightBundle.message("choose.0.parameters", method.isConstructor() ? "Constructor" : "Method"));
+    chooser.setTitle(CodeInsightBundle.message("dialog.title.choose.0.parameters", method.isConstructor() ? "Constructor" : "Method"));
     chooser.show();
     return chooser;
   }

@@ -27,7 +27,7 @@ public class CollapseAnnotationsFix extends LocalQuickFixAndIntentionActionOnPsi
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("collapse.repeating.annotations");
+    return CodeInsightBundle.message("intention.text.collapse.repeating.annotations");
   }
 
   @Override

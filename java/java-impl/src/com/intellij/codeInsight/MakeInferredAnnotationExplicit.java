@@ -47,7 +47,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   @Nls
   @Override
   public @NotNull String getFamilyName() {
-    return CodeInsightBundle.message("make.inferred.annotations.explicit");
+    return CodeInsightBundle.message("intention.family.make.inferred.annotations.explicit");
   }
 
   @Override
@@ -67,7 +67,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
                                    .map(MakeInferredAnnotationExplicit::getAnnotationPresentation)
                                    .joining(" ");
       if (!annotations.isEmpty()) {
-        setText(CodeInsightBundle.message("insert.0", annotations));
+        setText(CodeInsightBundle.message("intention.text.insert.0.annotation", annotations));
         return true;
       }
     }

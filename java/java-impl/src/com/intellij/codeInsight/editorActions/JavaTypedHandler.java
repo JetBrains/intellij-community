@@ -138,7 +138,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && isRparenth(leaf) &&
           (st instanceof PsiWhileStatement || st instanceof PsiIfStatement) && shouldInsertStatementBody(st, doc, prev)) {
         CommandProcessor.getInstance().executeCommand(project, () -> new JavaSmartEnterProcessor().process(project, editor, file),
-                                                      CodeInsightBundle.message("insert.block.statement"), null);
+                                                      CodeInsightBundle.message("command.name.insert.block.statement"), null);
         return Result.STOP;
       }
 

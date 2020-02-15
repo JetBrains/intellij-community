@@ -251,7 +251,7 @@ public class MarkerType {
   private static void navigateToOverriddenMethod(MouseEvent e, @NotNull final PsiMethod method) {
     if (DumbService.isDumb(method.getProject())) {
       DumbService.getInstance(method.getProject()).showDumbModeNotification(
-        CodeInsightBundle.message("navigation.to.overriding.classes"));
+        CodeInsightBundle.message("notification.navigation.to.overriding.classes"));
       return;
     }
 
@@ -330,7 +330,7 @@ public class MarkerType {
                                                PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
     if (DumbService.isDumb(aClass.getProject())) {
       DumbService.getInstance(aClass.getProject()).showDumbModeNotification(
-        CodeInsightBundle.message("navigation.to.overriding.methods"));
+        CodeInsightBundle.message("notification.navigation.to.overriding.methods"));
       return;
     }
 

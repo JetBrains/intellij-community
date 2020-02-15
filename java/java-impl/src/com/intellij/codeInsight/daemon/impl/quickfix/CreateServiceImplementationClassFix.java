@@ -169,9 +169,9 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
       super(project);
       setTitle(QuickFixBundle.message("create.service.implementation"));
 
-      mySubclassButton.setText(CodeInsightBundle.message("subclass.of.0", superClassName));
+      mySubclassButton.setText(CodeInsightBundle.message("radio.button.subclass.of.0", superClassName));
       mySubclassButton.setSelected(true);
-      myProviderButton.setText(CodeInsightBundle.message("with.provider.method"));
+      myProviderButton.setText(CodeInsightBundle.message("radio.button.with.provider.method"));
 
       ButtonGroup group = new ButtonGroup();
       group.add(mySubclassButton);
@@ -197,7 +197,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     @Override
     protected JComponent createNorthPanel() {
       PanelGridBuilder builder = UI.PanelFactory.grid();
-      builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel(CodeInsightBundle.message("implementation")))
+      builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel(CodeInsightBundle.message("label.implementation")))
              .add(UI.PanelFactory.panel(myProviderButton));
       if (myRootDirCombo.getModel().getSize() > 1) {
         builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("label.source.root") + ":"));

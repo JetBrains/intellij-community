@@ -42,7 +42,7 @@ public class JavaJoinParametersAction extends AbstractJavaJoinListAction<PsiPara
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("put.parameters.on.one.line");
+    return CodeInsightBundle.message("intention.family.put.parameters.on.one.line");
   }
 
   @NotNull

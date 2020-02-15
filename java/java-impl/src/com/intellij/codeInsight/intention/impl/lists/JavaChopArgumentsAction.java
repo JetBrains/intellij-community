@@ -42,7 +42,7 @@ public class JavaChopArgumentsAction extends AbstractJavaChopListAction<PsiExpre
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("put.arguments.on.separate.lines");
+    return CodeInsightBundle.message("intention.family.put.arguments.on.separate.lines");
   }
 
   @NotNull

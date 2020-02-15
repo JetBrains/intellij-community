@@ -50,7 +50,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("sort.content");
+    return CodeInsightBundle.message("intention.family.sort.content");
   }
 
   @NotNull

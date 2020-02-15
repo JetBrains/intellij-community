@@ -41,7 +41,7 @@ public class JavaJoinArgumentsAction extends AbstractJavaJoinListAction<PsiExpre
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("put.arguments.on.one.line");
+    return CodeInsightBundle.message("intention.family.put.arguments.on.one.line");
   }
 
   @NotNull

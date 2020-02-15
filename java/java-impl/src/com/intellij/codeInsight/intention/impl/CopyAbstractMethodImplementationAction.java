@@ -28,7 +28,7 @@ public class CopyAbstractMethodImplementationAction extends ImplementAbstractMet
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("copy.abstract.method.implementation");
+    return CodeInsightBundle.message("intention.family.copy.abstract.method.implementation");
   }
 
   @Override

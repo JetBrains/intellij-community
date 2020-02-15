@@ -48,7 +48,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("variable.access.from.inner.class");
+    return CodeInsightBundle.message("intention.family.variable.access.from.inner.class");
   }
 
   @Override

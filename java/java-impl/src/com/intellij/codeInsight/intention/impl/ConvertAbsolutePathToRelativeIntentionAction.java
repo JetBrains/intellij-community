@@ -63,7 +63,7 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle
-      .message("convert.0.path.to.1", isConvertToRelative() ? "absolute" : "relative", isConvertToRelative() ? "relative" : "absolute");
+      .message("intention.family.convert.0.path.to.1", isConvertToRelative() ? "absolute" : "relative", isConvertToRelative() ? "relative" : "absolute");
   }
 
   @Override
@@ -79,6 +79,6 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("convert.path.to.0", isConvertToRelative() ? "relative" : "absolute");
+    return CodeInsightBundle.message("intention.text.convert.path.to.0", isConvertToRelative() ? "relative" : "absolute");
   }
 }
