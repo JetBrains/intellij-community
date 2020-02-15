@@ -80,7 +80,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
 
   @Nullable
   public Sdk getSelectedProjectJdk() {
-    return myJdksModel.findSdk(myCbProjectJdk.getSelectedJdk());
+    return myCbProjectJdk != null ? myJdksModel.findSdk(myCbProjectJdk.getSelectedJdk()) : null;
   }
 
   @NotNull
