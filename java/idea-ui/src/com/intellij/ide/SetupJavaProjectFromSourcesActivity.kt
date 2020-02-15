@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.google.common.collect.ArrayListMultimap
+import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.impl.NewProjectUtil.setCompilerOutputPath
 import com.intellij.ide.impl.ProjectViewSelectInTarget
 import com.intellij.ide.projectView.impl.ProjectViewPane
@@ -13,24 +14,34 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl
 import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+import com.intellij.openapi.roots.ui.configuration.SdkLookup
+import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.util.ThrowableRunnable
 import java.io.File
+import java.util.concurrent.CompletableFuture
 import javax.swing.event.HyperlinkEvent
 
 private val NOTIFICATION_GROUP = NotificationGroup("Build Script Found", NotificationDisplayType.STICKY_BALLOON, true)
 
 private const val SCAN_DEPTH_LIMIT = 5
 private const val MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE = 3
+private val LOG = logger<SetupJavaProjectFromSourcesActivity>()
 
 class SetupJavaProjectFromSourcesActivity : StartupActivity {
 
@@ -50,7 +61,7 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
           showNotificationToImport(project, projectDir, importers)
         }
         else {
-          setupFromSources(project, projectDir)
+          setupFromSources(project, projectDir, indicator)
         }
       }
     })
@@ -138,7 +149,9 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
       "<a href='${file.path}'>${VfsUtil.getRelativePath(file, projectDirectory)}</a>"
   }
 
-  private fun setupFromSources(project: Project, projectDir: VirtualFile) {
+  private fun setupFromSources(project: Project,
+                               projectDir: VirtualFile,
+                               indicator: ProgressIndicator) {
     val builder = ProjectFromSourcesBuilderImpl(WizardContext(project, project), ModulesProvider.EMPTY_MODULES_PROVIDER)
     val projectPath = projectDir.path
     builder.baseProjectPath = projectPath
@@ -162,8 +175,37 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
       setCompilerOutputPath(project, compileOutput)
     }
 
+    findAndSetupJdk(project, indicator)
+
     if (roots.size > MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE) {
       notifyAboutAutomaticProjectStructure(project)
+    }
+  }
+
+  private fun findAndSetupJdk(project: Project, indicator: ProgressIndicator) {
+    val future = CompletableFuture<Sdk>()
+    SdkLookup.newLookupBuilder()
+      .withProgressIndicator(indicator)
+      .withSdkType(JavaSdk.getInstance())
+      .withProject(project)
+      .onDownloadableSdkSuggested { SdkLookupDecision.STOP }
+      .onSdkResolved {
+        future.complete(it)
+      }
+      .executeLookup()
+
+    try {
+      val sdk = future.get()
+      if (sdk != null) {
+        WriteAction.runAndWait(
+          ThrowableRunnable<Throwable> {
+            NewProjectUtil.applyJdkToProject(project, sdk)
+          }
+        )
+      }
+    }
+    catch (t: Throwable) {
+      LOG.warn("Couldn't lookup for a JDK", t)
     }
   }
 
