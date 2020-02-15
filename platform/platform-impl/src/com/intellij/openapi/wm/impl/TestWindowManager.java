@@ -261,9 +261,6 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public void updateWidgets() { }
-
-    @Override
     public void dispose() { }
 
     @Override

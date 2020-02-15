@@ -54,8 +54,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.docking.DockContainer;
@@ -1697,21 +1695,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
       else if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName()) || VirtualFile.PROP_ENCODING.equals(event.getPropertyName())) {
-        // TODO: message bus?
-        updateIconAndStatusBar(event);
+        updateIcon(event);
       }
     }
 
-    private void updateIconAndStatusBar(@NotNull VFilePropertyChangeEvent event) {
+    private void updateIcon(@NotNull VFilePropertyChangeEvent event) {
       assertDispatchThread();
       final VirtualFile file = event.getFile();
       if (isFileOpen(file)) {
         updateFileIcon(file);
-        if (file.equals(getSelectedFiles()[0])) { // update "write" status
-          final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
-          assert statusBar != null;
-          statusBar.updateWidgets();
-        }
       }
     }
 

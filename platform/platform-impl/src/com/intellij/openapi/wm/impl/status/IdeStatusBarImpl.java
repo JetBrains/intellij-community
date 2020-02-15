@@ -533,14 +533,6 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   @Override
-  public void updateWidgets() {
-    for (String s : myWidgetMap.keySet()) {
-      updateWidget(s);
-    }
-    updateChildren(IdeStatusBarImpl::updateWidgets);
-  }
-
-  @Override
   public void updateWidget(@NotNull final String id) {
     UIUtil.invokeLaterIfNeeded(() -> {
       JComponent widgetComponent = getWidgetComponent(id);
