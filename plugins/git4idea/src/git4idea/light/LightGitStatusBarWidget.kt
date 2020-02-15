@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.light
 
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditService
-import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.*
 import com.intellij.util.Consumer
@@ -55,7 +55,7 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
 
 class LightGitStatusBarWidgetProvider : StatusBarWidgetProvider {
   override fun getWidget(project: Project): StatusBarWidget? {
-    if (project != LightEditUtil.getProjectIfCreated()) return null
+    if (!LightEdit.owns(project)) return null
     return LightGitStatusBarWidget(LightGitTracker.getInstance())
   }
 
