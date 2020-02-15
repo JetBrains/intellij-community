@@ -23,27 +23,23 @@ abstract class SuggestedRefactoringExecution(protected val refactoringSupport: S
       data.declaration.setName(data.oldName)
     }
 
-    var refactoring = RefactoringFactory.getInstance(project).createRename(data.declaration, newName, true, true)
+    val refactoring = RefactoringFactory.getInstance(project).createRename(data.declaration, newName, true, true)
     refactoring.respectEnabledAutomaticRenames()
 
     val usages = refactoring.findUsages()
     if (usages.any { it.isNonCodeUsage } && !ApplicationManager.getApplication().isHeadlessEnvironment) {
-      val question = RefactoringBundle.message(
-        "suggested.refactoring.rename.comments.strings.occurrences",
-        data.oldName,
-        newName
-      )
+      val question = RefactoringBundle.message("suggested.refactoring.rename.text.occurrences", data.oldName, newName)
       val result = Messages.showOkCancelDialog(
         project,
         question,
-        RefactoringBundle.message("suggested.refactoring.rename.comments.strings.occurrences.title"),
+        RefactoringBundle.message("suggested.refactoring.rename.text.occurrences.title"),
         RefactoringBundle.message("suggested.refactoring.rename.with.preview.button.text"),
         RefactoringBundle.message("suggested.refactoring.ignore.button.text"),
         Messages.getQuestionIcon()
       )
       if (result != Messages.OK) {
-        refactoring = RefactoringFactory.getInstance(project).createRename(data.declaration, newName, false, false)
-        refactoring.respectEnabledAutomaticRenames()
+        refactoring.isSearchInComments = false
+        refactoring.isSearchInNonJavaFiles = false
       }
     }
 
