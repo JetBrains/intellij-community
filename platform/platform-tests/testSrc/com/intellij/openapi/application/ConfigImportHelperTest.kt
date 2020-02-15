@@ -159,14 +159,14 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
       .isDirectoryNotContaining { it.fileName == oldPluginZip.fileName }
   }
 
-  private fun createConfigDir(version: String, modern: Boolean = version >= "2020.1", product: String = "IntelliJIdea", storageTS: Long = 0): Path {
+  private fun createConfigDir(version: String, modern: Boolean = version >= "2020.1", product: String = "IntelliJIdea", storageTS: Long = 100): Path {
     val path = when {
       modern -> PathManager.getDefaultConfigPathFor("${product}${version}")
       SystemInfo.isMac -> "${SystemProperties.getUserHome()}/Library/Preferences/${product}${version}"
       else -> "${SystemProperties.getUserHome()}/.${product}${version}/config"
     }
     val dir = Files.createDirectories(memoryFs.fs.getPath(path).normalize())
-    if (storageTS > 0) writeStorageFile(dir, storageTS)
+    writeStorageFile(dir, storageTS)
     return dir
   }
 
