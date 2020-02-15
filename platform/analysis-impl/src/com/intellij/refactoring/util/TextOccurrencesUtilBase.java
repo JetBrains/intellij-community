@@ -34,6 +34,20 @@ public final class TextOccurrencesUtilBase {
     });
   }
 
+  public static boolean processUsagesInStringsAndComments(
+    @NotNull Processor<? super UsageInfo> processor,
+    @NotNull PsiElement element,
+    @NotNull SearchScope searchScope,
+    @NotNull String stringToSearch,
+    @NotNull UsageInfoFactory factory
+  ) {
+    return processUsagesInStringsAndComments(element, searchScope, stringToSearch, false, (commentOrLiteral, textRange) -> {
+      UsageInfo usageInfo = factory.createUsageInfo(commentOrLiteral, textRange.getStartOffset(), textRange.getEndOffset());
+      if (usageInfo != null && !processor.process(usageInfo)) return false;
+      return true;
+    });
+  }
+
   public static boolean processUsagesInStringsAndComments(@NotNull PsiElement element,
                                                    @NotNull SearchScope searchScope,
                                                    @NotNull String stringToSearch,
