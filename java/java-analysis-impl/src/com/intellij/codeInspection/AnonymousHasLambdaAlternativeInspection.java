@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -59,7 +60,7 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
             LOG.assertTrue(lBrace != null);
             final TextRange rangeInElement = new TextRange(0, lBrace.getStartOffsetInParent() + aClass.getStartOffsetInParent() - 1);
             holder.registerProblem(aClass.getParent(),
-                                   InspectionsBundle.message("anonymous.ref.loc.can.be.replaced.with.0", alternative.myReplacementMessage),
+                                   JavaAnalysisBundle.message("anonymous.ref.loc.can.be.replaced.with.0", alternative.myReplacementMessage),
                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithLambdaAlternativeFix(alternative));
           }
         }
@@ -89,14 +90,14 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("replace.with.0", myAlternative.myReplacementMessage);
+      return JavaAnalysisBundle.message("replace.with.0", myAlternative.myReplacementMessage);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.anonymous.class.with.lambda.alternative");
+      return JavaAnalysisBundle.message("replace.anonymous.class.with.lambda.alternative");
     }
 
     @Override

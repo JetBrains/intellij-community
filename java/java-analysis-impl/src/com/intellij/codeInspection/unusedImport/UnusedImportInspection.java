@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.unusedImport;
 
 import com.intellij.codeInspection.*;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -62,6 +63,6 @@ public class UnusedImportInspection extends GlobalSimpleInspectionTool {
   }
 
   public static String getDisplayNameText() {
-    return InspectionsBundle.message("unused.import.display.name");
+    return JavaAnalysisBundle.message("unused.import.display.name");
   }
 }

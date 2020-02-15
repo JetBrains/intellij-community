@@ -6,6 +6,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -114,11 +115,11 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
     String dependencyName = dependency.getName();
     String moduleName = module.getName();
     if (scope.containsModule(dependency)) { //external references are rejected -> annotator doesn't provide any information on them -> false positives
-      final String allContainsMessage = InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", moduleName, dependencyName);
+      final String allContainsMessage = JavaAnalysisBundle.message("unnecessary.module.dependency.problem.descriptor", moduleName, dependencyName);
       return manager.createProblemDescriptor(allContainsMessage, module, new RemoveModuleDependencyFix(dependencyName));
     }
     else {
-      String message = InspectionsBundle.message("suspected.module.dependency.problem.descriptor", moduleName, dependencyName, scope.getDisplayName());
+      String message = JavaAnalysisBundle.message("suspected.module.dependency.problem.descriptor", moduleName, dependencyName, scope.getDisplayName());
       return manager.createProblemDescriptor(message, module);
     }
   }
@@ -134,7 +135,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("remove.dependency");
+      return JavaAnalysisBundle.message("remove.dependency");
     }
 
     @Override

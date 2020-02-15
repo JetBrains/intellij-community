@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -53,7 +54,7 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
           } else {
             errorElement = body.getFirstChild();
           }
-          holder.registerProblem(errorElement, InspectionsBundle.message("statement.lambda.can.be.replaced.with.expression.lambda"),
+          holder.registerProblem(errorElement, JavaAnalysisBundle.message("statement.lambda.can.be.replaced.with.expression.lambda"),
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
         }
       }
@@ -99,7 +100,7 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.with.expression.lambda");
+      return JavaAnalysisBundle.message("replace.with.expression.lambda");
     }
 
     @Override

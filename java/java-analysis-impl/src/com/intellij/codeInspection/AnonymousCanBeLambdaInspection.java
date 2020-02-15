@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -59,7 +60,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("report.when.interface.is.not.annotated.with.functional.interface"), this, "reportNotAnnotatedInterfaces");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface"), this, "reportNotAnnotatedInterfaces");
   }
 
   @NotNull
@@ -82,7 +83,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
               type = ProblemHighlightType.INFORMATION;
             }
           }
-          holder.registerProblem(parent, InspectionsBundle.message("anonymous.ref.loc.can.be.replaced.with.lambda"),
+          holder.registerProblem(parent, JavaAnalysisBundle.message("anonymous.ref.loc.can.be.replaced.with.lambda"),
                                  type, rangeInElement, new ReplaceWithLambdaFix());
         }
       }
@@ -380,7 +381,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.with.lambda");
+      return JavaAnalysisBundle.message("replace.with.lambda");
     }
 
     @Override

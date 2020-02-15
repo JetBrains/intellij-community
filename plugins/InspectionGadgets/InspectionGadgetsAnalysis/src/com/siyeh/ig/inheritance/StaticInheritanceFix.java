@@ -17,8 +17,8 @@ package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -75,7 +75,7 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
     final PsiFile file = implementingClass.getContainingFile();
 
     ProgressManager.getInstance().run(new Task.Modal(project,
-                                                     InspectionsBundle.message("static.inheritrance.fix.replace.progress", iface.getName()), false) {
+                                                     JavaAnalysisBundle.message("static.inheritrance.fix.replace.progress", iface.getName()), false) {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

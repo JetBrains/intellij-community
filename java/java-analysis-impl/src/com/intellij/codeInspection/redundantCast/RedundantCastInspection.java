@@ -5,6 +5,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.miscGenerics.GenericsInspectionToolBase;
 import com.intellij.codeInspection.miscGenerics.SuspiciousMethodCallUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -61,7 +62,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionsBundle.message("ignore.casts.in.suspicious.collections.method.calls"), "IGNORE_SUSPICIOUS_METHOD_CALLS");
+    optionsPanel.addCheckbox(JavaAnalysisBundle.message("ignore.casts.in.suspicious.collections.method.calls"), "IGNORE_SUSPICIOUS_METHOD_CALLS");
     return optionsPanel;
   }
 
@@ -82,7 +83,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
       }
     }
 
-    String message = InspectionsBundle.message("inspection.redundant.cast.problem.descriptor",
+    String message = JavaAnalysisBundle.message("inspection.redundant.cast.problem.descriptor",
                                                "<code>" + PsiExpressionTrimRenderer.render(operand) + "</code>", "<code>#ref</code> #loc");
     return manager.createProblemDescriptor(castType, message, myQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, onTheFly);
   }
@@ -92,7 +93,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.cast.remove.quickfix");
+      return JavaAnalysisBundle.message("inspection.redundant.cast.remove.quickfix");
     }
 
     @Override

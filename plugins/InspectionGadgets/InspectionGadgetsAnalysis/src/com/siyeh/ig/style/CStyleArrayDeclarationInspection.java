@@ -16,8 +16,8 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -53,7 +53,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.c.style.array.declarations.option"), this, "ignoreVariables");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.c.style.array.declarations.option"), this, "ignoreVariables");
   }
 
   @Override

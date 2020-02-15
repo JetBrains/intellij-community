@@ -4,6 +4,7 @@ package com.intellij.codeInspection.concurrencyAnnotations;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -56,7 +57,7 @@ public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool 
       if (member == null) {
         return;
       }
-      myHolder.registerProblem(member, InspectionsBundle.message("unknown.guardedby.reference.ref.loc"));
+      myHolder.registerProblem(member, JavaAnalysisBundle.message("unknown.guardedby.reference.ref.loc"));
     }
 
     private static boolean isValidGuardText(@Nullable String guardText, @NotNull PsiElement context) {
@@ -160,7 +161,7 @@ public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool 
       if (isValidGuardText(guardValue, psiDocTag)) {
         return;
       }
-      myHolder.registerProblem(psiDocTag, InspectionsBundle.message("unknown.guardedby.reference.0.loc", guardValue));
+      myHolder.registerProblem(psiDocTag, JavaAnalysisBundle.message("unknown.guardedby.reference.0.loc", guardValue));
     }
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
@@ -62,7 +63,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       private void register(CompareInfo info, PsiElement nameElement) {
-        holder.registerProblem(nameElement, InspectionsBundle.message("inspection.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
+        holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
                                new ReplaceWithPrimitiveCompareFix(info.getReplacementText()));
       }
     };
@@ -339,7 +340,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.use.compare.method.fix.family.name");
+      return JavaAnalysisBundle.message("inspection.use.compare.method.fix.family.name");
     }
 
     @Override

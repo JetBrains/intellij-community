@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -119,7 +120,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
       }
 
       private void registerProblem(PsiLambdaExpression lambda, String displayReplacement, String replacement) {
-        holder.registerProblem(lambda, InspectionsBundle.message("inspection.can.be.replaced.with.message", displayReplacement),
+        holder.registerProblem(lambda, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", displayReplacement),
                                new ReplaceWithFunctionCallFix(replacement, displayReplacement));
       }
     };

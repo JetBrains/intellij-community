@@ -4,6 +4,7 @@ package com.intellij.codeInspection.concurrencyAnnotations;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -63,7 +64,7 @@ public class InstanceGuardedByStaticInspection extends AbstractBaseJavaLocalInsp
       if (!guardField.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      myHolder.registerProblem(psiDocTag, InspectionsBundle.message("instance.member.guarded.by.static.0.loc", guardValue));
+      myHolder.registerProblem(psiDocTag, JavaAnalysisBundle.message("instance.member.guarded.by.static.0.loc", guardValue));
     }
 
     @Override
@@ -99,7 +100,7 @@ public class InstanceGuardedByStaticInspection extends AbstractBaseJavaLocalInsp
       if (!guardField.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      myHolder.registerProblem(guardRef, InspectionsBundle.message("instance.member.guarded.by.static.ref.loc"));
+      myHolder.registerProblem(guardRef, JavaAnalysisBundle.message("instance.member.guarded.by.static.ref.loc"));
     }
   }
 }

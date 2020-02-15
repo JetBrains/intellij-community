@@ -16,10 +16,10 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -49,7 +49,7 @@ public class RedundantFieldInitializationInspection extends BaseInspection imple
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.redundant.field.initialization.option"), this, "onlyWarnOnNull");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.redundant.field.initialization.option"), this, "onlyWarnOnNull");
   }
 
   @Override

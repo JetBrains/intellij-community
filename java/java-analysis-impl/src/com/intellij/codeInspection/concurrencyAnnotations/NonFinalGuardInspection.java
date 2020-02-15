@@ -4,6 +4,7 @@ package com.intellij.codeInspection.concurrencyAnnotations;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -63,7 +64,7 @@ public class NonFinalGuardInspection extends AbstractBaseJavaLocalInspectionTool
       if (member == null) {
         return;
       }
-      myHolder.registerProblem(member, InspectionsBundle.message("non.final.guarded.by.field.ref.loc"));
+      myHolder.registerProblem(member, JavaAnalysisBundle.message("non.final.guarded.by.field.ref.loc"));
     }
 
     @Override
@@ -87,7 +88,7 @@ public class NonFinalGuardInspection extends AbstractBaseJavaLocalInspectionTool
       if (guardField.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      myHolder.registerProblem(psiDocTag, InspectionsBundle.message("non.final.guarded.by.field.0.loc", guardValue));
+      myHolder.registerProblem(psiDocTag, JavaAnalysisBundle.message("non.final.guarded.by.field.0.loc", guardValue));
     }
   }
 }

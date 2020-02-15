@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -115,7 +116,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
                                                 : "inspection.redundant.type.problem.descriptor";
         final ProblemDescriptor descriptor = 
           inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
-                                                    InspectionsBundle.message(key),
+                                                    JavaAnalysisBundle.message(key),
                                                     ourQuickFixAction,
                                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
         problems.add(descriptor);
@@ -142,7 +143,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
             LOG.assertTrue(referenceElement != null, qualifierTypeElement);
             final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
             LOG.assertTrue(parameterList != null);
-            final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(parameterList, InspectionsBundle
+            final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(parameterList, JavaAnalysisBundle
               .message("inspection.redundant.type.problem.descriptor"), ourQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
             problems.add(descriptor);
           }
@@ -163,7 +164,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
                                                   : "inspection.redundant.type.problem.descriptor";
           final ProblemDescriptor descriptor =
             inspectionManager.createProblemDescriptor(parameterList,
-                                                      InspectionsBundle.message(key),
+                                                      JavaAnalysisBundle.message(key),
                                                       new MyQuickFixAction(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
             problems.add(descriptor);
         }
@@ -175,7 +176,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.type.remove.quickfix");
+      return JavaAnalysisBundle.message("inspection.redundant.type.remove.quickfix");
     }
 
     @Override

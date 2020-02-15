@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -27,7 +28,7 @@ public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTo
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("ignore.operation.which.results.in.negative.value"), this,
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("ignore.operation.which.results.in.negative.value"), this,
                                           "ignoreLeftShiftWithNegativeResult");
   }
 

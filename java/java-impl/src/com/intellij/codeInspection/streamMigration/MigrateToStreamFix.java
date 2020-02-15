@@ -17,6 +17,7 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.StreamSource;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -41,7 +42,7 @@ class MigrateToStreamFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return InspectionsBundle.message("replace.with.0", myMigration.getReplacement());
+    return JavaAnalysisBundle.message("replace.with.0", myMigration.getReplacement());
   }
 
   @NotNull

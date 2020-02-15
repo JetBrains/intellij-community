@@ -2,7 +2,8 @@
 
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.analysis.AnalysisBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.util.IconUtil;
@@ -79,7 +80,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
      if (psiBaseClass == null) {
        return "anonymous class";
      } else {
-       return InspectionsBundle.message("inspection.reference.anonymous.name", psiBaseClass.getName());
+       return JavaAnalysisBundle.message("inspection.reference.anonymous.name", psiBaseClass.getName());
      }
    }
 
@@ -90,14 +91,14 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
    }
 
    if (element instanceof PsiMethod && element instanceof SyntheticElement ) {
-     return InspectionsBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
+     return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
    }
 
    String name = null;
    if (element instanceof PsiNamedElement) {
      name = ((PsiNamedElement)element).getName();
    }
-   return name == null ? InspectionsBundle.message("inspection.reference.anonymous") : name;
+   return name == null ? AnalysisBundle.message("inspection.reference.anonymous") : name;
  }
 
   @Override

@@ -4,6 +4,7 @@ package com.intellij.codeInspection.java18api;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
@@ -63,7 +64,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
         PsiParameter entry = lambdaParameters[0];
         if (!allUsagesAllowed(entry)) return;
         PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
-        holder.registerProblem(nameElement, InspectionsBundle.message("inspection.can.be.replaced.with.message", "Map.forEach()"),
+        holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "Map.forEach()"),
                                new ReplaceWithMapForEachFix());
       }
 
@@ -99,7 +100,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
             toHighlight = firstChild;
             range = new TextRange(0, firstChild.getTextLength());
           }
-          holder.registerProblem(toHighlight, InspectionsBundle.message("inspection.can.be.replaced.with.message", "Map.forEach()"),
+          holder.registerProblem(toHighlight, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "Map.forEach()"),
                                  type, range, new ReplaceWithMapForEachFix());
         }
       }

@@ -22,6 +22,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleOrderEntry;
@@ -61,7 +62,7 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
         LanguageLevel dependantLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(dependantModule);
         if (languageLevel.compareTo(dependantLanguageLevel) < 0) {
           final CommonProblemDescriptor problemDescriptor = manager.createProblemDescriptor(
-            InspectionsBundle
+            JavaAnalysisBundle
               .message("module.0.with.language.level.1.depends.on.module.2.with.language.level.3", module.getName(), languageLevel,
                        dependantModule.getName(), dependantLanguageLevel),
             module,

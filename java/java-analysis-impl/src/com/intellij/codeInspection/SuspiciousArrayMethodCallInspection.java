@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,7 +59,7 @@ public class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalIn
         elementType = TypeConversionUtil.erasure(elementType);
         arrayElementType = TypeConversionUtil.erasure(arrayElementType);
         if (!TypeConversionUtil.areTypesConvertible(elementType, arrayElementType)) {
-          holder.registerProblem(element, InspectionsBundle.message("inspection.suspicious.array.method.call.problem.element"));
+          holder.registerProblem(element, JavaAnalysisBundle.message("inspection.suspicious.array.method.call.problem.element"));
         }
       }
 
@@ -74,7 +75,7 @@ public class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalIn
         array2ElementType = TypeConversionUtil.erasure(array2ElementType);
         if (!TypeConversionUtil.areTypesConvertible(array1ElementType, array2ElementType) ||
             !TypeConversionUtil.areTypesConvertible(array2ElementType, array1ElementType)) {
-          holder.registerProblem(context, InspectionsBundle.message("inspection.suspicious.array.method.call.problem.arrays"));
+          holder.registerProblem(context, JavaAnalysisBundle.message("inspection.suspicious.array.method.call.problem.arrays"));
         }
       }
     };

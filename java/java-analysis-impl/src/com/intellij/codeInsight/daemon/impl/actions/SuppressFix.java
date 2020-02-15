@@ -17,9 +17,9 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -56,7 +56,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   @NotNull
   public String getText() {
     String myText = super.getText();
-    return StringUtil.isEmpty(myText) ? InspectionsBundle.message("suppress.inspection.member") : myText;
+    return StringUtil.isEmpty(myText) ? JavaAnalysisBundle.message("suppress.inspection.member") : myText;
   }
 
   @Override
@@ -89,16 +89,16 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
       return false;
     }
     if (container instanceof PsiJavaModule) {
-      setText(InspectionsBundle.message("suppress.inspection.module"));
+      setText(JavaAnalysisBundle.message("suppress.inspection.module"));
     }
     else if (container instanceof PsiClass) {
-      setText(InspectionsBundle.message("suppress.inspection.class"));
+      setText(JavaAnalysisBundle.message("suppress.inspection.class"));
     }
     else if (container instanceof PsiMethod) {
-      setText(InspectionsBundle.message("suppress.inspection.method"));
+      setText(JavaAnalysisBundle.message("suppress.inspection.method"));
     }
     else {
-      setText(InspectionsBundle.message("suppress.inspection.field"));
+      setText(JavaAnalysisBundle.message("suppress.inspection.field"));
     }
     return true;
   }
@@ -119,7 +119,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("suppress.inspection.member");
+    return JavaAnalysisBundle.message("suppress.inspection.member");
   }
 
   private boolean doSuppress(@NotNull Project project, PsiJavaDocumentedElement container) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,6 @@ import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PsiJavaPatterns.or;
@@ -77,11 +77,11 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
           return;
         }
         if (MARKER_PATTERN.accepts(element)) {
-          holder.registerProblem(element, InspectionsBundle.message("redundant.block.marker"), new LocalQuickFix() {
+          holder.registerProblem(element, JavaAnalysisBundle.message("redundant.block.marker"), new LocalQuickFix() {
             @NotNull
             @Override
             public String getFamilyName() {
-              return InspectionsBundle.message("remove.block.marker.comments");
+              return JavaAnalysisBundle.message("remove.block.marker.comments");
             }
 
             @Override

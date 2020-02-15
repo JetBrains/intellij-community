@@ -2,10 +2,10 @@
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInspection.DeprecationUtil;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -57,10 +57,10 @@ public class DeprecationInspection extends DeprecationInspectionBase {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("ignore.inside.deprecated.members"), "IGNORE_INSIDE_DEPRECATED");
-    panel.addCheckbox(InspectionsBundle.message("ignore.inside.non.static.imports"), "IGNORE_IMPORT_STATEMENTS");
-    panel.addCheckbox(InspectionsBundle.message("html.ignore.overrides.of.deprecated.abstract.methods"), "IGNORE_ABSTRACT_DEPRECATED_OVERRIDES");
-    panel.addCheckbox(InspectionsBundle.message("ignore.members.of.deprecated.classes"), IGNORE_METHODS_OF_DEPRECATED_NAME);
+    panel.addCheckbox(JavaAnalysisBundle.message("ignore.inside.deprecated.members"), "IGNORE_INSIDE_DEPRECATED");
+    panel.addCheckbox(JavaAnalysisBundle.message("ignore.inside.non.static.imports"), "IGNORE_IMPORT_STATEMENTS");
+    panel.addCheckbox(JavaAnalysisBundle.message("html.ignore.overrides.of.deprecated.abstract.methods"), "IGNORE_ABSTRACT_DEPRECATED_OVERRIDES");
+    panel.addCheckbox(JavaAnalysisBundle.message("ignore.members.of.deprecated.classes"), IGNORE_METHODS_OF_DEPRECATED_NAME);
     addSameOutermostClassCheckBox(panel);
     return panel;
   }

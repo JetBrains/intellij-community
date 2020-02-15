@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.PsiBinaryExpression;
@@ -49,7 +49,7 @@ public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection {
         myConstantShouldGoLeft = (e.getItem() == left);
       }
     });
-    final JLabel label = new JLabel(InspectionsBundle.message("inspection.constant.on.wrong.side.of.a.comparison.side.option"));
+    final JLabel label = new JLabel(JavaAnalysisBundle.message("inspection.constant.on.wrong.side.of.a.comparison.side.option"));
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
     panel.add(label);
     panel.add(comboBox);

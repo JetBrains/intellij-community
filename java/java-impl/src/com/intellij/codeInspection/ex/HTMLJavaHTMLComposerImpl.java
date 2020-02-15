@@ -296,7 +296,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     buf.append(">");
 
     if (refElement instanceof RefClass && ((RefClass)refElement).isAnonymous()) {
-      buf.append(InspectionsBundle.message("inspection.reference.anonymous"));
+      buf.append(AnalysisBundle.message("inspection.reference.anonymous"));
     }
     else if (refElement instanceof RefJavaElement && ((RefJavaElement)refElement).isSyntheticJSP()) {
       buf.append(XmlStringUtil.escapeString(refElement.getName()));

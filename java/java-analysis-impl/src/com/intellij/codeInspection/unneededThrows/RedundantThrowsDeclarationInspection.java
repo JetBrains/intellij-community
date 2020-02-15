@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +39,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("ignore.exceptions.thrown.by.entry.points.methods"), this, "IGNORE_ENTRY_POINTS");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("ignore.exceptions.thrown.by.entry.points.methods"), this, "IGNORE_ENTRY_POINTS");
   }
 
   @Override
@@ -84,17 +84,17 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
 
             RefClass ownerClass = refMethod.getOwnerClass();
             if (refMethod.isAbstract() || ownerClass != null && ownerClass.isInterface()) {
-              problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
+              problems.add(manager.createProblemDescriptor(throwsRef, JavaAnalysisBundle.message(
                 "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
             }
             else if (!refMethod.getDerivedMethods().isEmpty()) {
-              problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
+              problems.add(manager.createProblemDescriptor(throwsRef, JavaAnalysisBundle.message(
                 "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
             }
             else {
-              problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
+              problems.add(manager.createProblemDescriptor(throwsRef, JavaAnalysisBundle.message(
                 "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
             }
@@ -171,7 +171,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.throws.remove.quickfix");
+      return JavaAnalysisBundle.message("inspection.redundant.throws.remove.quickfix");
     }
 
     @Override

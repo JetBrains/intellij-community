@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,7 +59,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("annotate.as.safevarargs");
+      return JavaAnalysisBundle.message("annotate.as.safevarargs");
     }
 
     @Override
@@ -90,7 +91,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("make.final.and.annotate.as.safevarargs");
+      return JavaAnalysisBundle.message("make.final.and.annotate.as.safevarargs");
     }
 
     @Nullable
@@ -157,7 +158,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       final PsiElement nameIdentifier = ((PsiNameIdentifierOwner)aClass).getNameIdentifier();
       if (nameIdentifier != null) {
         final LocalQuickFix quickFix = new AnnotateAsSafeVarargsQuickFix();
-        myHolder.registerProblem(nameIdentifier, InspectionsBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"), quickFix);
+        myHolder.registerProblem(nameIdentifier, JavaAnalysisBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"), quickFix);
       }
     }
 
@@ -197,7 +198,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
                              OverridingMethodsSearch.search(method).findFirst() == null;
         quickFix = canBeFinal ? new MakeFinalAndAnnotateQuickFix() : null;
       }
-      myHolder.registerProblem(nameIdentifier, InspectionsBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"), quickFix);
+      myHolder.registerProblem(nameIdentifier, JavaAnalysisBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"), quickFix);
     }
   }
 }

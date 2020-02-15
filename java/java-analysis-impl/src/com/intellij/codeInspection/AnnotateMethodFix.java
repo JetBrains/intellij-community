@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,11 +58,11 @@ public class AnnotateMethodFix implements LocalQuickFix {
   public String getFamilyName() {
     if (annotateSelf()) {
       if (annotateOverriddenMethods()) {
-        return InspectionsBundle.message("inspection.annotate.overridden.method.and.self.quickfix.family.name");
+        return JavaAnalysisBundle.message("inspection.annotate.overridden.method.and.self.quickfix.family.name");
       }
-      return InspectionsBundle.message("inspection.annotate.method.quickfix.family.name");
+      return JavaAnalysisBundle.message("inspection.annotate.method.quickfix.family.name");
     }
-    return InspectionsBundle.message("inspection.annotate.overridden.method.quickfix.family.name");
+    return JavaAnalysisBundle.message("inspection.annotate.overridden.method.quickfix.family.name");
   }
 
   @Override
@@ -118,6 +119,6 @@ public class AnnotateMethodFix implements LocalQuickFix {
           }
         });
       }
-    }, InspectionsBundle.message("searching.for.overriding.methods"), true, method.getProject());
+    }, JavaAnalysisBundle.message("searching.for.overriding.methods"), true, method.getProject());
   }
 }

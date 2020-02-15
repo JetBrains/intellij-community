@@ -3,6 +3,7 @@ package com.intellij.codeInspection.localCanBeFinal;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -262,12 +263,12 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       PsiElement problemElement = nameIdentifier != null ? nameIdentifier : variable;
       if (variable instanceof PsiParameter && !(((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement)) {
         problems.add(manager.createProblemDescriptor(problemElement,
-                                                     InspectionsBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
+                                                     JavaAnalysisBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
                                                      myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly));
       }
       else {
         problems.add(manager.createProblemDescriptor(problemElement,
-                                                     InspectionsBundle.message("inspection.can.be.local.variable.problem.descriptor"),
+                                                     JavaAnalysisBundle.message("inspection.can.be.local.variable.problem.descriptor"),
                                                      myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly));
       }
     }
@@ -313,7 +314,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.can.be.final.accept.quickfix");
+      return JavaAnalysisBundle.message("inspection.can.be.final.accept.quickfix");
     }
 
     @Override
@@ -330,11 +331,11 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option"), "REPORT_VARIABLES");
-    panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option1"), "REPORT_PARAMETERS");
-    panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option2"), "REPORT_CATCH_PARAMETERS");
-    panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option3"), "REPORT_FOREACH_PARAMETERS");
-    panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option4"), "REPORT_IMPLICIT_FINALS");
+    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option"), "REPORT_VARIABLES");
+    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option1"), "REPORT_PARAMETERS");
+    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option2"), "REPORT_CATCH_PARAMETERS");
+    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option3"), "REPORT_FOREACH_PARAMETERS");
+    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option4"), "REPORT_IMPLICIT_FINALS");
     return panel;
   }
 }

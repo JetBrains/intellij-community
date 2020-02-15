@@ -3,7 +3,11 @@ package com.intellij.codeInspection.testOnly;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.RemoveAnnotationQuickFix;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -91,7 +95,7 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
             if (toHighlight == null) {
               toHighlight = element;
             }
-            h.registerProblem(toHighlight, InspectionsBundle.message("visible.for.testing.makes.little.sense.on.test.only.code"), new RemoveAnnotationQuickFix(vft, (PsiModifierListOwner)element));
+            h.registerProblem(toHighlight, JavaAnalysisBundle.message("visible.for.testing.makes.little.sense.on.test.only.code"), new RemoveAnnotationQuickFix(vft, (PsiModifierListOwner)element));
           }
         }
         super.visitElement(element);
@@ -202,7 +206,7 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
   }
 
   private static void reportProblem(PsiElement e, PsiMember target, ProblemsHolder h) {
-    String message = InspectionsBundle.message(target instanceof PsiClass
+    String message = JavaAnalysisBundle.message(target instanceof PsiClass
                                                ? "inspection.test.only.problems.test.only.class.reference"
                                                : target instanceof PsiField ? "inspection.test.only.problems.test.only.field.reference"
                                                                             : "inspection.test.only.problems.test.only.method.call");

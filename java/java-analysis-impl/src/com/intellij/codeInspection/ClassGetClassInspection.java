@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,7 +33,7 @@ public class ClassGetClassInspection extends AbstractBaseJavaLocalInspectionTool
         if (!(type instanceof PsiClassType)) return;
         if (!((PsiClassType)type).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS)) return;
         holder.registerProblem(Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement()),
-                               InspectionsBundle.message("inspection.class.getclass.message"),
+                               JavaAnalysisBundle.message("inspection.class.getclass.message"),
                                new RemoveGetClassCallFix(), new ReplaceWithClassClassFix());
       }
     };
@@ -43,7 +44,7 @@ public class ClassGetClassInspection extends AbstractBaseJavaLocalInspectionTool
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.class.getclass.fix.remove.name");
+      return JavaAnalysisBundle.message("inspection.class.getclass.fix.remove.name");
     }
 
     @Override
@@ -61,7 +62,7 @@ public class ClassGetClassInspection extends AbstractBaseJavaLocalInspectionTool
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.class.getclass.fix.replace.name");
+      return JavaAnalysisBundle.message("inspection.class.getclass.fix.replace.name");
     }
 
     @Override

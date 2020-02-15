@@ -18,6 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -49,7 +50,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.common.if.parts.settings.highlight.when.tail.call"), this, "myHighlightWhenLastStatementIsCall");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.common.if.parts.settings.highlight.when.tail.call"), this, "myHighlightWhenLastStatementIsCall");
   }
 
   @NotNull
@@ -77,7 +78,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
                 new SetInspectionOptionFix(
                   IfStatementWithIdenticalBranchesInspection.this,
                   "myHighlightWhenLastStatementIsCall",
-                  InspectionsBundle.message("inspection.common.if.parts.disable.highlight.tail.call"),
+                  JavaAnalysisBundle.message("inspection.common.if.parts.disable.highlight.tail.call"),
                   false
                 ),
                 result.myFix
@@ -125,14 +126,14 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.common.if.parts.family.else.if");
+      return JavaAnalysisBundle.message("inspection.common.if.parts.family.else.if");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.common.if.parts.family.else.if");
+      return JavaAnalysisBundle.message("inspection.common.if.parts.family.else.if");
     }
 
     @Override
@@ -222,7 +223,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.common.if.parts.family");
+      return JavaAnalysisBundle.message("inspection.common.if.parts.family");
     }
 
     @Nls
@@ -1153,7 +1154,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
                                                 boolean highlightWhenLastStatementIsCall) {
       ElseIf elseIf = from(ifStatement, thenBranch);
       if (elseIf == null) return null;
-      String message = InspectionsBundle.message("inspection.common.if.parts.family.else.if.description");
+      String message = JavaAnalysisBundle.message("inspection.common.if.parts.family.else.if.description");
       return new IfInspectionResult(ifStatement.getFirstChild(), false, new MergeElseIfsFix(), message);
     }
   }

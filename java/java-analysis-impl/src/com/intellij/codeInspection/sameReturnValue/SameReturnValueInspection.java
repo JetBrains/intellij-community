@@ -4,6 +4,7 @@ package com.intellij.codeInspection.sameReturnValue;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,11 +25,11 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
       if (returnValue != null) {
         final String message;
         if (refMethod.getDerivedMethods().isEmpty()) {
-          message = InspectionsBundle.message("inspection.same.return.value.problem.descriptor", "<code>" + returnValue + "</code>");
+          message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor", "<code>" + returnValue + "</code>");
         } else if (refMethod.hasBody()) {
-          message = InspectionsBundle.message("inspection.same.return.value.problem.descriptor1", "<code>" + returnValue + "</code>");
+          message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor1", "<code>" + returnValue + "</code>");
         } else {
-          message = InspectionsBundle.message("inspection.same.return.value.problem.descriptor2", "<code>" + returnValue + "</code>");
+          message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor2", "<code>" + returnValue + "</code>");
         }
 
         final UDeclaration decl = refMethod.getUastElement();

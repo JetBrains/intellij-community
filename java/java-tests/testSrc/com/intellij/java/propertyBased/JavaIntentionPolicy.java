@@ -3,7 +3,7 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -104,7 +104,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.matches("Simplify '.*' to .*") ||
                                       intentionText.matches("Move '.*' to Javadoc ''@throws'' tag") ||
                                       intentionText.matches("Remove '.*' from '.*' throws list") ||
-                                      intentionText.matches(InspectionsBundle.message("inspection.redundant.type.remove.quickfix")) ||
+                                      intentionText.matches(JavaAnalysisBundle.message("inspection.redundant.type.remove.quickfix")) ||
                                       intentionText.matches("Remove .+ suppression");
     return !isCommentChangingAction;
   }

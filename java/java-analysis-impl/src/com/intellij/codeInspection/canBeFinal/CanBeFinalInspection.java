@@ -19,6 +19,7 @@ package com.intellij.codeInspection.canBeFinal;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -56,19 +57,19 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
       gc.anchor = GridBagConstraints.NORTHWEST;
 
 
-      myReportClassesCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option"));
+      myReportClassesCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.can.be.final.option"));
       myReportClassesCheckbox.setSelected(REPORT_CLASSES);
       myReportClassesCheckbox.getModel().addItemListener(e -> REPORT_CLASSES = myReportClassesCheckbox.isSelected());
       gc.gridy = 0;
       add(myReportClassesCheckbox, gc);
 
-      myReportMethodsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option1"));
+      myReportMethodsCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.can.be.final.option1"));
       myReportMethodsCheckbox.setSelected(REPORT_METHODS);
       myReportMethodsCheckbox.getModel().addItemListener(e -> REPORT_METHODS = myReportMethodsCheckbox.isSelected());
       gc.gridy++;
       add(myReportMethodsCheckbox, gc);
 
-      myReportFieldsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option2"));
+      myReportFieldsCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.can.be.final.option2"));
       myReportFieldsCheckbox.setSelected(REPORT_FIELDS);
       myReportFieldsCheckbox.getModel().addItemListener(e -> REPORT_FIELDS = myReportFieldsCheckbox.isSelected());
 
@@ -142,7 +143,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
 
 
       if (psiIdentifier != null) {
-        return new ProblemDescriptor[]{manager.createProblemDescriptor(psiIdentifier, InspectionsBundle.message(
+        return new ProblemDescriptor[]{manager.createProblemDescriptor(psiIdentifier, JavaAnalysisBundle.message(
           "inspection.export.results.can.be.final.description"), new AcceptSuggested(globalContext.getRefManager()),
                                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
       }
@@ -264,6 +265,6 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private static String getQuickFixName() {
-    return InspectionsBundle.message("inspection.can.be.final.accept.quickfix");
+    return JavaAnalysisBundle.message("inspection.can.be.final.accept.quickfix");
   }
 }

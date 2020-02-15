@@ -2,8 +2,8 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -29,8 +29,8 @@ public class JUnitRuleInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("junit.rule.rule.option"), "REPORT_RULE_PROBLEMS");
-    panel.addCheckbox(InspectionsBundle.message("junit.rule.classrule.option"), "REPORT_CLASS_RULE_PROBLEMS");
+    panel.addCheckbox(JavaAnalysisBundle.message("junit.rule.rule.option"), "REPORT_RULE_PROBLEMS");
+    panel.addCheckbox(JavaAnalysisBundle.message("junit.rule.classrule.option"), "REPORT_CLASS_RULE_PROBLEMS");
     return panel;
   }
 

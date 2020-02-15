@@ -1,8 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.xml;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -56,7 +60,7 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return InspectionsBundle.message("deprecated.class.usage.group.xml");
+    return JavaAnalysisBundle.message("deprecated.class.usage.group.xml");
   }
 
   @NotNull

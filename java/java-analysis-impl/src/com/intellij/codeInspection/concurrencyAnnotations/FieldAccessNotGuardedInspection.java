@@ -5,6 +5,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -181,7 +182,7 @@ public class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocalInspec
         }
         check = syncStatement;
       }
-      myHolder.registerProblem(expression, InspectionsBundle.message("access.to.field.code.ref.code.outside.of.declared.guards.loc"));
+      myHolder.registerProblem(expression, JavaAnalysisBundle.message("access.to.field.code.ref.code.outside.of.declared.guards.loc"));
     }
 
     private static PsiClass getClassFromThisExpression(PsiThisExpression thisExpression, PsiElement context) {

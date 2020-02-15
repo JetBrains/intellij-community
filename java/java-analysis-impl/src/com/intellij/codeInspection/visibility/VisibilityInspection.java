@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,7 +62,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       gc.weighty = 0;
       gc.anchor = GridBagConstraints.NORTHWEST;
 
-      myPackageLocalForMembersCheckbox = new JCheckBox(InspectionsBundle.message("inspection.visibility.option.package.private.members"));
+      myPackageLocalForMembersCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.visibility.option.package.private.members"));
       myPackageLocalForMembersCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS);
       myPackageLocalForMembersCheckbox.getModel().addItemListener(
         e -> SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = myPackageLocalForMembersCheckbox.isSelected());
@@ -69,7 +70,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       gc.gridy = 0;
       add(myPackageLocalForMembersCheckbox, gc);
 
-      myPackageLocalForTopClassesCheckbox = new JCheckBox(InspectionsBundle.message(
+      myPackageLocalForTopClassesCheckbox = new JCheckBox(JavaAnalysisBundle.message(
         "inspection.visibility.package.private.top.level.classes"));
       myPackageLocalForTopClassesCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES);
       myPackageLocalForTopClassesCheckbox.getModel().addItemListener(
@@ -78,14 +79,14 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       gc.gridy++;
       add(myPackageLocalForTopClassesCheckbox, gc);
 
-      myPrivateForInnersCheckbox = new JCheckBox(InspectionsBundle.message("inspection.visibility.private.inner.members"));
+      myPrivateForInnersCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.visibility.private.inner.members"));
       myPrivateForInnersCheckbox.setSelected(SUGGEST_PRIVATE_FOR_INNERS);
       myPrivateForInnersCheckbox.getModel().addItemListener(e -> SUGGEST_PRIVATE_FOR_INNERS = myPrivateForInnersCheckbox.isSelected());
 
       gc.gridy++;
       add(myPrivateForInnersCheckbox, gc);
 
-      mySuggestForConstantsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.visibility.option.constants"));
+      mySuggestForConstantsCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.visibility.option.constants"));
       mySuggestForConstantsCheckbox.setSelected(SUGGEST_FOR_CONSTANTS);
       mySuggestForConstantsCheckbox.getModel().addItemListener(
         e -> SUGGEST_FOR_CONSTANTS = mySuggestForConstantsCheckbox.isSelected());
@@ -651,7 +652,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.visibility.accept.quickfix");
+      return JavaAnalysisBundle.message("inspection.visibility.accept.quickfix");
     }
 
     @Override
@@ -689,14 +690,14 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private static String getCanBePrivate() {
-    return InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
+    return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
   }
 
   private static String getCanBePackageLocal() {
-    return InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL));
+    return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL));
   }
 
   private static String getCanBeProtected() {
-    return InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PROTECTED));
+    return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PROTECTED));
   }
 }
