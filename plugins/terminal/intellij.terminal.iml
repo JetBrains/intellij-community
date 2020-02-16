@@ -22,5 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.tests" scope="TEST" />
     <orderEntry type="library" name="winp" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

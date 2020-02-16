@@ -66,5 +66,6 @@
     <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
 </module>

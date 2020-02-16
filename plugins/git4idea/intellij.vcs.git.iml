@@ -48,5 +48,6 @@
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="xz" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

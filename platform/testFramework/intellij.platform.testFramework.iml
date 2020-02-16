@@ -33,5 +33,6 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.core" />
     <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
 </module>

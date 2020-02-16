@@ -36,6 +36,7 @@
     </orderEntry>
     <orderEntry type="library" name="jb-jdi" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
   <component name="copyright">
     <Base>
