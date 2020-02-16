@@ -36,6 +36,8 @@ public interface RenameRefactoring extends Refactoring {
 
   @ApiStatus.Experimental
   void respectEnabledAutomaticRenames();
+  @ApiStatus.Experimental
+  void respectAllAutomaticRenames();
 
   @ApiStatus.Experimental
   boolean hasNonCodeUsages();

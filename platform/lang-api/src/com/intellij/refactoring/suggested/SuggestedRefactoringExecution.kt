@@ -24,7 +24,7 @@ abstract class SuggestedRefactoringExecution(protected val refactoringSupport: S
     }
 
     val refactoring = RefactoringFactory.getInstance(project).createRename(data.declaration, newName, true, true)
-    refactoring.respectEnabledAutomaticRenames()
+    refactoring.respectAllAutomaticRenames()
 
     if (refactoring.hasNonCodeUsages() && !ApplicationManager.getApplication().isHeadlessEnvironment) {
       val question = RefactoringBundle.message("suggested.refactoring.rename.text.occurrences", data.oldName, newName)
