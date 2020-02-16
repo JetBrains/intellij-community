@@ -277,6 +277,11 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   override fun addCommitAuthorListener(listener: CommitAuthorListener, parent: Disposable) =
     commitAuthorComponent.addCommitAuthorListener(listener, parent)
 
+  override var editedCommit by observable<EditedCommitDetails?>(null) { _, _, newValue ->
+    refreshData()
+    newValue?.let { expand(it) }
+  }
+
   override val isActive: Boolean get() = isVisible
 
   override fun activate(): Boolean {

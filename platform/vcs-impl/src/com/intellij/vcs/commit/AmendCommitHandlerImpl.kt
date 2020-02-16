@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -50,11 +50,13 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
     }
 
   protected open fun amendCommitModeToggled() {
-    amendCommitEventDispatcher.multicaster.amendCommitModeToggled()
+    fireAmendCommitModeToggled()
 
     if (isAmendCommitMode) setAmendMessage() else restoreBeforeAmendMessage()
     setAmendPrefix(isAmendCommitMode)
   }
+
+  protected fun fireAmendCommitModeToggled() = amendCommitEventDispatcher.multicaster.amendCommitModeToggled()
 
   override var isAmendCommitModeTogglingEnabled: Boolean = true
 
@@ -65,7 +67,7 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
   override fun addAmendCommitModeListener(listener: AmendCommitModeListener, parent: Disposable) =
     amendCommitEventDispatcher.addListener(listener, parent)
 
-  private fun setAmendPrefix(isAmend: Boolean) {
+  protected fun setAmendPrefix(isAmend: Boolean) {
     val amendPrefix = if (isAmend) "Amend " else ""
     workflowHandler.ui.defaultCommitActionName = amendPrefix + workflowHandler.getCommitActionName()
   }
@@ -90,7 +92,7 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
 
   protected fun getSingleRoot(): VcsRoot? = vcsManager.allVcsRoots.singleOrNull()
 
-  private fun setAmendMessage(beforeAmendMessage: String, amendMessage: String) {
+  protected fun setAmendMessage(beforeAmendMessage: String, amendMessage: String) {
     if (!equalsIgnoreWhitespaces(beforeAmendMessage, amendMessage)) {
       VcsConfiguration.getInstance(project).saveCommitMessage(beforeAmendMessage)
       setCommitMessageAndFocus(amendMessage)
@@ -99,7 +101,7 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
     }
   }
 
-  private fun restoreBeforeAmendMessage() {
+  protected fun restoreBeforeAmendMessage() {
     val amendData = commitContext.amendData ?: return
     commitContext.amendData = null
 

@@ -1,15 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.provider.commit
 
+import com.intellij.dvcs.commit.AmendCommitService
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.commit.AmendCommitAware
 import org.zmlx.hg4idea.HgVcs
 import org.zmlx.hg4idea.execution.HgCommandExecutor
 
 @Service
-internal class HgAmendCommitService(private val project: Project) : AmendCommitAware {
+internal class HgAmendCommitService(project: Project) : AmendCommitService(project) {
   private val vcs: HgVcs get() = HgVcs.getInstance(project)!!
 
   override fun isAmendCommitSupported(): Boolean = vcs.version.isAmendSupported

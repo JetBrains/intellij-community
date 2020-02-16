@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ReadAction;
@@ -162,13 +162,21 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   public TreeModelBuilder setChanges(@NotNull Collection<? extends Change> changes,
                                      @Nullable ChangeNodeDecorator changeNodeDecorator,
                                      @Nullable Object tag) {
-    ChangesBrowserNode<?> parentNode = createTagNode(tag);
-
-    List<? extends Change> sortedChanges = sorted(changes, CHANGE_COMPARATOR);
-    for (Change change : sortedChanges) {
-      insertChangeNode(change, parentNode, createChangeNode(change, changeNodeDecorator));
-    }
+    insertChanges(changes, createTagNode(tag), changeNodeDecorator);
     return this;
+  }
+
+  @Override
+  public void insertChanges(@NotNull Collection<? extends Change> changes, @NotNull ChangesBrowserNode<?> subtreeRoot) {
+    insertChanges(changes, subtreeRoot, null);
+  }
+
+  private void insertChanges(@NotNull Collection<? extends Change> changes,
+                             @NotNull ChangesBrowserNode<?> subtreeRoot,
+                             @Nullable ChangeNodeDecorator changeNodeDecorator) {
+    for (Change change : sorted(changes, CHANGE_COMPARATOR)) {
+      insertChangeNode(change, subtreeRoot, createChangeNode(change, changeNodeDecorator));
+    }
   }
 
   @NotNull

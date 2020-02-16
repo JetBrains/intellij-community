@@ -1,18 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin
 
+import com.intellij.dvcs.commit.AmendCommitService
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.commit.AmendCommitAware
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.GitVersionSpecialty
 
 @Service
-internal class GitAmendCommitService(private val project: Project) : AmendCommitAware {
+internal class GitAmendCommitService(project: Project) : AmendCommitService(project) {
   override fun isAmendCommitSupported(): Boolean = true
 
   @Throws(VcsException::class)

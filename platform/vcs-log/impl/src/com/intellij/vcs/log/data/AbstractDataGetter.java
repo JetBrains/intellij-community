@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -138,8 +138,16 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     }
 
     if (toLoad.isEmpty()) {
-      sortCommitsByRow(result, commits);
-      consumer.consume(result);
+      Runnable process = () -> {
+        sortCommitsByRow(result, commits);
+        consumer.consume(result);
+      };
+      if (indicator != null) {
+        ProgressManager.getInstance().runProcess(process, indicator);
+      }
+      else {
+        process.run();
+      }
     }
     else {
       Task.Backgroundable task =

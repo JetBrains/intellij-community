@@ -32,14 +32,12 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import com.intellij.vcs.commit.AmendCommitAware;
-import com.intellij.vcs.commit.AmendCommitHandler;
-import com.intellij.vcs.commit.AmendCommitModeListener;
-import com.intellij.vcs.commit.ToggleAmendCommitOption;
+import com.intellij.vcs.commit.*;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.command.mq.HgQNewCommand;
@@ -103,6 +101,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   @Override
   public String getLastCommitMessage(@NotNull VirtualFile root) {
     return getAmendService().getLastCommitMessage(root);
+  }
+
+  @NotNull
+  @Override
+  public CancellablePromise<EditedCommitDetails> getAmendCommitDetails(@NotNull VirtualFile root) {
+    return getAmendService().getAmendCommitDetails(root);
   }
 
   @NotNull

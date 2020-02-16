@@ -60,7 +60,7 @@ fun <T> resolvedCancellablePromise(result: T): CancellablePromise<T> {
  */
 fun <T> rejectedPromise(): Promise<T> = REJECTED as Promise<T>
 
-fun <T> rejectedPromise(error: String): Promise<T> = DonePromise(PromiseValue.createRejected(createError(error, true)))
+fun <T> rejectedPromise(error: String): Promise<T> = rejectedCancellablePromise(error)
 
 fun <T> rejectedPromise(error: Throwable?): Promise<T> {
   @Suppress("UNCHECKED_CAST")
@@ -69,6 +69,9 @@ fun <T> rejectedPromise(error: Throwable?): Promise<T> {
     else -> DonePromise(PromiseValue.createRejected(error))
   }
 }
+
+fun <T> rejectedCancellablePromise(error: String): CancellablePromise<T> =
+  DonePromise(PromiseValue.createRejected(createError(error, true)))
 
 @Suppress("RemoveExplicitTypeArguments")
 private val CANCELLED_PROMISE: Promise<Any?> by lazy {

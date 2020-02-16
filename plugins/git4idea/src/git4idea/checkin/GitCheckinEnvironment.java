@@ -37,6 +37,7 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.vcs.commit.AmendCommitAware;
+import com.intellij.vcs.commit.EditedCommitDetails;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -61,6 +62,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.io.*;
@@ -163,6 +165,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   @Override
   public String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
     return getAmendService().getLastCommitMessage(root);
+  }
+
+  @NotNull
+  @Override
+  public CancellablePromise<EditedCommitDetails> getAmendCommitDetails(@NotNull VirtualFile root) {
+    return getAmendService().getAmendCommitDetails(root);
   }
 
   @NotNull
