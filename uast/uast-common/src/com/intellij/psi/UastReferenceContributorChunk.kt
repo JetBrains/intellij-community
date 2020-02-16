@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.ProcessingContext
+import com.intellij.util.containers.toArray
 import org.jetbrains.uast.UElement
 
 internal class UastReferenceContributorChunk(private val supportedUElementTypes: List<Class<out UElement>>) : PsiReferenceProvider() {
@@ -16,27 +16,11 @@ internal class UastReferenceContributorChunk(private val supportedUElementTypes:
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val uElement = getOrCreateCachedElement(element, context, supportedUElementTypes) ?: return PsiReference.EMPTY_ARRAY
 
-    val references = providers.asSequence()
+    return providers.asSequence()
       .filter { it.pattern.invoke(uElement, context) }
-      .flatMap {
-        val referencesByElement = it.provider.getReferencesByElement(uElement, context)
-
-        if (referencesByElement.isNotEmpty()
-            && (ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isInternal)) {
-          for (reference in referencesByElement) {
-            if (reference.element !== element)
-              throw AssertionError(
-                """reference $reference was created for $element but targets ${reference.element}, provider ${it.provider}"""
-              )
-          }
-        }
-
-        referencesByElement.asSequence()
-      }
+      .flatMap { it.provider.getReferencesByElement(uElement, context).asSequence() }
       .toList()
-
-    if (references.isEmpty()) return PsiReference.EMPTY_ARRAY
-    return references.toTypedArray()
+      .toArray(PsiReference.EMPTY_ARRAY)
   }
 
   override fun acceptsTarget(target: PsiElement): Boolean {
@@ -44,12 +28,7 @@ internal class UastReferenceContributorChunk(private val supportedUElementTypes:
   }
 }
 
-internal data class ChunkTag(val priority: Double,
-                            val supportedUElementTypes: List<Class<out UElement>>)
+internal data class ChunkTag(val priority: Double, val supportedUElementTypes: List<Class<out UElement>>)
 
 private class ProviderRegistration(val pattern: (UElement, ProcessingContext) -> Boolean,
-                                   val provider: UastReferenceProvider) {
-  override fun toString(): String {
-    return "provider(${provider})"
-  }
-}
+                                   val provider: UastReferenceProvider)

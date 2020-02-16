@@ -6,29 +6,23 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.ElementPatternCondition
 import com.intellij.patterns.InitialPatternCondition
 import com.intellij.util.ProcessingContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-@Deprecated("Use custom pattern with PsiElementPattern.Capture<PsiElement>")
-internal class UastPatternAdapter(
-  private val supportedUElementTypes: List<Class<out UElement>>,
-  private val predicate: ((UElement, ProcessingContext) -> Boolean)
-) : ElementPattern<PsiElement> {
-
+internal class UElementTypePatternAdapter(private val supportedUElementTypes: List<Class<out UElement>>) : ElementPattern<PsiElement> {
   override fun accepts(o: Any?): Boolean = accepts(o, null)
 
   override fun accepts(o: Any?, context: ProcessingContext?): Boolean {
     if (o !is PsiElement) return false
 
     return RecursionManager.doPreventingRecursion(this, false) {
-      val uElement = getOrCreateCachedElement(o, context, supportedUElementTypes) ?: return@doPreventingRecursion false
-      predicate.invoke(uElement, (context ?: ProcessingContext()))
+      if (getOrCreateCachedElement(o, context, supportedUElementTypes) == null) return@doPreventingRecursion false
+      context?.put(REQUESTED_PSI_ELEMENT, o)
+      true
     } ?: false
   }
 
   private val condition = ElementPatternCondition(object : InitialPatternCondition<PsiElement>(PsiElement::class.java) {
-    override fun accepts(o: Any?, context: ProcessingContext?): Boolean = this@UastPatternAdapter.accepts(o, context)
+    override fun accepts(o: Any?, context: ProcessingContext?): Boolean = this@UElementTypePatternAdapter.accepts(o, context)
   })
 
   override fun getCondition(): ElementPatternCondition<PsiElement> = condition

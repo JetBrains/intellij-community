@@ -22,11 +22,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 
-private val CONTRIBUTOR_CHUNKS_KEY: Key<MutableMap<ChunkTag, UastReferenceContributorChunk>> = Key.create("uast.psiReferenceContributor.chunks")
+private val CONTRIBUTOR_CHUNKS_KEY: Key<MutableMap<ChunkTag, UastReferenceContributorChunk>> = Key.create(
+  "uast.psiReferenceContributor.chunks")
 
 /**
  * Groups all UAST-based reference providers by chunks with the same priority and supported UElement types.
- * Enables proper caching of UElement for underlying reference providers.
  */
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
                                                         provider: UastReferenceProvider,
@@ -85,7 +85,7 @@ internal fun getOrCreateCachedElement(element: PsiElement,
   }.firstOrNull()?.also { context?.put(cachedUElement, it) }
 
 internal fun uastTypePattern(supportedUElementTypes: List<Class<out UElement>>): ElementPattern<out PsiElement> {
-  val uastTypePattern = UastPatternAdapter(supportedUElementTypes)
+  val uastTypePattern = UElementTypePatternAdapter(supportedUElementTypes)
 
   // optimisation until IDEA-211738 is implemented
   if (supportedUElementTypes == listOf(UInjectionHost::class.java)) {
@@ -95,6 +95,8 @@ internal fun uastTypePattern(supportedUElementTypes: List<Class<out UElement>>):
   return uastTypePattern
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+@Deprecated("Use custom pattern with PsiElementPattern.Capture<PsiElement>")
 fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Class<out UElement>): ElementPattern<PsiElement> = UastPatternAdapter(
   if (supportedUElementTypes.isNotEmpty()) supportedUElementTypes.toList() else listOf(UElement::class.java),
   this::accepts
