@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.actions;
 
@@ -51,18 +51,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     public abstract void perform(ConfigurationContext context);
   }
 
-  private abstract static class CreatePolicy extends BaseCreatePolicy {
-    @Override
-    public void perform(final ConfigurationContext context) {
-      RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
-      RunnerAndConfigurationSettings configuration = context.getConfiguration();
-      configuration.setShared(runManager.getConfigurationTemplate(configuration.getFactory()).isShared());
-      runManager.addConfiguration(configuration);
-      runManager.setSelectedConfiguration(configuration);
-    }
-  }
-
-  private static class CreateAndEditPolicy extends CreatePolicy {
+  private static class CreateAndEditPolicy extends BaseCreatePolicy {
     @Override
     protected void updateText(final Presentation presentation, final String actionText) {
       presentation.setText(actionText.length() > 0 ? ExecutionBundle.message("create.run.configuration.for.item.action.name", actionText) + "..."
