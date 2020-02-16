@@ -190,6 +190,11 @@ public class DelombokHandler {
     }
 
     for (PsiMethod psiMethod : fromClass.getMethods()) {
+      final String psiMethodName = psiMethod.getName();
+      //skip Enum virtual methods
+      if ("values".equals(psiMethodName) || "valueOf".equals(psiMethodName)) {
+        continue;
+      }
       resultClass.add(rebuildMethod(project, psiMethod));
     }
 

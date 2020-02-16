@@ -1,13 +1,18 @@
 package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.impl.light.LightFieldBuilder;
 import com.intellij.psi.impl.light.LightPsiClassBuilder;
-import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +32,6 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   private final Icon myBaseIcon;
   private final LombokLightModifierList myModifierList;
   private Collection<PsiField> myFields = new ArrayList<>();
-  private ClassInnerStuffCache myInnerCache = new ClassInnerStuffCache(this);
 
   public LombokLightClassBuilder(@NotNull PsiElement context, @NotNull String simpleName, @NotNull String qualifiedName) {
     super(context, simpleName);
@@ -181,16 +185,6 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   @Override
   public List<PsiClass> getOwnInnerClasses() {
     return Arrays.asList(getInnerClasses());
-  }
-
-  @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
-    if (isEnum()) {
-      if (!PsiClassImplUtil.processDeclarationsInEnum(processor, state, myInnerCache)) {
-        return false;
-      }
-    }
-    return super.processDeclarations(processor, state, lastParent, place);
   }
 
   @Override

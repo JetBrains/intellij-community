@@ -7,10 +7,12 @@ import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.psi.LombokEnumConstantBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,6 +75,33 @@ public class FieldNameConstantsHandler {
       .withModifier(accessLevel)
       .withImplicitModifier(PsiModifier.STATIC)
       .withImplicitModifier(PsiModifier.FINAL);
+
+    //add enum methods like here:  ClassInnerStuffCache.calcMethods
+    final PsiManager psiManager = containingClass.getManager();
+    final PsiClassType enumClassType = PsiClassUtil.getTypeWithGenerics(classBuilder);
+//    "public static " + myClass.getName() + "[] values() { }"
+    final LombokLightMethodBuilder valuesEnumMethod = new LombokLightMethodBuilder(psiManager, "values")
+      .withModifier(PsiModifier.PUBLIC)
+      .withModifier(PsiModifier.STATIC)
+      .withContainingClass(containingClass)
+      .withNavigationElement(navigationElement)
+      .withMethodReturnType(new PsiArrayType(enumClassType));
+    valuesEnumMethod.withBody(PsiMethodUtil.createCodeBlockFromText("", valuesEnumMethod));
+
+    //     "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }"
+    final LombokLightMethodBuilder valueOfEnumMethod = new LombokLightMethodBuilder(psiManager, "valueOf")
+      .withModifier(PsiModifier.PUBLIC)
+      .withModifier(PsiModifier.STATIC)
+      .withContainingClass(containingClass)
+      .withNavigationElement(navigationElement)
+      .withParameter("name", PsiType.getJavaLangString(psiManager, containingClass.getResolveScope()))
+      .withException(PsiType.getTypeByName("java.lang.IllegalArgumentException", containingClass.getProject(), containingClass.getResolveScope()))
+      .withMethodReturnType(enumClassType);
+    valueOfEnumMethod.withBody(PsiMethodUtil.createCodeBlockFromText("", valueOfEnumMethod));
+
+    classBuilder.addMethod(valuesEnumMethod);
+    classBuilder.addMethod(valueOfEnumMethod);
+
     return classBuilder;
   }
 
