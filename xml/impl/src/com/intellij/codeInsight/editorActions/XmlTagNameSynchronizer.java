@@ -121,7 +121,6 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
     private final Language myLanguage;
     private final EditorImpl myEditor;
     private final Project myProject;
-    private XmlExtension myExtension;
     private boolean myApplying;
 
     private TagNameSynchronizer(EditorImpl editor, Project project, Language language) {
@@ -303,18 +302,21 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
     }
 
     private boolean isValidTagNameChar(char c) {
-      if (myExtension == null) initXmlExtension();
-      return XmlUtil.isValidTagNameChar(c) || myExtension.isValidTagNameChar(c);
+      if (XmlUtil.isValidTagNameChar(c)) return true;
+      final XmlExtension extension = getXmlExtension();
+      if (extension == null) return false;
+      return extension.isValidTagNameChar(c);
     }
 
-    private void initXmlExtension() {
+    @Nullable
+    private XmlExtension getXmlExtension() {
       Document document = myEditor.getDocument();
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       PsiFile psiFile = file != null && file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
       if (psiFile == null) {
-        return;
+        return null;
       }
-      myExtension = XmlExtension.getExtension(psiFile);
+      return XmlExtension.getExtension(psiFile);
     }
 
     private static RangeMarker findSupportForTagList(RangeMarker leader, PsiElement element, Document document) {
