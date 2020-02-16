@@ -90,6 +90,10 @@ public class DefaultActionGroup extends ActionGroup {
     return new DefaultActionGroup(shortName, false);
   }
 
+  public static DefaultActionGroup createPopupGroupWithEmptyText() {
+    return createPopupGroup(() -> "");
+  }
+
   private void incrementModificationStamp() {
     myModificationStamp++;
   }

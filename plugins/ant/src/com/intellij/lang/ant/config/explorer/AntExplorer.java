@@ -462,7 +462,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     if (userObject instanceof AntTargetNodeDescriptor) {
       final AntBuildTargetBase target = ((AntTargetNodeDescriptor)userObject).getTarget();
       final DefaultActionGroup executeOnGroup =
-        DefaultActionGroup.createPopupGroup(() -> AntBundle.message("ant.explorer.execute.on.action.group.name"));
+        DefaultActionGroup.createPopupGroup(AntBundle.lazyMessage("ant.explorer.execute.on.action.group.name"));
       executeOnGroup.add(new ExecuteOnEventAction(target, ExecuteBeforeCompilationEvent.getInstance()));
       executeOnGroup.add(new ExecuteOnEventAction(target, ExecuteAfterCompilationEvent.getInstance()));
       executeOnGroup.addSeparator();

@@ -154,7 +154,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
       return null;
     }
     final ArrayList<AnAction> actions = new ArrayList<>();
-    DefaultActionGroup group = DefaultActionGroup.createPopupGroup(() -> ProjectBundle.message("add.new.jdk.text"));
+    DefaultActionGroup group = DefaultActionGroup.createPopupGroup(ProjectBundle.lazyMessage("add.new.jdk.text"));
     group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
     myProjectJdksModel.createAddActions(group, myTree, projectJdk -> {
       addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);

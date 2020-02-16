@@ -2081,7 +2081,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
       if (!addActions.isEmpty()) {
-        DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(() -> EditorBundle.message("editor.annotations.action.group.name"));
+        DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(EditorBundle.lazyMessage("editor.annotations.action.group.name"));
         for (AnAction addAction : addActions) {
           actionGroup.add(addAction);
         }

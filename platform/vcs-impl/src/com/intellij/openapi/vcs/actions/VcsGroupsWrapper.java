@@ -96,7 +96,7 @@ public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
 
   @NotNull
   private static DefaultActionGroup createAllVcsesGroup(@NotNull Map<String, StandardVcsGroup> vcsGroupsMap, @NotNull Set<String> vcses) {
-    DefaultActionGroup result = DefaultActionGroup.createPopupGroup(() -> VcsBundle.message("group.name.version.control"));
+    DefaultActionGroup result = DefaultActionGroup.createPopupGroup(VcsBundle.lazyMessage("group.name.version.control"));
 
     vcsGroupsMap.entrySet().stream()
       .filter(e -> vcses.contains(e.getKey()))
