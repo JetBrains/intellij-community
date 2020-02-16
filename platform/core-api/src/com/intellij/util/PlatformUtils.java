@@ -2,6 +2,8 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -39,12 +41,11 @@ public final class PlatformUtils {
                                                                                      PYCHARM_PREFIX, RUBY_PREFIX, PHP_PREFIX,
                                                                                      WEB_PREFIX, DBE_PREFIX, RIDER_PREFIX,
                                                                                      GOIDE_PREFIX));
-
-  public static String getPlatformPrefix() {
+  public static @NotNull String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
   }
 
-  public static String getPlatformPrefix(String defaultPrefix) {
+  public static String getPlatformPrefix(@Nullable String defaultPrefix) {
     return System.getProperty(PLATFORM_PREFIX_KEY, defaultPrefix);
   }
 

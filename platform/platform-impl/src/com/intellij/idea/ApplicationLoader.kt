@@ -26,6 +26,7 @@ import com.intellij.ui.AppIcon
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.touchbar.TouchBarsManager
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.write
@@ -181,13 +182,6 @@ private fun startApp(app: ApplicationImpl,
         app.loadComponents(SplashManager.getProgressIndicator())
       }, edtExecutor)
 
-      boundedExecutor.execute {
-        // execute in parallel to component loading - this functionality should be used only by plugin functionality that is used after start-up
-        runActivity("system properties setting") {
-          SystemPropertyBean.initSystemProperties()
-        }
-      }
-
       CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
     }
     .thenComposeAsync<Void?>(Function {
@@ -195,9 +189,18 @@ private fun startApp(app: ApplicationImpl,
       val future = callAppInitialized(app, boundedExecutor)
 
       // should be after scheduling all app initialized listeners (because this activity is not important)
-      boundedExecutor.execute {
-        runActivity("project converter provider preloading") {
-          app.extensionArea.getExtensionPoint<Any>("com.intellij.project.converterProvider").extensionList
+      if (!Main.isLightEdit()) {
+        NonUrgentExecutor.getInstance().execute {
+          if (starter.commandName == null) {
+            runActivity("project converter provider preloading") {
+              app.extensionArea.getExtensionPoint<Any>("com.intellij.project.converterProvider").extensionList
+            }
+          }
+
+          // execute in parallel to component loading - this functionality should be used only by plugin functionality that is used after start-up
+          runActivity("system properties setting") {
+            SystemPropertyBean.initSystemProperties()
+          }
         }
       }
 
@@ -210,10 +213,9 @@ private fun startApp(app: ApplicationImpl,
         initAppActivity.end()
       }
     },
-      // if `loadComponentInEdtFuture` is completed after `preloadSyncServiceFuture`, then this task will be executed in EDT -
-      // not good, so force execution out of EDT
-                      nonEdtExecutor)
-    .thenRun(Runnable {
+      // if `loadComponentInEdtFuture` is completed after `preloadSyncServiceFuture`, then this task will be executed in EDT, so force execution out of EDT
+      nonEdtExecutor)
+    .thenRun {
       if (starter.modalityState == ApplicationStarter.NOT_IN_EDT) {
         starter.main(args)
       }
@@ -225,7 +227,7 @@ private fun startApp(app: ApplicationImpl,
           }
         })
       }
-    })
+    }
     .exceptionally {
       StartupAbortedException.processException(it)
       null

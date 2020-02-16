@@ -18,6 +18,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
@@ -29,6 +30,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
@@ -61,6 +63,14 @@ open class IdeStarter : ApplicationStarter {
   override fun getModalityState() = ApplicationStarter.NOT_IN_EDT
 
   override fun main(args: List<String>) {
+    if (Main.isLightEdit() && !Main.isHeadless()) {
+      // In a light mode UI is shown very quickly, tab layout requires ActionManager but it is forbidden to init ActionManager in EDT,
+      // so, preload
+      AppExecutorUtil.getAppExecutorService().execute {
+        ActionManager.getInstance()
+      }
+    }
+
     val frameInitActivity = StartUpMeasurer.startMainActivity("frame initialization")
 
     // Event queue should not be changed during initialization of application components.
@@ -74,7 +84,6 @@ open class IdeStarter : ApplicationStarter {
       }
     }
 
-    val isStandaloneLightEdit = "LightEdit" == System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)
     val app = ApplicationManager.getApplication()
 
     // temporary check until the JRE implementation has been checked and bundled
@@ -83,6 +92,7 @@ open class IdeStarter : ApplicationStarter {
       System.setProperty("jbre.popupwindow.settype", "true")
     }
 
+    val isStandaloneLightEdit = PlatformUtils.getPlatformPrefix() == "LightEdit"
     val needToOpenProject: Boolean
     if (isStandaloneLightEdit) {
       needToOpenProject = true
