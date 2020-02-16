@@ -52,7 +52,6 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
-import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
@@ -157,26 +156,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
 
   @Override
   public boolean isAmendCommitSupported() {
-    return true;
+    return getAmendService().isAmendCommitSupported();
   }
 
   @Nullable
   @Override
   public String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
-    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.LOG);
-    h.addParameters("--max-count=1");
-    h.addParameters("--encoding=UTF-8");
-    String formatPattern;
-    if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myProject)) {
-      formatPattern = "%B";
-    }
-    else {
-      // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
-      // %s strips newlines from subject; there is no way to work around it before 1.7.2 with %B (unless parsing some fixed format)
-      formatPattern = "%s%n%n%-b";
-    }
-    h.addParameters("--pretty=format:" + formatPattern);
-    return Git.getInstance().runCommand(h).getOutputOrThrow();
+    return getAmendService().getLastCommitMessage(root);
+  }
+
+  @NotNull
+  private GitAmendCommitService getAmendService() {
+    return myProject.getService(GitAmendCommitService.class);
   }
 
   private void updateState(@NotNull CommitContext commitContext) {
