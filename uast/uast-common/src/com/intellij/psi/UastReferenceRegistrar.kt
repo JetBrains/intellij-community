@@ -144,11 +144,7 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
       }
 
       override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
-        val sourcePsi = element.sourcePsi ?: return PsiReference.EMPTY_ARRAY
-        val originalUElement = (CompletionUtilCoreImpl.getOriginalElement(sourcePsi) ?: sourcePsi).toUElement()
-                               ?: return PsiReference.EMPTY_ARRAY
-
-        val parentVariable = when (val uastParent = originalUElement.uastParent) {
+        val parentVariable = when (val uastParent = getOriginalUastParent(element)) {
           is UVariable -> uastParent
           is UPolyadicExpression -> uastParent.uastParent as? UVariable // support .withUastParentOrSelf() patterns
           else -> null
@@ -167,7 +163,7 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
 
         context.put(USAGE_PSI_ELEMENT, usage)
 
-        return provider.getReferencesByElement(originalUElement, context)
+        return provider.getReferencesByElement(element, context)
       }
 
       override fun toString(): String = "uastReferenceByUsageAdapter($provider)"
