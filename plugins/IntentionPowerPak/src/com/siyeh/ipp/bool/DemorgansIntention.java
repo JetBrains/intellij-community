@@ -121,6 +121,7 @@ public class DemorgansIntention extends MutablyNamedIntention {
       boolean escaped = false;
       for (int i = length - 2; i > 0; i--) {
         if (text.charAt(i) == '\\') escaped = !escaped;
+        else break;
       }
       return escaped;
     }
