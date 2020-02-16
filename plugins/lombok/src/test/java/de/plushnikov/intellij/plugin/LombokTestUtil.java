@@ -19,7 +19,7 @@ import java.io.File;
 
 public class LombokTestUtil {
   private static final String LOMBOK_LIBRARY_DIRECTORY = "lib";
-  private static final String LOMBOK_JAR_NAME = "lombok-1.18.10.jar";
+  private static final String LOMBOK_JAR_NAME = "lombok-1.18.12.jar";
 
   public static void loadLombokLibrary(@NotNull Disposable projectDisposable, @NotNull Module module) {
     final String lombokLibPath = PathUtil.toSystemIndependentName(new File(LOMBOK_LIBRARY_DIRECTORY).getAbsolutePath());
