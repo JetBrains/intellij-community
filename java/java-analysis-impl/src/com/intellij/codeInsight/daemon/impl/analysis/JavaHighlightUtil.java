@@ -187,7 +187,7 @@ public class JavaHighlightUtil {
   @NotNull
   @Nls
   public static String invalidJavaTypeMessage() {
-    return JavaAnalysisBundle.message("invalid.java.type");
+    return JavaAnalysisBundle.message("error.message.invalid.java.type");
   }
 
   @NotNull
