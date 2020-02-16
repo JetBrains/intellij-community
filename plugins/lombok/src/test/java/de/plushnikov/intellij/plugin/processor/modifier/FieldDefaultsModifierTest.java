@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
@@ -16,6 +17,14 @@ public class FieldDefaultsModifierTest extends AbstractLombokLightCodeInsightTes
   @Override
   protected String getBasePath() {
     return super.getBasePath() + "/augment/modifier";
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+
+    //TODO disable assertions for the moment
+    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
   }
 
   //<editor-fold desc="Handling of makeFinal and @NonFinal">

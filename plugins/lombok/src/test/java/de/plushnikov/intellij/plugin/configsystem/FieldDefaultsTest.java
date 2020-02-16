@@ -1,5 +1,7 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
+import com.intellij.openapi.util.RecursionManager;
+
 import java.io.IOException;
 
 /**
@@ -10,6 +12,14 @@ public class FieldDefaultsTest extends AbstractLombokConfigSystemTestCase {
   @Override
   protected String getBasePath() {
     return super.getBasePath() + "/configsystem/fieldDefaults";
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+
+    //TODO disable assertions for the moment
+    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
   }
 
   //region DefaultFinal

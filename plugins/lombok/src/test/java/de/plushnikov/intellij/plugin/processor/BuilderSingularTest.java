@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor;
 
+import com.intellij.openapi.util.RecursionManager;
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 /**
@@ -12,6 +13,9 @@ public class BuilderSingularTest extends AbstractLombokParsingTestCase {
     // Add dummy classes, which are absent in mockJDK
     myFixture.addClass("package java.util;\n  public interface NavigableSet<E> extends java.util.SortedSet<E> {}");
     myFixture.addClass("package java.util;\n  public interface NavigableMap<K,V> extends java.util.SortedMap<K,V> {}");
+
+    //TODO disable assertions for the moment
+    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
   }
 
   public void testBuilder$Singular$Generic$Guava$SingularGuavaBiMap() {

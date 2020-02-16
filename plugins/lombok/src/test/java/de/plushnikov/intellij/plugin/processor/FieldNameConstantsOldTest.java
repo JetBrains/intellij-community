@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.util.PathUtil;
@@ -25,6 +26,9 @@ public class FieldNameConstantsOldTest extends AbstractLombokParsingTestCase {
     final String basePath = new File(getTestDataPath(), getBasePath()).getCanonicalPath();
     VfsRootAccess.allowRootAccess(projectDisposable, basePath, new File(LOMBOK_SRC_PATH).getCanonicalPath());
     VfsRootAccess.allowRootAccess(projectDisposable, basePath, new File(OLD_LOMBOK_SRC_PATH).getCanonicalPath());
+
+    //TODO disable assertions for the moment
+    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
   }
 
   public void testFieldnameconstants$FieldNameConstantsOldBasic() {

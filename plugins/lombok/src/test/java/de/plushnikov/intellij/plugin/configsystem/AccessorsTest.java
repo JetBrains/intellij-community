@@ -1,5 +1,7 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
+import com.intellij.openapi.util.RecursionManager;
+
 /**
  * Unit tests for IntelliJPlugin for Lombok with activated config system
  */
@@ -12,6 +14,14 @@ public class AccessorsTest extends AbstractLombokConfigSystemTestCase {
   @Override
   protected String getBasePath() {
     return super.getBasePath() + "/configsystem/accessors";
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+
+    //TODO disable assertions for the moment
+    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
   }
 
   public void testChain$GetterSetterFieldTest() {

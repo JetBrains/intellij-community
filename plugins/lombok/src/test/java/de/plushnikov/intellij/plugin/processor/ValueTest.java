@@ -1,11 +1,20 @@
 package de.plushnikov.intellij.plugin.processor;
 
+import com.intellij.openapi.util.RecursionManager;
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 public class ValueTest extends AbstractLombokParsingTestCase {
 
   protected boolean shouldCompareCodeBlocks() {
     return false;
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+
+    //TODO disable assertions for the moment
+    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
   }
 
   public void testValue$ValueIssue78() {

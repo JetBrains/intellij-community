@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLocalVariable;
@@ -22,6 +23,9 @@ public class ValModifierTest extends LightJavaCodeInsightFixtureTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myFixture.addClass("package lombok;\npublic @interface val { }");
+
+    //TODO disable assertions for the moment
+    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
   }
 
   public void testValModifiers() {
