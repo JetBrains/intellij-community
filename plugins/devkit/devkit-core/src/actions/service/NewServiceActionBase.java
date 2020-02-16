@@ -40,15 +40,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.function.Supplier;
 
 /**
  * An base class for actions generating service classes (implementation and optionally interface) and registering new service in {@code plugin.xml}.
  */
 abstract class NewServiceActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
-  NewServiceActionBase(@NotNull Supplier<String> text, @NotNull Supplier<String> description) {
-    super(text, description, null);
-  }
+  protected NewServiceActionBase() { }
 
   @Override
   public boolean startInWriteAction() {

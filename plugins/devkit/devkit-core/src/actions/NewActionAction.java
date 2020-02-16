@@ -45,10 +45,6 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   private NewActionDialog myDialog;
   private XmlFile pluginDescriptorToPatch;
 
-  public NewActionAction() {
-    super(DevKitBundle.lazyMessage("new.menu.action.text"), DevKitBundle.lazyMessage("new.menu.action.description"), null);
-  }
-
   @Override
   protected final PsiElement @NotNull [] invokeDialog(Project project, PsiDirectory directory) {
     PsiElement[] psiElements = doInvokeDialog(project, directory);
