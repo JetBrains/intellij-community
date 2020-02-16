@@ -1,22 +1,28 @@
 public class Issue440 {
-  private Bar bar;
+  private static class Test1 {
+    private Car car;
 
-  @lombok.Getter(lazy = true)
-  private final String barString = bar.toString();
+    private final String carString = car.<warning descr="Method invocation 'toString' will produce 'NullPointerException'">toString</warning>();
 
-  private Car car;
+    public Test1(Car car) {
+      this.car = car;
+    }
+  }
 
-  private final String carString = car.<warning descr="Method invocation 'toString' will produce 'NullPointerException'">toString</warning>();
+  private static class Test2 {
+    private Bar bar;
 
-  public Issue440(Bar bar) {
-    this.bar = bar;
+    @lombok.Getter(lazy = true)
+    private final String barString = bar.toString();
+
+    public Test2(Bar bar) {
+      this.bar = bar;
+    }
   }
 
   private static class Bar {
-
   }
 
   private static class Car {
-
   }
 }
