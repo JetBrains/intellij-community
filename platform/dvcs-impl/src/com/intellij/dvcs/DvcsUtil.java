@@ -9,12 +9,10 @@ import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
@@ -41,7 +39,6 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.intellij.images.editor.ImageFileEditor;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
@@ -135,13 +132,7 @@ public class DvcsUtil {
     final FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(statusBar);
     VirtualFile result = null;
     if (fileEditor != null) {
-      if (fileEditor instanceof TextEditor) {
-        Document document = ((TextEditor)fileEditor).getEditor().getDocument();
-        result = FileDocumentManager.getInstance().getFile(document);
-      }
-      else if (fileEditor instanceof ImageFileEditor) {
-        result = ((ImageFileEditor)fileEditor).getImageEditor().getFile();
-      }
+      result = fileEditor.getFile();
     }
 
     if (result == null) {

@@ -30,6 +30,7 @@ import org.intellij.images.editor.ImageFileEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.options.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
@@ -163,5 +164,10 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   @NotNull
   public ImageEditor getImageEditor() {
     return imageEditor;
+  }
+
+  @Override
+  public @Nullable VirtualFile getFile() {
+    return imageEditor.getFile();
   }
 }
