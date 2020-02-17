@@ -125,7 +125,6 @@ public class ConditionalExpressionInspection extends BaseInspection {
         statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
       }
       if (statement == null) return;
-      boolean blockParent = statement.getParent() instanceof PsiCodeBlock;
 
       final PsiVariable variable =
         statement instanceof PsiDeclarationStatement ? PsiTreeUtil.getParentOfType(expression, PsiVariable.class) : null;
@@ -184,7 +183,10 @@ public class ConditionalExpressionInspection extends BaseInspection {
       }
       ifStatement = (PsiIfStatement)CodeStyleManager.getInstance(project).reformat(
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(ifStatement));
-      if (!ControlFlowUtils.statementMayCompleteNormally(ifStatement.getThenBranch()) && blockParent) {
+      if (!ControlFlowUtils.statementMayCompleteNormally(ifStatement.getThenBranch())) {
+        if (!(ifStatement.getParent() instanceof PsiCodeBlock)) {
+          ifStatement = BlockUtils.expandSingleStatementToBlockStatement(ifStatement);
+        }
         final PsiStatement resultingElse = ifStatement.getElseBranch();
         if (resultingElse != null) {
           ifStatement.getParent().addAfter(ControlFlowUtils.stripBraces(resultingElse), ifStatement);

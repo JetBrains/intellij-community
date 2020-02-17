@@ -34,6 +34,7 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
   public void testConditionalInBinaryExpression() { doTest(); }
   public void testConditionalInIf() { doTest(); }
   public void testConditionalInIfBranch() { doTest(); }
+  public void testConditionalInIfBranch2() { doTest(); }
   public void testInsideExprLambda() { doTest(); }
   public void testInsideExprLambdaWithParams() { doTest(); }
   public void testParentheses() { doTest(); }
