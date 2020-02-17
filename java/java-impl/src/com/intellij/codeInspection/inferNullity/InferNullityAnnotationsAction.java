@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInspection.inferNullity;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -101,7 +101,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         if (virtualFile != null) {
           progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
         }
-        progressIndicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
+        progressIndicator.setText(AnalysisBundle.message("scanning.scope.progress.title"));
         if (!(file instanceof PsiJavaFile)) return;
         final Module module = ModuleUtilCore.findModuleForPsiElement(file);
         if (module != null && processed.add(module)) {
