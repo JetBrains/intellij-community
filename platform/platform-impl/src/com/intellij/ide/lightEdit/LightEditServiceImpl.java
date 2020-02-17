@@ -117,8 +117,17 @@ public final class LightEditServiceImpl implements LightEditService,
     if (created == null) {
       NonUrgentExecutor.getInstance().execute(() -> {
         ActionManager.getInstance();
-        ApplicationManager.getApplication().invokeLater(callback);
+        invokeOnEdt(callback);
       });
+    }
+    else {
+      invokeOnEdt(callback);
+    }
+  }
+
+  private static void invokeOnEdt(@NotNull Runnable callback) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      callback.run();
     }
     else {
       ApplicationManager.getApplication().invokeLater(callback);
