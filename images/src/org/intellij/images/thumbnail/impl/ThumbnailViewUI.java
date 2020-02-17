@@ -25,6 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
 import org.intellij.images.search.ImageTagManager;
@@ -159,7 +160,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         listModel = new DefaultListModel<>();
         updateTagsPreviewModel();
         JBList<String> tagsList = new JBList<>(listModel);
-        tagsList.setEmptyText("No tags defined");
+        tagsList.setEmptyText(ImagesBundle.message("list.empty.text.no.tags.defined"));
         ImageTagManager imageTagManager = ImageTagManager.getInstance(thumbnailView.getProject());
         return ToolbarDecorator.createDecorator(tagsList)
           .setAddAction(new AnActionButtonRunnable() {
