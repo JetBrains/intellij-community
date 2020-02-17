@@ -439,7 +439,7 @@ public final class MavenIndicesManager implements Disposable {
     private IndexFixer() {
       myMergingUpdateQueue =
         new MergingUpdateQueue(this.getClass().getName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, MavenIndicesManager.this, null,
-                               false);
+                               false).usePassThroughInUnitTestMode();
     }
 
     public void fixIndex(File file, MavenIndex index) {
