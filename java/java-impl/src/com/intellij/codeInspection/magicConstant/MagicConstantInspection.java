@@ -495,7 +495,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.with.magic.constant");
+      return InspectionsBundle.message("quickfix.family.replace.with.magic.constant");
     }
 
     @NotNull

@@ -40,7 +40,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
         if (operations == null || operations.size() < 1 || !(operations.get(0) instanceof SourceOperation)) return;
         OptionalToIfContext context = OptionalToIfContext.create(terminalCall);
         if (context == null) return;
-        holder.registerProblem(terminalCall, InspectionsBundle.message("replace.optional.with.if.statements"), new ReplaceOptionalWithIfFix());
+        holder.registerProblem(terminalCall, InspectionsBundle.message("inspection.message.replace.optional.with.if.statements"), new ReplaceOptionalWithIfFix());
       }
     };
   }
@@ -165,7 +165,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.optional.chain.with.if.statements");
+      return InspectionsBundle.message("quickfix.family.replace.optional.chain.with.if.statements");
     }
 
     @Override

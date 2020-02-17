@@ -61,7 +61,7 @@ public class AnnotateCapitalizationIntention implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("annotate.capitalization.type");
+    return InspectionsBundle.message("intention.family.annotate.capitalization.type");
   }
 
   @Override

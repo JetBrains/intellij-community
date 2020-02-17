@@ -26,7 +26,7 @@ public class DeprecatedEntryPoint extends EntryPoint {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionsBundle.message("deprecated.members");
+    return InspectionsBundle.message("checkbox.deprecated.members");
   }
 
   @Override

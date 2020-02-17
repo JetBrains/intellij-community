@@ -82,7 +82,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
         final PseudoLambdaReplaceTemplate.ValidationInfo validationInfo = suitableHandler.getTemplate().validate(methodCallExpression);
         if (validationInfo != null) {
           holder.registerProblem(methodCallExpression.getMethodExpression(),
-                                 InspectionsBundle.message("pseudo.functional.style.code"),
+                                 InspectionsBundle.message("inspection.message.pseudo.functional.style.code"),
                                  new ReplacePseudoLambdaWithLambda(suitableHandler));
         }
       }
@@ -99,7 +99,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.with.java.stream.api.pipeline");
+      return InspectionsBundle.message("quickfix.family.replace.with.java.stream.api.pipeline");
     }
 
     @Override

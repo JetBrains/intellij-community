@@ -125,8 +125,8 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
   @Override
   public JComponent createOptionsPanel() {
     JTabbedPane tabs = new JBTabbedPane(SwingConstants.TOP);
-    tabs.add(InspectionsBundle.message("members.to.report"), ScrollPaneFactory.createScrollPane(myLocalInspectionBase.createOptionsPanel(), true));
-    tabs.add(InspectionsBundle.message("entry.points"), ScrollPaneFactory.createScrollPane(new OptionsPanel(), true));
+    tabs.add(InspectionsBundle.message("tab.title.members.to.report"), ScrollPaneFactory.createScrollPane(myLocalInspectionBase.createOptionsPanel(), true));
+    tabs.add(InspectionsBundle.message("tab.title.entry.points"), ScrollPaneFactory.createScrollPane(new OptionsPanel(), true));
     return tabs;
   }
 
@@ -147,11 +147,11 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       gc.gridx = 0;
       gc.gridy = 0;
       gc.gridwidth = 2;
-      add(new JBLabel(InspectionsBundle.message("unused.declaration.reachable.from.tests.option")), gc);
+      add(new JBLabel(InspectionsBundle.message("label.unused.declaration.reachable.from.tests.option")), gc);
       gc.gridy++;
 
-      final JBRadioButton asEntryPoint = new JBRadioButton(InspectionsBundle.message("unused.declaration.used.option"), isTestEntryPoints());
-      final JBRadioButton asUnused = new JBRadioButton(InspectionsBundle.message("unused.declaration.unused.option"), !isTestEntryPoints());
+      final JBRadioButton asEntryPoint = new JBRadioButton(InspectionsBundle.message("radio.button.unused.declaration.used.option"), isTestEntryPoints());
+      final JBRadioButton asUnused = new JBRadioButton(InspectionsBundle.message("radio.button.unused.declaration.unused.option"), !isTestEntryPoints());
       final ButtonGroup group = new ButtonGroup();
       group.add(asEntryPoint);
       group.add(asUnused);
@@ -172,7 +172,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       gc.gridwidth = 2;
       add(new TitledSeparator(), gc);
       gc.gridy++;
-      add(new JBLabel(InspectionsBundle.message("entry.points.label")), gc);
+      add(new JBLabel(InspectionsBundle.message("label.entry.points")), gc);
       gc.insets = JBUI.insets(5, 0, 0, 0);
       gc.gridy++;
 

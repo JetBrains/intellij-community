@@ -64,7 +64,7 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("find.cause");
+    return InspectionsBundle.message("quickfix.family.find.cause");
   }
 
   @Override
@@ -75,7 +75,7 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
       return TrackingRunner.findProblemCause(myUnknownMembersAsNullable, myIgnoreAssertStatements, element, myProblemType);
     };
     TrackingRunner.CauseItem item = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.compute(causeFinder), InspectionsBundle.message("finding.cause"), true, project);
+      () -> ReadAction.compute(causeFinder), InspectionsBundle.message("progress.title.finding.cause"), true, project);
     PsiFile file = myAnchor.getContainingFile();
     if (item != null && file != null) {
       displayProblemCause(file, item);

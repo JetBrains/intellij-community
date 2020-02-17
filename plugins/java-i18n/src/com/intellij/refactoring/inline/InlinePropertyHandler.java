@@ -66,10 +66,10 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     );
 
     if (!result) {
-      CommonRefactoringUtil.showErrorHint(project, editor, InspectionsBundle.message("property.has.non.method.usages"), getRefactoringName(), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, InspectionsBundle.message("error.hint.property.has.non.method.usages"), getRefactoringName(), null);
     }
     if (occurrences.isEmpty()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, InspectionsBundle.message("property.has.no.usages"), getRefactoringName(), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, InspectionsBundle.message("error.hint.property.has.no.usages"), getRefactoringName(), null);
       return;
     }
 

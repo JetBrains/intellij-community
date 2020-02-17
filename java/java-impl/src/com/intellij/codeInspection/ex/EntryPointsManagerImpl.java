@@ -45,7 +45,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
     new DialogWrapper(myProject) {
       {
         init();
-        setTitle(InspectionsBundle.message("configure.annotations"));
+        setTitle(InspectionsBundle.message("dialog.title.configure.annotations"));
       }
 
       @Override
@@ -71,7 +71,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureAnnotationsButton() {
-    final JButton configureAnnotations = new JButton(InspectionsBundle.message("annotations"));
+    final JButton configureAnnotations = new JButton(InspectionsBundle.message("button.annotations"));
     configureAnnotations.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -82,7 +82,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureClassPatternsButton() {
-    final JButton configureClassPatterns = new JButton(InspectionsBundle.message("code.patterns"));
+    final JButton configureClassPatterns = new JButton(InspectionsBundle.message("button.code.patterns"));
     configureClassPatterns.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -97,7 +97,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
           {
             init();
-            setTitle(InspectionsBundle.message("configure.code.patterns"));
+            setTitle(InspectionsBundle.message("dialog.title.configure.code.patterns"));
           }
 
           @Override

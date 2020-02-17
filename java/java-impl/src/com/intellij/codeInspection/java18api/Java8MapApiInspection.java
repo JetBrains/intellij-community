@@ -59,13 +59,13 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("suggest.conversion.to.map.computeifabsent"), "mySuggestMapComputeIfAbsent");
-    panel.addCheckbox(InspectionsBundle.message("suggest.conversion.to.map.getordefault"), "mySuggestMapGetOrDefault");
-    panel.addCheckbox(InspectionsBundle.message("suggest.conversion.to.map.putifabsent"), "mySuggestMapPutIfAbsent");
-    panel.addCheckbox(InspectionsBundle.message("suggest.conversion.to.map.merge"), "mySuggestMapMerge");
-    panel.addCheckbox(InspectionsBundle.message("suggest.conversion.to.map.replaceall"), "mySuggestMapReplaceAll");
-    panel.addCheckbox(InspectionsBundle.message("treat.get.k.null.the.same.as.containskey.k.may.change.semantics"), "myTreatGetNullAsContainsKey");
-    panel.addCheckbox(InspectionsBundle.message("suggest.replacement.even.if.lambda.may.have.side.effects"), "mySideEffects");
+    panel.addCheckbox(InspectionsBundle.message("checkbox.suggest.conversion.to.map.computeifabsent"), "mySuggestMapComputeIfAbsent");
+    panel.addCheckbox(InspectionsBundle.message("checkbox.suggest.conversion.to.map.getordefault"), "mySuggestMapGetOrDefault");
+    panel.addCheckbox(InspectionsBundle.message("checkbox.suggest.conversion.to.map.putifabsent"), "mySuggestMapPutIfAbsent");
+    panel.addCheckbox(InspectionsBundle.message("checkbox.suggest.conversion.to.map.merge"), "mySuggestMapMerge");
+    panel.addCheckbox(InspectionsBundle.message("checkbox.suggest.conversion.to.map.replaceall"), "mySuggestMapReplaceAll");
+    panel.addCheckbox(InspectionsBundle.message("checkbox.treat.get.k.null.the.same.as.containskey.k.may.change.semantics"), "myTreatGetNullAsContainsKey");
+    panel.addCheckbox(InspectionsBundle.message("checkbox.suggest.replacement.even.if.lambda.may.have.side.effects"), "mySideEffects");
     return panel;
   }
 

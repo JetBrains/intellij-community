@@ -65,7 +65,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                                                                                                                   highestModifier,
                                                                                                                   (newModifier) -> highestModifier = newModifier),
                                                                                     InspectionsBundle
-                                                                                      .message("minimal.reported.method.visibility"),
+                                                                                      .message("label.minimal.reported.method.visibility"),
                                                                                     BorderLayout.WEST);
     panel.add(component, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
 
@@ -79,7 +79,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     });
     minimalUsageCountEditor.setValue(minimalUsageCount);
     minimalUsageCountEditor.setColumns(4);
-    panel.add(LabeledComponent.create(minimalUsageCountEditor, InspectionsBundle.message("minimal.reported.method.usage.count"), BorderLayout.WEST),
+    panel.add(LabeledComponent.create(minimalUsageCountEditor, InspectionsBundle.message("label.minimal.reported.method.usage.count"), BorderLayout.WEST),
               new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NORTHWEST, JBUI.emptyInsets(), 0, 0));
     return panel;
   }
@@ -288,7 +288,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       Project project = method.getProject();
       if (!ProgressManager.getInstance()
         .runProcessWithProgressSynchronously(() -> { methods.addAll(OverridingMethodsSearch.search(method).findAll()); },
-                                             InspectionsBundle.message("search.for.overriding.methods"), true, project)) {
+                                             InspectionsBundle.message("progress.title.search.for.overriding.methods"), true, project)) {
         return;
       }
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, methods, true)) return;

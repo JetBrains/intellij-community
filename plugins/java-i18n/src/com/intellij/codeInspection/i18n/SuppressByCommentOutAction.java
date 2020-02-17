@@ -95,6 +95,6 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return InspectionsBundle.message("suppress.with.0.comment", nonNlsCommentPattern);
+    return InspectionsBundle.message("intention.text.suppress.with.0.comment", nonNlsCommentPattern);
   }
 }

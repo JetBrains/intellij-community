@@ -24,14 +24,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class UnimplementInterfaceAction implements IntentionAction {
   private String myName = "Interface";
@@ -39,13 +35,13 @@ public class UnimplementInterfaceAction implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return InspectionsBundle.message("unimplement.0", myName);
+    return InspectionsBundle.message("intention.text.unimplement.0", myName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("unimplement.interface.class");
+    return InspectionsBundle.message("intention.family.unimplement.interface.class");
   }
 
   @Override

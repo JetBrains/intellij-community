@@ -163,8 +163,8 @@ public class NullityInferrer {
 
   public static void nothingFoundMessage(final Project project) {
     SwingUtilities.invokeLater(
-      () -> Messages.showInfoMessage(project, InspectionsBundle.message("no.places.found.to.infer.nullable.notnull"),
-                                     InspectionsBundle.message("infer.nullity.results")));
+      () -> Messages.showInfoMessage(project, InspectionsBundle.message("dialog.message.no.places.found.to.infer.nullable.notnull"),
+                                     InspectionsBundle.message("dialog.title.infer.nullity.results")));
   }
 
   private static void annotateNotNull(Project project,

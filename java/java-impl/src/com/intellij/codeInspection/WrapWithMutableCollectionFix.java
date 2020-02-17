@@ -30,14 +30,14 @@ public class WrapWithMutableCollectionFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return InspectionsBundle.message("wrap.0.with.1", myVariableName, StringUtil.getShortName(myCollectionName));
+    return InspectionsBundle.message("quickfix.text.wrap.0.with.1", myVariableName, StringUtil.getShortName(myCollectionName));
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("wrap.with.mutable.collection");
+    return InspectionsBundle.message("quickfix.family.wrap.with.mutable.collection");
   }
 
   @Override

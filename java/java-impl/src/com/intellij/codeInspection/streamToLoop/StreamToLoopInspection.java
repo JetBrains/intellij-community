@@ -49,7 +49,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("iterate.unknown.stream.sources.via.stream.iterator"), this, "SUPPORT_UNKNOWN_SOURCES");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("checkbox.iterate.unknown.stream.sources.via.stream.iterator"), this, "SUPPORT_UNKNOWN_SOURCES");
   }
 
   @NotNull
@@ -258,7 +258,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.stream.api.chain.with.loop");
+      return InspectionsBundle.message("quickfix.family.replace.stream.api.chain.with.loop");
     }
 
     @Override

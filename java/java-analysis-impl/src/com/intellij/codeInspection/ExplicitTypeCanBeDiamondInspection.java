@@ -64,7 +64,7 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.with");
+      return InspectionsBundle.message("quickfix.family.replace.with.diamond");
     }
 
     @Override

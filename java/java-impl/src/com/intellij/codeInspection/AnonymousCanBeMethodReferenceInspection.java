@@ -87,7 +87,8 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
                     type = ProblemHighlightType.INFORMATION;
                   }
                   holder.registerProblem(parent,
-                                         InspectionsBundle.message("anonymous.ref.loc.can.be.replaced.with.method.reference"),
+                                         InspectionsBundle.message(
+                                           "inspection.message.anonymous.ref.loc.can.be.replaced.with.method.reference"),
                                          type, rangeInElement, new ReplaceWithMethodRefFix());
                 }
               }
@@ -102,7 +103,7 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
       @NotNull
       @Override
       public String getFamilyName() {
-        return InspectionsBundle.message("replace.with.method.reference");
+        return InspectionsBundle.message("quickfix.family.replace.with.method.reference");
       }
 
     @Override

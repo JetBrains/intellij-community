@@ -179,7 +179,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("replace.inefficient.stream.count");
+      return InspectionsBundle.message("quickfix.family.replace.inefficient.stream.count");
     }
 
     @Override

@@ -54,8 +54,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("warn.if.only.foreach.replacement.is.available"), "SUGGEST_FOREACH");
-    panel.addCheckbox(InspectionsBundle.message("warn.if.the.loop.is.trivial"), "REPLACE_TRIVIAL_FOREACH");
+    panel.addCheckbox(InspectionsBundle.message("checkbox.warn.if.only.foreach.replacement.is.available"), "SUGGEST_FOREACH");
+    panel.addCheckbox(InspectionsBundle.message("checkbox.warn.if.the.loop.is.trivial"), "REPLACE_TRIVIAL_FOREACH");
     return panel;
   }
 

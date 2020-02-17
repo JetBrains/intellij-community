@@ -31,7 +31,7 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("add.math.max.0.count.to.avoid.possible.semantics.change"), this, "ADD_MATH_MAX");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("label.add.math.max.0.count.to.avoid.possible.semantics.change"), this, "ADD_MATH_MAX");
   }
 
   @NotNull
@@ -52,7 +52,8 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
         if (var.getType().equals(PsiType.LONG) || VariableAccessUtils.variableIsUsed(var, call)) return;
         PsiExpression arg = call.getArgumentList().getExpressions()[0];
         if (SideEffectChecker.mayHaveSideEffects(arg)) return;
-        holder.registerProblem(statement.getFirstChild(), InspectionsBundle.message("can.be.replaced.with.string.repeat"),
+        holder.registerProblem(statement.getFirstChild(), InspectionsBundle.message(
+          "inspection.message.can.be.replaced.with.string.repeat"),
                                new StringRepeatCanBeUsedFix(ADD_MATH_MAX));
       }
     };

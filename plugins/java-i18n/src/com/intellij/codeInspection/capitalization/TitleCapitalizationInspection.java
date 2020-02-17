@@ -147,7 +147,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("title.capitalization.fix.text", myTitleValue);
+      return InspectionsBundle.message("quickfix.text.title.capitalization", myTitleValue);
     }
 
     @Override
@@ -194,7 +194,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("title.capitalization.fix.family.name");
+      return InspectionsBundle.message("quickfix.family.title.capitalization.fix");
     }
   }
 

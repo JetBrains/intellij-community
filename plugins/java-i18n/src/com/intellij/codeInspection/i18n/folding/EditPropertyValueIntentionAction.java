@@ -14,7 +14,7 @@ public class EditPropertyValueIntentionAction implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return InspectionsBundle.message("edit.property.value");
+    return InspectionsBundle.message("intention.text.edit.property.value");
   }
 
   @Override

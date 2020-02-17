@@ -103,7 +103,7 @@ class ClassPatternsPanel extends JPanel {
                                                      int column) {
         final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         if (value instanceof String && ((String)value).isEmpty()) {
-          setText(InspectionsBundle.message("constructors"));
+          setText(InspectionsBundle.message("table.cell.constructors"));
           setForeground(UIUtil.getInactiveTextColor());
         }
         else if (value instanceof String) {
