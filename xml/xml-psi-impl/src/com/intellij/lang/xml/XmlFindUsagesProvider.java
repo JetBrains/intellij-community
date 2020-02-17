@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.*;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,7 +88,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
       final String name = metaData != null ? DescriptiveNameUtil.getMetaDataName(metaData) : xmlTag.getName();
 
       String presentableName = metaData == null ? "<" + name + ">" : name;
-      return presentableName+" of file "+xmlTag.getContainingFile().getName();
+      return XmlBundle.message("node.text.presentable.name.of.containing.file", presentableName, xmlTag.getContainingFile().getName());
     }
     if (element instanceof XmlAttributeValue) {
       return ((XmlAttributeValue)element).getValue();
