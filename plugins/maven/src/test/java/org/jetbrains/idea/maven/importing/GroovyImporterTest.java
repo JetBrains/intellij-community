@@ -5,11 +5,13 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
@@ -224,6 +226,9 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                       "src/test/groovy",
                       "src/test/java");
     assertTestResources("project", "src/test/resources");
+
+    GreclipseIdeaCompilerSettings compilerSettings = ServiceManager.getService(myProject, GreclipseIdeaCompilerSettings.class);
+    assertEquals("", compilerSettings.getState().greclipsePath);
   }
 
   public void testAddingCustomGroovySpecificSources() {
@@ -653,6 +658,10 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
 
     assertExcludes("project", "target");
+  }
+
+  public void testGrEclipseMavenPlugin(){
+
   }
 
 }

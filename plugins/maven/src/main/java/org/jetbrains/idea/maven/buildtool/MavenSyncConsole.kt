@@ -21,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
+import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.buildtool.quickfix.OffMavenOfflineModeQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.UseBundledMavenQuickFix
@@ -94,6 +95,11 @@ class MavenSyncConsole(private val myProject: Project) {
     }
     val toPrint = if (text.endsWith('\n')) text else "$text\n"
     mySyncView.onEvent(mySyncId, OutputBuildEventImpl(parentId, toPrint, stdout))
+  }
+
+  @Synchronized
+  fun addWarning(@Nls text: String, @Nls description: String) = doIfImportInProcess {
+    mySyncView.onEvent(mySyncId, MessageEventImpl(mySyncId, MessageEvent.Kind.WARNING, "Compiler", text, description))
   }
 
   @Synchronized

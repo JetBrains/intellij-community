@@ -82,6 +82,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.core" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" />
     <orderEntry type="module" module-name="intellij.repository.search" />
+    <orderEntry type="module" module-name="intellij.groovy.jps" scope="TEST" />
     <orderEntry type="library" name="StreamEx" level="project" />
   </component>
   <component name="copyright">
