@@ -402,6 +402,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon InspectionsPowerSaveMode = load("/general/inspectionsPowerSaveMode.svg");
     /** 16x16 */ public static final Icon InspectionsTrafficOff = load("/general/inspectionsTrafficOff.svg");
     /** 16x16 */ public static final Icon InspectionsTypos = load("/general/inspectionsTypos.svg");
+    /** 16x16 */ public static final Icon InspectionsWarning = load("/general/inspectionsWarning.svg");
     /** 16x16 */ public static final Icon Layout = load("/general/layout.svg");
     /** 16x16 */ public static final Icon LayoutEditorOnly = load("/general/layoutEditorOnly.svg");
     /** 16x16 */ public static final Icon LayoutEditorPreview = load("/general/layoutEditorPreview.svg");

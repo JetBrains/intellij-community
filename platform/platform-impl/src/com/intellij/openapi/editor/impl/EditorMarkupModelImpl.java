@@ -13,6 +13,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +25,10 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.markup.AnalyzerStatus;
@@ -129,7 +134,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private final ActionToolbar statusToolbar;
   private AnalyzerStatus analyzerStatus;
-  private InspectionPopupManager myPopupManager = new InspectionPopupManager();;
+  private InspectionPopupManager myPopupManager = new InspectionPopupManager();
+  private final Disposable resourcesDisposable = Disposer.newDisposable();
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
@@ -137,8 +143,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myEditorFragmentRenderer = new EditorFragmentRenderer();
     setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
 
-    AnAction nextErrorAction = findAction("GotoNextError", AllIcons.General.ArrowDown);
-    AnAction prevErrorAction = findAction("GotoPreviousError", AllIcons.General.ArrowUp);
+    AnAction nextErrorAction = findAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatches);
+    AnAction prevErrorAction = findAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatches);
     DefaultActionGroup navigateGroup = new DefaultActionGroup(Separator.create(), nextErrorAction, prevErrorAction) {
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -149,6 +155,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     ActionGroup actions = new DefaultActionGroup(new StatusAction(), navigateGroup);
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
+      @Override
+      protected void paintComponent(Graphics g) {
+        // Paint this toolbar background for non opaque (in mini mode)
+        // ignoring base component background and use Editor's background.
+        g.setColor(myEditor.getColorsScheme().getAttributes(HighlighterColors.TEXT).getBackgroundColor());
+        g.fillRect(0, 0, getWidth(), getHeight());
+
+        super.paintComponent(g);
+      }
+
       @Override
       @NotNull
       protected Color getSeparatorColor() {
@@ -196,6 +212,33 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     statusToolbar.setMiniMode(true);
     ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusToolbar.getComponent());
+
+    ApplicationManager.getApplication().getMessageBus().
+      connect(resourcesDisposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+      @Override
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+        if (action instanceof HintManagerImpl.ActionToIgnore) return;
+        myPopupManager.hidePopup();
+      }
+    });
+
+    myEditor.getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        myPopupManager.hidePopup();
+      }
+    }, resourcesDisposable);
+
+    myEditor.getCaretModel().addCaretListener(new CaretListener() {
+      @Override
+      public void caretPositionChanged(@NotNull CaretEvent event) {
+        VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
+        Point point = myEditor.visualPositionToXY(pos);
+        if (statusToolbar.getComponent().getBounds().contains(point)) {
+          System.out.println("Hide toolbar");
+        }
+      }
+    }, resourcesDisposable);
   }
 
   private static AnAction findAction(@NotNull String id, @NotNull Icon icon) {
@@ -551,6 +594,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     myPopupManager.hidePopup();
     myPopupManager = null;
+
+    Disposer.dispose(resourcesDisposable);
+
     super.dispose();
   }
 
@@ -1618,7 +1664,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       JPanel lowerPanel = JBUI.Panels.simplePanel(inspectionLevel);
       lowerPanel.setOpaque(true);
-      //lowerPanel.setBackground(JBColor.YELLOW);
+      lowerPanel.setBackground(UIUtil.getToolTipActionBackground());
       lowerPanel.setBorder(JBUI.Borders.empty(4, 10));
 
       contentPanel.add(lowerPanel,
