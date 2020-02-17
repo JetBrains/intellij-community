@@ -76,7 +76,7 @@ public final class PythonHelpersLocator {
    * @param resourceName a path relative to helper root
    * @return absolute path of the resource
    */
-  public static String getHelperPath(@NotNull String resourceName) {
+  public static String getHelperPath(@NonNls @NotNull String resourceName) {
     return getHelperFile(resourceName).getAbsolutePath();
   }
 
