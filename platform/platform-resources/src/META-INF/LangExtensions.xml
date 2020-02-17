@@ -935,7 +935,7 @@
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>
 
     <statistics.counterUsagesCollector groupId="tooltip.action.events" version="1"/>
-    <statistics.counterUsagesCollector groupId="rename.refactoring" version="1"/>
+    <statistics.counterUsagesCollector groupId="rename.refactoring" version="2"/>
     <statistics.counterUsagesCollector groupId="package.management.ui" version="1"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
