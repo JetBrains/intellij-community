@@ -37,7 +37,6 @@ abstract class SignaturePresentationBuilder(
   abstract fun buildPresentation()
 
   protected fun effect(value: String, otherValue: String?): Effect {
-    fragments.asSequence()
     return if (otherValue.isNullOrEmpty()) {
       if (isOldSignature) Effect.Removed else Effect.Added
     }
