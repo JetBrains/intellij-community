@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,7 +34,7 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
         if (literalExpression.getLiteralElementType() != JavaTokenType.TEXT_BLOCK_LITERAL || literalExpression.getTextBlockText() == null) {
           return;
         }
-        holder.registerProblem(literalExpression, InspectionsBundle.message("inspection.text.block.backward.migration.message"),
+        holder.registerProblem(literalExpression, JavaBundle.message("inspection.text.block.backward.migration.message"),
                                new ReplaceWithRegularStringLiteralFix());
       }
     };
@@ -45,7 +46,7 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.replace.with.regular.string.literal.fix");
+      return JavaBundle.message("inspection.replace.with.regular.string.literal.fix");
     }
 
     @Override

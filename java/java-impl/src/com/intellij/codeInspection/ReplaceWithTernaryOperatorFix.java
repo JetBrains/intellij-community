@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -42,7 +43,7 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return InspectionsBundle.message("inspection.replace.ternary.quickfix", myText);
+    return JavaBundle.message("inspection.replace.ternary.quickfix", myText);
   }
 
   public ReplaceWithTernaryOperatorFix(@NotNull PsiExpression expressionToAssert) {
@@ -52,7 +53,7 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.surround.if.family");
+    return JavaBundle.message("inspection.surround.if.family");
   }
 
   @Override
@@ -131,7 +132,7 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.replace.methodref.ternary.quickfix");
+      return JavaBundle.message("inspection.replace.methodref.ternary.quickfix");
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.DescriptorComposer;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.java.JavaBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -318,7 +319,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     final Set<RefElement> possibleChildren = getPossibleChildren(element);
     if (!possibleChildren.isEmpty()) {
       if (appendCallees){
-        appendHeading(buf, InspectionsBundle.message("inspection.export.results.callees"));
+        appendHeading(buf, JavaBundle.message("inspection.export.results.callees"));
         buf.append("<div class=\"problem-description\">");
       }
       @NonNls final String ul = "<ul>";

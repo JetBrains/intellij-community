@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -85,7 +86,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
             continue FieldLoop;
           }
         }
-        final String message = InspectionsBundle.message("inspection.field.can.be.local.problem.descriptor");
+        final String message = JavaBundle.message("inspection.field.can.be.local.problem.descriptor");
         final ArrayList<LocalQuickFix> fixes = new ArrayList<>();
         SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, qualifiedName -> {
           final LocalQuickFix quickFix = SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
@@ -112,10 +113,10 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   @Override
   public JComponent createOptionsPanel() {
     final JPanel listPanel = SpecialAnnotationsUtil
-      .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, InspectionsBundle.message("special.annotations.annotations.list"));
+      .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, JavaBundle.message("special.annotations.annotations.list"));
 
     final JPanel panel = new JPanel(new BorderLayout(2, 2));
-    panel.add(new SingleCheckboxOptionsPanel(InspectionsBundle.message("checkbox.ignore.fields.used.in.multiple.methods"), this, "IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS"), BorderLayout.NORTH);
+    panel.add(new SingleCheckboxOptionsPanel(JavaBundle.message("checkbox.ignore.fields.used.in.multiple.methods"), this, "IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS"), BorderLayout.NORTH);
     panel.add(listPanel, BorderLayout.CENTER);
     return panel;
   }
@@ -402,11 +403,11 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
 
     @NotNull
     private String determineName(@Nullable PsiElement block) {
-      if (block instanceof PsiClassInitializer) return InspectionsBundle.message("inspection.field.can.be.local.quickfix.initializer");
+      if (block instanceof PsiClassInitializer) return JavaBundle.message("inspection.field.can.be.local.quickfix.initializer");
 
       if (block instanceof PsiMethod) {
-        if (((PsiMethod)block).isConstructor()) return InspectionsBundle.message("inspection.field.can.be.local.quickfix.constructor");
-        return InspectionsBundle.message("inspection.field.can.be.local.quickfix.one.method", ((PsiMethod)block).getName());
+        if (((PsiMethod)block).isConstructor()) return JavaBundle.message("inspection.field.can.be.local.quickfix.constructor");
+        return JavaBundle.message("inspection.field.can.be.local.quickfix.one.method", ((PsiMethod)block).getName());
       }
 
       return getFamilyName();

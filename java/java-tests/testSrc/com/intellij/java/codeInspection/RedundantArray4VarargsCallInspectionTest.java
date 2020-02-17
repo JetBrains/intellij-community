@@ -16,8 +16,8 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
+import com.intellij.java.JavaBundle;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
@@ -42,7 +42,7 @@ public class RedundantArray4VarargsCallInspectionTest extends LightJavaCodeInsig
   private void doTest() {
     String name = getTestName(false);
     myFixture.configureByFile(name + ".java");
-    myFixture.launchAction(myFixture.findSingleIntention(InspectionsBundle.message("inspection.redundant.array.creation.quickfix")));
+    myFixture.launchAction(myFixture.findSingleIntention(JavaBundle.message("inspection.redundant.array.creation.quickfix")));
     myFixture.checkResultByFile(name + "_after.java");
   }
 }

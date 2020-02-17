@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -38,7 +39,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.explicit.array.filling.suggest.set.all"),
+    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.explicit.array.filling.suggest.set.all"),
                                           this,
                                           "mySuggestSetAll");
   }
@@ -66,7 +67,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
           Object defaultValue = PsiTypesUtil.getDefaultValue(lType);
           if (isDefaultValue(rValue, defaultValue, lType) && isFilledWithDefaultValues(container.getQualifier(), statement, defaultValue)) {
             holder.registerProblem(statement, getRange(statement, ProblemHighlightType.WARNING),
-                                   InspectionsBundle.message("inspection.explicit.array.filling.redundant.loop.description"),
+                                   JavaBundle.message("inspection.explicit.array.filling.redundant.loop.description"),
                                    QuickFixFactory.getInstance()
                                      .createDeleteFix(statement, CommonQuickFixBundle.message("fix.remove.statement", PsiKeyword.FOR)));
             return;
@@ -191,7 +192,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       }
 
       private void registerProblem(@NotNull PsiForStatement statement, boolean isSetAll) {
-        String message = InspectionsBundle.message("inspection.explicit.array.filling.description", isSetAll ? "setAll" : "fill");
+        String message = JavaBundle.message("inspection.explicit.array.filling.description", isSetAll ? "setAll" : "fill");
         ReplaceWithArraysCallFix fix = new ReplaceWithArraysCallFix(!isSetAll);
         ProblemHighlightType type = ProblemHighlightType.WARNING;
         if (isSetAll && !mySuggestSetAll) {
@@ -204,7 +205,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
           SetInspectionOptionFix disableForSetAllFix =
             new SetInspectionOptionFix(ExplicitArrayFillingInspection.this,
                                        "mySuggestSetAll",
-                                       InspectionsBundle.message("inspection.explicit.array.filling.no.suggestion.for.set.all"),
+                                       JavaBundle.message("inspection.explicit.array.filling.no.suggestion.for.set.all"),
                                        false);
           holder.registerProblem(statement, message, type, range, fix, disableForSetAllFix);
           return;
@@ -242,7 +243,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.explicit.array.filling.fix.family.name", myIsRhsConstant ? "fill" : "setAll");
+      return JavaBundle.message("inspection.explicit.array.filling.fix.family.name", myIsRhsConstant ? "fill" : "setAll");
     }
 
     @Override

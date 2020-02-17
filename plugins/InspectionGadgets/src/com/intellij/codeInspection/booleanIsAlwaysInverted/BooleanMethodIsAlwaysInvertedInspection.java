@@ -6,6 +6,7 @@ package com.intellij.codeInspection.booleanIsAlwaysInverted;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -94,7 +95,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
                                                       PsiElement psiIdentifier,
                                                       boolean onTheFly) {
     return manager.createProblemDescriptor(psiIdentifier,
-                                           InspectionsBundle.message("boolean.method.is.always.inverted.problem.descriptor"),
+                                           JavaBundle.message("boolean.method.is.always.inverted.problem.descriptor"),
                                            getInvertBooleanFix(onTheFly),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly);
   }

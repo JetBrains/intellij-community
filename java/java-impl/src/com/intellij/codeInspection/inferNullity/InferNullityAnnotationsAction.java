@@ -23,11 +23,11 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -77,7 +77,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   private JCheckBox myAnnotateLocalVariablesCb;
 
   public InferNullityAnnotationsAction() {
-    super(InspectionsBundle.lazyMessage("dialog.title.infer.nullity"), JavaPsiBundle.lazyMessage("action.description.infer.nullity.annotations"));
+    super(JavaBundle.lazyMessage("dialog.title.infer.nullity"), JavaPsiBundle.lazyMessage("action.description.infer.nullity.annotations"));
   }
 
   @Override
@@ -113,11 +113,11 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
           }
         }
       }
-    }), InspectionsBundle.message("progress.title.check.applicability"), true, project)) {
+    }), JavaBundle.message("progress.title.check.applicability"), true, project)) {
       return;
     }
     if (!modulesWithLL.isEmpty()) {
-      Messages.showErrorDialog(project, InspectionsBundle
+      Messages.showErrorDialog(project, JavaBundle
                                  .message("dialog.message.infer.nullity.annotations.requires.the.project.language.level"),
                                INFER_NULLITY_ANNOTATIONS);
       return;
@@ -167,7 +167,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       return false;
     }
     
-    if (Messages.showOkCancelDialog(project, InspectionsBundle.message(
+    if (Messages.showOkCancelDialog(project, JavaBundle.message(
       "dialog.message.jetbrains.annotations.library.is.missing"),
                                     title, Messages.getErrorIcon()) == Messages.OK) {
       Module firstModule = modulesWithoutAnnotations.iterator().next();
@@ -270,7 +270,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     final UsageTarget[] targets = UsageTarget.EMPTY_ARRAY;
     final Ref<Usage[]> convertUsagesRef = new Ref<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos))),
-                                                                           InspectionsBundle.message("progress.title.preprocess.usages"), true, project)) return;
+                                                                           JavaBundle.message("progress.title.preprocess.usages"), true, project)) return;
 
     if (convertUsagesRef.isNull()) return;
     final Usage[] usages = convertUsagesRef.get();
@@ -312,7 +312,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
     final JPanel panel = new JPanel(new VerticalFlowLayout());
     panel.add(new TitledSeparator());
-    myAnnotateLocalVariablesCb = new JCheckBox(InspectionsBundle.message("checkbox.annotate.local.variables"), PropertiesComponent.getInstance().getBoolean(ANNOTATE_LOCAL_VARIABLES));
+    myAnnotateLocalVariablesCb = new JCheckBox(JavaBundle.message("checkbox.annotate.local.variables"), PropertiesComponent.getInstance().getBoolean(ANNOTATE_LOCAL_VARIABLES));
     panel.add(myAnnotateLocalVariablesCb);
     return panel;
   }

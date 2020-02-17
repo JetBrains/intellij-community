@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -32,7 +33,7 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("inspection.manual.min.max.calculation.disable.for.non.integral"),
+    panel.addCheckbox(JavaBundle.message("inspection.manual.min.max.calculation.disable.for.non.integral"),
                       "disableForNonIntegralTypes");
     return panel;
   }
@@ -75,7 +76,7 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
         IElementType tokenType = condition.getOperationTokenType();
         useMathMin ^= JavaTokenType.LT.equals(tokenType) || JavaTokenType.LE.equals(tokenType);
         holder.registerProblem(element,
-                               InspectionsBundle.message("inspection.manual.min.max.calculation.description", useMathMin ? "min" : "max"),
+                               JavaBundle.message("inspection.manual.min.max.calculation.description", useMathMin ? "min" : "max"),
                                new ReplaceWithMinMaxFix(useMathMin));
       }
 

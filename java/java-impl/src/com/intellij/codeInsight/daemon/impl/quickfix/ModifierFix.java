@@ -4,8 +4,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -193,7 +193,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                 return true;
               }
             }));
-        }, InspectionsBundle.message("psi.search.overriding.progress"), true, project);
+        }, JavaBundle.message("psi.search.overriding.progress"), true, project);
         if (!modifierLists.isEmpty() && Messages.showYesNoDialog(project,
                                                                  QuickFixBundle.message("change.inheritors.visibility.warning.text"),
                                                                  QuickFixBundle.message("change.inheritors.visibility.warning.title"),

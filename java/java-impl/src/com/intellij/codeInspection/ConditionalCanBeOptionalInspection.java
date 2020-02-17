@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -55,7 +56,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
           !ExpressionUtils.isNullLiteral(nullBranch) && NullabilityUtil.getExpressionNullability(notNullBranch, true) != Nullability.NOT_NULL;
         if (!isOnTheFly && mayChangeSemantics) return;
         holder.registerProblem(ternary.getCondition(),
-                               InspectionsBundle.message("inspection.message.can.be.replaced.with.optional.of.nullable"),
+                               JavaBundle.message("inspection.message.can.be.replaced.with.optional.of.nullable"),
                                mayChangeSemantics ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new ReplaceConditionWithOptionalFix(mayChangeSemantics));
       }
@@ -83,14 +84,14 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName() + (myChangesSemantics ? InspectionsBundle.message("quickfix.text.suffix.may.change.semantics") : "");
+      return getFamilyName() + (myChangesSemantics ? JavaBundle.message("quickfix.text.suffix.may.change.semantics") : "");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("quickfix.family.replace.with.optional.of.nullable.chain");
+      return JavaBundle.message("quickfix.family.replace.with.optional.of.nullable.chain");
     }
 
     @Override

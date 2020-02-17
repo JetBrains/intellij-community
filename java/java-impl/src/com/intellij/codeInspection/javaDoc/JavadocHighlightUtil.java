@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.reference.RefJavaUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -101,7 +101,7 @@ public class JavadocHighlightUtil {
   }
 
   static void reportMissingTag(@NotNull PsiElement toHighlight, @NotNull ProblemHolder holder) {
-    String message = InspectionsBundle.message("inspection.javadoc.problem.descriptor");
+    String message = JavaBundle.message("inspection.javadoc.problem.descriptor");
     holder.problem(toHighlight, message, holder.addJavadocFix(toHighlight));
   }
 
@@ -127,7 +127,7 @@ public class JavadocHighlightUtil {
     for (int i = 0; i < TAGS_TO_CHECK.length; i++) {
       if (isTagRequired[i] && !isTagPresent[i]) {
         String tagName = TAGS_TO_CHECK[i];
-        String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + tagName + "</code>");
+        String message = JavaBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + tagName + "</code>");
         holder.problem(toHighlight, message, holder.addMissingTagFix(tagName, ""));
       }
     }
@@ -137,7 +137,7 @@ public class JavadocHighlightUtil {
     for (PsiDocTag tag : tags) {
       String tagName = tag.getName();
       if (ArrayUtil.find(TAGS_TO_CHECK, tagName) >= 0 && emptyTag(tag)) {
-        String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag.description", StringUtil.capitalize(tagName), tagName);
+        String message = JavaBundle.message("inspection.javadoc.problem.missing.tag.description", StringUtil.capitalize(tagName), tagName);
         holder.problem(tag.getNameElement(), message, null);
       }
     }
@@ -163,7 +163,7 @@ public class JavadocHighlightUtil {
         if (element == null) {
           int textOffset = value.getTextOffset();
           if (textOffset == value.getTextRange().getEndOffset()) {
-            holder.eolProblem(tag, InspectionsBundle.message("inspection.javadoc.problem.name.expected"), null);
+            holder.eolProblem(tag, JavaBundle.message("inspection.javadoc.problem.name.expected"), null);
           }
         }
       }
@@ -177,10 +177,10 @@ public class JavadocHighlightUtil {
 
       if ("see".equals(tagName)) {
         if (dataElements.length == 0 || dataElements.length == 1 && empty(dataElements[0])) {
-          holder.problem(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.see.tag.expecting.ref"), null);
+          holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.problem.see.tag.expecting.ref"), null);
         }
         else if (!isValidSeeRef(dataElements)) {
-          holder.problem(dataElements[0], InspectionsBundle.message("inspection.javadoc.problem.see.tag.expecting.ref"), null);
+          holder.problem(dataElements[0], JavaBundle.message("inspection.javadoc.problem.see.tag.expecting.ref"), null);
         }
       }
 
@@ -219,7 +219,7 @@ public class JavadocHighlightUtil {
                     PsiTreeUtil.getParentOfType(target, PsiDocCommentOwner.class, false)) {
                   PsiElement nameElement = tag.getNameElement();
                   if (nameElement != null) {
-                    holder.problem(nameElement, InspectionsBundle.message("inspection.javadoc.problem.pointing.to.itself"), null);
+                    holder.problem(nameElement, JavaBundle.message("inspection.javadoc.problem.pointing.to.itself"), null);
                   }
                 }
               }
@@ -239,7 +239,7 @@ public class JavadocHighlightUtil {
     PsiElement nameElement = tag.getNameElement();
     if (nameElement != null) {
       String key = tagInfo == null ? "inspection.javadoc.problem.wrong.tag" : "inspection.javadoc.problem.disallowed.tag";
-      holder.problem(nameElement, InspectionsBundle.message(key, "<code>" + tagName + "</code>"), holder.registerTagFix(tagName));
+      holder.problem(nameElement, JavaBundle.message(key, "<code>" + tagName + "</code>"), holder.registerTagFix(tagName));
     }
 
     return false;
@@ -259,7 +259,7 @@ public class JavadocHighlightUtil {
     }
 
     if (dotIndex == -1 || tagOffset > 0 && dotIndex + docComment.getTextOffset() > tagOffset) {
-      holder.problem(docComment.getFirstChild(), InspectionsBundle.message("inspection.javadoc.problem.descriptor1"), null);
+      holder.problem(docComment.getFirstChild(), JavaBundle.message("inspection.javadoc.problem.descriptor1"), null);
     }
   }
 
@@ -280,7 +280,7 @@ public class JavadocHighlightUtil {
             }
             documentedParamNames = set(documentedParamNames);
             if (documentedParamNames.contains(paramName)) {
-              holder.problem(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.duplicate.param", paramName), null);
+              holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.problem.duplicate.param", paramName), null);
             }
             documentedParamNames.add(paramName);
           }
@@ -297,7 +297,7 @@ public class JavadocHighlightUtil {
               String fqName = ((PsiClass)element).getQualifiedName();
               documentedExceptions = set(documentedExceptions);
               if (documentedExceptions.contains(fqName)) {
-                holder.problem(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.duplicate.throws", fqName), null);
+                holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.problem.duplicate.throws", fqName), null);
               }
               documentedExceptions.add(fqName);
             }
@@ -307,7 +307,7 @@ public class JavadocHighlightUtil {
       else if (UNIQUE_TAGS.contains(tag.getName())) {
         uniqueTags = set(uniqueTags);
         if (uniqueTags.contains(tag.getName())) {
-          holder.problem(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.duplicate.tag", tag.getName()), null);
+          holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.problem.duplicate.tag", tag.getName()), null);
         }
         uniqueTags.add(tag.getName());
       }
@@ -321,7 +321,7 @@ public class JavadocHighlightUtil {
         super.visitElement(element);
         ASTNode node = element.getNode();
         if (node != null && node.getElementType() == JavaDocTokenType.DOC_COMMENT_BAD_CHARACTER) {
-          holder.problem(element, InspectionsBundle.message("inspection.illegal.character"), null);
+          holder.problem(element, JavaBundle.message("inspection.illegal.character"), null);
         }
       }
     });
@@ -345,7 +345,7 @@ public class JavadocHighlightUtil {
           String name = typeParameter.getName();
           if (name != null) {
             String tagText = "<code>&lt;" + name + "&gt;</code>";
-            String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.param.tag", tagText);
+            String message = JavaBundle.message("inspection.javadoc.method.problem.missing.param.tag", tagText);
             holder.problem(toHighlight, message, holder.addMissingTagFix("param", "<" + name + ">"));
           }
         }
@@ -360,7 +360,7 @@ public class JavadocHighlightUtil {
     if (!psiMethod.isConstructor() && !PsiType.VOID.equals(psiMethod.getReturnType())) {
       boolean hasReturnTag = Stream.of(tags).anyMatch(tag -> "return".equals(tag.getName()));
       if (!hasReturnTag) {
-        String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + "return" + "</code>");
+        String message = JavaBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + "return" + "</code>");
         holder.problem(toHighlight, message, holder.addMissingTagFix("return", ""));
       }
     }
@@ -383,7 +383,7 @@ public class JavadocHighlightUtil {
         String name = parameter.getName();
         if (name != null) {
           String tagText = "<code>" + name + "</code>";
-          String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.param.tag", tagText);
+          String message = JavaBundle.message("inspection.javadoc.method.problem.missing.param.tag", tagText);
           holder.problem(toHighlight, message, holder.addMissingParamTagFix(name));
         }
       }
@@ -431,7 +431,7 @@ public class JavadocHighlightUtil {
 
     for (PsiClassType declaredException : declaredExceptions.keySet()) {
       String tagText = "<code>@throws</code> " + declaredException.getCanonicalText();
-      String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", tagText);
+      String message = JavaBundle.message("inspection.javadoc.problem.missing.tag", tagText);
       String firstDeclaredException = declaredException.getCanonicalText();
       holder.problem(toHighlight, message, holder.addMissingTagFix("throws", firstDeclaredException));
     }
@@ -442,20 +442,20 @@ public class JavadocHighlightUtil {
       if ("return".equals(tag.getName())) {
         if (emptyTag(tag)) {
           String tagText = "<code>@return</code>";
-          holder.problem(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), null);
+          holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), null);
         }
       }
       else if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {
         if (emptyThrowsTag(tag)) {
           String tagText = "<code>" + tag.getName() + "</code>";
-          holder.problem(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), null);
+          holder.problem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), null);
         }
       }
       else if ("param".equals(tag.getName())) {
         PsiDocTagValue valueElement = tag.getValueElement();
         if (valueElement != null && emptyParamTag(tag, valueElement)) {
           String tagText = "<code>@param " + valueElement.getText() + "</code>";
-          holder.problem(valueElement, InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), null);
+          holder.problem(valueElement, JavaBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), null);
         }
       }
     }

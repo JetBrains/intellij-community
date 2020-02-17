@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -31,7 +32,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.text.block.migration.suggest.literal.replacement"),
+    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.text.block.migration.suggest.literal.replacement"),
                                           this,
                                           "mySuggestLiteralReplacement");
   }
@@ -66,7 +67,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         if (nNewLines <= 1) return;
         boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
         holder.registerProblem(expression, quickFixOnly ? null : firstNewLineTextRange,
-                               InspectionsBundle.message("inspection.text.block.migration.message", "Concatenation"),
+                               JavaBundle.message("inspection.text.block.migration.message", "Concatenation"),
                                new ReplaceWithTextBlockFix());
       }
 
@@ -80,7 +81,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         int newLineIdx = getNewLineIndex(text, 0);
         if (newLineIdx == -1 || getNewLineIndex(text, newLineIdx + 1) == -1) return;
         holder.registerProblem(expression, quickFixOnly ? null : new TextRange(newLineIdx, newLineIdx + 2),
-                               InspectionsBundle.message("inspection.text.block.migration.message", "String"),
+                               JavaBundle.message("inspection.text.block.migration.message", "String"),
                                new ReplaceWithTextBlockFix());
       }
     };
@@ -92,7 +93,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.replace.with.text.block.fix");
+      return JavaBundle.message("inspection.replace.with.text.block.fix");
     }
 
     @Override

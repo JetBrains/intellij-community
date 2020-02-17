@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,7 +29,7 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.unused.assignment.remove.assignment.quickfix");
+    return JavaBundle.message("inspection.unused.assignment.remove.assignment.quickfix");
   }
 
   @Override

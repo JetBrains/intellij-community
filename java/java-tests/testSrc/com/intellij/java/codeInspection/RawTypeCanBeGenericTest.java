@@ -17,8 +17,8 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.miscGenerics.RawTypeCanBeGenericInspection;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
@@ -102,11 +102,11 @@ public class RawTypeCanBeGenericTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   private static String getMessage(String variable, String type) {
-    return InspectionsBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", variable, type);
+    return JavaBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", variable, type);
   }
 
   private static String getMessagePrefix() {
-    String message = InspectionsBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", "@", "@");
+    String message = JavaBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", "@", "@");
     return message.substring(0, message.indexOf("@"));
   }
 

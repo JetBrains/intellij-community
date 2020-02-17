@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -59,7 +60,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
               PsiExpression[] args = expressionList.getExpressions();
               if (args.length == 2 && PsiTreeUtil.isAncestor(args[0], call, false) &&
                   TypeUtils.typeEquals("java.nio.charset.Charset", args[1].getType())) {
-                holder.registerProblem(newExpression, InspectionsBundle.message("inspection.message.can.be.replaced.with.files.readstring"),
+                holder.registerProblem(newExpression, JavaBundle.message("inspection.message.can.be.replaced.with.files.readstring"),
                                        new ReplaceWithReadStringFix());
               }
             }
@@ -110,7 +111,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getName() {
-      return myMayNotWork ? InspectionsBundle.message("quickfix.text.0.may.not.work.before.jdk.11.0.2", getFamilyName()) : getFamilyName();
+      return myMayNotWork ? JavaBundle.message("quickfix.text.0.may.not.work.before.jdk.11.0.2", getFamilyName()) : getFamilyName();
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)

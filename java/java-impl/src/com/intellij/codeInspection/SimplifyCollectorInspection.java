@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -45,7 +46,7 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
         if (isCollectorMethod(downstream, "maxBy", "minBy", "reducing") &&
             downstream.getArgumentList().getExpressionCount() == 1) {
           String replacement = nameElement.getText().equals("groupingBy") ? "toMap" : "toConcurrentMap";
-          holder.registerProblem(nameElement, InspectionsBundle.message("inspection.simplify.collector.message", replacement),
+          holder.registerProblem(nameElement, JavaBundle.message("inspection.simplify.collector.message", replacement),
                                  new SimplifyCollectorFix(replacement));
         }
       }
@@ -104,14 +105,14 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.simplify.collector.fix.name", myMethodName);
+      return JavaBundle.message("inspection.simplify.collector.fix.name", myMethodName);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.simplify.collector.fix.family.name");
+      return JavaBundle.message("inspection.simplify.collector.fix.family.name");
     }
 
     @Override

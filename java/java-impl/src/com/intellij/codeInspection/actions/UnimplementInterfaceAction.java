@@ -17,7 +17,7 @@ package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -35,13 +35,13 @@ public class UnimplementInterfaceAction implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return InspectionsBundle.message("intention.text.unimplement.0", myName);
+    return JavaBundle.message("intention.text.unimplement.0", myName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("intention.family.unimplement.interface.class");
+    return JavaBundle.message("intention.family.unimplement.interface.class");
   }
 
   @Override

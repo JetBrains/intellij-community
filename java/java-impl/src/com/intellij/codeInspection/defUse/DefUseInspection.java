@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
@@ -97,7 +98,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
           if (context instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
               context instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
             holder.registerProblem(context,
-                                   InspectionsBundle.message("inspection.unused.assignment.problem.descriptor4", "<code>#ref</code> #loc"));
+                                   JavaBundle.message("inspection.unused.assignment.problem.descriptor4", "<code>#ref</code> #loc"));
           }
         }
       }
@@ -108,7 +109,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
       isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, psiVariable.getInitializer()) ? new RemoveInitializerFix() : null);
     holder.registerProblem(ObjectUtils.notNull(psiVariable.getInitializer(), psiVariable),
-                           InspectionsBundle.message("inspection.unused.assignment.problem.descriptor2",
+                           JavaBundle.message("inspection.unused.assignment.problem.descriptor2",
                                                      "<code>" + psiVariable.getName() + "</code>", "<code>#ref</code> #loc"),
                            ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                            fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
@@ -122,7 +123,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
       isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, assignment.getRExpression()) ? new RemoveAssignmentFix() : null);
     holder.registerProblem(assignment.getLExpression(),
-                           InspectionsBundle.message("inspection.unused.assignment.problem.descriptor3",
+                           JavaBundle.message("inspection.unused.assignment.problem.descriptor3",
                                                      Objects.requireNonNull(assignment.getRExpression()).getText(), "<code>#ref</code>" + " #loc"),
                            ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
     );
@@ -262,21 +263,21 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.anchor = GridBagConstraints.NORTHWEST;
 
-      myReportInitializer = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option2"));
+      myReportInitializer = new JCheckBox(JavaBundle.message("inspection.unused.assignment.option2"));
       myReportInitializer.setSelected(REPORT_REDUNDANT_INITIALIZER);
       myReportInitializer.getModel().addItemListener(e -> REPORT_REDUNDANT_INITIALIZER = myReportInitializer.isSelected());
       gc.insets = JBUI.insetsBottom(15);
       gc.gridy = 0;
       add(myReportInitializer, gc);
 
-      myReportPrefix = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option"));
+      myReportPrefix = new JCheckBox(JavaBundle.message("inspection.unused.assignment.option"));
       myReportPrefix.setSelected(REPORT_PREFIX_EXPRESSIONS);
       myReportPrefix.getModel().addItemListener(e -> REPORT_PREFIX_EXPRESSIONS = myReportPrefix.isSelected());
       gc.insets = JBUI.emptyInsets();
       gc.gridy++;
       add(myReportPrefix, gc);
 
-      myReportPostfix = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option1"));
+      myReportPostfix = new JCheckBox(JavaBundle.message("inspection.unused.assignment.option1"));
       myReportPostfix.setSelected(REPORT_POSTFIX_EXPRESSIONS);
       myReportPostfix.getModel().addItemListener(e -> REPORT_POSTFIX_EXPRESSIONS = myReportPostfix.isSelected());
       gc.weighty = 1;

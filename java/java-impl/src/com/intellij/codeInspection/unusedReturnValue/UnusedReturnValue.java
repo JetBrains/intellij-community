@@ -8,6 +8,7 @@ import com.intellij.codeInspection.deadCode.UnreferencedFilter;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiMethod;
@@ -78,11 +79,11 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("checkbox.ignore.simple.setters"), "IGNORE_BUILDER_PATTERN");
+    panel.addCheckbox(JavaBundle.message("checkbox.ignore.simple.setters"), "IGNORE_BUILDER_PATTERN");
     LabeledComponent<VisibilityModifierChooser> component = LabeledComponent.create(new VisibilityModifierChooser(() -> true,
                                                                                                                   highestModifier,
                                                                                                                   (newModifier) -> highestModifier = newModifier),
-                                                                                    InspectionsBundle
+                                                                                    JavaBundle
                                                                                       .message("label.maximal.reported.method.visibility"),
                                                                                     BorderLayout.WEST);
     panel.addComponent(component);
@@ -144,7 +145,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
                                                    @Nullable ProblemDescriptionsProcessor processor,
                                                    boolean isNative, boolean isOnTheFly) {
     return manager.createProblemDescriptor(psiMethod.getNameIdentifier(),
-                                           InspectionsBundle.message("inspection.unused.return.value.problem.descriptor"),
+                                           JavaBundle.message("inspection.unused.return.value.problem.descriptor"),
                                            isNative ? null : new MakeVoidQuickFix(processor),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                            isOnTheFly);

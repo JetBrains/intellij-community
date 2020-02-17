@@ -5,11 +5,11 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.TrackingRunner;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -64,7 +64,7 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("quickfix.family.find.cause");
+    return JavaBundle.message("quickfix.family.find.cause");
   }
 
   @Override
@@ -75,7 +75,7 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
       return TrackingRunner.findProblemCause(myUnknownMembersAsNullable, myIgnoreAssertStatements, element, myProblemType);
     };
     TrackingRunner.CauseItem item = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.compute(causeFinder), InspectionsBundle.message("progress.title.finding.cause"), true, project);
+      () -> ReadAction.compute(causeFinder), JavaBundle.message("progress.title.finding.cause"), true, project);
     PsiFile file = myAnchor.getContainingFile();
     if (item != null && file != null) {
       displayProblemCause(file, item);

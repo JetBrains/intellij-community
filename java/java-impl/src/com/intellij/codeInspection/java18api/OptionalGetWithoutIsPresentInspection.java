@@ -11,6 +11,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -47,7 +48,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
         if ((nullability == DfaNullability.UNKNOWN || nullability == DfaNullability.NULLABLE) &&
             !isPresentCallWithSameQualifierExists(qualifier)) {
           holder.registerProblem(nameElement,
-                                 InspectionsBundle.message("inspection.optional.get.without.is.present.message", optionalClass.getName()),
+                                 JavaBundle.message("inspection.optional.get.without.is.present.message", optionalClass.getName()),
                                  tryCreateFix(call));
         }
       }
@@ -109,7 +110,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("quickfix.family.use.flatmap");
+      return JavaBundle.message("quickfix.family.use.flatmap");
     }
 
     @Override

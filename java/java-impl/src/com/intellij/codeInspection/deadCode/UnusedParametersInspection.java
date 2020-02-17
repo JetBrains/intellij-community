@@ -9,6 +9,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiReferenceProcessor;
@@ -68,7 +69,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
         PsiElement anchor = UElementKt.getSourcePsiElement(parameter.getUastAnchor());
         if (anchor != null) {
           result.add(manager.createProblemDescriptor(anchor,
-                                                     InspectionsBundle.message(refMethod.isAbstract() ? "inspection.unused.parameter.composer" : "inspection.unused.parameter.composer1"),
+                                                     JavaBundle.message(refMethod.isAbstract() ? "inspection.unused.parameter.composer" : "inspection.unused.parameter.composer1"),
                                                      new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.getName()),
                                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL, false));
         }
@@ -203,7 +204,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.unused.parameter.delete.quickfix");
+      return JavaBundle.message("inspection.unused.parameter.delete.quickfix");
     }
 
     @Override

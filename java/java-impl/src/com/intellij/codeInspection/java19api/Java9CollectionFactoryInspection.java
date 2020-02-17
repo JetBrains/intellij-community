@@ -17,6 +17,7 @@ package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -68,8 +69,8 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("inspection.collection.factories.option.ignore.non.constant"), "IGNORE_NON_CONSTANT");
-    panel.addCheckbox(InspectionsBundle.message("inspection.collection.factories.option.suggest.ofentries"), "SUGGEST_MAP_OF_ENTRIES");
+    panel.addCheckbox(JavaBundle.message("inspection.collection.factories.option.ignore.non.constant"), "IGNORE_NON_CONSTANT");
+    panel.addCheckbox(JavaBundle.message("inspection.collection.factories.option.suggest.ofentries"), "SUGGEST_MAP_OF_ENTRIES");
     return panel;
   }
 
@@ -94,9 +95,9 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
           PsiElement element = wholeStatement ? call : call.getMethodExpression().getReferenceNameElement();
           if(element != null) {
             String replacementMethod = model.hasTooManyMapEntries() ? "ofEntries" : model.myCopy ? "copyOf" : "of";
-            String fixMessage = InspectionsBundle.message("inspection.collection.factories.fix.name", model.myType, replacementMethod);
+            String fixMessage = JavaBundle.message("inspection.collection.factories.fix.name", model.myType, replacementMethod);
             String inspectionMessage =
-              InspectionsBundle.message("inspection.collection.factories.message", model.myType, replacementMethod);
+              JavaBundle.message("inspection.collection.factories.message", model.myType, replacementMethod);
             holder.registerProblem(element, inspectionMessage, type, new ReplaceWithCollectionFactoryFix(fixMessage));
           }
         }
@@ -334,7 +335,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.collection.factories.fix.family.name");
+      return JavaBundle.message("inspection.collection.factories.fix.family.name");
     }
 
     @Override

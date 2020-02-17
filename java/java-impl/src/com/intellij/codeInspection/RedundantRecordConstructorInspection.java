@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiRecordUtil;
@@ -57,12 +58,12 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
         if (statements.length == components.length && assignedCount == components.length && 
             ctor.getModifierList().getAnnotations().length == 0 && ctor.getDocComment() == null) {
           holder.registerProblem(Objects.requireNonNull(ctor.getNameIdentifier()),
-                                 InspectionsBundle.message("inspection.redundant.record.constructor.canonical.message"),
+                                 JavaBundle.message("inspection.redundant.record.constructor.canonical.message"),
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteElementFix(ctor));
           return;
         }
         if (PsiUtil.findReturnStatements(body).length > 0) return;
-        holder.registerProblem(ctor.getParameterList(), InspectionsBundle.message("inspection.redundant.record.constructor.can.be.compact.message"),
+        holder.registerProblem(ctor.getParameterList(), JavaBundle.message("inspection.redundant.record.constructor.can.be.compact.message"),
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ConvertToCompactConstructorFix());
       }
 
@@ -77,7 +78,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
           if (count < statements.length) {
             for (int i = statements.length - count; i < statements.length; i++) {
               holder.registerProblem(statements[i],
-                                     InspectionsBundle.message("inspection.redundant.record.constructor.statement.message"),
+                                     JavaBundle.message("inspection.redundant.record.constructor.statement.message"),
                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteElementFix(statements[i]));
             }
             return;
@@ -86,7 +87,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
         if (ctor.getModifierList().getAnnotations().length == 0 &&
             ctor.getDocComment() == null) {
           holder.registerProblem(Objects.requireNonNull(ctor.getNameIdentifier()),
-                                 InspectionsBundle.message("inspection.redundant.record.constructor.compact.message"),
+                                 JavaBundle.message("inspection.redundant.record.constructor.compact.message"),
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteElementFix(ctor));
         }
       }
@@ -124,7 +125,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
     public @NotNull String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.record.constructor.fix.family.name");
+      return JavaBundle.message("inspection.redundant.record.constructor.fix.family.name");
     }
 
     @Override

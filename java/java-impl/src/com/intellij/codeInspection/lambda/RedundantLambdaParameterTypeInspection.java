@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.lambda;
 
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +25,7 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
       public void visitParameterList(PsiParameterList parameterList) {
         super.visitParameterList(parameterList);
         if (isApplicable(parameterList)) {
-          holder.registerProblem(parameterList, InspectionsBundle.message("inspection.message.lambda.parameter.type.is.redundant"), new LambdaParametersFix());
+          holder.registerProblem(parameterList, JavaBundle.message("inspection.message.lambda.parameter.type.is.redundant"), new LambdaParametersFix());
         }
       }
     };
@@ -108,7 +109,7 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
     @Nls
     @Override
     public @NotNull String getFamilyName() {
-      return InspectionsBundle.message("quickfix.family.remove.redundant.parameter.types");
+      return JavaBundle.message("quickfix.family.remove.redundant.parameter.types");
     }
 
     @Override

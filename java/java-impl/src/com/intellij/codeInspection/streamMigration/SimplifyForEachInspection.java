@@ -4,6 +4,7 @@ package com.intellij.codeInspection.streamMigration;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -212,7 +213,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("quickfix.family.simplify.foreach.lambda");
+      return JavaBundle.message("quickfix.family.simplify.foreach.lambda");
     }
 
     @Override
@@ -239,7 +240,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       }
       else {
         myContext = context;
-        setText(InspectionsBundle.message("quickfix.text.avoid.mutation.using.stream.api.0.operation", simplifyContext.myMigration.getReplacement()));
+        setText(JavaBundle.message("quickfix.text.avoid.mutation.using.stream.api.0.operation", simplifyContext.myMigration.getReplacement()));
       }
     }
 
@@ -279,7 +280,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("quickfix.family.avoid.mutation.using.stream.api");
+      return JavaBundle.message("quickfix.family.avoid.mutation.using.stream.api");
     }
   }
 }

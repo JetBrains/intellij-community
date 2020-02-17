@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaWithIfSurrounder;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -43,7 +44,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return InspectionsBundle.message("inspection.surround.if.quickfix", myText, mySuffix);
+    return JavaBundle.message("inspection.surround.if.quickfix", myText, mySuffix);
   }
 
   public SurroundWithIfFix(@NotNull PsiExpression expressionToAssert, String suffix) {
@@ -94,7 +95,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.surround.if.family");
+    return JavaBundle.message("inspection.surround.if.family");
   }
 
   public static boolean isAvailable(PsiExpression qualifier) {

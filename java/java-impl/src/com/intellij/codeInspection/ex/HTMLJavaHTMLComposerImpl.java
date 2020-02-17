@@ -7,6 +7,7 @@ import com.intellij.codeInspection.HTMLComposer;
 import com.intellij.codeInspection.HTMLJavaHTMLComposer;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +75,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   @Override
   public void appendLibraryMethods(@NotNull StringBuilder buf, RefClass refClass) {
     if (refClass.getLibraryMethods().size() > 0) {
-      HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.overrides.library.methods"));
+      HTMLComposer.appendHeading(buf, JavaBundle.message("inspection.export.results.overrides.library.methods"));
 
       myComposer.startList(buf);
       for (RefMethod refMethod : refClass.getLibraryMethods()) {
@@ -113,7 +114,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   @Override
   public void appendTypeReferences(@NotNull StringBuilder buf, RefClass refClass) {
     if (refClass.getInTypeReferences().size() > 0) {
-      HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.type.references"));
+      HTMLComposer.appendHeading(buf, JavaBundle.message("inspection.export.results.type.references"));
 
       myComposer.startList(buf);
       for (final RefElement refElement : refClass.getInTypeReferences()) {
@@ -212,7 +213,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   public void appendLocation(final RefEntity entity, @NotNull StringBuilder buf) {
     RefEntity owner = entity.getOwner();
     if (owner instanceof RefPackage) {
-      buf.append(InspectionsBundle.message("inspection.export.results.package"));
+      buf.append(JavaBundle.message("inspection.export.results.package"));
       buf.append(HTMLComposerImpl.NBSP).append(HTMLComposerImpl.CODE_OPENING);
       buf.append(RefJavaUtil.getInstance().getPackageName(entity));
       buf.append(HTMLComposerImpl.CODE_CLOSING);
@@ -257,7 +258,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   @Override
   public void appendReferencePresentation(RefEntity refElement, @NotNull StringBuilder buf, final boolean isPackageIncluded) {
     if (refElement instanceof RefImplicitConstructor) {
-      buf.append(InspectionsBundle.message("inspection.export.results.implicit.constructor"));
+      buf.append(JavaBundle.message("inspection.export.results.implicit.constructor"));
       buf.append("&nbsp;");
       refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
     }

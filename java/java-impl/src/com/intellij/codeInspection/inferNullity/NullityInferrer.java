@@ -19,7 +19,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -163,8 +163,8 @@ public class NullityInferrer {
 
   public static void nothingFoundMessage(final Project project) {
     SwingUtilities.invokeLater(
-      () -> Messages.showInfoMessage(project, InspectionsBundle.message("dialog.message.no.places.found.to.infer.nullable.notnull"),
-                                     InspectionsBundle.message("dialog.title.infer.nullity.results")));
+      () -> Messages.showInfoMessage(project, JavaBundle.message("dialog.message.no.places.found.to.infer.nullable.notnull"),
+                                     JavaBundle.message("dialog.title.infer.nullity.results")));
   }
 
   private static void annotateNotNull(Project project,

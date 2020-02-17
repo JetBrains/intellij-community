@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -80,7 +81,7 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
         if (allConsumingCall == null) return;
         PsiElement nameElement = allConsumingCall.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;
-        holder.registerProblem(nameElement, InspectionsBundle.message("inspection.endless.stream.description"));
+        holder.registerProblem(nameElement, JavaBundle.message("inspection.endless.stream.description"));
       }
     };
   }

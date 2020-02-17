@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,7 +27,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.switch.expression.migration.warn.only.on.expression"),
+    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.switch.expression.migration.warn.only.on.expression"),
                                           this,
                                           "myWarnOnlyOnExpressionConversion");
   }
@@ -55,10 +56,10 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         if (!myWarnOnlyOnExpressionConversion && replacer.getType() == ReplacementType.Statement) {
           fixes.add(new SetInspectionOptionFix(EnhancedSwitchMigrationInspection.this,
                                                "myWarnOnlyOnExpressionConversion",
-                                               InspectionsBundle.message("inspection.switch.expression.migration.warn.only.on.expression"),
+                                               JavaBundle.message("inspection.switch.expression.migration.warn.only.on.expression"),
                                                true));
         }
-        holder.registerProblem(switchKeyword, InspectionsBundle.message(
+        holder.registerProblem(switchKeyword, JavaBundle.message(
           "inspection.switch.expression.migration.inspection.switch.description"), type, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     };
@@ -224,15 +225,15 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   private enum ReplacementType {
     Expression("inspection.replace.with.switch.expression.fix.name"),
     Statement("inspection.replace.with.enhanced.switch.statement.fix.name");
-    @PropertyKey(resourceBundle = InspectionsBundle.BUNDLE)
+    @PropertyKey(resourceBundle = JavaBundle.BUNDLE)
     private final String key;
 
-    ReplacementType(@PropertyKey(resourceBundle = InspectionsBundle.BUNDLE) String key) {
+    ReplacementType(@PropertyKey(resourceBundle = JavaBundle.BUNDLE) String key) {
       this.key = key;
     }
 
     String getFixName() {
-      return InspectionsBundle.message(key);
+      return JavaBundle.message(key);
     }
   }
 

@@ -1,9 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.optionalToIf;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.streamToLoop.ChainVariable;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,7 +44,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
         if (operations == null || operations.size() < 1 || !(operations.get(0) instanceof SourceOperation)) return;
         OptionalToIfContext context = OptionalToIfContext.create(terminalCall);
         if (context == null) return;
-        holder.registerProblem(terminalCall, InspectionsBundle.message("inspection.message.replace.optional.with.if.statements"), new ReplaceOptionalWithIfFix());
+        holder.registerProblem(terminalCall, JavaBundle.message("inspection.message.replace.optional.with.if.statements"), new ReplaceOptionalWithIfFix());
       }
     };
   }
@@ -165,7 +169,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("quickfix.family.replace.optional.chain.with.if.statements");
+      return JavaBundle.message("quickfix.family.replace.optional.chain.with.if.statements");
     }
 
     @Override

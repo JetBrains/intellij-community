@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteMultiCatchFix;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -111,7 +112,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
         String charsetString = getCharsetString(charset);
         if (charsetString == null) return;
         String constantName = "StandardCharsets." + SUPPORTED_CHARSETS.get(charsetString);
-        holder.registerProblem(place, InspectionsBundle.message("inspection.charset.object.can.be.used.message", constantName),
+        holder.registerProblem(place, JavaBundle.message("inspection.charset.object.can.be.used.message", constantName),
                                new CharsetObjectCanBeUsedFix(constantName));
       }
 
@@ -258,14 +259,14 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.charset.object.can.be.used.fix.name", myConstantName);
+      return JavaBundle.message("inspection.charset.object.can.be.used.fix.name", myConstantName);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.charset.object.can.be.used.fix.family.name");
+      return JavaBundle.message("inspection.charset.object.can.be.used.fix.family.name");
     }
 
     @Override

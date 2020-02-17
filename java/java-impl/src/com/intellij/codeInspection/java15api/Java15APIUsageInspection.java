@@ -8,6 +8,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -93,11 +94,11 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
   @Override
   public JComponent createOptionsPanel() {
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false));
-    panel.add(new JLabel(InspectionsBundle.message("label.forbid.api.usages")));
+    panel.add(new JLabel(JavaBundle.message("label.forbid.api.usages")));
 
-    JRadioButton projectRb = new JRadioButton(InspectionsBundle.message("radio.button.respecting.to.project.language.level.settings"));
+    JRadioButton projectRb = new JRadioButton(JavaBundle.message("radio.button.respecting.to.project.language.level.settings"));
     panel.add(projectRb);
-    JRadioButton customRb = new JRadioButton(InspectionsBundle.message("radio.button.higher.than"));
+    JRadioButton customRb = new JRadioButton(JavaBundle.message("radio.button.higher.than"));
     panel.add(customRb);
     ButtonGroup gr = new ButtonGroup();
     gr.add(projectRb);
@@ -250,8 +251,8 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
                 element2Highlight = aClass instanceof PsiAnonymousClass ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass;
               }
               myHolder.registerProblem(element2Highlight,
-                                       methods.size() == 1 ? InspectionsBundle.message("inspection.1.8.problem.single.descriptor", methods.get(0).getName(), getJdkName(effectiveLanguageLevel))
-                                                           : InspectionsBundle.message("inspection.1.8.problem.descriptor", methods.size(), getJdkName(effectiveLanguageLevel)),
+                                       methods.size() == 1 ? JavaBundle.message("inspection.1.8.problem.single.descriptor", methods.get(0).getName(), getJdkName(effectiveLanguageLevel))
+                                                           : JavaBundle.message("inspection.1.8.problem.descriptor", methods.size(), getJdkName(effectiveLanguageLevel)),
                                        QuickFixFactory.getInstance().createImplementMethodsFix(aClass));
             }
           }
@@ -315,7 +316,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
               for (String generifiedClass : ourGenerifiedClasses) {
                 if (InheritanceUtil.isInheritor((PsiClass)resolved, generifiedClass) &&
                     !isRawInheritance(generifiedClass, (PsiClass)resolved, new HashSet<>())) {
-                  String message = InspectionsBundle.message("inspection.1.7.problem.descriptor", getJdkName(languageLevel));
+                  String message = JavaBundle.message("inspection.1.7.problem.descriptor", getJdkName(languageLevel));
                   myHolder.registerProblem(reference, message);
                   break;
                 }
@@ -398,7 +399,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     private void registerError(PsiElement reference, LanguageLevel api) {
       if (reference != null && isInProject(reference)) {
         myHolder.registerProblem(reference,
-                                 InspectionsBundle.message("inspection.1.5.problem.descriptor", getShortName(api)),
+                                 JavaBundle.message("inspection.1.5.problem.descriptor", getShortName(api)),
                                  myOnTheFly ? new LocalQuickFix[] {(LocalQuickFix)QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(LanguageLevel.values()[api.ordinal() + 1])} : null);
       }
     }

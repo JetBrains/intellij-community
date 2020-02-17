@@ -3,8 +3,8 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
@@ -45,7 +45,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
     new DialogWrapper(myProject) {
       {
         init();
-        setTitle(InspectionsBundle.message("dialog.title.configure.annotations"));
+        setTitle(JavaBundle.message("dialog.title.configure.annotations"));
       }
 
       @Override
@@ -71,7 +71,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureAnnotationsButton() {
-    final JButton configureAnnotations = new JButton(InspectionsBundle.message("button.annotations"));
+    final JButton configureAnnotations = new JButton(JavaBundle.message("button.annotations"));
     configureAnnotations.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -82,7 +82,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureClassPatternsButton() {
-    final JButton configureClassPatterns = new JButton(InspectionsBundle.message("button.code.patterns"));
+    final JButton configureClassPatterns = new JButton(JavaBundle.message("button.code.patterns"));
     configureClassPatterns.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -97,7 +97,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
           {
             init();
-            setTitle(InspectionsBundle.message("dialog.title.configure.code.patterns"));
+            setTitle(JavaBundle.message("dialog.title.configure.code.patterns"));
           }
 
           @Override

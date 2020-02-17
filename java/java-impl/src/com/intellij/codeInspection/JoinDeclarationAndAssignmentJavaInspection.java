@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -61,7 +62,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
           PsiLocalVariable variable = context.myVariable;
           PsiAssignmentExpression assignment = context.myAssignment;
           assert location == variable || location == assignment : "context location";
-          String message = InspectionsBundle.message("inspection.join.declaration.and.assignment.message", context.myName);
+          String message = JavaBundle.message("inspection.join.declaration.and.assignment.message", context.myName);
           JoinDeclarationAndAssignmentFix fix = new JoinDeclarationAndAssignmentFix();
 
           if (isOnTheFly && (context.myIsUpdate || isInformationLevel(location))) {
@@ -203,7 +204,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.join.declaration.and.assignment.fix.family.name");
+      return JavaBundle.message("inspection.join.declaration.and.assignment.fix.family.name");
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -109,12 +110,12 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     if (online) {
       if (modules.length == 0) {
-        Messages.showMessageDialog(project, InspectionsBundle.message("inspection.no.modules.error.message"),
+        Messages.showMessageDialog(project, JavaBundle.message("inspection.no.modules.error.message"),
                                    CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         return false;
       }
       if (isBadSdk(project, modules)) {
-        Messages.showMessageDialog(project, InspectionsBundle.message("inspection.no.jdk.error.message"),
+        Messages.showMessageDialog(project, JavaBundle.message("inspection.no.jdk.error.message"),
                                    CommonBundle.getErrorTitle(), Messages.getErrorIcon());
 
         SdkPopupFactory
@@ -134,20 +135,20 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     }
     else {
       if (modules.length == 0) {
-        System.err.println(InspectionsBundle.message("inspection.no.modules.error.message"));
+        System.err.println(JavaBundle.message("inspection.no.modules.error.message"));
         return false;
       }
       if (isBadSdk(project, modules)) {
-        System.err.println(InspectionsBundle.message("inspection.no.jdk.error.message"));
+        System.err.println(JavaBundle.message("inspection.no.jdk.error.message"));
         System.err.println(
-          InspectionsBundle.message("offline.inspections.jdk.not.found", ProjectRootManager.getInstance(project).getProjectSdkName()));
+          JavaBundle.message("offline.inspections.jdk.not.found", ProjectRootManager.getInstance(project).getProjectSdkName()));
         return false;
       }
 
       for (Module module : modules) {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
         if (ModuleType.get(module) instanceof JavaModuleType && rootManager.getSourceRoots(true).length == 0) {
-          LOG.info(InspectionsBundle.message("offline.inspections.no.source.roots", module.getName()));
+          LOG.info(JavaBundle.message("offline.inspections.no.source.roots", module.getName()));
         }
         final OrderEntry[] entries = rootManager.getOrderEntries();
         for (OrderEntry entry : entries) {
@@ -162,7 +163,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
             final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
             final Library library = libraryOrderEntry.getLibrary();
             if (library == null) {
-              System.err.println(InspectionsBundle.message("offline.inspections.library.was.not.resolved",
+              System.err.println(JavaBundle.message("offline.inspections.library.was.not.resolved",
                                                            libraryOrderEntry.getPresentableName(), module.getName()));
             }
             else {
@@ -172,7 +173,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
               declaredUrls.removeAll(detectedUrls);
               declaredUrls.removeIf(library::isJarDirectory);
               if (!declaredUrls.isEmpty()) {
-                System.err.println(InspectionsBundle.message("offline.inspections.library.urls.were.not.resolved",
+                System.err.println(JavaBundle.message("offline.inspections.library.urls.were.not.resolved",
                                                              StringUtil.join(declaredUrls, ", "),
                                                              libraryOrderEntry.getPresentableName(), module.getName()));
               }

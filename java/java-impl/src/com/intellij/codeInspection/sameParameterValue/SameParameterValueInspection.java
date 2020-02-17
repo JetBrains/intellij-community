@@ -7,6 +7,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -64,7 +65,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     LabeledComponent<VisibilityModifierChooser> component = LabeledComponent.create(new VisibilityModifierChooser(() -> true,
                                                                                                                   highestModifier,
                                                                                                                   (newModifier) -> highestModifier = newModifier),
-                                                                                    InspectionsBundle
+                                                                                    JavaBundle
                                                                                       .message("label.minimal.reported.method.visibility"),
                                                                                     BorderLayout.WEST);
     panel.add(component, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
@@ -79,7 +80,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     });
     minimalUsageCountEditor.setValue(minimalUsageCount);
     minimalUsageCountEditor.setColumns(4);
-    panel.add(LabeledComponent.create(minimalUsageCountEditor, InspectionsBundle.message("label.minimal.reported.method.usage.count"), BorderLayout.WEST),
+    panel.add(LabeledComponent.create(minimalUsageCountEditor, JavaBundle.message("label.minimal.reported.method.usage.count"), BorderLayout.WEST),
               new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NORTHWEST, JBUI.emptyInsets(), 0, 0));
     return panel;
   }
@@ -212,7 +213,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       suggestFix = !javaParameter.isVarArgs() && !usedForWriting && accessible ;
     }
     return manager.createProblemDescriptor(ObjectUtils.notNull(UDeclarationKt.getAnchorPsi(parameter), parameter),
-                                           InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
+                                           JavaBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      name,
                                                                      StringUtil.unquoteString(shortName)),
                                            suggestFix ? createFix(name, stringPresentation) : null,
@@ -236,14 +237,14 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     @Override
     @NotNull
     public String getName() {
-      return InspectionsBundle
+      return JavaBundle
         .message("inspection.same.parameter.fix.name", myParameterName, StringUtil.unquoteString(myValue));
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.same.parameter.fix.family.name");
+      return JavaBundle.message("inspection.same.parameter.fix.family.name");
     }
 
     @Override
@@ -288,7 +289,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       Project project = method.getProject();
       if (!ProgressManager.getInstance()
         .runProcessWithProgressSynchronously(() -> { methods.addAll(OverridingMethodsSearch.search(method).findAll()); },
-                                             InspectionsBundle.message("progress.title.search.for.overriding.methods"), true, project)) {
+                                             JavaBundle.message("progress.title.search.for.overriding.methods"), true, project)) {
         return;
       }
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, methods, true)) return;

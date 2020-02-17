@@ -802,7 +802,7 @@
                      key="redundant.local.variable.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.data.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection"/>
-    <globalInspection groupPath="Java" language="JAVA" shortName="BooleanMethodIsAlwaysInverted" bundle="messages.InspectionsBundle"
+    <globalInspection groupPath="Java" language="JAVA" shortName="BooleanMethodIsAlwaysInverted" bundle="messages.JavaBundle"
                       key="boolean.method.is.always.inverted.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.data.flow.issues" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection"/>
@@ -1335,8 +1335,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="Annotation" bundle="messages.InspectionGadgetsBundle" key="annotation.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.java.language.level.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.jdk.AnnotationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ForwardCompatibility" bundle="messages.InspectionsBundle" key="inspection.forward.compatibility.name"
-                     groupKey="group.names.java.language.level.issues" enabledByDefault="true" level="WARNING"
+    <localInspection groupPath="Java" language="JAVA" shortName="ForwardCompatibility" bundle="messages.JavaBundle" key="inspection.forward.compatibility.name"
+                     groupKey="group.names.java.language.level.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.jdk.ForwardCompatibilityInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="AssertStatement" bundle="messages.InspectionGadgetsBundle" key="assert.statement.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.java.language.level.issues" enabledByDefault="false"

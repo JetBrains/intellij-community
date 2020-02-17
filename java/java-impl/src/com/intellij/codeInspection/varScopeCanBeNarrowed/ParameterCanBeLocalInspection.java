@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -71,7 +72,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
                                           boolean isOnTheFly) {
     return manager.createProblemDescriptor(
       identifier,
-      InspectionsBundle.message("inspection.parameter.can.be.local.problem.descriptor"),
+      JavaBundle.message("inspection.parameter.can.be.local.problem.descriptor"),
       true,
       ProblemHighlightType.LIKE_UNUSED_SYMBOL,
       isOnTheFly,

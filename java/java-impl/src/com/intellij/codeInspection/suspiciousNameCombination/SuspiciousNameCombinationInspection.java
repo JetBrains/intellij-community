@@ -22,6 +22,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -92,7 +93,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.class"));
     JPanel panel = new JPanel(new GridLayout(2, 1));
     panel.add(nameGroupsPanel);
-    tablePanel.setBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message(
+    tablePanel.setBorder(IdeBorderFactory.createTitledBorder(JavaBundle.message(
       "section.title.inspection.suspicious.names.ignore.methods"), false));
     panel.add(tablePanel);
     return panel;

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -41,7 +42,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel
-      .addCheckbox(InspectionsBundle.message("inspection.require.non.null.no.warning.replacement.bigger"), "noWarningReplacementBigger");
+      .addCheckbox(JavaBundle.message("inspection.require.non.null.no.warning.replacement.bigger"), "noWarningReplacementBigger");
     return panel;
   }
 
@@ -64,7 +65,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         boolean isInfoLevel = noWarningReplacementBigger && ifStatement.getTextLength() + maybeImplicitElseLength - context.getLenAfterReplace() < MINIMAL_WARN_DELTA_SIZE;
         ProblemHighlightType highlight = getHighlight(context, isInfoLevel);
         if (!isOnTheFly && highlight == ProblemHighlightType.INFORMATION) return;
-        holder.registerProblem(ifStatement.getFirstChild(), InspectionsBundle.message("inspection.require.non.null.message", method), highlight,
+        holder.registerProblem(ifStatement.getFirstChild(), JavaBundle.message("inspection.require.non.null.message", method), highlight,
                                new ReplaceWithRequireNonNullFix(method, false));
       }
 
@@ -91,7 +92,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         boolean isInfoLevel = noWarningReplacementBigger && replacementShorter;
         ProblemHighlightType highlightType = isInfoLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         if (!isOnTheFly && highlightType == ProblemHighlightType.INFORMATION) return;
-        holder.registerProblem(ternary, InspectionsBundle.message("inspection.require.non.null.message", method),
+        holder.registerProblem(ternary, JavaBundle.message("inspection.require.non.null.message", method),
                                highlightType, new ReplaceWithRequireNonNullFix(method, true));
       }
     };
@@ -109,14 +110,14 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.require.non.null.message", myMethod);
+      return JavaBundle.message("inspection.require.non.null.message", myMethod);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.require.non.null");
+      return JavaBundle.message("inspection.require.non.null");
     }
 
     @Override

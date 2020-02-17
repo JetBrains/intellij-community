@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -71,7 +72,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
             if (FunctionalExpressionUtils.isFunctionalReferenceTo(arg, JAVA_UTIL_MAP_ENTRY, null, "get"+suffix, PsiType.EMPTY_ARRAY)) {
               String replacementMethod = "comparingBy" + suffix;
               holder.registerProblem(nameElement,
-                                     InspectionsBundle.message("inspection.simplifiable.comparator.entry.comparator.message",
+                                     JavaBundle.message("inspection.simplifiable.comparator.entry.comparator.message",
                                                                "Entry." + replacementMethod + "()"),
                                      new ReplaceWithEntryComparatorFix(replacementMethod));
             }
@@ -85,7 +86,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
             String maxOrMin = nameElement.getText();
             String replacement = getMaxMinReplacement(maxOrMin);
             holder.registerProblem(nameElement,
-                                   InspectionsBundle.message("inspection.simplifiable.comparator.reversed.message", maxOrMin, replacement),
+                                   JavaBundle.message("inspection.simplifiable.comparator.reversed.message", maxOrMin, replacement),
                                    new ReplaceMaxMinFix(replacement));
           }
         }
@@ -106,7 +107,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
         String name = comparingCall.getMethodExpression().getReferenceName();
         holder
           .registerProblem(comparingCall.getMethodExpression(),
-                           InspectionsBundle.message("inspection.simplifiable.comparator.comparing.message", name),
+                           JavaBundle.message("inspection.simplifiable.comparator.comparing.message", name),
                            ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteComparingCallFix(name, targetMethod));
       }
     };
@@ -160,15 +161,15 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     @Override
     public String getName() {
       return myTargetMethod.equals("thenComparing")
-             ? InspectionsBundle.message("inspection.simplifiable.comparator.fix.remove.name", mySourceMethod)
-             : InspectionsBundle.message("inspection.simplifiable.comparator.fix.replace.name", mySourceMethod, myTargetMethod);
+             ? JavaBundle.message("inspection.simplifiable.comparator.fix.remove.name", mySourceMethod)
+             : JavaBundle.message("inspection.simplifiable.comparator.fix.replace.name", mySourceMethod, myTargetMethod);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.simplifiable.comparator.fix.comparing.family.name");
+      return JavaBundle.message("inspection.simplifiable.comparator.fix.comparing.family.name");
     }
 
     @Override
@@ -194,14 +195,14 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.simplifiable.comparator.fix.reversed.name", myReplacement);
+      return JavaBundle.message("inspection.simplifiable.comparator.fix.reversed.name", myReplacement);
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.simplifiable.comparator.fix.reversed.family.name");
+      return JavaBundle.message("inspection.simplifiable.comparator.fix.reversed.family.name");
     }
 
     @Override
@@ -236,7 +237,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.simplifiable.comparator.fix.entry.comparator.family.name");
+      return JavaBundle.message("inspection.simplifiable.comparator.fix.entry.comparator.family.name");
     }
 
     @Override

@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +39,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   @Override
   @NotNull
   public final String getFamilyName() {
-    return InspectionsBundle.message("inspection.convert.to.local.quickfix");
+    return JavaBundle.message("inspection.convert.to.local.quickfix");
   }
 
   @Override

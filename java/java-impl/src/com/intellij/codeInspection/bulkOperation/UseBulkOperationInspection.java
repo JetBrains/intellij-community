@@ -1,9 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bulkOperation;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IteratorDeclaration;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -29,7 +33,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.replace.with.bulk.wrap.arrays"), this,
+    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.replace.with.bulk.wrap.arrays"), this,
                                           "USE_ARRAYS_AS_LIST");
   }
 
@@ -208,7 +212,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
         }
         if (isSupportedQualifier(qualifier) && info.isSupportedIterable(qualifier, iterable, USE_ARRAYS_AS_LIST)) {
           holder.registerProblem(methodExpression,
-                                 InspectionsBundle.message("inspection.replace.with.bulk.message", info.getReplacementName()),
+                                 JavaBundle.message("inspection.replace.with.bulk.message", info.getReplacementName()),
                                  new UseBulkOperationFix(info));
         }
       }
@@ -236,14 +240,14 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.replace.with.bulk.fix.name", myInfo.getReplacementName());
+      return JavaBundle.message("inspection.replace.with.bulk.fix.name", myInfo.getReplacementName());
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.replace.with.bulk.fix.family.name");
+      return JavaBundle.message("inspection.replace.with.bulk.fix.family.name");
     }
 
     @Override

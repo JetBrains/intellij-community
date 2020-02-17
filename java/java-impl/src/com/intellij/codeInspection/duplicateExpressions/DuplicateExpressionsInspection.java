@@ -3,6 +3,7 @@ package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -140,7 +141,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
             else if (isOnTheFly) {
               fixes.add(new IntroduceVariableFix(occurrence));
             }
-            holder.registerProblem(occurrence, InspectionsBundle.message("inspection.duplicate.expressions.message"),
+            holder.registerProblem(occurrence, JavaBundle.message("inspection.duplicate.expressions.message"),
                                    fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
           }
         }
@@ -272,7 +273,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(
-      InspectionsBundle.message("inspection.duplicate.expressions.complexity.threshold"), this, "complexityThreshold", 3);
+      JavaBundle.message("inspection.duplicate.expressions.complexity.threshold"), this, "complexityThreshold", 3);
   }
 
   private static class IntroduceVariableFix implements LocalQuickFix {
@@ -284,14 +285,14 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.duplicate.expressions.introduce.variable.fix.family.name");
+      return JavaBundle.message("inspection.duplicate.expressions.introduce.variable.fix.family.name");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.duplicate.expressions.introduce.variable.fix.name", myExpressionText);
+      return JavaBundle.message("inspection.duplicate.expressions.introduce.variable.fix.name", myExpressionText);
     }
 
     @Override
@@ -339,14 +340,14 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.duplicate.expressions.reuse.variable.fix.family.name");
+      return JavaBundle.message("inspection.duplicate.expressions.reuse.variable.fix.family.name");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.duplicate.expressions.reuse.variable.fix.name", myVariableName, myExpressionText);
+      return JavaBundle.message("inspection.duplicate.expressions.reuse.variable.fix.name", myVariableName, myExpressionText);
     }
 
     @Override
@@ -371,14 +372,14 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.duplicate.expressions.replace.other.occurrences.fix.family.name");
+      return JavaBundle.message("inspection.duplicate.expressions.replace.other.occurrences.fix.family.name");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.duplicate.expressions.replace.other.occurrences.fix.name", myVariableName, myExpressionText);
+      return JavaBundle.message("inspection.duplicate.expressions.replace.other.occurrences.fix.name", myVariableName, myExpressionText);
     }
 
     @Override

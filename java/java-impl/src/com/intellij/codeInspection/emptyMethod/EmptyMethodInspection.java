@@ -10,6 +10,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -86,29 +87,29 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
         }
       }
       if (refSuper == null || refUtil.compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
-        message = InspectionsBundle.message("inspection.empty.method.problem.descriptor");
+        message = JavaBundle.message("inspection.empty.method.problem.descriptor");
       }
     }
     else if (refMethod.hasBody() && hasEmptySuperImplementation(refMethod)) {
 
-      message = InspectionsBundle.message("inspection.empty.method.problem.descriptor1");
+      message = JavaBundle.message("inspection.empty.method.problem.descriptor1");
     }
     else if (areAllImplementationsEmpty(refMethod) && refSuper == null) {
       if (refMethod.hasBody()) {
         if (refMethod.getDerivedMethods().isEmpty()) {
           if (refMethod.getSuperMethods().isEmpty()) {
-            message = InspectionsBundle.message("inspection.empty.method.problem.descriptor2");
+            message = JavaBundle.message("inspection.empty.method.problem.descriptor2");
           }
         }
         else {
           needToDeleteHierarchy = true;
-          message = InspectionsBundle.message("inspection.empty.method.problem.descriptor3");
+          message = JavaBundle.message("inspection.empty.method.problem.descriptor3");
         }
       }
       else {
         if (!refMethod.getDerivedMethods().isEmpty()) {
           needToDeleteHierarchy = true;
-          message = InspectionsBundle.message("inspection.empty.method.problem.descriptor4");
+          message = JavaBundle.message("inspection.empty.method.problem.descriptor4");
         }
       }
     }
@@ -266,10 +267,10 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   @Nullable
   public JComponent createOptionsPanel() {
     final JPanel listPanel = SpecialAnnotationsUtil
-      .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, InspectionsBundle.message("special.annotations.annotations.list"));
+      .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, JavaBundle.message("special.annotations.annotations.list"));
 
     final JPanel panel = new JPanel(new BorderLayout(2, 2));
-    panel.add(new SingleCheckboxOptionsPanel(InspectionsBundle.message("checkbox.comments.and.javadoc.count.as.content"), this, "commentsAreContent"), BorderLayout.NORTH);
+    panel.add(new SingleCheckboxOptionsPanel(JavaBundle.message("checkbox.comments.and.javadoc.count.as.content"), this, "commentsAreContent"), BorderLayout.NORTH);
     panel.add(listPanel, BorderLayout.CENTER);
     return panel;
   }
@@ -366,6 +367,6 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private static String getQuickFixName() {
-    return InspectionsBundle.message("inspection.empty.method.delete.quickfix");
+    return JavaBundle.message("inspection.empty.method.delete.quickfix");
   }
 }

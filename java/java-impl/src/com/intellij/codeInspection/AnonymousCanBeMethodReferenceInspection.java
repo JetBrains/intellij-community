@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection.MethodReferenceCandidate;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -87,7 +88,7 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
                     type = ProblemHighlightType.INFORMATION;
                   }
                   holder.registerProblem(parent,
-                                         InspectionsBundle.message(
+                                         JavaBundle.message(
                                            "inspection.message.anonymous.ref.loc.can.be.replaced.with.method.reference"),
                                          type, rangeInElement, new ReplaceWithMethodRefFix());
                 }
@@ -103,7 +104,7 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
       @NotNull
       @Override
       public String getFamilyName() {
-        return InspectionsBundle.message("quickfix.family.replace.with.method.reference");
+        return JavaBundle.message("quickfix.family.replace.with.method.reference");
       }
 
     @Override

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -54,8 +55,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("checkbox.warn.if.only.foreach.replacement.is.available"), "SUGGEST_FOREACH");
-    panel.addCheckbox(InspectionsBundle.message("checkbox.warn.if.the.loop.is.trivial"), "REPLACE_TRIVIAL_FOREACH");
+    panel.addCheckbox(JavaBundle.message("checkbox.warn.if.only.foreach.replacement.is.available"), "SUGGEST_FOREACH");
+    panel.addCheckbox(JavaBundle.message("checkbox.warn.if.the.loop.is.trivial"), "REPLACE_TRIVIAL_FOREACH");
     return panel;
   }
 

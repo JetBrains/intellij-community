@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -186,7 +187,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
                   if (startElement != null) {
                     holder.registerProblem(methodCall, new TextRange(startElement.getTextOffset() - methodCall.getTextOffset(),
                                                                      methodCall.getTextLength()),
-                                           InspectionsBundle.message("inspection.message.can.be.replaced.with.0.constructor", replacement),
+                                           JavaBundle.message("inspection.message.can.be.replaced.with.0.constructor", replacement),
                                            new SimplifyCallChainFix(new SimplifyCollectionCreationFix(replacement)));
                   }
                 }
@@ -285,7 +286,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("quickfix.family.simplify.stream.call.chain");
+      return JavaBundle.message("quickfix.family.simplify.stream.call.chain");
     }
 
     @Override
@@ -342,7 +343,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("quickfix.text.replace.0.stream.with.1.2", myQualifierCall, ClassUtil.extractClassName(myClassName), myMethodName);
+      return JavaBundle.message("quickfix.text.replace.0.stream.with.1.2", myQualifierCall, ClassUtil.extractClassName(myClassName), myMethodName);
     }
 
     @Nullable
@@ -465,7 +466,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle
+      return JavaBundle
         .message("quickfix.text.replace.stream.0.with.1.2", myStreamMethod, myReplacementMethod, myChangeSemantics ? " (may change semantics)" : "");
     }
 
@@ -532,7 +533,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("quickfix.text.replace.collect.0.with.1.2", myCollector, myStreamSequenceStripped,
+      return JavaBundle.message("quickfix.text.replace.collect.0.with.1.2", myCollector, myStreamSequenceStripped,
                                        myChangeSemantics ? " (may change semantics when result is null)" : "");
     }
 
@@ -604,7 +605,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("quickfix.text.replace.filter.0.is.present.with.any.match", myFindMethodName);
+      return JavaBundle.message("quickfix.text.replace.filter.0.is.present.with.any.match", myFindMethodName);
     }
 
     @Override

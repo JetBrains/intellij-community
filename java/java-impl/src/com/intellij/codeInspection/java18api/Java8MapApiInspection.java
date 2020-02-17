@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,13 +60,13 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("checkbox.suggest.conversion.to.map.computeifabsent"), "mySuggestMapComputeIfAbsent");
-    panel.addCheckbox(InspectionsBundle.message("checkbox.suggest.conversion.to.map.getordefault"), "mySuggestMapGetOrDefault");
-    panel.addCheckbox(InspectionsBundle.message("checkbox.suggest.conversion.to.map.putifabsent"), "mySuggestMapPutIfAbsent");
-    panel.addCheckbox(InspectionsBundle.message("checkbox.suggest.conversion.to.map.merge"), "mySuggestMapMerge");
-    panel.addCheckbox(InspectionsBundle.message("checkbox.suggest.conversion.to.map.replaceall"), "mySuggestMapReplaceAll");
-    panel.addCheckbox(InspectionsBundle.message("checkbox.treat.get.k.null.the.same.as.containskey.k.may.change.semantics"), "myTreatGetNullAsContainsKey");
-    panel.addCheckbox(InspectionsBundle.message("checkbox.suggest.replacement.even.if.lambda.may.have.side.effects"), "mySideEffects");
+    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.computeifabsent"), "mySuggestMapComputeIfAbsent");
+    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.getordefault"), "mySuggestMapGetOrDefault");
+    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.putifabsent"), "mySuggestMapPutIfAbsent");
+    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.merge"), "mySuggestMapMerge");
+    panel.addCheckbox(JavaBundle.message("checkbox.suggest.conversion.to.map.replaceall"), "mySuggestMapReplaceAll");
+    panel.addCheckbox(JavaBundle.message("checkbox.treat.get.k.null.the.same.as.containskey.k.may.change.semantics"), "myTreatGetNullAsContainsKey");
+    panel.addCheckbox(JavaBundle.message("checkbox.suggest.replacement.even.if.lambda.may.have.side.effects"), "mySideEffects");
     return panel;
   }
 

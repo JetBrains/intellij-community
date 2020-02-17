@@ -4,6 +4,7 @@ package com.intellij.codeInspection.streamToLoop;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -49,7 +50,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("checkbox.iterate.unknown.stream.sources.via.stream.iterator"), this, "SUPPORT_UNKNOWN_SOURCES");
+    return new SingleCheckboxOptionsPanel(JavaBundle.message("checkbox.iterate.unknown.stream.sources.via.stream.iterator"), this, "SUPPORT_UNKNOWN_SOURCES");
   }
 
   @NotNull
@@ -258,7 +259,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("quickfix.family.replace.stream.api.chain.with.loop");
+      return JavaBundle.message("quickfix.family.replace.stream.api.chain.with.loop");
     }
 
     @Override

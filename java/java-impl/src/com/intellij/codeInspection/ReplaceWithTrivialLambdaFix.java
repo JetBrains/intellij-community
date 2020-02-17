@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
@@ -36,14 +37,14 @@ public class ReplaceWithTrivialLambdaFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return InspectionsBundle.message("inspection.replace.with.trivial.lambda.fix.name", myValue);
+    return JavaBundle.message("inspection.replace.with.trivial.lambda.fix.name", myValue);
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.replace.with.trivial.lambda.fix.family.name");
+    return JavaBundle.message("inspection.replace.with.trivial.lambda.fix.family.name");
   }
 
   @Override

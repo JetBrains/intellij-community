@@ -11,6 +11,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -40,7 +41,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
-      InspectionsBundle.message("checkbox.html.report.inaccessible.symbols"), this, "REPORT_INACCESSIBLE");
+      JavaBundle.message("checkbox.html.report.inaccessible.symbols"), this, "REPORT_INACCESSIBLE");
   }
 
   private static LocalQuickFix createAddQualifierFix(PsiJavaCodeReferenceElement reference) {
@@ -65,7 +66,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
 
   private String getResolveErrorMessage(ResolveResult @NotNull [] resolveResults, @NotNull PsiElement context, CharSequence referenceText) {
     if (resolveResults.length == 0) {
-      return InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + referenceText + "</code>");
+      return JavaBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + referenceText + "</code>");
     }
 
     boolean allAccessible = !REPORT_INACCESSIBLE ||
@@ -74,16 +75,16 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
                               .allMatch(element -> isAccessible(element, context));
 
     return allAccessible ? null :
-           InspectionsBundle.message("inspection.javadoc.problem.inaccessible", "<code>" + referenceText + "</code>");
+           JavaBundle.message("inspection.javadoc.problem.inaccessible", "<code>" + referenceText + "</code>");
   }
 
   private String getResolveErrorMessage(PsiElement resolved, @NotNull PsiElement context, CharSequence referenceText) {
     if (resolved == null) {
-      return InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + referenceText + "</code>");
+      return JavaBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + referenceText + "</code>");
     }
 
     if (REPORT_INACCESSIBLE && !isAccessible(resolved, context)) {
-      return InspectionsBundle.message("inspection.javadoc.problem.inaccessible", "<code>" + referenceText + "</code>");
+      return JavaBundle.message("inspection.javadoc.problem.inaccessible", "<code>" + referenceText + "</code>");
     }
 
     return null;
@@ -271,7 +272,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("quickfix.family.change.javadoc.to");
+      return JavaBundle.message("quickfix.family.change.javadoc.to");
     }
 
     @Override
@@ -354,13 +355,13 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("quickfix.text.remove.javadoc.0.1", myTagName, myParamName);
+      return JavaBundle.message("quickfix.text.remove.javadoc.0.1", myTagName, myParamName);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("quickfix.family.remove.javadoc.tag");
+      return JavaBundle.message("quickfix.family.remove.javadoc.tag");
     }
 
     @Override

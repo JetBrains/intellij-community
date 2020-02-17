@@ -7,8 +7,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -38,7 +38,7 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("intention.family.edit.range");
+    return JavaBundle.message("intention.family.edit.range");
   }
 
   @Nullable
@@ -69,7 +69,7 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
     if (owner != null) {
       boolean hasRange = !LongRangeSet.fromPsiElement(owner).equals(LongRangeSet.all());
       String name = ((PsiNamedElement)owner).getName();
-      setText(hasRange ? InspectionsBundle.message("intention.text.edit.range.of.0", name) : InspectionsBundle.message("intention.text.add.range.to.0", name));
+      setText(hasRange ? JavaBundle.message("intention.text.edit.range.of.0", name) : JavaBundle.message("intention.text.add.range.to.0", name));
       return true;
     }
     return false;
@@ -121,19 +121,19 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
       .setDefaultInsets(JBUI.insets(2)).setDefaultWeightX(0, 1.0).setDefaultWeightX(1, 3.0).setDefaultWeightY(1.0);
     panel.add(Messages.configureMessagePaneUi(new JTextPane(), ourPrompt), c.nextLine().next().coverLine());
     
-    JLabel fromLabel = new JLabel(InspectionsBundle.message("label.from.inclusive"));
+    JLabel fromLabel = new JLabel(JavaBundle.message("label.from.inclusive"));
     fromLabel.setDisplayedMnemonic('f');
     fromLabel.setLabelFor(minText);
     panel.add(fromLabel, c.nextLine().next());
     panel.add(minText, c.next());
     
-    JLabel toLabel = new JLabel(InspectionsBundle.message("label.to.inclusive"));
+    JLabel toLabel = new JLabel(JavaBundle.message("label.to.inclusive"));
     toLabel.setDisplayedMnemonic('t');
     toLabel.setLabelFor(maxText);
     panel.add(toLabel, c.nextLine().next());
     panel.add(maxText, c.next());
 
-    DialogBuilder builder = new DialogBuilder(project).setNorthPanel(panel).title(InspectionsBundle.message("dialog.title.edit.range"));
+    DialogBuilder builder = new DialogBuilder(project).setNorthPanel(panel).title(JavaBundle.message("dialog.title.edit.range"));
     builder.setPreferredFocusComponent(minText);
     builder.setHelpId("define_range_dialog");
     return builder;

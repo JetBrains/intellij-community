@@ -7,6 +7,7 @@ import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.util.ExecUtil
+import com.intellij.java.JavaBundle
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -86,7 +87,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
           val description = StringUtil.capitalize(message)
           val severity = if (error) HighlightSeverity.ERROR else HighlightSeverity.WARNING
           holder.newAnnotation(severity, description).range(range)
-            .newFix(EmptyIntentionAction(InspectionsBundle.message("inspection.javadoc.lint.display.name"))).key(key.value).registerFix()
+            .newFix(EmptyIntentionAction(JavaBundle.message("inspection.javadoc.lint.display.name"))).key(key.value).registerFix()
             .create()
         }
       }

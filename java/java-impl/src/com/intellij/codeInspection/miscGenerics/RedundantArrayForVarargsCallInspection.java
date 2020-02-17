@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -38,7 +39,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.array.creation.quickfix");
+      return JavaBundle.message("inspection.redundant.array.creation.quickfix");
     }
   }
 
@@ -112,7 +113,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         if (!isSafeToFlatten(expression, method, initializers)) {
           return;
         }
-        String message = InspectionsBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor");
+        String message = JavaBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor");
         ProblemDescriptor descriptor = manager.createProblemDescriptor(lastArg, message, myQuickFixAction,
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
         problems.add(descriptor);

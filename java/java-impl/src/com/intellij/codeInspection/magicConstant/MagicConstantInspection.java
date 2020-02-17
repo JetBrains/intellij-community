@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.magicConstant.MagicConstantUtils.AllowedValues;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -495,7 +496,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("quickfix.family.replace.with.magic.constant");
+      return JavaBundle.message("quickfix.family.replace.with.magic.constant");
     }
 
     @NotNull

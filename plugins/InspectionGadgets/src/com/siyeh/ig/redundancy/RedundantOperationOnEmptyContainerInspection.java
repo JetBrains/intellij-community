@@ -3,13 +3,13 @@ package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -90,13 +90,13 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
         String message;
         if (type instanceof PsiArrayType) {
           lengthField = SpecialField.ARRAY_LENGTH;
-          message = InspectionsBundle.message("inspection.redundant.operation.on.empty.array.message");
+          message = JavaBundle.message("inspection.redundant.operation.on.empty.array.message");
         } else if (InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION)) {
           lengthField = SpecialField.COLLECTION_SIZE;
-          message = InspectionsBundle.message("inspection.redundant.operation.on.empty.collection.message");
+          message = JavaBundle.message("inspection.redundant.operation.on.empty.collection.message");
         } else if (InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
           lengthField = SpecialField.COLLECTION_SIZE;
-          message = InspectionsBundle.message("inspection.redundant.operation.on.empty.map.message");
+          message = JavaBundle.message("inspection.redundant.operation.on.empty.map.message");
         } else {
           return null;
         }

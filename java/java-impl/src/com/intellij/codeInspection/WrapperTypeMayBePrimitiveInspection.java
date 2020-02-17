@@ -3,13 +3,17 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -65,7 +69,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
         body.accept(visitor);
         for (PsiVariable variable : visitor.getVariablesToUnbox()) {
           PsiElement elementToHighlight = variable.getTypeElement() != null ? variable.getTypeElement() : variable;
-          holder.registerProblem(elementToHighlight, InspectionsBundle.message("inspection.wrapper.type.may.be.primitive.name"), new ConvertWrapperTypeToPrimitive());
+          holder.registerProblem(elementToHighlight, JavaBundle.message("inspection.wrapper.type.may.be.primitive.name"), new ConvertWrapperTypeToPrimitive());
         }
       }
     };
@@ -321,7 +325,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.wrapper.type.may.be.primitive.fix.name");
+      return JavaBundle.message("inspection.wrapper.type.may.be.primitive.fix.name");
     }
 
     @Override

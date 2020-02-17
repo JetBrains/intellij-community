@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -284,14 +285,14 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.merge.fix.family.name");
+      return JavaBundle.message("inspection.duplicate.branches.in.switch.merge.fix.family.name");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.merge.fix.name", mySwitchLabelText);
+      return JavaBundle.message("inspection.duplicate.branches.in.switch.merge.fix.name", mySwitchLabelText);
     }
 
     @Override
@@ -310,7 +311,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.merge.with.default.fix.name");
+      return JavaBundle.message("inspection.duplicate.branches.in.switch.merge.with.default.fix.name");
     }
 
     @Override
@@ -330,14 +331,14 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.delete.fix.name");
+      return JavaBundle.message("inspection.duplicate.branches.in.switch.delete.fix.name");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.delete.fix.family.name");
+      return JavaBundle.message("inspection.duplicate.branches.in.switch.delete.fix.family.name");
     }
 
     @Override
@@ -525,11 +526,11 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     }
 
     String getCaseBranchMessage() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.message");
+      return JavaBundle.message("inspection.duplicate.branches.in.switch.message");
     }
 
     String getDefaultBranchMessage() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.default.message");
+      return JavaBundle.message("inspection.duplicate.branches.in.switch.default.message");
     }
 
     @Override
@@ -823,14 +824,14 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.merge.fix.family.name");
+      return JavaBundle.message("inspection.duplicate.branches.in.switch.merge.fix.family.name");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.merge.fix.name", mySwitchLabelText);
+      return JavaBundle.message("inspection.duplicate.branches.in.switch.merge.fix.name", mySwitchLabelText);
     }
 
     @Override
@@ -849,14 +850,14 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.delete.fix.name");
+      return JavaBundle.message("inspection.duplicate.branches.in.switch.delete.fix.name");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.delete.fix.family.name");
+      return JavaBundle.message("inspection.duplicate.branches.in.switch.delete.fix.family.name");
     }
 
     @Override

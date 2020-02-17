@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -26,7 +27,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.null.value.for.optional.option.comparisons"), 
+    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.null.value.for.optional.option.comparisons"),
                                           this, "WARN_ON_COMPARISON");
   }
 
@@ -37,7 +38,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       @Override
       public void visitAssignmentExpression(PsiAssignmentExpression expression) {
         checkNulls(expression.getType(), expression.getRExpression(),
-                   InspectionsBundle.message("inspection.null.value.for.optional.context.assignment"));
+                   JavaBundle.message("inspection.null.value.for.optional.context.assignment"));
       }
 
       @Override
@@ -56,7 +57,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
           if (varArgCall && i >= parameters.length - 1 && type instanceof PsiEllipsisType) {
             type = ((PsiEllipsisType)type).getComponentType();
           }
-          checkNulls(type, args[i], InspectionsBundle.message("inspection.null.value.for.optional.context.parameter"));
+          checkNulls(type, args[i], JavaBundle.message("inspection.null.value.for.optional.context.parameter"));
         }
       }
 
@@ -65,20 +66,20 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
         PsiElement body = lambda.getBody();
         if (body instanceof PsiExpression) {
           checkNulls(LambdaUtil.getFunctionalInterfaceReturnType(lambda), (PsiExpression)body,
-                     InspectionsBundle.message("inspection.null.value.for.optional.context.lambda"));
+                     JavaBundle.message("inspection.null.value.for.optional.context.lambda"));
         }
       }
 
       @Override
       public void visitReturnStatement(PsiReturnStatement statement) {
         checkNulls(PsiTypesUtil.getMethodReturnType(statement), statement.getReturnValue(),
-                   InspectionsBundle.message("inspection.null.value.for.optional.context.return"));
+                   JavaBundle.message("inspection.null.value.for.optional.context.return"));
       }
 
       @Override
       public void visitVariable(PsiVariable variable) {
         checkNulls(variable.getType(), variable.getInitializer(),
-                   InspectionsBundle.message("inspection.null.value.for.optional.context.declaration"));
+                   JavaBundle.message("inspection.null.value.for.optional.context.declaration"));
       }
 
       @Override
@@ -88,10 +89,10 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
         if (value != null &&
             TypeUtils.isOptional(value.getType()) &&
             !hasSubsequentIsPresentCall(value, binOp, JavaTokenType.EQEQ.equals(binOp.getOperationTokenType()))) {
-          holder.registerProblem(binOp, InspectionsBundle.message("inspection.null.value.for.optional.assigned.message"),
+          holder.registerProblem(binOp, JavaBundle.message("inspection.null.value.for.optional.assigned.message"),
                                  new ReplaceWithIsPresentFix(),
                                  new SetInspectionOptionFix(OptionalAssignedToNullInspection.this, "WARN_ON_COMPARISON",
-                                                            InspectionsBundle
+                                                            JavaBundle
                                                               .message("inspection.null.value.for.optional.assigned.ignore.fix.name"), false));
         }
       }
@@ -131,7 +132,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
 
       private void register(PsiExpression expression, PsiClassType type, String contextName) {
         holder.registerProblem(expression,
-                               InspectionsBundle.message("inspection.null.value.for.optional.message", contextName),
+                               JavaBundle.message("inspection.null.value.for.optional.message", contextName),
                                new ReplaceWithEmptyOptionalFix(type));
       }
     };
@@ -162,7 +163,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.null.value.for.optional.fix.family.name");
+      return JavaBundle.message("inspection.null.value.for.optional.fix.family.name");
     }
 
     @Override

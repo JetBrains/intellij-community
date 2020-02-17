@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
@@ -26,7 +26,7 @@ public class DeprecatedEntryPoint extends EntryPoint {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionsBundle.message("checkbox.deprecated.members");
+    return JavaBundle.message("checkbox.deprecated.members");
   }
 
   @Override
