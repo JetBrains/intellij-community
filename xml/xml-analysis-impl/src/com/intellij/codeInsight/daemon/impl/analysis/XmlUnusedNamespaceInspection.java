@@ -17,7 +17,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.DefaultXmlExtension;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.util.XmlRefCountHolder;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
@@ -54,21 +54,21 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
           XmlAttributeValue value = attribute.getValueElement();
           assert value != null;
-          holder.registerProblem(attribute, XmlBundle.message("xml.inspections.unused.schema.declaration"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+          holder.registerProblem(attribute, XmlAnalysisBundle.message("xml.inspections.unused.schema.declaration"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                  new RemoveNamespaceDeclarationFix(declaredPrefix, false, !refCountHolder.isUsedNamespace(namespace)));
 
           XmlTag parent = attribute.getParent();
           if (declaredPrefix.isEmpty()) {
             XmlAttribute location = getDefaultLocation(parent);
             if (location != null) {
-              holder.registerProblem(location, XmlBundle.message("xml.inspections.unused.schema.location"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+              holder.registerProblem(location, XmlAnalysisBundle.message("xml.inspections.unused.schema.location"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                      new RemoveNamespaceDeclarationFix(declaredPrefix, true, true));
             }
           }
           else if (!refCountHolder.isUsedNamespace(namespace)) {
             for (PsiReference reference : getLocationReferences(namespace, parent)) {
               if (!XmlHighlightVisitor.hasBadResolve(reference, false))
-              holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, XmlBundle.message("xml.inspections.unused.schema.location"),
+              holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, XmlAnalysisBundle.message("xml.inspections.unused.schema.location"),
                                                  new RemoveNamespaceDeclarationFix(declaredPrefix, true, true));
             }
           }
@@ -111,7 +111,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     if (XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(attribute.getNamespace())) {
       if (XmlUtil.NO_NAMESPACE_SCHEMA_LOCATION_ATT.equals(attribute.getLocalName())) {
         if (refCountHolder.isInUse("")) return;
-        holder.registerProblem(attribute, XmlBundle.message("xml.inspections.unused.schema.location"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+        holder.registerProblem(attribute, XmlAnalysisBundle.message("xml.inspections.unused.schema.location"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                new RemoveNamespaceLocationFix(""));
       }
       else if (XmlUtil.SCHEMA_LOCATION_ATT.equals(attribute.getLocalName())) {
@@ -124,14 +124,14 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
             String ns = getNamespaceFromReference(reference);
             if (ArrayUtil.indexOf(attribute.getParent().knownNamespaces(), ns) == -1 && !refCountHolder.isUsedNamespace(ns)) {
               if (!XmlHighlightVisitor.hasBadResolve(reference, false)) {
-                holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, XmlBundle.message("xml.inspections.unused.schema.location"),
+                holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, XmlAnalysisBundle.message("xml.inspections.unused.schema.location"),
                                                    new RemoveNamespaceLocationFix(ns));
               }
               for (int j = i + 1; j < referencesLength; j++) {
                 PsiReference nextRef = references[j];
                 if (nextRef instanceof URLReference) break;
                 if (!XmlHighlightVisitor.hasBadResolve(nextRef, false)) {
-                  holder.registerProblemForReference(nextRef, ProblemHighlightType.LIKE_UNUSED_SYMBOL, XmlBundle.message("xml.inspections.unused.schema.location"),
+                  holder.registerProblemForReference(nextRef, ProblemHighlightType.LIKE_UNUSED_SYMBOL, XmlAnalysisBundle.message("xml.inspections.unused.schema.location"),
                                                      new RemoveNamespaceLocationFix(ns));
                 }
               }
@@ -212,7 +212,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     @Override
     @NotNull
     public String getName() {
-      return XmlBundle.message("xml.inspections.unused.schema.remove");
+      return XmlAnalysisBundle.message("xml.inspections.unused.schema.remove");
     }
 
     @Override

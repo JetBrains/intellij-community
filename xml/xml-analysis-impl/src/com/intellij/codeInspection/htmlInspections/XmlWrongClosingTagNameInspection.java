@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -20,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
@@ -96,7 +96,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
-    holder.newAnnotation(HighlightSeverity.ERROR, XmlErrorBundle.message("tag.has.wrong.closing.tag.name"))
+    holder.newAnnotation(HighlightSeverity.ERROR, XmlAnalysisBundle.message("tag.has.wrong.closing.tag.name"))
       .range(start)
       .withFix(renameEndAction)
       .withFix(renameStartAction)
@@ -123,7 +123,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
-    holder.newAnnotation(HighlightSeverity.ERROR, XmlErrorBundle.message("wrong.closing.tag.name"))
+    holder.newAnnotation(HighlightSeverity.ERROR, XmlAnalysisBundle.message("wrong.closing.tag.name"))
       .range(end)
       .withFix(new RemoveExtraClosingTagIntentionAction())
       .withFix(renameEndAction)

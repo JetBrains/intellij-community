@@ -32,7 +32,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,7 +91,7 @@ public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInsp
                     final int offsetInElement = offset - elementRange.getStartOffset();
                     holder.registerProblem(
                       psiElement,
-                      XmlBundle.message("unescaped.xml.character"),
+                      XmlAnalysisBundle.message("unescaped.xml.character"),
                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                       createFix(psiElement, offsetInElement)
                     );

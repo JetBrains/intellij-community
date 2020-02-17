@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -30,8 +29,8 @@ import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
@@ -74,13 +73,13 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
 
   @Override
   protected String getCheckboxTitle() {
-    return XmlBundle.message("html.inspections.unknown.tag.checkbox.title");
+    return XmlAnalysisBundle.message("html.inspections.unknown.tag.checkbox.title");
   }
 
   @Override
   @NotNull
   protected String getPanelTitle() {
-    return XmlBundle.message("html.inspections.unknown.tag.title");
+    return XmlAnalysisBundle.message("html.inspections.unknown.tag.title");
   }
 
   @Override
@@ -106,13 +105,13 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
       final String name = tag.getName();
 
       if (!isCustomValuesEnabled() || !isCustomValue(name)) {
-        final AddCustomHtmlElementIntentionAction action = new AddCustomHtmlElementIntentionAction(TAG_KEY, name, XmlBundle.message("add.custom.html.tag", name));
+        final AddCustomHtmlElementIntentionAction action = new AddCustomHtmlElementIntentionAction(TAG_KEY, name, XmlAnalysisBundle.message("add.custom.html.tag", name));
 
         // todo: support "element is not allowed" message for html5
         // some tags in html5 cannot be found in xhtml5.xsd if they are located in incorrect context, so they get any-element descriptor (ex. "canvas: tag)
         final String message = isAbstractDescriptor(ownDescriptor)
-                               ? XmlErrorBundle.message("unknown.html.tag", name)
-                               : XmlErrorBundle.message("element.is.not.allowed.here", name);
+                               ? XmlAnalysisBundle.message("unknown.html.tag", name)
+                               : XmlAnalysisBundle.message("element.is.not.allowed.here", name);
 
         final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
         assert startTagName != null;

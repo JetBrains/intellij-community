@@ -29,8 +29,8 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,7 +58,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
                 node.getElementType() == XmlTokenType.XML_END_TAG_START) {
               holder.registerProblem(
                 tag,
-                XmlBundle.message("xml.inspections.tag.empty.body"),
+                XmlAnalysisBundle.message("xml.inspections.tag.empty.body"),
                 isCollapsibleTag(tag) ? new Fix(tag) : null
               );
             }

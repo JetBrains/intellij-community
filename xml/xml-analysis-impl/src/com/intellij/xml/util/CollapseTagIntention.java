@@ -31,7 +31,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +43,7 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlBundle.message("xml.inspections.replace.tag.empty.body.with.empty.end");
+    return XmlAnalysisBundle.message("xml.inspections.replace.tag.empty.body.with.empty.end");
   }
 
   @Nls
