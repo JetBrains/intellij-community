@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -14,10 +14,12 @@ open class GHPullRequestShort(id: String,
                               val author: GHActor?,
                               val createdAt: Date,
                               @JsonProperty("assignees") assignees: GHNodes<GHUser>,
-                              @JsonProperty("labels") labels: GHNodes<GHLabel>) : GHNode(id) {
+                              @JsonProperty("labels") labels: GHNodes<GHLabel>,
+                              val viewerDidAuthor: Boolean) : GHNode(id) {
 
   @JsonIgnore
   val assignees = assignees.nodes
+
   @JsonIgnore
   val labels = labels.nodes
 }

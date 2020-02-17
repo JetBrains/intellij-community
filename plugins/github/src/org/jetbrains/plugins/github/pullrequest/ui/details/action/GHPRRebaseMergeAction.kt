@@ -3,36 +3,20 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.errorOnEdt
-import org.jetbrains.plugins.github.util.handleOnEdt
-import java.awt.event.ActionEvent
-import javax.swing.AbstractAction
+import java.util.concurrent.CompletableFuture
 
-internal class GHPRRebaseMergeAction(private val detailsModel: SingleValueModel<out GHPullRequestShort>,
-                                     private val busyStateModel: SingleValueModel<Boolean>,
-                                     private val stateService: GHPRStateService,
-                                     private val errorPanel: HtmlEditorPane)
-  : AbstractAction("Rebase and Merge") {
+internal class GHPRRebaseMergeAction(busyStateModel: SingleValueModel<Boolean>,
+                                     errorHandler: (String) -> Unit,
+                                     detailsModel: SingleValueModel<GHPullRequest?>,
+                                     private val stateService: GHPRStateService)
+  : GHPRMergeAction("Rebase and Merge", busyStateModel, errorHandler, detailsModel) {
 
-  override fun actionPerformed(e: ActionEvent) {
-    detailsModel.value.let {
-      if (it !is GHPullRequest) return
-      if (busyStateModel.value) return
-      busyStateModel.value = true
-      errorPanel.setBody("")
-
-      stateService.rebaseMerge(EmptyProgressIndicator(), it.number, it.headRefOid)
-        .errorOnEdt { error ->
-          //language=HTML
-          errorPanel.setBody("<p>Error occurred while merging pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
-        }
-        .handleOnEdt { _, _ ->
-          busyStateModel.value = false
-        }
-    }
+  init {
+    update()
   }
+
+  override fun submitMergeTask(details: GHPullRequest): CompletableFuture<Unit>? =
+    stateService.rebaseMerge(EmptyProgressIndicator(), details.number, details.headRefOid)
 }

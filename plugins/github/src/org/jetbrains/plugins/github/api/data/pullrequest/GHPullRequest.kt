@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -18,6 +18,7 @@ class GHPullRequest(id: String,
                     createdAt: Date,
                     @JsonProperty("assignees") assignees: GHNodes<GHUser>,
                     @JsonProperty("labels") labels: GHNodes<GHLabel>,
+                    viewerDidAuthor: Boolean,
                     val bodyHTML: String,
                     val mergeable: GHPullRequestMergeableState,
                     @JsonProperty("reviewRequests") reviewRequests: GHNodes<GHPullRequestReviewRequest>,
@@ -25,13 +26,12 @@ class GHPullRequest(id: String,
                     val baseRefOid: String,
                     headRefName: String,
                     val headRefOid: String,
-                    headRepository: Repository?,
-                    val viewerCanUpdate: Boolean,
-                    val viewerDidAuthor: Boolean)
-  : GHPullRequestShort(id, url, number, title, state, author, createdAt, assignees, labels) {
+                    headRepository: Repository?)
+  : GHPullRequestShort(id, url, number, title, state, author, createdAt, assignees, labels, viewerDidAuthor) {
 
   @JsonIgnore
   val reviewRequests = reviewRequests.nodes
+
   @JsonIgnore
   val headLabel = headRepository?.nameWithOwner.orEmpty() + ":" + headRefName
 

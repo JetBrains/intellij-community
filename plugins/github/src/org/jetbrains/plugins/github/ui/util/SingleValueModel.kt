@@ -15,6 +15,18 @@ class SingleValueModel<T>(initialValue: T) {
   }
 
   @CalledInAwt
+  fun addAndInvokeValueChangedListener(disposable: Disposable, listener: () -> Unit) {
+    addValueChangedListener(disposable, listener)
+    listener()
+  }
+
+  @CalledInAwt
+  fun addAndInvokeValueChangedListener(listener: () -> Unit) {
+    addValueChangedListener(listener)
+    listener()
+  }
+
+  @CalledInAwt
   fun addValueChangedListener(disposable: Disposable, listener: () -> Unit) =
     SimpleEventListener.addDisposableListener(changeEventDispatcher, disposable, listener)
 

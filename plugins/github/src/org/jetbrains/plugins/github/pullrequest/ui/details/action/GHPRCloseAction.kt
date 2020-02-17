@@ -3,30 +3,19 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.errorOnEdt
-import org.jetbrains.plugins.github.util.handleOnEdt
-import java.awt.event.ActionEvent
-import javax.swing.AbstractAction
 
-internal class GHPRCloseAction(private val number: Long,
-                               private val busyStateModel: SingleValueModel<Boolean>,
+internal class GHPRCloseAction(busyStateModel: SingleValueModel<Boolean>,
+                               errorHandler: (String) -> Unit,
                                private val stateService: GHPRStateService,
-                               private val errorPanel: HtmlEditorPane)
-  : AbstractAction("Close") {
+                               private val number: Long)
+  : GHPRStateChangeAction("Close", busyStateModel, errorHandler) {
 
-  override fun actionPerformed(e: ActionEvent?) {
-    if (busyStateModel.value) return
-    busyStateModel.value = true
-    errorPanel.setBody("")
-    stateService.close(EmptyProgressIndicator(), number)
-      .errorOnEdt { error ->
-        //language=HTML
-        errorPanel.setBody("<p>Error occurred while closing pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
-      }
-      .handleOnEdt { _, _ ->
-        busyStateModel.value = false
-      }
+  init {
+    update()
   }
+
+  override val errorPrefix = "Error occurred while closing pull request:"
+
+  override fun submitTask() = stateService.close(EmptyProgressIndicator(), number)
 }

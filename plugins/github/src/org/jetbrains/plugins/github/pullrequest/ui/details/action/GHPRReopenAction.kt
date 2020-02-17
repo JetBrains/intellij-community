@@ -3,30 +3,19 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.errorOnEdt
-import org.jetbrains.plugins.github.util.handleOnEdt
-import java.awt.event.ActionEvent
-import javax.swing.AbstractAction
 
-internal class GHPRReopenAction(private val number: Long,
-                                private val busyStateModel: SingleValueModel<Boolean>,
+internal class GHPRReopenAction(busyStateModel: SingleValueModel<Boolean>,
+                                errorHandler: (String) -> Unit,
                                 private val stateService: GHPRStateService,
-                                private val errorPanel: HtmlEditorPane)
-  : AbstractAction("Reopen") {
+                                private val number: Long)
+  : GHPRStateChangeAction("Reopen", busyStateModel, errorHandler) {
 
-  override fun actionPerformed(e: ActionEvent) {
-    if (busyStateModel.value) return
-    busyStateModel.value = true
-    errorPanel.setBody("")
-    stateService.reopen(EmptyProgressIndicator(), number)
-      .errorOnEdt { error ->
-        //language=HTML
-        errorPanel.setBody("<p>Error occurred while reopening pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
-      }
-      .handleOnEdt { _, _ ->
-        busyStateModel.value = false
-      }
+  init {
+    update()
   }
+
+  override val errorPrefix = "Error occurred while reopening pull request:"
+
+  override fun submitTask() = stateService.reopen(EmptyProgressIndicator(), number)
 }

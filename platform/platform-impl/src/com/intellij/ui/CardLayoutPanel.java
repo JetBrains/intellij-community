@@ -139,7 +139,9 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     }
     for (Component component : getComponents()) {
       if (component.isVisible()) {
-        return component.getPreferredSize();
+        Dimension size = component.getPreferredSize();
+        JBInsets.addTo(size, getInsets());
+        return size;
       }
     }
     return super.getPreferredSize();
@@ -152,7 +154,9 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     }
     for (Component component : getComponents()) {
       if (component.isVisible()) {
-        return component.getMinimumSize();
+        Dimension size = component.getMinimumSize();
+        JBInsets.addTo(size, getInsets());
+        return size;
       }
     }
     return super.getMinimumSize();

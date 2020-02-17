@@ -27,7 +27,4 @@ fragment pullRequestInfo on PullRequest {
   headRepository {
     nameWithOwner
   }
-
-  viewerCanUpdate
-  viewerDidAuthor
 }
