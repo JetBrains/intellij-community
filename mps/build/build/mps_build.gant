@@ -1,10 +1,9 @@
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.jps.idea.IdeaProjectLoader
-import org.jetbrains.intellij.build.MPSBuilder
 
 target("default": "Default") {
     String home = IdeaProjectLoader.guessHome(this)
     BuildUtils.addToClassPath("$home/community/build/groovy", ant)
     BuildUtils.addToClassPath("$home/groovy", ant)
-    new MPSBuilder(home, binding).build()
+    Class.forName("org.jetbrains.intellij.build.MPSBuilder").constructors[0].newInstance(home, binding).build()
 }
