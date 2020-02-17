@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction;
 import com.intellij.lang.java.JavaLanguage;
@@ -118,7 +117,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
 
       WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
         () -> {
-          PsiAnnotationOwner target = AddAnnotationPsiFix.getTarget(owner, qname);
+          PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(owner, qname);
           assert target != null;
           PsiElement element = target.addAnnotation(qname).replace(toInsert);
           JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
