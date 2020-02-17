@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
           final PsiFile psiFile = psiElement.getContainingFile();
 
           if (psiFile != null && (HTMLLanguage.INSTANCE == psiFile.getViewProvider().getBaseLanguage() || HTMLLanguage.INSTANCE == parent.getLanguage())) {
-            final String message = XmlErrorBundle.message("xml.parsing.closing.tag.matches.nothing");
+            final String message = XmlPsiBundle.message("xml.parsing.closing.tag.matches.nothing");
 
             if (message.equals(((PsiErrorElement)parent).getErrorDescription()) &&
                 psiFile.getContext() == null

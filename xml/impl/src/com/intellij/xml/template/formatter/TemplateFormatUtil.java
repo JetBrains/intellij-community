@@ -15,7 +15,6 @@
  */
 package com.intellij.xml.template.formatter;
 
-import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
@@ -32,6 +31,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.text.TextRangeUtil;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +44,8 @@ public class TemplateFormatUtil {
   private final static List<PsiElement> EMPTY_PSI_ELEMENT_LIST = new ArrayList<>();
   
   private final static String[] IGNORABLE_ERROR_MESSAGES = {
-    XmlErrorBundle.message("xml.parsing.closing.tag.matches.nothing"),
-    XmlErrorBundle.message("xml.parsing.closing.tag.name.missing")
+    XmlPsiBundle.message("xml.parsing.closing.tag.matches.nothing"),
+    XmlPsiBundle.message("xml.parsing.closing.tag.name.missing")
   };
 
   private TemplateFormatUtil() {

@@ -23,8 +23,8 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.PlatformIcons;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +55,7 @@ public class SchemaPrefix extends RenameableFakePsiElement {
 
   @Override
   public String getTypeName() {
-    return XmlBundle.message("xml.namespace.prefix");
+    return XmlPsiBundle.message("xml.namespace.prefix");
   }
 
   @Override

@@ -16,8 +16,8 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +41,7 @@ public class XmlFileType extends XmlLikeFileType implements DomSupportEnabled {
   @Override
   @NotNull
   public String getDescription() {
-    return IdeBundle.message("filetype.description.xml");
+    return XmlPsiBundle.message("filetype.description.xml");
   }
 
   @Override

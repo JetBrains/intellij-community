@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ThreeState;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +100,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("xml.suppressable.for.tag.title");
+      return XmlPsiBundle.message("xml.suppressable.for.tag.title");
     }
 
     @Override
@@ -129,7 +130,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("xml.suppressable.for.file.title");
+      return XmlPsiBundle.message("xml.suppressable.for.file.title");
     }
 
     @Override
@@ -157,7 +158,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("xml.suppressable.all.for.file.title");
+      return XmlPsiBundle.message("xml.suppressable.all.for.file.title");
     }
   }
 }
