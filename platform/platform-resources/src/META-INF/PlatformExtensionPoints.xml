@@ -361,5 +361,7 @@
     <extensionPoint name="titleInfoProvider" interface="com.intellij.openapi.wm.impl.TitleInfoProvider" area="IDEA_PROJECT"/>
 
     <extensionPoint name="lightEditTabAttributesProvider" interface="com.intellij.ide.lightEdit.LightEditTabAttributesProvider" dynamic="true"/>
+
+    <extensionPoint name="jdkDownloader.jdkInstallerListener" interface="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerListener" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

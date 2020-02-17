@@ -2007,7 +2007,7 @@
     <appStarter implementation="com.intellij.internal.DumpProjectIndexesStarter" />
     <applicationService serviceImplementation="com.intellij.internal.SharedIndexesLoader"/>
     <sharedIndexChunkLocator implementation="com.intellij.internal.SharedJdkIndexChunkLocator"/>
-    <startupActivity implementation="com.intellij.internal.SharedJdkIndexChunkLocatorInit"/>
+    <jdkDownloader.jdkInstallerListener implementation="com.intellij.internal.SharedJdkIndexChunkPreloader"/>
 
     <registryKey key="shared.indexes.url"
                  defaultValue="https://idea-indexes-cdn.s3-eu-west-1.amazonaws.com/"

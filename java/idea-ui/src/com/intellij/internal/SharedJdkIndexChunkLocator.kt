@@ -13,12 +13,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallRequest
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerListener
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.OrderEntry
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.indexing.hash.SharedIndexChunkConfiguration
 import com.intellij.util.indexing.hash.SharedIndexChunkConfigurationImpl
@@ -30,29 +28,23 @@ import java.nio.file.Path
 
 private fun isSharedIndexesDownloadEnabled() = ApplicationManager.getApplication()?.isUnitTestMode == false && Registry.`is`("shared.indexes.download")
 
-class SharedJdkIndexChunkLocatorInit : StartupActivity.DumbAware {
-  override fun runActivity(project: Project) {
+class SharedJdkIndexChunkPreloader : JdkInstallerListener {
+  override fun onJdkDownloadStarted(request: JdkInstallRequest, project: Project?) {
     if (!isSharedIndexesDownloadEnabled()) return
 
-    project.messageBus.connect().subscribe(JdkInstaller.TOPIC, object: JdkInstallerListener {
-      override fun onJdkDownloadStarted(request: JdkInstallRequest) {
-        if (!isSharedIndexesDownloadEnabled()) return
-
-        val jdk = request.item
-        val task = object: Task.Backgroundable(project, "Downloading Shared Indexes for ${jdk.fullPresentationText}", true, PerformInBackgroundOption.ALWAYS_BACKGROUND){
-          override fun run(indicator: ProgressIndicator) {
-            prefetchSharedIndex(jdk, indicator, project)
-          }
-        }
-
-        ProgressManager.getInstance().run(task)
+    val jdk = request.item
+    val task = object: Task.Backgroundable(project, "Downloading Shared Indexes for ${jdk.fullPresentationText}", true, PerformInBackgroundOption.ALWAYS_BACKGROUND){
+      override fun run(indicator: ProgressIndicator) {
+        prefetchSharedIndex(jdk, indicator, project)
       }
-    })
+    }
+
+    ProgressManager.getInstance().run(task)
   }
 
   private fun prefetchSharedIndex(jdk: JdkItem,
                                   indicator: ProgressIndicator,
-                                  project: Project) {
+                                  project: Project?) {
     val request = SharedIndexRequest(kind = "jdk", aliases = listOf(jdk.installFolderName, jdk.suggestedSdkName, "${jdk.jdkMajorVersion}"))
     val info = SharedIndexesLoader.getInstance().lookupSharedIndex(request, indicator)
 
@@ -64,7 +56,7 @@ class SharedJdkIndexChunkLocatorInit : StartupActivity.DumbAware {
       .getService(SharedIndexChunkConfiguration::class.java) as SharedIndexChunkConfigurationImpl
 
     runBlocking {
-      service.preloadIndex(project, descriptor, indicator).await()
+      service.preloadIndex(descriptor, indicator).await()
     }
   }
 }
@@ -129,7 +121,7 @@ private object SharedIndexesLogger {
     NotificationGroup.logOnlyGroup("SharedIndexes")
   }
 
-  fun logDownloadNotifications(project: Project, name: String, descriptor: ChunkDescriptor) = object: ChunkDescriptor by descriptor {
+  fun logDownloadNotifications(project: Project?, name: String, descriptor: ChunkDescriptor) = object: ChunkDescriptor by descriptor {
     override fun downloadChunk(targetFile: Path, indicator: ProgressIndicator) {
       logNotification(project, "Downloading Shared Index for $name")
       try {
@@ -140,7 +132,7 @@ private object SharedIndexesLogger {
     }
   }
 
-  fun logNotification(project: Project, message: String) {
+  fun logNotification(project: Project?, message: String) {
     LOG.warn("SharedIndexes: $message")
     if (ApplicationManager.getApplication().isInternal || Registry.`is`("shared.indexes.eventLogMessages")) {
       val msg = notificationGroup.createNotification(message, NotificationType.INFORMATION)
