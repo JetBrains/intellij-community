@@ -737,7 +737,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   public synchronized void reset() {
     List<ExtensionComponentAdapter> adapters = myAdapters;
     myAdapters = Collections.emptyList();
-    notifyListeners(ExtensionEvent.REMOVED, adapters, myListeners);
+    if (!adapters.isEmpty()) {
+      notifyListeners(ExtensionEvent.REMOVED, adapters, myListeners);
+    }
     clearCache();
   }
 
