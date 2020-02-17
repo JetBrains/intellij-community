@@ -15,9 +15,10 @@ import com.intellij.openapi.progress.createModalTask
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.IdeUICustomization
@@ -182,7 +183,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
         windowManager.assignFrame(frameHelper, project)
       }
       runActivity("tool window pane creation") {
-        (ToolWindowManager.getInstance(project) as ToolWindowManagerImpl).init(frameHelper)
+        ToolWindowManagerEx.getInstanceEx(project).init(frameHelper)
       }
     }, project.disposed)
   }
@@ -198,7 +199,9 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
         ProjectManagerImpl.showCannotConvertMessage(error, frame?.frame)
       }
 
-      frame?.frame?.dispose()
+      if (frame != null) {
+        Disposer.dispose(frame)
+      }
     }
   }
 

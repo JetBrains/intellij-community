@@ -8,6 +8,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.DesktopLayout;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +18,9 @@ import java.util.List;
 
 public abstract class ToolWindowManagerEx extends ToolWindowManager {
   public abstract void initToolWindow(@NotNull ToolWindowEP bean);
+
+  @ApiStatus.Internal
+  public abstract void init(ProjectFrameHelper frameHelper);
 
   @NotNull
   public static ToolWindowManagerEx getInstanceEx(@NotNull Project project) {

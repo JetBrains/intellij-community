@@ -648,13 +648,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final Component getFocusedComponent(@NotNull final Window window) {
+  public final Component getFocusedComponent(@NotNull Window window) {
     return myWindowWatcher.getFocusedComponent(window);
   }
 
   @Override
-  @Nullable
-  public final Component getFocusedComponent(@Nullable final Project project) {
+  public final @Nullable Component getFocusedComponent(@Nullable Project project) {
     return myWindowWatcher.getFocusedComponent(project);
   }
 

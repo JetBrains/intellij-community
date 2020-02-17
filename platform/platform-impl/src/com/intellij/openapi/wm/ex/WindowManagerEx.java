@@ -51,8 +51,7 @@ public abstract class WindowManagerEx extends WindowManager {
    * the method returns focused component in window which has no project.
    * If there is no focused component at all then the method returns {@code null}.
    */
-  @Nullable
-  public abstract Component getFocusedComponent(@Nullable Project project);
+  public abstract @Nullable Component getFocusedComponent(@Nullable Project project);
 
   public abstract Window getMostRecentFocusedWindow();
 

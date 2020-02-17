@@ -137,6 +137,10 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
+  public void init(ProjectFrameHelper frameHelper) {
+  }
+
+  @Override
   public String getLastActiveToolWindowId() {
     return null;
   }

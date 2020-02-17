@@ -234,9 +234,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @NotNull
   private static String message(@NotNull Throwable e) {
     String message = e.getMessage();
-    if (message != null) return message;
+    if (message != null) {
+      return message;
+    }
+
     message = e.getLocalizedMessage();
-    if (message != null) return message;
+    if (message != null) {
+      return message;
+
+    }
     message = e.toString();
     Throwable cause = e.getCause();
     if (cause != null) {
@@ -292,10 +298,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @ApiStatus.Internal
   public static void initProject(@NotNull Path file,
-                                  @NotNull ProjectImpl project,
-                                  boolean isRefreshVfsNeeded,
-                                  @Nullable Project template,
-                                  @Nullable ProgressIndicator indicator) {
+                                 @NotNull ProjectImpl project,
+                                 boolean isRefreshVfsNeeded,
+                                 @Nullable Project template,
+                                 @Nullable ProgressIndicator indicator) {
     LOG.assertTrue(!project.isDefault());
     if (indicator != null) {
       indicator.setIndeterminate(false);
@@ -423,10 +429,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       doLoadProject(project, ProgressManager.getInstance().getProgressIndicator());
     }
     catch (ProcessCanceledException e) {
-      GuiUtils.invokeLaterIfNeeded(() -> {
-        closeProject(project, false, /* dispose= */ true, true);
-        notifyProjectOpenFailed();
-      }, ModalityState.defaultModalityState());
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        closeProject(project, /* saveProject = */ false, /* dispose = */ true, /* checkCanClose = */ false);
+      });
+      notifyProjectOpenFailed();
       return false;
     }
     return true;
@@ -562,10 +568,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   private static void notifyProjectOpenFailed() {
-    Application application = ApplicationManager.getApplication();
-    application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed();
-    if (application.isUnitTestMode()) return;
-    WelcomeFrame.showIfNoProjectOpened();
+    Application app = ApplicationManager.getApplication();
+    app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed();
+    if (!app.isUnitTestMode()) {
+      WelcomeFrame.showIfNoProjectOpened();
+    }
   }
 
   @Override
@@ -608,7 +615,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @SuppressWarnings("TestOnlyProblems")
-  private boolean closeProject(@NotNull Project project, boolean isSaveProject, boolean dispose, boolean checkCanClose) {
+  private boolean closeProject(@NotNull Project project, boolean saveProject, boolean dispose, boolean checkCanClose) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {
       throw new IllegalStateException(
@@ -659,7 +666,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       getPublisher().projectClosingBeforeSave(project);
 
-      if (isSaveProject) {
+      if (saveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
         SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project);
       }

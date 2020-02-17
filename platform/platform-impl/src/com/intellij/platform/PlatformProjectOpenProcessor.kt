@@ -77,8 +77,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     @Deprecated("Use {@link #doOpenProject(Path, OpenProjectTask)} ")
     fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean, line: Int, callback: ProjectOpenedCallback?, isReopen: Boolean): Project? {
-      val options = OpenProjectTask(forceOpenInNewFrame, projectToClose)
-      options.line = line
+      val options = OpenProjectTask(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, line = line)
       return doOpenProject(Paths.get(virtualFile.path), options)
     }
 
@@ -86,8 +85,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     @Deprecated("Use {@link #doOpenProject(Path, OpenProjectTask)} ")
     fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, line: Int, callback: ProjectOpenedCallback?, options: EnumSet<Option>): Project? {
-      val openProjectOptions = OpenProjectTask(forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME), projectToClose = projectToClose, callback = callback)
-      openProjectOptions.line = line
+      val openProjectOptions = OpenProjectTask(forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME), projectToClose = projectToClose, callback = callback, line = line)
       return doOpenProject(Paths.get(virtualFile.path), openProjectOptions)
     }
 
@@ -210,6 +208,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
             frameAllocator.projectOpened(project)
           }
           else {
+            frameAllocator.projectNotLoaded(error = null)
             result = null
           }
         }
@@ -281,15 +280,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
   override fun openProjectAndFile(virtualFile: VirtualFile, line: Int, column: Int, tempProject: Boolean): Project? {
     // force open in a new frame if temp project
-    val options = OpenProjectTask(forceOpenInNewFrame = tempProject)
     val file = Paths.get(virtualFile.path)
     if (tempProject) {
-      return createTempProjectAndOpenFile(file, options)
+      return createTempProjectAndOpenFile(file, OpenProjectTask(forceOpenInNewFrame = true, line = line, column = column))
     }
     else {
-      options.line = line
-      options.column = column
-      return doOpenProject(file, options)
+      return doOpenProject(file, OpenProjectTask(line = line, column = column))
     }
   }
 
@@ -411,15 +407,7 @@ private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project
 
   val project = ProjectManagerImpl.doCreateProject(options.projectName, path)
   try {
-    val progressManager = ProgressManager.getInstance()
-    if (!ApplicationManager.getApplication().isDispatchThread && progressManager.progressIndicator != null) {
-      ProjectManagerImpl.initProject(path, project, /* isRefreshVfsNeeded = */ true, null, progressManager.progressIndicator)
-    }
-    else {
-      progressManager.runProcessWithProgressSynchronously({
-        ProjectManagerImpl.initProject(path, project,  /* isRefreshVfsNeeded = */ true, null, progressManager.progressIndicator)
-      }, IdeUICustomization.getInstance().projectMessage("project.load.progress"), !ProgressManager.getInstance().isInNonCancelableSection, project)
-    }
+    ProjectManagerImpl.initProject(path, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().progressIndicator)
   }
   catch (e: ProcessCanceledException) {
     return null

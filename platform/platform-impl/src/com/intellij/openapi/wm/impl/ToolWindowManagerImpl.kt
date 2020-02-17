@@ -336,8 +336,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     toolWindowPane?.setStripesOverlayed(currentState == KeyState.HOLD)
   }
 
-  @TestOnly
-  fun init(frameHelper: ProjectFrameHelper) {
+  @ApiStatus.Internal
+  override fun init(frameHelper: ProjectFrameHelper) {
     if (toolWindowPane != null) {
       return
     }

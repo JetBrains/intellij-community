@@ -19,7 +19,9 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
                            val showWelcomeScreen: Boolean = true,
                            var callback: ProjectOpenedCallback? = null,
                            val frame: FrameInfo? = null,
-                           val projectWorkspaceId: String? = null) {
+                           val projectWorkspaceId: String? = null,
+                           val line: Int = -1,
+                           val column: Int = -1) {
   constructor(project: Project) : this(false, project = project)
 
   constructor(forceOpenInNewFrame: Boolean = false, projectToClose: Project?) : this(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, useDefaultProjectAsTemplate = true)
@@ -37,10 +39,4 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
 
   @JvmField
   var isRefreshVfsNeeded = true
-
-  @JvmField
-  var line: Int = -1
-
-  @JvmField
-  var column: Int = -1
 }
