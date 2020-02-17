@@ -51,7 +51,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   @Nullable
   protected String styleType = null;
 
-  private final boolean caseInsensitive;
+  protected final boolean caseInsensitive;
   protected boolean seenContentType;
   protected boolean seenStylesheetType;
   private CharSequence cachedBufferSequence;
@@ -72,15 +72,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
 
     @Override
     public void handleElement(Lexer lexer) {
-      final CharSequence buffer;
-      if (lexerOfCacheBufferSequence == lexer) {
-        buffer = cachedBufferSequence;
-      } else {
-        cachedBufferSequence = lexer.getBufferSequence();
-        buffer = cachedBufferSequence;
-        lexerOfCacheBufferSequence = lexer;
-      }
-      final char firstCh = buffer.charAt(lexer.getTokenStart());
+      final char firstCh = getFirstChar(lexer);
 
       if (seenScript && !seenTag) {
         seenContentType = false;
@@ -131,6 +123,18 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
         }
       }
     }
+  }
+
+  protected char getFirstChar(Lexer lexer) {
+    final CharSequence buffer;
+    if (lexerOfCacheBufferSequence == lexer) {
+      buffer = cachedBufferSequence;
+    } else {
+      cachedBufferSequence = lexer.getBufferSequence();
+      buffer = cachedBufferSequence;
+      lexerOfCacheBufferSequence = lexer;
+    }
+    return buffer.charAt(lexer.getTokenStart());
   }
 
   class XmlAttributeValueEndHandler implements TokenHandler {
@@ -461,6 +465,10 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
 
   protected boolean hasSeenScript() {
     return seenScript;
+  }
+
+  protected int getBaseStateShift() {
+    return BASE_STATE_SHIFT;
   }
 
   protected abstract boolean isHtmlTagState(int state);
