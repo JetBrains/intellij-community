@@ -159,7 +159,7 @@ public class TerminalShellCommandHandlerHelper {
     }
     myAlarm.cancelAllRequests();
 
-    if ((keyPressed.getModifiers() & InputEvent.CTRL_MASK) != 0) {
+    if ((keyPressed.getModifiers() & InputEvent.CTRL_MASK) == 0) {
       myWorkingDirectory = null;
       return false;
     }
