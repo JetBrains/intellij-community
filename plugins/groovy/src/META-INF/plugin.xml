@@ -720,7 +720,7 @@
                         implementationClass="org.jetbrains.plugins.groovy.regexp.GroovyRegExpHost"/>
 
     <lang.jvm.actions.jvmElementActionsFactory implementation="org.jetbrains.plugins.groovy.annotator.intentions.elements.GroovyElementActionsFactory"/>
-    <localInspection displayName="Unused declaration"
+    <localInspection language="Groovy" displayName="Unused declaration"
                      groupPath="Groovy"
                      groupKey="inspection.redundancy" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection" unfair="true"/>
