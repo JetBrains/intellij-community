@@ -66,11 +66,14 @@ public interface JavacRef {
 
   interface JavacMethod extends JavacRef {
     byte getParamCount();
+    @Nullable
     String getContainingClass();
   }
 
   interface JavacField extends JavacRef {
+    @Nullable
     String getDescriptor();
+    @Nullable
     String getContainingClass();
   }
 
@@ -128,20 +131,22 @@ public interface JavacRef {
   }
 
   class JavacMethodImpl extends JavacRefBase implements JavacMethod {
-    private final String myContainingClassName;
+    @Nullable
+    private final String myContainingClass;
     private final String myOwnerName;
     private final byte myParamCount;
 
-    public JavacMethodImpl(String containingClassName, String ownerName, byte paramCount, Set<Modifier> modifiers, String name) {
+    public JavacMethodImpl(@Nullable String containingClass, String ownerName, byte paramCount, Set<Modifier> modifiers, String name) {
       super(name, modifiers);
-      myContainingClassName = containingClassName;
+      myContainingClass = containingClass != null && !containingClass.isEmpty()? containingClass : null;
       myOwnerName = ownerName;
       myParamCount = paramCount;
     }
 
     @Override
+    @Nullable
     public String getContainingClass() {
-      return myContainingClassName;
+      return myContainingClass;
     }
 
     @Override
@@ -157,30 +162,32 @@ public interface JavacRef {
   }
 
   class JavacFieldImpl extends JavacRefBase implements JavacField {
-
-    private final String myContainingClassName;
+    @Nullable
+    private final String myContainingClass;
     private final String myOwnerName;
     private final String myDescriptor;
 
-    public JavacFieldImpl(String containingClassName, String ownerName, Set<Modifier> modifiers, String name, String descriptor) {
+    public JavacFieldImpl(@Nullable String containingClass, String ownerName, Set<Modifier> modifiers, String name, String descriptor) {
       super(name, modifiers);
-      myContainingClassName = containingClassName;
+      myContainingClass = containingClass != null && !containingClass.isEmpty()? containingClass : null;
       myOwnerName = ownerName;
       myDescriptor = descriptor != null && !descriptor.isEmpty()? descriptor : null;
     }
 
     @Override
+    @Nullable
     public String getContainingClass() {
-      return myContainingClassName;
+      return myContainingClass;
     }
 
-    @NotNull
     @Override
+    @NotNull
     public String getOwnerName() {
       return myOwnerName;
     }
 
     @Override
+    @Nullable
     public String getDescriptor() {
       return myDescriptor;
     }
@@ -223,12 +230,12 @@ public interface JavacRef {
     }
 
     @Nullable
-    public static JavacElementRefBase fromElement(final String containingClass, Element element, Element qualifier, JavacNameTable nameTableCache) {
+    public static JavacElementRefBase fromElement(@Nullable String containingClass, Element element, Element qualifier, JavacNameTable nameTableCache) {
       return fromElement(containingClass, element, qualifier, nameTableCache, null);
     }
     
     @Nullable
-    public static JavacElementRefBase fromElement(final String containigClass, Element element, Element qualifier, JavacNameTable nameTableCache, @Nullable ImportProperties importProps) {
+    public static JavacElementRefBase fromElement(@Nullable String containigClass, Element element, Element qualifier, JavacNameTable nameTableCache, @Nullable ImportProperties importProps) {
       if (qualifier != null) {
         TypeMirror type = qualifier.asType();
         if (!isValidType(type)) {
@@ -310,14 +317,16 @@ public interface JavacRef {
   }
 
   class JavacElementMethodImpl extends JavacElementRefBase implements JavacMethod {
+    @Nullable
     private final String myContainingClass;
 
-    public JavacElementMethodImpl(String containingClass, @NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache, final ImportProperties importProps) {
+    public JavacElementMethodImpl(@Nullable String containingClass, @NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache, final ImportProperties importProps) {
       super(element, qualifier, nameTableCache, importProps);
-      myContainingClass = containingClass;
+      myContainingClass = containingClass != null && !containingClass.isEmpty()? containingClass : null;
     }
 
     @Override
+    @Nullable
     public String getContainingClass() {
       return myContainingClass;
     }
@@ -329,19 +338,22 @@ public interface JavacRef {
   }
 
   class JavacElementFieldImpl extends JavacElementRefBase implements JavacField {
+    @Nullable
     private final String myContainingClass;
 
-    public JavacElementFieldImpl(String containingClass, @NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache, final ImportProperties importProps) {
+    public JavacElementFieldImpl(@Nullable String containingClass, @NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache, final ImportProperties importProps) {
       super(element, qualifier, nameTableCache, importProps);
-      myContainingClass = containingClass;
+      myContainingClass = containingClass != null && !containingClass.isEmpty()? containingClass : null;
     }
 
     @Override
+    @Nullable
     public String getContainingClass() {
       return myContainingClass;
     }
 
     @Override
+    @Nullable
     public String getDescriptor() {
       return calcDescriptor(myOriginalElement.asType());
     }

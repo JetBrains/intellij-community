@@ -204,14 +204,16 @@ public class JavacFileData {
     }
     else if (ref instanceof JavacRef.JavacField) {
       out.writeByte(FIELD_MARKER);
-      out.writeUTF(((JavacRef.JavacField)ref).getContainingClass());
+      final String containingClass = ((JavacRef.JavacField)ref).getContainingClass();
+      out.writeUTF(containingClass == null? "" : containingClass);
       out.writeUTF(ref.getOwnerName());
       final String descriptor = ((JavacRef.JavacField)ref).getDescriptor();
       out.writeUTF(descriptor == null? "" : descriptor);
     }
     else if (ref instanceof JavacRef.JavacMethod) {
       out.writeByte(METHOD_MARKER);
-      out.writeUTF(((JavacRef.JavacMethod)ref).getContainingClass());
+      final String containingClass = ((JavacRef.JavacMethod)ref).getContainingClass();
+      out.writeUTF(containingClass == null? "" : containingClass);
       out.writeUTF(ref.getOwnerName());
       out.write(((JavacRef.JavacMethod)ref).getParamCount());
     }
