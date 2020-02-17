@@ -275,13 +275,7 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
       setAttribute(JDK_NAME_ATTRIBUTE, dependencyItem.sdkName)
 
       val sdkType = dependencyItem.sdkType
-      if (sdkType == null) {
-        val jdk = ProjectJdkTable.getInstance().findJdk(dependencyItem.sdkName)
-        val sdkTypeName = jdk?.sdkType?.name
-        sdkTypeName?.let { setAttribute(JDK_TYPE_ATTRIBUTE, it) }
-      } else {
-        setAttribute(JDK_TYPE_ATTRIBUTE, sdkType)
-      }
+      setAttribute(JDK_TYPE_ATTRIBUTE, sdkType)
     }
     is ModuleDependencyItem.InheritedSdkDependency -> createOrderEntryTag(INHERITED_JDK_TYPE)
     is ModuleDependencyItem.Exportable.LibraryDependency -> {
