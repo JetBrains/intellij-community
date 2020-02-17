@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
@@ -584,7 +584,19 @@ public class StringUtilTest {
 
   @Test
   public void testFormatDurationApproximate() {
+    assertEquals("0 ms", StringUtil.formatDurationApproximate(0));
+
+    assertEquals("59 s 999 ms", StringUtil.formatDurationApproximate(60000 - 1));
+    assertEquals("1 m", StringUtil.formatDurationApproximate(60000));
+    assertEquals("1 m 0 s", StringUtil.formatDurationApproximate(60000 + 1));
+
+    assertEquals("2 m", StringUtil.formatDurationApproximate(120000 - 1));
     assertEquals("2 m", StringUtil.formatDurationApproximate(120000));
+    assertEquals("2 m 0 s", StringUtil.formatDurationApproximate(120000 + 1));
+    assertEquals("2 m 0 s", StringUtil.formatDurationApproximate(120000 + 499));
+    assertEquals("2 m 0 s", StringUtil.formatDurationApproximate(120000 + 500));
+    assertEquals("2 m 1 s", StringUtil.formatDurationApproximate(120000 + 501));
+
     assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123000));
     assertEquals("2 m 4 s", StringUtil.formatDurationApproximate(123789));
     assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123456));

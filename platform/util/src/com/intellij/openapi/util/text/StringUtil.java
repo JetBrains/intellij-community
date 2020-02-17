@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -1585,7 +1585,7 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.formatFileSize(fileSize, unitSeparator);
   }
 
-  /** Formats given duration as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}). */
+  /** Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}). */
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration) {
@@ -1595,7 +1595,7 @@ public class StringUtil extends StringUtilRt {
   private static final String[] TIME_UNITS = {"ms", "s", "m", "h", "d"};
   private static final long[] TIME_MULTIPLIERS = {1, 1000, 60, 60, 24};
 
-  /** Formats given duration as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}). */
+  /** Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}). */
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration, @NotNull String unitSeparator) {
@@ -1650,7 +1650,8 @@ public class StringUtil extends StringUtilRt {
 
   private static final String[] PADDED_FORMATS = {"%03d", "%02d", "%02d", "%02d", "%d"};
   /**
-   * Formats 234523598 like "2 d 03 h 11 min 04 sec 004 ms" padded accordingly with zeros except the most significant unit, e.g. "days" here.
+   * Formats duration given in milliseconds as a sum of padded time units, except the most significant unit
+   * E.g. 234523598 padded as "2 d 03 h 11 min 04 sec 004 ms" accordingly with zeros except "days" here.
    */
   @NotNull
   @Contract(pure = true)
@@ -1678,9 +1679,10 @@ public class StringUtil extends StringUtilRt {
     }
     return result.toString();
   }
+
   /**
-   * Formats given duration as a sum of time units with at most two units
-   * (example: {@code formatDuration(123456, "") = "2m 3s"}).
+   * Formats duration given in milliseconds as a sum of time units with at most two units
+   * (example: {@code formatDuration(123456) = "2 m 3 s"}).
    */
   @NotNull
   @Contract(pure = true)
