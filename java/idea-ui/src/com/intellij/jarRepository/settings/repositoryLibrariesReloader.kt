@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.projectModel.ProjectModelBundle
 import org.jetbrains.concurrency.collectResults
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
@@ -19,13 +20,10 @@ fun reloadAllRepositoryLibraries(project: Project) {
     .map { RepositoryUtils.reloadDependencies(project, it) }
     .collectResults()
     .onSuccess {
-      val description = when (it.size) {
-        0 -> "No libraries were"
-        1 -> "One library was"
-        else -> "${it.size} libraries were"
-      }
-      Notifications.Bus.notify(Notification("Repository", "Repository library synchronization",
-                                            "$description successfully reloaded", NotificationType.INFORMATION), project)
+      Notifications.Bus.notify(Notification("Repository",
+                                            ProjectModelBundle.message("notification.title.repository.library.synchronization"),
+                                            ProjectModelBundle.message("notification.content.libraries.reloaded", it.size),
+                                            NotificationType.INFORMATION), project)
     }
 
 }

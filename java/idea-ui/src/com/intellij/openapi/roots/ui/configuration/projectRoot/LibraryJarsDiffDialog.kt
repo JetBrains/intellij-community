@@ -9,6 +9,7 @@ import com.intellij.ide.diff.DirDiffSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.ui.components.JBLabel
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
@@ -28,8 +29,8 @@ class LibraryJarsDiffDialog(libraryFile: VirtualFile,
   private val panel: DiffRequestPanel
 
   init {
-    title = "Replace Library"
-    setOKButtonText("Replace")
+    title = ProjectModelBundle.message("dialog.title.replace.library")
+    setOKButtonText(ProjectModelBundle.message("button.text.replace"))
     val request: ContentDiffRequest = DiffRequestFactory.getInstance().createFromFiles(project, libraryFile, downloadedFile)
     panel = DiffManager.getInstance().createRequestPanel(project, disposable, window)
     panel.putContextHints(DirDiffSettings.KEY, DirDiffSettings().apply {
