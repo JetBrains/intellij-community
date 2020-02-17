@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch.dashboard
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.CommonActionsManager
 import com.intellij.ide.DataManager
 import com.intellij.ide.DefaultTreeExpander
@@ -34,6 +35,7 @@ import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties.MAIN_LOG_ID
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.ui.frame.FrameDiffPreview
@@ -44,6 +46,7 @@ import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.i18n.GitBundle.message
+import git4idea.i18n.GitBundleExtensions.lazyMessage
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.GroupByDirectoryAction
@@ -63,7 +66,6 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val tree = FilteringBranchesTree(project, BranchesTreeComponent(project), uiController)
   private val branchViewSplitter = BranchViewSplitter()
   private val branchesTreePanel = BranchesTreePanel().withBorder(createBorder(JBColor.border(), SideBorder.LEFT))
-  private val branchesTreeWithToolbarPanel = simplePanel()
   private val branchesScrollPane = ScrollPaneFactory.createScrollPane(tree.component, true)
   private val branchesProgressStripe = ProgressStripe(branchesScrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
   private val branchesTreeWithLogPanel = simplePanel()
@@ -71,8 +73,10 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val branchesSearchFieldPanel = simplePanel()
   private val branchesSearchField = NonOpaquePanel(tree.installSearchField(JBUI.Borders.emptyLeft(5))).apply(UIUtil::setNotOpaqueRecursively)
 
+  private lateinit var branchesPanelExpandableController: ExpandablePanelController
+
   private val treeSelectionListener = TreeSelectionListener { e ->
-    if (!branchesTreeWithToolbarPanel.isVisible) return@TreeSelectionListener
+    if (!branchesPanelExpandableController.isExpanded()) return@TreeSelectionListener
     if (e.paths.none(e::isAddedPath)) return@TreeSelectionListener
 
     val ui = logUi
@@ -126,8 +130,11 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val commonActionsManager = CommonActionsManager.getInstance()
     val expandAllAction = commonActionsManager.createExpandAllHeaderAction(defaultTreeExpander, tree.component)
     val collapseAllAction = commonActionsManager.createCollapseAllHeaderAction(defaultTreeExpander, tree.component)
+    val hideBranchesAction = ActionManager.getInstance().getAction("Git.Log.Hide.Branches")
 
     val group = DefaultActionGroup()
+    group.add(hideBranchesAction)
+    group.add(Separator())
     group.add(newBranchAction)
     group.add(updateSelectedAction)
     group.add(deleteAction)
@@ -143,13 +150,21 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val toolbar = ActionManager.getInstance().createActionToolbar("Git.Cleanup.Branches", group, false)
     toolbar.setTargetComponent(branchesTreePanel)
 
-    branchesTreeWithToolbarPanel.addToLeft(toolbar.component)
+    val branchesButton = ExpandStripeButton(lazyMessage("action.Git.Log.Show.Branches.text"), AllIcons.Actions.ArrowExpand)
+      .apply {
+        border = createBorder(JBColor.border(), SideBorder.RIGHT)
+        addActionListener {
+          if (logUi.properties.exists(SHOW_GIT_BRANCHES_LOG_PROPERTY)) {
+            logUi.properties.set(SHOW_GIT_BRANCHES_LOG_PROPERTY, true)
+          }
+        }
+      }
     branchesSearchFieldPanel.withBackground(UIUtil.getListBackground()).withBorder(createBorder(JBColor.border(), SideBorder.BOTTOM))
     branchesSearchFieldPanel.addToCenter(branchesSearchField)
     branchesTreePanel.addToTop(branchesSearchFieldPanel).addToCenter(branchesProgressStripe)
-    branchesTreeWithToolbarPanel.addToCenter(branchesTreePanel)
-    branchViewSplitter.firstComponent = branchesTreeWithToolbarPanel
-    branchesTreeWithLogPanel.addToCenter(branchViewSplitter)
+    branchesPanelExpandableController = ExpandablePanelController(toolbar.component, branchesButton, branchesTreePanel)
+    branchViewSplitter.firstComponent = branchesTreePanel
+    branchesTreeWithLogPanel.addToLeft(branchesPanelExpandableController.expandControlPanel).addToCenter(branchViewSplitter)
     mainPanel.isFocusCycleRoot = true
     mainPanel.focusTraversalPolicy = BRANCHES_UI_FOCUS_TRAVERSAL_POLICY
     startLoadingBranches()
@@ -157,7 +172,8 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   }
 
   fun toggleBranchesPanelVisibility() {
-    branchesTreeWithToolbarPanel.isVisible = logUi.properties.get(SHOW_GIT_BRANCHES_LOG_PROPERTY)
+    val showBranches = logUi.properties.get(SHOW_GIT_BRANCHES_LOG_PROPERTY)
+    branchesPanelExpandableController.toggleExpand(showBranches)
   }
 
   private fun createFocusFilterFieldAction(searchField: Component) {
@@ -176,6 +192,9 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     override fun getData(dataId: String): Any? {
       if (GIT_BRANCHES.`is`(dataId)) {
         return tree.getSelectedBranches()
+      }
+      else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId)) {
+        return logUi.properties
       }
       return null
     }

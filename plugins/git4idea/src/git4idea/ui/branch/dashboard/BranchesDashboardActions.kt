@@ -12,9 +12,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.VcsLogProperties
-import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.ui.actions.BooleanPropertyToggleAction
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.GitUtil
 import git4idea.actions.GitFetch
 import git4idea.branch.GitBranchType
@@ -305,18 +304,19 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class ShowBranchesAction : BooleanPropertyToggleAction() {
+  class HideBranchesAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
-      val project = e.project
-      val branchesUiController = e.getData(BRANCHES_UI_CONTROLLER)
-      if (project == null || branchesUiController == null) {
-        e.presentation.isEnabledAndVisible = false
-        return
-      }
+      val properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES)
+      e.presentation.isEnabledAndVisible = properties != null && properties.exists(SHOW_GIT_BRANCHES_LOG_PROPERTY)
       super.update(e)
     }
 
-    override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = SHOW_GIT_BRANCHES_LOG_PROPERTY
+    override fun actionPerformed(e: AnActionEvent) {
+      val properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES)
+      if (properties != null && properties.exists(SHOW_GIT_BRANCHES_LOG_PROPERTY)) {
+        properties.set(SHOW_GIT_BRANCHES_LOG_PROPERTY, false)
+      }
+    }
   }
 
   abstract class BranchesActionBase(@Nls(capitalization = Nls.Capitalization.Title) text: () -> String = { "" },
