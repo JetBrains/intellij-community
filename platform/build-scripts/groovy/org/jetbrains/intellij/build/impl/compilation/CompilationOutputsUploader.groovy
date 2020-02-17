@@ -2,10 +2,8 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.common.io.Files
-import com.google.gson.Gson
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.io.Compressor
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -19,14 +17,12 @@ import java.util.concurrent.TimeUnit
 
 @CompileStatic
 class CompilationOutputsUploader {
-  private static final String SOURCES_STATE_FILE_NAME = "target_sources_state.json"
-
   private final String agentPersistentStorage
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
   private final String commitHash
-  private final Gson gson
+  private final SourcesStateProcessor sourcesStateProcessor
 
   CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, String commitHash, String agentPersistentStorage) {
     this.agentPersistentStorage = agentPersistentStorage
@@ -34,7 +30,8 @@ class CompilationOutputsUploader {
     this.messages = context.messages
     this.commitHash = commitHash
     this.context = context
-    gson = new Gson()
+
+    sourcesStateProcessor = new SourcesStateProcessor(context)
   }
 
   def upload() {
@@ -47,14 +44,13 @@ class CompilationOutputsUploader {
     try {
       def start = System.nanoTime()
       def dataStorageRoot = context.compilationData.dataStorageRoot
-      def sourceStateFile = new File(dataStorageRoot, SOURCES_STATE_FILE_NAME)
+      def sourceStateFile = sourcesStateProcessor.sourceStateFile
       if (!sourceStateFile.exists()) {
         context.messages.
           warning("Compilation outputs doesn't contain source state file, please enable 'org.jetbrains.jps.portable.caches' flag")
         return
       }
-      Map<String, Map<String, BuildTargetState>> currentSourcesState = (Map<String, Map<String, BuildTargetState>>)gson
-        .fromJson(FileUtil.loadFile(sourceStateFile, CharsetToolkit.UTF8), SourcesStateProcessor.SOURCES_STATE_TYPE)
+      Map<String, Map<String, BuildTargetState>> currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
 
       executor.submit {
         // Upload jps caches started first because of the significant size of the output
@@ -72,9 +68,7 @@ class CompilationOutputsUploader {
         return
       }
 
-      def classesDirName = "classes"
-      def buildOutput = new File(context.paths.buildOutputRoot, classesDirName)
-      uploadCompilationOutputs(buildOutput, currentSourcesState, uploader, executor)
+      uploadCompilationOutputs(currentSourcesState, uploader, executor)
 
       executor.waitForAllComplete(messages)
       executor.reportErrors(messages)
@@ -93,9 +87,9 @@ class CompilationOutputsUploader {
     }
   }
 
-  def uploadCompilationOutputs(File root, Map<String, Map<String, BuildTargetState>> currentSourcesState,
+  def uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
                                JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
-    SourcesStateProcessor.getAllCompilationOutputs(SourcesStateProcessor.IDENTIFIER, root, currentSourcesState).forEach { CompilationOutput it ->
+    sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).forEach { CompilationOutput it ->
       uploadCompilationOutput(it, uploader, executor)
     }
   }

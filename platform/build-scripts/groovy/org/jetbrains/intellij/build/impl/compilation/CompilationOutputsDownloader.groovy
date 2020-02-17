@@ -35,6 +35,8 @@ class CompilationOutputsDownloader {
 
   private final NamedThreadPoolExecutor executor
 
+  private final SourcesStateProcessor sourcesStateProcessor
+
   CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl) {
     this.context = context
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
@@ -42,9 +44,11 @@ class CompilationOutputsDownloader {
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     context.messages.info("Using $executorThreadsCount threads to download caches.")
     executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
+
+    sourcesStateProcessor = new SourcesStateProcessor(context)
   }
 
-  void downloadCachesAndOutput() {
+  String downloadCachesAndOutput() {
     Set<String> availableCachesKeys = getAvailableCachesKeys()
 
     String lastCachedCommit = getLastCommits().find { availableCachesKeys.contains(it) }
@@ -57,8 +61,7 @@ class CompilationOutputsDownloader {
       }
 
       def sourcesState = getSourcesState(lastCachedCommit)
-      def outputs = SourcesStateProcessor.getAllCompilationOutputs(SourcesStateProcessor.IDENTIFIER,
-                                                                   new File(context.paths.buildOutputRoot, "classes"), sourcesState)
+      def outputs = sourcesStateProcessor.getAllCompilationOutputs(sourcesState)
       context.messages.info("Going to download ${outputs.size()} compilation output parts.")
       outputs.forEach { CompilationOutput output ->
         executor.submit {
@@ -71,6 +74,8 @@ class CompilationOutputsDownloader {
     }
 
     executor.waitForAllComplete(context.messages)
+
+    return lastCachedCommit
   }
 
   private Map<String, Map<String, BuildTargetState>> getSourcesState(String commitHash) {
