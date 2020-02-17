@@ -2,13 +2,22 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
 import org.jetbrains.concurrency.CancellablePromise
 import kotlin.properties.Delegates.observable
+
+private val AMEND_AUTHOR_DATA_KEY = Key.create<AmendAuthorData>("Vcs.Commit.AmendAuthorData")
+private var CommitContext.amendAuthorData: AmendAuthorData? by commitProperty(AMEND_AUTHOR_DATA_KEY, null)
+
+private class AmendAuthorData(val beforeAmendAuthor: VcsUser?, val amendAuthor: VcsUser)
 
 class ChangesViewAmendCommitHandler(private val workflowHandler: ChangesViewCommitWorkflowHandler) :
   AmendCommitHandlerImpl(workflowHandler) {
@@ -66,17 +75,38 @@ class ChangesViewAmendCommitHandler(private val workflowHandler: ChangesViewComm
     amendDetailsGetter?.cancel()
     workflowHandler.updateDefaultCommitActionEnabled()
 
+    restoreAmendAuthor()
     restoreBeforeAmendMessage()
     setEditedCommit(null)
   }
 
   private fun setAmendDetails(amendDetails: EditedCommitDetails) {
+    setAmendAuthor(amendDetails.currentUser, amendDetails.commit.author)
     setAmendMessage(workflowHandler.getCommitMessage(), amendDetails.commit.fullMessage)
     setEditedCommit(amendDetails)
   }
 
   private fun setEditedCommit(amendDetails: EditedCommitDetails?) {
     workflowHandler.ui.editedCommit = amendDetails
+  }
+
+  private fun setAmendAuthor(currentUser: VcsUser?, amendAuthor: VcsUser) {
+    val beforeAmendAuthor = workflowHandler.ui.commitAuthor
+    if (beforeAmendAuthor != null && isSamePerson(beforeAmendAuthor, amendAuthor)) return
+    if (beforeAmendAuthor == null && currentUser != null && isSamePerson(currentUser, amendAuthor)) return
+
+    workflowHandler.ui.commitAuthor = amendAuthor
+    commitContext.amendAuthorData = AmendAuthorData(beforeAmendAuthor, amendAuthor)
+  }
+
+  private fun restoreAmendAuthor() {
+    val amendAuthorData = commitContext.amendAuthorData ?: return
+    commitContext.amendAuthorData = null
+
+    val author = workflowHandler.ui.commitAuthor
+    if (author == null || !isSamePerson(author, amendAuthorData.amendAuthor)) return
+
+    workflowHandler.ui.commitAuthor = amendAuthorData.beforeAmendAuthor
   }
 
   private inner class EditedCommitCleaner : CommitResultHandler {
