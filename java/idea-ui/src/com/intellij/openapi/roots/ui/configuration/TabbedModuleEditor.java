@@ -56,6 +56,7 @@ public abstract class TabbedModuleEditor extends ModuleEditor {
   @Override
   protected JComponent createCenterPanel() {
     myTabbedPane = new TabbedPaneWrapper(this);
+    myTabbedPane.getComponent().setFocusTraversalPolicyProvider(false);
 
     for (ModuleConfigurationEditor editor : myEditors) {
       myTabbedPane.addTab(editor.getDisplayName(), editor.createComponent());
