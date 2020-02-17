@@ -57,8 +57,8 @@ class CompilationOutputsDownloader {
       }
 
       def sourcesState = getSourcesState(lastCachedCommit)
-      def outputs = SourcesStateProcessor.getAllCompilationOutputs("${SourcesStateProcessor.IDENTIFIER}/out",
-                                                                   new File(context.paths.buildOutputRoot), sourcesState)
+      def outputs = SourcesStateProcessor.getAllCompilationOutputs(SourcesStateProcessor.IDENTIFIER,
+                                                                   new File(context.paths.buildOutputRoot, "classes"), sourcesState)
       context.messages.info("Going to download ${outputs.size()} compilation output parts.")
       outputs.forEach { CompilationOutput output ->
         executor.submit {
