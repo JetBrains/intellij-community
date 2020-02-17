@@ -852,16 +852,22 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   void uninstallAndUpdateUi(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor descriptor) {
-    IdeaPluginDescriptorImpl descriptorImpl = (IdeaPluginDescriptorImpl)descriptor;
-    if (!dependent(descriptorImpl).isEmpty()) {
-      String message = IdeBundle.message("several.plugins.depend.on.0.continue.to.remove", descriptor.getName());
+    List<IdeaPluginDescriptor> deps = dependent(descriptor);
+    if (!deps.isEmpty()) {
+      String listOfDeps = StringUtil.join(deps, plugin -> {
+        return "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + plugin.getName();
+      }, "<br>");
+      String beginS = deps.size() == 1 ? "" : "s";
+      String middleS = deps.size() == 1 ? "s" : "";
+      String message = "<html>Following plugin" + beginS + " depend" + middleS + " on " + descriptor.getName() +
+                       ". Continue to remove?<br>" + listOfDeps + "</html>";
       String title = IdeBundle.message("title.plugin.uninstall");
       if (Messages.showYesNoDialog(uiParent, message, title, Messages.getQuestionIcon()) != Messages.YES) {
         return;
       }
     }
 
-    boolean needRestartForUninstall = performUninstall(descriptorImpl);
+    boolean needRestartForUninstall = performUninstall((IdeaPluginDescriptorImpl)descriptor);
     needRestart |= descriptor.isEnabled() && needRestartForUninstall;
     myInstallsRequiringRestart |= needRestartForUninstall;
 

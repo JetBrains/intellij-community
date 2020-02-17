@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -92,20 +94,29 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
   }
 
   @NotNull
-  public List<IdeaPluginDescriptorImpl> dependent(@NotNull IdeaPluginDescriptorImpl plugin) {
-    List<IdeaPluginDescriptorImpl> list = new ArrayList<>();
-    for (IdeaPluginDescriptor any : getAllPlugins()) {
-      if (any instanceof IdeaPluginDescriptorImpl) {
-        PluginId[] dep = any.getDependentPluginIds();
-        for (PluginId id : dep) {
-          if (id == plugin.getPluginId()) {
-            list.add((IdeaPluginDescriptorImpl)any);
-            break;
-          }
-        }
+  public List<IdeaPluginDescriptor> dependent(@NotNull IdeaPluginDescriptor rootDescriptor) {
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    PluginId rootId = rootDescriptor.getPluginId();
+
+    List<IdeaPluginDescriptor> result = new ArrayList<>();
+    for (IdeaPluginDescriptor plugin : getAllPlugins()) {
+      PluginId pluginId = plugin.getPluginId();
+      if (pluginId == rootId || appInfo.isEssentialPlugin(pluginId) || !plugin.isEnabled() || plugin.isImplementationDetail()) {
+        continue;
       }
+      if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
+        continue;
+      }
+
+      PluginManagerCore.processAllDependencies(plugin, false, descriptor -> {
+        if (descriptor.getPluginId() == rootId) {
+          result.add(plugin);
+          return FileVisitResult.TERMINATE;
+        }
+        return FileVisitResult.CONTINUE;
+      });
     }
-    return list;
+    return result;
   }
 
   public abstract int getNameColumn();
