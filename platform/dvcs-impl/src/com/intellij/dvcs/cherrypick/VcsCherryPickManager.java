@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.cherrypick;
 
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,6 +20,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,7 @@ public final class VcsCherryPickManager {
 
   public VcsCherryPickManager(@NotNull Project project) {
     myProject = project;
-    myTaskQueue = new BackgroundTaskQueue(project, "Cherry-picking");
+    myTaskQueue = new BackgroundTaskQueue(project, DvcsBundle.message("cherry.picking.process"));
   }
 
   public void cherryPick(@NotNull VcsLog log) {
@@ -67,7 +69,7 @@ public final class VcsCherryPickManager {
     @NotNull private final ChangeListManagerEx myChangeListManager;
 
     CherryPickingTask(@NotNull List<? extends VcsFullCommitDetails> detailsInReverseOrder) {
-      super(VcsCherryPickManager.this.myProject, "Cherry-Picking");
+      super(VcsCherryPickManager.this.myProject, DvcsBundle.message("cherry.picking.process"));
       myAllDetailsInReverseOrder = detailsInReverseOrder;
       myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
       myChangeListManager.blockModalNotifications();
@@ -77,24 +79,24 @@ public final class VcsCherryPickManager {
     private VcsCherryPicker getCherryPickerOrReportError(@NotNull VcsFullCommitDetails details) {
       CommitId commitId = new CommitId(details.getId(), details.getRoot());
       if (myIdsInProgress.contains(commitId)) {
-        showError("Cherry pick process is already started for commit " +
-                  commitId.getHash().toShortString() +
-                  " from root " +
-                  commitId.getRoot().getName());
+        showError(DvcsBundle.message("cherry.pick.process.is.already.started.for.commit.from.root",
+                                     commitId.getHash().toShortString(),
+                                     commitId.getRoot().getName()));
         return null;
       }
       myIdsInProgress.add(commitId);
 
       VcsCherryPicker cherryPicker = getCherryPickerForCommit(details);
       if (cherryPicker == null) {
-        showError(
-          "Cherry pick is not supported for commit " + details.getId().toShortString() + " from root " + details.getRoot().getName());
+        showError(DvcsBundle.message("cherry.pick.is.not.supported.for.commit.from.root",
+                                     details.getId().toShortString(),
+                                     details.getRoot().getName()));
         return null;
       }
       return cherryPicker;
     }
 
-    public void showError(@NotNull String message) {
+    public void showError(@Nls @NotNull String message) {
       VcsNotifier.getInstance(myProject).notifyWeakError(message);
       LOG.warn(message);
     }
