@@ -868,7 +868,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
     else {
       //todo return from lambda
-      UElement parent = expression.getUastParent();
+      UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
       while (parent instanceof UCallExpression && 
              ((UCallExpression)parent).getKind() == UastCallKind.NEW_ARRAY_WITH_INITIALIZER) {
         parent = parent.getUastParent();
