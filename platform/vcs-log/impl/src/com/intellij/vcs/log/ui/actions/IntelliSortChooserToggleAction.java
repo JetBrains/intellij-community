@@ -27,6 +27,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.BekUtil;
+import com.intellij.vcs.log.util.GraphSortPresentationUtil;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,11 +67,15 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
     e.getPresentation().setEnabled(BekUtil.isBekEnabled() && logUI != null);
 
     if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
-      String description = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.Normal ?
-                           VcsLogBundle.message("vcs.log.action.turn.intellisort.on",
-                                                StringUtil.toLowerCase(PermanentGraph.SortType.Bek.getDescription())) :
-                           VcsLogBundle.message("vcs.log.action.turn.intellisort.off",
-                                                StringUtil.toLowerCase(PermanentGraph.SortType.Normal.getDescription()));
+      String description;
+      if (properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.Normal) {
+        String localizedDescription = GraphSortPresentationUtil.getLocalizedDescription(PermanentGraph.SortType.Bek);
+        description = VcsLogBundle.message("vcs.log.action.turn.intellisort.on", StringUtil.toLowerCase(localizedDescription));
+      }
+      else {
+        String localizedDescription = GraphSortPresentationUtil.getLocalizedDescription(PermanentGraph.SortType.Normal);
+        description = VcsLogBundle.message("vcs.log.action.turn.intellisort.off", StringUtil.toLowerCase(localizedDescription));
+      }
       e.getPresentation().setDescription(description);
       e.getPresentation().setText(description);
     }
