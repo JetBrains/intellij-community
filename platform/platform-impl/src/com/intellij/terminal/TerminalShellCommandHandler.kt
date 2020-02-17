@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal
 
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -24,14 +23,10 @@ interface TerminalShellCommandHandler {
     private val EP = ExtensionPointName.create<TerminalShellCommandHandler>("com.intellij.terminal.shellCommandHandler")
 
     fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean {
-      if (!Experiments.getInstance().isFeatureEnabled("terminal.shell.command.handling")) return false
-
       return EP.extensionList.any { it.matches(project, workingDirectory, localSession, command) }
     }
 
     fun executeShellCommandHandler(project: Project, workingDirectory: String?, localSession: Boolean, command: String) {
-      if (!Experiments.getInstance().isFeatureEnabled("terminal.shell.command.handling")) return
-
       EP.extensionList
         .find { it.matches(project, workingDirectory, localSession, command) }
         ?.execute(project, workingDirectory, localSession, command)

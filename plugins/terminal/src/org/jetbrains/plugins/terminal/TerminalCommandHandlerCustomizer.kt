@@ -12,8 +12,8 @@ import com.intellij.openapi.util.Setter
 
 class TerminalCommandHandlerCustomizer : LocalTerminalCustomizer() {
   override fun getConfigurable(project: Project?): UnnamedConfigurable? {
-    if (project == null) {
-      return super.getConfigurable(project)
+    if (project == null || !TerminalShellCommandHandlerHelper.isFeatureEnabled()) {
+      return null
     }
     return TerminalCommandHandlerConfigurable(project)
   }
