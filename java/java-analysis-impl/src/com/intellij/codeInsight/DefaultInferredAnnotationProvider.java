@@ -28,8 +28,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
   private static final Set<String> JB_INFERRED_ANNOTATIONS =
     ContainerUtil.set(ORG_JETBRAINS_ANNOTATIONS_CONTRACT, Mutability.UNMODIFIABLE_ANNOTATION,
                       Mutability.UNMODIFIABLE_VIEW_ANNOTATION);
-  private static final Set<String> EXPERIMENTAL_INFERRED_ANNOTATIONS =
-    ContainerUtil.set(Mutability.UNMODIFIABLE_ANNOTATION, Mutability.UNMODIFIABLE_VIEW_ANNOTATION);
+  private static final Set<String> EXPERIMENTAL_INFERRED_ANNOTATIONS = Collections.emptySet();
   private final Project myProject;
 
   // Could be added via external annotations, but there are many signatures to handle
