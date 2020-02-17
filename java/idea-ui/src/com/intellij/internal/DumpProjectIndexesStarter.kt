@@ -16,6 +16,7 @@ class DumpProjectIndexesStarter : IndexesStarterBase("dump-project-index") {
     //disable indexing
     //System.setProperty("idea.skip.indices.initialization", "true")
     System.setProperty("idea.force.dumb.queue.tasks", "true")
+    //System.setProperty("idea.suspend.indexes.initialization", "true")
 
     val revisionHash = CommandLineKey("commit") {
       println("       --$name=<commit hash>       --- project revision")

@@ -185,6 +185,13 @@ abstract class IndexesStarterBase(
       messages.close()
     }
 
+    override fun setFraction(fraction: Double) {
+      super.setFraction(fraction)
+      val v = (100 * fraction).toInt()
+      val d = ".".repeat((18 * fraction).toInt())
+      messages.offer("$d...  $v%")
+    }
+
     override fun setText(text: String?) {
       super.setText(text)
       if (text != null) {
@@ -192,9 +199,16 @@ abstract class IndexesStarterBase(
       }
     }
 
+    override fun setText2(text: String?) {
+      super.setText2(text)
+      if (text != null) {
+        messages.offer("  $text")
+      }
+    }
+
     init {
       GlobalScope.launch {
-        messages.consumeAsFlow().debounce(500).collect {
+        messages.consumeAsFlow().debounce(300).collect {
           LOG.info(text)
         }
       }
