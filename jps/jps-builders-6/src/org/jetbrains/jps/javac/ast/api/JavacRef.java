@@ -385,6 +385,10 @@ public interface JavacRef {
           return "L" + myNameTableCache.parseBinaryName(t.asElement()).replace('.', '/') + ";";
         }
 
+        @Override
+        public String visitUnknown(TypeMirror t, Void param) {
+          return null;
+        }
       }.visit(type);
     }
   }
