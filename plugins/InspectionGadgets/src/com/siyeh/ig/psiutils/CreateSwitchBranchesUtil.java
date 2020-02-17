@@ -28,8 +28,7 @@ public class CreateSwitchBranchesUtil {
    * @param names names of individual branches to create (non-empty)
    * @return a name of the action which creates missing switch branches.
    */
-  @NotNull
-  public static String getActionName(Collection<String> names) {
+  public static @NotNull String getActionName(Collection<String> names) {
     if (names.size() == 1) {
       return "Create missing switch branch '" + names.iterator().next() + "'";
     }
@@ -119,20 +118,22 @@ public class CreateSwitchBranchesUtil {
    */
   public static void createTemplate(@NotNull PsiSwitchBlock block, List<PsiSwitchLabelStatementBase> addedLabels) {
     if (!(block instanceof PsiSwitchExpression)) return;
+    List<SmartPsiElementPointer<PsiSwitchLabelStatementBase>> pointers = ContainerUtil.map(addedLabels, SmartPointerManager::createPointer);
     Editor editor = prepareForTemplateAndObtainEditor(block);
     if (editor == null) return;
     TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(block);
-    List<PsiExpression> elementsToReplace = getElementsToReplace(addedLabels);
+    List<PsiExpression> elementsToReplace = getElementsToReplace(pointers);
     for (PsiExpression expression : elementsToReplace) {
       builder.replaceElement(expression, new ConstantNode(expression.getText()));
     }
     builder.run(editor, true);
   }
 
-  @NotNull
-  private static List<PsiExpression> getElementsToReplace(@NotNull List<PsiSwitchLabelStatementBase> labels) {
+  private static @NotNull List<PsiExpression> getElementsToReplace(@NotNull List<SmartPsiElementPointer<PsiSwitchLabelStatementBase>> labels) {
     List<PsiExpression> elementsToReplace = new ArrayList<>();
-    for (PsiSwitchLabelStatementBase label : labels) {
+    for (SmartPsiElementPointer<PsiSwitchLabelStatementBase> pointer : labels) {
+      PsiSwitchLabelStatementBase label = pointer.getElement();
+      if (label == null) continue;
       if (label instanceof PsiSwitchLabeledRuleStatement) {
         PsiStatement body = ((PsiSwitchLabeledRuleStatement)label).getBody();
         if (body instanceof PsiExpressionStatement) {
@@ -204,8 +205,7 @@ public class CreateSwitchBranchesUtil {
    * @param element any element from the document
    * @return an editor, or null if not found.
    */
-  @Nullable
-  public static Editor prepareForTemplateAndObtainEditor(@NotNull PsiElement element) {
+  public static @Nullable Editor prepareForTemplateAndObtainEditor(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     Project project = file.getProject();
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();

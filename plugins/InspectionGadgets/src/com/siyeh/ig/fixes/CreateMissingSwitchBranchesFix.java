@@ -22,23 +22,18 @@ public class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
     myNames = names;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return getName();
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
     return CreateSwitchBranchesUtil.getActionName(myNames);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("create.missing.switch.branches.fix.family.name");
   }
 
