@@ -137,8 +137,8 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
   override fun getMaximumWidth(sz: Int) = if (c.isMaximumSizeSet) c.maximumSize.width else Integer.MAX_VALUE
 
   override fun getParent(): ContainerWrapper? {
-    val p = c.parent ?: return null
-    return SwingContainerWrapper(p as JComponent)
+    val p = c.parent as? JComponent ?: return null
+    return SwingContainerWrapper(p)
   }
 
   override fun getHorizontalScreenDPI(): Int {

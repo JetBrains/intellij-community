@@ -385,9 +385,9 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
 
   override fun addLayoutComponent(comp: Component, constraints: Any?) {
     synchronized(comp.parent.treeLock) {
-      val componentWrapper = SwingComponentWrapper(comp as JComponent)
-      if (constraints != null) {
-        componentWrapperToConstraints.put(componentWrapper, constraints as CC)
+      if (constraints is CC && comp is JComponent) {
+        val componentWrapper = SwingComponentWrapper(comp)
+        componentWrapperToConstraints.put(componentWrapper, constraints)
       }
 
       dirty = true
@@ -396,7 +396,9 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
 
   override fun removeLayoutComponent(comp: Component) {
     synchronized(comp.parent.treeLock) {
-      componentWrapperToConstraints.remove(SwingComponentWrapper(comp as JComponent))
+      if (comp is JComponent) {
+        componentWrapperToConstraints.remove(SwingComponentWrapper(comp))
+      }
       // to clear references
       grid = null
     }
