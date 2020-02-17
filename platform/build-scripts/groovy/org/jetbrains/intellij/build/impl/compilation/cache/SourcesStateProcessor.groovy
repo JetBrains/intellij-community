@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets
 @CompileStatic
 class SourcesStateProcessor {
   static final Type SOURCES_STATE_TYPE = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType()
-  static final String IDENTIFIER = '$PROJECT_DIR$'
+  static final String IDENTIFIER = '$BUILD_DIR$'
 
   private static final List<String> PRODUCTION_TYPES = ["java-production", "resources-production"]
   private static final List<String> TEST_TYPES = ["java-test", "resources-test"]

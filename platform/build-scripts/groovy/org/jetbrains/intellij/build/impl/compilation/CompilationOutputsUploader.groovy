@@ -72,7 +72,7 @@ class CompilationOutputsUploader {
         return
       }
 
-      def projectHome = new File(context.paths.projectHome)
+      def projectHome = new File(context.paths.buildOutputRoot)
       uploadCompilationOutputs(projectHome, currentSourcesState, uploader, executor)
 
       executor.waitForAllComplete(messages)
