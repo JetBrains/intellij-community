@@ -150,11 +150,13 @@ public class TerminalShellCommandHandlerHelper {
     };
 
     TerminalTextBuffer textBuffer = myWidget.getTerminalTextBuffer();
-    int currentLine = StringUtil.countNewLines(StringUtil.trimTrailing(textBuffer.getScreenLines()));
-    if (currentLine != myWidget.getLineNumberAtCursor()) {
-      return null;
+    textBuffer.lock();
+    try {
+      textBuffer.processScreenLines(myWidget.getLineNumberAtCursor(), 1, consumer);
     }
-    textBuffer.processScreenLines(currentLine, 1, consumer);
+    finally {
+      textBuffer.unlock();
+    }
 
     return finder.getResult();
   }

@@ -97,9 +97,15 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   @NotNull
   private String getLineAtCursor() {
     TerminalTextBuffer textBuffer = getTerminalPanel().getTerminalTextBuffer();
-    TerminalLine line = textBuffer.getLine(getLineNumberAtCursor());
-    if (line != null) {
-      return line.getText();
+    textBuffer.lock();
+    try {
+      TerminalLine line = textBuffer.getLine(getLineNumberAtCursor());
+      if (line != null) {
+        return line.getText();
+      }
+    }
+    finally {
+      textBuffer.unlock();
     }
     return "";
   }
