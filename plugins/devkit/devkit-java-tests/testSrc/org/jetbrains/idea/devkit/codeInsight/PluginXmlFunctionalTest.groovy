@@ -102,6 +102,9 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testListeners() {
+    myFixture.addClass("public class MyCollectionWithoutDefaultCTOR implements java.util.Collection {" +
+                       " public MyCollectionWithoutDefaultCTOR(String something) {}" +
+                       "}")
     doHighlightingTest("Listeners.xml")
   }
 

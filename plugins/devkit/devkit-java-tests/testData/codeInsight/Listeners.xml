@@ -17,8 +17,10 @@
               activeInHeadlessMode="true" activeInTestMode="true"/>
 
 
-    <listener class="<error descr="'java.util.Collection' does not inherit from 'java.util.Collection'"><error descr="'java.util.Collection' is not a concrete class"><error descr="Interface is not allowed">java.util.Collection</error></error></error>"
+    <listener class="<error descr="'java.util.Collection' does not inherit from 'java.util.Collection'"><error descr="Interface is not allowed">java.util.Collection</error></error>"
               topic="java.util.Collection"/>
+
+    <listener class="MyCollectionWithoutDefaultCTOR" topic="java.util.Collection"/>
 
 
     <listener class="java.util.ArrayList" topic="java.util.Collection"
@@ -40,7 +42,7 @@
               activeInHeadlessMode="true" activeInTestMode="true"/>
 
 
-    <listener class="<error descr="'java.util.Collection' does not inherit from 'java.util.Collection'"><error descr="'java.util.Collection' is not a concrete class"><error descr="Interface is not allowed">java.util.Collection</error></error></error>"
+    <listener class="<error descr="'java.util.Collection' does not inherit from 'java.util.Collection'"><error descr="Interface is not allowed">java.util.Collection</error></error>"
               topic="java.util.Collection"/>
 
 

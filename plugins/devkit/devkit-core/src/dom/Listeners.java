@@ -20,7 +20,7 @@ public interface Listeners extends DomElement {
     @Attribute("class")
     @Required
     @Convert(PluginPsiClassConverter.class)
-    @ExtendClass(allowNonPublic = true, allowAbstract = false, allowInterface = false, allowEnum = false)
+    @ExtendClass(allowNonPublic = true, allowAbstract = false, allowInterface = false, allowEnum = false, instantiatable = false)
     GenericAttributeValue<PsiClass> getListenerClassName();
 
     @Attribute("topic")
