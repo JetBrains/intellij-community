@@ -283,7 +283,9 @@
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XML"
                                     implementationClass="org.jetbrains.idea.devkit.references.DevKitRelatedPropertiesProvider"/>
-    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.DevKitActionOrGroupIdReferenceContributor"/>
+    <psi.referenceContributor
+      language="Properties"
+      implementation="org.jetbrains.idea.devkit.references.DevKitActionOrGroupIdReferenceContributor"/>
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.references.DevKitActionOrGroupIdReferenceContributor$ImplicitUsageProvider"/>
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
