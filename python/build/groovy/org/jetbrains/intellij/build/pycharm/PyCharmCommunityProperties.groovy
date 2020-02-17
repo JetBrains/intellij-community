@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.*
@@ -78,13 +64,10 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   @Override
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
     return new PyCharmCommunityLinuxDistributionCustomizer(projectHome) {
-      @Override
-      String getSnapName() { return "pycharm-community" }
-
-      @Override
-      String getSnapDescription() {
-        return "Python IDE for professional developers. Save time while PyCharm takes care of the routine. " + \
-        "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
+      {
+        snapName = "pycharm-community"
+        snapDescription = "Python IDE for professional developers. Save time while PyCharm takes care of the routine. " +  \
+         "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
       }
     }
   }
@@ -119,6 +102,7 @@ class PyCharmCommunityLinuxDistributionCustomizer extends LinuxDistributionCusto
   PyCharmCommunityLinuxDistributionCustomizer(projectHome) {
     iconPngPath = "$projectHome/python/resources/PyCharmCore128.png"
     iconPngPathForEAP = "$projectHome/python/resources/PyCharmCore128_EAP.png"
+    includeX86Files = false
   }
 
   @Override
