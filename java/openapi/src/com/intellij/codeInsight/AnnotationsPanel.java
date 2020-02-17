@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -105,7 +105,7 @@ public class AnnotationsPanel {
           Component component = defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           if (component instanceof JComponent) {
             ((JComponent)component)
-              .setToolTipText(column == 1 ? InspectionsBundle.message("nullable.notnull.annotations.runtime.instrumentation.tooltip") : null);
+              .setToolTipText(column == 1 ? JavaBundle.message("nullable.notnull.annotations.runtime.instrumentation.tooltip") : null);
           }
           return component;
         }
@@ -116,7 +116,7 @@ public class AnnotationsPanel {
     }
 
     final AnActionButton selectButton =
-      new AnActionButton(CodeInsightBundle.lazyMessage("action.AnActionButton.text.select.annotation.used.for.code.generation"),
+      new AnActionButton(JavaBundle.lazyMessage("action.AnActionButton.text.select.annotation.used.for.code.generation"),
                          AllIcons.Actions.Checked) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -153,7 +153,7 @@ public class AnnotationsPanel {
     }
     final JPanel panel = toolbarDecorator.createPanel();
     myComponent = new JPanel(new BorderLayout());
-    myComponent.setBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("nullable.notnull.annotations.panel.title", name), false, JBUI.insetsTop(10)));
+    myComponent.setBorder(IdeBorderFactory.createTitledBorder(JavaBundle.message("nullable.notnull.annotations.panel.title", name), false, JBUI.insetsTop(10)));
     myComponent.add(panel);
     myComponent.setPreferredSize(new JBDimension(myComponent.getPreferredSize().width, 200));
 

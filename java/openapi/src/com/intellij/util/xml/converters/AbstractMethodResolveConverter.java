@@ -16,7 +16,7 @@
 package com.intellij.util.xml.converters;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.IdeBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -70,7 +70,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
   public String getErrorMessage(final String s, final ConvertContext context) {
     final ParentType parent = getParent(context);
     return CodeInsightBundle
-      .message("error.cannot.resolve.0.1", IdeBundle.message("element.method"), getReferenceCanonicalText(s, getMethodParams(parent)));
+      .message("error.cannot.resolve.0.1", JavaPsiBundle.message("element.method"), getReferenceCanonicalText(s, getMethodParams(parent)));
   }
 
   @NotNull

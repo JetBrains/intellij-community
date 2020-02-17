@@ -23,13 +23,17 @@ package com.intellij.ui.classFilter;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -125,7 +129,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     column.setCellRenderer(new EnabledCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
     columnModel.getColumn(FilterTableModel.FILTER).setCellRenderer(new FilterCellRenderer());
 
-    getEmptyText().setText(UIBundle.message("no.patterns"));
+    getEmptyText().setText(JavaBundle.message("no.patterns"));
   }
   protected int getPreferredRowsCount() {
     return JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS;
@@ -138,11 +142,11 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   }
 
   protected String getAddButtonText() {
-    return UIBundle.message("button.add.class");
+    return JavaBundle.message("button.add.class");
   }
 
   protected String getAddPatternButtonText() {
-    return UIBundle.message("button.add.pattern");
+    return JavaBundle.message("button.add.pattern");
   }
 
   protected Icon getAddButtonIcon() {
@@ -338,7 +342,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
   protected void addClassFilter() {
     TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createNoInnerClassesScopeChooser(
-      UIBundle.message("class.filter.editor.choose.class.title"), GlobalSearchScope.allScope(myProject), myChooserFilter, null);
+      JavaBundle.message("class.filter.editor.choose.class.title"), GlobalSearchScope.allScope(myProject), myChooserFilter, null);
     chooser.showDialog();
     PsiClass selectedClass = chooser.getSelected();
     if (selectedClass != null) {

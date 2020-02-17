@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -220,7 +221,7 @@ public class SuperMethodWarningUtil {
                                          String @NotNull [] classNames) {
     StringBuilder labelText = new StringBuilder();
     String classType = isParentInterface ? IdeBundle.message("element.of.interface") : IdeBundle.message("element.of.class");
-    String methodString = IdeBundle.message("element.method");
+    String methodString = JavaPsiBundle.message("element.method");
     labelText.append("<html>").append(IdeBundle.message("label.method", name)).append("<br>");
     if (classNames.length == 1) {
       final String className = classNames[0];
