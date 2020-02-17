@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.actions;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -35,9 +34,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author pdolgov
@@ -46,7 +48,7 @@ public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
   private static final String INTERNAL_TEMPLATE_NAME = "FxmlFile.fxml";
 
   public CreateFxmlFileAction() {
-    super(ExecutionBundle.message("javafx.create.new.fxml.file.title"), ExecutionBundle.message("javafx.create.new.fxml.file.description"), AllIcons.FileTypes.Xml);
+    super(JavaFXBundle.message("javafx.create.new.fxml.file.title"), JavaFXBundle.message("javafx.create.new.fxml.file.description"), AllIcons.FileTypes.Xml);
   }
 
   @Override

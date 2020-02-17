@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
@@ -27,6 +26,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
@@ -65,8 +65,8 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     if (reference == null) return;
     if (reference instanceof JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase &&
         ((JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase)reference).isBuiltIn()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("javafx.property.rename.handler.error.message"),
-                                          RefactoringBundle.message("javafx.property.rename.handler.error.title"), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, JavaFXBundle.message("javafx.property.rename.handler.error.message"),
+                                          JavaFXBundle.message("javafx.property.rename.handler.error.title"), null);
       return;
     }
     if (reference instanceof JavaFxPropertyReference && reference.resolve() != null) {

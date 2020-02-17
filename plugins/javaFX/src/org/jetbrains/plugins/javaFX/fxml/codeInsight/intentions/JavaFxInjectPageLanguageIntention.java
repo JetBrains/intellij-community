@@ -3,7 +3,6 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -23,6 +22,7 @@ import com.intellij.psi.xml.XmlProlog;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
@@ -119,7 +119,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("javafx.inject.page.language.intention.family.name");
+    return JavaFXBundle.message("javafx.inject.page.language.intention.family.name");
   }
 
   @Override

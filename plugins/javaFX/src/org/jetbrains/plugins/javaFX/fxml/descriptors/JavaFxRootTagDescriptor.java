@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -12,6 +11,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
@@ -112,7 +112,7 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
     public String validateValue(XmlElement context, String value) {
       final PsiReference[] references = context.getReferences();
       if (references.length == 0 || references[references.length - 1].resolve() == null) {
-        return ExecutionBundle.message("javafx.root.tag.descriptor.cannot.resolve.class", value);
+        return JavaFXBundle.message("javafx.root.tag.descriptor.cannot.resolve.class", value);
       }
       return null;
     }

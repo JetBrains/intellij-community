@@ -6,9 +6,9 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
-import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxPropertyReference;
 
 /**
@@ -30,7 +30,7 @@ public class JavaFxPropertyElement extends BeanPropertyElement {
 
   @Override
   public String getTypeName() {
-    return RefactoringBundle.message("javafx.refactoring.property.element.type.name");
+    return JavaFXBundle.message("javafx.refactoring.property.element.type.name");
   }
 
   @NotNull

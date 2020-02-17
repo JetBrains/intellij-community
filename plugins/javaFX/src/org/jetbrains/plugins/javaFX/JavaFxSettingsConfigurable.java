@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -88,8 +87,8 @@ public class JavaFxSettingsConfigurable implements SearchableConfigurable, Confi
 
   public static FileChooserDescriptor createSceneBuilderDescriptor() {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
-    descriptor.setTitle(ExecutionBundle.message("javafx.settings.configurable.scene.builder.configuration.title"));
-    descriptor.setDescription(ExecutionBundle.message("javafx.settings.configurable.scene.builder.configuration.description"));
+    descriptor.setTitle(JavaFXBundle.message("javafx.settings.configurable.scene.builder.configuration.title"));
+    descriptor.setDescription(JavaFXBundle.message("javafx.settings.configurable.scene.builder.configuration.description"));
     return descriptor;
   }
 

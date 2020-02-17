@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
@@ -53,7 +54,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
                 if (fieldClass != null) {
                   final String text = reference.getCanonicalText();
                   boolean validName = LanguageNamesValidation.isIdentifier(fieldClass.getLanguage(), text, fieldClass.getProject());
-                  holder.registerProblem(reference.getElement(), reference.getRangeInElement(), InspectionsBundle.message("inspection.javafx.unresolved.fx.id.reference.problem"),
+                  holder.registerProblem(reference.getElement(), reference.getRangeInElement(), JavaFXBundle.message("inspection.javafx.unresolved.fx.id.reference.problem"),
                                          isOnTheFly && validName ? new LocalQuickFix[]{new CreateFieldFromUsageQuickFix(text)} : LocalQuickFix.EMPTY_ARRAY);
                 }
               }

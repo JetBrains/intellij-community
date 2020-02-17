@@ -3,7 +3,10 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveTagIntentionFix;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
@@ -15,6 +18,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -66,7 +70,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
         if (defaultValue == null) return;
 
         if (isEqualValue(tagClass, attributeValue, defaultValue, descriptor.getDeclaration())) {
-          holder.registerProblem(attribute, InspectionsBundle.message("inspection.javafx.redundant.property.values.problem"),
+          holder.registerProblem(attribute, JavaFXBundle.message("inspection.javafx.redundant.property.values.problem"),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new RemoveAttributeIntentionFix(attributeName));
         }
@@ -94,7 +98,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
         if (defaultValue == null) return;
 
         if (isEqualValue(tagClass, tagText, defaultValue, descriptor.getDeclaration())) {
-          holder.registerProblem(tag, InspectionsBundle.message("inspection.javafx.redundant.property.values.redundant.tag.problem"),
+          holder.registerProblem(tag, JavaFXBundle.message("inspection.javafx.redundant.property.values.redundant.tag.problem"),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new RemoveTagIntentionFix(tag.getName(), tag));
         }

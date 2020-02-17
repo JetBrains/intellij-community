@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.packaging;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -24,6 +23,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -38,7 +38,7 @@ public class JavaFxEditCertificatesDialog extends DialogWrapper {
 
   protected JavaFxEditCertificatesDialog(JComponent parent, JavaFxArtifactProperties properties, Project project) {
     super(parent, true);
-    setTitle(ExecutionBundle.message("javafx.certificates.dialog.choose.certificate.title"));
+    setTitle(JavaFXBundle.message("javafx.certificates.dialog.choose.certificate.title"));
     init();
     final ActionListener actionListener = new ActionListener() {
       @Override
@@ -59,28 +59,28 @@ public class JavaFxEditCertificatesDialog extends DialogWrapper {
     myPanel.myKeypassTF.setText(keypass != null ? new String(Base64.getDecoder().decode(keypass), StandardCharsets.UTF_8) : "");
     final String storepass = properties.getStorepass();
     myPanel.myStorePassTF.setText(storepass != null ? new String(Base64.getDecoder().decode(storepass), StandardCharsets.UTF_8) : "");
-    myPanel.myKeystore.addBrowseFolderListener(ExecutionBundle.message("javafx.certificates.dialog.choose.certificate.title"), ExecutionBundle.message("javafx.certificates.dialog.select.file.with.generated.keys"), project, BrowseFilesListener.SINGLE_FILE_DESCRIPTOR);
+    myPanel.myKeystore.addBrowseFolderListener(JavaFXBundle.message("javafx.certificates.dialog.choose.certificate.title"), JavaFXBundle.message("javafx.certificates.dialog.select.file.with.generated.keys"), project, BrowseFilesListener.SINGLE_FILE_DESCRIPTOR);
   }
 
   @Override
   protected void doOKAction() {
     if (myPanel.mySignedByKeyRadioButton.isSelected()) {
       if (StringUtil.isEmptyOrSpaces(myPanel.myAliasTF.getText())) {
-        Messages.showErrorDialog(myPanel.myWholePanel, ExecutionBundle.message("javafx.certificates.dialog.alias.should.be.non.empty.error"));
+        Messages.showErrorDialog(myPanel.myWholePanel, JavaFXBundle.message("javafx.certificates.dialog.alias.should.be.non.empty.error"));
         return;
       }
       final String keystore = myPanel.myKeystore.getText();
       if (StringUtil.isEmptyOrSpaces(keystore)) {
-        Messages.showErrorDialog(myPanel.myWholePanel, ExecutionBundle.message("javafx.certificates.dialog.path.to.keystore.file.error"));
+        Messages.showErrorDialog(myPanel.myWholePanel, JavaFXBundle.message("javafx.certificates.dialog.path.to.keystore.file.error"));
         return;
       }
       if (!new File(keystore).isFile()) {
-        Messages.showErrorDialog(myPanel.myWholePanel, ExecutionBundle.message("javafx.certificates.dialog.keystore.file.should.exist.error"));
+        Messages.showErrorDialog(myPanel.myWholePanel, JavaFXBundle.message("javafx.certificates.dialog.keystore.file.should.exist.error"));
         return;
       }
       if (StringUtil.isEmptyOrSpaces(String.valueOf(myPanel.myKeypassTF.getPassword())) || 
           StringUtil.isEmptyOrSpaces(String.valueOf(myPanel.myStorePassTF.getPassword()))) {
-        Messages.showErrorDialog(myPanel.myWholePanel, ExecutionBundle.message("javafx.certificates.dialog.passwords.should.be.set.error"));
+        Messages.showErrorDialog(myPanel.myWholePanel, JavaFXBundle.message("javafx.certificates.dialog.passwords.should.be.set.error"));
         return;
       }
     }

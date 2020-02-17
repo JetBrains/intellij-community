@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +27,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
@@ -69,7 +69,7 @@ public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseInte
           tag.getDescriptor() instanceof JavaFxPropertyTagDescriptor &&
           parentTag.getDescriptor() instanceof JavaFxClassTagDescriptorBase) {
 
-        setText(InspectionsBundle.message("javafx.collapse.subtag.to.attribute.intention",tag.getName()));
+        setText(JavaFXBundle.message("javafx.collapse.subtag.to.attribute.intention",tag.getName()));
         return true;
       }
     }
@@ -79,6 +79,6 @@ public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseInte
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("javafx.collapse.subtag.to.attribute.intention.family.name");
+    return JavaFXBundle.message("javafx.collapse.subtag.to.attribute.intention.family.name");
   }
 }

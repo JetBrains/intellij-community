@@ -21,6 +21,7 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
@@ -55,7 +56,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
         final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
         if (eventHandlerMethods.size() == 0) return;
         if (eventHandlerMethods.size() != 1) {
-          holder.registerProblem(xmlAttributeValue, InspectionsBundle.message("inspection.javafx.event.handler.ambiguous.problem"));
+          holder.registerProblem(xmlAttributeValue, JavaFXBundle.message("inspection.javafx.event.handler.ambiguous.problem"));
         }
 
         if (myDetectNonVoidReturnType) {
@@ -63,7 +64,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
             .map(PsiMethod::getReturnType)
             .filter(returnType -> !PsiType.VOID.equals(returnType))
             .findAny()
-            .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue, InspectionsBundle.message("inspection.javafx.event.handler.return.type.problem")));
+            .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue, JavaFXBundle.message("inspection.javafx.event.handler.return.type.problem")));
         }
 
         final PsiClassType declaredType = JavaFxPsiUtil.getDeclaredEventType(attribute);
@@ -83,13 +84,13 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
                   quickFixes.add(parameterTypeFix);
                   collectFieldTypeFixes(attribute, (PsiClassType)actualType, quickFixes);
                   holder.registerProblem(xmlAttributeValue,
-                                         InspectionsBundle.message("inspection.javafx.event.handler.incompatible.generic.parameter.problem",
+                                         JavaFXBundle.message("inspection.javafx.event.handler.incompatible.generic.parameter.problem",
                                                                    actualType.getCanonicalText(), declaredType.getCanonicalText()),
                                          quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
                 }
                 else {
                   holder.registerProblem(xmlAttributeValue,
-                                         InspectionsBundle.message("inspection.javafx.event.handler.incompatible.handler.argument",
+                                         JavaFXBundle.message("inspection.javafx.event.handler.incompatible.handler.argument",
                                                                    actualRawType.getCanonicalText(), expectedRawType.getCanonicalText()),
                                          parameterTypeFix);
                 }
@@ -125,7 +126,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.javafx.event.handler.create.options.panel"), this, "myDetectNonVoidReturnType");
+    return new SingleCheckboxOptionsPanel(JavaFXBundle.message("inspection.javafx.event.handler.create.options.panel"), this, "myDetectNonVoidReturnType");
   }
 
   private static void collectFieldTypeFixes(@NotNull XmlAttribute attribute,
@@ -193,7 +194,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.javafx.event.handler.change.parameter.type");
+      return JavaFXBundle.message("inspection.javafx.event.handler.change.parameter.type");
     }
 
     @Override

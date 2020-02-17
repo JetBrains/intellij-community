@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -24,6 +23,7 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 
 public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction {
@@ -38,12 +38,12 @@ public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("javafx.wrap.with.fx.define.intention.family.name");
+    return JavaFXBundle.message("javafx.wrap.with.fx.define.intention.family.name");
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    setText( InspectionsBundle.message("javafx.wrap.id.with.fx.define.intention",myId));
+    setText( JavaFXBundle.message("javafx.wrap.id.with.fx.define.intention",myId));
     return myTag.isValid();
   }
 
