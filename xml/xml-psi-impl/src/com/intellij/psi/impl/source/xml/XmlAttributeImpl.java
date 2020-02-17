@@ -224,15 +224,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   public XmlAttributeDescriptor getDescriptor() {
     return getImpl().getDescriptor();
   }
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  @NotNull
-  public String getRealLocalName() {
-    XmlAttribute attribute = this;
-    return getRealName(attribute);
-  }
-
+  
   @NotNull
   public static String getRealName(@NotNull XmlAttribute attribute) {
     final String name = attribute.getLocalName();
