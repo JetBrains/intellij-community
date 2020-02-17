@@ -66,8 +66,11 @@ public class BaseLabel extends JLabel {
 
   public static Font getLabelFont() {
     UISettings uiSettings = UISettings.getInstance();
-    return JBUI.CurrentTheme.ToolWindow.headerFont().deriveFont(
-      uiSettings.getFontSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
+    Font font = JBUI.CurrentTheme.ToolWindow.headerFont();
+    if (uiSettings.getOverrideLafFonts()) {
+      return font.deriveFont(uiSettings.getFontSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
+    }
+    return font;
   }
 
   public void setActiveFg(final Color fg) {
