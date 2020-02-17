@@ -12,10 +12,26 @@
         }
       }
     },
-    "foo": {
+    "sdks": {
       "type": "object",
       "properties": {
-        "a": {
+        "sdks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/classDefinitions/com_intellij_configurationScript_ConfigurationSchemaTest$JdkAutoHint"
+          }
+        }
+      },"additionalProperties": false
+    }
+  },
+  "classDefinitions": {
+    "com_intellij_configurationScript_ConfigurationSchemaTest$JdkAutoHint": {
+      "type": "object",
+      "properties": {
+        "sdkName": {
+          "type": "string"
+        },
+        "sdkPath": {
           "type": "string"
         }
       },"additionalProperties": false

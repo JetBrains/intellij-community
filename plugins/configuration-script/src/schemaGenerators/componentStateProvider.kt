@@ -17,6 +17,11 @@ import org.jetbrains.io.JsonObjectBuilder
 internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
   private val pathToStateClass: MutableMap<String, Class<out BaseState>> = THashMap()
 
+  private val objectSchemaGenerator = OptionClassJsonSchemaGenerator("classDefinitions")
+
+  override val definitionNodeKey: CharSequence?
+    get() = objectSchemaGenerator.definitionNodeKey
+
   // schema is generated without project - we cannot rely on created component adapter for services
   override fun generate(rootBuilder: JsonObjectBuilder) {
     for (plugin in PluginManagerCore.getLoadedPlugins()) {
@@ -26,6 +31,8 @@ internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
     }
     doGenerate(rootBuilder, pathToStateClass)
   }
+
+  override fun generateDefinitions() = objectSchemaGenerator.describe()
 
   internal fun doGenerate(rootBuilder: JsonObjectBuilder, pathToStateClass: Map<String, Class<out BaseState>>) {
     if (pathToStateClass.isEmpty()) {
@@ -49,7 +56,7 @@ internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
       jsonObjectBuilder.map(keys.last()) {
         "type" to "object"
         map("properties") {
-          buildJsonSchema(ReflectionUtil.newInstance(pathToStateClass.getValue(path)), this)
+          buildJsonSchema(ReflectionUtil.newInstance(pathToStateClass.getValue(path)), this, objectSchemaGenerator)
         }
         "additionalProperties" to false
       }

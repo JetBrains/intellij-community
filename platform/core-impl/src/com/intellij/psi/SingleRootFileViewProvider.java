@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
@@ -32,6 +18,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -167,7 +154,12 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile) {
-    if (!checkFileSizeLimit(vFile)) return false;
+    if (!checkFileSizeLimit(vFile)) {
+      return false;
+    }
+    if (vFile instanceof LightVirtualFile && ((LightVirtualFile)vFile).isTooLargeForIntelligence() == ThreeState.YES) {
+      return false;
+    }
     return fileSizeIsGreaterThan(vFile, PersistentFSConstants.getMaxIntellisenseFileSize());
   }
 
@@ -189,8 +181,10 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
   }
 
-  public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile, final long contentSize) {
-    if (!checkFileSizeLimit(vFile)) return false;
+  public static boolean isTooLargeForIntelligence(@NotNull VirtualFile file, long contentSize) {
+    if (!checkFileSizeLimit(file)) {
+      return false;
+    }
     return contentSize > PersistentFSConstants.getMaxIntellisenseFileSize();
   }
 
@@ -201,9 +195,13 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   public static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxBytes) {
     if (vFile instanceof LightVirtualFile) {
       // This is optimization in order to avoid conversion of [large] file contents to bytes
-      final int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
-      if (lengthInChars < maxBytes / 2) return false;
-      if (lengthInChars > maxBytes ) return true;
+      int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
+      if (lengthInChars < maxBytes / 2) {
+        return false;
+      }
+      if (lengthInChars > maxBytes ) {
+        return true;
+      }
     }
 
     return vFile.getLength() > maxBytes;

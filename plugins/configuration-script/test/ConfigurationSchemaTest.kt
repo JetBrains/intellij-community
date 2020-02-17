@@ -12,6 +12,7 @@ import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.io.sanitizeFileName
+import com.intellij.util.xmlb.annotations.XCollection
 import com.jetbrains.jsonSchema.impl.JsonSchemaCompletionContributor
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader
 import org.intellij.lang.annotations.Language
@@ -69,35 +70,60 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
   }
 
   fun `test component state`() {
-    doTestComponentState("foo".trimIndent(), """
+    testFooComponentState("foo".trimIndent(), """
       foo:
         <caret>
     """)
   }
 
   fun `test component state - nested key`() {
-    doTestComponentState("foo.bar", """
+    testFooComponentState("foo.bar", """
       foo:
         bar:
           <caret>
     """)
   }
 
-  private fun doTestComponentState(path: String, fileContent: String) {
+  @Suppress("unused")
+  private class JdkAutoHint: BaseState() {
+    var sdkName by string()
+    var sdkPath by string()
+  }
+
+  private class JdkAutoHints : BaseState() {
+    @get:XCollection
+    val sdks by list<JdkAutoHint>()
+  }
+
+  fun `test list of objects`() {
+    testComponentState("sdks", """
+      sdks:
+        <caret>
+    """, beanClass = JdkAutoHints::class.java, expectedVariants = """sdks (array)""")
+  }
+
+  private fun testFooComponentState(path: String, fileContent: String) {
+    testComponentState(path, fileContent, Foo::class.java, expectedVariants = "a (string)")
+  }
+
+  private fun testComponentState(path: String, fileContent: String, beanClass: Class<out BaseState>, expectedVariants: String) {
     val variants = test(fileContent.trimIndent(), listOf(object : SchemaGenerator {
+      private val componentStateJsonSchemaGenerator = ComponentStateJsonSchemaGenerator()
+
       override fun generate(rootBuilder: JsonObjectBuilder) {
-        val pathToStateClass = mapOf(path to Foo::class.java)
-        val schemaGenerator = ComponentStateJsonSchemaGenerator()
-        schemaGenerator.doGenerate(rootBuilder, pathToStateClass)
+        componentStateJsonSchemaGenerator.doGenerate(rootBuilder, mapOf(path to beanClass))
       }
+
+      override val definitionNodeKey: CharSequence?
+        get() = componentStateJsonSchemaGenerator.definitionNodeKey
+
+      override fun generateDefinitions() = componentStateJsonSchemaGenerator.generateDefinitions()
     }), schemaValidator = {
       val snapshotFile = testSnapshotDir.resolve(sanitizeFileName(name) + ".json")
       assertThat(it.toString()).toMatchSnapshot(snapshotFile)
     })
 
-    assertThat(variantsToText(variants)).isEqualTo("""
-    a (string)
-    """.trimIndent())
+    assertThat(variantsToText(variants)).isEqualTo(expectedVariants)
   }
 
   private fun checkDescription(variants: List<LookupElement>, name: String, expectedDescription: String) {

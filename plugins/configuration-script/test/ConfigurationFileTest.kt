@@ -1,3 +1,4 @@
+@file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.configurationScript
 
 import com.fasterxml.jackson.core.JsonFactory
