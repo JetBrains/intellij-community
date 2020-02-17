@@ -1,29 +1,23 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('a')
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('a')
     PsiWhiteSpace(' ')
     PsiElement(&&)('&&')
     PsiWhiteSpace(' ')
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('b')
-        PsiWhiteSpace(' ')
-        PsiElement(|)('|')
-        PsiWhiteSpace(' ')
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('c')
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('b')
+    PsiWhiteSpace(' ')
+    PsiElement(|)('|')
+    PsiWhiteSpace(' ')
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('c')
     PsiWhiteSpace(' ')
     PsiElement(&)('&')
     PsiWhiteSpace(' ')
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('d')
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('d')

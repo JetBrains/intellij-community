@@ -1,7 +1,5 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          VARIABLE
-            PsiElement(var)('$a')
+    GENERIC_COMMAND_DIRECTIVE
+      VARIABLE
+        PsiElement(var)('$a')

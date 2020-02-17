@@ -250,10 +250,6 @@ public class ShVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
-  public void visitPipeline(@NotNull ShPipeline o) {
-    visitCompositeElement(o);
-  }
-
   public void visitPipelineCommand(@NotNull ShPipelineCommand o) {
     visitCommand(o);
   }

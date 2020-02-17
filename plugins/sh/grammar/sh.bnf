@@ -130,25 +130,23 @@ private file ::=
 private simple_list ::= (commands_list newlines)*
 
 commands_list ::= pipeline_command (
-                     '&&' newlines? pipeline_command
-                   | '||' newlines? pipeline_command
-                   | '&' pipeline_command?
-                   | ';' pipeline_command?
+                     ('&&' | '||') newlines? pipeline_command
+                   | ('|' | '|&' | '&'| ';') pipeline_command?
                  )*
 
-pipeline_command ::=  '!'? pipeline
+pipeline_command ::=  '!'? command
                     | '!'? eval_command
                     | '!'? test_command
                     | let_command {recoverWhile=pipeline_recover}
 
 let_command  ::= let expression
-eval_command ::= eval (EVAL_CONTENT|simple_command_element)+
+eval_command ::= eval (EVAL_CONTENT|simple_command_element)*
 test_command ::= test simple_command_element*
 
 private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|'(('|
                                var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}')
 
-pipeline ::= command (('|&'|'|') newlines command)* {pin(".*")=1}
+//pipeline ::=  {pin(".*")=1}
 
 command ::= shell_command [heredoc | redirection+]
           | include_command
@@ -215,7 +213,7 @@ private compound_list_recover ::= !(elif | else | then | fi)
 private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
   pin=1
 } // todo with pin
-private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') newlines
+private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '\n') newlines
 
 function_definition ::= &(function | word '(') function_definition_inner {extends=command}
 private function_definition_inner ::=           word argument_list  newlines block
