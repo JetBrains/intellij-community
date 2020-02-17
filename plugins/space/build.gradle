@@ -38,7 +38,7 @@ dependencies {
     compile "commons-io:commons-io:$apache_commons_io_version"
 
     compile project(':plugins:pipelines:pipelines-config:pipelines-config-dsl-compile')
-    compile project(':plugins:pipelines:pipelines-config:pipelines-config-dsl-script-exec-common')
+    compile project(':plugins:pipelines:pipelines-config:pipelines-config-dsl-script-exec')
     compile project(':plugins:pipelines:pipelines-config:pipelines-config-utils')
     compile project(':plugins:pipelines:pipelines-common')
 
