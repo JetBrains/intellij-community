@@ -90,9 +90,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         }
         final DomExtension extension =
           registrar.registerGenericAttributeValueChildExtension(new XmlName(attributeName), clazz).setDeclaringElement(field);
-        if (required) {
-          extension.addCustomAnnotation(MyRequired.INSTANCE);
-        }
+        markAsRequired(extension, required);
 
         if (clazz == String.class) {
           if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
@@ -120,7 +118,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         final DomExtension extension =
           registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class)
             .setDeclaringElement(field);
-        if (required) extension.addCustomAnnotation(MyRequired.INSTANCE);
+        markAsRequired(extension, required);
 
         final With withElement = findWithElement(elements, field);
         markAsClass(extension, Extension.isClassField(field.getName()), withElement);
@@ -175,6 +173,10 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
+  private static void markAsRequired(DomExtension extension, boolean required) {
+    if (required) extension.addCustomAnnotation(MyRequired.INSTANCE);
+  }
+
   private static void registerCollectionBinding(PsiField field,
                                                 DomExtensionsRegistrar registrar,
                                                 PsiAnnotation collectionAnnotation,
@@ -192,13 +194,13 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         final DomExtension extension = registrar
           .registerCollectionChildrenExtension(new XmlName(tagName), SimpleTagValue.class)
           .setDeclaringElement(field);
-        if (required) extension.addCustomAnnotation(MyRequired.INSTANCE);
+        markAsRequired(extension, required);
       }
       else if (tagName != null) {
         final DomExtension extension = registrar
           .registerCollectionChildrenExtension(new XmlName(tagName), DomElement.class)
           .setDeclaringElement(field);
-        if (required) extension.addCustomAnnotation(MyRequired.INSTANCE);
+        markAsRequired(extension, required);
         extension.addExtender(new DomExtender() {
           @Override
           public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
@@ -218,7 +220,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
           final DomExtension extension = registrar
             .registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class)
             .setDeclaringElement(field);
-          if (required) extension.addCustomAnnotation(MyRequired.INSTANCE);
+          markAsRequired(extension, required);
           extension.addExtender(new DomExtender() {
             @Override
             public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
