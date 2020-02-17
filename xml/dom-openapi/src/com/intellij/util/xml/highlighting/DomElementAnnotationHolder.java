@@ -58,12 +58,7 @@ public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDe
   DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference);
 
   /**
-   * Is useful only if called from {@link com.intellij.util.xml.highlighting.DomElementsAnnotator} instance
-   *
-   * @param element  element
-   * @param severity highlight severity
-   * @param message  description
-   * @return annotation
+   * Is useful only if called from {@link DomElementsAnnotator} instance.
    */
   @NotNull
   Annotation createAnnotation(@NotNull DomElement element, HighlightSeverity severity, @Nullable String message);
