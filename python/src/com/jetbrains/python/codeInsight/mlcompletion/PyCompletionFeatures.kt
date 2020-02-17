@@ -164,9 +164,9 @@ object PyCompletionFeatures {
 
   fun getNumberOfOccurrencesInScope(kind: PyCompletionMlElementKind, contextFeatures: ContextFeatures, lookupString: String): Int? {
     return when (kind) {
-             in arrayOf(PyCompletionMlElementKind.FUNCTION,
-                        PyCompletionMlElementKind.TYPE_OR_CLASS,
-                        PyCompletionMlElementKind.FROM_TARGET) ->
+             PyCompletionMlElementKind.FUNCTION,
+             PyCompletionMlElementKind.TYPE_OR_CLASS,
+             PyCompletionMlElementKind.FROM_TARGET ->
                contextFeatures.getUserData(PyNamesMatchingMlCompletionFeatures.statementListOrFileNamesKey)
                  ?.let { it[lookupString] }
              PyCompletionMlElementKind.NAMED_ARG ->
