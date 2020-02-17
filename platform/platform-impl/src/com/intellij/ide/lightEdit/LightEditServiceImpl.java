@@ -121,7 +121,7 @@ public final class LightEditServiceImpl implements LightEditService,
       });
     }
     else {
-      callback.run();
+      ApplicationManager.getApplication().invokeLater(callback);
     }
   }
 
