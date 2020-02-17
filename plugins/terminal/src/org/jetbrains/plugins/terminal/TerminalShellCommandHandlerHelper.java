@@ -36,6 +36,7 @@ public class TerminalShellCommandHandlerHelper {
   private final ShellTerminalWidget myWidget;
   private final Alarm myAlarm;
   private volatile String myWorkingDirectory;
+  private volatile Boolean myHasRunningCommands;
   private PropertiesComponent myPropertiesComponent;
 
   TerminalShellCommandHandlerHelper(@NotNull ShellTerminalWidget widget) {
@@ -70,7 +71,7 @@ public class TerminalShellCommandHandlerHelper {
     //highlight matched command
     String command = myWidget.getTypedShellCommand();
     SubstringFinder.FindResult result =
-      TerminalShellCommandHandler.Companion.matches(project, getWorkingDirectory(), !myWidget.hasRunningCommands(), command)
+      TerminalShellCommandHandler.Companion.matches(project, getWorkingDirectory(), !hasRunningCommands(), command)
       ? searchMatchedCommand(command, true) : null;
     myWidget.getTerminalPanel().setFindResult(result);
 
@@ -123,6 +124,15 @@ public class TerminalShellCommandHandlerHelper {
     return StringUtil.nullize(workingDirectory);
   }
 
+  private boolean hasRunningCommands() {
+    Boolean hasRunningCommands = myHasRunningCommands;
+    if (hasRunningCommands == null) {
+      hasRunningCommands = myWidget.hasRunningCommands();
+      myHasRunningCommands = hasRunningCommands;
+    }
+    return hasRunningCommands;
+  }
+
   @Nullable
   private SubstringFinder.FindResult searchMatchedCommand(@NotNull String pattern, boolean ignoreCase) {
     if (pattern.length() == 0) {
@@ -151,7 +161,7 @@ public class TerminalShellCommandHandlerHelper {
 
   public boolean processEnterKeyPressed(@NotNull String command, @NotNull KeyEvent keyPressed) {
     if (!isFeatureEnabled() || !isEnabledForProject()) {
-      myWorkingDirectory = null;
+      onShellCommandExecuted();
       return false;
     }
     if (LOG.isDebugEnabled()) {
@@ -160,20 +170,25 @@ public class TerminalShellCommandHandlerHelper {
     myAlarm.cancelAllRequests();
 
     if ((keyPressed.getModifiers() & InputEvent.CTRL_MASK) == 0) {
-      myWorkingDirectory = null;
+      onShellCommandExecuted();
       return false;
     }
 
     if (!TerminalShellCommandHandler.Companion.matches(myWidget.getProject(), getWorkingDirectory(),
-                                                       !myWidget.hasRunningCommands(), command)) {
-      myWorkingDirectory = null;
+                                                       !hasRunningCommands(), command)) {
+      onShellCommandExecuted();
       return false;
     }
 
     TerminalShellCommandHandler.Companion.executeShellCommandHandler(myWidget.getProject(), getWorkingDirectory(),
-                                                                     !myWidget.hasRunningCommands(), command);
+                                                                     !hasRunningCommands(), command);
     clearTypedCommand(command);
     return true;
+  }
+
+  private void onShellCommandExecuted() {
+    myWorkingDirectory = null;
+    myHasRunningCommands = null;
   }
 
   private void clearTypedCommand(@NotNull String command) {
