@@ -16,7 +16,7 @@ class SharedIndexMetadataTest : BasePlatformTestCase() {
   @Test
   fun testAliasesAreIncluded() {
     val selfVersion = getIdeVersion()
-    val data = writeIndexMetadata("mock1", "jdk", "123", selfVersion, aliases = setOf("jonnyzzz", "intellij", "jdk"))
+    val data = writeIndexMetadata("mock1", "jdk2", selfVersion, SharedIndexMetadataInfo(sourcesHash = "123", aliases = listOf("jonnyzzz", "intellij", "jdk")))
 
     val om = ObjectMapper()
     val root = om.readTree(data) as ObjectNode
@@ -29,7 +29,7 @@ class SharedIndexMetadataTest : BasePlatformTestCase() {
   @Test
   fun testSourcesAreIncluded() {
     val selfVersion = getIdeVersion()
-    val data = writeIndexMetadata("mock1", "jdk2", "123", selfVersion)
+    val data = writeIndexMetadata("mock1", "jdk2", selfVersion, SharedIndexMetadataInfo(sourcesHash = "123"))
 
     val om = ObjectMapper()
     val root = om.readTree(data) as ObjectNode
@@ -78,7 +78,7 @@ class SharedIndexMetadataTest : BasePlatformTestCase() {
   fun testSelfSerializationIsStable() {
     val (a,b) = List(2) {
       val selfVersion = getIdeVersion()
-      writeIndexMetadata("mock1", "jdk", "123", selfVersion)
+      writeIndexMetadata("mock1", "jdk", selfVersion, SharedIndexMetadataInfo(sourcesHash = "123"))
     }
 
     Assert.assertArrayEquals(a, b)
@@ -89,7 +89,7 @@ class SharedIndexMetadataTest : BasePlatformTestCase() {
     val version = getIdeVersion()
     Assert.assertEquals(version, version.copy())
 
-    val json = writeIndexMetadata("mock1", "jdk", "123", version.copy().tuneSelfVersion())
+    val json = writeIndexMetadata("mock1", "jdk", version.copy().tuneSelfVersion(), SharedIndexMetadataInfo(sourcesHash = "123"))
     val om = ObjectMapper()
 
     val selfVersion = version.copy()

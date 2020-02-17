@@ -118,7 +118,7 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     LOG.info("JDK size          = ${StringUtil.formatFileSize(jdkHome.totalSize())}")
     LOG.info("JDK hash          = ${hash}")
 
-    packIndexes(indexKind, indexName, hash, indexZip, infraVersion, outputDir, aliases = aliases)
+    packIndexes(indexKind, indexName, indexZip, infraVersion, outputDir, SharedIndexMetadataInfo(sourcesHash = hash, aliases = aliases))
     exitProcess(0)
   }
 }

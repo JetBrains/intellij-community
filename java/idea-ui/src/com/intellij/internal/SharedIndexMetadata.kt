@@ -10,6 +10,13 @@ import com.intellij.util.indexing.IndexInfrastructureVersion
 import java.util.*
 import kotlin.collections.HashMap
 
+data class SharedIndexMetadataInfo(
+  val aliases: List<String> = listOf(),
+  val sourcesHash: String? = null,
+  val vcsCommitId: String? = null
+  //TODO: possibly a commits map?
+)
+
 object SharedIndexMetadata {
   private const val METADATA_VERSION = "2"
 
@@ -32,9 +39,8 @@ object SharedIndexMetadata {
 
   fun writeIndexMetadata(indexName: String,
                          indexKind: String,
-                         sourcesHash: String,
                          infrastructureVersion: IndexInfrastructureVersion,
-                         aliases: Collection<String> = setOf()): ByteArray {
+                         addon: SharedIndexMetadataInfo): ByteArray {
     try {
       val om = ObjectMapper()
 
@@ -45,11 +51,21 @@ object SharedIndexMetadata {
       root.putObject("sources").also { sources ->
         sources.put("os", IndexInfrastructureVersion.Os.getOs().osName)
         sources.put("os_name", SystemInfo.getOsNameAndVersion())
-        sources.put("hash", sourcesHash)
         sources.put("kind", indexKind)
         sources.put("name", indexName)
-        sources.putArray("aliases").let { aliasesNode ->
-          aliases.map { it.toLowerCase().trim() }.toSortedSet().forEach { aliasesNode.add(it) }
+
+        addon.sourcesHash?.let {
+          sources.put("hash", it)
+        }
+
+        addon.vcsCommitId?.let {
+          sources.put("vcs_commit_id", it)
+        }
+
+        addon.aliases.let { aliases ->
+          sources.putArray("aliases").let { aliasesNode ->
+            aliases.map { it.toLowerCase().trim() }.toSortedSet().forEach { aliasesNode.add(it) }
+          }
         }
       }
 

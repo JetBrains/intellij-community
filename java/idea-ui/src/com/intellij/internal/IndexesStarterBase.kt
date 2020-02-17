@@ -60,11 +60,10 @@ abstract class IndexesStarterBase(
 
   protected fun packIndexes(indexKind: String,
                             indexName: String,
-                            hash: String,
                             indexZip: File,
                             infraVersion: IndexInfrastructureVersion,
                             outputDir: File,
-                            aliases: Collection<String> = setOf()) {
+                            addon: SharedIndexMetadataInfo) {
     LOG.info("Packing the indexes to XZ...")
     val indexZipXZ = File(indexZip.path + ".xz")
     xz(indexZip, indexZipXZ)
@@ -74,7 +73,7 @@ abstract class IndexesStarterBase(
     LOG.info("Generated index in $indexZip")
 
     val indexMetadata = runAndCatchNotNull("extract JSON metadata from $indexZip") {
-      SharedIndexMetadata.writeIndexMetadata(indexName, indexKind, hash, infraVersion, aliases)
+      SharedIndexMetadata.writeIndexMetadata(indexName, indexKind, infraVersion, addon)
     }
 
     // we generate production layout here:
@@ -91,7 +90,8 @@ abstract class IndexesStarterBase(
     //       | <entry>.sha256 // SHA-256 hash of the .ijx.xz entry
     //
 
-    val indexDir = (outputDir / indexKind / hash).apply { mkdirs() }
+    val targetPathHash = addon.sourcesHash ?: addon.vcsCommitId ?: error("No source hash is specified")
+    val indexDir = (outputDir / indexKind / targetPathHash).apply { mkdirs() }
     fun indexFile(nameSuffix: String) = indexDir / "${indexName}-${infraVersion.weakVersionHash}$nameSuffix"
 
     FileUtil.copy(indexZipXZ, indexFile(".ijx.xz"))

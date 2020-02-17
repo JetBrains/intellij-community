@@ -35,10 +35,11 @@ class DumpProjectIndexesStarter : IndexesStarterBase("dump-project-index") {
     println("")
     println("")
 
+    val indexKind = "project"
     val tempDir = args.argFile(tempKey).recreateDir()
     val outputDir = args.argFile(outputKey).apply { mkdirs() }
     val projectDir = args.argFile(projectHome)
-    val hash = args.arg(revisionHash)
+    val vcsCommitId = args.arg(revisionHash)
 
     LOG.info("Opening project from $projectDir")
     val project = runAndCatchNotNull("Opening Project") {
@@ -46,7 +47,7 @@ class DumpProjectIndexesStarter : IndexesStarterBase("dump-project-index") {
     }
 
     val chunkName = FileUtil.sanitizeFileName(project.name, true)
-    val indexZip = File(tempDir, "project-$hash-$chunkName.ijx")
+    val indexZip = File(tempDir, "$indexKind-${FileUtil.sanitizeFileName(project.name)}-$vcsCommitId-$chunkName.ijx")
 
     LOG.info("Generating indexes...")
     val indexingStartTime = System.currentTimeMillis()
@@ -57,9 +58,9 @@ class DumpProjectIndexesStarter : IndexesStarterBase("dump-project-index") {
     val indexingTime = Longs.max(0L, System.currentTimeMillis() - indexingStartTime)
     LOG.info("Indexes build completed in ${StringUtil.formatDuration(indexingTime)}")
     LOG.info("size          = ${StringUtil.formatFileSize(indexZip.totalSize())}")
-    LOG.info("hash          = ${hash}")
+    LOG.info("commitId      = ${vcsCommitId}")
 
-    packIndexes("project", chunkName, hash, indexZip, infraVersion, outputDir)
+    packIndexes(indexKind, chunkName, indexZip, infraVersion, outputDir, SharedIndexMetadataInfo(vcsCommitId = vcsCommitId))
     exitProcess(0)
   }
 }
