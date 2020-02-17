@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.mlcompletion
 
 import com.intellij.codeInsight.completion.CompletionLocation
+import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.module.ModuleUtilCore
@@ -161,33 +162,21 @@ object PyCompletionFeatures {
     return res
   }
 
-  fun getNumberOfOccurrencesInScope(kind: PyCompletionMlElementKind, locationPsi: PsiElement, lookupString: String): Int? {
-    when (kind) {
-      in arrayOf(PyCompletionMlElementKind.FUNCTION,
-                 PyCompletionMlElementKind.TYPE_OR_CLASS,
-                 PyCompletionMlElementKind.FROM_TARGET) -> {
-        val statementList = PsiTreeUtil.getParentOfType(locationPsi, PyStatementList::class.java, PyFile::class.java) ?: return null
-        val children = PsiTreeUtil.collectElementsOfType(statementList, PyReferenceExpression::class.java)
-        return children.count { it.textOffset < locationPsi.textOffset && it.textMatches(lookupString) }
-      }
-      PyCompletionMlElementKind.NAMED_ARG -> {
-        val psiArgList = PsiTreeUtil.getParentOfType(locationPsi, PyArgumentList::class.java) ?: return null
-        val children = PsiTreeUtil.getChildrenOfType(psiArgList, PyKeywordArgument::class.java) ?: return null
-        return children.map { it.firstChild }.count {
-          lookupString == "${it.text}="
-        }
-      }
-      PyCompletionMlElementKind.PACKAGE_OR_MODULE -> {
-        val imports = PsiTreeUtil.collectElementsOfType(locationPsi.containingFile, PyImportElement::class.java)
-        return imports.count { imp ->
-          val refExpr = imp.importReferenceExpression
-          refExpr != null && refExpr.textMatches(lookupString)
-        }
-      }
-      else -> {
-        return null
-      }
-    }
+  fun getNumberOfOccurrencesInScope(kind: PyCompletionMlElementKind, contextFeatures: ContextFeatures, lookupString: String): Int? {
+    return when (kind) {
+             in arrayOf(PyCompletionMlElementKind.FUNCTION,
+                        PyCompletionMlElementKind.TYPE_OR_CLASS,
+                        PyCompletionMlElementKind.FROM_TARGET) ->
+               contextFeatures.getUserData(PyNamesMatchingMlCompletionFeatures.statementListOrFileNamesKey)
+                 ?.let { it[lookupString] }
+             PyCompletionMlElementKind.NAMED_ARG ->
+               contextFeatures.getUserData(PyNamesMatchingMlCompletionFeatures.namedArgumentsNamesKey)
+                 ?.let { it[lookupString.substringBefore("=")] }
+             PyCompletionMlElementKind.PACKAGE_OR_MODULE ->
+               contextFeatures.getUserData(PyNamesMatchingMlCompletionFeatures.importNamesKey)
+                 ?.let { it[lookupString] }
+             else -> null
+           } ?: 0
   }
 
   fun getBuiltinPopularityFeature(lookupString: String, isBuiltins: Boolean): Int? =

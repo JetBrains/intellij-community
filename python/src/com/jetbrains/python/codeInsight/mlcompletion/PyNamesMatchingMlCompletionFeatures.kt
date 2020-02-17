@@ -17,6 +17,15 @@ object PyNamesMatchingMlCompletionFeatures {
   private val lineLeftNamesKey = Key<Map<String, Int>>("py.ml.completion.line.left.names")
   private val lineLeftTokensKey = Key<Map<String, Int>>("py.ml.completion.line.left.tokens")
 
+  val importNamesKey = Key<Map<String, Int>>("py.ml.completion.import.names")
+  val importTokensKey = Key<Map<String, Int>>("py.ml.completion.import.tokens")
+
+  val namedArgumentsNamesKey = Key<Map<String, Int>>("py.ml.completion.arguments.names")
+  val namedArgumentsTokensKey = Key<Map<String, Int>>("py.ml.completion.arguments.tokens")
+
+  val statementListOrFileNamesKey = Key<Map<String, Int>>("py.ml.completion.statement.list.names")
+  val statementListOrFileTokensKey = Key<Map<String, Int>>("py.ml.completion.statement.list.tokens")
+
   data class PyScopeMatchingFeatures(val sumMatches: Int,
                                      val sumTokensMatches: Int,
                                      val numScopeNames: Int,
@@ -70,6 +79,51 @@ object PyNamesMatchingMlCompletionFeatures {
     environment.putUserData(lineLeftNamesKey, names.toMap())
     environment.putUserData(lineLeftTokensKey, getTokensCounterMap(names.toMap()).toMap())
     return names.toMap()
+  }
+
+  fun calculateImportNames(environment: CompletionEnvironment) {
+    environment.parameters.position.containingFile
+      .let { PsiTreeUtil.collectElementsOfType(it, PyImportElement::class.java) }
+      .mapNotNull { it.importReferenceExpression }
+      .mapNotNull { it.name }
+      .let { putTokensAndNamesToUserData(environment, importNamesKey, importTokensKey, it) }
+  }
+
+  fun calculateStatementListNames(environment: CompletionEnvironment) {
+    val position = environment.parameters.position
+    position
+      .let { PsiTreeUtil.getParentOfType(it, PyStatementList::class.java, PyFile::class.java) }
+      ?.let { PsiTreeUtil.collectElementsOfType(it, PyReferenceExpression::class.java) }
+      ?.filter { it.textOffset < position.textOffset }
+      ?.mapNotNull { it.name }
+      ?.let { putTokensAndNamesToUserData(environment, statementListOrFileNamesKey, statementListOrFileTokensKey, it) }
+  }
+
+  fun calculateNamedArgumentsNames(environment: CompletionEnvironment) {
+    val position = environment.parameters.position
+    PsiTreeUtil.getParentOfType(position, PyArgumentList::class.java)
+      ?.let { PsiTreeUtil.getChildrenOfType(it, PyKeywordArgument::class.java) }
+      ?.mapNotNull { it.firstChild }
+      ?.mapNotNull { it.text }
+      ?.let { putTokensAndNamesToUserData(environment, namedArgumentsNamesKey, namedArgumentsTokensKey, it) }
+  }
+
+  private fun putTokensAndNamesToUserData(environment: CompletionEnvironment,
+                                          namesKey: Key<Map<String, Int>>,
+                                          tokensKey: Key<Map<String, Int>>,
+                                          names: List<String>) {
+    names
+      .groupingBy { it }
+      .eachCount()
+      .let { putTokensAndNamesToUserData(environment, namesKey, tokensKey, it) }
+  }
+
+  private fun putTokensAndNamesToUserData(environment: CompletionEnvironment,
+                                          namesKey: Key<Map<String, Int>>,
+                                          tokensKey: Key<Map<String, Int>>,
+                                          names: Map<String, Int>) {
+    environment.putUserData(namesKey, names.toMap())
+    environment.putUserData(tokensKey, getTokensCounterMap(names.toMap()).toMap())
   }
 
   private fun getPyScopeMatchingFeatures(names: Map<String, Int>,

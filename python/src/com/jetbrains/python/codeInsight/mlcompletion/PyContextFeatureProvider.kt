@@ -43,6 +43,9 @@ class PyContextFeatureProvider : ContextFeatureProvider {
 
     PyReceiverMlCompletionFeatures.calculateReceiverElementInfo(environment, typeEvalContext)
     PyNamesMatchingMlCompletionFeatures.calculateFunBodyNames(environment)
+    PyNamesMatchingMlCompletionFeatures.calculateNamedArgumentsNames(environment)
+    PyNamesMatchingMlCompletionFeatures.calculateImportNames(environment)
+    PyNamesMatchingMlCompletionFeatures.calculateStatementListNames(environment)
 
     PyNamesMatchingMlCompletionFeatures.calculateSameLineLeftNames(environment).let { names ->
       result["have_opening_round_bracket"] = MLFeatureValue.binary(PyParenthesesFeatures.haveOpeningRoundBracket(names))

@@ -21,7 +21,7 @@ class PyElementFeatureProvider : ElementFeatureProvider {
     PyCompletionFeatures.getPyLookupElementInfo(element)?.let { info ->
       result["kind"] = MLFeatureValue.categorical(info.kind)
       result["is_builtins"] = MLFeatureValue.binary(info.isBuiltins)
-      PyCompletionFeatures.getNumberOfOccurrencesInScope(info.kind, locationPsi, lookupString)?.let {
+      PyCompletionFeatures.getNumberOfOccurrencesInScope(info.kind, contextFeatures, lookupString)?.let {
         result["number_of_occurrences_in_scope"] = MLFeatureValue.numerical(it)
       }
       PyCompletionFeatures.getBuiltinPopularityFeature(lookupString, info.isBuiltins)?.let {
