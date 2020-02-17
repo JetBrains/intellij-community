@@ -15,6 +15,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
+import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -56,7 +57,8 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Statically import matcher's methods", this, "myStaticallyImportMatchers");
+    return new SingleCheckboxOptionsPanel(TypeMigrationBundle.message("checkbox.statically.import.matcher.methods"), this,
+                                          "myStaticallyImportMatchers");
   }
 
   @NotNull
