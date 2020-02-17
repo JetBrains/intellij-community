@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.cache.impl.todo;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.StringPattern;
 import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
@@ -29,6 +30,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PlainTextTodoIndexer extends VersionedTodoIndexer {
+  private static final Logger LOG = Logger.getInstance(PlainTextTodoIndexer.class);
+
   @Override
   @NotNull
   public Map<TodoIndexEntry, Integer> map(@NotNull final FileContent inputData) {
@@ -39,13 +42,18 @@ public class PlainTextTodoIndexer extends VersionedTodoIndexer {
     OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
     for (IndexPattern indexPattern : indexPatterns) {
       Pattern pattern = indexPattern.getOptimizedIndexingPattern();
-      if (pattern != null) {
-        Matcher matcher = pattern.matcher(StringPattern.newBombedCharSequence(chars));
-        while (matcher.find()) {
-          if (matcher.start() != matcher.end()) {
-            occurrenceConsumer.incTodoOccurrence(indexPattern);
+      try {
+        if (pattern != null) {
+          Matcher matcher = pattern.matcher(StringPattern.newBombedCharSequence(chars));
+          while (matcher.find()) {
+            if (matcher.start() != matcher.end()) {
+              occurrenceConsumer.incTodoOccurrence(indexPattern);
+            }
           }
         }
+      }
+      catch (StackOverflowError error) {
+        LOG.error(error);
       }
     }
     Map<TodoIndexEntry, Integer> map = new HashMap<>();
