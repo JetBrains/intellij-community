@@ -64,7 +64,9 @@ public class JavaFeatureSpecificSanityTest extends LightJavaCodeInsightFixtureTe
         return Generator.sampledFrom(anyIntentionInSwitchRange, replaceToEnhancedSwitchIntention, new StripTestDataMarkup(file));
       };
 
-    PropertyChecker.checkScenarios(createChooser(fileActions, " switch"));
+    PropertyChecker
+      .customized().withIterationCount(50)
+      .checkScenarios(createChooser(fileActions, " switch"));
   }
 
   public void testPatternInstanceOfSpecific() {
@@ -104,7 +106,9 @@ public class JavaFeatureSpecificSanityTest extends LightJavaCodeInsightFixtureTe
         return Generator.sampledFrom(anyIntentionAroundInstanceOf, replaceToPattern, new StripTestDataMarkup(file));
       };
 
-    PropertyChecker.checkScenarios(createChooser(fileActions, " instanceof"));
+    PropertyChecker
+      .customized().withIterationCount(50)
+      .checkScenarios(createChooser(fileActions, " instanceof"));
   }
 
   private Supplier<MadTestingAction> createChooser(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions, String substring) {
