@@ -66,7 +66,7 @@ class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(
   }
 
   private fun checkState() {
-    debuggerSessionStarted = XDebuggerManager.getInstance(project).debugSessions.isNotEmpty() && isEnabled()
+    debuggerSessionStarted = isEnabled() && XDebuggerManager.getInstance(project).debugSessions.isNotEmpty()
   }
 
   override val isActive: Boolean
