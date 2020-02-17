@@ -1287,6 +1287,13 @@ public class PluginManagerConfigurable
     return getFormatLength(size);
   }
 
+  @NotNull
+  public static String getVersion(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
+    return StringUtil.defaultIfEmpty(oldPlugin.getVersion(), "unknown") +
+           " " + UIUtil.rightArrow() + " " +
+           StringUtil.defaultIfEmpty(newPlugin.getVersion(), "unknown");
+  }
+
   @Messages.YesNoResult
   public static int showRestartDialog() {
     return showRestartDialog(IdeBundle.message("update.notifications.title"));

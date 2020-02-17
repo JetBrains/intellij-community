@@ -336,7 +336,7 @@ public class ListPluginComponent extends JPanel {
     }
     else {
       if (myVersion != null) {
-        myVersion.setText(myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + descriptor.getVersion());
+        myVersion.setText(PluginManagerConfigurable.getVersion(myPlugin, descriptor));
       }
       if (myPlugin.getProductCode() == null && descriptor.getProductCode() != null) {
         if (myUpdateLicensePanel == null) {

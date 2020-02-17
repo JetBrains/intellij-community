@@ -407,7 +407,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       version = "bundled" + (StringUtil.isEmptyOrSpaces(version) ? "" : " " + version);
     }
     if (myUpdateDescriptor != null) {
-      version = myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + myUpdateDescriptor.getVersion();
+      version = PluginManagerConfigurable.getVersion(myPlugin, myUpdateDescriptor);
     }
 
     myVersion.setText(version);
