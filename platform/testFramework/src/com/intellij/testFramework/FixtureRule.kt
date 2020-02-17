@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -20,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -27,6 +29,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.project.stateStore
+import com.intellij.util.SmartList
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.runBlocking
@@ -64,6 +68,37 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
   companion object {
     private var sharedProject: ProjectEx? = null
     private val projectOpened = AtomicBoolean()
+
+    @JvmStatic
+    fun checkThatNoOpenProjects() {
+      val openProjects = ProjectUtil.getOpenProjects()
+      if (openProjects.isEmpty()) {
+        return
+      }
+
+      val projectManager = ProjectManagerEx.getInstanceEx()
+      val errors: MutableList<IllegalStateException> = SmartList()
+      val tasks: MutableList<ThrowableRunnable<Throwable>> = SmartList()
+      for (project in openProjects) {
+        errors.add(IllegalStateException(
+          "Test project is not disposed: $project;\n created in: ${getCreationPlace(project)}"))
+        tasks.add(ThrowableRunnable { projectManager.forceCloseProject(project) })
+      }
+      RunAll(tasks).run(errors)
+    }
+
+    @JvmStatic
+    fun getCreationPlace(project: Project): String {
+      val base = try {
+        if (project.isDisposed) "" else project.basePath
+      }
+      catch (e: Exception) {
+        " ($e while getting base dir)"
+      }
+
+      val place = if (project is ProjectImpl) project.creationTrace else null
+      return "$project ${place ?: ""}$base"
+    }
 
     private fun createLightProject(): ProjectEx {
       (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
@@ -246,8 +281,10 @@ fun createHeavyProject(path: Path, useDefaultProjectAsTemplate: Boolean = false)
 suspend fun Project.use(task: suspend (Project) -> Unit) {
   val projectManager = ProjectManagerEx.getInstanceEx()
   try {
-    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-      projectManager.openTestProject(this@use)
+    if (!projectManager.isProjectOpened(this)) {
+      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        projectManager.openTestProject(this@use)
+      }
     }
     task(this)
   }

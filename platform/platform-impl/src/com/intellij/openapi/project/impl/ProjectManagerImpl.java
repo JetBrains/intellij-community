@@ -384,7 +384,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public boolean isProjectOpened(Project project) {
+  public boolean isProjectOpened(@NotNull Project project) {
     synchronized (lock) {
       return ArrayUtil.contains(project, myOpenProjects);
     }

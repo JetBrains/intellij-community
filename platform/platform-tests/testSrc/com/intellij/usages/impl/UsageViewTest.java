@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindManager;
@@ -33,9 +33,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.ExtensionTestUtil;
-import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.ProjectRule;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -64,7 +64,7 @@ public class UsageViewTest extends BasePlatformTestCase {
         }
         Project project = ((PsiFile)file).getProject();
         if (alreadyLeaking.add(project)) {
-          System.err.println(project + " already leaking; its creation trace: " + HeavyPlatformTestCase.getCreationPlace(project));
+          System.err.println(project + " already leaking; its creation trace: " + ProjectRule.getCreationPlace(project));
         }
       }
       alreadyLeaking.add(file);

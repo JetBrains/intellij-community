@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.mock.MockApplication;
@@ -64,7 +63,10 @@ import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
-import com.intellij.util.*;
+import com.intellij.util.MemoryDumpHelper;
+import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -72,7 +74,10 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import junit.framework.TestCase;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -89,7 +94,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.testFramework.RunAll.runAll;
 
@@ -337,7 +345,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       .processLeaks(LeakHunter.allRoots(), ProjectImpl.class, p -> hashCodes.contains(System.identityHashCode(p)), (leaked, backLink) -> {
         int hashCode = System.identityHashCode(leaked);
         leakers.append("Leaked project found:").append(leaked).append("; hash: ").append(hashCode).append("; place: ")
-          .append(getCreationPlace(leaked)).append("\n");
+          .append(ProjectRule.getCreationPlace(leaked)).append("\n");
         leakers.append(backLink).append("\n");
         leakers.append(";-----\n");
 
@@ -347,20 +355,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       });
 
     fail(leakers + "\nPlease see '" + dumpPath + "' for a memory dump");
-  }
-
-  @NotNull
-  @TestOnly
-  public static String getCreationPlace(@NotNull Project project) {
-    Object base;
-    try {
-      base = project.isDisposed() ? "" : project.getBaseDir();
-    }
-    catch (Exception e) {
-      base = " (" + e + " while getting base dir)";
-    }
-    String place = project instanceof ProjectImpl ? ((ProjectImpl)project).getCreationTrace() : null;
-    return project + " " + (place == null ? "" : place) + base;
   }
 
   protected void runStartupActivities() {
@@ -613,23 +607,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
     ProjectManagerEx.getInstanceEx().forceCloseProject(projectToClose);
-    checkThatNoOpenProjects();
-  }
-
-  public static void checkThatNoOpenProjects() {
-    Project[] openProjects = ProjectUtil.getOpenProjects();
-    if (openProjects.length == 0) {
-      return;
-    }
-
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    List<IllegalStateException> errors = new SmartList<>();
-    List<ThrowableRunnable<Throwable>> tasks = new SmartList<>();
-    for (Project project : openProjects) {
-      errors.add(new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)));
-      tasks.add(() -> projectManager.forceCloseProject(project));
-    }
-    new RunAll(tasks).run(errors);
+    ProjectRule.checkThatNoOpenProjects();
   }
 
   protected void resetAllFields() {
