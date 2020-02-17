@@ -2,7 +2,6 @@
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.util.FileStructureNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -45,7 +44,7 @@ public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLam
   @NotNull
   @Override
   public String getCheckBoxText() {
-    return IdeBundle.message("file.structure.toggle.show.collapse.show.lambdas");
+    return JavaStructureViewBundle.message("file.structure.toggle.show.collapse.show.lambdas");
   }
 
   @Override

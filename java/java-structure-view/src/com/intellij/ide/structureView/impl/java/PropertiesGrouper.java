@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.psi.PsiElement;
@@ -50,7 +49,7 @@ public class PropertiesGrouper implements Grouper{
   @Override
   @NotNull
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(IdeBundle.message("action.structureview.show.properties"), null, PlatformIcons.PROPERTY_ICON);
+    return new ActionPresentationData(JavaStructureViewBundle.message("action.structureview.show.properties"), null, PlatformIcons.PROPERTY_ICON);
   }
 
   @Override
