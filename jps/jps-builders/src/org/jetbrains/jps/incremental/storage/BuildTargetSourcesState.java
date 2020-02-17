@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.storage;
 
 import com.google.gson.Gson;
@@ -37,6 +37,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.incremental.storage.MurmurHashingService.HASH_SIZE;
 import static org.jetbrains.jps.incremental.storage.MurmurHashingService.getStringHash;
@@ -93,7 +94,7 @@ public class BuildTargetSourcesState implements BuildListener {
   public void reportSourcesState() {
     if (reportStateUnavailable()) return;
 
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     Map<String, Map<String, BuildTargetState>> targetTypeHashMap = loadCurrentTargetState();
 
     List<BuildTarget<?>> buildTargets;
@@ -124,7 +125,7 @@ public class BuildTargetSourcesState implements BuildListener {
     catch (IOException e) {
       LOG.warn("Unable to save sources state", e);
     }
-    LOG.info("Build target sources report took: " + (System.currentTimeMillis() - start) + " ms");
+    LOG.info("Build target sources report took: " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + " ms");
   }
 
   public void clearSourcesState() {

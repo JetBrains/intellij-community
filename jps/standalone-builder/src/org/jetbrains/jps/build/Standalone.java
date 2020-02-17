@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.build;
 
 import com.intellij.openapi.util.Disposer;
@@ -24,6 +24,7 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
@@ -130,7 +131,7 @@ public class Standalone {
     }
 
     ConsoleMessageHandler consoleMessageHandler = new ConsoleMessageHandler();
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     try {
       runBuild(loader, dataStorageRoot, !incremental, modulesSet, allModules, artifactsList, allArtifacts, true,
                consoleMessageHandler);
@@ -139,7 +140,7 @@ public class Standalone {
       System.err.println("Internal error: " + t.getMessage());
       t.printStackTrace();
     }
-    System.out.println("Build finished in " + Utils.formatDuration(System.currentTimeMillis() - start));
+    System.out.println("Build finished in " + Utils.formatDuration(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)));
     return consoleMessageHandler.hasErrors() ? 1 : 0;
   }
 

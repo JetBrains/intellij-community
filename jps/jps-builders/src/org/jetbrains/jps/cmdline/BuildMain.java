@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -73,7 +59,7 @@ public class BuildMain {
 
   public static void main(String[] args) {
     try {
-      final long processStart = System.currentTimeMillis();
+      final long processStart = System.nanoTime();
       final String startMessage = "Build process started. Classpath: " + System.getProperty("java.class.path");
       System.out.println(startMessage);
       LOG.info(StringUtil.repeatSymbol('=', 50));
@@ -85,7 +71,7 @@ public class BuildMain {
       final File systemDir = new File(FileUtil.toCanonicalPath(args[SYSTEM_DIR_ARG]));
       Utils.setSystemRoot(systemDir);
 
-      final long connectStart = System.currentTimeMillis();
+      final long connectStart = System.nanoTime();
       // IDEA-123132, let's try again
       for (int attempt = 0; attempt < 3; attempt++) {
         try {
@@ -120,7 +106,7 @@ public class BuildMain {
 
       final boolean success = future.isSuccess();
       if (success) {
-        LOG.info("Connection to IDE established in " + (System.currentTimeMillis() - connectStart) + " ms");
+        LOG.info("Connection to IDE established in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - connectStart) + " ms");
 
         final String projectPathToPreload = System.getProperty(PRELOAD_PROJECT_PATH, null);
         final String globalsPathToPreload = System.getProperty(PRELOAD_CONFIG_PATH, null);
@@ -172,7 +158,7 @@ public class BuildMain {
 
             JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class).forEach(ext-> ext.preloadData(data));
 
-            LOG.info("Pre-loaded process ready in " + (System.currentTimeMillis() - processStart) + " ms");
+            LOG.info("Pre-loaded process ready in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - processStart) + " ms");
           }
           catch (Throwable e) {
             LOG.info("Failed to pre-load project " + projectPathToPreload, e);

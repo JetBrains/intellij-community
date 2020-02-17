@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -721,7 +721,7 @@ public class IncProjectBuilder {
   }
 
   private void clearOutputs(CompileContext context) throws ProjectBuildException {
-    final long cleanStart = System.currentTimeMillis();
+    final long cleanStart = System.nanoTime();
     final MultiMap<File, BuildTarget<?>> rootsToDelete = MultiMap.createSet();
     final Set<File> allSourceRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
 
@@ -833,7 +833,7 @@ public class IncProjectBuilder {
         myAsyncTasks.add(FileUtil.asyncDelete(filesToDelete));
       }
     }
-    LOG.info("Cleaned output directories in " + (System.currentTimeMillis() - cleanStart) + " ms");
+    LOG.info("Cleaned output directories in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - cleanStart) + " ms");
   }
 
   private static boolean isEmpty(File outputRoot) {
