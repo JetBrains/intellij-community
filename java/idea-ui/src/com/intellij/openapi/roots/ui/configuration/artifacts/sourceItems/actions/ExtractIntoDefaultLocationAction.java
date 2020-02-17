@@ -47,7 +47,7 @@ public class ExtractIntoDefaultLocationAction extends PutIntoDefaultLocationActi
     final String pathForClasses = myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(PackagingElementOutputKind.DIRECTORIES_WITH_CLASSES);
     final Presentation presentation = e.getPresentation();
     if (onlyJarsSelected() && pathForClasses != null) {
-      presentation.setText(ProjectBundle.message("extract.into.0", getTargetLocationText(Collections.singleton(pathForClasses))));
+      presentation.setText(ProjectBundle.message("action.text.extract.source.item.into.0", getTargetLocationText(Collections.singleton(pathForClasses))));
       presentation.setVisible(true);
     }
     else {

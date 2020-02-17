@@ -31,7 +31,8 @@ public class AddLibraryToModuleDependenciesAction extends DumbAwareAction {
   @NotNull private final BaseLibrariesConfigurable myConfigurable;
 
   public AddLibraryToModuleDependenciesAction(@NotNull Project project, @NotNull BaseLibrariesConfigurable configurable) {
-    super(ProjectBundle.message("add.to.modules"), ProjectBundle.message("add.the.library.to.the.dependencies.list.of.chosen.modules"), null);
+    super(ProjectBundle.message("action.text.add.to.modules"), ProjectBundle.message(
+      "action.description.add.the.library.to.the.dependencies.list.of.chosen.modules"), null);
     myProject = project;
     myConfigurable = configurable;
   }

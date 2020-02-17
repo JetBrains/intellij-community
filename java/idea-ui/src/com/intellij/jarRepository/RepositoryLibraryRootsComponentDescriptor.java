@@ -43,8 +43,8 @@ class RepositoryLibraryRootsComponentDescriptor extends LibraryRootsComponentDes
   @Override
   public FileChooserDescriptor createAttachFilesChooserDescriptor(@Nullable String libraryName) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle(IdeBundle.message("attach.external.annotations"));
-    descriptor.setDescription(IdeBundle.message("select.directory.where.external.annotations.are.located"));
+    descriptor.setTitle(IdeBundle.message("chooser.title.attach.external.annotations"));
+    descriptor.setDescription(IdeBundle.message("chooser.description.select.directory.where.external.annotations.are.located"));
     return descriptor;
   }
 

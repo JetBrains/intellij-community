@@ -61,7 +61,7 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
                                     boolean commitChanges,
                                     LibraryTablePresentation presentation, StructureConfigurableContext context) {
     super(parent, new LibraryRootsComponent(project, libraryEditor));
-    setTitle(ProjectBundle.message("configure.0", presentation.getDisplayName(false)));
+    setTitle(ProjectBundle.message("dialog.title.configure.library.0", presentation.getDisplayName(false)));
     myTableModifiableModel = tableModifiableModel;
     myLibraryEditor = libraryEditor;
     myCommitChanges = commitChanges;

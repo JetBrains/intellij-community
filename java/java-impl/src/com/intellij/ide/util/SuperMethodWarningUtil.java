@@ -98,7 +98,7 @@ public class SuperMethodWarningUtil {
         PsiMethod[] siblingSuperMethod = new PsiMethod[1];
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(()->{
           siblingSuperMethod[0] = ReadAction.compute(()->FindSuperElementsHelper.getSiblingInheritedViaSubClass(method));
-        }, IdeBundle.message("searching.for.sub.classes"), true, aClass.getProject())) {
+        }, IdeBundle.message("progress.title.searching.for.sub.classes"), true, aClass.getProject())) {
           throw new ProcessCanceledException();
         }
         if (siblingSuperMethod[0] != null) {
@@ -207,8 +207,8 @@ public class SuperMethodWarningUtil {
                                 String @NotNull ... classNames) {
     String message = getDialogMessage(name, actionString, isSuperAbstract, isParentInterface, isContainedInInterface, classNames);
     return Messages.showYesNoCancelDialog(project,
-                                          message, IdeBundle.message("super.method.found"), IdeBundle.message("base.method"),
-                                          IdeBundle.message("current.method"),
+                                          message, IdeBundle.message("dialog.title.super.method.found"), IdeBundle.message("button.base.method"),
+                                          IdeBundle.message("button.current.method"),
                                           Messages.getCancelButton(), Messages.getQuestionIcon());
   }
 

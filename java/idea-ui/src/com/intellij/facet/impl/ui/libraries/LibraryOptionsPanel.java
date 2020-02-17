@@ -439,7 +439,7 @@ public class LibraryOptionsPanel implements Disposable {
     }
 
     if (myLibraryProvider != null) {
-      myUseFromProviderRadioButton.setText(JavaUiBundle.message("use.library.from.0", myLibraryProvider.getPresentableName()));
+      myUseFromProviderRadioButton.setText(JavaUiBundle.message("radio.button.use.library.from.0", myLibraryProvider.getPresentableName()));
     }
 
     //show the longest message on the hidden card to ensure that dialog won't jump if user selects another option

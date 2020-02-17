@@ -76,7 +76,8 @@ public final class NewProjectUtil {
       return doCreate(wizard, projectToClose);
     }
     catch (IOException e) {
-      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(e.getMessage(), IdeBundle.message("project.initialization.failed")));
+      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(e.getMessage(), IdeBundle.message(
+        "dialog.title.project.initialization.failed")));
       return null;
     }
   }

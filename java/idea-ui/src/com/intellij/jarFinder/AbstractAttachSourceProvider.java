@@ -152,7 +152,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
     @Override
     public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
       final ActionCallback callback = new ActionCallback();
-      Task task = new Task.Backgroundable(myProject, IdeBundle.message("downloading.sources"), true) {
+      Task task = new Task.Backgroundable(myProject, IdeBundle.message("progress.title.downloading.sources"), true) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           final byte[] bytes;
@@ -165,7 +165,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
             LOG.warn(e);
             ApplicationManager.getApplication().invokeLater(() -> {
               String message = "Failed to download sources: " + myUrl;
-              new Notification(myMessageGroupId, IdeBundle.message("downloading.failed"), message, NotificationType.ERROR).notify(getProject());
+              new Notification(myMessageGroupId, IdeBundle.message("notification.title.downloading.failed"), message, NotificationType.ERROR).notify(getProject());
               callback.setDone();
             });
             return;

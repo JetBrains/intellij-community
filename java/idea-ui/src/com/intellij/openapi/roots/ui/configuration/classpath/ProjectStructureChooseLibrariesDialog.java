@@ -41,7 +41,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     myClasspathPanel = classpathPanel;
     myContext = context;
     myAcceptedLibraries = acceptedLibraries;
-    setOKButtonText(ProjectBundle.message("add.selected"));
+    setOKButtonText(ProjectBundle.message("button.add.selected"));
     init();
   }
 
@@ -145,7 +145,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
 
   private class CreateNewLibraryAction extends DialogWrapperAction {
     private CreateNewLibraryAction() {
-      super(ProjectBundle.message("new.library"));
+      super(ProjectBundle.message("dialog.title.new.library"));
       putValue(MNEMONIC_KEY, KeyEvent.VK_N);
     }
 

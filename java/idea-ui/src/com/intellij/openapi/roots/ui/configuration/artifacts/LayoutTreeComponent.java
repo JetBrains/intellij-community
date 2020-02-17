@@ -228,14 +228,14 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     if (nodeSources.size() > 1) {
       Messages.showErrorDialog(myArtifactsEditor.getMainComponent(),
                                ProjectBundle.message(
-                                 "the.selected.node.consist.of.several.elements.so.it.cannot.be.edited.nswitch.off.show.content.of.elements.checkbox.to.edit.the.output.layout"));
+                                 "error.message.the.selected.node.consist.of.several.elements.so.it.cannot.be.edited"));
     }
     else {
     final PackagingNodeSource source = ContainerUtil.getFirstItem(nodeSources, null);
       if (source != null) {
         Messages.showErrorDialog(myArtifactsEditor.getMainComponent(),
                                  ProjectBundle.message(
-                                   "the.selected.node.belongs.to.0.element.so.it.cannot.be.edited.nswitch.off.show.content.of.elements.checkbox.to.edit.the.output.layout",
+                                   "error.message.the.selected.node.belongs.to.0.element.so.it.cannot.be.edited",
                                    source.getPresentableName()));
       }
     }
@@ -273,7 +273,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       else {
         message = "The selected node belongs to " + nodes.size() + " elements. Do you want to remove all these elements from the artifact?";
       }
-      final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, ProjectBundle.message("remove.elements"), null);
+      final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, ProjectBundle.message(
+        "dialog.title.remove.elements"), null);
       if (answer != Messages.YES) return false;
     }
     return true;

@@ -39,8 +39,8 @@ public class InlineModuleDependencyAction extends AnAction {
   private final ClasspathPanelImpl myClasspathPanel;
 
   public InlineModuleDependencyAction(ClasspathPanelImpl classpathPanel) {
-    super(ProjectBundle.message("inline.module.dependency"),
-          ProjectBundle.message("replace.dependency.on.a.module.without.source.roots.by.the.list.of.its.dependencies"), null);
+    super(ProjectBundle.message("action.text.inline.module.dependency"),
+          ProjectBundle.message("action.description.inline.module.dependency"), null);
     myClasspathPanel = classpathPanel;
   }
 

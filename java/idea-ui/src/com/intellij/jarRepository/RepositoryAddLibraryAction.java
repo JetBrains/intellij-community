@@ -31,13 +31,13 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
   @NotNull
   @Override
   public String getName() {
-    return IdeBundle.message("add.0.library.to.module.dependencies", libraryDescription.getDisplayName());
+    return IdeBundle.message("intention.text.add.0.library.to.module.dependencies", libraryDescription.getDisplayName());
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return IdeBundle.message("maven.libraries");
+    return IdeBundle.message("intention.family.maven.libraries");
   }
 
   @Override

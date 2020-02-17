@@ -41,7 +41,7 @@ public class AddFrameworkSupportInProjectStructureAction extends DumbAwareAction
 
   public AddFrameworkSupportInProjectStructureAction(@NotNull FrameworkTypeEx frameworkType, @NotNull FrameworkSupportInModuleProvider provider,
                                                      @NotNull ModuleStructureConfigurable moduleStructureConfigurable) {
-    super(frameworkType.getPresentableName(), JavaUiBundle.message("add.0.support", frameworkType.getPresentableName()), frameworkType.getIcon());
+    super(frameworkType.getPresentableName(), JavaUiBundle.message("action.description.add.0.support", frameworkType.getPresentableName()), frameworkType.getIcon());
     myFrameworkType = frameworkType;
     myProvider = provider;
     myModuleStructureConfigurable = moduleStructureConfigurable;

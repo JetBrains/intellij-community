@@ -98,7 +98,8 @@ public class RepositoryUtils {
         roots == null || roots.isEmpty() ?
         () -> {
           String message = "No files were downloaded for " + properties.getMavenId();
-          Notifications.Bus.notify(new Notification("Repository", JavaUiBundle.message("repository.library.synchronization"),
+          Notifications.Bus.notify(new Notification("Repository", JavaUiBundle.message(
+            "notification.title.repository.library.synchronization"),
                                                     message, NotificationType.ERROR), project);
           promise.setError(message);
         } :

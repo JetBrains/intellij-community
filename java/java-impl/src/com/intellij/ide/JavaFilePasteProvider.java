@@ -90,7 +90,7 @@ public class JavaFilePasteProvider implements PasteProvider {
         catch (IncorrectOperationException e) {
           // ignore
         }
-      }, IdeBundle.message("updating.package.statement"), null);
+      }, IdeBundle.message("command.name.updating.package.statement"), null);
     }
   }
 

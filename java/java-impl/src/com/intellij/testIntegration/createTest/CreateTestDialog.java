@@ -498,7 +498,7 @@ public class CreateTestDialog extends DialogWrapper {
 
     if (errorMessage != null) {
       final int result = Messages
-        .showOkCancelDialog(myProject, IdeBundle.message("0.update.existing.class", errorMessage), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+        .showOkCancelDialog(myProject, IdeBundle.message("dialog.message.0.update.existing.class", errorMessage), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       if (result == Messages.CANCEL) {
         return;
       }

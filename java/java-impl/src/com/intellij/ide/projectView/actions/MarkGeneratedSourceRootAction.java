@@ -42,8 +42,8 @@ public class MarkGeneratedSourceRootAction extends MarkRootActionBase {
     if (handler == null) return;
     
     String typeName = handler.getFullRootTypeName();
-    presentation.setText(IdeBundle.message("generated.0", typeName));
-    presentation.setDescription(IdeBundle.message("mark.directory.as.a.0.for.generated.files", typeName.toLowerCase(Locale.getDefault())));
+    presentation.setText(IdeBundle.message("action.text.generated.root.0", typeName));
+    presentation.setDescription(IdeBundle.message("action.description.mark.directory.as.a.0.for.generated.files", typeName.toLowerCase(Locale.getDefault())));
   }
 
   @Override

@@ -32,7 +32,7 @@ final class OpenFilesActivity implements StartupActivity {
 
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(IdeBundle.message("reopening.files"));
+      indicator.setText(IdeBundle.message("progress.text.reopening.files"));
     }
 
     FileEditorManagerImpl manager = (FileEditorManagerImpl)fileEditorManager;

@@ -45,7 +45,7 @@ public class CreateModuleFromSourcesMode extends CreateFromSourcesMode {
   public JComponent getAdditionalSettings(WizardContext wizardContext) {
     myPathPanel = new TextFieldWithBrowseButton();
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myPathPanel.addBrowseFolderListener(IdeBundle.message("select.directory.containing.module.files"), null, wizardContext.getProject(), descriptor);
+    myPathPanel.addBrowseFolderListener(IdeBundle.message("chooser.title.select.directory.containing.module.files"), null, wizardContext.getProject(), descriptor);
     onChosen(false);
     return myPathPanel;
   }

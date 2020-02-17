@@ -104,8 +104,8 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     if (testRootUrls.isEmpty() && computeSuitableTestRootUrls(testModule).isEmpty()) {
       testModule = srcModule;
       if (!propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT)) {
-        if (Messages.showOkCancelDialog(project, IdeBundle.message("create.test.in.the.same.source.root"),
-                                        IdeBundle.message("no.test.roots.found"), Messages.getQuestionIcon()) !=
+        if (Messages.showOkCancelDialog(project, IdeBundle.message("dialog.message.create.test.in.the.same.source.root"),
+                                        IdeBundle.message("dialog.title.no.test.roots.found"), Messages.getQuestionIcon()) !=
             Messages.OK) {
           return;
         }

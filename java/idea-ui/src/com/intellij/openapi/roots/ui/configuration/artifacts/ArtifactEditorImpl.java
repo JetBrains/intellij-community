@@ -215,7 +215,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final JPanel rightTopPanel = new JPanel(new BorderLayout());
     final JPanel labelPanel = new JPanel();
     labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
-    labelPanel.add(new JLabel(ProjectBundle.message("available.elements")));
+    labelPanel.add(new JLabel(ProjectBundle.message("label.available.elements")));
     final HyperlinkLabel link = new HyperlinkLabel("");
     link.setIcon(AllIcons.General.ContextHelp);
     link.setUseIconAsLink(true);
@@ -281,7 +281,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     rightTopPanel.setPreferredSize(new Dimension(-1, toolbarComponent.getPreferredSize().height));
 
     myTabbedPane = new TabbedPaneWrapper(this);
-    myTabbedPane.addTab(ProjectBundle.message("output.layout"), splitter);
+    myTabbedPane.addTab(ProjectBundle.message("tab.title.output.layout"), splitter);
     myPropertiesEditors.addTabs(myTabbedPane);
     myEditorPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 

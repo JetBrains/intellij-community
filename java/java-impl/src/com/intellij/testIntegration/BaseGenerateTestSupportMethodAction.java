@@ -54,7 +54,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       final List<TestFramework> frameworks = TestIntegrationUtils.findSuitableFrameworks(targetClass);
       final TestIntegrationUtils.MethodKind methodKind = ((MyHandler)getHandler()).myMethodKind;
       if (!frameworks.isEmpty()) {
-        return new AnAction(IdeBundle.message("edit.template")) {
+        return new AnAction(IdeBundle.message("action.text.edit.template")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             chooseAndPerform(editor, frameworks, framework -> {
@@ -142,7 +142,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       .createPopupChooserBuilder(frameworks)
       .setRenderer(cellRenderer)
       .setNamerForFiltering(o -> o.getName())
-      .setTitle(IdeBundle.message("choose.framework"))
+      .setTitle(IdeBundle.message("popup.title.choose.framework"))
       .setItemChosenCallback(consumer)
       .setMovable(true)
       .createPopup().showInBestPositionFor(editor);

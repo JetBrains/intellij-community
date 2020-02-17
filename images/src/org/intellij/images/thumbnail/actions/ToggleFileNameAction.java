@@ -30,6 +30,6 @@ public final class ToggleFileNameAction extends ToggleAction {
         super.update(e);
         ImageComponentDecorator decorator = e.getData(ImageComponentDecorator.DATA_KEY);
         e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));
-        e.getPresentation().setText(isSelected(e) ? IdeBundle.message("hide.file.name") : IdeBundle.message("show.file.name"));
+        e.getPresentation().setText(isSelected(e) ? IdeBundle.message("action.text.hide.file.name") : IdeBundle.message("action.text.show.file.name"));
     }
 }

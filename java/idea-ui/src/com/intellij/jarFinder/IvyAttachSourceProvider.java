@@ -107,7 +107,7 @@ public class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
         }
         catch (IOException e) {
           String message = "Failed to save " + artifactDir.getPath() + "/sources/" + sourceFileName;
-          new Notification(myMessageGroupId, IdeBundle.message("io.error"), message, NotificationType.ERROR).notify(myProject);
+          new Notification(myMessageGroupId, IdeBundle.message("notification.title.io.error"), message, NotificationType.ERROR).notify(myProject);
           LOG.warn(e);
         }
       }

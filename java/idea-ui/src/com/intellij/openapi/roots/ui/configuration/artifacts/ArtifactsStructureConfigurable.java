@@ -387,8 +387,8 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
         final Artifact selected = (Artifact)o;
         ModifiableArtifactModel artifactModel = myPackagingEditorContext.getOrCreateModifiableArtifactModel();
         String suggestedName = ArtifactUtil.generateUniqueArtifactName(selected.getName(), artifactModel);
-        final String newName = Messages.showInputDialog(ProjectBundle.message("enter.artifact.name"),
-                                                        ProjectBundle.message("copy.artifact"),
+        final String newName = Messages.showInputDialog(ProjectBundle.message("label.enter.artifact.name"),
+                                                        ProjectBundle.message("dialog.title.copy.artifact"),
                                                         COPY_ICON,
                                                         suggestedName,
                                                         new NonEmptyInputValidator());

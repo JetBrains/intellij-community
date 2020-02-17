@@ -124,7 +124,7 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
 
       @Override
       public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
-        final Task task = new Task.Modal(psiFile.getProject(), IdeBundle.message("searching.source"), true) {
+        final Task task = new Task.Modal(psiFile.getProject(), IdeBundle.message("progress.title.searching.source"), true) {
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             String artifactUrl = null;

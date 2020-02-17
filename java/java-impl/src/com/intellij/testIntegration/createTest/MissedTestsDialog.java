@@ -56,7 +56,7 @@ public class MissedTestsDialog extends DialogWrapper {
     mySourceClass = sourceClass;
     myTestClass = testClass;
     myDescriptor = descriptor;
-    setTitle(IdeBundle.message("create.missed.tests"));
+    setTitle(IdeBundle.message("dialog.title.create.missed.tests"));
     init();
   }
 

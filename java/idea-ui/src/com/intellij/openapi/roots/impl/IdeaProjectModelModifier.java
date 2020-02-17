@@ -81,8 +81,8 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
       Collection<OrderRoot> roots =
         JarRepositoryManager.loadDependenciesModal(myProject, libraryProperties, dialog.getAttachSources(), dialog.getAttachJavaDoc(), dialog.getDirectoryPath(), null);
       if (roots.isEmpty()) {
-        Messages.showErrorDialog(myProject, ProjectBundle.message("0.was.not.loaded", descriptor.getPresentableName()),
-                                 ProjectBundle.message("failed.to.download.library"));
+        Messages.showErrorDialog(myProject, ProjectBundle.message("dialog.mesage.0.was.not.loaded", descriptor.getPresentableName()),
+                                 ProjectBundle.message("dialog.title.failed.to.download.library"));
         return Promises.rejectedPromise();
       }
       classesRoots = roots.stream()

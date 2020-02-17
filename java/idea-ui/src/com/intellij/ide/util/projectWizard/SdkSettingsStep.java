@@ -170,7 +170,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
       myModel.apply(null, true);
     } catch (ConfigurationException e) {
       //IDEA-98382 We should allow Next step if user has wrong SDK
-      if (Messages.showDialog(IdeBundle.message("0.n.ndo.you.want.to.proceed", e.getMessage()),
+      if (Messages.showDialog(IdeBundle.message("dialog.message.0.do.you.want.to.proceed", e.getMessage()),
                               e.getTitle(),
                               new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1, Messages.getWarningIcon()) != Messages.YES) {
         return false;

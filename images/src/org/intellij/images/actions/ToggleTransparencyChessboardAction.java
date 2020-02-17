@@ -47,6 +47,6 @@ public final class ToggleTransparencyChessboardAction extends ToggleAction {
     super.update(e);
     ImageComponentDecorator decorator = e.getData(ImageComponentDecorator.DATA_KEY);
     e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));
-    e.getPresentation().setText(isSelected(e) ? IdeBundle.message("hide.chessboard") : IdeBundle.message("show.chessboard"));
+    e.getPresentation().setText(isSelected(e) ? IdeBundle.message("action.text.hide.chessboard") : IdeBundle.message("action.text.show.chessboard"));
   }
 }

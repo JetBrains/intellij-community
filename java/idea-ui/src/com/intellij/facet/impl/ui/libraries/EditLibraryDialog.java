@@ -53,7 +53,7 @@ public class EditLibraryDialog extends DialogWrapper {
     Disposer.register(getDisposable(), myLibraryRootsComponent);
 
     final boolean newLibrary = libraryEditor instanceof NewLibraryEditor;
-    setTitle(JavaUiBundle.message("edit.library.dialog.library",
+    setTitle(JavaUiBundle.message("dialog.title.edit.library",
                                   newLibrary ? CommonBundle.message("title.create") : CommonBundle.message("title.edit")));
 
     myBuilder = LibraryNameAndLevelPanel.createFormBuilder();

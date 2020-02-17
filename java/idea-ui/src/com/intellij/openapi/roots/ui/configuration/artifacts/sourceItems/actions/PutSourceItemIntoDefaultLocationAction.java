@@ -35,7 +35,7 @@ public class PutSourceItemIntoDefaultLocationAction extends PutIntoDefaultLocati
         }
         paths.add(StringUtil.trimStart(StringUtil.trimEnd(path, "/"), "/"));
       }
-      presentation.setText(ProjectBundle.message("put.into.0", getTargetLocationText(paths)));
+      presentation.setText(ProjectBundle.message("action.text.put.source.item.into.0", getTargetLocationText(paths)));
     }
     presentation.setEnabledAndVisible(enabled);
   }

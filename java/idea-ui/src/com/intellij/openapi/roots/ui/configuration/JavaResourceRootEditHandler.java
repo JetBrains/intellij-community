@@ -32,7 +32,7 @@ public class JavaResourceRootEditHandler extends JavaResourceRootEditHandlerBase
   @NotNull
   @Override
   public String getRootTypeName() {
-    return ProjectBundle.message("resources");
+    return ProjectBundle.message("title.resources");
   }
 
   @NotNull
@@ -44,7 +44,7 @@ public class JavaResourceRootEditHandler extends JavaResourceRootEditHandlerBase
   @NotNull
   @Override
   public String getRootsGroupTitle() {
-    return ProjectBundle.message("resource.folders");
+    return ProjectBundle.message("section.title.resource.folders");
   }
 
   @NotNull
@@ -56,6 +56,6 @@ public class JavaResourceRootEditHandler extends JavaResourceRootEditHandlerBase
   @NotNull
   @Override
   public String getUnmarkRootButtonText() {
-    return ProjectBundle.message("unmark.resource");
+    return ProjectBundle.message("button.unmark.resource");
   }
 }

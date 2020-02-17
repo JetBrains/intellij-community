@@ -39,7 +39,7 @@ public class PackAndPutIntoDefaultLocationAction extends PutIntoDefaultLocationA
     final String pathForJars = myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(PackagingElementOutputKind.JAR_FILES);
     final Presentation presentation = e.getPresentation();
     if (jarName != null && pathForJars != null) {
-      presentation.setText(ProjectBundle.message("pack.into.0", DeploymentUtil.appendToPath(pathForJars, jarName + ".jar")));
+      presentation.setText(ProjectBundle.message("action.text.pack.element.into.0", DeploymentUtil.appendToPath(pathForJars, jarName + ".jar")));
       presentation.setVisible(true);
     }
     else {

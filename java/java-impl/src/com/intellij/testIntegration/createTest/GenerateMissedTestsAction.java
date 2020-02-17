@@ -31,7 +31,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return IdeBundle.message("generate.missed.test.methods");
+    return IdeBundle.message("intention.text.generate.missed.test.methods");
   }
 
   @Override
@@ -78,7 +78,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
       .createPopupChooserBuilder(new ArrayList<>(testClasses))
       .setRenderer(new PsiClassListCellRenderer())
       .setItemChosenCallback((selectedClass) -> generateMissedTests((PsiClass)selectedClass, srcClass, editor))
-      .setTitle(IdeBundle.message("choose.test"))
+      .setTitle(IdeBundle.message("popup.title.choose.test"))
       .createPopup()
       .showInBestPositionFor(editor);
   }

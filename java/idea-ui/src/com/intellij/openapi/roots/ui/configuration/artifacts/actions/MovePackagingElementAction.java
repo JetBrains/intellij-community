@@ -30,7 +30,7 @@ public class MovePackagingElementAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     final boolean b = isEnabled();
     e.getPresentation().setEnabled(b);
-    e.getPresentation().setText(ProjectBundle.message("0.disabled.if.elements.are.sorted", getTemplatePresentation().getText()));
+    e.getPresentation().setText(ProjectBundle.message("action.text.0.disabled.if.elements.are.sorted", getTemplatePresentation().getText()));
   }
 
   private boolean isEnabled() {

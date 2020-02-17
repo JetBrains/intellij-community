@@ -392,7 +392,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       if (!compositionSettings.downloadFiles(parentComponent)) {
         int answer = Messages.showYesNoDialog(parentComponent,
                                               ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              IdeBundle.message("libraries.are.required"), Messages.getWarningIcon());
+                                              IdeBundle.message("dialog.title.libraries.are.required"), Messages.getWarningIcon());
         return answer == Messages.YES;
       }
     }

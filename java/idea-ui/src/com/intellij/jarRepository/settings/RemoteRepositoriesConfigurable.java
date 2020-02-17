@@ -190,7 +190,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
         @NonNls String defaultValue = "https://";
         String initialValue = value == null ? defaultValue : adapter.toPresentation(value);
         final String text = Messages.showInputDialog(
-          modificationDialogTitle, IdeBundle.message("add.0", modificationDialogHint), Messages.getQuestionIcon(),
+          modificationDialogTitle, IdeBundle.message("dialog.title.add.repository.0", modificationDialogHint), Messages.getQuestionIcon(),
           initialValue, new URLInputVaslidator()
         );
         if (StringUtil.isNotEmpty(text)) {
@@ -205,7 +205,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
         final int index = list.getSelectedIndex();
         final T element = model.getElementAt(index);
         final String text = Messages.showInputDialog(
-          modificationDialogTitle, IdeBundle.message("edit.0", modificationDialogHint), Messages.getQuestionIcon(), adapter.toPresentation(element), new URLInputVaslidator()
+          modificationDialogTitle, IdeBundle.message("dialog.title.edit.repository.0", modificationDialogHint), Messages.getQuestionIcon(), adapter.toPresentation(element), new URLInputVaslidator()
         );
         if (StringUtil.isNotEmpty(text)) {
           model.setElementAt(adapter.change(element, text), index);

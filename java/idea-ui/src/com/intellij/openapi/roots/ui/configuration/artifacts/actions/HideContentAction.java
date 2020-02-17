@@ -30,7 +30,7 @@ public class HideContentAction extends DumbAwareAction {
   private final ArtifactEditorEx myArtifactEditor;
 
   public HideContentAction(ArtifactEditorEx artifactEditor) {
-    super(ProjectBundle.message("hide.content"));
+    super(ProjectBundle.message("action.text.hide.content"));
     myArtifactEditor = artifactEditor;
   }
 

@@ -92,7 +92,7 @@ public class BackgroundImageDialog extends DialogWrapper {
   public BackgroundImageDialog(@NotNull Project project, @Nullable String selectedPath) {
     super(project, true);
     myProject = project;
-    setTitle(IdeBundle.message("background.image"));
+    setTitle(IdeBundle.message("dialog.title.background.image"));
     myEditorPreview = createEditorPreview();
     myIdePreview = createFramePreview();
     myPropertyTmp = getSystemProp() + "#" + project.getLocationHash();
@@ -112,7 +112,7 @@ public class BackgroundImageDialog extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    return ArrayUtil.append(super.createActions(), new AbstractAction(IdeBundle.message("clear.and.close")) {
+    return ArrayUtil.append(super.createActions(), new AbstractAction(IdeBundle.message("button.clear.and.close")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         doClearAction();
@@ -460,8 +460,8 @@ public class BackgroundImageDialog extends DialogWrapper {
   }
 
   private static void initFlipPanel(@NotNull JPanel p, @NotNull JBCheckBox flipHorCb, @NotNull JBCheckBox flipVerCb) {
-    flipHorCb.setToolTipText(IdeBundle.message("flip.vertically"));
-    flipVerCb.setToolTipText(IdeBundle.message("flip.horizontally"));
+    flipHorCb.setToolTipText(IdeBundle.message("tooltip.flip.vertically"));
+    flipVerCb.setToolTipText(IdeBundle.message("tooltip.flip.horizontally"));
     p.setLayout(new GridLayout(1, 2, 1, 1));
     Color color = getSelectionBackground();
     JBPanelWithEmptyText h = addClickablePanel(p, flipHorCb, color);

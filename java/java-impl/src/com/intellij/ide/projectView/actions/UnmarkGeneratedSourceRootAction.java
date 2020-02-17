@@ -39,8 +39,8 @@ public class UnmarkGeneratedSourceRootAction extends MarkRootActionBase {
     if (handler == null) return;
 
     String typeName = handler.getFullRootTypeName();
-    presentation.setText(IdeBundle.message("unmark.generated.0", typeName));
-    presentation.setDescription(IdeBundle.message("mark.directory.as.an.ordinary.0", typeName.toLowerCase(Locale.getDefault())));
+    presentation.setText(IdeBundle.message("action.text.unmark.generated.0", typeName));
+    presentation.setDescription(IdeBundle.message("action.description.mark.directory.as.an.ordinary.0", typeName.toLowerCase(Locale.getDefault())));
   }
 
   @Override

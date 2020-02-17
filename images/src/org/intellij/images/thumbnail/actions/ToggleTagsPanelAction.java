@@ -46,7 +46,7 @@ public final class ToggleTagsPanelAction extends ToggleAction {
     public void update(@NotNull final AnActionEvent e) {
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         e.getPresentation().setEnabledAndVisible(view != null);
-        e.getPresentation().setText(isSelected(e) ? IdeBundle.message("hide.tags.panel") : IdeBundle.message("show.tags.panel"));
+        e.getPresentation().setText(isSelected(e) ? IdeBundle.message("action.text.hide.tags.panel") : IdeBundle.message("action.text.show.tags.panel"));
         super.update(e);
     }
 }

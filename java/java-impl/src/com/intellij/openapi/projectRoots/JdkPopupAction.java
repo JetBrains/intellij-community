@@ -34,7 +34,7 @@ public class JdkPopupAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(JdkPopupAction.class);
 
   public JdkPopupAction() {
-    super(ProjectBundle.lazyMessage("show.quick.list"), () -> "", AllIcons.General.AddJdk);
+    super(ProjectBundle.lazyMessage("action.text.show.quick.list"), () -> "", AllIcons.General.AddJdk);
   }
 
   @Override
@@ -75,7 +75,7 @@ public class JdkPopupAction extends AnAction {
       }
 
       ApplicationManager.getApplication().invokeLater(() -> showPopupMenu(e, jdkLocations, showInMiddle, component));
-    }, ProjectBundle.message("looking.for.jdk.locations"), false, e.getProject(), component);
+    }, ProjectBundle.message("progress.title.looking.for.jdk.locations"), false, e.getProject(), component);
   }
 
   private static boolean isEnabledInCurrentOS() {

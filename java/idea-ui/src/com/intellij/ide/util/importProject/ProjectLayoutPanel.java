@@ -327,7 +327,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       if (elements.size() > 1) {
         final String newName = Messages.showInputDialog(
           ProjectLayoutPanel.this,
-          IdeBundle.message("enter.new.name.for.merge.result"),
+          IdeBundle.message("label.enter.new.name.for.merge.result"),
           CommonBundle.message("dialog.title.merge"),
           Messages.getQuestionIcon(), getElementName(elements.get(0)), getValidator());
         if (newName != null) {
@@ -398,8 +398,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       if (elements.size() == 1) {
         final T element = elements.get(0);
         final String newName = Messages.showInputDialog(ProjectLayoutPanel.this, IdeBundle
-                                                          .message("new.name.for.0.1", getElementTypeName(), getElementName(element)),
-                                                        IdeBundle.message("rename.0", StringUtil.capitalize(getElementTypeName())),
+                                                          .message("label.new.name.for.0.1", getElementTypeName(), getElementName(element)),
+                                                        IdeBundle.message("dialog.title.rename.module.or.library.0", StringUtil.capitalize(getElementTypeName())),
                                                         Messages.getQuestionIcon(),
                                                         getElementName(element),
                                                         getValidator()
@@ -434,7 +434,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
     private SplitDialog(final Collection<File> files) {
       super(myEntriesChooser, true);
-      setTitle(IdeBundle.message("split.0", StringUtil.capitalize(getElementTypeName())));
+      setTitle(IdeBundle.message("dialog.title.split.module.or.library.0", StringUtil.capitalize(getElementTypeName())));
 
       myNameField = new JTextField();
       myChooser = new ElementsChooser<File>(true) {
@@ -487,7 +487,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     @Nullable
     protected JComponent createCenterPanel() {
       FormBuilder builder = FormBuilder.createFormBuilder().setVertical(true);
-      builder.addLabeledComponent(JavaUiBundle.message("project.layout.panel.name"), myNameField);
+      builder.addLabeledComponent(JavaUiBundle.message("label.project.layout.panel.name"), myNameField);
       builder.addLabeledComponent(getSplitDialogChooseFilesPrompt(), myChooser);
       myChooser.setPreferredSize(JBUI.size(450, 300));
       return builder.getPanel();

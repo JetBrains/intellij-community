@@ -30,6 +30,6 @@ public final class ToggleFileSizeAction extends ToggleAction {
         super.update(e);
         ImageComponentDecorator decorator = e.getData(ImageComponentDecorator.DATA_KEY);
         e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));
-        e.getPresentation().setText(isSelected(e) ? IdeBundle.message("hide.file.size") : IdeBundle.message("show.file.size"));
+        e.getPresentation().setText(isSelected(e) ? IdeBundle.message("action.text.hide.file.size") : IdeBundle.message("action.text.show.file.size"));
     }
 }

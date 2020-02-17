@@ -31,7 +31,7 @@ public class ShowAddPackagingElementPopupAction extends DumbAwareAction {
   private final ArtifactEditorEx myArtifactEditor;
 
   public ShowAddPackagingElementPopupAction(ArtifactEditorEx artifactEditor) {
-    super(ProjectBundle.message("add"));
+    super(ProjectBundle.message("action.text.add.packaging.element"));
     myArtifactEditor = artifactEditor;
   }
 
@@ -42,7 +42,7 @@ public class ShowAddPackagingElementPopupAction extends DumbAwareAction {
       group.add(new AddNewPackagingElementAction((PackagingElementType<?>)type, myArtifactEditor));
     }
     final DataContext dataContext = e.getDataContext();
-    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(ProjectBundle.message("add"), group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(ProjectBundle.message("action.text.add.packaging.element"), group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
     popup.showInBestPositionFor(dataContext);
   }
 }

@@ -133,7 +133,7 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
   public static AddModuleWizard selectFileAndCreateWizard(@Nullable Project project, @Nullable Component dialogParent) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     descriptor.setHideIgnored(false);
-    descriptor.setTitle(JavaUiBundle.message("select.file.or.directory.to.import"));
+    descriptor.setTitle(JavaUiBundle.message("chooser.title.select.file.or.directory.to.import"));
     List<ProjectImportProvider> providers = getProviders(project);
     String description = getFileChooserDescription(providers);
     descriptor.setDescription(description);
@@ -203,8 +203,8 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
                                                    ProjectImportProvider... providers) {
     List<ProjectImportProvider> available = ContainerUtil.filter(providers, provider -> provider.canImport(file, project));
     if (available.isEmpty()) {
-      Messages.showInfoMessage(project, JavaUiBundle.message("cannot.import.anything.from.0", file.getPath()),
-                               JavaUiBundle.message("cannot.import"));
+      Messages.showInfoMessage(project, JavaUiBundle.message("message.cannot.import.anything.from.0", file.getPath()),
+                               JavaUiBundle.message("dialog.title.cannot.import"));
       return null;
     }
 

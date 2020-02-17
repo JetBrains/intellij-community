@@ -33,7 +33,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
   private final ClasspathPanel myPanel;
 
   AnalyzeModuleDependencyAction(final ClasspathPanel panel) {
-    super(ProjectBundle.message("analyze.this.dependency"));
+    super(ProjectBundle.message("action.text.analyze.this.dependency"));
     myPanel = panel;
   }
 
@@ -69,7 +69,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
         if (usedScopes.contains(mainScope)) {
           Messages.showInfoMessage(myProject,
                                    ProjectBundle
-                                     .message("dependencies.were.successfully.collected.in.0.toolwindow", ToolWindowId.DEPENDENCIES),
+                                     .message("message.text.dependencies.were.successfully.collected.in.0.toolwindow", ToolWindowId.DEPENDENCIES),
                                    getTemplateText());
           return true;
         }

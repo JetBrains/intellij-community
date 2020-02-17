@@ -166,7 +166,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
           .setAddAction(new AnActionButtonRunnable() {
               @Override
               public void run(AnActionButton button) {
-                  JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("add.tags"),
+                  JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.tags"),
                                                                       new AddTagGroup(),
                                                                       button.getDataContext(),
                                                                       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
@@ -739,7 +739,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             if (view != null) {
               VirtualFile[] selection = view.getSelection();
               if (selection.length > 0) {
-                String tag = Messages.showInputDialog("", IdeBundle.message("new.tag.name"), null);
+                String tag = Messages.showInputDialog("", IdeBundle.message("dialog.title.new.tag.name"), null);
                 if (tag != null) {
                   for (VirtualFile file : selection) {
                     tagManager.addTag(tag, file);

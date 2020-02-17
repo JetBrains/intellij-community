@@ -37,7 +37,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
 
     final ParentElementsInfo parentInfo = findParentAndGrandParent(artifact);
     if (parentInfo != null) {
-      presentation.setText(ProjectBundle.message("put.into.0.and.link.via.manifest", parentInfo.getGrandparentArtifact().getName()));
+      presentation.setText(ProjectBundle.message("action.text.put.into.0.and.link.via.manifest", parentInfo.getGrandparentArtifact().getName()));
     }
 
     boolean enable = parentInfo != null;

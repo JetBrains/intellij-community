@@ -70,7 +70,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
   public DownloadingOptionsDialog(@NotNull Component parent, @NotNull final LibraryDownloadSettings settings, @NotNull List<? extends FrameworkLibraryVersion> versions,
                                   final boolean showNameAndLevel) {
     super(parent, true);
-    setTitle(JavaUiBundle.message("downloading.options"));
+    setTitle(JavaUiBundle.message("dialog.title.downloading.options"));
     myLibraryType = settings.getLibraryType();
     LOG.assertTrue(!versions.isEmpty());
 
@@ -83,7 +83,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     myVersionComboBox.setRenderer(SimpleListCellRenderer.create("", FrameworkLibraryVersion::getDefaultLibraryName));
     myVersionComboBox.setSelectedItem(settings.getVersion());
     if (versions.size() > 1) {
-      builder.addLabeledComponent(JavaUiBundle.message("downloading.options.dialog.version"), myVersionComboBox);
+      builder.addLabeledComponent(JavaUiBundle.message("label.downloading.options.dialog.version"), myVersionComboBox);
     }
 
     if (showNameAndLevel) {

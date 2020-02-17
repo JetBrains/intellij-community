@@ -70,7 +70,7 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
 
   @Override
   protected void addNorthComponents(FormBuilder formBuilder) {
-    formBuilder.addLabeledComponent(ProjectBundle.message("label.level"), myLibraryLevelCombobox);
+    formBuilder.addLabeledComponent(ProjectBundle.message("label.library.level"), myLibraryLevelCombobox);
   }
 
   @Override

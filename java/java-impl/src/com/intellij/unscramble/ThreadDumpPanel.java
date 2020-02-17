@@ -335,7 +335,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     private final Project myProject;
 
     private CopyToClipboardAction(List<? extends ThreadState> threadDump, Project project) {
-      super(IdeBundle.message("copy.to.clipboard"), IdeBundle.message("copy.whole.thread.dump.to.clipboard"), PlatformIcons.COPY_ICON);
+      super(IdeBundle.message("action.text.copy.to.clipboard"), IdeBundle.message("action.description.copy.whole.thread.dump.to.clipboard"), PlatformIcons.COPY_ICON);
       myThreadDump = threadDump;
       myProject = project;
     }
@@ -349,14 +349,15 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
       }
       CopyPasteManager.getInstance().setContents(new StringSelection(buf.toString()));
 
-      GROUP.createNotification(IdeBundle.message("full.thread.dump.was.successfully.copied.to.clipboard"), MessageType.INFO).notify(myProject);
+      GROUP.createNotification(IdeBundle.message("notification.text.full.thread.dump.was.successfully.copied.to.clipboard"), MessageType.INFO).notify(myProject);
     }
   }
 
   private class FilterAction extends ToggleAction implements DumbAware {
 
     private FilterAction() {
-      super(CommonBundle.lazyMessage("action.text.filter"), IdeBundle.lazyMessage("show.only.threads.containing.a.specific.string"), AllIcons.General.Filter);
+      super(CommonBundle.lazyMessage("action.text.filter"), IdeBundle.lazyMessage(
+        "action.description.show.only.threads.containing.a.specific.string"), AllIcons.General.Filter);
     }
 
     @Override
@@ -377,7 +378,8 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
   private class MergeStacktracesAction extends ToggleAction implements DumbAware {
     private MergeStacktracesAction() {
-      super(IdeBundle.lazyMessage("merge.identical.stacktraces"), IdeBundle.lazyMessage("group.threads.with.identical.stacktraces"), AllIcons.Actions.Collapseall);
+      super(IdeBundle.lazyMessage("action.text.merge.identical.stacktraces"), IdeBundle.lazyMessage(
+        "action.description.group.threads.with.identical.stacktraces"), AllIcons.Actions.Collapseall);
     }
 
     @Override

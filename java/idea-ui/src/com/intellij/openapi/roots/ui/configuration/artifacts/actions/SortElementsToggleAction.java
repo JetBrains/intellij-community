@@ -27,7 +27,8 @@ public class SortElementsToggleAction extends ToggleAction implements DumbAware 
   private final LayoutTreeComponent myLayoutTreeComponent;
 
   public SortElementsToggleAction(final LayoutTreeComponent layoutTreeComponent) {
-    super(ProjectBundle.message("sort.elements.by.names.and.types"), ProjectBundle.message("sort.elements.by.names.and.types"), AllIcons.ObjectBrowser.Sorted);
+    super(ProjectBundle.message("action.text.sort.elements.by.names.and.types"), ProjectBundle.message(
+      "action.text.sort.elements.by.names.and.types"), AllIcons.ObjectBrowser.Sorted);
     myLayoutTreeComponent = layoutTreeComponent;
   }
 

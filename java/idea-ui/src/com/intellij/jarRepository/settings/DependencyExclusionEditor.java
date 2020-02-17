@@ -58,7 +58,7 @@ class DependencyExclusionEditor {
     TreeUtil.expandAll(myDependenciesTree);
     DialogBuilder dialogBuilder =
       new DialogBuilder(myMainPanel)
-        .title(IdeBundle.message("include.transitive.dependencies"))
+        .title(IdeBundle.message("dialog.title.include.transitive.dependencies"))
         .centerPanel(new JBScrollPane(myDependenciesTree));
     dialogBuilder.setPreferredFocusComponent(myDependenciesTree);
 

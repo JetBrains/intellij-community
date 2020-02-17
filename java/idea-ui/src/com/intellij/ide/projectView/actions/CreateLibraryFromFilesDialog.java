@@ -42,7 +42,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
 
   public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<? extends OrderRoot> roots) {
     super(project, true);
-    setTitle(IdeBundle.message("create.library"));
+    setTitle(IdeBundle.message("dialog.title.create.library"));
     myProject = project;
     myRoots = roots;
     final FormBuilder builder = LibraryNameAndLevelPanel.createFormBuilder();
@@ -54,7 +54,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     myModulesComboBox = new ModulesComboBox();
     myModulesComboBox.fillModules(myProject);
     myModulesComboBox.setSelectedModule(findModule(roots));
-    builder.addLabeledComponent(JavaUiBundle.message("add.to.module"), myModulesComboBox);
+    builder.addLabeledComponent(JavaUiBundle.message("label.add.to.module"), myModulesComboBox);
     myPanel = builder.getPanel();
     myNameAndLevelPanel.getLibraryNameField().selectAll();
     myNameAndLevelPanel.getLevelComboBox().addActionListener(new ActionListener() {
