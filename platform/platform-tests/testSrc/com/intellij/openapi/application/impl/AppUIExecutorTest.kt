@@ -2,11 +2,8 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.constraints.ConstrainedExecution
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Disposer
@@ -532,6 +529,21 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       emit("end")
       assertOrderedEquals(queue, *expectedLog)
 
+    }.joinNonBlocking()
+  }
+
+  fun `test use write-safe context if called from write-unsafe context`() {
+    GlobalScope.async(SwingDispatcher) {
+      launch(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
+        (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
+      }
+      launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
+      }
+      launch(AppUIExecutor.onUiThread(ModalityState.any()).coroutineDispatchingContext()) {
+        assertFalse("Passing write-unsafe modality should not lead to write-safety checks",
+                    TransactionGuard.getInstance().isWritingAllowed)
+      }
     }.joinNonBlocking()
   }
 }

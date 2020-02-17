@@ -126,6 +126,13 @@ public class TransactionGuardImpl extends TransactionGuard {
     };
   }
 
+  @Override
+  public boolean isWritingAllowed() {
+    ApplicationManager.getApplication().assertIsWriteThread();
+    return myWritingAllowed;
+  }
+
+  @Override
   public boolean isWriteSafeModality(ModalityState state) {
     return Boolean.TRUE.equals(myWriteSafeModalities.get(state));
   }
