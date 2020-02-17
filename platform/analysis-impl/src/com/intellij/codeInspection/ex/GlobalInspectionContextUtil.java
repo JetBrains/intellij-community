@@ -33,10 +33,10 @@ public class GlobalInspectionContextUtil {
                                           final boolean online,
                                           @NotNull Runnable rerunAction) {
     for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
-      if (!factory.isProjectConfiguredToRunInspections(project, online, rerunAction)) {
-        return false;
+      if (factory.isProjectConfiguredToRunInspections(project, online, rerunAction)) {
+        return true;
       }
     }
-    return true;
+    return false;
   }
 }
