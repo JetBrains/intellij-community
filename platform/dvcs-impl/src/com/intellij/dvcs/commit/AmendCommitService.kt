@@ -17,6 +17,7 @@ import com.intellij.vcs.commit.EditedCommitDetailsImpl
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsProjectLog
 import org.jetbrains.concurrency.AsyncPromise
@@ -53,7 +54,7 @@ abstract class AmendCommitService(protected val project: Project) : AmendCommitA
     }
     logData.commitDetailsGetter.loadCommitsData(
       listOf(logData.getCommitIndex(hash, root)),
-      { commits -> promise.setCommit(hash, commits.firstOrNull()) },
+      { commits -> promise.setCommit(hash, commits.firstOrNull(), logData.currentUser[root]) },
       { error -> promise.setError(error) },
       indicator
     )
@@ -62,7 +63,7 @@ abstract class AmendCommitService(protected val project: Project) : AmendCommitA
   }
 }
 
-private fun AsyncPromise<EditedCommitDetails>.setCommit(hash: Hash, commit: VcsFullCommitDetails?) {
+private fun AsyncPromise<EditedCommitDetails>.setCommit(hash: Hash, commit: VcsFullCommitDetails?, currentUser: VcsUser?) {
   if (commit == null) {
     val message = "Failed to get commit details $hash"
 
@@ -70,7 +71,7 @@ private fun AsyncPromise<EditedCommitDetails>.setCommit(hash: Hash, commit: VcsF
     setError(message)
   }
   else {
-    setResult(EditedCommitDetailsImpl(commit))
+    setResult(EditedCommitDetailsImpl(currentUser, commit))
   }
 }
 
