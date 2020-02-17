@@ -2635,7 +2635,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   // 2: BINARY(logical_and_condition)
   // 3: BINARY(equality_condition)
   // 4: BINARY(comparison_condition)
-  // 5: PREFIX(logical_bitwise_condition)
+  // 5: ATOM(logical_bitwise_condition)
   // 6: ATOM(literal_condition)
   // 7: PREFIX(parentheses_condition)
   public static boolean condition(PsiBuilder b, int l, int g) {
@@ -2708,16 +2708,16 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  // '!' simple_command
   public static boolean logical_bitwise_condition(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "logical_bitwise_condition")) return false;
     if (!nextTokenIsSmart(b, BANG)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, null);
+    boolean r;
+    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, BANG);
-    p = r;
-    r = p && condition(b, l, 5);
-    exit_section_(b, l, m, LOGICAL_BITWISE_CONDITION, r, p, null);
-    return r || p;
+    r = r && simple_command(b, l + 1);
+    exit_section_(b, m, LOGICAL_BITWISE_CONDITION, r);
+    return r;
   }
 
   // w newlines | newlines w

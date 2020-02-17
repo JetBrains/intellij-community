@@ -26,9 +26,9 @@ public class ShLogicalBitwiseConditionImpl extends ShConditionImpl implements Sh
   }
 
   @Override
-  @Nullable
-  public ShCondition getCondition() {
-    return findChildByClass(ShCondition.class);
+  @NotNull
+  public ShCommand getCommand() {
+    return findNotNullChildByClass(ShCommand.class);
   }
 
   @Override

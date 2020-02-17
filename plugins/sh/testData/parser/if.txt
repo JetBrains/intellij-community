@@ -14,8 +14,9 @@ SHELL_SCRIPT
                   EQUALITY_CONDITION
                     LOGICAL_BITWISE_CONDITION
                       PsiElement(!)('!')
-                      LITERAL_CONDITION
-                        PsiElement(word)('a')
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('a')
                     PsiWhiteSpace(' ')
                     PsiElement(==)('==')
                     PsiWhiteSpace(' ')
