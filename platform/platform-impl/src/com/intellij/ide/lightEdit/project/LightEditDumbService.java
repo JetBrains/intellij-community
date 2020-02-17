@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.project;
 
-import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbModeTask;
@@ -71,11 +70,6 @@ public class LightEditDumbService extends DumbServiceImpl {
                                     @NotNull Disposable parentDisposable) {
     reportUnavailable();
     return null;
-  }
-
-  @Override
-  public Project getProject() {
-    return LightEditUtil.getProject();
   }
 
   @Override
