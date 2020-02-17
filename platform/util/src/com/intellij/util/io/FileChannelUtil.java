@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.nio.ch.FileChannelImpl;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -15,17 +14,27 @@ import java.nio.channels.FileChannel;
 class FileChannelUtil {
   private static final Logger LOG = Logger.getInstance(FileChannelUtil.class);
 
+  private static final Class<?> sunNioChFileChannelImpl = setupFileChannelImpl();
   private static final MethodHandle setUnInterruptible = setupUnInterruptibleHandle();
+
+  private static Class<?> setupFileChannelImpl() {
+    try {
+      return Class.forName("sun.nio.ch.FileChannelImpl");
+    }
+    catch (ClassNotFoundException ignored) {}
+    return null;
+  }
 
   @Nullable
   private static MethodHandle setupUnInterruptibleHandle() {
     MethodHandle setUnInterruptible = null;
     try {
-      //noinspection SpellCheckingInspection,JavaLangInvokeHandleSignature
-      setUnInterruptible = MethodHandles
-        .lookup()
-        .findVirtual(FileChannelImpl.class, "setUninterruptible", MethodType.methodType(void.class));
-      LOG.info("un-interruptible FileChannel-s will be used for indexes");
+      if (sunNioChFileChannelImpl != null) {
+        // noinspection SpellCheckingInspection
+        setUnInterruptible = MethodHandles
+          .lookup()
+          .findVirtual(sunNioChFileChannelImpl, "setUninterruptible", MethodType.methodType(void.class));
+      }
     }
     catch (NoSuchMethodException e) {
       LOG.info("interruptible FileChannel-s will be used for indexes");
@@ -33,13 +42,18 @@ class FileChannelUtil {
     catch (IllegalAccessException e) {
       LOG.error(e);
     }
+    if (setUnInterruptible != null) {
+      LOG.info("un-interruptible FileChannel-s will be used for indexes");
+    } else {
+      LOG.info("interruptible FileChannel-s will be used for indexes");
+    }
     return setUnInterruptible;
   }
 
   @NotNull
   static FileChannel unInterruptible(@NotNull FileChannel channel) {
     try {
-      if (setUnInterruptible != null && channel instanceof FileChannelImpl) {
+      if (setUnInterruptible != null && sunNioChFileChannelImpl != null && sunNioChFileChannelImpl.isInstance(channel)) {
         setUnInterruptible.invoke(channel);
       }
     }
