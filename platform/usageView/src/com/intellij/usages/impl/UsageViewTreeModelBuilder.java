@@ -86,7 +86,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     return (UsageNode)getFirstChildOfType(myRootNode, UsageNode.class);
   }
 
-  private static TreeNode getFirstChildOfType(TreeNode parent, final Class type) {
+  private static TreeNode getFirstChildOfType(TreeNode parent, final Class<?> type) {
     final int childCount = parent.getChildCount();
     for (int idx = 0; idx < childCount; idx++) {
       final TreeNode child = parent.getChildAt(idx);
