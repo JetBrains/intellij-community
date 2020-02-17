@@ -267,30 +267,19 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   @NotNull
   public static JLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow, int maxLineLength) {
-    return createCommentComponent(commentText, isCommentBelow, true, maxLineLength);
-  }
-
-  @NotNull
-  public static JLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow, boolean allowAutoWrapping,
-                                              int maxLineLength) {
-    return createCommentComponent(() -> new JBLabel(""), commentText, isCommentBelow, allowAutoWrapping, maxLineLength);
+    return createCommentComponent(() -> new JBLabel(""), commentText, isCommentBelow, maxLineLength);
   }
 
   private static JLabel createCommentComponent(@NotNull Supplier<? extends JBLabel> labelSupplier, @Nullable String commentText,
-                                               boolean isCommentBelow, boolean allowAutoWrapping, int maxLineLength) {
+                                              boolean isCommentBelow, int maxLineLength) {
     // todo why our JBLabel cannot render html if render panel without frame (test only)
     boolean isCopyable = SystemProperties.getBooleanProperty("idea.ui.comment.copyable", true);
-    JLabel component = labelSupplier.get().setCopyable(isCopyable).setAllowAutoWrapping(allowAutoWrapping);
+    JLabel component = labelSupplier.get().setCopyable(isCopyable).setAllowAutoWrapping(true);
 
     component.setVerticalTextPosition(SwingConstants.TOP);
     component.setFocusable(false);
     component.setForeground(UIUtil.getContextHelpForeground());
-    if (SystemInfo.isMac) {
-      Font font = component.getFont();
-      float size = font.getSize2D();
-      Font smallFont = font.deriveFont(size - 2.0f);
-      component.setFont(smallFont);
-    }
+    setCommentFont(component);
 
     if (isCopyable) {
       setCommentText(component, commentText, isCommentBelow, maxLineLength);
@@ -298,6 +287,13 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     else {
       component.setText(commentText);
     }
+    return component;
+  }
+
+  public static JLabel createNonWrappingCommentComponent(@NotNull String commentText) {
+    JBLabel component = new JBLabel(commentText);
+    component.setForeground(UIUtil.getContextHelpForeground());
+    setCommentFont(component);
     return component;
   }
 
@@ -317,6 +313,15 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       else {
         component.setText(String.format("<html>" + css + "<body><div>%s</div></body></html>", commentText));
       }
+    }
+  }
+
+  private static void setCommentFont(@NotNull JLabel component) {
+    if (SystemInfo.isMac) {
+      Font font = component.getFont();
+      float size = font.getSize2D();
+      Font smallFont = font.deriveFont(size - 2.0f);
+      component.setFont(smallFont);
     }
   }
 
@@ -342,7 +347,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         protected HyperlinkListener createHyperlinkListener() {
           return myHyperlinkListener;
         }
-      }, myCommentText, myCommentBelow, true, 70);
+      }, myCommentText, myCommentBelow, 70);
       comment.setBorder(getCommentBorder());
     }
 

@@ -484,7 +484,11 @@ abstract class Cell : BaseBuilder {
   }
 
   fun comment(text: String, maxLineLength: Int = -1): CellBuilder<JLabel> {
-    return component(ComponentPanelBuilder.createCommentComponent(text, true, false, maxLineLength))
+    return component(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength))
+  }
+
+  fun commentNoWrap(text: String): CellBuilder<JLabel> {
+    return component(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }
 
   fun placeholder(): CellBuilder<JComponent> {
