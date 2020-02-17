@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -21,24 +22,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-public class HotSwapManager {
+@Service
+public final class HotSwapManager {
   private final Map<DebuggerSession, Long> myTimeStamps = new HashMap<>();
   private static final String CLASS_EXTENSION = ".class";
   private final Project myProject;
 
   public HotSwapManager(@NotNull Project project) {
     myProject = project;
-    project.getMessageBus().connect().subscribe(DebuggerManagerListener.TOPIC, new DebuggerManagerListener() {
-      @Override
-      public void sessionCreated(DebuggerSession session) {
-        myTimeStamps.put(session, Long.valueOf(System.currentTimeMillis()));
-      }
-
-      @Override
-      public void sessionRemoved(DebuggerSession session) {
-        myTimeStamps.remove(session);
-      }
-    });
   }
 
   private long getTimeStamp(DebuggerSession session) {
@@ -46,8 +37,8 @@ public class HotSwapManager {
     return tStamp != null ? tStamp.longValue() : 0;
   }
 
-  void setTimeStamp(DebuggerSession session, long tStamp) {
-    myTimeStamps.put(session, Long.valueOf(tStamp));
+  private void setTimeStamp(DebuggerSession session, long tStamp) {
+    myTimeStamps.put(session, tStamp);
   }
 
   public Map<String, HotSwapFile> scanForModifiedClasses(@NotNull DebuggerSession session,
@@ -95,8 +86,8 @@ public class HotSwapManager {
     return true;
   }
 
-  public static HotSwapManager getInstance(Project project) {
-    return project.getComponent(HotSwapManager.class);
+  private static HotSwapManager getInstance(Project project) {
+    return project.getService(HotSwapManager.class);
   }
 
   private void reloadClasses(DebuggerSession session, Map<String, HotSwapFile> classesToReload, HotSwapProgress progress) {
@@ -205,5 +196,23 @@ public class HotSwapManager {
     reloadClassesProgress.setTitle(DebuggerBundle.message("progress.hotswap.reloading"));
     reloadClassesCommand.run();
     ActionsCollector.getInstance().record("Reload Classes", HotSwapManager.class);
+  }
+
+  public static class HotSwapDebuggerManagerListener implements DebuggerManagerListener {
+    private final Project myProject;
+
+    public HotSwapDebuggerManagerListener(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void sessionCreated(DebuggerSession session) {
+      getInstance(myProject).setTimeStamp(session, System.currentTimeMillis());
+    }
+
+    @Override
+    public void sessionRemoved(DebuggerSession session) {
+      getInstance(myProject).myTimeStamps.remove(session);
+    }
   }
 }

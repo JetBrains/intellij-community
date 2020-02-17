@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class HotSwapUI {
   public static HotSwapUI getInstance(Project project) {
-    return project.getComponent(HotSwapUI.class);
+    return project.getService(HotSwapUI.class);
   }
 
   public abstract void reloadChangedClasses(@NotNull DebuggerSession session, boolean compileBeforeHotswap);
