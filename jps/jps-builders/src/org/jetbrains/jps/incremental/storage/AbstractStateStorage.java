@@ -115,7 +115,7 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
 
 
   private PersistentHashMap<Key, T> createMap(final File file) throws IOException {
-    FileUtil.createIfDoesntExist(file);
+    FileUtil.createIfDoesntExist(file); //todo assert
     return new PersistentHashMap<>(file, myKeyDescriptor, myStateExternalizer);
   }
 
