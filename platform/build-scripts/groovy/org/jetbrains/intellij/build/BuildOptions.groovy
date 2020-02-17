@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 
@@ -33,7 +34,7 @@ class BuildOptions {
   /**
    * Pass comma-separated names of build steps (see below) to 'intellij.build.skip.build.steps' system property to skip them when building locally.
    */
-  Set<String> buildStepsToSkip = System.getProperty("intellij.build.skip.build.steps", "").split(",") as Set<String>
+  Set<String> buildStepsToSkip = StringUtil.split(System.getProperty("intellij.build.skip.build.steps", ""), ",") as Set<String>
   /** Pre-builds SVG icons for all SVG resource files into *.jpix resources to speedup icons loading at runtime */
   static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
@@ -136,7 +137,7 @@ class BuildOptions {
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
    * used to speed up updating the IDE from sources.
    */
-  List<String> bundledPluginDirectoriesToSkip = System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", "").split(",") as List<String>
+  List<String> bundledPluginDirectoriesToSkip = StringUtil.split(System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", ""), ",") as List<String>
 
   /**
    * Specifies list of names of directories of non-bundled plugins (determined by {@link ProductModulesLayout#pluginsToPublish} and
@@ -145,7 +146,7 @@ class BuildOptions {
    * {@link ProductModulesLayout#buildAllCompatiblePlugins} are built. In order to skip building all non-bundled plugins, set the property to
    * {@code none}.
    */
-  List<String> nonBundledPluginDirectoriesToInclude = System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", "").split(",") as List<String>
+  List<String> nonBundledPluginDirectoriesToInclude = StringUtil.split(System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", ""), ",") as List<String>
 
   /**
    * Specifies JRE version to be bundled with distributions, 11 by default.
