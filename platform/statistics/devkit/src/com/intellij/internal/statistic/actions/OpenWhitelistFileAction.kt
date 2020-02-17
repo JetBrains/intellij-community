@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
@@ -16,7 +17,9 @@ import com.intellij.openapi.vfs.VfsUtil
 import java.io.File
 
 class OpenWhitelistFileAction(private val myRecorderId: String = "FUS")
-  : AnAction(StatisticsBundle.message("stats.open.0.whitelist.file", myRecorderId), null, AllIcons.FileTypes.Config) {
+  : AnAction(StatisticsBundle.message("stats.open.0.whitelist.file", myRecorderId),
+             ActionsBundle.message("group.OpenWhitelistFileAction.description"),
+             AllIcons.FileTypes.Config) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 

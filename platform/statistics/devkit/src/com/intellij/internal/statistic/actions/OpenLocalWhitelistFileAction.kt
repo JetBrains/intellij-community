@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.OpenWhitelistFileAction.Companion.openFileInEditor
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence
@@ -16,7 +17,9 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Font
 
 class OpenLocalWhitelistFileAction(private val myRecorderId: String = "FUS")
-  : AnAction(StatisticsBundle.message("stats.open.0.local.whitelist.file", myRecorderId)) {
+  : AnAction(StatisticsBundle.message("stats.open.0.local.whitelist.file", myRecorderId),
+             ActionsBundle.message("group.OpenLocalWhitelistFileAction.description"),
+             ICON) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 

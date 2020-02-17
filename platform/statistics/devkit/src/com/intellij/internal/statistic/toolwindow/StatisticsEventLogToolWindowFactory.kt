@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.getEventLogProviders
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -21,7 +22,7 @@ private const val DEFAULT_RECORDER = "FUS"
 /**
  * Creates a toolwindow with feature usage statistics event log
  */
-class StatisticsEventLogToolWindowFactory : ToolWindowFactory {
+class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     createNewTab(project, toolWindow, DEFAULT_RECORDER)
     toolWindow.setToHideOnEmptyContent(true)
