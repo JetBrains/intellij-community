@@ -35,7 +35,6 @@ import com.intellij.openapi.editor.markup.AnalyzerStatus;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -78,7 +77,7 @@ import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMarkupModel {
+public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMarkupModel, CaretListener, DocumentListener {
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
   private static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
 
@@ -159,7 +158,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       protected void paintComponent(Graphics g) {
         // Paint this toolbar background for non opaque (in mini mode)
         // ignoring base component background and use Editor's background.
-        g.setColor(myEditor.getColorsScheme().getAttributes(HighlighterColors.TEXT).getBackgroundColor());
+        g.setColor(myEditor.getColorsScheme().getDefaultBackground());
         g.fillRect(0, 0, getWidth(), getHeight());
 
         super.paintComponent(g);
@@ -221,24 +220,20 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         myPopupManager.hidePopup();
       }
     });
+  }
 
-    myEditor.getDocument().addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        myPopupManager.hidePopup();
-      }
-    }, resourcesDisposable);
+  @Override
+  public void caretPositionChanged(@NotNull CaretEvent event) {
+    VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
+    Point point = myEditor.visualPositionToXY(pos);
+    if (statusToolbar.getComponent().getBounds().contains(point)) {
+      System.out.println(System.identityHashCode(event) + ": hide toolbar");
+    }
+  }
 
-    myEditor.getCaretModel().addCaretListener(new CaretListener() {
-      @Override
-      public void caretPositionChanged(@NotNull CaretEvent event) {
-        VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
-        Point point = myEditor.visualPositionToXY(pos);
-        if (statusToolbar.getComponent().getBounds().contains(point)) {
-          System.out.println("Hide toolbar");
-        }
-      }
-    }, resourcesDisposable);
+  @Override
+  public void documentChanged(@NotNull DocumentEvent event) {
+    myPopupManager.hidePopup();
   }
 
   private static AnAction findAction(@NotNull String id, @NotNull Icon icon) {
@@ -1635,34 +1630,25 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                          fillCellHorizontally().
                          insets(10, 10, 10, 0));
 
-      MenuAction menuAction = new MenuAction();
-      menuAction.add(new DumbAwareAction("Action 1") {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          System.out.println("Action 1");
-        }
-      });
-
-      menuAction.add(new DumbAwareAction("Action 2") {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          System.out.println("Action 2");
-        }
-      });
-
       Presentation presentation = new Presentation();
       presentation.setIcon(AllIcons.Actions.More);
       presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
 
-      ActionButton menuButton = new ActionButton(menuAction, presentation, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+      ActionButton menuButton = new ActionButton(myCurrentStatus.getActionMenu().invoke(),
+                                                 presentation,
+                                                 ActionPlaces.EDITOR_POPUP,
+                                                 ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
       contentPanel.add(menuButton,
                        gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
 
-      DropDownLink<String> inspectionLevel = new DropDownLink<>("Highlight: Inspections",
-                  Arrays.asList("Highlight: Inspections", "Highlight: Syntax", "No highlighting"),
+      DropDownLink<String> inspectionLevel = new DropDownLink<>("All Problems",
+                  Arrays.asList("None", "Errors Only", "All Problems"),
                   i -> System.out.println(i + " selected"), true);
 
-      JPanel lowerPanel = JBUI.Panels.simplePanel(inspectionLevel);
+      JLabel highlightLabel = new JLabel("Highlight: ");
+      highlightLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
+
+      JPanel lowerPanel = JBUI.Panels.simplePanel(inspectionLevel).addToLeft(highlightLabel);
       lowerPanel.setOpaque(true);
       lowerPanel.setBackground(UIUtil.getToolTipActionBackground());
       lowerPanel.setBorder(JBUI.Borders.empty(4, 10));
@@ -1680,11 +1666,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  private static class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
-    private MenuAction() {
-      setPopup(true);
-    }
-  }
 
   //private static class DelegatedAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
   //  private final AnAction delegateAction;

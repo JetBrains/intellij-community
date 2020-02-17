@@ -393,6 +393,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myDocument.addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
     myDocument.addDocumentListener(mySoftWrapModel, myCaretModel);
+    myDocument.addDocumentListener(myMarkupModel, myCaretModel);
 
     myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
 
@@ -451,6 +452,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myPrimaryCaret.updateVisualPosition();
       }
     });
+
+    myCaretModel.addCaretListener(myMarkupModel, myCaretModel);
 
     myCaretCursor = new CaretCursor();
 
