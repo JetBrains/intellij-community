@@ -15,24 +15,18 @@ public class ExtensionPointUtil {
   public static <V extends ClearableLazyValue<?>> V dropLazyValueOnChange(@NotNull V lazyValue,
                                                                           @NotNull ExtensionPointName<?> extensionPointName,
                                                                           @Nullable Disposable parentDisposable) {
-    return dropLazyValueOnChange(lazyValue, extensionPointName.getPoint(null), parentDisposable);
-  }
-
-  @NotNull
-  public static <V extends ClearableLazyValue<?>> V dropLazyValueOnChange(@NotNull V lazyValue,
-                                                                          @NotNull ExtensionPoint<?> extensionPoint,
-                                                                          @Nullable Disposable parentDisposable) {
-    extensionPoint.addExtensionPointListener(lazyValue::drop, false, parentDisposable);
+    extensionPointName.getPoint(null).addExtensionPointListener(lazyValue::drop, false, parentDisposable);
     return lazyValue;
   }
 
+  @NotNull
   public static <T> Disposable createExtensionDisposable(@NotNull T extensionObject,
                                                          @NotNull ExtensionPointName<T> extensionPointName) {
     return createExtensionDisposable(extensionObject, extensionPointName.getPoint(null));
   }
 
-  public static <T> Disposable createExtensionDisposable(@NotNull T extensionObject,
-                                                         @NotNull ExtensionPoint<T> extensionPoint) {
+  @NotNull
+  public static <T> Disposable createExtensionDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<T> extensionPoint) {
     Disposable disposable = createDisposable(extensionObject, extensionPoint);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<T>() {
       @Override
@@ -45,6 +39,7 @@ public class ExtensionPointUtil {
     return disposable;
   }
 
+  @NotNull
   public static <T> Disposable createKeyedExtensionDisposable(@NotNull T extensionObject,
                                                               @NotNull ExtensionPoint<KeyedLazyInstance<T>> extensionPoint) {
     Disposable disposable = createDisposable(extensionObject, extensionPoint);
@@ -60,10 +55,9 @@ public class ExtensionPointUtil {
   }
 
   @NotNull
-  private static <T> Disposable createDisposable(@NotNull T extensionObject,
-                                                 @NotNull ExtensionPoint extensionPoint) {
-    Disposable disposable = Disposer.newDisposable("Disposable for [" + extensionObject.toString() + "]");
-    ComponentManager manager = ((ExtensionPointImpl)extensionPoint).getComponentManager();
+  private static <T> Disposable createDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<?> extensionPoint) {
+    Disposable disposable = Disposer.newDisposable("Disposable for [" + extensionObject + "]");
+    ComponentManager manager = ((ExtensionPointImpl<?>)extensionPoint).getComponentManager();
     Disposer.register(manager, disposable);
     return disposable;
   }

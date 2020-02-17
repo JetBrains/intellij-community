@@ -130,7 +130,7 @@ public class ProblemDescriptorUtil {
   }
 
   @NotNull
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element) {
+  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element) {
     return renderDescriptionMessage(descriptor, element, false);
   }
 

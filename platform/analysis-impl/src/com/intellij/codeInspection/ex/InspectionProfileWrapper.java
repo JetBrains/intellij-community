@@ -67,8 +67,8 @@ public class InspectionProfileWrapper {
     return myProfile.isToolEnabled(key, element);
   }
 
-  public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey,
-                                             PsiElement element) {
+  @NotNull
+  public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element) {
     return myProfile.getErrorLevel(inspectionToolKey, element);
   }
 
