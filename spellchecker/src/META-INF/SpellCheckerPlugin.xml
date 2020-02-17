@@ -19,7 +19,7 @@
     <projectConfigurable parentId="proofread" instance="com.intellij.spellchecker.settings.SpellCheckerSettingsManager" id="reference.settings.ide.settings.spelling" key="spelling" bundle="messages.SpellCheckerBundle" />
 
     <localInspection shortName="SpellCheckingInspection" bundle="messages.SpellCheckerBundle"
-                     key="spellchecking.inspection.name" groupKey="spelling" enabledByDefault="true" level="TYPO"
+                     key="spellchecking.inspection.name" groupKey="proofread" enabledByDefault="true" level="TYPO"
                      implementationClass="com.intellij.spellchecker.inspections.SpellCheckingInspection"/>
 
     <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.quickfixes.DictionarySuggestionProvider" order="first"/>
