@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -146,7 +145,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
     else {
       // file wasn't mentioned in coverage information
-      info = fillInfoForUncoveredFile(VfsUtilCore.virtualToIoFile(file));
+      info = null; // don't add arbitrary files in report - many of them can't be ever covered
     }
 
     if (info != null) {
