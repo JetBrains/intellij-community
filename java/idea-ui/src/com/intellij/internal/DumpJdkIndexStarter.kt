@@ -3,7 +3,7 @@ package com.intellij.internal
 
 import com.google.common.primitives.Longs.max
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -21,7 +21,7 @@ import com.intellij.util.text.nullize
 import kotlin.system.exitProcess
 
 class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
-  override fun mainImpl(args: Array<out String>) {
+  override fun mainImpl(args: Array<out String>, indicator: ProgressIndicator) {
     println("Dump JDK indexes command:")
     val nameHintKey = "name-infix"
     val jdkHomeKey = "jdk-home"
@@ -111,7 +111,7 @@ class DumpJdkIndexStarter : IndexesStarterBase("dump-jdk-index") {
     val indexChunk = IndexChunk(allRoots, indexName)
 
     LOG.info("Indexing...")
-    val infraVersion = IndexesExporter.getInstance(project).exportIndexesChunk(indexChunk, indexZip.toPath(), EmptyProgressIndicator())
+    val infraVersion = IndexesExporter.getInstance(project).exportIndexesChunk(indexChunk, indexZip.toPath(), indicator)
 
     val indexingTime = max(0L, System.currentTimeMillis() - indexingStartTime)
     LOG.info("Indexes build completed in ${StringUtil.formatDuration(indexingTime)}")

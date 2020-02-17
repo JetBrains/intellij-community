@@ -2,7 +2,7 @@
 package com.intellij.internal
 
 import com.google.common.primitives.Longs
-import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -12,7 +12,7 @@ import kotlin.system.exitProcess
 
 class DumpProjectIndexesStarter : IndexesStarterBase("dump-project-index") {
 
-  override fun mainImpl(args: Array<out String>) {
+  override fun mainImpl(args: Array<out String>, indicator: ProgressIndicator) {
     //disable indexing
     //System.setProperty("idea.skip.indices.initialization", "true")
     System.setProperty("idea.force.dumb.queue.tasks", "true")
@@ -51,7 +51,7 @@ class DumpProjectIndexesStarter : IndexesStarterBase("dump-project-index") {
     val indexingStartTime = System.currentTimeMillis()
     val infraVersion = ProjectIndexesExporter
       .getInstance(project)
-      .exportIndices(indexZip.toPath(), EmptyProgressIndicator())
+      .exportIndices(indexZip.toPath(), indicator)
 
     val indexingTime = Longs.max(0L, System.currentTimeMillis() - indexingStartTime)
     LOG.info("Indexes build completed in ${StringUtil.formatDuration(indexingTime)}")

@@ -1,14 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.use
 import com.intellij.util.indexing.IndexInfrastructureVersion
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.isFile
 import com.intellij.util.io.sizeOrNull
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import org.tukaani.xz.LZMA2Options
 import org.tukaani.xz.XZOutputStream
 import java.io.File
@@ -36,14 +46,17 @@ abstract class IndexesStarterBase(
 
   final override fun main(args: Array<out String>) {
     try {
-      mainImpl(args)
-    } catch (t: Throwable) {
+      LoggingProgressIndicator().use { indicator ->
+        mainImpl(args, indicator)
+      }
+    }
+    catch (t: Throwable) {
       LOG.error("JDK Indexing failed unexpectedly. ${t.message}", t)
       exitProcess(1)
     }
   }
 
-  protected abstract fun mainImpl(args: Array<out String>)
+  protected abstract fun mainImpl(args: Array<out String>, indicator: ProgressIndicator)
 
   protected fun packIndexes(indexKind: String,
                             indexName: String,
@@ -162,5 +175,29 @@ abstract class IndexesStarterBase(
         else -> 0L
       }
     }.sum()
+  }
+
+  @Suppress("EXPERIMENTAL_API_USAGE")
+  private class LoggingProgressIndicator : ProgressIndicatorBase(), Disposable {
+    private val messages = Channel<String>(128)
+
+    override fun dispose() {
+      messages.close()
+    }
+
+    override fun setText(text: String?) {
+      super.setText(text)
+      if (text != null) {
+        messages.offer(text)
+      }
+    }
+
+    init {
+      GlobalScope.launch {
+        messages.consumeAsFlow().debounce(500).collect {
+          LOG.info(text)
+        }
+      }
+    }
   }
 }
