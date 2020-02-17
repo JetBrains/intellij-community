@@ -43,6 +43,7 @@ intellij {
             'CSS',
             'java-i18n',
             'properties',
+            'java'
     ]
     pluginName '.env files support'
 }

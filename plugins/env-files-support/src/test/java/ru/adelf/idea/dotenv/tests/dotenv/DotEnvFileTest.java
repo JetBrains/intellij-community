@@ -29,10 +29,10 @@ public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
 
     public void testEnvCommentedVars() {
         assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR=123");
-        assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR2=\"123 #comment\"");
-        assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR3=\"123 #com\\\"ment\"");
+        assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR2=123 #comment");
+        assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR3=123 #com\\\"ment");
 
-        assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR4=\"1\"");
+        assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR4=1");
     }
 
     public void testEnvEmptyCommentedVars() {
@@ -45,7 +45,7 @@ public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
     }
 
     public void testMultiLine() {
-        assertIndexContains(DotEnvKeysIndex.KEY,"MULTI_LINE=MULTI...");
+        assertIndexContains(DotEnvKeyValuesIndex.KEY,"MULTI_LINE=MULTI...");
     }
 
     public void testEnvExportKeys() {
