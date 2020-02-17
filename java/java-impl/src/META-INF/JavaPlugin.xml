@@ -1539,8 +1539,10 @@
                      bundle="messages.JavaBundle" key="inspection.comparator.result.comparison.display.name"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ComparatorResultComparisonInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousNameCombination" bundle="messages.InspectionsBundle"
-                     key="suspicious.name.combination.display.name" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousNameCombination" bundle="messages.AnalysisBundle"
+                     key="suspicious.name.combination.display.name"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.suspiciousNameCombination.SuspiciousNameCombinationInspection" />
     <localInspection groupPath="Java" language="JAVA" suppressId="unchecked" shortName="UNCHECKED_WARNING" displayName="Unchecked warning" groupKey="group.names.compiler.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"

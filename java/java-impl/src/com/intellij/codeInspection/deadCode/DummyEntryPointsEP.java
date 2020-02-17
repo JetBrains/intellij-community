@@ -15,15 +15,15 @@
  */
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.InspectionsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class DummyEntryPointsEP extends InspectionEP {
   public DummyEntryPointsEP() {
     presentation = DummyEntryPointsPresentation.class.getName();
-    displayName = InspectionsBundle.message("inspection.dead.code.entry.points.display.name");
+    displayName = AnalysisBundle.message("inspection.dead.code.entry.points.display.name");
     implementationClass = "";
     shortName = "";
   }

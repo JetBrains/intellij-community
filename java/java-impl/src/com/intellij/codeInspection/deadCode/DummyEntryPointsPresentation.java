@@ -3,8 +3,8 @@
  */
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.GlobalJavaInspectionContext;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -44,7 +44,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
 
   private class MoveEntriesToSuspicious extends QuickFixAction {
     private MoveEntriesToSuspicious(@NotNull InspectionToolWrapper toolWrapper) {
-      super(InspectionsBundle.message("inspection.dead.code.remove.user.defined.entry.point.quickfix"), null, null, toolWrapper);
+      super(AnalysisBundle.message("inspection.dead.code.remove.user.defined.entry.point.quickfix"), null, null, toolWrapper);
     }
 
     @Override

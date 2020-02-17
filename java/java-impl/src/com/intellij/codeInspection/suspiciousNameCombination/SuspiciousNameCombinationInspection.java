@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.suspiciousNameCombination;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -170,7 +171,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
   private class NameGroupsPanel extends AddEditDeleteListPanel<String> {
 
     NameGroupsPanel() {
-      super(InspectionsBundle.message("suspicious.name.combination.options.title"), myNameGroups);
+      super(AnalysisBundle.message("suspicious.name.combination.options.title"), myNameGroups);
       myListModel.addListDataListener(new ListDataListener() {
         @Override
         public void intervalAdded(ListDataEvent e) {
@@ -192,16 +193,16 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     @Override
     protected String findItemToAdd() {
       return Messages.showInputDialog(this,
-                                      InspectionsBundle.message("suspicious.name.combination.options.prompt"),
-                                      InspectionsBundle.message("suspicious.name.combination.add.title"),
+                                      AnalysisBundle.message("suspicious.name.combination.options.prompt"),
+                                      AnalysisBundle.message("suspicious.name.combination.add.title"),
                                       Messages.getQuestionIcon(), "", null);
     }
 
     @Override
     protected String editSelectedItem(String inputValue) {
       return Messages.showInputDialog(this,
-                                      InspectionsBundle.message("suspicious.name.combination.options.prompt"),
-                                      InspectionsBundle.message("suspicious.name.combination.edit.title"),
+                                      AnalysisBundle.message("suspicious.name.combination.options.prompt"),
+                                      AnalysisBundle.message("suspicious.name.combination.edit.title"),
                                       Messages.getQuestionIcon(),
                                       inputValue, null);
     }

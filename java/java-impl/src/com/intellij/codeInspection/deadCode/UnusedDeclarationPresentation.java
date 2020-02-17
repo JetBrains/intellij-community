@@ -1,9 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalJavaInspectionContext;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
@@ -183,7 +187,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       problemClassElement.setAttribute(INSPECTION_RESULTS_SEVERITY_ATTRIBUTE, severity.myName);
       problemClassElement.setAttribute(INSPECTION_RESULTS_ATTRIBUTE_KEY_ATTRIBUTE, attributeKey);
 
-      problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.dead.code"));
+      problemClassElement.addContent(AnalysisBundle.message("inspection.export.results.dead.code"));
       element.addContent(problemClassElement);
 
       @NonNls Element hintsElement = new Element(INSPECTION_RESULTS_HINTS_ELEMENT);
@@ -221,7 +225,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   class PermanentDeleteAction extends QuickFixAction {
     PermanentDeleteAction(@NotNull InspectionToolWrapper toolWrapper) {
-      super(InspectionsBundle.message("inspection.dead.code.safe.delete.quickfix"), AllIcons.Actions.Cancel, null, toolWrapper);
+      super(AnalysisBundle.message("inspection.dead.code.safe.delete.quickfix"), AllIcons.Actions.Cancel, null, toolWrapper);
       copyShortcutFrom(ActionManager.getInstance().getAction("SafeDelete"));
     }
 
@@ -270,7 +274,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   class MoveToEntries extends QuickFixAction {
     MoveToEntries(@NotNull InspectionToolWrapper toolWrapper) {
-      super(InspectionsBundle.message("inspection.dead.code.entry.point.quickfix"), null, null, toolWrapper);
+      super(AnalysisBundle.message("inspection.dead.code.entry.point.quickfix"), null, null, toolWrapper);
     }
 
     @Override
@@ -302,7 +306,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   class CommentOutBin extends QuickFixAction {
     CommentOutBin(@NotNull InspectionToolWrapper toolWrapper) {
-      super(InspectionsBundle.message("inspection.dead.code.comment.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
+      super(AnalysisBundle.message("inspection.dead.code.comment.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
             toolWrapper);
     }
 
@@ -346,7 +350,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.dead.code.comment.quickfix");
+      return AnalysisBundle.message("inspection.dead.code.comment.quickfix");
     }
 
     @Override
@@ -375,7 +379,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
         int startOffset = textRange.getStartOffset();
         CharSequence chars = doc.getCharsSequence();
-        while (CharArrayUtil.regionMatches(chars, startOffset, InspectionsBundle.message("inspection.dead.code.comment"))) {
+        while (CharArrayUtil.regionMatches(chars, startOffset, AnalysisBundle.message("inspection.dead.code.comment"))) {
           int line = doc.getLineNumber(startOffset) + 1;
           if (line < doc.getLineCount()) {
             startOffset = doc.getLineStartOffset(line);
@@ -389,7 +393,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         int line2 = doc.getLineNumber(endOffset - 1);
 
         if (line1 == line2) {
-          doc.insertString(startOffset, InspectionsBundle.message("inspection.dead.code.date.comment", date));
+          doc.insertString(startOffset, AnalysisBundle.message("inspection.dead.code.date.comment", date));
         }
         else {
           for (int i = line1; i <= line2; i++) {
@@ -397,8 +401,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
           }
 
           doc.insertString(doc.getLineStartOffset(Math.min(line2 + 1, doc.getLineCount() - 1)),
-                           InspectionsBundle.message("inspection.dead.code.stop.comment", date));
-          doc.insertString(doc.getLineStartOffset(line1), InspectionsBundle.message("inspection.dead.code.start.comment", date));
+                           AnalysisBundle.message("inspection.dead.code.stop.comment", date));
+          doc.insertString(doc.getLineStartOffset(line1), AnalysisBundle.message("inspection.dead.code.start.comment", date));
         }
       }
     }
@@ -595,7 +599,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.dead.code.safe.delete.quickfix");
+      return AnalysisBundle.message("inspection.dead.code.safe.delete.quickfix");
     }
 
 

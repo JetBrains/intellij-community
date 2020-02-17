@@ -5,7 +5,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.HTMLComposer;
 import com.intellij.codeInspection.HTMLJavaHTMLComposer;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
@@ -45,7 +44,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   @Override
   public void appendClassExtendsImplements(@NotNull StringBuilder buf, RefClass refClass) {
     if (refClass.getBaseClasses().size() > 0) {
-      HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.extends.implements"));
+      HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.extends.implements"));
       myComposer.startList(buf);
       for (RefClass refBase : refClass.getBaseClasses()) {
         myComposer.appendListItem(buf, refBase);
@@ -58,10 +57,10 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   public void appendDerivedClasses(@NotNull StringBuilder buf, RefClass refClass) {
     if (refClass.getSubClasses().size() > 0) {
       if (refClass.isInterface()) {
-        HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.extended.implemented"));
+        HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.extended.implemented"));
       }
       else {
-        HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.extended"));
+        HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.extended"));
       }
 
       myComposer.startList(buf);
@@ -88,7 +87,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   @Override
   public void appendSuperMethods(@NotNull StringBuilder buf, RefMethod refMethod) {
     if (refMethod.getSuperMethods().size() > 0) {
-      HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.overrides.implements"));
+      HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.overrides.implements"));
 
       myComposer.startList(buf);
       for (RefMethod refSuper : refMethod.getSuperMethods()) {
@@ -101,7 +100,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   @Override
   public void appendDerivedMethods(@NotNull StringBuilder buf, RefMethod refMethod) {
     if (refMethod.getDerivedMethods().size() > 0) {
-      HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.derived.methods"));
+      HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.derived.methods"));
 
       myComposer.startList(buf);
       for (RefMethod refDerived : refMethod.getDerivedMethods()) {
@@ -137,7 +136,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       @Override
       public void visitClass(@NotNull RefClass refClass) {
         if (refClass.isStatic()) {
-          buf.append(InspectionsBundle.message("inspection.export.results.static"));
+          buf.append(AnalysisBundle.message("inspection.export.results.static"));
           buf.append(HTMLComposerImpl.NBSP);
         }
 
@@ -153,11 +152,11 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
         PsiField psiField = (PsiField)field.getUastElement().getJavaPsi();
         if (psiField != null) {
           if (field.isStatic()) {
-            buf.append(InspectionsBundle.message("inspection.export.results.static"));
+            buf.append(AnalysisBundle.message("inspection.export.results.static"));
             buf.append(HTMLComposerImpl.NBSP);
           }
 
-          buf.append(InspectionsBundle.message("inspection.export.results.field"));
+          buf.append(AnalysisBundle.message("inspection.export.results.field"));
           buf.append(HTMLComposerImpl.NBSP).append(HTMLComposerImpl.CODE_OPENING);
 
           buf.append(XmlStringUtil.escapeString(psiField.getType().getPresentableText()));
@@ -175,16 +174,16 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
         PsiType returnType = psiMethod.getReturnType();
 
         if (method.isStatic()) {
-          buf.append(InspectionsBundle.message("inspection.export.results.static"));
+          buf.append(AnalysisBundle.message("inspection.export.results.static"));
           buf.append(HTMLComposerImpl.NBSP);
         }
         else if (method.isAbstract()) {
-          buf.append(InspectionsBundle.message("inspection.export.results.abstract"));
+          buf.append(AnalysisBundle.message("inspection.export.results.abstract"));
           buf.append(HTMLComposerImpl.NBSP);
         }
         buf.append(method.isConstructor()
-                   ? InspectionsBundle.message("inspection.export.results.constructor")
-                   : InspectionsBundle.message("inspection.export.results.method"));
+                   ? AnalysisBundle.message("inspection.export.results.constructor")
+                   : AnalysisBundle.message("inspection.export.results.method"));
         buf.append(HTMLComposerImpl.NBSP).append(HTMLComposerImpl.CODE_OPENING);
 
         if (returnType != null) {
@@ -219,16 +218,16 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       buf.append(HTMLComposerImpl.CODE_CLOSING);
     }
     else if (owner instanceof RefMethod) {
-      buf.append(InspectionsBundle.message("inspection.export.results.method"));
+      buf.append(AnalysisBundle.message("inspection.export.results.method"));
       buf.append(HTMLComposerImpl.NBSP);
       myComposer.appendElementReference(buf, (RefElement)owner);
     }
     else if (owner instanceof RefField) {
-      buf.append(InspectionsBundle.message("inspection.export.results.field"));
+      buf.append(AnalysisBundle.message("inspection.export.results.field"));
       buf.append(HTMLComposerImpl.NBSP);
       myComposer.appendElementReference(buf, (RefElement)owner);
       buf.append(HTMLComposerImpl.NBSP);
-      buf.append(InspectionsBundle.message("inspection.export.results.initializer"));
+      buf.append(AnalysisBundle.message("inspection.export.results.initializer"));
     }
     else if (owner instanceof RefClass) {
       appendClassOrInterface(buf, (RefClass)owner, false);
@@ -325,7 +324,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     if (owner != null) {
       if ((refElement instanceof RefClass && ((RefClass)refElement).isAnonymous())) {
         buf.append(" ");
-        buf.append(InspectionsBundle.message("inspection.export.results.anonymous.ref.in.owner"));
+        buf.append(AnalysisBundle.message("inspection.export.results.anonymous.ref.in.owner"));
         buf.append(" ");
         myComposer.appendElementReference(buf, (RefElement) owner, isPackageIncluded);
       }
