@@ -13,114 +13,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl.tagTreeHighlighting;
+package com.intellij.codeInsight.daemon.impl.tagTreeHighlighting
 
-import com.intellij.application.options.editor.WebEditorOptions;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.breadcrumbs.BreadcrumbsPanel;
+import com.intellij.application.options.editor.WebEditorOptions
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.options.UiDslConfigurable
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.ui.layout.*
+import com.intellij.xml.XmlBundle
+import com.intellij.xml.breadcrumbs.BreadcrumbsPanel
+import javax.swing.JSpinner
+import javax.swing.SpinnerNumberModel
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+class XmlTagTreeHighlightingConfigurable : UiDslConfigurable.Simple() {
+  override fun RowBuilder.createComponentRow() {
+    val options = WebEditorOptions.getInstance()
+    row {
+      val enable = checkBox(XmlBundle.message("settings.enable.html.xml.tag.tree.highlighting"),
+                            options::isTagTreeHighlightingEnabled, options::setTagTreeHighlightingEnabled)
+        .onApply { clearTagTreeHighlighting() }
 
-/**
- * @author Eugene.Kudelevsky
- */
-public class XmlTagTreeHighlightingConfigurable implements UnnamedConfigurable {
-  private JCheckBox myEnableTagTreeHighlightingCheckBox;
-  private JSpinner myLevelsSpinner;
-  private JPanel myLevelsPanel;
-  private JPanel myContentPanel;
-  private JSpinner myOpacitySpinner;
+      val spinnerGroupName = "xml.tag.highlight.spinner"
+      row(XmlBundle.message("settings.levels.to.highlight")) {
+        spinner({ options.tagTreeHighlightingLevelCount }, { options.tagTreeHighlightingLevelCount = it },
+                1, 50, 1)
+          .onApply { clearTagTreeHighlighting() }
+          .sizeGroup(spinnerGroupName)
+          .enableIf(enable.selected)
 
-  public XmlTagTreeHighlightingConfigurable() {
-    myLevelsSpinner.setModel(new SpinnerNumberModel(1, 1, 50, 1));
-    myOpacitySpinner.setModel(new SpinnerNumberModel(0.0, 0.0, 1.0, 0.05));
-
-    myEnableTagTreeHighlightingCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final boolean enabled = myEnableTagTreeHighlightingCheckBox.isSelected();
-        UIUtil.setEnabled(myLevelsPanel, enabled, true);
       }
-    });
-  }
-
-  @Override
-  public JComponent createComponent() {
-    return myContentPanel;
-  }
-
-  @Override
-  public boolean isModified() {
-    final WebEditorOptions options = WebEditorOptions.getInstance();
-
-    if (myEnableTagTreeHighlightingCheckBox.isSelected() != options.isTagTreeHighlightingEnabled()) {
-      return true;
+      row(XmlBundle.message("settings.opacity")) {
+        component(JSpinner())
+          .applyToComponent { model = SpinnerNumberModel(0.0, 0.0, 1.0, 0.05) }
+          .withBinding({ ((it.value as Double) * 100).toInt() }, { it, value -> it.value = value * 0.01 },
+                       PropertyBinding(options::getTagTreeHighlightingOpacity, options::setTagTreeHighlightingOpacity))
+          .onApply { clearTagTreeHighlighting() }
+          .sizeGroup(spinnerGroupName)
+          .enableIf(enable.selected)
+        largeGapAfter()
+      }
     }
-
-    if (getLevelCount() != options.getTagTreeHighlightingLevelCount()) {
-      return true;
-    }
-
-    if (getOpacity() != options.getTagTreeHighlightingOpacity()) {
-      return true;
-    }
-
-    return false;
   }
 
-  @Override
-  public void apply() throws ConfigurationException {
-    final WebEditorOptions options = WebEditorOptions.getInstance();
-
-    options.setTagTreeHighlightingEnabled(myEnableTagTreeHighlightingCheckBox.isSelected());
-    options.setTagTreeHighlightingLevelCount(getLevelCount());
-    options.setTagTreeHighlightingOpacity(getOpacity());
-
-    clearTagTreeHighlighting();
-  }
-
-  private int getLevelCount() {
-    return ((Integer)myLevelsSpinner.getValue()).intValue();
-  }
-
-  private int getOpacity() {
-    return (int)(((Double)myOpacitySpinner.getValue()).doubleValue() * 100);
-  }
-
-  private static void clearTagTreeHighlighting() {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
-        if (fileEditor instanceof TextEditor) {
-          final Editor editor = ((TextEditor)fileEditor).getEditor();
-          XmlTagTreeHighlightingPass.clearHighlightingAndLineMarkers(editor, project);
-
-          final BreadcrumbsPanel breadcrumbs = BreadcrumbsPanel.getBreadcrumbsComponent(editor);
-          if (breadcrumbs != null) {
-            breadcrumbs.queueUpdate();
+  companion object {
+    private fun clearTagTreeHighlighting() {
+      for (project in ProjectManager.getInstance().openProjects) {
+        for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
+          if (fileEditor is TextEditor) {
+            val editor = fileEditor.editor
+            XmlTagTreeHighlightingPass.clearHighlightingAndLineMarkers(editor, project)
+            val breadcrumbs = BreadcrumbsPanel.getBreadcrumbsComponent(editor)
+            breadcrumbs?.queueUpdate()
           }
         }
       }
     }
-  }
-
-  @Override
-  public void reset() {
-    final WebEditorOptions options = WebEditorOptions.getInstance();
-    final boolean enabled = options.isTagTreeHighlightingEnabled();
-
-    myEnableTagTreeHighlightingCheckBox.setSelected(enabled);
-    myLevelsSpinner.setValue(options.getTagTreeHighlightingLevelCount());
-    myOpacitySpinner.setValue(options.getTagTreeHighlightingOpacity() * 0.01);
-    UIUtil.setEnabled(myLevelsPanel, enabled, true);
   }
 }
