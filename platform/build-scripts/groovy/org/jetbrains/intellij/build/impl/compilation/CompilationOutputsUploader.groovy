@@ -72,8 +72,9 @@ class CompilationOutputsUploader {
         return
       }
 
-      def projectHome = new File(context.paths.buildOutputRoot)
-      uploadCompilationOutputs(projectHome, currentSourcesState, uploader, executor)
+      def classesDirName = "classes"
+      def buildOutput = new File(context.paths.buildOutputRoot, classesDirName)
+      uploadCompilationOutputs(buildOutput, currentSourcesState, uploader, executor)
 
       executor.waitForAllComplete(messages)
       executor.reportErrors(messages)
