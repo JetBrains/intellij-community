@@ -37,4 +37,14 @@ public abstract class InputDataDiffBuilder<Key, Value> {
                                         @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
                                         @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
                                         @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException;
+
+  @ApiStatus.NonExtendable
+  @ApiStatus.Internal
+  public boolean differentiateWithoutExternalModification(@NotNull Map<Key, Value> newData,
+                                                          @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
+                                                          @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
+                                                          @NotNull RemovedKeyProcessor<? super Key> removeProcessor)
+    throws StorageException {
+    return differentiate(newData, addProcessor, updateProcessor, removeProcessor);
+  }
 }
