@@ -18,6 +18,10 @@ class ChangesViewAmendCommitHandler(private val workflowHandler: ChangesViewComm
     updateAmendCommitState()
   }
   private var amendDetailsGetter: CancellablePromise<EditedCommitDetails>? = null
+  private var _isLoading: Boolean by observable(false) { _, oldValue, newValue ->
+    if (oldValue == newValue) return@observable
+    workflowHandler.updateDefaultCommitActionEnabled()
+  }
 
   init {
     workflowHandler.workflow.addCommitListener(EditedCommitCleaner(), workflowHandler)
@@ -28,6 +32,8 @@ class ChangesViewAmendCommitHandler(private val workflowHandler: ChangesViewComm
     })
   }
 
+  val isLoading: Boolean get() = _isLoading
+
   internal fun isAmendWithoutChangesAllowed(): Boolean = isAmendCommitMode && amendRoot != null
 
   override fun amendCommitModeToggled() {
@@ -36,7 +42,6 @@ class ChangesViewAmendCommitHandler(private val workflowHandler: ChangesViewComm
 
     fireAmendCommitModeToggled()
     setAmendPrefix(isAmendCommitMode)
-    workflowHandler.updateDefaultCommitActionEnabled()
     updateAmendCommitState()
     if (isAmendCommitMode) loadAmendDetails(amendAware, root) else restoreAmendDetails()
   }
@@ -46,15 +51,20 @@ class ChangesViewAmendCommitHandler(private val workflowHandler: ChangesViewComm
   }
 
   private fun loadAmendDetails(amendAware: AmendCommitAware, root: VirtualFile) {
+    _isLoading = true
     amendDetailsGetter = amendAware.getAmendCommitDetails(root)
     amendDetailsGetter?.run {
       onSuccess { setAmendDetails(it) }
-      onProcessed { amendDetailsGetter = null }
+      onProcessed {
+        _isLoading = false
+        amendDetailsGetter = null
+      }
     }
   }
 
   private fun restoreAmendDetails() {
     amendDetailsGetter?.cancel()
+    workflowHandler.updateDefaultCommitActionEnabled()
 
     restoreBeforeAmendMessage()
     setEditedCommit(null)
