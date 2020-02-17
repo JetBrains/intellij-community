@@ -115,6 +115,13 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
         jaCoCoConfigProperty = propertyName.getTextTrim();
       }
     }
+    Element jaCoCoGoalConfig = mavenProject.getPluginGoalConfiguration("org.jacoco", "jacoco-maven-plugin", "prepare-agent");
+    if (jaCoCoGoalConfig != null) {
+      Element propertyName = jaCoCoGoalConfig.getChild("propertyName");
+      if (propertyName != null) {
+        jaCoCoConfigProperty = propertyName.getTextTrim();
+      }
+    }
     return jaCoCoConfigProperty;
   }
 
