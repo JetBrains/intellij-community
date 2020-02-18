@@ -370,10 +370,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     this.toolWindowPane = toolWindowPane
   }
 
+  private data class TaskAndBean(val task: RegisterToolWindowTask, val bean: ToolWindowEP)
+
   private fun beforeProjectOpened() {
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
 
-    val list = mutableListOf<ToolWindowEP>()
+    val list = mutableListOf<TaskAndBean>()
     runActivity("toolwindow init command creation") {
       ToolWindowEP.EP_NAME.forEachExtensionSafe { bean ->
         val condition = bean.condition
@@ -383,12 +385,21 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
 
         // compute outside of EDT (should be already preloaded, but who knows)
-        val toolWindowFactory = bean.toolWindowFactory
-        if (!toolWindowFactory.isApplicable(project)) {
+        val factory = bean.toolWindowFactory
+        if (!factory.isApplicable(project)) {
           return@forEachExtensionSafe
         }
 
-        list.add(bean)
+        list.add(TaskAndBean(RegisterToolWindowTask(
+          id = bean.id,
+          icon = findIconFromBean(bean, factory),
+          anchor = ToolWindowAnchor.fromText(bean.anchor),
+          sideTool = bean.side,
+          canCloseContent = bean.canCloseContents,
+          canWorkInDumbMode = DumbService.isDumbAware(factory),
+          shouldBeAvailable = bean.toolWindowFactory.shouldBeAvailable(project),
+          contentFactory = factory
+        ), bean))
       }
     }
 
@@ -426,17 +437,17 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }, project.disposed)
   }
 
-  private fun initToolWindows(list: List<ToolWindowEP>) {
+  private fun initToolWindows(list: List<TaskAndBean>) {
     runActivity("toolwindow creating") {
-      for (bean in list) {
+      for ((task, bean) in list) {
         try {
-          doInitToolWindow(bean, bean.toolWindowFactory)
+          doRegisterToolWindow(task, bean)
         }
         catch (e: ProcessCanceledException) {
           throw e
         }
         catch (t: Throwable) {
-          LOG.error("Cannot init toolwindow ${bean.factoryClass}", t)
+          LOG.error("Cannot init toolwindow ${task.contentFactory}", t)
         }
       }
     }
@@ -457,27 +468,24 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return
     }
 
-    val toolWindowFactory = bean.toolWindowFactory
-    if (!toolWindowFactory.isApplicable(project)) {
+    val factory = bean.toolWindowFactory
+    if (!factory.isApplicable(project)) {
       return
     }
 
-    doInitToolWindow(bean, toolWindowFactory)
-    toolWindowPane!!.validate()
-    toolWindowPane!!.repaint()
-  }
-
-  private fun doInitToolWindow(bean: ToolWindowEP, factory: ToolWindowFactory) {
-    val toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor)
     doRegisterToolWindow(RegisterToolWindowTask(
       id = bean.id,
-      anchor = toolWindowAnchor,
+      icon = findIconFromBean(bean, factory),
+      anchor = ToolWindowAnchor.fromText(bean.anchor),
       sideTool = bean.side,
       canCloseContent = bean.canCloseContents,
       canWorkInDumbMode = DumbService.isDumbAware(factory),
       shouldBeAvailable = factory.shouldBeAvailable(project),
       contentFactory = factory
     ), bean)
+
+    toolWindowPane!!.validate()
+    toolWindowPane!!.repaint()
   }
 
   fun projectClosed() {
@@ -939,24 +947,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     val toolWindow = ToolWindowImpl(this, task.id, task.canCloseContent, task.canWorkInDumbMode, task.component, disposable,
-      windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable, stripeTitle = getStripeTitle(task, bean))
+      windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable, stripeTitle = getStripeTitle(task, bean?.pluginDescriptor))
 
     contentFactory?.init(toolWindow)
 
     // contentFactory.init can set icon
     if (toolWindow.icon == null) {
-      var icon = task.icon
-      if (bean?.icon != null) {
-        icon = IconLoader.findIcon(bean.icon, contentFactory!!.javaClass)
-        if (icon == null) {
-          try {
-            icon = IconLoader.getIcon(bean.icon)
-          }
-          catch (ignored: Exception) {
-          }
-        }
+      task.icon?.let {
+        toolWindow.doSetIcon(it)
       }
-      toolWindow.doSetIcon(icon ?: EmptyIcon.ICON_13)
     }
 
     val button = StripeButton(toolWindowPane!!, toolWindow)
@@ -1973,12 +1972,11 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
   return source != null
 }
 
-private fun getStripeTitle(task: RegisterToolWindowTask, bean: ToolWindowEP?): String {
+private fun getStripeTitle(task: RegisterToolWindowTask, pluginDescriptor: PluginDescriptor?): String {
   task.stripeTitle?.let {
     return it.get()
   }
 
-  val pluginDescriptor = bean?.pluginDescriptor
   if (pluginDescriptor != null && pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
     return getStripeTitleFromPluginResourceBundle(pluginDescriptor, "toolwindow.stripe.${task.id}", defaultValue = task.id)
   }
@@ -1995,5 +1993,23 @@ private fun getStripeTitleFromPluginResourceBundle(pluginDescriptor: PluginDescr
   catch (e: MissingResourceException) {
     LOG.warn("Missing bundle ${bundleName} at ${classLoader}: ${e.message}")
     return defaultValue
+  }
+}
+
+private fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory): Icon? {
+  if (bean.icon == null) {
+    return null
+  }
+
+  val icon = IconLoader.findIcon(bean.icon, factory.javaClass)
+  if (icon != null) {
+    return icon
+  }
+
+  try {
+    return IconLoader.getIcon(bean.icon)
+  }
+  catch (ignored: Exception) {
+    return EmptyIcon.ICON_13
   }
 }
