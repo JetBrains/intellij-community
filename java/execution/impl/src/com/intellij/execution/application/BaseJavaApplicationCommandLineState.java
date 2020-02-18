@@ -144,8 +144,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     if (myPreparedRemoteEnvironment != null) {
       return myPreparedRemoteEnvironment;
     }
-    TargetEnvironmentFactory factory = getTargetEnvironmentFactory(getEnvironment());
-    return myPreparedRemoteEnvironment = factory.prepareRemoteEnvironment(factory.createRequest(), new EmptyProgressIndicator());
+    return prepareEnvironment(new EmptyProgressIndicator());
   }
 
   @NotNull
