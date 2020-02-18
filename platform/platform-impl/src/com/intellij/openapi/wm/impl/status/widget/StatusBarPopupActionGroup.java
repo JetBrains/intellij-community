@@ -23,8 +23,8 @@ public class StatusBarPopupActionGroup extends ComputableActionGroup {
   @Override
   protected CachedValueProvider<AnAction[]> createChildrenProvider(@NotNull ActionManager actionManager) {
     return () ->
-      CachedValueProvider.Result.create(
-        ContainerUtil.map2Array(myManager.getWidgetFactories().keySet(), AnAction.class, ToggleWidgetAction::new), myManager);
+      CachedValueProvider.Result.create(ContainerUtil.map2Array(myManager.getWidgetFactories(), AnAction.class, ToggleWidgetAction::new),
+                                        myManager);
   }
 
   private class ToggleWidgetAction extends DumbAwareToggleAction {

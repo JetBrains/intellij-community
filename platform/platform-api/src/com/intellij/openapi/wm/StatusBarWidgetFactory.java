@@ -29,20 +29,23 @@ public interface StatusBarWidgetFactory {
   @NotNull
   String getDisplayName();
 
+  /**
+   * Creates a widget to be added on the status bar.
+   * <p>
+   * `null` means nothing to add. E.g. you should return `null` for Branches widget if VCS integration is not configured for a project.
+   * <p>
+   * Once the method is invoked on project initialization, the widget won't be recreated.
+   * <p>
+   * You may need to recreate If you still need to recreate a widget if:
+   * - its availability is changed (e.g. Git integration was enabled and this changes availability of branches widget)
+   * - its visibility is changed (e.g. users enabled/disabled widget in the settings)
+   * you need to explicitely invoke {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager#updateWidget(StatusBarWidgetFactory)}
+   * to recreate the widget and re-add it to the status bar.
+   */
   @Nullable
   StatusBarWidget createWidget(@NotNull Project project);
 
   void disposeWidget(@NotNull StatusBarWidget widget);
-
-  /**
-   * @return whether widget can be possibly enabled and shown in the project
-   * <p>
-   * E.g.
-   * - {@link git4idea.ui.branch.GitBranchWidget} factory is available only if Git integration is enabled for a project,
-   * - {@link git4idea.light.LightGitStatusBarWidget} is not available for regular IDE frames, it won't be
-   * created for regular project even if Light Git widget is enabled.
-   */
-  boolean isAvailable(@NotNull Project project);
 
   /**
    * @return whether widget can be enabled on the given status bar right now.

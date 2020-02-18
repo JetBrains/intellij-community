@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public final class StatusBarWidgetsManager extends SimpleModificationTracker implements Disposable {
@@ -60,12 +61,18 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   public void updateWidget(@NotNull StatusBarWidgetFactory factory) {
-    if (factory.isAvailable(myProject) && myProject.getService(StatusBarWidgetSettings.class).isEnabled(factory)) {
+    disableWidget(factory);
+    if (isAvailable(factory) && myProject.getService(StatusBarWidgetSettings.class).isEnabled(factory)) {
       enableWidget(factory);
     }
-    else {
-      disableWidget(factory);
+  }
+
+  public boolean isAvailable(@NotNull StatusBarWidgetFactory factory) {
+    if (factory instanceof StatusBarWidgetProviderToFactoryAdapter) {
+      IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
+      return frame != null && ((StatusBarWidgetProviderToFactoryAdapter)factory).isCompatibleWith(frame);
     }
+    return true;
   }
 
   @Override
@@ -78,8 +85,8 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     myWidgetFactories.clear();
   }
 
-  public Map<StatusBarWidgetFactory, StatusBarWidget> getWidgetFactories() {
-    return myWidgetFactories;
+  public Set<StatusBarWidgetFactory> getWidgetFactories() {
+    return myWidgetFactories.keySet();
   }
 
   public void enableWidget(@NotNull StatusBarWidgetFactory factory) {
@@ -132,7 +139,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   public boolean canBeEnabledOnStatusBar(@NotNull StatusBarWidgetFactory factory, @NotNull StatusBar statusBar) {
-    return factory.isAvailable(myProject) && factory.canBeEnabledOn(statusBar);
+    return isAvailable(factory) && factory.canBeEnabledOn(statusBar);
   }
 
   private void addWidgetFactory(@NotNull StatusBarWidgetFactory factory) {

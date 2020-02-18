@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
@@ -15,11 +14,6 @@ public abstract class StatusBarEditorBasedWidgetFactory implements StatusBarWidg
   @Override
   public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
     return getFileEditor(statusBar) != null;
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project) {
-    return true;
   }
 
   @Nullable
