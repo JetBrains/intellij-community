@@ -69,8 +69,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     if (candidates.isEmpty()) return;
     final List<ImplicitUsageProvider> implicitUsageProviders = ImplicitUsageProvider.EP_NAME.getExtensionList();
 
-    PsiClass scope = PsiTreeUtil.getTopmostParentOfType(aClass, PsiClass.class);
-    if (scope == null) scope = aClass;
+    final PsiClass scope = findVariableScope(aClass);
 
     FieldLoop:
     for (final PsiField field : candidates) {
@@ -121,6 +120,10 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     return panel;
   }
 
+  private static @NotNull PsiClass findVariableScope(@NotNull PsiClass containingClass) {
+    final PsiClass scope = PsiTreeUtil.getTopmostParentOfType(containingClass, PsiClass.class);
+    return scope == null ? containingClass : scope;
+  }
 
   private static void removeFieldsReferencedFromInitializers(PsiElement aClass, PsiElement root, Set<PsiField> candidates) {
     root.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -424,7 +427,10 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     protected List<PsiElement> moveDeclaration(@NotNull final Project project, @NotNull final PsiField variable) {
       final Map<PsiCodeBlock, Collection<PsiReference>> refs = new HashMap<>();
       final List<PsiElement> newDeclarations = new ArrayList<>();
-      if (!groupByCodeBlocks(ReferencesSearch.search(variable).findAll(), refs)) return newDeclarations;
+      final PsiClass containingClass = variable.getContainingClass();
+      if (containingClass == null) return newDeclarations;
+      final PsiClass scope = findVariableScope(containingClass);
+      if (!groupByCodeBlocks(ReferencesSearch.search(variable, new LocalSearchScope(scope)).findAll(), refs)) return newDeclarations;
 
       PsiElement declaration;
       for (Collection<PsiReference> psiReferences : refs.values()) {
