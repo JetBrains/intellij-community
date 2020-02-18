@@ -30,6 +30,7 @@ import io.netty.handler.codec.http.*
 import io.netty.handler.codec.http.cookie.DefaultCookie
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder
+import org.jetbrains.ide.BuiltInServerBundle
 import org.jetbrains.ide.BuiltInServerManagerImpl
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.orInSafeMode
@@ -200,7 +201,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   }) ?: candidateByDirectoryName ?: return false
 
   if (isActivatable() && !PropertiesComponent.getInstance().getBoolean("ide.built.in.web.server.active")) {
-    notificationManager.notify("Built-in web server is deactivated, to activate, please use Open in Browser", null)
+    notificationManager.notify(BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), null)
     return false
   }
 
@@ -267,10 +268,9 @@ fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boole
       ProjectUtil.focusProjectWindow(null, true)
 
       if (MessageDialogBuilder
-          .yesNo("", "Page '" + StringUtil.trimMiddle(url, 50) + "' requested without authorization, " +
-              "\nyou can copy URL and open it in browser to trust it.")
+          .yesNo("", BuiltInServerBundle.message("dialog.message.page", StringUtil.trimMiddle(url, 50)))
           .icon(Messages.getWarningIcon())
-          .yesText("Copy authorization URL to clipboard")
+          .yesText(BuiltInServerBundle.message("dialog.button.copy.authorization.url.to.clipboard"))
           .show() == Messages.YES) {
         CopyPasteManager.getInstance().setContents(StringSelection(url + "?" + TOKEN_PARAM_NAME + "=" + acquireToken()))
       }

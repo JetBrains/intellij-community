@@ -137,8 +137,8 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
         catch (e: Throwable) {
           LOG.info(e)
           NOTIFICATION_GROUP.value.createNotification(
-            "Cannot start internal HTTP server. Git integration, JavaScript debugger and LiveEdit may operate with errors. " +
-            "Please check your firewall settings and restart " + ApplicationNamesInfo.getInstance().fullProductName,
+            BuiltInServerBundle.message("notification.content.cannot.start.internal.http.server.git.integration.javascript.debugger.and.liveedit.may.operate.with.errors") +
+            BuiltInServerBundle.message("notification.content.please.check.your.firewall.settings.and.restart") + ApplicationNamesInfo.getInstance().fullProductName,
             NotificationType.ERROR).notify(null)
           return@Consumer
         }
