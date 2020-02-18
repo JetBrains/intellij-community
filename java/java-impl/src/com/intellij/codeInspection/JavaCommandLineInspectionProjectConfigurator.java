@@ -27,7 +27,7 @@ public class JavaCommandLineInspectionProjectConfigurator implements CommandLine
     if (!sdks.isEmpty()) return false;
 
     try {
-      boolean hasAnyJavaFiles = Files.walk(projectPath).anyMatch(f -> f.toString().endsWith(".java"));
+      boolean hasAnyJavaFiles = Files.walk(projectPath).anyMatch(f -> f.toString().endsWith(".java") || f.toString().endsWith(".kt"));
       if (!hasAnyJavaFiles) {
         logger.reportMessage(3, "Skipping JDK autodetection because the project doesn't contain any Java files");
       }
