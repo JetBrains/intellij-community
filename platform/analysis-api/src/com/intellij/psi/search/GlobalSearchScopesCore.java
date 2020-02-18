@@ -2,6 +2,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.analysis.AnalysisBundle;
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -304,7 +305,7 @@ public class GlobalSearchScopesCore {
     @NotNull
     @Override
     public String getDisplayName() {
-      return "Directory '" + myDirectory.getName() + "'";
+      return AnalysisScopeBundle.message("display.name.directory.02", myDirectory.getName());
     }
   }
 
@@ -420,10 +421,10 @@ public class GlobalSearchScopesCore {
       if (myDirectories.size() + myDirectoriesWithSubdirectories.size() == 1) {
         Set<VirtualFile> dirs = myDirectories.size() == 1 ? myDirectories : myDirectoriesWithSubdirectories;
         VirtualFile root = Objects.requireNonNull(ContainerUtil.getFirstItem(dirs));
-        return "Directory '" + root.getName() + "'";
+        return AnalysisScopeBundle.message("display.name.directory.0", root.getName());
       }
       Iterable<VirtualFile> allDirs = ContainerUtil.concat(myDirectories, myDirectoriesWithSubdirectories);
-      return "Directories " + StringUtil.join(allDirs, file -> "'" + file.getName() + "'", ", ");
+      return AnalysisScopeBundle.message("display.name.directories.0", StringUtil.join(allDirs, file -> "'" + file.getName() + "'", ", "));
     }
 
   }
