@@ -29,6 +29,7 @@ public final class XDebuggerWatchesManager {
   @NotNull
   public WatchesManagerState saveState(@NotNull WatchesManagerState state) {
     List<ConfigurationState> expressions = state.getExpressions();
+    expressions.clear();
     watches.forEach((key, value) -> expressions.add(new ConfigurationState(key, value)));
     return state;
   }
