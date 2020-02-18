@@ -158,6 +158,7 @@ public class PluginGroups {
       "org.intellij.grails",
 
       "com.intellij.micronaut",
+      "com.intellij.frameworks.starters",
       "com.intellij.microprofile",
       "com.intellij.quarkus",
       "com.intellij.helidon",
