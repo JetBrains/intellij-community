@@ -283,6 +283,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
   private static boolean isHoverOverJavaLens(@NotNull Editor editor, @NotNull Point point) {
     InlayModel inlayModel = editor.getInlayModel();
     Inlay at = inlayModel.getElementAt(point);
-    return at != null && InlayHintsSinkImpl.Companion.getSettingsKey(at) == KEY;
+    //return at != null && InlayHintsPass.getSettingsKey(at) == KEY;
+    return false; // TODO get back!
   }
 }

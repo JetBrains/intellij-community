@@ -9,7 +9,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.psi.PsiFile
 import com.intellij.util.xmlb.annotations.Property
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
@@ -44,7 +43,6 @@ object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EX
  *
  * To test it you may use InlayHintsProviderTestCase.
  */
-@ApiStatus.Experimental
 interface InlayHintsProvider<T : Any> {
   /**
    * If this method is called, provider is enabled for this file
@@ -163,8 +161,22 @@ class NoSettings {
 
 /**
  * Similar to [com.intellij.openapi.util.Key], but it also requires language to be unique
+ * Allows type-safe access to settings of provider
  */
 @Suppress("unused")
 data class SettingsKey<T>(val id: String) {
   fun getFullId(language: Language): String = language.id + "." + id
 }
+
+interface AbstractSettingsKey<T: Any> {
+  fun getFullId(language: Language): String
+}
+
+data class InlayKey<T: Any, C: Any>(val id: String) : AbstractSettingsKey<T>, ContentKey<C> {
+  override fun getFullId(language: Language): String = language.id + "." + id
+}
+
+/**
+ * Allows type-safe access to content of the root presentation
+ */
+interface ContentKey<C: Any>
