@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.schemes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.NonTrivialActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Scheme;
@@ -140,7 +125,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   @NotNull
   private JComponent createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new ShowSchemesActionsListAction(myActions.getActions()));
+    group.add(new ShowSchemesActionsListAction(myActions));
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -290,13 +275,15 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
   }
 
-  private static class ShowSchemesActionsListAction extends NonTrivialActionGroup {
-    ShowSchemesActionsListAction(@NotNull Collection<? extends AnAction> actions) {
+  private static class ShowSchemesActionsListAction extends DefaultActionGroup {
+    private final AbstractSchemeActions<?> mySchemeActions;
+
+    ShowSchemesActionsListAction(AbstractSchemeActions<?> schemeActions) {
       setPopup(true);
+      mySchemeActions = schemeActions;
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
       getTemplatePresentation().setText(IdeBundle.lazyMessage("action.presentation.AbstractSchemesPanel.text"));
       getTemplatePresentation().setDescription(IdeBundle.lazyMessage("action.presentation.AbstractSchemesPanel.description"));
-      addAll(actions);
     }
 
     @Override
@@ -311,8 +298,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      DefaultActionGroup group = new DefaultActionGroup();
+      group.addAll(mySchemeActions.getActions());
       ListPopup popup = JBPopupFactory.getInstance().
-        createActionGroupPopup(null, this, e.getDataContext(), true, null, Integer.MAX_VALUE);
+        createActionGroupPopup(null, group, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
       HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), popup);
       Component component = e.getInputEvent().getComponent();
