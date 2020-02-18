@@ -469,7 +469,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
       XBreakpointUtil.breakpointTypes().remove(myDefaultBreakpoints::containsKey).forEach(this::addDefaultBreakpoint);
 
-      myBreakpoints.values().forEach(this::doRemoveBreakpoint);
+      new ArrayList<>(myBreakpoints.values()).forEach(this::doRemoveBreakpoint);
 
       ContainerUtil.notNullize(state.getBreakpoints()).forEach(breakpointState -> loadBreakpoint(breakpointState, false));
 
