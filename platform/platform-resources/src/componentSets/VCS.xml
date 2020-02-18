@@ -70,6 +70,7 @@
                                    implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguageHighlighterFactory"/>
 
     <localInspection
+        language="IgnoreLang"
         bundle="messages.VcsBundle"
         enabledByDefault="true"
         groupKey="ignore.codeInspection.group"
