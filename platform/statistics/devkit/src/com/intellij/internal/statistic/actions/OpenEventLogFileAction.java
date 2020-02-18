@@ -39,9 +39,7 @@ public class OpenEventLogFileAction extends AnAction {
     final EventLogFile logFile = StatisticsEventLoggerKt.getEventLogProvider(myRecorderId).getActiveLogFile();
     final VirtualFile logVFile = logFile != null ? LocalFileSystem.getInstance().findFileByIoFile(logFile.getFile()) : null;
     if (logVFile == null) {
-      showNotification(
-        project, NotificationType.WARNING,
-        "There's no active event log file. Please enable logging and restart IDE");
+      showNotification(project, NotificationType.WARNING, StatisticsBundle.message("stats.there.is.no.active.event.log"));
       return;
     }
     FileEditorManager.getInstance(project).openFile(logVFile, true);
@@ -53,7 +51,7 @@ public class OpenEventLogFileAction extends AnAction {
     String title = StatisticsBundle.message("stats.feature.usage.statistics");
     final Notification notification = new Notification("FeatureUsageStatistics", title, message, type);
     notification.addAction(NotificationAction.createSimple(
-      StatisticsBundle.lazyMessage("action.NotificationAction.OpenEventLogFileAction.text.enable.event.log"), () -> {
+      StatisticsBundle.lazyMessage("stats.enable.data.sharing"), () -> {
       final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, new ConsentConfigurable());
       editor.show();
     }));

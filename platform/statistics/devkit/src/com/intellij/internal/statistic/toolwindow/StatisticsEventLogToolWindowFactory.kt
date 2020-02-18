@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.toolwindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.NonEmptyActionGroup
+import com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction
 import com.intellij.internal.statistic.eventLog.getEventLogProviders
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
 import com.intellij.openapi.actionSystem.AnAction
@@ -70,6 +71,7 @@ private class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware
       val content = ContentFactory.SERVICE.getInstance().createContent(eventLogToolWindow.component, recorderId, true)
       content.preferredFocusableComponent = eventLogToolWindow.component
       toolWindow.contentManager.addContent(content)
+      RecordStateStatisticsEventLogAction.checkLogRecordingEnabled(project, recorderId)
     }
   }
 
