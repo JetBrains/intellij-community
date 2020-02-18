@@ -223,6 +223,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     to.setLiteralPort(from.getLiteralPort());//then port is copied
     to.setUserName(from.getUserName());
     to.setPassword(from.getPassword());
+    to.setPassphrase(from.getPassphrase());
     to.setAuthType(from.getAuthType());
     to.setPrivateKeyFile(from.getPrivateKeyFile());
     to.setStorePassword(from.isStorePassword());
