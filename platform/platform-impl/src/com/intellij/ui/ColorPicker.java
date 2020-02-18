@@ -158,7 +158,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   @Nullable
-  public static Point bestLocationForColorPickerPopup(@Nullable Editor editor) {
+  public static RelativePoint bestLocationForColorPickerPopup(@Nullable Editor editor) {
     if (editor == null || editor.isDisposed()) {
       return null;
     }
@@ -172,7 +172,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
     VisualPosition visualPosition = editor.getCaretModel().getCurrentCaret().getVisualPosition();
     Point pointInEditor = editor.visualPositionToXY(new VisualPosition(visualPosition.line + 1, visualPosition.column));
-    return new RelativePoint(editor.getContentComponent(),pointInEditor).getScreenPoint();
+    return new RelativePoint(editor.getContentComponent(),pointInEditor);
   }
 
   @Nullable
@@ -398,7 +398,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     showColorPickerPopup(project, currentColor, listener, null);
   }
 
-  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable Point location) {
+  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location) {
     Ref<LightCalloutPopup> ref = Ref.create();
 
     ColorListener colorListener = new ColorListener() {
@@ -432,9 +432,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     ref.set(popup);
 
     if (location == null) {
-      location = MouseInfo.getPointerInfo().getLocation();
+      location = new RelativePoint(MouseInfo.getPointerInfo().getLocation());
     }
-    popup.show(location);
+    popup.show(location.getScreenPoint());
     updatePointer(ref);
   }
 
