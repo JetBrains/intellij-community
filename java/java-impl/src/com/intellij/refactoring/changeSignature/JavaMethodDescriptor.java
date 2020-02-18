@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -58,7 +55,14 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl,
   @Nullable
   public String getReturnTypeText() {
     final PsiTypeElement typeElement = myMethod.getReturnTypeElement();
-    return typeElement != null ? typeElement.getType().getPresentableText(true) : null;
+    if (typeElement != null) {
+      PsiType type = typeElement.getType();
+      if (type.getAnnotations().length > 0) {
+        return type.getPresentableText(true);
+      }
+      return typeElement.getText();
+    }
+    return null;
   }
 
   @Override
