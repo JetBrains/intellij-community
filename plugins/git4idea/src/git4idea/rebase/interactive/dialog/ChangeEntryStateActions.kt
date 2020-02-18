@@ -2,7 +2,6 @@
 package git4idea.rebase.interactive.dialog
 
 import com.intellij.ide.DataManager
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
@@ -11,13 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.AnActionButton
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.TableUtil
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.components.BorderLayoutPanel
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Insets
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.Icon
@@ -67,20 +61,9 @@ internal open class ChangeEntryStateButtonAction(
   action: GitRebaseEntry.Action,
   table: GitRebaseCommitsTableView
 ) : ChangeEntryStateSimpleAction(action, null, table), CustomComponentAction, DumbAware {
-  companion object {
-    private val BUTTON_HEIGHT = JBUI.scale(28)
-  }
-
   protected val button = object : JButton(action.name.capitalize()) {
     init {
-      preferredSize = Dimension(preferredSize.width, BUTTON_HEIGHT)
-      border = object : DarculaButtonPainter() {
-        override fun getBorderInsets(c: Component?): Insets {
-          return JBUI.emptyInsets()
-        }
-      }
-      isFocusable = false
-      displayedMnemonicIndex = 0
+      adjustForToolbar()
       addActionListener {
         val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, this)
         val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(this)
@@ -91,9 +74,7 @@ internal open class ChangeEntryStateButtonAction(
     }
   }
 
-  private val buttonPanel = BorderLayoutPanel().addToCenter(button).apply {
-    border = JBUI.Borders.emptyLeft(6)
-  }
+  private val buttonPanel = button.withLeftToolbarBorder()
 
   override fun actionIsEnabled(e: AnActionEvent, isEnabled: Boolean) {
     super.actionIsEnabled(e, isEnabled)

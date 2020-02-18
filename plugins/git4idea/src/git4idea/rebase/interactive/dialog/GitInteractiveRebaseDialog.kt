@@ -94,12 +94,11 @@ internal class GitInteractiveRebaseDialog(
       commitsTable
     )
   )
-  private val buttonActions = listOf(
-    RewordAction(commitsTable),
-    FixupAction(commitsTable),
-    SquashAction(commitsTable),
-    ChangeEntryStateButtonAction(GitRebaseEntry.Action.DROP, commitsTable)
-  )
+  private val rewordAction = RewordAction(commitsTable)
+  private val fixupAction = FixupAction(commitsTable)
+  private val squashAction = SquashAction(commitsTable)
+  private val dropAction = ChangeEntryStateButtonAction(GitRebaseEntry.Action.DROP, commitsTable)
+
   private val contextMenuOnlyActions = listOf<AnAction>(ShowGitRebaseCommandsDialog(project, commitsTable))
   private var modified = false
 
@@ -115,7 +114,10 @@ internal class GitInteractiveRebaseDialog(
       commitsTable,
       DefaultActionGroup().apply {
         addAll(iconActions)
-        addAll(buttonActions)
+        add(rewordAction)
+        add(squashAction)
+        add(fixupAction)
+        add(dropAction)
         addSeparator()
         addAll(contextMenuOnlyActions)
       },
@@ -138,9 +140,9 @@ internal class GitInteractiveRebaseDialog(
       .disableRemoveAction()
       .addExtraActions(*iconActions.toTypedArray())
       .addExtraAction(AnActionButtonSeparator())
-    buttonActions.forEach {
-      decorator.addExtraAction(it)
-    }
+      .addExtraAction(rewordAction)
+      .addExtraAction(AnActionOptionButton(squashAction, listOf(fixupAction)))
+      .addExtraAction(dropAction)
 
     val tablePanel = decorator.createPanel()
     val resetEntriesLabelPanel = BorderLayoutPanel().addToCenter(resetEntriesLabel).apply {
