@@ -147,6 +147,7 @@ class PostHighlightingVisitor {
             if (info != null) {
               errorFound |= info.getSeverity() == HighlightSeverity.ERROR;
               result.add(info);
+              result.queueToUpdateIncrementally();
             }
           }
         }
@@ -164,6 +165,7 @@ class PostHighlightingVisitor {
           if (info != null) {
             errorFound |= info.getSeverity() == HighlightSeverity.ERROR;
             result.add(info);
+            result.queueToUpdateIncrementally();
           }
         }
       }
