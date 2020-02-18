@@ -118,18 +118,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   @Override
-  void applySnapshotToComparison(RunnerAndConfigurationSettings original, RunnerAndConfigurationSettings snapshot) {
-    snapshot.setTemporary(original.isTemporary());
-    snapshot.setName(getNameText());
-    RunConfiguration runConfiguration = snapshot.getConfiguration();
-    runConfiguration.setAllowRunningInParallel(myIsAllowRunningInParallel);
-    if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
-      ((TargetEnvironmentAwareRunProfile)runConfiguration).setDefaultTargetName(myDefaultTargetName);
-    }
-    snapshot.setFolderName(myFolderName);
-  }
-
-  @Override
   boolean isSnapshotSpecificallyModified(@NotNull RunnerAndConfigurationSettings original, @NotNull RunnerAndConfigurationSettings snapshot) {
     return original.isShared() != myStoreProjectConfiguration;
   }

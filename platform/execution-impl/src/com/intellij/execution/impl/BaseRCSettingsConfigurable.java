@@ -1,13 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,21 +32,6 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
       if (isSnapshotSpecificallyModified(original, snapshot) || !RunManagerImplKt.doGetBeforeRunTasks(original.getConfiguration()).equals(RunManagerImplKt.doGetBeforeRunTasks(snapshot.getConfiguration()))) {
         return true;
       }
-
-      if (original instanceof JDOMExternalizable && snapshot instanceof JDOMExternalizable) {
-        applySnapshotToComparison(original, snapshot);
-
-        Element originalElement = new Element("config");
-        Element snapshotElement = new Element("config");
-        ((JDOMExternalizable)original).writeExternal(originalElement);
-        ((JDOMExternalizable)snapshot).writeExternal(snapshotElement);
-        patchElementsIfNeeded(originalElement, snapshotElement);
-        boolean result = !JDOMUtil.areElementsEqual(originalElement, snapshotElement, true);
-        if (!result) {
-          super.setModified(false);
-        }
-        return result;
-      }
     }
     catch (ConfigurationException e) {
       //ignore
@@ -57,11 +39,7 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
     return super.isModified();
   }
 
-  void applySnapshotToComparison(RunnerAndConfigurationSettings original, RunnerAndConfigurationSettings snapshot) {}
-
   boolean isSnapshotSpecificallyModified(@NotNull RunnerAndConfigurationSettings original, @NotNull RunnerAndConfigurationSettings snapshot) {
     return false;
   }
-
-  void patchElementsIfNeeded(Element originalElement, Element snapshotElement) {}
 }
