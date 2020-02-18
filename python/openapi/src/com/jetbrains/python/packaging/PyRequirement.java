@@ -61,6 +61,11 @@ public interface PyRequirement {
   @Nullable
   PyPackage match(@NotNull Collection<? extends PyPackage> packages);
 
+
+  default boolean isEditable() {
+    return getInstallOptions().size() > 0 && "-e".equals(getInstallOptions().get(0));
+  }
+
   /**
    * @return concatenated representation of name, extras and version specs so it could be easily displayed.
    */

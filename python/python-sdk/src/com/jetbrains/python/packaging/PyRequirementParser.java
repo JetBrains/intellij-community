@@ -306,9 +306,7 @@ public class PyRequirementParser {
   }
 
   @NotNull
-  private static List<PyRequirement> fromText(@NotNull String text,
-                                              @Nullable VirtualFile containingFile,
-                                              @NotNull Set<VirtualFile> visitedFiles) {
+  static List<PyRequirement> fromText(@NotNull String text, @Nullable VirtualFile containingFile, @NotNull Set<VirtualFile> visitedFiles) {
     if (containingFile != null) {
       visitedFiles.add(containingFile);
     }
@@ -420,11 +418,10 @@ public class PyRequirementParser {
 
     final String requirementOptions = matcher.group(REQUIREMENT_OPTIONS_GROUP);
     if (requirementOptions != null) {
-      boolean isKey = true;
-      for (String token : StringUtil.tokenize(requirementOptions, "\"")) {
-        result.add(isKey ? token.substring(findFirstNotWhiteSpaceAfter(token, 0), token.length() - 1) : token);
-        isKey = !isKey;
-      }
+      Arrays.stream(requirementOptions.split(" "))
+        .map(String::trim)
+        .filter(s -> !s.isEmpty())
+        .forEach(result::add);
     }
 
     return result;

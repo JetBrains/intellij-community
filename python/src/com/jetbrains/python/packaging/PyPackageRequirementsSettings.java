@@ -55,6 +55,18 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
     getState().myRequirementsPath = path;
   }
 
+  public boolean getSpecifyVersion() {
+    return getState().myVersionSpecifier != PyRequirementsVersionSpecifierType.NO_VERSION;
+  }
+
+  public final PyRequirementsVersionSpecifierType getVersionSpecifier() {
+    return getState().myVersionSpecifier;
+  }
+
+  public final void setVersionSpecifier(PyRequirementsVersionSpecifierType versionSpecifier) {
+    getState().myVersionSpecifier = versionSpecifier;
+  }
+
   public final boolean isDefaultPath() {
     return getRequirementsPath().equals(DEFAULT_REQUIREMENTS_PATH);
   }
@@ -73,6 +85,10 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
     @NotNull
     @OptionTag("requirementsPath")
     public String myRequirementsPath = DEFAULT_REQUIREMENTS_PATH;
+
+    @NotNull
+    @OptionTag("versionSpecifier")
+    public PyRequirementsVersionSpecifierType myVersionSpecifier = PyRequirementsVersionSpecifierType.STRONG_EQ;
   }
 
   @State(name = "AppPackageRequirementsSettings", storages = @Storage("PackageRequirementsSettings.xml"))

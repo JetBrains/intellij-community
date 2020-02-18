@@ -97,7 +97,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
     public void visitPlainTextFile(@NotNull PsiPlainTextFile file) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(file);
       if (module != null && file.getVirtualFile().equals(PyPackageUtil.findRequirementsTxt(module))) {
-        checkPackagesHaveBeenInstalled(file, module);
+        if (file.getText().trim().isEmpty()) {
+          registerProblem(file, PyBundle.message("python.requirements.file.empty"),
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new PyGenerateRequirementsFileQuickFix(module));
+        }
+        else checkPackagesHaveBeenInstalled(file, module);
       }
     }
 
@@ -228,6 +232,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
           .filter(PyPIPackageUtil.INSTANCE::isInPyPI)
           .map(name -> new AddToRequirementsFix(packageManager, module, name, LanguageLevel.forElement(importedExpression)))
           .forEach(quickFixes::add);
+
+        quickFixes.add(new PyGenerateRequirementsFileQuickFix(module));
 
         quickFixes.add(new IgnoreRequirementFix(Collections.singleton(packageName)));
 
@@ -544,6 +550,30 @@ public class PyPackageRequirementsInspection extends PyInspection {
       });
       ui.install(Collections.singletonList(PyRequirementsKt.pyRequirement(myPackageName)), Collections.emptyList());
     }
+  }
+
+  public static class PyGenerateRequirementsFileQuickFix implements LocalQuickFix {
+    private final Module myModule;
+
+    public PyGenerateRequirementsFileQuickFix(Module module) {
+      myModule = module;
+    }
+
+    @Override
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+      return PyBundle.message("python.requirements.quickfix.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PyRequirementsTxtUtilKt.syncWithImports(myModule);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
   }
 
   public static class RunningPackagingTasksListener implements PyPackageManagerUI.Listener {
