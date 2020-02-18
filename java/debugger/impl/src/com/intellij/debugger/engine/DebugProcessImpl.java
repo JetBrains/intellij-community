@@ -134,6 +134,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, myDisposable);
+    NodeRenderer.EP_NAME.addExtensionPointListener(this::reloadRenderers, myDisposable);
     reloadRenderers();
     myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override

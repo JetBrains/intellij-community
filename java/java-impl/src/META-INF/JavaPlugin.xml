@@ -224,10 +224,10 @@
                     interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.nodeRenderer"
-                    interface="com.intellij.debugger.ui.tree.render.NodeRenderer"/>
+                    interface="com.intellij.debugger.ui.tree.render.NodeRenderer" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.javaDebugAware"
-                    interface="com.intellij.debugger.engine.JavaDebugAware"/>
+                    interface="com.intellij.debugger.engine.JavaDebugAware" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.javaBreakpointHandlerFactory"
                     interface="com.intellij.debugger.engine.JavaBreakpointHandlerFactory"/>
@@ -236,33 +236,33 @@
                     interface="com.intellij.debugger.PositionManagerFactory"
                     area="IDEA_PROJECT"/>
     <extensionPoint qualifiedName="com.intellij.debugger.jvmSmartStepIntoHandler"
-                    interface="com.intellij.debugger.actions.JvmSmartStepIntoHandler"/>
+                    interface="com.intellij.debugger.actions.JvmSmartStepIntoHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.jvmSteppingCommandProvider"
-                    interface="com.intellij.debugger.impl.JvmSteppingCommandProvider"/>
+                    interface="com.intellij.debugger.impl.JvmSteppingCommandProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.frameExtraVarsProvider"
-                    interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
+                    interface="com.intellij.debugger.engine.FrameExtraVariablesProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.asyncStackTraceProvider"
-                    interface="com.intellij.debugger.engine.AsyncStackTraceProvider"/>
+                    interface="com.intellij.debugger.engine.AsyncStackTraceProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.sourcePositionProvider"
-                    interface="com.intellij.debugger.engine.SourcePositionProvider"/>
+                    interface="com.intellij.debugger.engine.SourcePositionProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.simplePropertyGetterProvider"
-                    interface="com.intellij.debugger.engine.SimplePropertyGetterProvider"/>
+                    interface="com.intellij.debugger.engine.SimplePropertyGetterProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.syntheticProvider"
-                    interface="com.intellij.debugger.engine.SyntheticTypeComponentProvider"/>
+                    interface="com.intellij.debugger.engine.SyntheticTypeComponentProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.extraSteppingFilter"
-                    interface="com.intellij.debugger.engine.ExtraSteppingFilter"/>
+                    interface="com.intellij.debugger.engine.ExtraSteppingFilter" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.sourcePositionHighlighter"
-                    interface="com.intellij.debugger.engine.SourcePositionHighlighter"/>
+                    interface="com.intellij.debugger.engine.SourcePositionHighlighter" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.nodeNameAdjuster"
-                    interface="com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster"/>
+                    interface="com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster" dynamic="true"/>
 
 
     <extensionPoint qualifiedName="com.intellij.compiler.inspectionValidator"
