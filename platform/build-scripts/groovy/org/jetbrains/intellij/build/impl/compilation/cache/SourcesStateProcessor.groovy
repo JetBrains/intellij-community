@@ -15,9 +15,9 @@ import java.nio.charset.StandardCharsets
 @CompileStatic
 class SourcesStateProcessor {
   static final Type SOURCES_STATE_TYPE = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType()
-  static final String SOURCES_STATE_FILE_NAME = 'target_sources_state.json'
 
-  static final String IDENTIFIER = '$BUILD_DIR$'
+  private static final String SOURCES_STATE_FILE_NAME = 'target_sources_state.json'
+  private static final String IDENTIFIER = '$BUILD_DIR$'
 
   private static final List<String> PRODUCTION_TYPES = ["java-production", "resources-production"]
   private static final List<String> TEST_TYPES = ["java-test", "resources-test"]
@@ -36,11 +36,11 @@ class SourcesStateProcessor {
   }
 
   Map<String, Map<String, BuildTargetState>> parseSourcesStateFile(){
-    return gson.fromJson(FileUtil.loadFile(sourceStateFile, CharsetToolkit.UTF8), SourcesStateProcessor.SOURCES_STATE_TYPE)
+    return gson.fromJson(FileUtil.loadFile(sourceStateFile, CharsetToolkit.UTF8), SOURCES_STATE_TYPE)
   }
 
   File getSourceStateFile() {
-    return new File(context.compilationData.dataStorageRoot, SourcesStateProcessor.SOURCES_STATE_FILE_NAME)
+    return new File(context.compilationData.dataStorageRoot, SOURCES_STATE_FILE_NAME)
   }
 
   private List<CompilationOutput> getProductionCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState) {

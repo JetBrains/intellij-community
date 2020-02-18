@@ -25,7 +25,7 @@ import java.lang.reflect.Type
 @CompileStatic
 class CompilationOutputsDownloader {
   private static final Type CACHES_LIST_TYPE = new TypeToken<List<ReducedCacheEntity>>() {}.getType()
-  private static final int COMMITS_COUNT = 30
+  private static final int COMMITS_COUNT = 1_000
   private static final int COMMITS_SEARCH_TIMEOUT = 10_000
 
   private final GetClient getClient = new GetClient()
@@ -48,13 +48,15 @@ class CompilationOutputsDownloader {
     sourcesStateProcessor = new SourcesStateProcessor(context)
   }
 
-  String downloadCachesAndOutput() {
+  void downloadCachesAndOutput() {
     Set<String> availableCachesKeys = getAvailableCachesKeys()
 
-    String lastCachedCommit = getLastCommits().find { availableCachesKeys.contains(it) }
+    def commits = getLastCommits()
+    int depth = commits.findIndexOf { availableCachesKeys.contains(it) }
 
-    if (lastCachedCommit != null) {
-      context.messages.info("Using cahe for commit $lastCachedCommit")
+    if (depth != -1) {
+      String lastCachedCommit = commits[depth]
+      context.messages.info("Using cahe for commit $lastCachedCommit ($depth behind last commit).")
 
       executor.submit {
         saveCache(lastCachedCommit)
@@ -68,14 +70,11 @@ class CompilationOutputsDownloader {
           saveOutput(output)
         }
       }
+      executor.waitForAllComplete(context.messages)
     }
     else {
       context.messages.error("Unable to find cache for any of last $COMMITS_COUNT commits.")
     }
-
-    executor.waitForAllComplete(context.messages)
-
-    return lastCachedCommit
   }
 
   private Map<String, Map<String, BuildTargetState>> getSourcesState(String commitHash) {
