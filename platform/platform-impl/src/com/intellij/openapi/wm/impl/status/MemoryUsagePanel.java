@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,6 +34,7 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
   private long myLastUsed = -1;
   private ScheduledFuture<?> myFuture;
   private final long myMaxMemory = Math.min(Runtime.getRuntime().maxMemory() / MEGABYTE, 9999);
+  private StatusBar myStatusBar;
 
   public MemoryUsagePanel() {
     setOpaque(false);
@@ -68,10 +69,19 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
   }
 
   @Override
-  public void dispose() { }
+  public void install(@NotNull StatusBar statusBar) {
+    if (statusBar instanceof IdeStatusBarImpl) {
+      ((IdeStatusBarImpl)statusBar).setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 6));
+    }
+  }
 
   @Override
-  public void install(@NotNull StatusBar statusBar) { }
+  public void dispose() { 
+    if (myStatusBar instanceof IdeStatusBarImpl) {
+      ((IdeStatusBarImpl)myStatusBar).setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 0));
+    }
+    myStatusBar = null;
+  }
 
   @Nullable
   @Override

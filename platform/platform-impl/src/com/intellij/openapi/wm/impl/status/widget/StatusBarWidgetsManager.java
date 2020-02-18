@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.wm.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -67,7 +68,11 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     }
   }
 
-  public boolean isAvailable(@NotNull StatusBarWidgetFactory factory) {
+  public boolean wasWidgetCreated(@Nullable StatusBarWidgetFactory factory) {
+    return myWidgetFactories.get(factory) != null;
+  }
+
+  private boolean isAvailable(@NotNull StatusBarWidgetFactory factory) {
     if (factory instanceof StatusBarWidgetProviderToFactoryAdapter) {
       IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
       return frame != null && ((StatusBarWidgetProviderToFactoryAdapter)factory).isCompatibleWith(frame);
@@ -89,7 +94,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     return myWidgetFactories.keySet();
   }
 
-  public void enableWidget(@NotNull StatusBarWidgetFactory factory) {
+  private void enableWidget(@NotNull StatusBarWidgetFactory factory) {
     StatusBarWidget createdWidget = myWidgetFactories.get(factory);
     if (createdWidget != null) {
       LOG.error("Cannot add a widget created by the same factory twice: " + factory.getId());
@@ -135,9 +140,8 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     return StatusBar.Anchors.DEFAULT_ANCHOR;
   }
 
-  public <T extends StatusBarWidget> void disableWidget(@NotNull StatusBarWidgetFactory factory) {
-    //noinspection unchecked
-    T createdWidget = (T)myWidgetFactories.put(factory, null);
+  private void disableWidget(@NotNull StatusBarWidgetFactory factory) {
+    StatusBarWidget createdWidget = myWidgetFactories.put(factory, null);
     if (createdWidget != null) {
       factory.disposeWidget(createdWidget);
       StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
@@ -148,7 +152,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   public boolean canBeEnabledOnStatusBar(@NotNull StatusBarWidgetFactory factory, @NotNull StatusBar statusBar) {
-    return isAvailable(factory) && factory.canBeEnabledOn(statusBar);
+    return isAvailable(factory) && factory.isConfigurable() && factory.canBeEnabledOn(statusBar);
   }
 
   private void addWidgetFactory(@NotNull StatusBarWidgetFactory factory) {

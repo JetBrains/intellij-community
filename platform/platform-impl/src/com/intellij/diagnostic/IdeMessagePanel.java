@@ -79,6 +79,7 @@ public final class IdeMessagePanel extends JPanel implements MessagePoolListener
 
   @Override
   public void dispose() {
+    UIUtil.dispose(myIcon);
     myMessagePool.removeListener(this);
   }
 

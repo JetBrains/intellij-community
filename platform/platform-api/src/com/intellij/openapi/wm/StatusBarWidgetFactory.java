@@ -56,4 +56,16 @@ public interface StatusBarWidgetFactory {
    * Based can be useful for creating editor based widgets {@link com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory}
    */
   boolean canBeEnabledOn(@NotNull StatusBar statusBar);
+
+  /**
+   * @return whether user should be able to enable or disable the widget.
+   *
+   * Some widgets are controlled by application-level settings (e.g. Memory indicator)
+   * or cannot be disabled (e.g. Write thread indicator). 
+   *
+   * So they should not be shown neither in the Status bar context menu nor in the Settings. 
+   */
+  default boolean isConfigurable() {
+    return true;
+  }
 }

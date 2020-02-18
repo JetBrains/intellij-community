@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.SearchTopHitProvider;
@@ -17,8 +17,6 @@ public class UISimpleSettingsProvider implements SearchTopHitProvider, OptionsTo
   private static final OptionDescription CYCLING_SCROLLING = AppearanceOptionsTopHitProvider.appearance("Cyclic scrolling", "cycleScrolling");
   private static final OptionDescription MEMORY_INDICATOR = AppearanceOptionsTopHitProvider.appearance("Show Memory Indicator",
                                                                                                        "showMemoryIndicator");
-  private static final OptionDescription WRITE_THREAD_INDICATOR = AppearanceOptionsTopHitProvider.appearance("Show Write Thread Indicator",
-                                                                                                             "showWriteThreadIndicator");
   private static final OptionDescription SHOW_MAIN_TOOLBAR = AppearanceOptionsTopHitProvider.appearance("Show Main Toolbar", "showMainToolbar");
   private static final OptionDescription SHOW_NAVIGATION_BAR = AppearanceOptionsTopHitProvider.appearance("Show Navigation Bar",
                                                                                                           "showNavigationBar");
@@ -40,9 +38,6 @@ public class UISimpleSettingsProvider implements SearchTopHitProvider, OptionsTo
     }
     else if (patternContains(pattern, "memo")) {
       collector.accept(MEMORY_INDICATOR);
-    }
-    else if (patternContains(pattern, "wri")) {
-      collector.accept(WRITE_THREAD_INDICATOR);
     }
     else if (StringUtil.isBetween(pattern, "nav", "navigation bar ") || StringUtil.isBetween(pattern, "navb", "navbar ")) {
       collector.accept(SHOW_NAVIGATION_BAR);

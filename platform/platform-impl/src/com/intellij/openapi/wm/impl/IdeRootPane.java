@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.actions.CustomizeUIAction;
 import com.intellij.ide.actions.ViewToolbarAction;
 import com.intellij.ide.ui.UISettings;
@@ -18,12 +16,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameHeader;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
-import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
-import com.intellij.openapi.wm.impl.status.WriteThreadWidget;
+import com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLayeredPane;
@@ -60,9 +58,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private JBPanel<?> myContentPane;
 
   private final boolean myGlassPaneInitialized;
-
-  private MemoryUsagePanel myMemoryWidget;
-  private WriteThreadWidget myWriteThreadWidget;
 
   private boolean myFullScreen;
 
@@ -258,10 +253,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myStatusBar = createStatusBar(frame);
     Disposer.register(parentDisposable, myStatusBar);
 
-    setMemoryIndicatorVisible(UISettings.getInstance().getShowMemoryIndicator());
-    myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
-    setWriteThreadIndicatorVisible(UISettings.getInstance().getShowWriteThreadIndicator());
-
     updateStatusBarVisibility();
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
   }
@@ -269,31 +260,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   @NotNull
   protected IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
     return new IdeStatusBarImpl(frame, true);
-  }
-
-  private void setMemoryIndicatorVisible(boolean visible) {
-    if (myMemoryWidget == null) {
-      if (!visible) {
-        myStatusBar.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 6));
-        return;
-      }
-
-      myMemoryWidget = new MemoryUsagePanel();
-      myStatusBar.addWidget(myMemoryWidget);
-    }
-
-    myMemoryWidget.setShowing(visible);
-    myStatusBar.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, visible ? 0 : 6));
-  }
-
-  private void setWriteThreadIndicatorVisible(boolean visible) {
-    if (myWriteThreadWidget == null && visible) {
-      myWriteThreadWidget = new WriteThreadWidget();
-      myStatusBar.addWidget(myWriteThreadWidget, StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
-    }
-    if (myWriteThreadWidget != null) {
-      myWriteThreadWidget.getComponent().setVisible(visible);
-    }
   }
 
   @Nullable
@@ -378,8 +344,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     UIUtil.decorateWindowHeader(this);
-    setMemoryIndicatorVisible(uiSettings.getShowMemoryIndicator());
-    setWriteThreadIndicatorVisible(uiSettings.getShowWriteThreadIndicator());
+    updateMemoryIndicator(uiSettings.getShowMemoryIndicator());
     updateToolbarVisibility();
     updateStatusBarVisibility();
     updateMainMenuVisibility();
@@ -397,6 +362,17 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     BalloonLayout layout = frame.getBalloonLayout();
     if (layout instanceof BalloonLayoutImpl) {
       ((BalloonLayoutImpl)layout).queueRelayout();
+    }
+  }
+
+  private void updateMemoryIndicator(boolean visible) {
+    MemoryIndicatorWidgetFactory widgetFactory = StatusBarWidgetFactory.EP_NAME.findExtension(MemoryIndicatorWidgetFactory.class);
+    Project project = myStatusBar.getProject();
+    if (widgetFactory != null && project != null) {
+      StatusBarWidgetsManager widgetsManager = project.getService(StatusBarWidgetsManager.class);
+      if (widgetsManager.wasWidgetCreated(widgetFactory) != visible) {
+        widgetsManager.updateWidget(widgetFactory);
+      }
     }
   }
 

@@ -53,12 +53,7 @@ public class StatusBarPopupActionGroup extends ComputableActionGroup {
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Project project = e.getRequiredData(CommonDataKeys.PROJECT);
       project.getService(StatusBarWidgetSettings.class).setEnabled(myWidgetFactory, state);
-      if (state) {
-        myManager.enableWidget(myWidgetFactory);
-      }
-      else {
-        myManager.disableWidget(myWidgetFactory);
-      }
+      myManager.updateWidget(myWidgetFactory);
     }
   }
 }

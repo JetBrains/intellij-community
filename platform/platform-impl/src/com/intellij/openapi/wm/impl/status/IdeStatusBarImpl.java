@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.ide.HelpTooltipManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.notification.impl.IdeNotificationArea;
+import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -316,6 +317,9 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
       }
       if (widgetAnchor == null) {
         widgetAnchor = myWidgetMap.get(IdeNotificationArea.WIDGET_ID);
+        if (widgetAnchor == null) {
+          widgetAnchor = myWidgetMap.get(IdeMessagePanel.FATAL_ERROR);
+        }
         before = true;
       }
       if (widgetAnchor != null) {

@@ -1096,6 +1096,9 @@
     <statusBarWidgetFactory id="readOnlyWidget" implementation="com.intellij.openapi.wm.impl.status.ReadOnlyAttributeWidgetFactory" order="after selectionModeWidget"/>
     <statusBarWidgetFactory id="inspectionProfileWidget" implementation="com.intellij.openapi.wm.impl.status.InspectionProfileWidgetFactory" order="after readOnlyWidget"/>
     <statusBarWidgetFactory id="codeStyleWidget" implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetFactory" order="after encodingWidget"/>
+    <statusBarWidgetFactory id="writeActionWidget" implementation="com.intellij.openapi.wm.impl.status.WriteThreadIndicatorWidgetFactory" order="before memoryUsageWidget"/>
+    <statusBarWidgetFactory id="fatalErrorWidget" implementation="com.intellij.openapi.wm.impl.status.FatalErrorWidgetFactory" order="before memoryUsageWidget"/>
+    <statusBarWidgetFactory id="memoryUsageWidget" implementation="com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory" order="last"/>
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>
     <lang.formatter.restriction implementation="com.intellij.formatting.ExcludedFileFormattingRestriction"/>
