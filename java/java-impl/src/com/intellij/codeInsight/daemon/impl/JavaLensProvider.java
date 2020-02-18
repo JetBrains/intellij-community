@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nls;
@@ -140,7 +141,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
       }
 
       if (!hints.isEmpty()) {
-        int offset = element.getTextRange().getStartOffset();
+        int offset = getAnchorOffset(element);
         int line = editor1.getDocument().getLineNumber(offset);
         int lineStart = editor1.getDocument().getLineStartOffset(line);
         int indent = offset - lineStart;
@@ -168,6 +169,15 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
       }
       return true;
     };
+  }
+
+  private static int getAnchorOffset(PsiElement element) {
+    for (PsiElement child : element.getChildren()) {
+      if (!(child instanceof PsiDocComment) && !(child instanceof PsiWhiteSpace)) {
+        return child.getTextRange().getStartOffset();
+      }
+    }
+    return element.getTextRange().getStartOffset();
   }
 
   @NotNull
