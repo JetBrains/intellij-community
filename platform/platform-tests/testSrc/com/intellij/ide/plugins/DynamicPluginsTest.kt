@@ -10,6 +10,8 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -142,6 +144,23 @@ class DynamicPluginsTest {
     assertThat(group.getChildren(null).any { it is ShowQuickActionPopupAction }).isTrue()
     Disposer.dispose(disposable)
     assertThat(group.getChildren(null).any { it is ShowQuickActionPopupAction }).isFalse()
+  }
+
+  @Test
+  fun unloadGroupWithActions() {
+    val disposable = loadPluginWithText("""
+      <idea-plugin>
+        <id>foo</id>
+        <actions>
+          <group id="Foo">
+            <action id="foo.bar" class="${MyAction::class.java.name}"/>
+          </group>
+        </actions>
+      </idea-plugin>
+    """.trimIndent(), DynamicPlugins::class.java.classLoader)
+    assertThat(ActionManager.getInstance().getAction("foo.bar")).isNotNull()
+    Disposer.dispose(disposable)
+    assertThat(ActionManager.getInstance().getAction("foo.bar")).isNull()
   }
 
   @Test
@@ -448,5 +467,10 @@ class DynamicPluginsTest {
     override fun getDisplayName(): String = TODO()
     override fun apply() {}
     override fun createComponent() = TODO()
+  }
+
+  private class MyAction : AnAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+    }
   }
 }

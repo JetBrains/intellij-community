@@ -1117,14 +1117,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     if (elements == null) return;
     for (Element element : ContainerUtil.reverse(elements)) {
       if (element.getName().equals(ACTION_ELEMENT_NAME)) {
-        String className = element.getAttributeValue(CLASS_ATTR_NAME);
-        String id = obtainActionId(element, className);
-        unregisterAction(id);
+        unloadActionElement(element);
       }
       else if (element.getName().equals(GROUP_ELEMENT_NAME)) {
         String id = element.getAttributeValue(ID_ATTR_NAME);
         if (id == null) {
           throw new IllegalStateException("Cannot unload groups with no ID");
+        }
+        for (Element groupChild : element.getChildren()) {
+          if (groupChild.getName().equals(ACTION_ELEMENT_NAME)) {
+            unloadActionElement(groupChild);
+          }
         }
         unregisterAction(id);
       }
@@ -1143,6 +1146,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         }
       }
     }
+  }
+
+  private void unloadActionElement(@NotNull Element element) {
+    String className = element.getAttributeValue(CLASS_ATTR_NAME);
+    String id = obtainActionId(element, className);
+    unregisterAction(id);
   }
 
   @Override
