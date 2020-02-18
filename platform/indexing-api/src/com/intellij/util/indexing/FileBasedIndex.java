@@ -164,7 +164,6 @@ public abstract class FileBasedIndex {
     return processAllKeys(indexId, processor, scope.getProject());
   }
 
-  @ApiStatus.Experimental
   @NotNull
   public abstract <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project);
 
