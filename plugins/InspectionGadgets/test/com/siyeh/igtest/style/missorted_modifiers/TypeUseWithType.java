@@ -3,8 +3,8 @@ import java.lang.annotation.Target;
 
 class TypeUseWithType {
 
-  <warning descr="Missorted modifiers '@TestAnnotation1 public'">@TestAnnotation1<caret>
-  public</warning> String x() {
+  <warning descr="Missorted modifiers '@TestAnnotation1 public'">@TestAnnotation1<caret></warning>
+  public String x() {
     return null;
   }
 

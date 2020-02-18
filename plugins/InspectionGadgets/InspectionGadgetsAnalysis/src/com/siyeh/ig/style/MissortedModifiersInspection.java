@@ -34,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MissortedModifiersInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
@@ -47,7 +49,12 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("missorted.modifiers.problem.descriptor");
+    final PsiModifierList modifierList = (PsiModifierList)infos[0];
+    final String text = Stream.of(modifierList.getChildren())
+      .filter(e -> !(e instanceof PsiWhiteSpace) && !(e instanceof PsiComment))
+      .map(PsiElement::getText)
+      .collect(Collectors.joining(" "));
+    return InspectionGadgetsBundle.message("missorted.modifiers.problem.descriptor", text);
   }
 
   @Override
@@ -85,7 +92,12 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiModifierList modifierList = (PsiModifierList)descriptor.getPsiElement();
+      PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiModifierList)) {
+        element = element.getParent();
+        if (!(element instanceof PsiModifierList)) return;
+      }
+      final PsiModifierList modifierList = (PsiModifierList)element;
       final List<String> modifiers = new SmartList<>();
       final List<String> typeAnnotations = new SmartList<>();
       final List<String> annotations = new SmartList<>();
@@ -173,7 +185,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       if (!isModifierListMissorted(modifierList)) {
         return;
       }
-      registerError(modifierList);
+      registerError(isVisibleHighlight(modifierList) ? modifierList.getFirstChild() : modifierList, modifierList);
     }
 
     private boolean isModifierListMissorted(PsiModifierList modifierList) {

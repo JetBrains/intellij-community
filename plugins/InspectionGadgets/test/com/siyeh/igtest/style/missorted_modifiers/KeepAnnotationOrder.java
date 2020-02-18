@@ -3,7 +3,7 @@ import java.lang.annotation.Target;
 
 class KeepAnnotationOrder {
 
-  <warning descr="Missorted modifiers 'private @A @B @C final'">private @A @B @C<caret> final</warning> String foo = "";
+  <warning descr="Missorted modifiers 'private @A @B @C final'">private<caret></warning> @A @B @C final String foo = "";
 
   @Target(ElementType.FIELD) public @interface A {}
   @Target(ElementType.FIELD) public @interface B {}
