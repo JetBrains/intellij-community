@@ -14,7 +14,7 @@ jbrTasks(jreBuild, jreVersion, targetOs, jrePrefix)
 
 /**
  * Update this method together with:
- *  `setupJdk.gradle` 
+ *  `setupJdk.gradle`
  *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
  */
 static def splitJbrBuild(String jreBuild, String version) {
@@ -87,7 +87,7 @@ def downloadJbrTask(String artifactName, String build) {
 def untarJbrTask(File downloadOutputs, String taskName) {
   Task untar
   if (OperatingSystem.current().isWindows()) {
-    // note: tarTree extracts symlinks as 0 length files which breaks osx distributions 
+    // note: tarTree extracts symlinks as 0 length files which breaks osx distributions
     untar = task("untar$taskName", type: Copy, dependsOn: "download$taskName") {
       from tarTree(downloadOutputs)
       into { "${downloadOutputs.parent}/${downloadOutputs.name - '.tar.gz'}/" }
