@@ -17,6 +17,7 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -411,6 +412,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
+  @Nls
   protected String getFilesCoverageInformationString(@NotNull final DirCoverageInfo info) {
     return ExecutionBundle.message("coverage.view.text.files.covered", calcPercent(info.coveredFilesCount, info.totalFilesCount));
   }
