@@ -17,6 +17,7 @@ class PythonCommunityPluginModules {
     "intellij.python.langInjection",
     "intellij.python.copyright",
     "intellij.python.terminal",
+    "intellij.python.grazie",
     "intellij.python.reStructuredText",
     "intellij.python.sdk",
   ]
