@@ -44,11 +44,6 @@ public class InstalledPluginsTableModel {
     return new ArrayList<>(view);
   }
 
-  public boolean hasProblematicDependencies(PluginId pluginId) {
-    final Set<PluginId> ids = myDependentToRequiredListMap.get(pluginId);
-    return ids != null && !ids.isEmpty();
-  }
-
   @Nullable
   public Set<PluginId> getRequiredPlugins(PluginId pluginId) {
     return myDependentToRequiredListMap.get(pluginId);
@@ -58,21 +53,7 @@ public class InstalledPluginsTableModel {
     return myEnabled.get(pluginId) != null;
   }
 
-  public void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
-    PluginId id = descriptor.getPluginId();
-    if (!PluginManagerCore.isPluginInstalled(id)) {
-      int i = view.indexOf(descriptor);
-      if (i < 0) {
-        view.add(descriptor);
-      }
-      else {
-        view.set(i, descriptor);
-      }
-
-      setEnabled(descriptor, true);
-    }
-  }
-  private void setEnabled(IdeaPluginDescriptor ideaPluginDescriptor, boolean enabled) {
+  protected void setEnabled(IdeaPluginDescriptor ideaPluginDescriptor, boolean enabled) {
     PluginId pluginId = ideaPluginDescriptor.getPluginId();
     if (!enabled && !PluginManagerCore.isDisabled(pluginId)) {
       myEnabled.put(pluginId, null);

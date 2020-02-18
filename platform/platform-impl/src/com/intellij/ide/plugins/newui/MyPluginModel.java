@@ -622,9 +622,20 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myDetailPanels.add(detailPanel);
   }
 
-  @Override
   public void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
-    super.appendOrUpdateDescriptor(descriptor, restartNeeded);
+    PluginId id = descriptor.getPluginId();
+    if (!PluginManagerCore.isPluginInstalled(id)) {
+      int i = view.indexOf(descriptor);
+      if (i < 0) {
+        view.add(descriptor);
+      }
+      else {
+        view.set(i, descriptor);
+      }
+
+      setEnabled(descriptor, true);
+    }
+
     if (restartNeeded) {
       needRestart = myInstallsRequiringRestart = true;
     }
@@ -920,7 +931,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return plugin;
   }
 
-  @Override
   public boolean hasProblematicDependencies(PluginId pluginId) {
     Set<PluginId> ids = getDependentToRequiredListMap().get(pluginId);
     if (ContainerUtil.isEmpty(ids)) {
