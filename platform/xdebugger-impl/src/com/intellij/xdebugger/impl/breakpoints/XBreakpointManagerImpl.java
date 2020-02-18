@@ -8,13 +8,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
@@ -32,10 +32,10 @@ import java.util.stream.Collectors;
 public final class XBreakpointManagerImpl implements XBreakpointManager {
   private static final Logger LOG = Logger.getInstance(XBreakpointManagerImpl.class);
 
-  private final MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>> myBreakpoints = new MultiValuesMap<>(true);
-  private final Map<XBreakpointType, Set<XBreakpointBase<?,?,?>>> myDefaultBreakpoints = new LinkedHashMap<>();
-  private final Map<XBreakpointType, BreakpointState<?,?,?>> myBreakpointsDefaults = new LinkedHashMap<>();
-  private final Set<XBreakpointBase<?,?,?>> myAllBreakpoints = new LinkedHashSet<>();
+  private final MultiMap<XBreakpointType, XBreakpointBase<?, ?, ?>> myBreakpoints = MultiMap.createLinkedSet();
+  private final Map<XBreakpointType, Set<XBreakpointBase<?, ?, ?>>> myDefaultBreakpoints = new LinkedHashMap<>();
+  private final Map<XBreakpointType, BreakpointState<?, ?, ?>> myBreakpointsDefaults = new LinkedHashMap<>();
+  private final Set<XBreakpointBase<?, ?, ?>> myAllBreakpoints = new LinkedHashSet<>();
   private final Map<XBreakpointType, EventDispatcher<XBreakpointListener>> myDispatchers = new HashMap<>();
   private XBreakpointsDialogState myBreakpointsDialogSettings;
   private volatile EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
@@ -155,7 +155,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       typeDefaultBreakpoints.add(breakpoint);
     }
     else {
-      myBreakpoints.put(type, breakpoint);
+      myBreakpoints.putValue(type, breakpoint);
       if (initUI) {
         BreakpointsUsageCollector.reportNewBreakpoint(breakpoint, type, getDebuggerManager().getCurrentSession() != null);
       }
@@ -276,12 +276,8 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   @NotNull
   public <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(@NotNull final XBreakpointType<B,?> type) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Set<B> defaultBreakpoints = getDefaultBreakpoints(type);
-    List<B> result = new ArrayList<>(defaultBreakpoints);
-    Collection<XBreakpointBase<?, ?, ?>> breakpoints = myBreakpoints.get(type);
-    if (breakpoints != null) {
-      result.addAll((Collection<? extends B>)breakpoints);
-    }
+    List<B> result = new ArrayList<>(getDefaultBreakpoints(type));
+    result.addAll((Collection<? extends B>)myBreakpoints.get(type));
     return Collections.unmodifiableList(result);
   }
 
@@ -313,20 +309,15 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   @Override
   @Nullable
-  public <P extends XBreakpointProperties> XLineBreakpoint<P> findBreakpointAtLine(@NotNull final XLineBreakpointType<P> type, @NotNull final VirtualFile file,
+  public <P extends XBreakpointProperties> XLineBreakpoint<P> findBreakpointAtLine(@NotNull final XLineBreakpointType<P> type,
+                                                                                   @NotNull final VirtualFile file,
                                                                                    final int line) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Collection<XBreakpointBase<?,?,?>> breakpoints = myBreakpoints.get(type);
-    if (breakpoints == null) return null;
-
-    for (XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
-      XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
-      if (lineBreakpoint.getFileUrl().equals(file.getUrl()) && lineBreakpoint.getLine() == line) {
-        //noinspection unchecked
-        return lineBreakpoint;
-      }
-    }
-    return null;
+    //noinspection unchecked
+    return StreamEx.of(myBreakpoints.get(type))
+      .select(XLineBreakpoint.class)
+      .findFirst(b -> b.getFileUrl().equals(file.getUrl()) && b.getLine() == line)
+      .orElse(null);
   }
 
   @Override
