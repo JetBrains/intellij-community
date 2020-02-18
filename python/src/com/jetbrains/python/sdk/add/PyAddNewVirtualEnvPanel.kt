@@ -64,13 +64,13 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     addBrowseFolderListener(PyBundle.message("python.sdk.select.location.for.virtualenv.title"), null, project,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
-  private val inheritSitePackagesField = JBCheckBox("Inherit global site-packages")
+  private val inheritSitePackagesField = JBCheckBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
   private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))
 
   init {
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Location:", pathField)
+      .addLabeledComponent(PyBundle.message("sdk.create.venv.dialog.label.location"), pathField)
       .addLabeledComponent(PyBundle.message("base.interpreter"), baseSdkField)
       .addComponent(inheritSitePackagesField)
       .addComponent(makeSharedField)

@@ -55,7 +55,7 @@ public class PythonFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return "Python";
+    return PyPsiApiBundle.message("python.file.type");
   }
 
   @Override

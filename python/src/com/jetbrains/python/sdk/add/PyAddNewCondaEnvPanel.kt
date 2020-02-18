@@ -86,8 +86,8 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     updatePathField()
 
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Location:", pathField)
-      .addLabeledComponent("Python version:", languageLevelsField)
+      .addLabeledComponent(PyBundle.message("sdk.create.venv.conda.dialog.label.location"), pathField)
+      .addLabeledComponent(PyBundle.message("sdk.create.venv.conda.dialog.label.python.version"), languageLevelsField)
       .addLabeledComponent(PyBundle.message("python.sdk.conda.path"), condaPathField)
       .addComponent(makeSharedField)
       .panel

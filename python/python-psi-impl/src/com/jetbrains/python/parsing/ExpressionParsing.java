@@ -139,12 +139,12 @@ public class ExpressionParsing extends Parsing {
           }
           // Can be the end of an enclosing f-string, so leave it in the stream
           else {
-            builder.mark().error(openingQuotes + " expected");
+            builder.mark().error(message("PARSE.0.expected", openingQuotes));
           }
           break;
         }
         else if (atToken(PyTokenTypes.STATEMENT_BREAK)) {
-          builder.mark().error(openingQuotes + " expected");
+          builder.mark().error(message("PARSE.0.expected", openingQuotes));
           break;
         }
         else {

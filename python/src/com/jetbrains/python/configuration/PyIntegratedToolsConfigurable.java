@@ -119,10 +119,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myRequirementsPathField.setText(getRequirementsPath());
     myPipEnvPathField.addBrowseFolderListener(null, null, null, FileChooserDescriptorFactory.createSingleFileDescriptor());
 
-    myDocStringsPanel.setBorder(IdeBorderFactory.createTitledBorder("Docstrings"));
-    myRestPanel.setBorder(IdeBorderFactory.createTitledBorder("reStructuredText"));
-    myPackagingPanel.setBorder(IdeBorderFactory.createTitledBorder("Packaging"));
-    myTestsPanel.setBorder(IdeBorderFactory.createTitledBorder("Testing"));
+    myDocStringsPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.docstrings")));
+    myRestPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.restructuredtext")));
+    myPackagingPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.packaging")));
+    myTestsPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.testing")));
   }
 
   @NotNull

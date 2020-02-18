@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBLabel;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,7 +17,7 @@ public class PyConfigureInterpretersLinkPanel extends JPanel {
 
   public PyConfigureInterpretersLinkPanel(final JPanel parentPanel) {
     super(new BorderLayout());
-    myConfigureLabel = new JBLabel("<html><a href=\"#\">Configure Interpreters");
+    myConfigureLabel = new JBLabel(PyBundle.message("configuring.interpreters.link"));
     myConfigureLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     new ClickListener() {
       @Override

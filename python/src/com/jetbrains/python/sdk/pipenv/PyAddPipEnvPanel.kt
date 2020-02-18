@@ -65,7 +65,7 @@ class PyAddPipEnvPanel(private val project: Project?,
    }
   }
 
-  private val installPackagesCheckBox = JBCheckBox("Install packages from Pipfile").apply {
+  private val installPackagesCheckBox = JBCheckBox(PyBundle.message("install.packages.from.pipfile")).apply {
     isVisible = newProjectPath == null
     isSelected = isVisible
   }
@@ -107,7 +107,7 @@ class PyAddPipEnvPanel(private val project: Project?,
     val builder = FormBuilder.createFormBuilder().apply {
       if (module == null && modules.size > 1) {
         val associatedObject = if (PlatformUtils.isPyCharm()) "project" else "module"
-        addLabeledComponent("Associated $associatedObject:", moduleField)
+        addLabeledComponent(PyBundle.message("python.sdk.pipenv.associated.object", associatedObject), moduleField)
       }
       addLabeledComponent(PyBundle.message("base.interpreter"), baseSdkField)
       addComponent(installPackagesCheckBox)

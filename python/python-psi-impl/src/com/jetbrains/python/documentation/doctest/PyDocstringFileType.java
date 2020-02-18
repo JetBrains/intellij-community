@@ -17,6 +17,7 @@
 package com.jetbrains.python.documentation.doctest;
 
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,7 @@ public class PyDocstringFileType extends PythonFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return "python docstring";
+    return PyPsiBundle.message("python.docstring.file.type");
   }
 
   @NotNull
