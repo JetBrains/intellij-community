@@ -8,6 +8,7 @@ import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
@@ -15,7 +16,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.FacetProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
@@ -290,7 +290,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
 
     setSelectedNode(null);
     myCurrentMultipleSettingsEditor = editor;
-    detailsComponent.setText(ProjectBundle.message("multiple.facets.banner.0.1.facets", selectedEditors.length,
+    detailsComponent.setText(JavaUiBundle.message("multiple.facets.banner.0.1.facets", selectedEditors.length,
                                                         selectedFacetType.getPresentableName()));
     detailsComponent.setContent(editor.createComponent());
     return true;
@@ -325,7 +325,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   public String getDisplayName() {
-    return ProjectBundle.message("project.facets.display.name");
+    return JavaUiBundle.message("project.facets.display.name");
   }
 
   @Override
@@ -398,7 +398,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
 
   private class MyNavigateAction extends AnAction implements DumbAware {
     private MyNavigateAction() {
-      super(ProjectBundle.message("action.name.facet.navigate"));
+      super(JavaUiBundle.message("action.name.facet.navigate"));
       registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree);
     }
 

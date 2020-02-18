@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
@@ -99,7 +100,7 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
       myRelativeOutputPathField = new JTextField();
       myIsGeneratedCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand("For &generated resources"));
       myMainPanel = FormBuilder.createFormBuilder()
-        .addLabeledComponent(ProjectBundle.message("label.relative.output.path"), myRelativeOutputPathField)
+        .addLabeledComponent(JavaUiBundle.message("label.relative.output.path"), myRelativeOutputPathField)
         .addComponent(myIsGeneratedCheckBox)
         .getPanel();
       myRelativeOutputPathField.setText(myProperties.getRelativeOutputPath());

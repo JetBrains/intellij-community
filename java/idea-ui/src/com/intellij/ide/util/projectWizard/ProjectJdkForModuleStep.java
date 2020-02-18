@@ -2,7 +2,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -64,12 +64,12 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
-    final JLabel label = new JLabel(IdeBundle.message("prompt.please.select.module.jdk", type == null ? "SDK" : type.getPresentableName()));
+    final JLabel label = new JLabel(JavaUiBundle.message("prompt.please.select.module.jdk", type == null ? "SDK" : type.getPresentableName()));
     label.setUI(new MultiLineLabelUI());
     myPanel.add(label, new GridBagConstraints(0, 0, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                               GridBagConstraints.HORIZONTAL, JBInsets.create(8, 10), 0, 0));
 
-    final JLabel jdkLabel = new JLabel(IdeBundle.message("label.project.jdk"));
+    final JLabel jdkLabel = new JLabel(JavaUiBundle.message("label.project.jdk"));
     jdkLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     myPanel.add(jdkLabel, new GridBagConstraints(0, 1, 1, 1, 0, 0.0, GridBagConstraints.NORTHWEST,
                                                  GridBagConstraints.NONE, JBUI.insets(8, 10, 0, 10), 0, 0));
@@ -77,7 +77,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     myPanel.add(myJdkChooser, new GridBagConstraints(1, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                      GridBagConstraints.HORIZONTAL, JBUI.insets(2, 10, 10, 5), 0, 0));
 
-    mySetAsDefaultButton = new JButton(IdeBundle.message("button.set.default"));
+    mySetAsDefaultButton = new JButton(JavaUiBundle.message("button.set.default"));
     mySetAsDefaultButton.setMnemonic('D');
     myPanel.add(mySetAsDefaultButton, new GridBagConstraints(1, 2, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
                                                              GridBagConstraints.NONE, JBUI.insets(2, 10, 10, 5), 0, 0));
@@ -168,8 +168,8 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     final Sdk jdk = myJdkChooser.getSelectedJdk();
     if (jdk == null) {
       int result = Messages
-        .showOkCancelDialog(IdeBundle.message("prompt.confirm.project.no.jdk"),
-                            IdeBundle.message("title.no.jdk.specified"),
+        .showOkCancelDialog(JavaUiBundle.message("prompt.confirm.project.no.jdk"),
+                            JavaUiBundle.message("title.no.jdk.specified"),
                             Messages.getOkButton(),
                             Messages.getCancelButton(),
                             Messages.getWarningIcon(), null);
@@ -182,7 +182,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
       mySdksModel.apply(null, true);
     } catch (ConfigurationException e) {
       //IDEA-98382 We should allow Next step if user has wrong SDK
-      if (Messages.showDialog(IdeBundle.message("dialog.message.0.do.you.want.to.proceed", e.getMessage()),
+      if (Messages.showDialog(JavaUiBundle.message("dialog.message.0.do.you.want.to.proceed", e.getMessage()),
                               e.getTitle(),
                               new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1, Messages.getWarningIcon()) != Messages.YES) {
         return false;

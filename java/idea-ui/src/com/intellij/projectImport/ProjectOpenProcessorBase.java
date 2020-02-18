@@ -4,6 +4,7 @@ package com.intellij.projectImport;
 import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
@@ -131,10 +132,10 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder<?>
 
       if (wizardContext.getProjectName() == null) {
         if (wizardContext.getProjectStorageFormat() == StorageScheme.DEFAULT) {
-          wizardContext.setProjectName(IdeBundle.message("project.import.default.name", getName()) + ProjectFileType.DOT_DEFAULT_EXTENSION);
+          wizardContext.setProjectName(JavaUiBundle.message("project.import.default.name", getName()) + ProjectFileType.DOT_DEFAULT_EXTENSION);
         }
         else {
-          wizardContext.setProjectName(IdeBundle.message("project.import.default.name.dotIdea", getName()));
+          wizardContext.setProjectName(JavaUiBundle.message("project.import.default.name.dotIdea", getName()));
         }
       }
 
@@ -179,10 +180,10 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder<?>
           }
           int result = Messages.showYesNoCancelDialog(
             projectToClose,
-            IdeBundle.message("project.import.open.existing", existingName, projectFile.getParent(), virtualFile.getName()),
+            JavaUiBundle.message("project.import.open.existing", existingName, projectFile.getParent(), virtualFile.getName()),
             IdeBundle.message("title.open.project"),
-            IdeBundle.message("project.import.open.existing.openExisting"),
-            IdeBundle.message("project.import.open.existing.reimport"),
+            JavaUiBundle.message("project.import.open.existing.openExisting"),
+            JavaUiBundle.message("project.import.open.existing.reimport"),
             CommonBundle.getCancelButtonText(),
             Messages.getQuestionIcon());
           if (result == Messages.CANCEL) return null;

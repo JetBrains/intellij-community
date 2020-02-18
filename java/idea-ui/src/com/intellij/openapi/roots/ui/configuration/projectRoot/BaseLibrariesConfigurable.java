@@ -4,12 +4,12 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -85,7 +84,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @Override
   public void checkCanApply() throws ConfigurationException {
     super.checkCanApply();
-    checkForEmptyAndDuplicatedNames(UIBundle.message("configurable.library.prefix"), CommonBundle.getErrorTitle(), LibraryConfigurable.class);
+    checkForEmptyAndDuplicatedNames(JavaUiBundle.message("configurable.library.prefix"), CommonBundle.getErrorTitle(), LibraryConfigurable.class);
     for (LibraryConfigurable configurable : getLibraryConfigurables()) {
       if (configurable.getDisplayName().isEmpty()) {
         ((LibraryProjectStructureElement)configurable.getProjectStructureElement()).navigate();
@@ -312,11 +311,11 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
             message = firstLibraryUsageDescription + ".\nAre you sure you want to delete this library?";
           }
           else {
-            message = ProjectBundle.message("libraries.remove.confirmation.text", firstLibraryWithUsageName, librariesWithUsages-1);
+            message = JavaUiBundle.message("libraries.remove.confirmation.text", firstLibraryWithUsageName, librariesWithUsages-1);
           }
 
           if (Messages.OK != Messages.showOkCancelDialog(myProject, message,
-                                                         ProjectBundle.message("libraries.remove.confirmation.title", librariesWithUsages), Messages.getQuestionIcon())) {
+                                                         JavaUiBundle.message("libraries.remove.confirmation.title", librariesWithUsages), Messages.getQuestionIcon())) {
             return false;
           }
         }
@@ -360,7 +359,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       final Object o = getSelectedObject();
       if (o instanceof LibraryEx) {
         final LibraryEx selected = (LibraryEx)o;
-        final String newName = Messages.showInputDialog(ProjectBundle.message("label.enter.library.name"), ProjectBundle.message(
+        final String newName = Messages.showInputDialog(JavaUiBundle.message("label.enter.library.name"), JavaUiBundle.message(
           "dialog.title.copy.library"), null, selected.getName() + "2", new NonEmptyInputValidator());
         if (newName == null) return;
 

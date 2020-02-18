@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -82,7 +83,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, false, true, true).withFileFilter(LIBRARY_ROOT_CONDITION);
     descriptor.setTitle(StringUtil.isEmpty(libraryName) ? ProjectBundle.message("library.attach.files.action")
                                                         : ProjectBundle.message("library.attach.files.to.library.action", libraryName));
-    descriptor.setDescription(ProjectBundle.message("library.java.attach.files.description"));
+    descriptor.setDescription(JavaUiBundle.message("library.java.attach.files.description"));
     return descriptor;
   }
 

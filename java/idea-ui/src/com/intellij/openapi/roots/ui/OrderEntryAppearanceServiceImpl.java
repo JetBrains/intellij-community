@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -42,7 +42,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
       Sdk jdk = jdkLibraryEntry.getJdk();
       if (!orderEntry.isValid()) {
         final String oldJdkName = jdkLibraryEntry.getJdkName();
-        return FileAppearanceService.getInstance().forInvalidUrl(oldJdkName != null ? oldJdkName : ProjectBundle.message("jdk.missing.item"));
+        return FileAppearanceService.getInstance().forInvalidUrl(oldJdkName != null ? oldJdkName : JavaUiBundle.message("jdk.missing.item"));
       }
       return forJdk(jdk, false, selected, true);
     }
@@ -92,7 +92,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
     }
 
     final String url = StringUtil.trimEnd(files[0], JarFileSystem.JAR_SEPARATOR);
-    String text = ProjectBundle.message("library.unnamed.text", PathUtil.getFileName(url), files.length - 1);
+    String text = JavaUiBundle.message("library.unnamed.text", PathUtil.getFileName(url), files.length - 1);
     return SimpleTextCellAppearance.regular(text, PlatformIcons.LIBRARY_ICON);
   }
 

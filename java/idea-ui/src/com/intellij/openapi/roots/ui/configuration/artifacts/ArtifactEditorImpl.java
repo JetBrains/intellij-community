@@ -7,13 +7,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.*;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
@@ -215,14 +215,14 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final JPanel rightTopPanel = new JPanel(new BorderLayout());
     final JPanel labelPanel = new JPanel();
     labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
-    labelPanel.add(new JLabel(ProjectBundle.message("label.available.elements")));
+    labelPanel.add(new JLabel(JavaUiBundle.message("label.available.elements")));
     final HyperlinkLabel link = new HyperlinkLabel("");
     link.setIcon(AllIcons.General.ContextHelp);
     link.setUseIconAsLink(true);
     link.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
-        final JLabel label = new JLabel(ProjectBundle.message("artifact.source.items.tree.tooltip"));
+        final JLabel label = new JLabel(JavaUiBundle.message("artifact.source.items.tree.tooltip"));
         label.setBorder(HintUtil.createHintBorder());
         label.setBackground(HintUtil.getInformationColor());
         label.setOpaque(true);
@@ -281,7 +281,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     rightTopPanel.setPreferredSize(new Dimension(-1, toolbarComponent.getPreferredSize().height));
 
     myTabbedPane = new TabbedPaneWrapper(this);
-    myTabbedPane.addTab(ProjectBundle.message("tab.title.output.layout"), splitter);
+    myTabbedPane.addTab(JavaUiBundle.message("tab.title.output.layout"), splitter);
     myPropertiesEditors.addTabs(myTabbedPane);
     myEditorPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
@@ -376,7 +376,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   private ActionGroup createAddNonCompositeElementGroup() {
-    DefaultActionGroup group = DefaultActionGroup.createPopupGroup(ProjectBundle.lazyMessage("artifacts.add.copy.action"));
+    DefaultActionGroup group = DefaultActionGroup.createPopupGroup(JavaUiBundle.lazyMessage("artifacts.add.copy.action"));
     group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
     for (PackagingElementType<?> type : PackagingElementFactory.getInstance().getNonCompositeElementTypes()) {
       group.add(new AddNewPackagingElementAction(type, this));

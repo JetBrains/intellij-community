@@ -16,11 +16,11 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -154,7 +154,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
       return null;
     }
     final ArrayList<AnAction> actions = new ArrayList<>();
-    DefaultActionGroup group = DefaultActionGroup.createPopupGroup(ProjectBundle.lazyMessage("add.new.jdk.text"));
+    DefaultActionGroup group = DefaultActionGroup.createPopupGroup(JavaUiBundle.lazyMessage("add.new.jdk.text"));
     group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
     myProjectJdksModel.createAddActions(group, myTree, projectJdk -> {
       addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);

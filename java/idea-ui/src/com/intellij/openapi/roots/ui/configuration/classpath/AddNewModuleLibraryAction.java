@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
@@ -31,7 +31,7 @@ class AddNewModuleLibraryAction extends AddItemPopupAction<Library> {
   AddNewModuleLibraryAction(final ClasspathPanel classpathPanel,
                                    int actionIndex,
                                    StructureConfigurableContext context) {
-    super(classpathPanel, actionIndex, ProjectBundle.message("classpath.add.simple.module.library.action"), PlatformIcons.JAR_ICON);
+    super(classpathPanel, actionIndex, JavaUiBundle.message("classpath.add.simple.module.library.action"), PlatformIcons.JAR_ICON);
     myContext = context;
   }
 

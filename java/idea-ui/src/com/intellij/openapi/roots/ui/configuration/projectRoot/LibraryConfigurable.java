@@ -16,8 +16,8 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
@@ -130,7 +130,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     String libraryType = libraryTable == null
                          ? ProjectModelBundle.message("module.library.display.name", 1)
                          : libraryTable.getPresentation().getDisplayName(false);
-    return ProjectBundle.message("project.roots.library.banner.text", getDisplayName(), libraryType);
+    return JavaUiBundle.message("project.roots.library.banner.text", getDisplayName(), libraryType);
   }
 
   @Override

@@ -16,11 +16,11 @@
 package com.intellij.openapi.projectRoots.ui;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ProjectJdksConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -47,7 +47,7 @@ public class ProjectJdksEditor extends DialogWrapper {
     super(parent, true);
     myConfigurable = configurable;
     SwingUtilities.invokeLater(() -> myConfigurable.selectNodeInTree(jdk != null ? jdk.getName() : null));
-    setTitle(ProjectBundle.message("sdk.configure.title"));
+    setTitle(JavaUiBundle.message("sdk.configure.title"));
     Disposer.register(myDisposable, new Disposable() {
       @Override
       public void dispose() {
@@ -79,7 +79,7 @@ public class ProjectJdksEditor extends DialogWrapper {
     }
     catch (ConfigurationException e){
       Messages.showMessageDialog(getContentPane(), e.getMessage(),
-                                 ProjectBundle.message("sdk.configure.save.settings.error"), Messages.getErrorIcon());
+                                 JavaUiBundle.message("sdk.configure.save.settings.error"), Messages.getErrorIcon());
     }
   }
 

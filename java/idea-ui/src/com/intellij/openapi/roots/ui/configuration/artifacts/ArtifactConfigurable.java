@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
@@ -84,7 +84,7 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
     });
 
     final JPanel panel = new JPanel(new FlowLayout());
-    panel.add(new JLabel(ProjectBundle.message("label.artifact.configurable.type")));
+    panel.add(new JLabel(JavaUiBundle.message("label.artifact.configurable.type")));
     panel.add(artifactTypeBox);
     return panel;
   }

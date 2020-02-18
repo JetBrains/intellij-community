@@ -3,11 +3,11 @@ package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
@@ -27,7 +27,7 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
 
   private AddFrameworkSupportDialog(@NotNull Module module, final @NotNull String contentRootPath, final List<FrameworkSupportInModuleProvider> providers) {
     super(module.getProject(), true);
-    setTitle(ProjectBundle.message("dialog.title.add.frameworks.support"));
+    setTitle(JavaUiBundle.message("dialog.title.add.frameworks.support"));
     myModule = module;
     final LibrariesContainer container = LibrariesContainerFactory.createContainer(module.getProject());
     final FrameworkSupportModelBase model = new FrameworkSupportModelImpl(module.getProject(), contentRootPath, container);

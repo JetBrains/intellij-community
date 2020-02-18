@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactRootNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingNodeSource;
@@ -227,14 +227,14 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
     if (nodeSources.size() > 1) {
       Messages.showErrorDialog(myArtifactsEditor.getMainComponent(),
-                               ProjectBundle.message(
+                               JavaUiBundle.message(
                                  "error.message.the.selected.node.consist.of.several.elements.so.it.cannot.be.edited"));
     }
     else {
     final PackagingNodeSource source = ContainerUtil.getFirstItem(nodeSources, null);
       if (source != null) {
         Messages.showErrorDialog(myArtifactsEditor.getMainComponent(),
-                                 ProjectBundle.message(
+                                 JavaUiBundle.message(
                                    "error.message.the.selected.node.belongs.to.0.element.so.it.cannot.be.edited",
                                    source.getPresentableName()));
       }
@@ -273,7 +273,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       else {
         message = "The selected node belongs to " + nodes.size() + " elements. Do you want to remove all these elements from the artifact?";
       }
-      final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, ProjectBundle.message(
+      final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, JavaUiBundle.message(
         "dialog.title.remove.elements"), null);
       if (answer != Messages.YES) return false;
     }

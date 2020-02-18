@@ -10,7 +10,7 @@ import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.addSupport.FrameworkVersionListener;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
@@ -22,7 +22,6 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
@@ -391,8 +390,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
     for (LibraryCompositionSettings compositionSettings : getLibrariesCompositionSettingsList()) {
       if (!compositionSettings.downloadFiles(parentComponent)) {
         int answer = Messages.showYesNoDialog(parentComponent,
-                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              IdeBundle.message("dialog.title.libraries.are.required"), Messages.getWarningIcon());
+                                              JavaUiBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                              JavaUiBundle.message("dialog.title.libraries.are.required"), Messages.getWarningIcon());
         return answer == Messages.YES;
       }
     }
@@ -414,8 +413,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
     if (!frameworksWithoutRequiredLibraries.isEmpty()) {
       String frameworksText = StringUtil.join(frameworksWithoutRequiredLibraries, ", ");
-      Messages.showErrorDialog(myMainPanel, ProjectBundle.message("error.message.required.library.is.not.configured", frameworksText, frameworksWithoutRequiredLibraries.size()),
-                               ProjectBundle.message("error.title.required.library.is.not.configured"));
+      Messages.showErrorDialog(myMainPanel, JavaUiBundle.message("error.message.required.library.is.not.configured", frameworksText, frameworksWithoutRequiredLibraries.size()),
+                               JavaUiBundle.message("error.title.required.library.is.not.configured"));
       return false;
     }
     return true;

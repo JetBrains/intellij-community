@@ -4,6 +4,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -12,7 +13,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -34,7 +34,6 @@ import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.LibraryElementType;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
-import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -166,7 +165,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   @Nls
   public String getDisplayName() {
-    return ProjectBundle.message("display.name.artifacts");
+    return JavaUiBundle.message("display.name.artifacts");
   }
 
   @Override
@@ -227,7 +226,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   protected AbstractAddGroup createAddAction() {
-    return new AbstractAddGroup(ProjectBundle.message("add.new.header.text")) {
+    return new AbstractAddGroup(JavaUiBundle.message("add.new.header.text")) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         final ArtifactType[] types = ArtifactType.getAllTypes();
@@ -284,7 +283,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   public void apply() throws ConfigurationException {
     myPackagingEditorContext.saveEditorSettings();
-    checkForEmptyAndDuplicatedNames(UIBundle.message("configurable.artifact.prefix"), CommonBundle.getErrorTitle(), ArtifactConfigurableBase.class);
+    checkForEmptyAndDuplicatedNames(JavaUiBundle.message("configurable.artifact.prefix"), CommonBundle.getErrorTitle(), ArtifactConfigurableBase.class);
     super.apply();
 
     myPackagingEditorContext.getManifestFilesInfo().saveManifestFiles();
@@ -387,8 +386,8 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
         final Artifact selected = (Artifact)o;
         ModifiableArtifactModel artifactModel = myPackagingEditorContext.getOrCreateModifiableArtifactModel();
         String suggestedName = ArtifactUtil.generateUniqueArtifactName(selected.getName(), artifactModel);
-        final String newName = Messages.showInputDialog(ProjectBundle.message("label.enter.artifact.name"),
-                                                        ProjectBundle.message("dialog.title.copy.artifact"),
+        final String newName = Messages.showInputDialog(JavaUiBundle.message("label.enter.artifact.name"),
+                                                        JavaUiBundle.message("dialog.title.copy.artifact"),
                                                         COPY_ICON,
                                                         suggestedName,
                                                         new NonEmptyInputValidator());

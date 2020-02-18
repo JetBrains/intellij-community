@@ -19,6 +19,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetModel;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.projectWizard.NewProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
@@ -34,7 +35,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -223,7 +223,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       for (ContentEntry content : contents) {
         for (VirtualFile root : content.getSourceFolderFiles()) {
           if (!sourceRoots.add(root)) {
-            throw new ConfigurationException(ProjectBundle.message("module.paths.validation.duplicate.source.root.in.same.module.error", root.getPresentableUrl(), moduleName));
+            throw new ConfigurationException(JavaUiBundle.message("module.paths.validation.duplicate.source.root.in.same.module.error", root.getPresentableUrl(), moduleName));
           }
         }
       }
@@ -236,7 +236,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         final String previousName = contentRootToModuleNameMap.put(contentRoot, moduleName);
         if (previousName != null && !previousName.equals(moduleName)) {
           throw new ConfigurationException(
-            ProjectBundle.message("module.paths.validation.duplicate.content.error", contentRoot.getPresentableUrl(), previousName, moduleName)
+            JavaUiBundle.message("module.paths.validation.duplicate.content.error", contentRoot.getPresentableUrl(), previousName, moduleName)
           );
         }
         for (VirtualFile srcRoot : contentEntry.getSourceFolderFiles()) {
@@ -253,7 +253,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
               correctModule = contentRootToModuleNameMap.get(anotherContentRoot);
             }
             throw new ConfigurationException(
-              ProjectBundle.message("module.paths.validation.duplicate.source.root.error", problematicModule, srcRoot.getPresentableUrl(), correctModule)
+              JavaUiBundle.message("module.paths.validation.duplicate.source.root.error", problematicModule, srcRoot.getPresentableUrl(), correctModule)
             );
           }
         }
@@ -269,7 +269,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         final String moduleName = contentRootToModuleNameMap.get(candidateContent);
         if (moduleName != null && !moduleName.equals(expectedModuleName)) {
           throw new ConfigurationException(
-            ProjectBundle.message("module.paths.validation.source.root.belongs.to.another.module.error", srcRoot.getPresentableUrl(), expectedModuleName, moduleName)
+            JavaUiBundle.message("module.paths.validation.source.root.belongs.to.another.module.error", srcRoot.getPresentableUrl(), expectedModuleName, moduleName)
           );
         }
       }
@@ -404,9 +404,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         (ThrowableComputable<Module, Exception>)() -> builder.createModule(myModuleModel));
     }
     catch (Exception e) {
-      LOG.error(ProjectBundle.message("module.add.error.message", e.getMessage()), e);
-      Messages.showErrorDialog(ProjectBundle.message("module.add.error.message", e.getMessage()),
-                               ProjectBundle.message("module.add.error.title"));
+      LOG.error(JavaUiBundle.message("module.add.error.message", e.getMessage()), e);
+      Messages.showErrorDialog(JavaUiBundle.message("module.add.error.message", e.getMessage()),
+                               JavaUiBundle.message("module.add.error.title"));
       return null;
     }
   }
@@ -455,13 +455,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
     String question;
     if (myModuleEditors.size() == selectedEditors.size()) {
-      question = ProjectBundle.message("module.remove.last.confirmation", selectedEditors.size());
+      question = JavaUiBundle.message("module.remove.last.confirmation", selectedEditors.size());
     }
     else {
-      question = ProjectBundle.message("module.remove.confirmation", selectedEditors.get(0).getModule().getName(), selectedEditors.size());
+      question = JavaUiBundle.message("module.remove.confirmation", selectedEditors.get(0).getModule().getName(), selectedEditors.size());
     }
     int result =
-      Messages.showYesNoDialog(myProject, question, ProjectBundle.message("module.remove.confirmation.title", selectedEditors.size()), Messages.getQuestionIcon());
+      Messages.showYesNoDialog(myProject, question, JavaUiBundle.message("module.remove.confirmation.title", selectedEditors.size()), Messages.getQuestionIcon());
     if (result != Messages.YES) {
       return false;
     }

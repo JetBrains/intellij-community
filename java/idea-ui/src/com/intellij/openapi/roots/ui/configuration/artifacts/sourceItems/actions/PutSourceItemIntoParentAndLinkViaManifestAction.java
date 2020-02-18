@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
@@ -37,7 +37,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
 
     final ParentElementsInfo parentInfo = findParentAndGrandParent(artifact);
     if (parentInfo != null) {
-      presentation.setText(ProjectBundle.message("action.text.put.into.0.and.link.via.manifest", parentInfo.getGrandparentArtifact().getName()));
+      presentation.setText(JavaUiBundle.message("action.text.put.into.0.and.link.via.manifest", parentInfo.getGrandparentArtifact().getName()));
     }
 
     boolean enable = parentInfo != null;

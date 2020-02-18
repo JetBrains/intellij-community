@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -45,7 +45,7 @@ public class CreateModuleFromSourcesMode extends CreateFromSourcesMode {
   public JComponent getAdditionalSettings(WizardContext wizardContext) {
     myPathPanel = new TextFieldWithBrowseButton();
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myPathPanel.addBrowseFolderListener(IdeBundle.message("chooser.title.select.directory.containing.module.files"), null, wizardContext.getProject(), descriptor);
+    myPathPanel.addBrowseFolderListener(JavaUiBundle.message("chooser.title.select.directory.containing.module.files"), null, wizardContext.getProject(), descriptor);
     onChosen(false);
     return myPathPanel;
   }

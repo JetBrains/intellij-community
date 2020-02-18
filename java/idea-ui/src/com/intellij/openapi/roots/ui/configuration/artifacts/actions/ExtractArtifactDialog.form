@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="e88c4"/>
-          <text resource-bundle="messages/ProjectBundle" key="label.text.specify.artifact.name"/>
+          <text resource-bundle="messages/JavaUiBundle" key="label.text.specify.artifact.name"/>
         </properties>
       </component>
       <vspacer id="d3681">

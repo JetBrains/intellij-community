@@ -2,7 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -26,7 +26,7 @@ public class ExtractArtifactDialog extends DialogWrapper implements IExtractArti
   public ExtractArtifactDialog(ArtifactEditorContext context, LayoutTreeComponent treeComponent, String initialName) {
     super(treeComponent.getLayoutTree(), true);
     myContext = context;
-    setTitle(ProjectBundle.message("dialog.title.extract.artifact"));
+    setTitle(JavaUiBundle.message("dialog.title.extract.artifact"));
     for (ArtifactType type : ArtifactType.getAllTypes()) {
       myTypeBox.addItem(type);
     }
@@ -49,7 +49,7 @@ public class ExtractArtifactDialog extends DialogWrapper implements IExtractArti
   protected void doOKAction() {
     final String artifactName = getArtifactName();
     if (myContext.getArtifactModel().findArtifact(artifactName) != null) {
-      Messages.showErrorDialog(myContext.getProject(), ProjectBundle.message("dialog.message.artifact.0.already.exists", artifactName), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(myContext.getProject(), JavaUiBundle.message("dialog.message.artifact.0.already.exists", artifactName), CommonBundle.getErrorTitle());
       return;
     }
     super.doOKAction();

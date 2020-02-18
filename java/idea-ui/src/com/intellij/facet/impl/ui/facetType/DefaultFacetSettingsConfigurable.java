@@ -19,10 +19,10 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.facet.ui.DefaultFacetSettingsEditor;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,7 +43,7 @@ public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> impl
 
   @Override
   public String getDisplayName() {
-    return ProjectBundle.message("facet.defaults.display.name");
+    return JavaUiBundle.message("facet.defaults.display.name");
   }
 
   @Override

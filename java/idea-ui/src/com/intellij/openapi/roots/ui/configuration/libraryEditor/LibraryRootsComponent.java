@@ -4,7 +4,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -16,7 +16,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.PersistentOrderRootType;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
@@ -165,7 +164,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myTreePanel.setLayout(new BorderLayout());
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTree).disableUpDownActions()
-      .setRemoveActionName(ProjectBundle.message("library.remove.action"))
+      .setRemoveActionName(JavaUiBundle.message("library.remove.action"))
       .disableRemoveAction();
     toolbarDecorator.setPanelBorder(new CustomLineBorder(1, 0, 0, 0));
     final List<AttachRootButtonDescriptor> popupItems = new ArrayList<>();
@@ -181,7 +180,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
     myAddExcludedRootActionButton = new AddExcludedRootActionButton();
     toolbarDecorator.addExtraAction(myAddExcludedRootActionButton);
-    toolbarDecorator.addExtraAction(new AnActionButton(IdeBundle.lazyMessage("action.AnActionButton.text.remove"), IconUtil.getRemoveIcon()) {
+    toolbarDecorator.addExtraAction(new AnActionButton(JavaUiBundle.lazyMessage("action.AnActionButton.text.remove"), IconUtil.getRemoveIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final List<Object> selectedElements = getSelectedElements();
@@ -217,7 +216,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         super.updateButton(e);
         Presentation presentation = e.getPresentation();
         if (ContainerUtil.and(getSelectedElements(), new FilteringIterator.InstanceOf<>(ExcludedRootElement.class))) {
-          presentation.setText(ProjectBundle.message("action.text.cancel.exclusion"));
+          presentation.setText(JavaUiBundle.message("action.text.cancel.exclusion"));
         }
         else {
           presentation.setText(getTemplatePresentation().getText());
@@ -551,8 +550,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
-      descriptor.setTitle(ProjectBundle.message("chooser.title.exclude.from.library"));
-      descriptor.setDescription(ProjectBundle.message(
+      descriptor.setTitle(JavaUiBundle.message("chooser.title.exclude.from.library"));
+      descriptor.setDescription(JavaUiBundle.message(
         "chooser.description.select.directories.which.should.be.excluded.from.the.library.content"));
       Set<VirtualFile> roots = getNotExcludedRoots();
       descriptor.setRoots(roots.toArray(VirtualFile.EMPTY_ARRAY));

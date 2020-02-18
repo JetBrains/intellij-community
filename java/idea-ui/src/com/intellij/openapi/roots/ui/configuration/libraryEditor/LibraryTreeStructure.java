@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.OrderRootTypePresentation;
@@ -27,7 +27,7 @@ class LibraryTreeStructure extends AbstractTreeStructure {
     myRootElementDescriptor = new NodeDescriptor(null, null) {
       @Override
       public boolean update() {
-        myName = ProjectBundle.message("library.root.node");
+        myName = JavaUiBundle.message("library.root.node");
         return false;
       }
       @Override

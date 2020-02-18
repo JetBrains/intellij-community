@@ -1,19 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.*;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -72,7 +72,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Override
   @Nls
   public String getDisplayName() {
-    return IdeBundle.message("configurable.JdkListConfigurable.display.name");
+    return JavaUiBundle.message("configurable.JdkListConfigurable.display.name");
   }
 
   @Override
@@ -209,7 +209,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
 
   private class AddSdkAction extends AnAction implements DumbAware {
     AddSdkAction() {
-      super(ProjectBundle.message("add.new.jdk.text"), null, IconUtil.getAddIcon());
+      super(JavaUiBundle.message("add.new.jdk.text"), null, IconUtil.getAddIcon());
 
       AbstractAddGroup replacedAction = new AbstractAddGroup("text") {
         @Override

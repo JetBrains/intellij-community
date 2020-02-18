@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.impl.ModuleLibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
@@ -37,7 +37,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
     super(parent, true);
     myLibraryRootsComponent = libraryRootsComponent;
     libraryRootsComponent.resetProperties();
-    setTitle(ProjectBundle.message("library.configure.title"));
+    setTitle(JavaUiBundle.message("library.configure.title"));
     Disposer.register(getDisposable(), myLibraryRootsComponent);
   }
 
@@ -72,11 +72,11 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
       final LibraryTable.ModifiableModel tableModifiableModel = getTableModifiableModel();
       if (tableModifiableModel != null && !(tableModifiableModel instanceof ModuleLibraryTable)) {
         if (newName == null) {
-          Messages.showErrorDialog(ProjectBundle.message("library.name.not.specified.error", newName), ProjectBundle.message("library.name.not.specified.title"));
+          Messages.showErrorDialog(JavaUiBundle.message("library.name.not.specified.error", newName), JavaUiBundle.message("library.name.not.specified.title"));
           return false;
         }
         if (LibraryEditingUtil.libraryAlreadyExists(tableModifiableModel, newName)) {
-          Messages.showErrorDialog(ProjectBundle.message("library.name.already.exists.error", newName), ProjectBundle.message("library.name.already.exists.title"));
+          Messages.showErrorDialog(JavaUiBundle.message("library.name.already.exists.error", newName), JavaUiBundle.message("library.name.already.exists.title"));
           return false;
         }
       }
@@ -103,7 +103,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
     myNameField = new JTextField(currentName);
     myNameField.selectAll();
 
-    FormBuilder formBuilder = FormBuilder.createFormBuilder().addLabeledComponent(ProjectBundle.message("label.library.name"), myNameField);
+    FormBuilder formBuilder = FormBuilder.createFormBuilder().addLabeledComponent(JavaUiBundle.message("label.library.name"), myNameField);
     addNorthComponents(formBuilder);
     return formBuilder.addVerticalGap(10).getPanel();
   }

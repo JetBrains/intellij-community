@@ -16,7 +16,6 @@
 package com.intellij.jarRepository;
 
 import com.intellij.ProjectTopics;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -123,7 +122,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
                              ? "'" + LibraryUtil.getPresentableName(validLibraries.iterator().next()) + "' library"
                              : validLibraries.size() + " libraries";
         Notifications.Bus.notify(new Notification(
-          "Repository", IdeBundle.message("notification.title.repository.libraries.cleanup"),
+          "Repository", JavaUiBundle.message("notification.title.repository.libraries.cleanup"),
           JavaUiBundle.message("notification.text.duplicated.urls.were.removed", libraryText, ApplicationNamesInfo.getInstance().getFullProductName()),
           NotificationType.INFORMATION
         ), project);

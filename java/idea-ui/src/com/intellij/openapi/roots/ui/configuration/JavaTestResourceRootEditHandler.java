@@ -16,7 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ide.JavaUiBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
@@ -31,7 +31,7 @@ public class JavaTestResourceRootEditHandler extends JavaResourceRootEditHandler
   @NotNull
   @Override
   public String getRootTypeName() {
-    return ProjectBundle.message("title.test.resources");
+    return JavaUiBundle.message("title.test.resources");
   }
 
   @NotNull
@@ -43,7 +43,7 @@ public class JavaTestResourceRootEditHandler extends JavaResourceRootEditHandler
   @NotNull
   @Override
   public String getRootsGroupTitle() {
-    return ProjectBundle.message("section.title.test.resource.folders");
+    return JavaUiBundle.message("section.title.test.resource.folders");
   }
 
   @NotNull
@@ -55,6 +55,6 @@ public class JavaTestResourceRootEditHandler extends JavaResourceRootEditHandler
   @NotNull
   @Override
   public String getUnmarkRootButtonText() {
-    return ProjectBundle.message("button.unmark.test.resource");
+    return JavaUiBundle.message("button.unmark.test.resource");
   }
 }

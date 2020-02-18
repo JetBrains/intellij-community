@@ -2,7 +2,7 @@
 
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
@@ -80,7 +80,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
         };
     progressPanel.add(myProgressLabel2, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 1.0, NORTHWEST, HORIZONTAL, JBUI.insets(8, 10, 0, 10), 0, 0));
 
-    JButton stopButton = new JButton(IdeBundle.message("button.stop.searching"));
+    JButton stopButton = new JButton(JavaUiBundle.message("button.stop.searching"));
     stopButton.addActionListener(__ -> cancelSearch());
     progressPanel.add(stopButton, new GridBagConstraints(1, RELATIVE, 1, 2, 0.0, 1.0, NORTHWEST, NONE, JBUI.insets(10, 0, 0, 10), 0, 0));
     return progressPanel;
@@ -165,7 +165,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   public boolean validate() throws ConfigurationException {
     if (isProgressRunning()) {
       final int answer = Messages.showOkCancelDialog(getComponent(), myPromptStopSearch,
-                                             IdeBundle.message("title.question"), IdeBundle.message("action.continue.searching"), IdeBundle.message("action.stop.searching"), Messages.getWarningIcon());
+                                             JavaUiBundle.message("title.question"), JavaUiBundle.message("action.continue.searching"), JavaUiBundle.message("action.stop.searching"), Messages.getWarningIcon());
       if (answer != Messages.OK) { // terminate
         cancelSearch();
       }

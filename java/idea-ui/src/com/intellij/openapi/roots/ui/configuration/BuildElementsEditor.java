@@ -2,12 +2,12 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -46,13 +46,13 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
   @Override
   public JComponent createComponentImpl() {
-    myInheritCompilerOutput = new JRadioButton(ProjectBundle.message("project.inherit.compile.output.path"));
-    myPerModuleCompilerOutput = new JRadioButton(ProjectBundle.message("project.module.compile.output.path"));
+    myInheritCompilerOutput = new JRadioButton(JavaUiBundle.message("project.inherit.compile.output.path"));
+    myPerModuleCompilerOutput = new JRadioButton(JavaUiBundle.message("project.module.compile.output.path"));
     ButtonGroup group = new ButtonGroup();
     group.add(myInheritCompilerOutput);
     group.add(myPerModuleCompilerOutput);
 
-    myOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.output.title"), new CommitPathRunnable() {
+    myOutputPathPanel = createOutputPathPanel(JavaUiBundle.message("module.paths.output.title"), new CommitPathRunnable() {
       @Override
       public void saveUrl(String url) {
         if (myInheritCompilerOutput.isSelected()) return;  //do not override settings if any
@@ -60,7 +60,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
         fireModuleConfigurationChanged();
       }
     });
-    myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
+    myTestsOutputPathPanel = createOutputPathPanel(JavaUiBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
       @Override
       public void saveUrl(String url) {
         if (myInheritCompilerOutput.isSelected()) return; //do not override settings if any
@@ -69,7 +69,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       }
     });
 
-    myCbExcludeOutput = new JCheckBox(ProjectBundle.message("module.paths.exclude.output.checkbox"), getCompilerExtension().isExcludeOutput());
+    myCbExcludeOutput = new JCheckBox(JavaUiBundle.message("module.paths.exclude.output.checkbox"), getCompilerExtension().isExcludeOutput());
     myCbExcludeOutput.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -88,13 +88,13 @@ public class BuildElementsEditor extends ModuleElementsEditor {
                                                                            GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                                            JBUI.insets(6, 0, 0, 4), 0, 0));
 
-    myOutputLabel = new JLabel(ProjectBundle.message("module.paths.output.label"));
+    myOutputLabel = new JLabel(JavaUiBundle.message("module.paths.output.label"));
     outputPathsPanel.add(myOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
                                                                GridBagConstraints.NONE, JBUI.insets(6, 12, 0, 4), 0, 0));
     outputPathsPanel.add(myOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST,
                                                                    GridBagConstraints.HORIZONTAL, JBUI.insets(6, 4, 0, 0), 0, 0));
 
-    myTestOutputLabel = new JLabel(ProjectBundle.message("module.paths.test.output.label"));
+    myTestOutputLabel = new JLabel(JavaUiBundle.message("module.paths.test.output.label"));
     outputPathsPanel.add(myTestOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
                                                                    GridBagConstraints.NONE, JBUI.insets(6, 16, 0, 4), 0, 0));
     outputPathsPanel.add(myTestsOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
@@ -125,7 +125,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     myPerModuleCompilerOutput.addActionListener(listener);
 
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ProjectBundle.message("project.roots.output.compiler.title")));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(JavaUiBundle.message("project.roots.output.compiler.title")));
     panel.add(outputPathsPanel, BorderLayout.NORTH);
     return panel;
   }
@@ -238,7 +238,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
   @Override
   public String getDisplayName() {
-    return ProjectBundle.message("output.tab.title");
+    return JavaUiBundle.message("output.tab.title");
   }
 
   @Override

@@ -16,18 +16,15 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ProjectSdkSetupValidator;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -59,10 +56,10 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
       if (sdk == null) {
         if (ModuleRootManager.getInstance(module).isSdkInherited()) {
-          return ProjectBundle.message("project.sdk.not.defined");
+          return JavaUiBundle.message("project.sdk.not.defined");
         }
         else {
-          return ProjectBundle.message("module.sdk.not.defined");
+          return JavaUiBundle.message("module.sdk.not.defined");
         }
       }
     }

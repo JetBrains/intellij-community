@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -89,8 +89,8 @@ public class JavadocEditor extends ModuleElementsEditor {
         @Override
         public void run(AnActionButton button) {
           FileChooserDescriptor myDescriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
-          myDescriptor.setTitle(ProjectBundle.message("module.javadoc.add.path.title"));
-          myDescriptor.setDescription(ProjectBundle.message("module.javadoc.add.path.prompt"));
+          myDescriptor.setTitle(JavaUiBundle.message("module.javadoc.add.path.title"));
+          myDescriptor.setDescription(JavaUiBundle.message("module.javadoc.add.path.prompt"));
           VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myTable, getProject(), null);
           final MyTableModel tableModel = (MyTableModel)myTable.getModel();
           boolean changes = false;
@@ -105,7 +105,7 @@ public class JavadocEditor extends ModuleElementsEditor {
             TableUtil.selectRows(myTable, new int[]{tableModel.getRowCount() - 1});
           }
         }
-      }).addExtraAction(new DumbAwareActionButton(ProjectBundle.lazyMessage("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
+      }).addExtraAction(new DumbAwareActionButton(JavaUiBundle.lazyMessage("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           VirtualFile[] files = new VirtualFile[]{Util.showSpecifyJavadocUrlDialog(myTable)};
@@ -130,12 +130,12 @@ public class JavadocEditor extends ModuleElementsEditor {
             saveData();
           }
         }
-      }).setButtonComparator("Add", ProjectBundle.message("module.javadoc.add.url.button"), "Remove").createPanel();
+      }).setButtonComparator("Add", JavaUiBundle.message("module.javadoc.add.url.button"), "Remove").createPanel();
 
     final JPanel mainPanel = new JPanel(new BorderLayout());
     mainPanel.add(tablePanel, BorderLayout.CENTER);
     mainPanel.add(
-      new JBLabel(ProjectBundle.message("project.roots.javadoc.tab.description"), UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER),
+      new JBLabel(JavaUiBundle.message("project.roots.javadoc.tab.description"), UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER),
       BorderLayout.NORTH);
     return mainPanel;
   }
@@ -209,6 +209,6 @@ public class JavadocEditor extends ModuleElementsEditor {
   }
 
   private static String getName() {
-    return ProjectBundle.message("module.javadoc.title");
+    return JavaUiBundle.message("module.javadoc.title");
   }
 }

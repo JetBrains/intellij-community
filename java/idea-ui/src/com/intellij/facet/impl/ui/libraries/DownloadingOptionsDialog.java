@@ -21,7 +21,6 @@ import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryNameAndLevelPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.ComboBox;
@@ -104,8 +103,8 @@ public class DownloadingOptionsDialog extends DialogWrapper {
 
     myFilesList.setBorder(null);
     myFilesToDownloadLabel.setLabelFor(myFilesList);
-    myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
-                                             ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
+    myDirectoryField.addBrowseFolderListener(JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
+                                             JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     myCopyDownloadedFilesToLabel.setLabelFor(myDirectoryField);

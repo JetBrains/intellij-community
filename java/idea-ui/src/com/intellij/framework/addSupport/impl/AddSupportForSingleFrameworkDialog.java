@@ -28,7 +28,6 @@ import com.intellij.ide.util.newProjectWizard.FrameworkSupportOptionsComponent;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
@@ -63,7 +62,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
     final String baseDirectoryForLibraries = baseDir != null ? baseDir.getPath() : "";
     myFrameworkType = frameworkType;
     myModifiableModelsProvider = modifiableModelsProvider;
-    setTitle(ProjectBundle.message("dialog.title.add.framework.0.support", frameworkType.getPresentableName()));
+    setTitle(JavaUiBundle.message("dialog.title.add.framework.0.support", frameworkType.getPresentableName()));
     myModule = module;
     myModel = new FrameworkSupportModelImpl(module.getProject(), baseDirectoryForLibraries, librariesContainer);
     myConfigurable = provider.createConfigurable(myModel);
@@ -107,7 +106,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
       final boolean downloaded = librarySettings.downloadFiles(getRootPane());
       if (!downloaded) {
         int answer = Messages.showYesNoDialog(getRootPane(),
-                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                              JavaUiBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
                                               JavaUiBundle.message("dialog.title.libraries.are.required"), Messages.getWarningIcon());
         if (answer != Messages.YES) {
           return false;

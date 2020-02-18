@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
@@ -202,7 +202,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       WHEN_FOCUSED
     );
 
-    myEditButton = new AnActionButton(ProjectBundle.message("module.classpath.button.edit"), null, IconUtil.getEditIcon()) {
+    myEditButton = new AnActionButton(JavaUiBundle.message("module.classpath.button.edit"), null, IconUtil.getEditIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         doEdit();
@@ -234,7 +234,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     }.installOn(myEntryTable);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    final AnAction navigateAction = new AnAction(ProjectBundle.message("classpath.panel.navigate.action.text")) {
+    final AnAction navigateAction = new AnAction(JavaUiBundle.message("classpath.panel.navigate.action.text")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(false);
@@ -551,7 +551,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       final List<AddItemPopupAction<?>> actions = new ArrayList<>();
       final StructureConfigurableContext context = getStructureConfigurableContext();
       actions.add(new AddNewModuleLibraryAction(this, actionIndex++, context));
-      actions.add(new AddLibraryDependencyAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), context));
+      actions.add(new AddLibraryDependencyAction(this, actionIndex++, JavaUiBundle.message("classpath.add.library.action"), context));
       actions.add(new AddModuleDependencyAction(this, actionIndex, context)
       );
 

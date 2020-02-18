@@ -5,13 +5,13 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RepositoryAttachDialog;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -81,8 +81,8 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
       Collection<OrderRoot> roots =
         JarRepositoryManager.loadDependenciesModal(myProject, libraryProperties, dialog.getAttachSources(), dialog.getAttachJavaDoc(), dialog.getDirectoryPath(), null);
       if (roots.isEmpty()) {
-        Messages.showErrorDialog(myProject, ProjectBundle.message("dialog.mesage.0.was.not.loaded", descriptor.getPresentableName()),
-                                 ProjectBundle.message("dialog.title.failed.to.download.library"));
+        Messages.showErrorDialog(myProject, JavaUiBundle.message("dialog.mesage.0.was.not.loaded", descriptor.getPresentableName()),
+                                 JavaUiBundle.message("dialog.title.failed.to.download.library"));
         return Promises.rejectedPromise();
       }
       classesRoots = roots.stream()

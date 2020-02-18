@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -183,10 +183,10 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   }
 
   private static String getScopeColumnName() {
-    return ProjectBundle.message("modules.order.export.scope.column");
+    return JavaUiBundle.message("modules.order.export.scope.column");
   }
 
   static String getExportColumnName() {
-    return ProjectBundle.message("modules.order.export.export.column");
+    return JavaUiBundle.message("modules.order.export.export.column");
   }
 }

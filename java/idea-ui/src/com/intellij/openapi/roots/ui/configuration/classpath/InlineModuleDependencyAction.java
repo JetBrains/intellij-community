@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ClonableOrderEntry;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
@@ -39,8 +39,8 @@ public class InlineModuleDependencyAction extends AnAction {
   private final ClasspathPanelImpl myClasspathPanel;
 
   public InlineModuleDependencyAction(ClasspathPanelImpl classpathPanel) {
-    super(ProjectBundle.message("action.text.inline.module.dependency"),
-          ProjectBundle.message("action.description.inline.module.dependency"), null);
+    super(JavaUiBundle.message("action.text.inline.module.dependency"),
+          JavaUiBundle.message("action.description.inline.module.dependency"), null);
     myClasspathPanel = classpathPanel;
   }
 

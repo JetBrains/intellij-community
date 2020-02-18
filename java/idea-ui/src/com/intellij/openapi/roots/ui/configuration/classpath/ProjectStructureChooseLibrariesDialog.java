@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -41,7 +41,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     myClasspathPanel = classpathPanel;
     myContext = context;
     myAcceptedLibraries = acceptedLibraries;
-    setOKButtonText(ProjectBundle.message("button.add.selected"));
+    setOKButtonText(JavaUiBundle.message("button.add.selected"));
     init();
   }
 
@@ -145,7 +145,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
 
   private class CreateNewLibraryAction extends DialogWrapperAction {
     private CreateNewLibraryAction() {
-      super(ProjectBundle.message("dialog.title.new.library"));
+      super(JavaUiBundle.message("dialog.title.new.library"));
       putValue(MNEMONIC_KEY, KeyEvent.VK_N);
     }
 

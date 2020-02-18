@@ -16,7 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -93,6 +93,6 @@ public class OutputEditor extends ModuleElementsEditor {
   }
 
   public static String getName() {
-    return ProjectBundle.message("project.roots.path.tab.title");
+    return JavaUiBundle.message("project.roots.path.tab.title");
   }
 }

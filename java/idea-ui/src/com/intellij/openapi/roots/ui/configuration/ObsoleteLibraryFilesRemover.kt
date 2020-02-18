@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration
 
+import com.intellij.ide.JavaUiBundle
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
@@ -25,9 +26,9 @@ class ObsoleteLibraryFilesRemover(private val project: Project) {
 
     if (toDelete.isNotEmpty()) {
       if (Messages.showYesNoDialog(project,
-                                   ProjectBundle.message("dialog.message.obsolete.library.files.remover.delete.files", toDelete.size,
+                                   JavaUiBundle.message("dialog.message.obsolete.library.files.remover.delete.files", toDelete.size,
                                                          toDelete.joinToString("\n") { it.presentableUrl }),
-                                   ProjectBundle.message("dialog.title.obsolete.library.files.remover.delete.files"), null)
+                                   JavaUiBundle.message("dialog.title.obsolete.library.files.remover.delete.files"), null)
         == Messages.YES) {
         runWriteAction {
           toDelete.forEach {

@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +35,7 @@ public class PutSourceItemIntoDefaultLocationAction extends PutIntoDefaultLocati
         }
         paths.add(StringUtil.trimStart(StringUtil.trimEnd(path, "/"), "/"));
       }
-      presentation.setText(ProjectBundle.message("action.text.put.source.item.into.0", getTargetLocationText(paths)));
+      presentation.setText(JavaUiBundle.message("action.text.put.source.item.into.0", getTargetLocationText(paths)));
     }
     presentation.setEnabledAndVisible(enabled);
   }

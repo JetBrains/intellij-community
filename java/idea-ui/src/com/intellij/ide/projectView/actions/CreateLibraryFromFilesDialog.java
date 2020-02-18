@@ -2,7 +2,6 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.application.options.ModulesComboBox;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -42,7 +41,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
 
   public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<? extends OrderRoot> roots) {
     super(project, true);
-    setTitle(IdeBundle.message("dialog.title.create.library"));
+    setTitle(JavaUiBundle.message("dialog.title.create.library"));
     myProject = project;
     myRoots = roots;
     final FormBuilder builder = LibraryNameAndLevelPanel.createFormBuilder();

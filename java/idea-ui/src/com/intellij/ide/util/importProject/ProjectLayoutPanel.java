@@ -3,7 +3,6 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
@@ -327,7 +326,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       if (elements.size() > 1) {
         final String newName = Messages.showInputDialog(
           ProjectLayoutPanel.this,
-          IdeBundle.message("label.enter.new.name.for.merge.result"),
+          JavaUiBundle.message("label.enter.new.name.for.merge.result"),
           CommonBundle.message("dialog.title.merge"),
           Messages.getQuestionIcon(), getElementName(elements.get(0)), getValidator());
         if (newName != null) {
@@ -397,9 +396,9 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       if (elements.size() == 1) {
         final T element = elements.get(0);
-        final String newName = Messages.showInputDialog(ProjectLayoutPanel.this, IdeBundle
+        final String newName = Messages.showInputDialog(ProjectLayoutPanel.this, JavaUiBundle
                                                           .message("label.new.name.for.0.1", getElementTypeName(), getElementName(element)),
-                                                        IdeBundle.message("dialog.title.rename.module.or.library.0", StringUtil.capitalize(getElementTypeName())),
+                                                        JavaUiBundle.message("dialog.title.rename.module.or.library.0", StringUtil.capitalize(getElementTypeName())),
                                                         Messages.getQuestionIcon(),
                                                         getElementName(element),
                                                         getValidator()
@@ -434,7 +433,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
     private SplitDialog(final Collection<File> files) {
       super(myEntriesChooser, true);
-      setTitle(IdeBundle.message("dialog.title.split.module.or.library.0", StringUtil.capitalize(getElementTypeName())));
+      setTitle(JavaUiBundle.message("dialog.title.split.module.or.library.0", StringUtil.capitalize(getElementTypeName())));
 
       myNameField = new JTextField();
       myChooser = new ElementsChooser<File>(true) {

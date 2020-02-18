@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
@@ -38,7 +38,7 @@ public class InlineArtifactAction extends DumbAwareAction {
   private final ArtifactEditorEx myEditor;
 
   public InlineArtifactAction(ArtifactEditorEx editor) {
-    super(ProjectBundle.message("action.name.inline.artifact"));
+    super(JavaUiBundle.message("action.name.inline.artifact"));
     myEditor = editor;
   }
 
