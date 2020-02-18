@@ -66,6 +66,7 @@ public final class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multi
   @Override
   public void install(@NotNull StatusBar statusBar) {
     myStatusBar = statusBar;
+    myStatusBar.updateWidget(ID());
     ApplicationManager.getApplication().getMessageBus().connect(this)
       .subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
         @Override
