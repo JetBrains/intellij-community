@@ -943,12 +943,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
               if (values != null) {
                 for (PsiExpression caseValue : values.getExpressions()) {
 
+                  boolean enumConstant = false;
                   if (enumValues != null && caseValue instanceof PsiReferenceExpression) {
-                    //noinspection SuspiciousMethodCalls
-                    enumValues.remove(((PsiReferenceExpression)caseValue).resolve());
+                    PsiEnumConstant target = ObjectUtils.tryCast(((PsiReferenceExpression)caseValue).resolve(), PsiEnumConstant.class);
+                    if (target != null) {
+                      enumValues.remove(target);
+                      enumConstant = true;
+                    }
                   }
 
-                  if (caseValue != null && expressionValue != null) {
+                  if (caseValue != null && expressionValue != null && (enumConstant || PsiUtil.isConstantExpression(caseValue))) {
                     addInstruction(new PushInstruction(expressionValue, null));
                     caseValue.accept(this);
                     addInstruction(new BinopInstruction(
