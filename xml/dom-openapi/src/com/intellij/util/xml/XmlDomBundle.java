@@ -23,11 +23,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class DomBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.DomBundle";
-  private static final DomBundle INSTANCE = new DomBundle();
+public class XmlDomBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.XmlDomBundle";
+  private static final XmlDomBundle INSTANCE = new XmlDomBundle();
 
-  private DomBundle() { super(BUNDLE); }
+  private XmlDomBundle() { super(BUNDLE); }
 
   @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {

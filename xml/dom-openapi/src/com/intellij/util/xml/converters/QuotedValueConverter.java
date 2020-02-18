@@ -145,10 +145,11 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
       return getReferenceVariants(myContext, myGenericDomValue, getRangeInElement());
     }
 
+    @SuppressWarnings("UnresolvedPropertyKey")
     @Override
     @NotNull
     public String getUnresolvedMessagePattern() {
-      return myBadQuotation? DomBundle.message("message.invalid.value.quotation") : getUnresolvedMessage(getValue());
+      return myBadQuotation ? XmlDomBundle.message("message.invalid.value.quotation") : getUnresolvedMessage(getValue());
     }
   }
 }

@@ -72,17 +72,17 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
     final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
     if (extendClasses.length > 0) {
       if (!name.equals(value.getQualifiedName()) && ContainerUtil.find(extendClasses, aClass -> value.isInheritor(aClass, true)) == null) {
-        String message = DomBundle.message("class.is.not.a.subclass", value.getQualifiedName(), name);
+        String message = XmlDomBundle.message("class.is.not.a.subclass", value.getQualifiedName(), name);
         list.add(holder.createProblem(element, message));
       }
     }
 
     if (instantiatable) {
       if (value.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        list.add(holder.createProblem(element, DomBundle.message("class.is.not.concrete", value.getQualifiedName())));
+        list.add(holder.createProblem(element, XmlDomBundle.message("class.is.not.concrete", value.getQualifiedName())));
       }
       else if (!allowNonPublic && !value.hasModifierProperty(PsiModifier.PUBLIC)) {
-        list.add(holder.createProblem(element, DomBundle.message("class.is.not.public", value.getQualifiedName())));
+        list.add(holder.createProblem(element, XmlDomBundle.message("class.is.not.public", value.getQualifiedName())));
       }
       else if (!PsiUtil.hasDefaultConstructor(value, true, true)) {
         if (canBeDecorator) {
@@ -104,22 +104,22 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
             }
           }
           if (!hasConstructor) {
-            list.add(holder.createProblem(element, DomBundle.message("class.decorator.or.has.default.constructor", value.getQualifiedName())));
+            list.add(holder.createProblem(element, XmlDomBundle.message("class.decorator.or.has.default.constructor", value.getQualifiedName())));
           }
         }
         else {
-          list.add(holder.createProblem(element, DomBundle.message("class.has.no.default.constructor", value.getQualifiedName())));
+          list.add(holder.createProblem(element, XmlDomBundle.message("class.has.no.default.constructor", value.getQualifiedName())));
         }
       }
     }
     if (!allowInterface && value.isInterface()) {
-      list.add(holder.createProblem(element, DomBundle.message("interface.not.allowed", value.getQualifiedName())));
+      list.add(holder.createProblem(element, XmlDomBundle.message("interface.not.allowed", value.getQualifiedName())));
     }
     if (!allowEnum && value.isEnum()) {
-      list.add(holder.createProblem(element, DomBundle.message("enum.not.allowed", value.getQualifiedName())));
+      list.add(holder.createProblem(element, XmlDomBundle.message("enum.not.allowed", value.getQualifiedName())));
     }
     if (!allowAbstract && value.hasModifierProperty(PsiModifier.ABSTRACT) && !value.isInterface()) {
-      list.add(holder.createProblem(element, DomBundle.message("abstract.class.not.allowed", value.getQualifiedName())));
+      list.add(holder.createProblem(element, XmlDomBundle.message("abstract.class.not.allowed", value.getQualifiedName())));
     }
     return list;
   }
