@@ -10,12 +10,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.VirtualFilePattern;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +30,13 @@ import java.util.Objects;
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 
 public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContributor {
+
   @NonNls private static final String ACTION = "action.";
   @NonNls private static final String GROUP = "group.";
   @NonNls private static final String TEXT = ".text";
   @NonNls private static final String DESC = ".description";
   @NonNls private static final String BUNDLE_PROPERTIES = "Bundle.properties";
-  
+
   public static final PsiElementResolveResult[] EMPTY_RESOLVE_RESULT = new PsiElementResolveResult[0];
 
   @Override
@@ -83,7 +85,7 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
 
     @NotNull
     @Override
-    public ResolveResult[] multiResolve(boolean incompleteCode) {
+    public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
       Project project = getElement().getProject();
 
       CommonProcessors.CollectUniquesProcessor<ActionOrGroup> processor = new CommonProcessors.CollectUniquesProcessor<>();
@@ -96,9 +98,9 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
 
       return JBIterable
         .from(processor.getResults())
-        .map(a -> {
-          XmlElement xml = a.getId().getXmlAttributeValue();
-          return xml == null ? null : new PsiElementResolveResult(xml);
+        .map(actionOrGroup -> {
+          final DomTarget target = DomTarget.getTarget(actionOrGroup);
+          return target == null ? null : new PsiElementResolveResult(PomService.convertToPsi(project, target));
         }).filter(Objects::nonNull).toArray(EMPTY_RESOLVE_RESULT);
     }
   }
@@ -111,7 +113,7 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
       if (!fileName.endsWith(BUNDLE_PROPERTIES)) return false;
       String name = property.getName();
       if (name == null) return false;
-      if ((name.startsWith(ACTION) || name.startsWith(GROUP)) && 
+      if ((name.startsWith(ACTION) || name.startsWith(GROUP)) &&
           (name.endsWith(TEXT) || name.endsWith(DESC))) {
         PsiElement key = property.getFirstChild();
         PsiReference[] references = key == null ? PsiReference.EMPTY_ARRAY : key.getReferences();
