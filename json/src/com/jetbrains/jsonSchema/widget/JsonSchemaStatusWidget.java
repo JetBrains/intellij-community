@@ -45,8 +45,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
+  public static final String ID = "JSONSchemaSelector";
   private final SynchronizedClearableLazy<JsonSchemaService> myServiceLazy;
-  private static final String ID = "JSONSchemaSelector";
   private static final AtomicBoolean myIsNotified = new AtomicBoolean(false);
 
   JsonSchemaStatusWidget(Project project) {

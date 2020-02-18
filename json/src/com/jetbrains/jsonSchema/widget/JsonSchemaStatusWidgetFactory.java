@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 public class JsonSchemaStatusWidgetFactory extends StatusBarEditorBasedWidgetFactory {
   @Override
   public @NotNull String getId() {
-    return "json.scheme";
+    return JsonSchemaStatusWidget.ID;
   }
 
   @Override

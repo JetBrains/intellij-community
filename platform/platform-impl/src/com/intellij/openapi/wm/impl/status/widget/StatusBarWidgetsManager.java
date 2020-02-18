@@ -104,6 +104,9 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
 
     StatusBarWidget widget = factory.createWidget(myProject);
     if (widget != null) {
+      if (!widget.ID().equals(factory.getId())) {
+        LOG.warn("Factory id doesn't match widget id. It may affect ordering: " + factory.getId());
+      }
       myWidgetFactories.put(factory, widget);
       statusBar.addWidget(widget, getAnchor(factory), this);
       Disposer.register(this, () -> disableWidget(factory));
