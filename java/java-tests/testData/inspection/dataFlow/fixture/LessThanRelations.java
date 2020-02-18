@@ -1,6 +1,16 @@
 import java.util.*;
 
 class LessThanRelations {
+  void test(int a, int b, int c, int d) {
+    if (a > b) {
+      if (c < d) {
+        if (<warning descr="Condition 'a == c && b == d' is always 'false'">a == c && <warning descr="Condition 'b == d' is always 'false' when reached">b == d</warning></warning>) {
+
+        }
+      }
+    }
+  }
+
   void foo1(long f1, long f2, long t1, long t2) {
     if (t1 < f2 || f1 > f2) return;
     if (f1 <= f2 && t1 >= t2) return;

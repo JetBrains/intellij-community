@@ -123,6 +123,12 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
 
       if (pc1 == c1Index || pc2 == c1Index) {
         addedToC1 = true;
+        if (distinct < 0) {
+          if (pc1 == c1Index && myData.contains(createPair(pc2, c2Index, true)) ||
+              pc2 == c2Index && myData.contains(createPair(c2Index, pc1, true))) {
+            return false;
+          }
+        }
       }
 
       if (pc1 == c2Index || pc2 == c2Index) {
@@ -224,8 +230,7 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
       myList = list;
     }
 
-    @NotNull
-    public EqClass getFirst() {
+    public @NotNull EqClass getFirst() {
       return myList.get(myFirst);
     }
 
@@ -233,8 +238,7 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
       return myFirst;
     }
 
-    @NotNull
-    public EqClass getSecond() {
+    public @NotNull EqClass getSecond() {
       return myList.get(mySecond);
     }
 
@@ -255,8 +259,7 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
       return myOrdered;
     }
 
-    @Nullable
-    public EqClass getOtherClass(int eqClassIndex) {
+    public @Nullable EqClass getOtherClass(int eqClassIndex) {
       if (myFirst == eqClassIndex) {
         return getSecond();
       }
