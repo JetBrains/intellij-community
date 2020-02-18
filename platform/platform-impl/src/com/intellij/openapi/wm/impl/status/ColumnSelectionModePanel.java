@@ -62,6 +62,7 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
     if (multicaster instanceof EditorEventMulticasterEx) {
       ((EditorEventMulticasterEx)multicaster).addPropertyChangeListener(this, this);
     }
+    updateStatus();
   }
 
   private void updateStatus() {

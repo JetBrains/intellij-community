@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,7 +14,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorManagerListener {
-  private static final Logger LOG = Logger.getInstance(EditorBasedWidget.class);
   public static final String SWING_FOCUS_OWNER_PROPERTY = "focusOwner";
 
   @NotNull
@@ -38,47 +36,7 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
 
   @Nullable
   protected Editor getEditor() {
-    final Project project = getProject();
-    if (project.isDisposed()) return null;
-
-    FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(myStatusBar);
-    Editor result = null;
-    if (fileEditor instanceof TextEditor) {
-      Editor editor = ((TextEditor)fileEditor).getEditor();
-      if (ensureValidEditorFile(editor)) {
-        result = editor;
-      }
-    }
-
-    if (result == null) {
-      final FileEditorManager manager = FileEditorManager.getInstance(project);
-      Editor editor = manager.getSelectedTextEditor();
-      if (editor != null &&
-          WindowManager.getInstance().getStatusBar(editor.getComponent(), project) == myStatusBar &&
-          ensureValidEditorFile(editor)) {
-        result = editor;
-      }
-    }
-
-    return result;
-  }
-
-  private static boolean ensureValidEditorFile(Editor editor) {
-    Document document = editor.getDocument();
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file != null && !file.isValid()) {
-      Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
-      Project project = editor.getProject();
-      Boolean fileIsOpen = project == null ? null : ArrayUtil.contains(file, FileEditorManager.getInstance(project).getOpenFiles());
-      LOG.error("Returned editor for invalid file: " + editor +
-                "; disposed=" + editor.isDisposed() +
-                "; file " + file.getClass() +
-                "; cached document exists: " + (cachedDocument != null) +
-                "; same as document: " + (cachedDocument == document) +
-                "; file is open: " + fileIsOpen);
-      return false;
-    }
-    return true;
+    return StatusBarUtil.getCurrentTextEditor(myStatusBar);
   }
 
   public boolean isOurEditor(Editor editor) {
