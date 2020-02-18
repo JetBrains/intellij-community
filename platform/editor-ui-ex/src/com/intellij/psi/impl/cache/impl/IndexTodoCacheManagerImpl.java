@@ -4,6 +4,7 @@ package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -16,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -46,16 +48,13 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
           TodoIndex.NAME,
           new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), GlobalSearchScope.allScope(myProject));
         PsiManager psiManager = PsiManager.getInstance(myProject);
-        ApplicationManager.getApplication().runReadAction(() -> {
-          for (VirtualFile file : files) {
-            if (TodoIndexers.belongsToProject(myProject, file)) {
-              final PsiFile psiFile = psiManager.findFile(file);
-              if (psiFile != null) {
-                allFiles.add(psiFile);
-              }
+        for (VirtualFile file : files) {
+          ReadAction.run(() -> {
+            if (file.isValid() && TodoIndexers.belongsToProject(myProject, file)) {
+              ContainerUtil.addIfNotNull(allFiles, psiManager.findFile(file));
             }
-          }
-        });
+          });
+        }
       }
     }, myProject, DumbModeAccessType.RELIABLE_DATA_ONLY);
 
