@@ -131,8 +131,10 @@ object DynamicPlugins {
       for (epName in extensions.keys) {
         val pluginExtensionPoint = findPluginExtensionPoint(baseDescriptor ?: descriptor, epName)
         if (pluginExtensionPoint != null) {
-          if (baseDescriptor != null && !pluginExtensionPoint.isDynamic) {
-            LOG.info("Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it")
+          // descriptor.pluginId is null when we check the optional dependencies of the plugin which is being loaded
+          // if an optional dependency of a plugin extends a non-dynamic EP of that plugin, it shouldn't prevent plugin loading
+          if (baseDescriptor != null && descriptor.pluginId != null && !pluginExtensionPoint.isDynamic) {
+            LOG.info("Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependency on it: ${descriptor.pluginId}")
             return false
           }
           continue
