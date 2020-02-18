@@ -255,7 +255,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   @NotNull
   public TextDiffSettings getTextSettings() {
-    return TextDiffSettings.getSettings("ApplyPatch");
+    return TextDiffSettings.getSettings("ApplyPatch"); //NON-NLS
   }
 
   @NotNull
@@ -271,12 +271,13 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   protected void initPatchViewer() {
   myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myPatchRequest));
     final Document outputDocument = myResultEditor.getDocument();
-    boolean success = DiffUtil.executeWriteCommand(outputDocument, myProject, "Init merge content", () -> {
-      outputDocument.setText(myPatchRequest.getLocalContent());
-      if (!isReadOnly()) DiffUtil.putNonundoableOperation(myProject, outputDocument);
-    });
+    boolean success =
+      DiffUtil.executeWriteCommand(outputDocument, myProject, DiffBundle.message("merge.init.merge.content.execute.command.name"), () -> {
+        outputDocument.setText(myPatchRequest.getLocalContent());
+        if (!isReadOnly()) DiffUtil.putNonundoableOperation(myProject, outputDocument);
+      });
     if (!success && !StringUtil.equals(outputDocument.getText(), myPatchRequest.getLocalContent())) {
-      myPanel.setErrorContent("Failed to display patch applier - local content was modified");
+      myPanel.setErrorContent(VcsBundle.message("patch.apply.display.local.content.was.modified.error"));
       return;
     }
 
@@ -524,7 +525,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
       final List<ApplyPatchChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 
-      String title = e.getPresentation().getText() + " in patch resolve";
+      String title = VcsBundle.message("patch.apply.changes.in.patch.resolve", e.getPresentation().getText());
 
       executeCommand(title, () -> apply(selectedChanges));
     }
@@ -558,7 +559,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class ApplyNonConflictsAction extends DumbAwareAction {
     ApplyNonConflictsAction() {
-      ActionUtil.copyFrom(this, "Diff.ApplyNonConflicts");
+      ActionUtil.copyFrom(this, "Diff.ApplyNonConflicts"); //NON-NLS
     }
 
     @Override
@@ -576,7 +577,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
       List<ApplyPatchChange> changes = myModelChanges;
       if (changes.isEmpty()) return;
 
-      executeCommand("Apply Non Conflicted Changes", () -> {
+      executeCommand(DiffBundle.message("merge.dialog.apply.non.conflicted.changes.command"), () -> {
         for (int i = changes.size() - 1; i >= 0; i--) {
           ApplyPatchChange change = changes.get(i);
           switch (change.getStatus()) {

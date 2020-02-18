@@ -134,11 +134,11 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
         String base = PatchWriter.calculateBaseForWritingPatch(project, changes).getPath();
         List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, base, false);
         writeAsPatchToClipboard(project, patches, base, new CommitContext());
-        VcsNotifier.getInstance(project).notifySuccess("Patch copied to clipboard");
+        VcsNotifier.getInstance(project).notifySuccess(VcsBundle.message("patch.copied.to.clipboard"));
       }
       catch (IOException | VcsException exception) {
         LOG.warn("Can't create patch", exception);
-        VcsNotifier.getInstance(project).notifyWeakError("Patch Creation Failed", exception.getMessage());
+        VcsNotifier.getInstance(project).notifyWeakError(VcsBundle.message("patch.creation.failed"), exception.getMessage());
       }
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
   }

@@ -9,6 +9,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
@@ -91,7 +92,7 @@ import static java.util.Objects.requireNonNull;
 public class ShelvedChangesViewManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
   @NonNls static final String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
-  private static final String SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION";
+  private static final String SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION"; //NON-NLS
 
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
@@ -197,7 +198,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     public void setDeletedShelvedLists(@NotNull List<? extends ShelvedChangeList> shelvedLists) {
-      createShelvedListsWithChangesNode(shelvedLists, createTagNode("Recently Deleted"));
+      createShelvedListsWithChangesNode(shelvedLists, createTagNode(VcsBundle.message("shelve.recently.deleted.node")));
     }
 
     private void createShelvedListsWithChangesNode(@NotNull List<? extends ShelvedChangeList> shelvedLists, @NotNull MutableTreeNode parentNode) {
@@ -325,7 +326,7 @@ public class ShelvedChangesViewManager implements Disposable {
     updateTreeIfShown(tree -> {
       DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), list);
       if (treeNode == null) {
-        LOG.warn(String.format("Shelved changeList %s not found", list.DESCRIPTION));
+        LOG.warn(VcsBundle.message("shelve.changelist.not.found", list.DESCRIPTION));
         return;
       }
       TreeUtil.selectNode(tree, treeNode);
@@ -539,7 +540,7 @@ public class ShelvedChangesViewManager implements Disposable {
       @NotNull private final Map<ShelvedChangeList, Date> myListDateMap;
 
       private UndoShelfDeletionAction(@NotNull Project project, @NotNull Map<ShelvedChangeList, Date> listDateMap) {
-        super("Undo");
+        super(IdeBundle.lazyMessage("undo.dialog.title"));
         myProject = project;
         myListDateMap = listDateMap;
       }
@@ -551,8 +552,8 @@ public class ShelvedChangesViewManager implements Disposable {
         myListDateMap.forEach((l, d) -> manager.restoreList(l, d));
         notification.expire();
         if (!cantRestoreList.isEmpty()) {
-          VcsNotifier.getInstance(myProject).notifyMinorWarning("Undo Shelf Deletion", VcsBundle
-            .message("shelve.changes.restore.error", cantRestoreList.size(), StringUtil.pluralize("changelist", cantRestoreList.size())));
+          VcsNotifier.getInstance(myProject).notifyMinorWarning(VcsBundle.message("shelve.undo.deletion"),
+                                                                VcsBundle.message("shelve.changes.restore.error", cantRestoreList.size()));
         }
       }
     }
@@ -577,23 +578,11 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @NotNull
     private static String constructDeleteSuccessfullyMessage(int fileNum, int listNum, @Nullable ShelvedChangeList first) {
-      StringBuilder stringBuilder = new StringBuilder();
-      String delimiter = "";
-      if (fileNum != 0) {
-        stringBuilder.append(fileNum == 1 ? "one" : fileNum).append(StringUtil.pluralize(" file", fileNum));
-        delimiter = " and ";
-      }
-      if (listNum != 0) {
-        stringBuilder.append(delimiter);
-        if (listNum == 1 && first != null) {
-          stringBuilder.append("one shelved changelist [<b>").append(first.DESCRIPTION).append("</b>]");
-        }
-        else {
-          stringBuilder.append(listNum).append(" shelved ").append(StringUtil.pluralize("changelist", listNum));
-        }
-      }
-      stringBuilder.append(" deleted successfully");
-      return StringUtil.capitalize(stringBuilder.toString());
+      String filesMessage = fileNum != 0 ? VcsBundle.message("shelve.delete.files.successful.message", fileNum) : "";
+      String changelistsMessage = listNum != 0 ? VcsBundle
+        .message("shelve.delete.changelists.message", listNum, listNum == 1 && first != null ? first.DESCRIPTION : "") : "";
+      return StringUtil.capitalize(
+        VcsBundle.message("shelve.delete.successful.message", filesMessage, fileNum > 0 && listNum > 0 ? 1 : 0, changelistsMessage));
     }
 
     @Override
@@ -696,7 +685,7 @@ public class ShelvedChangesViewManager implements Disposable {
           @Override
           protected String getCurrentName() {
             ShelvedWrapper myCurrentShelvedElement = changeProcessor.myCurrentShelvedElement;
-            return myCurrentShelvedElement != null ? myCurrentShelvedElement.getRequestName() : "Shelf";
+            return myCurrentShelvedElement != null ? myCurrentShelvedElement.getRequestName() : VcsBundle.message("shelved.version.name");
           }
 
           @Override
@@ -768,7 +757,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @NotNull
     private DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
-      String imageText = "Unshelve changes";
+      String imageText = VcsBundle.message("unshelve.changes.action");
       Image image = DnDAwareTree.getDragImage(myTree, imageText, null).getFirst();
       return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
     }
@@ -880,6 +869,7 @@ public class ShelvedChangesViewManager implements Disposable {
         if (binaryFile.AFTER_PATH == null) {
           throw new DiffRequestProducerException("Content for '" + getRequestName(provider) + "' was removed");
         }
+        //
         byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
         FileType fileType = VcsUtil.getFilePath(binaryFile.SHELVED_PATH).getFileType();
         return new SimpleDiffRequest(getRequestName(provider), factory.createEmpty(),
@@ -949,7 +939,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
       String path = myShelvedChange.getRequestName();
-      String directory = StringUtil.defaultIfEmpty(PathUtil.getParentPath(path), "<project root>");
+      String directory = StringUtil.defaultIfEmpty(PathUtil.getParentPath(path), VcsBundle.message("shelve.default.path.rendering"));
       String fileName = StringUtil.defaultIfEmpty(PathUtil.getFileName(path), path);
 
       renderer.append(fileName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, myShelvedChange.getFileStatus().getColor()));

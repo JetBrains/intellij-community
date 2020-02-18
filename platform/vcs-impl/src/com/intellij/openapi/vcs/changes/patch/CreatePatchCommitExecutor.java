@@ -36,8 +36,8 @@ import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToC
 
 public final class CreatePatchCommitExecutor extends LocalCommitExecutor implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(CreatePatchCommitExecutor.class);
-  private static final String VCS_PATCH_PATH_KEY = "vcs.patch.path";
-  private static final String VCS_PATCH_TO_CLIPBOARD = "vcs.patch.to.clipboard";
+  private static final String VCS_PATCH_PATH_KEY = "vcs.patch.path"; //NON-NLS
+  private static final String VCS_PATCH_TO_CLIPBOARD = "vcs.patch.to.clipboard"; //NON-NLS
 
   private final Project myProject;
 
@@ -53,7 +53,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor impleme
   @Override
   @Nls
   public String getActionText() {
-    return "Create Patch...";
+    return VcsBundle.message("action.name.create.patch");
   }
 
   @Override
@@ -119,7 +119,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor impleme
           String base = myPanel.getBaseDirName();
           List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, base, myPanel.isReversePatch(), true);
           writeAsPatchToClipboard(myProject, patches, base, myCommitContext);
-          VcsNotifier.getInstance(myProject).notifySuccess("Patch copied to clipboard");
+          VcsNotifier.getInstance(myProject).notifySuccess(VcsBundle.message("patch.copied.to.clipboard"));
         }
         else {
           validateAndWritePatchToFile(changes);
@@ -169,7 +169,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor impleme
     @Nullable
     @Override
     public String getHelpId() {
-      return "reference.dialogs.PatchFileSettings";
+      return "reference.dialogs.PatchFileSettings"; //NON-NLS
     }
   }
 
@@ -177,10 +177,10 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor impleme
     if (file.exists()) {
       final int[] result = new int[1];
       WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(
-        () -> result[0] = Messages.showYesNoDialog(myProject, "File " + file.getName() + " (" + file.getParent() + ")" +
-                                                              " already exists.\nDo you want to overwrite it?",
-                                                   "Save Patch File",
-                                                   "Overwrite", "Cancel",
+        () -> result[0] = Messages.showYesNoDialog(myProject, VcsBundle
+                                                     .message("patch.apply.already.exists.overwrite.prompt", file.getName(), file.getParent()),
+                                                   VcsBundle.message("patch.creation.save.patch.file.title"),
+                                                   CommonBundle.message("button.overwrite"), CommonBundle.message("button.cancel"),
                                                    Messages.getWarningIcon()));
       if (Messages.NO == result[0]) return false;
     }
@@ -188,8 +188,8 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor impleme
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() ->
                                                             Messages.showErrorDialog(myProject, VcsBundle
                                                               .message("create.patch.error.title",
-                                                                       "Can not write patch to specified file: " +
-                                                                       file.getPath()), CommonBundle.getErrorTitle()),
+                                                                       VcsBundle
+                                                                         .message("patch.creation.can.not.write.patch.error", file.getPath())), CommonBundle.getErrorTitle()),
                                                           ModalityState.NON_MODAL, myProject);
       return false;
     }

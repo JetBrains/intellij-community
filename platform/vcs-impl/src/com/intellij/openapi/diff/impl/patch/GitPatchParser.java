@@ -129,10 +129,10 @@ public class GitPatchParser {
 
   @NotNull
   private static FileStatus parseFileStatus(@NotNull String status) {
-    if (status.startsWith("new")) {
+    if (status.startsWith("new")) { //NON-NLS
       return FileStatus.ADDED;
     }
-    else if (status.startsWith("deleted")) return FileStatus.DELETED;
+    else if (status.startsWith("deleted")) return FileStatus.DELETED; //NON-NLS
     return FileStatus.MODIFIED;
   }
 

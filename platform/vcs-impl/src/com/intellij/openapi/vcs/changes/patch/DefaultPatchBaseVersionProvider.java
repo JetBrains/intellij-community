@@ -187,7 +187,7 @@ public class DefaultPatchBaseVersionProvider {
 
   private Long getFromTsPattern() {
     final String trimmed = myVersionId.trim();
-    final String startPattern = "(date";
+    final String startPattern = "(date"; //NON-NLS
     final int start = trimmed.indexOf(startPattern);
     if (start >= 0) {
       String number = trimmed.substring(startPattern.length() + start);

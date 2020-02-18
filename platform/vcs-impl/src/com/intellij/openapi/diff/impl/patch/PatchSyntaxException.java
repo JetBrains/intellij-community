@@ -16,10 +16,13 @@
 
 package com.intellij.openapi.diff.impl.patch;
 
+import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.Nls;
+
 public class PatchSyntaxException extends Exception {
   private final int myLine;
 
-  public PatchSyntaxException(int line, String message) {
+  public PatchSyntaxException(int line, @Nls String message) {
     super(message);
     myLine = line;
   }
@@ -30,6 +33,6 @@ public class PatchSyntaxException extends Exception {
 
   @Override
   public String getMessage() {
-    return String.format(super.getMessage() + " (line:%d)", myLine);
+    return  super.getMessage() + VcsBundle.message("patch.apply.syntax.line", myLine);
   }
 }

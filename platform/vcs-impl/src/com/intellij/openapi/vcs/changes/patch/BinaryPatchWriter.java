@@ -8,6 +8,7 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,11 +26,11 @@ public class BinaryPatchWriter {
 
   private final static Logger LOG = Logger.getInstance(BinaryFilePatch.class);
 
-  private final static String GIT_DIFF_HEADER = "diff --git %s %s";
-  private final static String FILE_MODE_HEADER = "%s file mode %s";
-  private final static String INDEX_SHA1_HEADER = "index %s..%s";
-  private final static String GIT_BINARY_HEADER = "GIT binary patch";
-  private final static String LITERAL_HEADER = "literal %s";
+  private final static @NonNls String GIT_DIFF_HEADER = "diff --git %s %s";
+  private final static @NonNls String FILE_MODE_HEADER = "%s file mode %s";
+  private final static @NonNls String INDEX_SHA1_HEADER = "index %s..%s";
+  private final static @NonNls String GIT_BINARY_HEADER = "GIT binary patch";
+  private final static @NonNls String LITERAL_HEADER = "literal %s";
 
   public static void writeBinaries(@Nullable String basePath,
                                    @NotNull List<? extends BinaryFilePatch> patches,
@@ -69,7 +70,7 @@ public class BinaryPatchWriter {
 
   @NotNull
   private static String getFileModeHeader(@NotNull FileStatus fileStatus, int mode) {
-    return String.format(FILE_MODE_HEADER, fileStatus == FileStatus.DELETED ? "deleted" : "new", mode);
+    return String.format(FILE_MODE_HEADER, fileStatus == FileStatus.DELETED ? "deleted" : "new", mode); //NON-NLS NON-NLS
   }
 
   @NotNull

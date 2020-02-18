@@ -76,7 +76,6 @@ import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChang
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.createShelvedChangesFromFilePatches;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Objects.requireNonNull;
 
@@ -98,8 +97,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     return project.getComponent(ShelveChangesManager.class);
   }
 
-  private static final String SHELVE_MANAGER_DIR_PATH = "shelf";
-  public static final String DEFAULT_PROJECT_PRESENTATION_PATH = "<Project>/shelf";
+  private static final String SHELVE_MANAGER_DIR_PATH = "shelf"; //NON-NLS
+  public static final String DEFAULT_PROJECT_PRESENTATION_PATH = "<Project>/shelf"; //NON-NLS
 
   private static final Element EMPTY_ELEMENT = new Element("state");
 
@@ -240,7 +239,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     final SchemeManager<ShelvedChangeList> newSchemeManager = createShelveSchemeManager(myProject, VcsUtil.getFilePath(toFile).getPath());
     newSchemeManager.loadSchemes();
     if (VcsConfiguration.getInstance(myProject).MOVE_SHELVES && fromFile.exists()) {
-      new Task.Modal(myProject, "Copying Shelves to the New Directory...", true) {
+      new Task.Modal(myProject, VcsBundle.message("shelve.copying.shelves.to.progress"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           for (ShelvedChangeList list : mySchemeManager.getAllSchemes()) {
@@ -270,12 +269,13 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
           suggestToCancelMigrationOrRevertPathToPrevious();
         }
 
+        //
         private void suggestToCancelMigrationOrRevertPathToPrevious() {
           if (Messages.showOkCancelDialog(myProject,
-                                          "Shelves moving failed. <br/>Would you like to use new shelf directory path or revert it to previous?",
-                                          "Shelf Error",
-                                          "&Use New",
-                                          "&Revert",
+                                          VcsBundle.message("shelve.moving.failed.prompt"),
+                                          VcsBundle.message("shelve.error.title"),
+                                          VcsBundle.message("shelve.use.new.directory.button"),
+                                          VcsBundle.message("shelve.revert.moving.button"),
                                           UIUtil.getWarningIcon()) == Messages.OK) {
             updateShelveSchemaManager(newSchemeManager);
           }
@@ -463,7 +463,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     List<List<Change>> partition = Lists.partition(textChanges, partitionSize);
     for (List<Change> list : partition) {
       batchIndex++;
-      String inbatch = partition.size() > 1 ? " in batch #" + batchIndex : "";
+      String inbatch = partition.size() > 1 ? " in batch #" + batchIndex : ""; //NON-NLS
       StopWatch totalSw = StopWatch.start("Total shelving" + inbatch);
       try {
         StopWatch iterSw;
@@ -628,7 +628,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                                    final Consumer<? super VcsException> exceptionConsumer) {
     final List<ShelvedChangeList> result = new ArrayList<>(files.size());
     try {
-      final FilesProgress filesProgress = new FilesProgress(files.size(), "Processing ");
+      final FilesProgress filesProgress = new FilesProgress(files.size(), VcsBundle.message("shelve.import.to.progress"));
       for (VirtualFile file : files) {
         filesProgress.updateIndicator(file);
         final String description = file.getNameWithoutExtension().replace('_', ' ');
@@ -764,7 +764,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     }
     catch (IOException | PatchSyntaxException e) {
       LOG.info(e);
-      PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage());
+      PatchApplier.showError(myProject, VcsBundle.message("unshelve.loading.patch.error", e.getMessage()));
       return;
     }
 
@@ -849,7 +849,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     }
     catch (IOException | PatchSyntaxException e) {
       LOG.info(e);
-      VcsImplUtil.showErrorMessage(myProject, e.getMessage(), "Cannot delete files from " + list.DESCRIPTION);
+      VcsImplUtil.showErrorMessage(myProject, e.getMessage(),
+                                   VcsBundle.message("shelve.delete.files.from.changelist.error", list.DESCRIPTION));
       return null;
     }
     return saveRemainingPatchesIfNeeded(list, remainingPatches, remainingBinaries, commitContext, true);
@@ -921,7 +922,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
       @Override
       public void onSuccess() {
-        VcsNotifier.getInstance(myProject).notifySuccess("Changes shelved successfully");
+        VcsNotifier.getInstance(myProject).notifySuccess(VcsBundle.message("shelve.successful.message"));
         if (result.size() == 1 && isShelfContentActive()) {
           ShelvedChangesViewManager.getInstance(myProject).startEditing(result.get(0));
         }
@@ -996,9 +997,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     rollbackChangesAfterShelve(shelvedChanges, false);
 
     if (!failedChangeLists.isEmpty()) {
-      VcsNotifier.getInstance(myProject).notifyError("Shelf Failed", String
-        .format("Shelving changes for %s [%s] failed", StringUtil.pluralize("changelist", failedChangeLists.size()),
-                StringUtil.join(failedChangeLists, ",")));
+      VcsNotifier.getInstance(myProject).notifyError(VcsBundle.message("shelve.failed.title"), VcsBundle
+        .message("shelve.failed.message", failedChangeLists.size(), StringUtil.join(failedChangeLists, ",")));
     }
     return result;
   }

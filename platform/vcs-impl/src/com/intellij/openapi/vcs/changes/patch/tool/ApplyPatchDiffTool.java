@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.patch.tool;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ApplyPatchDiffTool implements FrameDiffTool {
@@ -35,7 +36,7 @@ public class ApplyPatchDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Apply patch somehow";
+    return VcsBundle.message("patch.apply.somehow.diff.name");
   }
 
   private static class MyApplyPatchViewer extends ApplyPatchViewer implements DiffViewer {

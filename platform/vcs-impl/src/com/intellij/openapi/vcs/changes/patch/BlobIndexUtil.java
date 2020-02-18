@@ -33,7 +33,7 @@ public class BlobIndexUtil {
    */
   @NotNull
   public static String getSha1(byte @NotNull [] bytes) {
-    String prefix = "blob " + bytes.length + '\u0000';
+    String prefix = "blob " + bytes.length + '\u0000'; //NON-NLS
     return Hashing.sha1().newHasher().putBytes(prefix.getBytes(Charsets.UTF_8)).putBytes(bytes).hash().toString();
   }
 

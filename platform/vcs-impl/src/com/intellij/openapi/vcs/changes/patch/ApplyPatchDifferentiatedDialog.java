@@ -110,7 +110,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private JLabel myPatchFileLabel;
   private PatchReader myReader;
   private final boolean myCanChangePatchFile;
-  private String myHelpId = "reference.dialogs.vcs.patch.apply";
+  private String myHelpId = "reference.dialogs.vcs.patch.apply"; //NON-NLS
   private final boolean myShouldUpdateChangeListName;
 
   public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<? extends ApplyPatchExecutor> executors,
@@ -227,7 +227,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         final int inapplicable = myInfoCalculator.getInapplicable();
         if (inapplicable > 0) {
           appendSpace();
-          append(inapplicable, FileStatus.MERGED_WITH_CONFLICTS, "missing base");
+          append(inapplicable, FileStatus.MERGED_WITH_CONFLICTS, VcsBundle.message("patch.apply.missing.base.file.label"));
         }
       }
     };
@@ -432,14 +432,14 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       reader = ReadAction.compute(() -> PatchVirtualFileReader.create(patchFile));
     }
     catch (IOException e) {
-      addNotificationAndWarn("Can't read patchFile " + patchFile.getPresentableName() + ": " + e.getMessage());
+      addNotificationAndWarn(VcsBundle.message("patch.apply.cannot.read.patch", patchFile.getPresentableName(), e.getMessage()));
       return null;
     }
     try {
       reader.parseAllPatches();
     }
     catch (PatchSyntaxException e) {
-      addNotificationAndWarn("Can't read patch: " + e.getMessage());
+      addNotificationAndWarn(VcsBundle.message("patch.apply.cannot.read.patch", "", e.getMessage()));
       return null;
     }
 
@@ -524,7 +524,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), getRootPane());
       group.add(diffAction);
 
-      ActionGroup mapDirectoryActionGroup = new ActionGroup("Change Directory Paths", null, AllIcons.Vcs.Folders) {
+      ActionGroup mapDirectoryActionGroup = new ActionGroup(VcsBundle.message("patch.apply.change.directory.paths.group"), null, AllIcons.Vcs.Folders) {
         @Override
         public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
           return new AnAction[]{
@@ -588,7 +588,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       myChangesTreeLoadingPanel.startLoading();
     }
     else {
-      myChangesTreeList.setEmptyText("No changed files");
+      myChangesTreeList.setEmptyText(VcsBundle.message("commit.dialog.no.changes.detected.text"));
       myChangesTreeLoadingPanel.stopLoading();
     }
   }
@@ -648,7 +648,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private final NewBaseSelector myNewBaseSelector;
 
     private MapDirectory() {
-      super("Map Base Directory...");
+      super(VcsBundle.message("patch.apply.map.base.directory.action"));
       myNewBaseSelector = new NewBaseSelector();
     }
 
@@ -797,7 +797,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       final FileChooserDescriptor descriptor = myDirectorySelector
                                                ? FileChooserDescriptorFactory.createSingleFolderDescriptor()
                                                : FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-      descriptor.setTitle(String.format("Select %s Base", myDirectorySelector ? "Directory" : "File"));
+      descriptor.setTitle(VcsBundle.message("patch.apply.select.base.title", myDirectorySelector ? 0 : 1));
       VirtualFile selectedFile = FileChooser.chooseFile(descriptor, myProject, null);
       if (selectedFile == null) {
         return;
@@ -831,7 +831,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private final Runnable myNewBaseSelector;
 
     private MapPopup(final @NotNull List<? extends VirtualFile> aValues, Runnable newBaseSelector) {
-      super("Select base directory for a path", aValues);
+      super(VcsBundle.message("path.apply.select.base.directory.for.a.path.popup"), aValues);
       myNewBaseSelector = newBaseSelector;
     }
 
@@ -860,7 +860,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @NotNull
     @Override
     public String getTextFor(VirtualFile value) {
-      return value == null ? "Select base for a path" : value.getPath();
+      return value == null ? VcsBundle.message("patch.apply.select.base.for.a.path.message") : value.getPath();
     }
   }
 
@@ -979,33 +979,33 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         final AbstractFilePatchInProgress.PatchChange patchChange = (AbstractFilePatchInProgress.PatchChange)change;
         final AbstractFilePatchInProgress patchInProgress = patchChange.getPatchInProgress();
         if (patchInProgress.getCurrentStrip() > 0) {
-          component.append(" stripped " + patchInProgress.getCurrentStrip(), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+          component.append(VcsBundle.message("patch.apply.stripped.description", patchInProgress.getCurrentStrip()), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
         }
         final String text;
         if (FilePatchStatus.ADDED.equals(patchInProgress.getStatus())) {
-          text = "Added";
+          text = VcsBundle.message("patch.apply.added.status");
         }
         else if (FilePatchStatus.DELETED.equals(patchInProgress.getStatus())) {
-          text = "Deleted";
+          text = VcsBundle.message("patch.apply.deleted.status");
         }
         else {
-          text = "Modified";
+          text = VcsBundle.message("patch.apply.modified.status");
         }
         component.append("   ");
         component.append(text, SimpleTextAttributes.GRAY_ATTRIBUTES);
         if (!patchInProgress.baseExistsOrAdded()) {
           component.append("  ");
-          component.append("Select missing base", new SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
+          component.append(VcsBundle.message("patch.apply.select.missing.base.link"), new SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
                            (Runnable)myChangesTreeList::handleInvalidChangesAndToggle);
         }
         else {
           if (!patchInProgress.getStatus().equals(FilePatchStatus.ADDED) && basePathWasChanged(patchInProgress)) {
             component.append("  ");
-            component.append("New base detected", SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
-            component.setToolTipText(
-              String.format("was: %s (base dir: %s)", patchInProgress.getOriginalBeforePath(), myProject.getBasePath()) + "<br/>" +
-              String.format("now: %s (base dir: %s)", patchInProgress.getPatch().getBeforeName(),
-                            patchInProgress.getBase().getPath()));
+            component
+              .append(VcsBundle.message("patch.apply.new.base.detected.node.description"), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+            component.setToolTipText(VcsBundle.message("patch.apply.old.new.base.info", patchInProgress.getOriginalBeforePath(),
+                                                       myProject.getBasePath(), patchInProgress.getPatch().getBeforeName(),
+                                                       patchInProgress.getBase().getPath()));
           }
         }
       }
@@ -1100,7 +1100,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private final MyChangeComparator myMyChangeComparator;
 
     private MyShowDiff() {
-      super("Show Diff", "Show Diff", AllIcons.Actions.Diff);
+      super(VcsBundle.message("action.name.show.difference"),null, AllIcons.Actions.Diff);
       myMyChangeComparator = new MyChangeComparator();
     }
 

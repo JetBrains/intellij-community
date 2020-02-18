@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer;
 import com.intellij.ui.ColorUtil;
@@ -203,11 +204,11 @@ class ApplyPatchChange {
   private String getStatusText() {
     switch (myStatus) {
       case ALREADY_APPLIED:
-        return "Already applied";
+        return VcsBundle.message("patch.apply.already.applied.status");
       case EXACTLY_APPLIED:
-        return "Automatically applied";
+        return VcsBundle.message("patch.apply.automatically.applied.status");
       case NOT_APPLIED:
-        return "Not applied";
+        return VcsBundle.message("patch.apply.not.applied.status");
       default:
         throw new IllegalStateException();
     }
@@ -260,12 +261,14 @@ class ApplyPatchChange {
 
   @Nullable
   private GutterIconRenderer createApplyRenderer() {
-    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), DiffUtil.getArrowIcon(Side.RIGHT), () -> myViewer.executeCommand("Accept change", () -> myViewer.replaceChange(this)));
+    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), DiffUtil.getArrowIcon(Side.RIGHT), () -> myViewer.executeCommand(
+      DiffBundle.message("merge.dialog.accept.change.command"), () -> myViewer.replaceChange(this)));
   }
 
   @Nullable
   private GutterIconRenderer createIgnoreRenderer() {
-    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, () -> myViewer.executeCommand("Ignore change", () -> myViewer.markChangeResolved(this)));
+    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, () -> myViewer.executeCommand(
+      DiffBundle.message("merge.dialog.ignore.change.command"), () -> myViewer.markChangeResolved(this)));
   }
 
   @Nullable
@@ -351,7 +354,7 @@ class ApplyPatchChange {
     @NotNull
     @Override
     public String getAccessibleName() {
-      return "marker: " + getTooltipText();
+      return VcsBundle.message("patch.apply.marker.renderer", getTooltipText());
     }
   }
 }

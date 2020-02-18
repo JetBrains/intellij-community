@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.SimpleContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,7 +75,7 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
               .create(project, file, VcsUtil.getFilePath(file), getPatch(), patchReader.getBaseRevision(project, path));
 
           String afterTitle = getPatch().getAfterVersionId();
-          if (afterTitle == null) afterTitle = "Patched Version";
+          if (afterTitle == null) afterTitle = VcsBundle.message("patch.apply.conflict.patched.version");
           return PatchDiffRequestFactory.createConflictDiffRequest(project, file, getPatch(), afterTitle, texts, getName());
         }
         else {

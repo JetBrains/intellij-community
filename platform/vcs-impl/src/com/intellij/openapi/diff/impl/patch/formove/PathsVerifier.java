@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.formove;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
@@ -189,8 +191,7 @@ public class PathsVerifier {
 
   private boolean isFileTypeOk(@NotNull VirtualFile file) {
     if (file.isDirectory()) {
-      PatchApplier
-        .showError(myProject, "Cannot apply content for " + file.getPresentableName() + " file from patch because it is directory.");
+      PatchApplier.showError(myProject, VcsBundle.message("patch.apply.file.type.directory.error", file.getPresentableName()));
       return false;
     }
     FileType fileType = file.getFileType();
@@ -198,12 +199,12 @@ public class PathsVerifier {
       fileType = FileTypeChooser.associateFileType(file.getName());
       if (fileType == null) {
         PatchApplier
-          .showError(myProject, "Cannot apply content for " + file.getPresentableName() + " file from patch because its type not defined.");
+          .showError(myProject, VcsBundle.message("patch.apply.file.type.undefined.error", file.getPresentableName()));
         return false;
       }
     }
     if (fileType.isBinary()) {
-      PatchApplier.showError(myProject, "Cannot apply file " + file.getPresentableName() + " from patch because it is binary.");
+      PatchApplier.showError(myProject, VcsBundle.message("patch.apply.file.type.binary.error", file.getPresentableName()));
       return false;
     }
     return true;
@@ -392,7 +393,7 @@ public class PathsVerifier {
       if (ApplicationManager.getApplication().isUnitTestMode() && myIgnoreContentRootsCheck) return true;
       // security check to avoid overwriting system files with a patch
       if (!inContent(file) && myVcsManager.getVcsRootFor(file) == null) {
-        setErrorMessage("File to patch found outside content root: " + name);
+        setErrorMessage(VcsBundle.message("patch.apply.outside.content.root.message", name));
         return false;
       }
       return true;
@@ -571,7 +572,7 @@ public class PathsVerifier {
     }
 
     private void performRenameWithConflicts(@NotNull File oldParent) throws IOException {
-      File tmpFileWithUniqueName = FileUtil.createTempFile(oldParent, "tempFileToMove", null, false);
+      File tmpFileWithUniqueName = FileUtil.createTempFile(oldParent, "tempFileToMove", null, false); //NON-NLS
       File newParentFile = VfsUtilCore.virtualToIoFile(myNewParent);
       File destFile = new File(newParentFile, tmpFileWithUniqueName.getName());
       while (destFile.exists()) {
@@ -613,14 +614,13 @@ public class PathsVerifier {
       final List<FilePatch> result = new ArrayList<>();
       if (!myOverrideExisting.isEmpty()) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          final String title = "Overwrite Existing Files";
+          final String title = VcsBundle.message("patch.apply.overwrite.existing.title");
           List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
           Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
-            files, title,
-            "\nThe following files should be created by patch, but they already exist.\nDo you want to overwrite them?\n", title,
-            "The following file should be created by patch, but it already exists.\nDo you want to overwrite it?\n{0}",
+            files, title, VcsBundle.message("patch.apply.overwrite.existing.files.prompt"), title,
+            VcsBundle.message("patch.apply.overwrite.existing.file.prompt"),
             VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
-            "Overwrite", "Cancel");
+            CommonBundle.message("button.overwrite"), IdeBundle.message("button.cancel"));
           if (selected != null) {
             for (FilePath path : selected) {
               myOverrideExisting.remove(path);

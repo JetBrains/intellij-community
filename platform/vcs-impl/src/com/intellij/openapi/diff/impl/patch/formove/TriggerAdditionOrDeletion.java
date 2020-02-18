@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -112,16 +111,15 @@ public class TriggerAdditionOrDeletion {
       }
       //if some errors occurred  -> notify
       if (!incorrectFilePath.isEmpty()) {
-        notifyAndLogFiles("Apply new files error", incorrectFilePath);
+        notifyAndLogFiles(incorrectFilePath);
       }
     }
   }
 
-  private void notifyAndLogFiles(@NotNull String topic, @NotNull List<FilePath> incorrectFilePath) {
-    String message = "The following " + StringUtil.pluralize("file", incorrectFilePath.size()) + " may be processed incorrectly by VCS.\n" +
-                     "Please check it manually: " + incorrectFilePath;
+  private void notifyAndLogFiles(@NotNull List<FilePath> incorrectFilePath) {
+    String message = VcsBundle.message("patch.apply.incorrectly.processed.warning", incorrectFilePath.size(), incorrectFilePath);
     LOG.warn(message);
-    VcsNotifier.getInstance(myProject).notifyImportantWarning(topic, message);
+    VcsNotifier.getInstance(myProject).notifyImportantWarning(VcsBundle.message("patch.apply.new.files.warning"), message);
   }
 
   public Set<FilePath> getAffected() {

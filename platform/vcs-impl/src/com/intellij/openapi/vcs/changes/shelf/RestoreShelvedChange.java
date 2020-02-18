@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +33,7 @@ public class RestoreShelvedChange extends DumbAwareAction {
     Collection<ShelvedChangeList> deletedLists = notNullize(e.getData(ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY));
     presentation.setText(VcsBundle.lazyMessage("vcs.shelf.action.restore.text"));
     presentation
-      .setDescription(VcsBundle.lazyMessage("vcs.shelf.action.restore.description", StringUtil.pluralize("changelist", deletedLists.size())));
+      .setDescription(VcsBundle.lazyMessage("vcs.shelf.action.restore.description", deletedLists.size()));
     presentation.setEnabled(!isEmpty(deletedLists));
   }
 

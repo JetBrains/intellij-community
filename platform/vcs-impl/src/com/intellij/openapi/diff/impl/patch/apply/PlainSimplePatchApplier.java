@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.PatchHunk;
 import com.intellij.openapi.diff.impl.patch.PatchLine;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,23 +102,23 @@ public class PlainSimplePatchApplier {
     int patchedEnd = hunk.getEndLineAfter();
 
     if (baseLine != baseStart) {
-      error(String.format("Unexpected hunk base start: expected  - %s, actual - %s", baseLine, baseStart));
+      error(VcsBundle.message("patch.simple.apply.hunk.base.start.error", baseLine, baseStart));
     }
     if (patchedLine != patchedStart) {
-      error(String.format("Unexpected hunk patched start: expected  - %s, actual - %s", patchedLine, patchedStart));
+      error(VcsBundle.message("patch.simple.apply.hunk.patched.start.error", patchedLine, patchedStart));
     }
     if (baseEnd > myLineOffsets.getLineCount()) {
-      error(String.format("Unexpected hunk base end: total lines  - %s, hunk end - %s", myLineOffsets.getLineCount(), baseEnd));
+      error(VcsBundle.message("patch.simple.apply.hunk.base.end.error", myLineOffsets.getLineCount(), baseEnd));
     }
 
     int baseCount = ContainerUtil.count(hunk.getLines(), patchLine -> patchLine.getType() != PatchLine.Type.ADD);
     int patchedCount = ContainerUtil.count(hunk.getLines(), patchLine -> patchLine.getType() != PatchLine.Type.REMOVE);
 
     if (baseCount != baseEnd - baseStart) {
-      error(String.format("Unexpected hunk base body: expected - %s, actual - %s", baseEnd - baseStart, baseCount));
+      error(VcsBundle.message("patch.simple.apply.hunk.base.body.error", baseEnd - baseStart, baseCount));
     }
     if (patchedCount != patchedEnd - patchedStart) {
-      error(String.format("Unexpected hunk patched body: expected - %s, actual - %s", patchedEnd - patchedStart, patchedCount));
+      error(VcsBundle.message("patch.simple.apply.hunk.patched.body.error", patchedEnd - patchedStart, patchedCount));
     }
 
     int count = 0;
@@ -126,7 +127,7 @@ public class PlainSimplePatchApplier {
         CharSequence expectedContent = getLineContent(baseStart + count);
         String actualContent = patchLine.getText();
         if (!StringUtil.equals(expectedContent, actualContent)) {
-          error(String.format("Unexpected hunk content: expected - '%s', actual - '%s'", expectedContent, patchLine));
+          error(VcsBundle.message("patch.simple.apply.hunk.content.error", expectedContent, patchLine));
         }
         count++;
       }
@@ -145,10 +146,10 @@ public class PlainSimplePatchApplier {
 
   private void appendUnchangedLines(int untilLine) {
     if (baseLine > untilLine) {
-      error(String.format("Unexpected base line: expected - %s, actual - %s", baseLine, untilLine));
+      error(VcsBundle.message("patch.simple.apply.base.line.error", baseLine, untilLine));
     }
     if (untilLine > myLineOffsets.getLineCount()) {
-      error(String.format("Unexpected base line: total lines - %s, actual - %s", myLineOffsets.getLineCount(), untilLine));
+      error(VcsBundle.message("patch.simple.apply.base.line.total.error", myLineOffsets.getLineCount(), untilLine));
     }
 
     for (int i = baseLine; i < untilLine; i++) {

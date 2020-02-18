@@ -584,8 +584,8 @@ public class PatchReader {
 
     @Nullable
     static String stripPatchNameIfNeeded(@NotNull String fileName, boolean p1Patch, boolean before) {
-      if ("/dev/null".equals(fileName)) return null;
-      String prefix = before ? "a/" : "b/";
+      if ("/dev/null".equals(fileName)) return null; //NON-NLS
+      String prefix = before ? "a/" : "b/"; //NON-NLS
       if (p1Patch && fileName.startsWith(prefix)) return fileName.substring(prefix.length());
       return fileName;
     }
