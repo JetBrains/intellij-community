@@ -209,7 +209,10 @@ abstract class IndexesStarterBase(
     init {
       GlobalScope.launch {
         messages.consumeAsFlow().debounce(300).collect {
-          LOG.info(text)
+          val text = text
+          if (text != null) {
+            LOG.info(text)
+          }
         }
       }
     }
