@@ -33,7 +33,7 @@ import com.jetbrains.python.psi.impl.PyImportResolver
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
-import java.util.SortedMap
+import java.util.*
 import java.util.regex.Pattern
 
 /**
@@ -68,7 +68,7 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   if (mayCache) {
     val cachedResults = cache?.get(key)
     if (cachedResults != null) {
-      return relativeResults + cachedResults
+      return (relativeResults + cachedResults).distinct()
     }
   }
 
