@@ -107,7 +107,8 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.yaml.customStructureViewFactory"
-                    interface="org.jetbrains.yaml.structureView.YAMLCustomStructureViewFactory">
+                    interface="org.jetbrains.yaml.structureView.YAMLCustomStructureViewFactory"
+                    dynamic="true">
     </extensionPoint>
   </extensionPoints>
 

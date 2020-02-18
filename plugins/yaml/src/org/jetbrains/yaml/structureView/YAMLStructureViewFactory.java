@@ -2,11 +2,14 @@
 package org.jetbrains.yaml.structureView;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.util.treeView.smartTree.NodeProvider;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.PsiStructureViewFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,6 +23,12 @@ import java.util.Collections;
 
 public class YAMLStructureViewFactory implements PsiStructureViewFactory {
   static final Icon ALIAS_ICON = AllIcons.Nodes.Alias;
+
+  public YAMLStructureViewFactory() {
+    YAMLCustomStructureViewFactory.EP_NAME.addExtensionPointListener(
+        () -> ApplicationManager.getApplication().getMessageBus().syncPublisher(StructureViewWrapperImpl.STRUCTURE_CHANGED).run(),
+        ExtensionPointUtil.createKeyedExtensionDisposable(this, PsiStructureViewFactory.EP_NAME.getPoint(null)));
+  }
 
   @Override
   @Nullable
