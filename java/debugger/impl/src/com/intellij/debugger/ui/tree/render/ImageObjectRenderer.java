@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.CommonBundle;
@@ -28,7 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
-class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
+final class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   private static final Logger LOG = Logger.getInstance(ImageObjectRenderer.class);
 
   ImageObjectRenderer() {
@@ -37,9 +37,8 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
     setEnabled(true);
   }
 
-  @Nullable
   @Override
-  public XFullValueEvaluator getFullValueEvaluator(final EvaluationContextImpl evaluationContext, final ValueDescriptorImpl valueDescriptor) {
+  public @NotNull XFullValueEvaluator getFullValueEvaluator(final EvaluationContextImpl evaluationContext, final ValueDescriptorImpl valueDescriptor) {
     return new IconPopupEvaluator(DebuggerBundle.message("message.node.show.image"), evaluationContext) {
       @Override
       protected Icon getData() {
