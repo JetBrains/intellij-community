@@ -23,6 +23,7 @@ import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
 import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -340,27 +341,27 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
   private void writeEditorPropertyValue(final @Nullable String propertyName,
                                         final @NotNull Editor editor,
-                                        final @NotNull VirtualFile propertiesFile) {
+                                        final @NotNull VirtualFile file) {
     final String currentValue = editor.getDocument().getText();
     final String currentSelectedProperty = propertyName ==  null ? getSelectedPropertyName() : propertyName;
     if (currentSelectedProperty == null) {
       return;
     }
-
-    ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      try {
+    if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(myProject, Collections.singleton(file))) {
+      return;
+    }
+    WriteAction.run(() -> {
+      PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file, myProject);
+      if (propertiesFile != null) {
         if (currentValue.isEmpty() &&
             ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties() &&
-            !propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
-          myPropertiesInsertDeleteManager.deletePropertyIfExist(currentSelectedProperty, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
+            !file.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
+          myPropertiesInsertDeleteManager.deletePropertyIfExist(currentSelectedProperty, propertiesFile);
         } else {
-          myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
+          myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, propertiesFile);
         }
       }
-      catch (final IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }));
+    });
   }
 
   void recreateEditorsPanel() {
