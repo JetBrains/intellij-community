@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,7 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
     }
 
     return JBPopupFactory.getInstance().createActionGroupPopup(
-      "Line Separator",
+      UIBundle.message("status.bar.line.separator.widget.name"),
       (ActionGroup)group,
       context,
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
