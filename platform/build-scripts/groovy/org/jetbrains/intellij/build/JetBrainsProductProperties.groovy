@@ -11,7 +11,6 @@ abstract class JetBrainsProductProperties extends ProductProperties {
   {
     scrambleMainJar = true
     productLayout.bundledPluginModules = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + [
-      "intellij.platform.images",
       "intellij.laf.macos",
       "intellij.laf.win10",
     ]
