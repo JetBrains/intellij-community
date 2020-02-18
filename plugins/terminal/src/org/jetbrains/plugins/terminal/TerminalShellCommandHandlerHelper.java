@@ -82,14 +82,11 @@ public class TerminalShellCommandHandlerHelper {
     }
 
     if (result != null) {
-      String content =
-        "Highlighted commands can be interpreted and executed by the IDE in a smart way.<br>" +
-        "Press <b>Ctrl+Enter</b> to try this, or <b>Enter</b> to run the command in the console as usual.<br>" +
-        "You can turn this behavior on/off in Preferences | Tools | Terminal. <a href=\"" + GOT_IT + "\"/>Got it!</a>";
-
+      String title = TerminalBundle.message("smart_command_execution.notification.title");
+      String content = TerminalBundle.message("smart_command_execution.notification.text", GOT_IT);
       new SingletonNotificationManager(
         NotificationGroup.toolWindowGroup("Terminal", TerminalToolWindowFactory.TOOL_WINDOW_ID), NotificationType.INFORMATION, null)
-        .notify("Smart commands execution", content, project,
+        .notify(title, content, project,
                 new NotificationListener.Adapter() {
                   @Override
                   protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
