@@ -216,6 +216,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
           pluginDescriptorsToDisable.add(descriptor);
         }
       }
+      else if (!shouldEnable && PluginManagerCore.getPlugin(pluginId) != null) {
+        pluginDescriptorsToDisable.add(descriptor);
+      }
     }
 
     return PluginEnabler.updatePluginEnabledState(pluginDescriptorsToEnable, pluginDescriptorsToDisable, parentComponent);
