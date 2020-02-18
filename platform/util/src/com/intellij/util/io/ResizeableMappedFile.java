@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
@@ -141,7 +142,7 @@ public class ResizeableMappedFile implements Forceable {
           try {
             return new DataOutputStream(Files.newOutputStream(lengthFile));
           }
-          catch (FileNotFoundException ex) {
+          catch (NoSuchFileException ex) {
             final File parentFile = lengthFile.getParent().toFile();
             
             if (!parentFile.exists()) {
