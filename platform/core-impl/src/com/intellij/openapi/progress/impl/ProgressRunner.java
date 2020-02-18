@@ -327,49 +327,39 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
   private CompletableFuture<R> normalExec(CompletableFuture<? extends ProgressIndicator> progressFuture,
                                           Semaphore modalityEntered,
                                           Supplier<R> onThreadCallable, boolean shouldWaitForModality) {
-    Runnable modalityRunnable = () -> {
-      ProgressIndicator progressIndicator;
-      try {
-        progressIndicator = progressFuture.get();
-      }
-      catch (Throwable e) {
-        throw new RuntimeException("Can't get progress", e);
-      }
-
+    Function<ProgressIndicator, ProgressIndicator> modalityRunnable = (progressIndicator) -> {
       LaterInvocator.enterModal(progressIndicator, (ModalityStateEx)progressIndicator.getModalityState());
       modalityEntered.up();
+      return progressIndicator;
     };
 
     if (shouldWaitForModality) {
-      if (ApplicationManager.getApplication().isWriteThread()) {
-        modalityRunnable.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeLaterOnWriteThread(modalityRunnable);
-      }
-    }
-
-    final CompletableFuture<R> resultFuture = launchTask(onThreadCallable, myProgressIndicatorFuture);
-
-    resultFuture.whenComplete((r, throwable) -> {
-      ProgressIndicator progressIndicator;
-      try {
-        progressIndicator = progressFuture.get();
-      }
-      catch (Throwable e) {
-        throw new RuntimeException("Can't get progress", e);
-      }
-
-      if (shouldWaitForModality) {
+      // If a progress indicator has not been calculated yet, grabbing IW lock might lead to deadlock, as progress might need it for init
+      progressFuture = progressFuture.thenApplyAsync(modalityRunnable, r -> {
         if (ApplicationManager.getApplication().isWriteThread()) {
-          LaterInvocator.leaveModal(progressIndicator);
+          r.run();
         }
         else {
-          ApplicationManager.getApplication()
-            .invokeLaterOnWriteThread(() -> LaterInvocator.leaveModal(progressIndicator), progressIndicator.getModalityState());
+          ApplicationManager.getApplication().invokeLaterOnWriteThread(r);
         }
-      }
-    });
+      });
+    }
+
+    final CompletableFuture<R> resultFuture = launchTask(onThreadCallable, progressFuture);
+
+    resultFuture
+      .handle((r, throwable) -> r) // ignore result computation exception
+      .thenAcceptBoth(progressFuture, (r, progressIndicator) -> {
+        if (shouldWaitForModality) {
+          if (ApplicationManager.getApplication().isWriteThread()) {
+            LaterInvocator.leaveModal(progressIndicator);
+          }
+          else {
+            ApplicationManager.getApplication()
+              .invokeLaterOnWriteThread(() -> LaterInvocator.leaveModal(progressIndicator), progressIndicator.getModalityState());
+          }
+        }
+      });
 
     if (isSync) {
       if (ApplicationManager.getApplication().isWriteThread()) {
@@ -415,7 +405,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
   }
 
   @NotNull
-  private CompletableFuture<R> launchTask(Supplier<R> callable, CompletableFuture<P> progressIndicatorFuture) {
+  private CompletableFuture<R> launchTask(Supplier<R> callable, CompletableFuture<? extends ProgressIndicator> progressIndicatorFuture) {
     final CompletableFuture<R> resultFuture;
     switch (myThreadToUse) {
       case POOLED:
@@ -432,15 +422,14 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
           }
         };
 
-        ModalityState processModality;
-        try {
-          processModality = progressIndicatorFuture.get().getModalityState();
-        }
-        catch (Throwable e) {
-          throw new RuntimeException("Can't get progress or its modality state", e);
-        }
-
-        ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, processModality);
+        progressIndicatorFuture.whenComplete((progressIndicator, throwable) -> {
+          if (throwable != null) {
+            resultFuture.completeExceptionally(throwable);
+            return;
+          }
+          ModalityState processModality = progressIndicator.getModalityState();
+          ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, processModality);
+        });
         break;
       default:
         throw new IllegalStateException("Unexpected value: " + myThreadToUse);

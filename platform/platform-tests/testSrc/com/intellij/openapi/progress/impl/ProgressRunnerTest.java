@@ -5,6 +5,7 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -119,10 +120,17 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     task.release();
 
     if (EDT.isCurrentThreadEdt()) {
-      UIUtil.dispatchAllInvocationEvents();
+      ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
+        // Waiting rationale: a task to write thread might have not been submitted yet
+        TimeoutUtil.sleep(100);
+        // Dispatching rationale: a task might be submitted to write thread. Hence, we need to ensure flush queue
+        // has finished processing pending events.
+        LaterInvocator.dispatchPendingFlushes();
+        return null;
+      });
     }
 
-    ProgressResult<?> result = future.get(10, TimeUnit.MILLISECONDS);
+    ProgressResult<?> result = future.get(1000, TimeUnit.MILLISECONDS);
     assertFalse(result.isCanceled());
     assertNull(result.getThrowable());
     task.assertFinished();
@@ -182,7 +190,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
     task.release();
 
-    ProgressResult<?> result = future.get(100, TimeUnit.MILLISECONDS);
+    ProgressResult<?> result = future.get(1000, TimeUnit.MILLISECONDS);
     assertFalse(result.isCanceled());
     assertNull(result.getThrowable());
     task.assertFinished();
@@ -208,7 +216,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     progressIndicator.cancel();
     task.release();
 
-    ProgressResult<?> result = future.get(100, TimeUnit.MILLISECONDS);
+    ProgressResult<?> result = future.get(1000, TimeUnit.MILLISECONDS);
     assertTrue(result.isCanceled());
     assertInstanceOf(result.getThrowable(), ProcessCanceledException.class);
     task.assertNotFinished();
@@ -228,7 +236,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
     task.release();
 
-    ProgressResult<?> result = future.get(100, TimeUnit.MILLISECONDS);
+    ProgressResult<?> result = future.get(1000, TimeUnit.MILLISECONDS);
     assertFalse(result.isCanceled());
     assertNull(result.getThrowable());
     task.assertFinished();
@@ -254,7 +262,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     progressIndicator.get().cancel();
     task.release();
 
-    ProgressResult<?> result = future.get(100, TimeUnit.MILLISECONDS);
+    ProgressResult<?> result = future.get(1000, TimeUnit.MILLISECONDS);
     assertTrue(result.isCanceled());
     assertInstanceOf(result.getThrowable(), ProcessCanceledException.class);
     task.assertNotFinished();
