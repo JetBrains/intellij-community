@@ -6,6 +6,8 @@ import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -789,6 +791,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     if (myProject != null && myVirtualFile != null) {
       for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
+        //noinspection InstanceofIncompatibleInterface
+        if (LightEdit.owns(myProject) && !(painter instanceof LightEditCompatible)) {
+          continue;
+        }
         Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, myVirtualFile, line);
         if (extensions != null) {
           for (LineExtensionInfo extension : extensions) {
