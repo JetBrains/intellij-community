@@ -86,7 +86,7 @@ public class Notification {
    */
   public Notification(@NotNull String groupDisplayId,
                       @Nullable Icon icon,
-                      @Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
+                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title,
                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String subtitle,
                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String content,
                       @NotNull NotificationType type,
@@ -105,7 +105,7 @@ public class Notification {
   }
 
   public Notification(@NotNull String groupDisplayId,
-                      @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title,
                       @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String content,
                       @NotNull NotificationType type) {
     this(groupDisplayId, title, content, type, null);
@@ -120,7 +120,7 @@ public class Notification {
    * @param listener       notification lifecycle listener
    */
   public Notification(@NotNull String groupDisplayId,
-                      @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title,
                       @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
@@ -167,13 +167,13 @@ public class Notification {
   }
 
   @NotNull
-  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title) {
+  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
     myTitle = StringUtil.notNullize(title);
     return this;
   }
 
   @NotNull
-  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
+  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title,
                                @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String subtitle) {
     return setTitle(title).setSubtitle(subtitle);
   }
