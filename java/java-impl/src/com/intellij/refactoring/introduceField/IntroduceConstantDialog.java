@@ -7,6 +7,7 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -88,7 +89,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private JCheckBox myCbNonNls;
   private JPanel myVisibilityPanel;
   private final JavaVisibilityPanel myVPanel;
-  private final JCheckBox myIntroduceEnumConstantCb = new JCheckBox(RefactoringBundle.message("introduce.constant.enum.cb"), true);
+  private final JCheckBox myIntroduceEnumConstantCb = new JCheckBox(JavaRefactoringBundle.message("introduce.constant.enum.cb"), true);
 
   IntroduceConstantDialog(Project project,
                           PsiClass parentClass,
@@ -421,7 +422,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     if (!targetClassName.isEmpty() && !Comparing.strEqual(targetClassName, myParentClass.getQualifiedName())) {
       newClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
       if (newClass == null) {
-        if (Messages.showOkCancelDialog(myProject, RefactoringBundle.message("class.does.not.exist.in.the.project"),
+        if (Messages.showOkCancelDialog(myProject, JavaRefactoringBundle.message("class.does.not.exist.in.the.project"),
                                         IntroduceConstantHandler.getRefactoringNameText(), Messages.getErrorIcon()) != Messages.OK) {
           return;
         }

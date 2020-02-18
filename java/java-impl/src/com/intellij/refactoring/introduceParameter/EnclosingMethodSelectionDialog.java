@@ -2,6 +2,7 @@
 
 package com.intellij.refactoring.introduceParameter;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiMethod;
@@ -20,7 +21,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
   private final List<PsiMethod> myEnclosingMethods;
 
   private JList myEnclosingMethodsList;
-  private final JCheckBox myCbReplaceInstanceOf = new JCheckBox(RefactoringBundle.message("use.interface.superclass.in.instanceof"));
+  private final JCheckBox myCbReplaceInstanceOf = new JCheckBox(JavaRefactoringBundle.message("use.interface.superclass.in.instanceof"));
 
   EnclosingMethodSelectionDialog(Project project, List<PsiMethod> enclosingMethods) {
     super(project, true);
@@ -65,7 +66,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
     gbConstraints.gridheight = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.anchor = GridBagConstraints.WEST;
-    panel.add(new JLabel(RefactoringBundle.message("introduce.parameter.to.method")), gbConstraints);
+    panel.add(new JLabel(JavaRefactoringBundle.message("introduce.parameter.to.method")), gbConstraints);
 
     gbConstraints.weighty = 1;
     myEnclosingMethodsList = new JBList(myEnclosingMethods.toArray());

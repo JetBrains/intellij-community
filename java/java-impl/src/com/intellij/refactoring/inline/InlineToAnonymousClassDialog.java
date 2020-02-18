@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
@@ -8,7 +9,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 
 /**
  * @author yole
@@ -22,29 +22,29 @@ public class InlineToAnonymousClassDialog extends InlineOptionsWithSearchSetting
     myClass = psiClass;
     myCallToInline = callToInline;
     myInvokedOnReference = isInvokeOnReference;
-    setTitle(RefactoringBundle.message("inline.to.anonymous.refactoring"));
+    setTitle(JavaRefactoringBundle.message("inline.to.anonymous.refactoring"));
     init();
   }
 
   @Override
   protected String getNameLabelText() {
     String className = PsiFormatUtil.formatClass(myClass, PsiFormatUtilBase.SHOW_NAME);
-    return RefactoringBundle.message("inline.to.anonymous.name.label", className);
+    return JavaRefactoringBundle.message("inline.to.anonymous.name.label", className);
   }
 
   @Override
   protected String getBorderTitle() {
-    return RefactoringBundle.message("inline.to.anonymous.border.title");
+    return JavaRefactoringBundle.message("inline.to.anonymous.border.title");
   }
 
   @Override
   protected String getInlineAllText() {
-    return RefactoringBundle.message("all.references.and.remove.the.class");
+    return JavaRefactoringBundle.message("all.references.and.remove.the.class");
   }
 
   @Override
   protected String getInlineThisText() {
-    return RefactoringBundle.message("this.reference.only.and.keep.the.class");
+    return JavaRefactoringBundle.message("this.reference.only.and.keep.the.class");
   }
 
   @Override

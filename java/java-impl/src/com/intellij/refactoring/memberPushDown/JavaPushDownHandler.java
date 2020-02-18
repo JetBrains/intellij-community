@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.memberPushDown;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -95,7 +96,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
 
       if (element instanceof PsiClass && ((PsiClass)element).getQualifiedName() != null || element instanceof PsiField || element instanceof PsiMethod) {
         if (element instanceof JspClass) {
-          return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.is.not.supported.for.jsp.classes"));
+          return RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("refactoring.is.not.supported.for.jsp.classes"));
         }
         elements.add(element);
         return null;
@@ -115,7 +116,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
       CommonRefactoringUtil.showErrorHint(project, editor,  RefactoringBundle.message("refactoring.cannot.be.performed") + 
-                                                            RefactoringBundle.message("class.is.final.warning.message", aClass.getName()), getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
+                                                            JavaRefactoringBundle.message("class.is.final.warning.message", aClass.getName()), getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
       return;
     }
 

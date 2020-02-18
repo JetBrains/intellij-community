@@ -2,6 +2,7 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -14,7 +15,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.util.Function;
@@ -313,8 +313,8 @@ public class LambdaRefactoringUtil {
         if (!sideEffects.isEmpty()) {
           if (ApplicationManager.getApplication().isUnitTestMode() ||
               Messages.showYesNoDialog(lambdaExpression.getProject(),
-                                       RefactoringBundle.message("lambda.to.reference.side.effect.warning.message"),
-                                       RefactoringBundle.message("side.effects.detected.title"), Messages.getQuestionIcon()) == Messages.YES) {
+                                       JavaRefactoringBundle.message("lambda.to.reference.side.effect.warning.message"),
+                                       JavaRefactoringBundle.message("side.effects.detected.title"), Messages.getQuestionIcon()) == Messages.YES) {
             //ensure introduced before lambda
             qualifierExpression.putUserData(ElementToWorkOn.PARENT, lambdaExpression);
             new IntroduceVariableHandler().invoke(qualifierExpression.getProject(), editor, qualifierExpression);

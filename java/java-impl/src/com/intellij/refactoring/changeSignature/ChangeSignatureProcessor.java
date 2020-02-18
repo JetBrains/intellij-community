@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -9,7 +10,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -202,7 +202,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   }
 
   protected boolean isProcessCovariantOverriders() {
-    String message = RefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type");
+    String message = JavaRefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type");
     return Messages.showYesNoDialog(myProject, message, ChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon()) == Messages.YES;
   }
 

@@ -3,6 +3,7 @@ package com.intellij.refactoring.replaceConstructorWithFactory;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -90,7 +91,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     gbc.gridwidth = 1;
     gbc.gridx = 0;
     gbc.gridy = 0;
-    panel.add(new JLabel(RefactoringBundle.message("factory.method.name.label")), gbc);
+    panel.add(new JLabel(JavaRefactoringBundle.message("factory.method.name.label")), gbc);
 
     gbc.gridx++;
     gbc.weightx = 1.0;
@@ -118,7 +119,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   private JPanel createTargetPanel() {
     JPanel targetClassPanel = new JPanel(new BorderLayout());
     if (!myIsInner) {
-      JLabel label = new JLabel(RefactoringBundle.message("replace.constructor.with.factory.target.fq.name"));
+      JLabel label = new JLabel(JavaRefactoringBundle.message("replace.constructor.with.factory.target.fq.name"));
       label.setLabelFor(myTfTargetClassName);
       targetClassPanel.add(label, BorderLayout.NORTH);
       targetClassPanel.add(myTfTargetClassName, BorderLayout.CENTER);
@@ -133,7 +134,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
       }
 
       myTargetClassNameCombo = new JComboBox(ArrayUtilRt.toStringArray(list));
-      JLabel label = new JLabel(RefactoringBundle.message("replace.constructor.with.factory.target.fq.name"));
+      JLabel label = new JLabel(JavaRefactoringBundle.message("replace.constructor.with.factory.target.fq.name"));
       label.setLabelFor(myTargetClassNameCombo.getEditor().getEditorComponent());
       targetClassPanel.add(label, BorderLayout.NORTH);
       targetClassPanel.add(myTargetClassNameCombo, BorderLayout.CENTER);
@@ -173,7 +174,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     final PsiClass targetClass =
       JavaPsiFacade.getInstance(manager.getProject()).findClass(targetClassName, GlobalSearchScope.allScope(project));
     if (targetClass == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.0.not.found", targetClassName));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("class.0.not.found", targetClassName));
       CommonRefactoringUtil.showErrorMessage(ReplaceConstructorWithFactoryHandler.getRefactoringName(),
                                              message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, project);
       return;

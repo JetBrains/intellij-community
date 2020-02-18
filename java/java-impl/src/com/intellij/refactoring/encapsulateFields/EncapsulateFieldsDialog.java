@@ -2,6 +2,7 @@
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -218,12 +219,12 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(createTable(), BorderLayout.CENTER);
 
-    myCbEncapsulateGet.setText(RefactoringBundle.message("encapsulate.fields.get.access.checkbox"));
-    myCbEncapsulateSet.setText(RefactoringBundle.message("encapsulate.fields.set.access.checkbox"));
-    myCbUseAccessorsWhenAccessible.setText(RefactoringBundle.message("encapsulate.fields.use.accessors.even.when.field.is.accessible.checkbox"));
-    myRbFieldPrivate.setText(RefactoringBundle.message("encapsulate.fields.private.radio"));
-    myRbFieldProtected.setText(RefactoringBundle.message("encapsulate.fields.protected.radio"));
-    myRbFieldPackageLocal.setText(RefactoringBundle.message("encapsulate.fields..package.local.radio"));
+    myCbEncapsulateGet.setText(JavaRefactoringBundle.message("encapsulate.fields.get.access.checkbox"));
+    myCbEncapsulateSet.setText(JavaRefactoringBundle.message("encapsulate.fields.set.access.checkbox"));
+    myCbUseAccessorsWhenAccessible.setText(JavaRefactoringBundle.message("encapsulate.fields.use.accessors.even.when.field.is.accessible.checkbox"));
+    myRbFieldPrivate.setText(JavaRefactoringBundle.message("encapsulate.fields.private.radio"));
+    myRbFieldProtected.setText(JavaRefactoringBundle.message("encapsulate.fields.protected.radio"));
+    myRbFieldPackageLocal.setText(JavaRefactoringBundle.message("encapsulate.fields..package.local.radio"));
     myRbFieldAsIs.setText(RefactoringBundle.getVisibilityAsIs());
     myRbAccessorPublic.setText(RefactoringBundle.getVisibilityPublic());
     myRbAccessorProtected.setText(RefactoringBundle.getVisibilityProtected());
@@ -296,7 +297,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     leftBox.add(myCbUseAccessorsWhenAccessible);
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields.encapsulate.border.title")));
+      JavaRefactoringBundle.message("encapsulate.fields.encapsulate.border.title")));
     leftPanel.add(leftBox, BorderLayout.CENTER);
     leftPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -320,7 +321,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     fieldsBox.add(myRbFieldAsIs);
     JPanel fieldsVisibilityPanel = new JPanel(new BorderLayout());
     fieldsVisibilityPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields..encapsulated.fields.visibility.border.title")));
+      JavaRefactoringBundle.message("encapsulate.fields..encapsulated.fields.visibility.border.title")));
     fieldsVisibilityPanel.add(fieldsBox, BorderLayout.CENTER);
     fieldsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -331,7 +332,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     methodsBox.add(myRbAccessorPrivate);
     JPanel methodsVisibilityPanel = new JPanel(new BorderLayout());
     methodsVisibilityPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields.accessors.visibility.border.title")));
+      JavaRefactoringBundle.message("encapsulate.fields.accessors.visibility.border.title")));
     methodsVisibilityPanel.add(methodsBox, BorderLayout.CENTER);
     methodsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -373,7 +374,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
 //    CompTitledBorder titledBorder = new CompTitledBorder(label);
     JPanel panel = new JPanel(new BorderLayout());
     Border border = IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields.fields.to.encapsulate.border.title"), false);
+      JavaRefactoringBundle.message("encapsulate.fields.fields.to.encapsulate.border.title"), false);
     panel.setBorder(border);
     panel.add(scrollPane);
 
@@ -555,11 +556,11 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
         case CHECKED_COLUMN:
           return " ";
         case FIELD_COLUMN:
-          return RefactoringBundle.message("encapsulate.fields.field.column.name");
+          return JavaRefactoringBundle.message("encapsulate.fields.field.column.name");
         case GETTER_COLUMN:
-          return RefactoringBundle.message("encapsulate.fields.getter.column.name");
+          return JavaRefactoringBundle.message("encapsulate.fields.getter.column.name");
         case SETTER_COLUMN:
-          return RefactoringBundle.message("encapsulate.fields.setter.column.name");
+          return JavaRefactoringBundle.message("encapsulate.fields.setter.column.name");
         default:
           throw new RuntimeException("Incorrect column index");
       }
@@ -688,6 +689,6 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   }
 
   private static String getRefactoringName() {
-    return RefactoringBundle.message("encapsulate.fields.title");
+    return JavaRefactoringBundle.message("encapsulate.fields.title");
   }
 }

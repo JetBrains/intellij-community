@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -33,7 +34,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodViewDescriptor;
 import com.intellij.refactoring.util.*;
@@ -197,7 +197,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
             PsiExpression instanceValue = expressions[index];
             instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
             if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
-              String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
+              String message = JavaRefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
                                                          RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(place), true),
                                                          CommonRefactoringUtil.htmlEmphasize(myTargetParameter.getName()));
               conflicts.putValue(place, message);
@@ -208,7 +208,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       else if (usageInfo instanceof MethodReferenceUsageInfo) {
         place = ((MethodReferenceUsageInfo)usageInfo).getExpression();
         if (!((MethodReferenceUsageInfo)usageInfo).isApplicableBySecondSearch()) {
-          conflicts.putValue(place, RefactoringBundle.message("expand.method.reference.warning"));
+          conflicts.putValue(place, JavaRefactoringBundle.message("expand.method.reference.warning"));
         }
       }
 

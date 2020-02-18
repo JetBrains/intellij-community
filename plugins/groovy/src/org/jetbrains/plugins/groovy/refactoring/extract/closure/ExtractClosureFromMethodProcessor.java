@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -26,7 +27,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -97,7 +97,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
         for (UsageInfo usageInfo : usagesIn) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(myMethod.getContainingClass(), usageInfo.getElement(), false)) {
-              conflicts.putValue(statements[0], RefactoringBundle
+              conflicts.putValue(statements[0], JavaRefactoringBundle
                 .message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
                          CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
               break;

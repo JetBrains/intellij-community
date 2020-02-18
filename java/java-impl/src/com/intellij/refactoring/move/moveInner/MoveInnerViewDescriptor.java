@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.move.moveInner;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
@@ -38,7 +39,7 @@ class MoveInnerViewDescriptor implements UsageViewDescriptor {
 
   @Override
   public String getProcessedElementsHeader() {
-    return RefactoringBundle.message("move.inner.class.to.be.moved");
+    return JavaRefactoringBundle.message("move.inner.class.to.be.moved");
   }
 
   @NotNull

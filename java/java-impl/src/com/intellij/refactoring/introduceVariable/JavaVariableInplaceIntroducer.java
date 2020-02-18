@@ -17,6 +17,7 @@ package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -25,8 +26,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -42,7 +41,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
@@ -271,7 +269,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     }
 
     if (myCanBeVarType && getVariable() instanceof PsiLocalVariable) {
-      myCanBeVarTypeCb = new NonFocusableCheckBox(RefactoringBundle.message("declare.var.type"));
+      myCanBeVarTypeCb = new NonFocusableCheckBox(JavaRefactoringBundle.message("declare.var.type"));
       myCanBeVarTypeCb.setSelected(IntroduceVariableBase.createVarType());
       myCanBeVarTypeCb.addActionListener(new ActionListener() {
         @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveInstanceMethod;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -25,7 +26,6 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.ScrollPaneFactory;
@@ -113,14 +113,14 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     if (targetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(targetClass)) {
       final Project project = getProject();
       if (ClassInheritorsSearch.search(targetClass, false).findFirst() == null) {
-        final String message = RefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", DescriptiveNameUtil
+        final String message = JavaRefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", DescriptiveNameUtil
           .getDescriptiveName(targetClass));
 
         Messages.showErrorDialog(project, message, myRefactoringName);
         return false;
       }
 
-      final String message = RefactoringBundle.message("0.is.an.interface.method.implementation.will.be.added.to.all.directly.implementing.classes",
+      final String message = JavaRefactoringBundle.message("0.is.an.interface.method.implementation.will.be.added.to.all.directly.implementing.classes",
                                                        DescriptiveNameUtil.getDescriptiveName(targetClass));
 
       final int result = Messages.showYesNoDialog(project, message, myRefactoringName,

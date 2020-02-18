@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -10,7 +11,6 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverridingMethodUsageInfo;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
@@ -64,7 +64,7 @@ class OverridingMethodsDialog extends DialogWrapper {
       );
     }
     myUsagePreviewPanel = new UsagePreviewPanel(project, new UsageViewPresentation());
-    setTitle(RefactoringBundle.message("unused.overriding.methods.title"));
+    setTitle(JavaRefactoringBundle.message("unused.overriding.methods.title"));
     init();
   }
 
@@ -92,8 +92,8 @@ class OverridingMethodsDialog extends DialogWrapper {
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-    panel.add(new JLabel(RefactoringBundle.message("there.are.unused.methods.that.override.methods.you.delete")));
-    panel.add(new JLabel(RefactoringBundle.message("choose.the.ones.you.want.to.be.deleted")));
+    panel.add(new JLabel(JavaRefactoringBundle.message("there.are.unused.methods.that.override.methods.you.delete")));
+    panel.add(new JLabel(JavaRefactoringBundle.message("choose.the.ones.you.want.to.be.deleted")));
     return panel;
   }
 
@@ -199,7 +199,7 @@ class OverridingMethodsDialog extends DialogWrapper {
 
     @Override
     public String getColumnName(int column) {
-      return column == CHECK_COLUMN ? " " : RefactoringBundle.message("method.column");
+      return column == CHECK_COLUMN ? " " : JavaRefactoringBundle.message("method.column");
     }
 
     @Override

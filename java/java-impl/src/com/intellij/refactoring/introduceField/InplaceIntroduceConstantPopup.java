@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -105,7 +106,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   private JPanel createLeftPanel() {
     final JPanel left = new JPanel(new GridBagLayout());
     myMoveToAnotherClassCb =
-      new JCheckBox(RefactoringBundle.message("introduce.constant.move.to.another.class.checkbox"), JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS);
+      new JCheckBox(JavaRefactoringBundle.message("introduce.constant.move.to.another.class.checkbox"), JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS);
     myMoveToAnotherClassCb.setMnemonic('m');
     myMoveToAnotherClassCb.setFocusable(false);
     left.add(myMoveToAnotherClassCb,

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveInner;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -246,7 +247,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     final String parameterName = getParameterName();
     PsiManager manager = PsiManager.getInstance(myProject);
     if (className.isEmpty()) {
-      message = RefactoringBundle.message("no.class.name.specified");
+      message = JavaRefactoringBundle.message("no.class.name.specified");
     }
     else {
       if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(className)) {
@@ -255,7 +256,7 @@ public class MoveInnerDialog extends MoveDialogBase {
       else {
         if (myCbPassOuterClass.isSelected()) {
           if (parameterName != null && parameterName.isEmpty()) {
-            message = RefactoringBundle.message("no.parameter.name.specified");
+            message = JavaRefactoringBundle.message("no.parameter.name.specified");
           }
           else {
             if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(parameterName)) {
@@ -269,7 +270,7 @@ public class MoveInnerDialog extends MoveDialogBase {
             PsiClass[] classes = targetClass.getInnerClasses();
             for (PsiClass aClass : classes) {
               if (className.equals(aClass.getName())) {
-                message = RefactoringBundle.message("inner.class.exists", className, targetClass.getName());
+                message = JavaRefactoringBundle.message("inner.class.exists", className, targetClass.getName());
                 break;
               }
             }

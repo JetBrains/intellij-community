@@ -4,6 +4,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -58,13 +59,13 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
     if (methodBody == null){
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        message = RefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", getRefactoringName());
+        message = JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", getRefactoringName());
       }
       else if (method.hasModifierProperty(PsiModifier.NATIVE)) {
-        message = RefactoringBundle.message("refactoring.cannot.be.applied.to.native.methods", getRefactoringName());
+        message = JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.native.methods", getRefactoringName());
       }
       else {
-        message = RefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", getRefactoringName());
+        message = JavaRefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", getRefactoringName());
       }
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_METHOD);
       return;
@@ -73,7 +74,7 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
     if (reference != null) {
       final PsiElement refElement = reference.getElement();
       if (!isJavaLanguage(refElement.getLanguage())) {
-        String message = RefactoringBundle
+        String message = JavaRefactoringBundle
           .message("refactoring.is.not.supported.for.language", "Inline of Java method", refElement.getLanguage().getDisplayName());
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_METHOD);
         return;
@@ -96,7 +97,7 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
 
     if (method.isConstructor()) {
       if (method.isVarArgs()) {
-        String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", getRefactoringName());
+        String message = JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", getRefactoringName());
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_CONSTRUCTOR);
         return;
       }
@@ -104,9 +105,9 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
       if (!chainingConstructor) {
         InlineObjectProcessor processor = InlineObjectProcessor.create(reference, method);
         if (processor != null) {
-          if (Messages.showOkCancelDialog(RefactoringBundle.message("inline.method.object.suggestion.message"),
-                                          RefactoringBundle.message("inline.method.object.action.name"),
-                                          RefactoringBundle.message("inline.action.name"), CommonBundle.getCancelButtonText(),
+          if (Messages.showOkCancelDialog(JavaRefactoringBundle.message("inline.method.object.suggestion.message"),
+                                          JavaRefactoringBundle.message("inline.method.object.action.name"),
+                                          JavaRefactoringBundle.message("inline.action.name"), CommonBundle.getCancelButtonText(),
                                           Messages.getQuestionIcon()) == Messages.OK) {
             processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
             processor.run();
@@ -114,7 +115,7 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
           return;
         }
         if (!isThisReference(reference)) {
-          String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors",
+          String message = JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors",
                                                      getRefactoringName());
           CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_CONSTRUCTOR);
           return;

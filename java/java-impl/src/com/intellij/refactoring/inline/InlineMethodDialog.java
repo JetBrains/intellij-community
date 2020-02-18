@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -62,7 +63,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getKeepTheDeclarationText() {
-    if (myMethod.isWritable()) return RefactoringBundle.message("all.invocations.keep.the.method");
+    if (myMethod.isWritable()) return JavaRefactoringBundle.message("all.invocations.keep.the.method");
     return super.getKeepTheDeclarationText();
   }
 

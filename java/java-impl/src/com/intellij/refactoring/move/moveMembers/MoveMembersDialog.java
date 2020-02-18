@@ -5,6 +5,7 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -57,7 +58,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
   private MyMemberInfoModel myMemberInfoModel;
   private MemberSelectionTable myTable;
   private JavaVisibilityPanel myVisibilityPanel;
-  private final JCheckBox myIntroduceEnumConstants = new JCheckBox(RefactoringBundle.message("move.enum.constant.cb"), true);
+  private final JCheckBox myIntroduceEnumConstants = new JCheckBox(JavaRefactoringBundle.message("move.enum.constant.cb"), true);
 
   @Override
   protected String getMovePropertySuffix() {
@@ -304,7 +305,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
           for (MemberInfo info : myMemberInfos) {
             if (!info.isChecked()) continue;
             if (PsiTreeUtil.isAncestor(info.getMember(), targetClass[0], false)) {
-              return RefactoringBundle.message("cannot.move.inner.class.0.into.itself", info.getDisplayName());
+              return JavaRefactoringBundle.message("cannot.move.inner.class.0.into.itself", info.getDisplayName());
             }
           }
 

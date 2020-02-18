@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -50,7 +51,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
   protected boolean validClass(PsiClass parentClass, Editor editor) {
     if (parentClass.isInterface() || parentClass.isRecord()) {
       String message = RefactoringBundle.getCannotRefactorMessage(
-        RefactoringBundle.message(parentClass.isRecord() ? "cannot.introduce.field.in.record" : "cannot.introduce.field.in.interface"));
+        JavaRefactoringBundle.message(parentClass.isRecord() ? "cannot.introduce.field.in.record" : "cannot.introduce.field.in.interface"));
       CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, getRefactoringNameText(), getHelpID());
       return false;
     }
@@ -185,7 +186,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
   protected boolean invokeImpl(final Project project, PsiLocalVariable localVariable, final Editor editor) {
     final PsiElement parent = localVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
       return false;
     }

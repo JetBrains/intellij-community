@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.move.moveMembers;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -98,7 +99,7 @@ public class MoveMembersImpl {
       else if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass)element;
         if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
-          String message = RefactoringBundle.message("inner.class.0.is.not.static", aClass.getQualifiedName(),
+          String message = JavaRefactoringBundle.message("inner.class.0.is.not.static", aClass.getQualifiedName(),
                                                      getRefactoringName());
           CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, HelpID.MOVE_MEMBERS, project);
           return;

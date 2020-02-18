@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -22,7 +23,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineTransformer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -311,7 +311,7 @@ public class InlineUtil {
           return false;
         }
         return true;
-      }), RefactoringBundle.message("inline.method.checking.tail.calls.progress"), true, method.getProject());
+      }), JavaRefactoringBundle.message("inline.method.checking.tail.calls.progress"), true, method.getProject());
     return result && nonTailCallUsages.isEmpty();
   }
 
@@ -476,7 +476,7 @@ public class InlineUtil {
 
     String readVarName = variable.getName();
     for (Map.Entry<PsiElement, PsiVariable> writePlaceEntry : writePlaces.entrySet()) {
-      String message = RefactoringBundle.message("variable.0.is.changed.before.last.access", writePlaceEntry.getValue().getName(), readVarName);
+      String message = JavaRefactoringBundle.message("variable.0.is.changed.before.last.access", writePlaceEntry.getValue().getName(), readVarName);
       conflicts.putValue(writePlaceEntry.getKey(), message);
     }
   }

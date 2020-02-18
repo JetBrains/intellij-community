@@ -16,12 +16,12 @@
 
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.refactoring.RefactoringBundle;
 
 public class AutomaticParametersRenamer extends AutomaticRenamer {
   public AutomaticParametersRenamer(PsiParameter param, String newParamName) {
@@ -44,12 +44,12 @@ public class AutomaticParametersRenamer extends AutomaticRenamer {
 
   @Override
   public String getDialogTitle() {
-    return RefactoringBundle.message("rename.parameters.dialog.title");
+    return JavaRefactoringBundle.message("rename.parameters.dialog.title");
   }
 
   @Override
   public String getDialogDescription() {
-    return RefactoringBundle.message("rename.parameter.in.hierarchy.to.dialog.description");
+    return JavaRefactoringBundle.message("rename.parameter.in.hierarchy.to.dialog.description");
   }
 
   @Override

@@ -4,6 +4,7 @@ package com.intellij.refactoring.typeMigration.ui;
 import com.intellij.CommonBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -22,7 +23,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
@@ -77,7 +77,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   @Override
   protected void doAction() {
     if (myScopeChooserCombo.getSelectedScope() == null) {
-      Messages.showErrorDialog(RefactoringBundle.message("type.migration.no.scope.warning.message"), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(JavaRefactoringBundle.message("type.migration.no.scope.warning.message"), CommonBundle.getErrorTitle());
       return;
     }
     FindSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
@@ -103,7 +103,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     appendMigrationTypeEditor(panel, gc);
     LabeledComponent<ScopeChooserCombo> scopeChooserComponent = new LabeledComponent<>();
     scopeChooserComponent.setComponent(myScopeChooserCombo);
-    scopeChooserComponent.setText(RefactoringBundle.message("type.migration.choose.scope.title"));
+    scopeChooserComponent.setText(JavaRefactoringBundle.message("type.migration.choose.scope.title"));
     panel.add(scopeChooserComponent, gc);
     return panel;
   }
@@ -194,7 +194,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     protected void appendMigrationTypeEditor(JPanel panel, GridBagConstraints gc) {
       final PsiType type = getRootType();
       final String typeText = type != null ? type.getPresentableText() : "<unknown>";
-      panel.add(new JLabel(RefactoringBundle.message("type.migration.label", getElementPresentation(myRoots[0]), typeText)), gc);
+      panel.add(new JLabel(JavaRefactoringBundle.message("type.migration.label", getElementPresentation(myRoots[0]), typeText)), gc);
       panel.add(myToTypeEditor, gc);
     }
 

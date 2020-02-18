@@ -3,6 +3,7 @@ package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +24,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.typeMigration.usageInfo.OverriddenUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.OverriderUsageInfo;
@@ -806,7 +806,7 @@ public class TypeMigrationLabeler {
       myDialogSemaphore.down();
       try {
         final Runnable checkTimeToStopRunnable = () -> {
-          if (Messages.showYesNoCancelDialog(RefactoringBundle.message("type.migration.preview.warning.text"), RefactoringBundle.message("type.migration.action.name"),
+          if (Messages.showYesNoCancelDialog(JavaRefactoringBundle.message("type.migration.preview.warning.text"), JavaRefactoringBundle.message("type.migration.action.name"),
                                              Messages.getWarningIcon()) == Messages.YES) {
             myException = new MigrateException();
           }

@@ -18,6 +18,7 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +33,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,7 +59,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
 
     PsiExpression initializer = getInitializer(field);
     if (initializer == null) {
-      String message = RefactoringBundle.message("no.initializer.present.for.the.field");
+      String message = JavaRefactoringBundle.message("no.initializer.present.for.the.field");
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_FIELD);
       return;
     }
@@ -71,7 +71,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     }
 
     if (ReferencesSearch.search(field, ProjectScope.getProjectScope(project), false).findFirst() == null) {
-      String message = RefactoringBundle.message("field.0.is.never.used", field.getName());
+      String message = JavaRefactoringBundle.message("field.0.is.never.used", field.getName());
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_FIELD);
       return;
     }
@@ -85,11 +85,11 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
             break;
           }
         }
-      }), RefactoringBundle.message("inline.conflicts.progress"), true, project)) {
+      }), JavaRefactoringBundle.message("inline.conflicts.progress"), true, project)) {
         return;
       }
       if (hasWriteUsages.get()) {
-        String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", getRefactoringName());
+        String message = JavaRefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", getRefactoringName());
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_FIELD);
         return;
       }
@@ -179,6 +179,6 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   }
 
   private static String getRefactoringName() {
-    return RefactoringBundle.message("inline.field.title");
+    return JavaRefactoringBundle.message("inline.field.title");
   }
 }

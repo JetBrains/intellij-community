@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.turnRefsToSuper;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -67,7 +68,7 @@ public class TurnRefsToSuperHandler implements RefactoringActionHandler, Context
     PsiClass subClass = (PsiClass)elements[0];
     List<PsiClass> basesList = RefactoringHierarchyUtil.createBasesList(subClass, true, true);
     if (basesList.isEmpty()) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("interface.does.not.have.base.interfaces", subClass.getQualifiedName()));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("interface.does.not.have.base.interfaces", subClass.getQualifiedName()));
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.TURN_REFS_TO_SUPER);
       return;
@@ -77,6 +78,6 @@ public class TurnRefsToSuperHandler implements RefactoringActionHandler, Context
   }
 
   public static String getRefactoringName() {
-    return RefactoringBundle.message("use.interface.where.possible.title");
+    return JavaRefactoringBundle.message("use.interface.where.possible.title");
   }
 }

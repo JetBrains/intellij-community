@@ -4,6 +4,7 @@ package com.intellij.refactoring.move.moveInner;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -18,7 +19,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
@@ -76,7 +76,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected String getCommandName() {
-    return RefactoringBundle.message("move.inner.class.command", myDescriptiveName);
+    return JavaRefactoringBundle.message("move.inner.class.command", myDescriptiveName);
   }
 
   @Override
@@ -385,7 +385,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       } else {
         placesDescription = "<ol><li>" + StringUtil.join(containerSet, element -> RefactoringUIUtil.getDescription(element, true), "</li><li>") + "</li></ol>";
       }
-      String message = RefactoringBundle.message("0.will.become.inaccessible.from.1",
+      String message = JavaRefactoringBundle.message("0.will.become.inaccessible.from.1",
                                                  placesDescription,
                                                  RefactoringUIUtil.getDescription(container, true));
       conflicts.put(container, Collections.singletonList(message));

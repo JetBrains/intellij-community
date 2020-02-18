@@ -16,9 +16,9 @@
  */
 package com.intellij.refactoring.turnRefsToSuper;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     StringBuilder buffer = new StringBuilder();
-    buffer.append(RefactoringBundle.message("references.to.0.to.be.replaced.with.references.to.1",
+    buffer.append(JavaRefactoringBundle.message("references.to.0.to.be.replaced.with.references.to.1",
                                             myClass.getName(), mySuper.getName()));
     buffer.append(" ");
     buffer.append(UsageViewBundle.getReferencesString(usagesCount, filesCount));

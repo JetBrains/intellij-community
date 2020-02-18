@@ -15,8 +15,8 @@
  */
 package com.intellij.refactoring.typeMigration;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,7 @@ class TypeMigrationViewDescriptor implements UsageViewDescriptor {
   @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return RefactoringBundle.message("occurences.to.be.migrated", UsageViewBundle.getReferencesString(usagesCount, filesCount));
+    return JavaRefactoringBundle.message("occurences.to.be.migrated", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   @Override

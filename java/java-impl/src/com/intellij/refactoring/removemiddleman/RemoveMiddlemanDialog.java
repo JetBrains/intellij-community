@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.removemiddleman;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
@@ -9,7 +10,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionTable;
@@ -79,7 +79,7 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
   protected JComponent createNorthPanel() {
     fieldNameLabel.setEditable(false);
     final JPanel sourceClassPanel = new JPanel(new BorderLayout());
-    sourceClassPanel.add(new JLabel(RefactoringBundle.message("delegating.field")), BorderLayout.NORTH);
+    sourceClassPanel.add(new JLabel(JavaRefactoringBundle.message("delegating.field")), BorderLayout.NORTH);
     sourceClassPanel.add(fieldNameLabel, BorderLayout.CENTER);
     return sourceClassPanel;
   }

@@ -18,6 +18,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.WriteAction;
@@ -91,13 +92,13 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       else if (element instanceof PsiDirectory || element instanceof PsiPackage) directoryCount++;
     }
     if (directoryCount == 0) {
-      return classCount == 1 ? RefactoringBundle.message("move.class") : RefactoringBundle.message("move.classes");
+      return classCount == 1 ? JavaRefactoringBundle.message("move.class") : JavaRefactoringBundle.message("move.classes");
     }
     if (classCount == 0) {
-      return directoryCount == 1 ? RefactoringBundle.message("move.package.or.directory")
-                                 : RefactoringBundle.message("move.packages.or.directories");
+      return directoryCount == 1 ? JavaRefactoringBundle.message("move.package.or.directory")
+                                 : JavaRefactoringBundle.message("move.packages.or.directories");
     }
-    return RefactoringBundle.message("move.classes.and.packages");
+    return JavaRefactoringBundle.message("move.classes.and.packages");
   }
 
   public static boolean invalid4Move(PsiElement element) {
@@ -192,9 +193,9 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     final PsiDirectory[] projectDirectories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
     if (projectDirectories.length > 1) {
       int ret = Messages
-        .showYesNoCancelDialog(project, RefactoringBundle.message("0.or.all.directories.in.project", prompt), RefactoringBundle.message("warning.title"),
-                               RefactoringBundle.message("move.current.directory"),
-                               RefactoringBundle.message("move.directories"),
+        .showYesNoCancelDialog(project, JavaRefactoringBundle.message("0.or.all.directories.in.project", prompt), RefactoringBundle.message("warning.title"),
+                               JavaRefactoringBundle.message("move.current.directory"),
+                               JavaRefactoringBundle.message("move.directories"),
                                CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
       if (ret == Messages.YES) {
         moveAsDirectory(project, targetContainer, callback, directories);
@@ -252,7 +253,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
               }
             }
             catch (IncorrectOperationException e) {
-              Messages.showErrorDialog(project, e.getMessage(), RefactoringBundle.message("cannot.move"));
+              Messages.showErrorDialog(project, e.getMessage(), JavaRefactoringBundle.message("cannot.move"));
               return null;
             }
             return new MoveDirectoryWithClassesProcessor(project, directories, null, searchInComments, searchForTextOccurences, true, callback) {
@@ -414,11 +415,11 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
        LOG.assertTrue(myDirectories.length > 0);
        LOG.assertTrue(packages.size() > 0);
        if (packages.size() > 1) {
-         moveDescription = RefactoringBundle.message("move.packages.to.another.package", packages.size());
+         moveDescription = JavaRefactoringBundle.message("move.packages.to.another.package", packages.size());
        }
        else {
          final String qName = packages.iterator().next();
-         moveDescription = RefactoringBundle.message("move.package.to.another.package", qName);
+         moveDescription = JavaRefactoringBundle.message("move.package.to.another.package", qName);
        }
 
        myRbMovePackage = new JRadioButton();
@@ -427,10 +428,10 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
 
        final String rearrangeDescription;
        if (myDirectories.length > 1) {
-         rearrangeDescription = RefactoringBundle.message("move.directories.to.another.source.root", myDirectories.length);
+         rearrangeDescription = JavaRefactoringBundle.message("move.directories.to.another.source.root", myDirectories.length);
        }
        else {
-         rearrangeDescription = RefactoringBundle.message("move.directory.to.another.source.root", myDirectories[0].getVirtualFile().getPresentableUrl());
+         rearrangeDescription = JavaRefactoringBundle.message("move.directory.to.another.source.root", myDirectories[0].getVirtualFile().getPresentableUrl());
        }
        myRbRearrangePackage = new JRadioButton();
        myRbRearrangePackage.setText(rearrangeDescription);

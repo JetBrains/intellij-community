@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.copy;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -54,8 +55,8 @@ class CopyClassDialog extends DialogWrapper{
     myProject = project;
     myDefaultTargetDirectory = defaultTargetDirectory;
     myDoClone = doClone;
-    String text = myDoClone ? RefactoringBundle.message("copy.class.clone.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass)) :
-                  RefactoringBundle.message("copy.class.copy.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass));
+    String text = myDoClone ? JavaRefactoringBundle.message("copy.class.clone.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass)) :
+                  JavaRefactoringBundle.message("copy.class.copy.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass));
     myInformationLabel.setText(text);
     myInformationLabel.setFont(myInformationLabel.getFont().deriveFont(Font.BOLD));
     init();
@@ -92,7 +93,7 @@ class CopyClassDialog extends DialogWrapper{
     String qualifiedName = getQualifiedName();
     myTfPackage = new PackageNameReferenceEditorCombo(qualifiedName, myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
     myTfPackage.setTextFieldPreferredWidth(Math.max(qualifiedName.length() + 5, 40));
-    myPackageLabel.setText(RefactoringBundle.message("destination.package"));
+    myPackageLabel.setText(JavaRefactoringBundle.message("destination.package"));
     myPackageLabel.setLabelFor(myTfPackage);
     if (myDoClone) {
       myTfPackage.setVisible(false);
@@ -148,9 +149,9 @@ class CopyClassDialog extends DialogWrapper{
     final PsiManager manager = PsiManager.getInstance(myProject);
     final PsiNameHelper nameHelper = PsiNameHelper.getInstance(manager.getProject());
     if (packageName.length() > 0 && !nameHelper.isQualifiedName(packageName)) {
-      errorString[0] = RefactoringBundle.message("invalid.target.package.name.specified");
+      errorString[0] = JavaRefactoringBundle.message("invalid.target.package.name.specified");
     } else if (className != null && className.isEmpty()) {
-      errorString[0] = RefactoringBundle.message("no.class.name.specified");
+      errorString[0] = JavaRefactoringBundle.message("no.class.name.specified");
     } else {
       if (!nameHelper.isIdentifier(className)) {
         errorString[0] = RefactoringMessageUtil.getIncorrectIdentifierMessage(className);

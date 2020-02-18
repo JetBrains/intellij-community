@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -128,8 +129,8 @@ public class DuplicatesImpl {
           final boolean allChosen = promptDialog.getExitCode() == FindManager.PromptResult.ALL;
           showAll.set(allChosen);
           if (allChosen && confirmDuplicatePrompt != null && prompt == null) {
-            if (Messages.showOkCancelDialog(project, RefactoringBundle.message("process.duplicates.change.signature.promt"),
-                                            RefactoringBundle.message("change.method.signature.action.name"), CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) !=
+            if (Messages.showOkCancelDialog(project, JavaRefactoringBundle.message("process.duplicates.change.signature.promt"),
+                                            JavaRefactoringBundle.message("change.method.signature.action.name"), CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) !=
                 Messages.OK) return true;
           }
           if (promptDialog.getExitCode() == FindManager.PromptResult.SKIP) return false;
@@ -205,7 +206,7 @@ public class DuplicatesImpl {
       final int answer = ApplicationManager.getApplication().isUnitTestMode() || hasDuplicates == null ? Messages.YES : Messages.showYesNoDialog(project,
                                                                                                                                                  RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
         ApplicationNamesInfo.getInstance().getProductName(), duplicates.size()),
-                                                                                                                                                 RefactoringBundle
+                                                                                                                                                 JavaRefactoringBundle
                                                                                                                                                    .message(
                                                                                                                                                      "process.duplicates.title"), Messages.getQuestionIcon());
       if (answer == Messages.YES) {

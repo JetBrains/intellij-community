@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -212,7 +213,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     table.getSelectionModel().setSelectionInterval(0, 0);
     table.setSurrendersFocusOnKeystroke(true);
 
-    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, AllIcons.Hierarchy.Supertypes) {
+    myPropExceptionsButton = new AnActionButton(JavaRefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, AllIcons.Hierarchy.Supertypes) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final Ref<JavaCallerChooser> chooser = new Ref<>();
@@ -222,7 +223,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         };
         chooser.set(new JavaCallerChooser(getMethod(),
                                           myProject,
-                                          RefactoringBundle.message("changeSignature.exception.caller.chooser"),
+                                          JavaRefactoringBundle.message("changeSignature.exception.caller.chooser"),
                                           myExceptionPropagationTree,
                                           callback));
         chooser.get().show();
@@ -236,7 +237,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     myExceptionsModel.addTableModelListener(getSignatureUpdater());
 
     final ArrayList<Pair<String, JPanel>> result = new ArrayList<>();
-    final String message = RefactoringBundle.message("changeSignature.exceptions.panel.border.title");
+    final String message = JavaRefactoringBundle.message("changeSignature.exceptions.panel.border.title");
     result.add(Pair.create(message, panel));
     return result;
   }
@@ -362,7 +363,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
               additionalPanel.add(createLabeledPanel(message, myDefaultValueEditor), BorderLayout.WEST);
 
               if (!isGenerateDelegate()) {
-                myAnyVar = new JCheckBox(RefactoringBundle.message("change.signature.use.any.checkbox"));
+                myAnyVar = new JCheckBox(JavaRefactoringBundle.message("change.signature.use.any.checkbox"));
                 UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myAnyVar);
                 DialogUtil.registerMnemonic(myAnyVar, '&');
                 myAnyVar.addActionListener(new ActionListener() {
@@ -508,7 +509,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected void invokeRefactoring(final BaseRefactoringProcessor processor) {
     if (myMethodsToPropagateExceptions != null && !mayPropagateExceptions()) {
-      Messages.showWarningDialog(myProject, RefactoringBundle.message("changeSignature.exceptions.wont.propagate"), REFACTORING_NAME);
+      Messages.showWarningDialog(myProject, JavaRefactoringBundle.message("changeSignature.exceptions.wont.propagate"), REFACTORING_NAME);
       myMethodsToPropagateExceptions = null;
     }
     super.invokeRefactoring(processor);
@@ -580,11 +581,11 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true));
-        return RefactoringBundle.message("changeSignature.wrong.return.type", myReturnTypeCodeFragment.getText());
+        return JavaRefactoringBundle.message("changeSignature.wrong.return.type", myReturnTypeCodeFragment.getText());
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true));
-        return RefactoringBundle.message("changeSignature.no.return.type");
+        return JavaRefactoringBundle.message("changeSignature.no.return.type");
       }
     }
 
@@ -602,17 +603,17 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       try {
         type = ((PsiTypeCodeFragment)parameterInfos.get(i).typeCodeFragment).getType();
       } catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        return RefactoringBundle.message("changeSignature.wrong.type.for.parameter",
+        return JavaRefactoringBundle.message("changeSignature.wrong.type.for.parameter",
                                          item.typeCodeFragment.getText(),
                                          item.parameter.getName());
       } catch (PsiTypeCodeFragment.NoTypeException e) {
-        return RefactoringBundle.message("changeSignature.no.type.for.parameter", "return", item.parameter.getName());
+        return JavaRefactoringBundle.message("changeSignature.no.type.for.parameter", "return", item.parameter.getName());
       }
 
       item.parameter.setType(type);
 
       if (type instanceof PsiEllipsisType && i != newParametersNumber - 1) {
-        return RefactoringBundle.message("changeSignature.vararg.not.last");
+        return JavaRefactoringBundle.message("changeSignature.vararg.not.last");
       }
 
       if (item.parameter.oldParameterIndex < 0) {
@@ -640,21 +641,21 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       try {
         PsiType type = typeCodeFragment.getType();
         if (!(type instanceof PsiClassType)) {
-          return RefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
+          return JavaRefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
         }
 
         PsiClassType throwable = JavaPsiFacade.getElementFactory(myProject)
           .createTypeByFQClassName("java.lang.Throwable", type.getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
-          return RefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
+          return JavaRefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
         }
         exceptionInfo.setType((PsiClassType)type);
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        return RefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
+        return JavaRefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
-        return RefactoringBundle.message("changeSignature.no.type.for.exception");
+        return JavaRefactoringBundle.message("changeSignature.no.type.for.exception");
       }
     }
 
@@ -662,7 +663,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     try {
       if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
         if (PsiTypesUtil.hasUnresolvedComponents(((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType())) {
-          if (Messages.showOkCancelDialog(myProject, RefactoringBundle
+          if (Messages.showOkCancelDialog(myProject, JavaRefactoringBundle
             .message("changeSignature.cannot.resolve.return.type", myReturnTypeCodeFragment.getText()),
                                           RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getWarningIcon()) != Messages.OK) {
             return EXIT_SILENTLY;
@@ -692,7 +693,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       for (final ParameterTableModelItemBase<ParameterInfoImpl> item : myParametersTableModel.getItems()) {
         if (item.parameter.oldParameterIndex < 0) {
           if (StringUtil.isEmpty(item.defaultValueCodeFragment.getText()))
-            return new ValidationInfo(RefactoringBundle.message("change.signature.default.value.missing.warning.message"));
+            return new ValidationInfo(JavaRefactoringBundle.message("change.signature.default.value.missing.warning.message"));
         }
       }
     }

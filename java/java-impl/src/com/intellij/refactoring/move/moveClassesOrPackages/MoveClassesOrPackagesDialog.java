@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -150,10 +151,10 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
         PsiElement parent = firstElement.getParent();
         LOG.assertTrue(parent != null);
       }
-      myNameLabel.setText(RefactoringBundle.message("move.single.class.or.package.name.label", UsageViewUtil.getType(firstElement), UsageViewUtil.getLongName(firstElement)));
+      myNameLabel.setText(JavaRefactoringBundle.message("move.single.class.or.package.name.label", UsageViewUtil.getType(firstElement), UsageViewUtil.getLongName(firstElement)));
     }
     else if (elementsToMove.length > 1) {
-      myNameLabel.setText(RefactoringBundle.message(elementsToMove[0] instanceof PsiClass ? "move.specified.classes" : "move.specified.packages"));
+      myNameLabel.setText(JavaRefactoringBundle.message(elementsToMove[0] instanceof PsiClass ? "move.specified.classes" : "move.specified.packages"));
     }
     selectInitialCard();
 
@@ -416,7 +417,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
     for (PsiElement element : myElementsToMove) {
       if (PsiTreeUtil.isAncestor(element, targetClass, false)) {
-        return RefactoringBundle.message("move.class.to.inner.move.to.self.error");
+        return JavaRefactoringBundle.message("move.class.to.inner.move.to.self.error");
       }
       final Language targetClassLanguage = targetClass.getLanguage();
       if (!element.getLanguage().equals(targetClassLanguage)) {
@@ -427,7 +428,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
     while (targetClass != null) {
       if (targetClass.getContainingClass() != null && !targetClass.hasModifierProperty(PsiModifier.STATIC)) {
-        return RefactoringBundle.message("move.class.to.inner.nonstatic.error");
+        return JavaRefactoringBundle.message("move.class.to.inner.nonstatic.error");
       }
       targetClass = targetClass.getContainingClass();
     }
@@ -463,14 +464,14 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
   private MoveDestination selectDestination() {
     final String packageName = getTargetPackage().trim();
     if (packageName.length() > 0 && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(packageName)) {
-      Messages.showErrorDialog(myProject, RefactoringBundle.message("please.enter.a.valid.target.package.name"),
+      Messages.showErrorDialog(myProject, JavaRefactoringBundle.message("please.enter.a.valid.target.package.name"),
                                RefactoringBundle.message("move.title"));
       return null;
     }
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, packageName);
     PackageWrapper targetPackage = new PackageWrapper(myManager, packageName);
     if (!targetPackage.exists()) {
-      final int ret = Messages.showYesNoDialog(myProject, RefactoringBundle.message("package.does.not.exist", packageName),
+      final int ret = Messages.showYesNoDialog(myProject, JavaRefactoringBundle.message("package.does.not.exist", packageName),
                                                RefactoringBundle.message("move.title"), Messages.getQuestionIcon());
       if (ret != Messages.YES) return null;
     }

@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +32,6 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -185,7 +185,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
       if (element instanceof PsiMethodReferenceExpression && !ApplicationManager.getApplication().isUnitTestMode()) {
-        conflicts.putValue(element, RefactoringBundle.message("expand.method.reference.warning"));
+        conflicts.putValue(element, JavaRefactoringBundle.message("expand.method.reference.warning"));
       }
       if (!isMethodUsage(usage)) continue;
       final PsiCall call = RefactoringUtil.getCallExpressionByMethodReference(element);

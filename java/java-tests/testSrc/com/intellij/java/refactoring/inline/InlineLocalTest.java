@@ -17,6 +17,7 @@ package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -116,7 +117,7 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
     catch (RuntimeException ex) {
       exception = ex.getMessage();
     }
-    String error = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", "text"));
+    String error = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", "text"));
     assertEquals(error, exception);
   }
 

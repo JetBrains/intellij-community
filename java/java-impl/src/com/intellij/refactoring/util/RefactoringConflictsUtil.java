@@ -3,6 +3,7 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
@@ -105,7 +106,7 @@ public class RefactoringConflictsUtil {
     if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
       // check for target class accessibility
       if (targetClass != null && !manager.getResolveHelper().isAccessible(targetClass, targetClass.getModifierList(), ref, null, null)) {
-        String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
+        String message = JavaRefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                    RefactoringUIUtil.getDescription(targetClass, true),
                                                    VisibilityUtil.getVisibilityStringToDisplay(targetClass),
                                                    RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
@@ -114,7 +115,7 @@ public class RefactoringConflictsUtil {
       }
       // check for member accessibility
       else if (!manager.getResolveHelper().isAccessible(member, modifierListCopy, ref, targetClass, null)) {
-        String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
+        String message = JavaRefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                    RefactoringUIUtil.getDescription(member, true),
                                                    VisibilityUtil.toPresentableText(VisibilityUtil.getVisibilityModifier(modifierListCopy)),
                                                    RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
@@ -199,7 +200,7 @@ public class RefactoringConflictsUtil {
                                         MultiMap<PsiElement, String> conflicts) {
     PsiResolveHelper helper = JavaPsiFacade.getInstance(newContext.getProject()).getResolveHelper();
     if (!helper.isAccessible(refMember, refMember.getModifierList(), newContext, accessClass, newContext)) {
-      String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
+      String message = JavaRefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                  RefactoringUIUtil.getDescription(refMember, true),
                                                  VisibilityUtil.getVisibilityStringToDisplay(refMember),
                                                  RefactoringUIUtil.getDescription(member, false));
@@ -324,7 +325,7 @@ public class RefactoringConflictsUtil {
         };
       }
       ProgressManager.progress(
-        RefactoringBundle.message("processing.progress.text", SymbolPresentationUtil.getSymbolPresentableText(scope)));
+        JavaRefactoringBundle.message("processing.progress.text", SymbolPresentationUtil.getSymbolPresentableText(scope)));
       scope.accept(visitor);
     }
 

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -236,7 +237,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
             return null;
           }
           JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
-          createStaticOptions(optionsPanel, RefactoringBundle.message("introduce.functional.variable.pass.fields.checkbox"));
+          createStaticOptions(optionsPanel, JavaRefactoringBundle.message("introduce.functional.variable.pass.fields.checkbox"));
           return optionsPanel;
         }
 

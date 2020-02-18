@@ -17,6 +17,7 @@ package com.intellij.refactoring.anonymousToInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -76,13 +77,13 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiAnonymousClass anonymousClass = findAnonymousClass(file, offset);
     if (anonymousClass == null) {
-      showErrorMessage(editor, RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.anonymous")));
+      showErrorMessage(editor, RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.anonymous")));
       return;
     }
     final PsiElement parent = anonymousClass.getParent();
     if (parent instanceof PsiEnumConstant) {
       showErrorMessage(editor, RefactoringBundle.getCannotRefactorMessage(
-        RefactoringBundle.message("anonymous.to.inner.enum.constant.cannot.refactor.message")));
+        JavaRefactoringBundle.message("anonymous.to.inner.enum.constant.cannot.refactor.message")));
       return;
     }
     invoke(project, editor, anonymousClass);
@@ -102,20 +103,20 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
     PsiClass baseClass = baseRef.resolve();
     if (baseClass == null) {
-      String message = RefactoringBundle.message("error.cannot.resolve", baseRef.getCanonicalText());
+      String message = JavaRefactoringBundle.message("error.cannot.resolve", baseRef.getCanonicalText());
       showErrorMessage(editor, message);
       return;
     }
 
     if (PsiUtil.isLocalClass(baseClass)) {
-      String message = RefactoringBundle.message("error.not.supported.for.local", getRefactoringName());
+      String message = JavaRefactoringBundle.message("error.not.supported.for.local", getRefactoringName());
       showErrorMessage(editor, message);
       return;
     }
 
     PsiElement targetContainer = findTargetContainer(myAnonClass);
     if (FileTypeUtils.isInServerPageFile(targetContainer) && targetContainer instanceof PsiFile) {
-      String message = RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName());
+      String message = JavaRefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName());
       showErrorMessage(editor, message);
       return;
     }
@@ -599,6 +600,6 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   static String getRefactoringName() {
-    return RefactoringBundle.message("anonymousToInner.refactoring.name");
+    return JavaRefactoringBundle.message("anonymousToInner.refactoring.name");
   }
 }

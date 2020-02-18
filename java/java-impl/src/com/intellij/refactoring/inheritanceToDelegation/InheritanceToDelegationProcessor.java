@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -33,7 +34,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inheritanceToDelegation.usageInfo.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -194,7 +194,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     if (myPrepareSuccessfulSwingThreadCallback != null) {
       MultiMap<PsiElement, String> conflicts = new MultiMap<>();
       if (objectUpcastedUsageInfos.length > 0) {
-        final String message = RefactoringBundle.message("instances.of.0.upcasted.to.1.were.found",
+        final String message = JavaRefactoringBundle.message("instances.of.0.upcasted.to.1.were.found",
                                                          RefactoringUIUtil.getDescription(myClass, true), CommonRefactoringUtil.htmlEmphasize(
           CommonClassNames.JAVA_LANG_OBJECT));
 
@@ -252,7 +252,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             }
             final PsiElement container = ConflictsUtil.getContainer(element);
             if (!reportedContainers.contains(container)) {
-              String message = RefactoringBundle.message("0.uses.1.of.an.instance.of.a.2", RefactoringUIUtil.getDescription(container, true),
+              String message = JavaRefactoringBundle.message("0.uses.1.of.an.instance.of.a.2", RefactoringUIUtil.getDescription(container, true),
                                                          RefactoringUIUtil.getDescription(nonDelegatedMember, true), classDescription);
               conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
               reportedContainers.add(container);
@@ -267,7 +267,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             }
             final PsiElement container = ConflictsUtil.getContainer(element);
             if (!reportedContainers.contains(container)) {
-              String message = RefactoringBundle.message("0.upcasts.an.instance.of.1.to.2",
+              String message = JavaRefactoringBundle.message("0.upcasts.an.instance.of.1.to.2",
                                                          RefactoringUIUtil.getDescription(container, true), classDescription,
                                                          RefactoringUIUtil.getDescription(upcastedTo, false));
               conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
@@ -278,7 +278,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
       else if (aUsage instanceof NoLongerOverridingSubClassMethodUsageInfo) {
         NoLongerOverridingSubClassMethodUsageInfo info = (NoLongerOverridingSubClassMethodUsageInfo)aUsage;
-        String message = RefactoringBundle.message("0.will.no.longer.override.1",
+        String message = JavaRefactoringBundle.message("0.will.no.longer.override.1",
                                                    RefactoringUIUtil.getDescription(info.getSubClassMethod(), true),
                                                    RefactoringUIUtil.getDescription(info.getOverridenMethod(), true));
         conflicts.putValue(info.getSubClassMethod(), message);
@@ -834,9 +834,9 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   private void showObjectUpcastedUsageView(final ObjectUpcastedUsageInfo[] usages) {
     UsageViewPresentation presentation = new UsageViewPresentation();
-    presentation.setTargetsNodeText(RefactoringBundle.message("replacing.inheritance.with.delegation"));
-    presentation.setCodeUsagesString(RefactoringBundle.message("instances.casted.to.java.lang.object"));
-    final String upcastedString = RefactoringBundle.message("instances.upcasted.to.object");
+    presentation.setTargetsNodeText(JavaRefactoringBundle.message("replacing.inheritance.with.delegation"));
+    presentation.setCodeUsagesString(JavaRefactoringBundle.message("instances.casted.to.java.lang.object"));
+    final String upcastedString = JavaRefactoringBundle.message("instances.upcasted.to.object");
     presentation.setUsagesString(upcastedString);
     presentation.setTabText(upcastedString);
 
@@ -847,7 +847,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       presentation
     );
 
-    WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("instances.upcasted.to.java.lang.object.found"));
+    WindowManager.getInstance().getStatusBar(myProject).setInfo(JavaRefactoringBundle.message("instances.upcasted.to.java.lang.object.found"));
   }
 
   /**
@@ -899,7 +899,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected String getCommandName() {
-    return RefactoringBundle.message("replace.inheritance.with.delegation.command", DescriptiveNameUtil.getDescriptiveName(myClass));
+    return JavaRefactoringBundle.message("replace.inheritance.with.delegation.command", DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 
   private Set<PsiMember> getAllBaseClassMembers() {

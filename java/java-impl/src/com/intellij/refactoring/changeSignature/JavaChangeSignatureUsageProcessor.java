@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -1172,7 +1173,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           checkContract(conflictDescriptions, method, true);
         }
         else if (element instanceof PsiMethodReferenceExpression && MethodReferenceUsageInfo.needToExpand(myChangeInfo)) {
-          conflictDescriptions.putValue(element, RefactoringBundle.message("expand.method.reference.warning"));
+          conflictDescriptions.putValue(element, JavaRefactoringBundle.message("expand.method.reference.warning"));
         }
         else if (element instanceof PsiJavaCodeReferenceElement) {
           final PsiElement parent = element.getParent();

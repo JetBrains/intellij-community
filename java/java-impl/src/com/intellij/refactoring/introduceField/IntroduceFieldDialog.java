@@ -2,6 +2,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -183,8 +184,8 @@ class IntroduceFieldDialog extends DialogWrapper {
 
   private String getTypeLabel() {
     return myWillBeDeclaredStatic ?
-           RefactoringBundle.message("introduce.field.static.field.of.type") :
-           RefactoringBundle.message("introduce.field.field.of.type");
+           JavaRefactoringBundle.message("introduce.field.static.field.of.type") :
+           JavaRefactoringBundle.message("introduce.field.field.of.type");
   }
 
   @Override

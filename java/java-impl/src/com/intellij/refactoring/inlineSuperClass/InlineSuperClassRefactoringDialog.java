@@ -16,12 +16,12 @@
 
 package com.intellij.refactoring.inlineSuperClass;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineOptionsDialog;
 import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.util.ui.JBUI;
@@ -102,12 +102,12 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
 
   @Override
   protected String getInlineAllText() {
-    return RefactoringBundle.message("all.references.and.remove.super.class");
+    return JavaRefactoringBundle.message("all.references.and.remove.super.class");
   }
 
   @Override
   protected String getInlineThisText() {
-    return RefactoringBundle.message("this.reference.only.and.keep.super.class");
+    return JavaRefactoringBundle.message("this.reference.only.and.keep.super.class");
   }
 
   @Override

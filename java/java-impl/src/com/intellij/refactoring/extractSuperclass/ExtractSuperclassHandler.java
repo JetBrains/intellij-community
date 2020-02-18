@@ -17,6 +17,7 @@ package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -92,7 +93,7 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
     }
 
     if (mySubclass.isEnum()) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("superclass.cannot.be.extracted.from.an.enum"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("superclass.cannot.be.extracted.from.an.enum"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_SUPERCLASS);
       return;
     }

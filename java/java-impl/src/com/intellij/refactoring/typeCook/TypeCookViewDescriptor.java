@@ -15,8 +15,8 @@
  */
 package com.intellij.refactoring.typeCook;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -35,13 +35,13 @@ class TypeCookViewDescriptor implements UsageViewDescriptor {
 
   @Override
   public String getProcessedElementsHeader() {
-    return RefactoringBundle.message("type.cook.elements.header");
+    return JavaRefactoringBundle.message("type.cook.elements.header");
   }
 
   @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return RefactoringBundle.message("declaration.s.to.be.generified", UsageViewBundle.getReferencesString(usagesCount, filesCount));
+    return JavaRefactoringBundle.message("declaration.s.to.be.generified", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   @Override

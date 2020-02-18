@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,12 +85,12 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     final AnalysisScope scope = new AnalysisScope(file);
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg =
-      new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", getRefactoringName()),
-                                   RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"), project, BaseAnalysisActionDialog.standardItems(project, scope, module, element),
+      new BaseAnalysisActionDialog(JavaRefactoringBundle.message("replace.method.duplicates.scope.chooser.title", getRefactoringName()),
+                                   JavaRefactoringBundle.message("replace.method.duplicates.scope.chooser.message"), project, BaseAnalysisActionDialog.standardItems(project, scope, module, element),
                                    AnalysisUIOptions.getInstance(project), false);
     if (dlg.showAndGet()) {
       AnalysisScope selectedScope = dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module);
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, RefactoringBundle.message("locate.duplicates.action.name"), true) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaRefactoringBundle.message("locate.duplicates.action.name"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
@@ -102,19 +103,19 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
   @Nullable
   private static String getCannotRefactorMessage(PsiMember member) {
     if (member == null) {
-      return RefactoringBundle.message("locate.caret.inside.a.method");
+      return JavaRefactoringBundle.message("locate.caret.inside.a.method");
     }
     if (member instanceof PsiMethod) {
       if (((PsiMethod)member).isConstructor()) {
-        return RefactoringBundle.message("replace.with.method.call.does.not.work.for.constructors");
+        return JavaRefactoringBundle.message("replace.with.method.call.does.not.work.for.constructors");
       }
       final PsiCodeBlock body = ((PsiMethod)member).getBody();
       if (body == null) {
-        return RefactoringBundle.message("method.does.not.have.a.body", member.getName());
+        return JavaRefactoringBundle.message("method.does.not.have.a.body", member.getName());
       }
       final PsiStatement[] statements = body.getStatements();
       if (statements.length == 0) {
-        return RefactoringBundle.message("method.has.an.empty.body", member.getName());
+        return JavaRefactoringBundle.message("method.has.an.empty.body", member.getName());
       }
     } else if (member instanceof PsiField) {
       final PsiField field = (PsiField)member;
@@ -204,7 +205,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     if (duplicates.isEmpty()) {
       if (!silent) {
         final Runnable nothingFoundRunnable = () -> {
-          final String message = RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
+          final String message = JavaRefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call",
                                                            ApplicationNamesInfo.getInstance().getProductName());
           Messages.showInfoMessage(project, message, getRefactoringName());
         };
@@ -302,7 +303,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
   }
 
   static String getStatusMessage(final int duplicatesNo) {
-    return RefactoringBundle.message("method.duplicates.found.message", duplicatesNo);
+    return JavaRefactoringBundle.message("method.duplicates.found.message", duplicatesNo);
   }
 
   private static void showErrorMessage(String message, Project project, Editor editor) {
@@ -315,6 +316,6 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
   }
 
   public static String getRefactoringName() {
-    return RefactoringBundle.message("replace.method.code.duplicates.title");
+    return JavaRefactoringBundle.message("replace.method.code.duplicates.title");
   }
 }

@@ -17,6 +17,7 @@ package com.intellij.refactoring.migration;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -31,7 +32,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.migration.PsiMigrationManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +127,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (refUsages.get().length == 0) {
-      Messages.showInfoMessage(myProject, RefactoringBundle.message("migration.no.usages.found.in.the.project"), getRefactoringName());
+      Messages.showInfoMessage(myProject, JavaRefactoringBundle.message("migration.no.usages.found.in.the.project"), getRefactoringName());
       return false;
     }
     setPreviewUsages(true);
@@ -192,6 +192,6 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   private static String getRefactoringName() {
-    return RefactoringBundle.message("migration.title");
+    return JavaRefactoringBundle.message("migration.title");
   }
 }

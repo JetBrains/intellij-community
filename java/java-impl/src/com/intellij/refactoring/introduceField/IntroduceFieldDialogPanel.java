@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -151,7 +152,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
 
     myRbInFieldDeclaration = new JRadioButton();
     myRbInFieldDeclaration.setFocusable(false);
-    myRbInFieldDeclaration.setText(RefactoringBundle.message("field.declaration.radio"));
+    myRbInFieldDeclaration.setText(JavaRefactoringBundle.message("field.declaration.radio"));
 
     myRbInConstructor = new JRadioButton();
     myRbInConstructor.setFocusable(false);

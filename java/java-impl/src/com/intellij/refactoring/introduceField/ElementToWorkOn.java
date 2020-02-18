@@ -18,6 +18,7 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -209,7 +210,7 @@ public class ElementToWorkOn {
                                                      final String refactoringName,
                                                      final String helpId,
                                                      final Project project) {
-    String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
+    String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
     CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId);
   }
   

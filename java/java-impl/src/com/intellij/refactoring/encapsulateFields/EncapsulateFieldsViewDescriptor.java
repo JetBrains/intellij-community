@@ -16,6 +16,7 @@
  */
 package com.intellij.refactoring.encapsulateFields;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.refactoring.RefactoringBundle;
@@ -35,7 +36,7 @@ class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
 
   @Override
   public String getProcessedElementsHeader() {
-    return RefactoringBundle.message("encapsulate.fields.fields.to.be.encapsulated");
+    return JavaRefactoringBundle.message("encapsulate.fields.fields.to.be.encapsulated");
   }
 
   @Override

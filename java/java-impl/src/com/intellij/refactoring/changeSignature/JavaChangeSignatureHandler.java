@@ -3,6 +3,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
@@ -140,7 +141,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
     Project project = aClass.getProject();
     if (typeParameterList == null) {
-      final String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("changeClassSignature.no.type.parameters"));
+      final String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("changeClassSignature.no.type.parameters"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.CHANGE_CLASS_SIGNATURE);
       return;
     }

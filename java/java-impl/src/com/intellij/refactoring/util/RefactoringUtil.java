@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -1025,7 +1026,7 @@ public class RefactoringUtil {
     if (PsiImplUtil.getSwitchLabel(expr) != null) {
       PsiReferenceExpression ref = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expr), PsiReferenceExpression.class);
       if (ref != null && ref.resolve() instanceof PsiEnumConstant) {
-        return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"));
+        return RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"));
       }
     }
     return null;

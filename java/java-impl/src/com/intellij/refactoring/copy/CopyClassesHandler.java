@@ -18,6 +18,7 @@ package com.intellij.refactoring.copy;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -71,9 +72,9 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   @Override
   public String getActionName(PsiElement[] elements) {
     if (elements.length == 1 && !(elements[0] instanceof PsiPackage) && !(elements[0] instanceof PsiDirectory)) {
-      return RefactoringBundle.message("copy.handler.copy.class.with.dialog");
+      return JavaRefactoringBundle.message("copy.handler.copy.class.with.dialog");
     }
-    return RefactoringBundle.message("copy.handler.copy.classes.with.dialog");
+    return JavaRefactoringBundle.message("copy.handler.copy.classes.with.dialog");
   }
 
   public static boolean canCopyClass(PsiElement... elements) {
@@ -184,7 +185,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     }
     Project project = defaultTargetDirectory.getProject();
     if (DumbService.isDumb(elements[0].getProject())) {
-      DumbService.getInstance(project).showDumbModeNotification(RefactoringBundle.message(
+      DumbService.getInstance(project).showDumbModeNotification(JavaRefactoringBundle.message(
         "copy.handler.is.not.available.during.indexing"));
       return;
     }
@@ -221,7 +222,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
           return qualifiedName;
         }
       };
-      dialog.setTitle(RefactoringBundle.message("copy.handler.copy.class"));
+      dialog.setTitle(JavaRefactoringBundle.message("copy.handler.copy.class"));
       if (dialog.showAndGet()) {
         openInEditor = dialog.openInEditor();
         targetDirectory = dialog.getTargetDirectory();
@@ -254,7 +255,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       }
     }
     if (targetDirectory != null) {
-      copyClassesImpl(className, project, classes, relativePathsMap, targetDirectory, defaultTargetDirectory, RefactoringBundle.message(
+      copyClassesImpl(className, project, classes, relativePathsMap, targetDirectory, defaultTargetDirectory, JavaRefactoringBundle.message(
         "copy.handler.copy.class"), false, openInEditor);
     }
   }
@@ -278,12 +279,12 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     Project project = element.getProject();
 
     CopyClassDialog dialog = new CopyClassDialog(classes[0], null, project, true);
-    dialog.setTitle(RefactoringBundle.message("copy.handler.clone.class"));
+    dialog.setTitle(JavaRefactoringBundle.message("copy.handler.clone.class"));
     if (dialog.showAndGet()) {
       String className = dialog.getClassName();
       PsiDirectory targetDirectory = element.getContainingFile().getContainingDirectory();
       copyClassesImpl(className, project, Collections.singletonMap(classes[0].getContainingFile(), classes), null, targetDirectory,
-                      targetDirectory, RefactoringBundle.message("copy.handler.clone.class"), true, true);
+                      targetDirectory, JavaRefactoringBundle.message("copy.handler.clone.class"), true, true);
     }
   }
 

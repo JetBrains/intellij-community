@@ -2,6 +2,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,7 +25,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
@@ -126,8 +126,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     if (!StringUtil.isEmpty(qName)) {
       PsiNameHelper helper = PsiNameHelper.getInstance(myProject);
       if (!helper.isQualifiedName(qName)) {
-        Messages.showMessageDialog(myProject, RefactoringBundle.message("invalid.target.package.name.specified"),
-                                   RefactoringBundle.message("move.classes.invalid.package.name.warning.message"),
+        Messages.showMessageDialog(myProject, JavaRefactoringBundle.message("invalid.target.package.name.specified"),
+                                   JavaRefactoringBundle.message("move.classes.invalid.package.name.warning.message"),
                                    Messages.getErrorIcon());
         return false;
       }
@@ -270,7 +270,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
               if (directory != null) {
                 PsiPackage usagePackage = JavaDirectoryService.getInstance().getPackage(directory);
                 if (usagePackage != null && !myTargetPackage.equalToPackage(usagePackage)) {
-                  final String message = RefactoringBundle.message("a.package.local.class.0.will.no.longer.be.accessible.from.1",
+                  final String message = JavaRefactoringBundle.message("a.package.local.class.0.will.no.longer.be.accessible.from.1",
                                                                    CommonRefactoringUtil.htmlEmphasize(aClass.getName()),
                                                                    RefactoringUIUtil.getDescription(
                                                                    container, true));
@@ -574,7 +574,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   protected String getCommandName() {
     String elements = RefactoringUIUtil.calculatePsiElementDescriptionList(myElementsToMove);
     String target = myTargetPackage.getQualifiedName();
-    return RefactoringBundle.message("move.classes.command", elements, target);
+    return JavaRefactoringBundle.message("move.classes.command", elements, target);
   }
 
   private class MyClassInstanceReferenceVisitor implements ClassInstanceScanner.ClassInstanceReferenceVisitor {
@@ -641,7 +641,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
             if (directory != null) {
               PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
               if (!myTargetPackage.equalToPackage(aPackage)) {
-                String message = RefactoringBundle.message("0.will.be.inaccessible.from.1", RefactoringUIUtil.getDescription(member, true),
+                String message = JavaRefactoringBundle.message("0.will.be.inaccessible.from.1", RefactoringUIUtil.getDescription(member, true),
                                                       RefactoringUIUtil.getDescription(container, true));
                 myConflicts.putValue(member, CommonRefactoringUtil.capitalize(message));
               }

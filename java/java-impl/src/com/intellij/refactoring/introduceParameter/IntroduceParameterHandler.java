@@ -8,6 +8,7 @@ import com.intellij.codeInsight.FunctionalInterfaceSuggester;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -137,7 +138,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     if (expr == null && localVar == null) {
-      String message =  RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.an.expression"));
+      String message =  RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.block.should.represent.an.expression"));
       showErrorMessage(project, message, editor);
       return false;
     }
@@ -145,7 +146,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     if (localVar != null) {
       final PsiElement parent = localVar.getParent();
       if (!(parent instanceof PsiDeclarationStatement)) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
+        String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
         showErrorMessage(project, message, editor);
         return false;
       }
@@ -160,13 +161,13 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
     final PsiType typeByExpression = invokedOnDeclaration ? null : RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
     if (!invokedOnDeclaration && (typeByExpression == null || LambdaUtil.notInferredType(typeByExpression))) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("type.of.the.selected.expression.cannot.be.determined"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("type.of.the.selected.expression.cannot.be.determined"));
       showErrorMessage(project, message, editor);
       return false;
     }
 
     if (!invokedOnDeclaration && PsiType.VOID.equals(typeByExpression)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(project, message, editor);
       return false;
     }
@@ -206,7 +207,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     final JPanel panel = new JPanel(new BorderLayout());
-    final JCheckBox superMethod = new JCheckBox(RefactoringBundle.message("introduce.parameter.super.method.checkbox"), true);
+    final JCheckBox superMethod = new JCheckBox(JavaRefactoringBundle.message("introduce.parameter.super.method.checkbox"), true);
     superMethod.setMnemonic('U');
     panel.add(superMethod, BorderLayout.SOUTH);
     final JBList<PsiMethod> list = new JBList<>(validEnclosingMethods.toArray(PsiMethod.EMPTY_ARRAY));

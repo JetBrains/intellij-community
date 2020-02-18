@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -22,7 +23,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -180,23 +180,23 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
     final String signature = MatchUtil
       .getChangedSignature(match, myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility);
     if (signature != null) {
-      return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", signature);
+      return JavaRefactoringBundle.message("replace.this.code.fragment.and.change.signature", signature);
     }
     final boolean needToEscalateVisibility = !PsiUtil.isAccessible(myMethod, matchStart, null);
     if (needToEscalateVisibility) {
       final String visibilityPresentation = VisibilityUtil.toPresentableText(visibility);
       return shouldBeStatic
-             ? RefactoringBundle.message("replace.this.code.fragment.and.make.method.static.visible", visibilityPresentation)
-             : RefactoringBundle.message("replace.this.code.fragment.and.make.method.visible", visibilityPresentation);
+             ? JavaRefactoringBundle.message("replace.this.code.fragment.and.make.method.static.visible", visibilityPresentation)
+             : JavaRefactoringBundle.message("replace.this.code.fragment.and.make.method.visible", visibilityPresentation);
     }
     if (shouldBeStatic) {
-      return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
+      return JavaRefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
     }
     return null;
   }
 
   @Override
   public String getReplaceDuplicatesTitle(int idx, int size) {
-    return RefactoringBundle.message("process.methods.duplicates.title", idx, size, myMethod.getName());
+    return JavaRefactoringBundle.message("process.methods.duplicates.title", idx, size, myMethod.getName());
   }
 }

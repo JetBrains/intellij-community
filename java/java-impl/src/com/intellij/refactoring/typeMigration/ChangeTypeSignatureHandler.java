@@ -4,6 +4,7 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -12,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeMigration.ui.TypeMigrationDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
       typeElement = PsiTreeUtil.getParentOfType(parent, PsiTypeElement.class, false);
     }
     CommonRefactoringUtil.showErrorHint(project, editor,
-                                        RefactoringBundle.message("caret.position.warning.message"),
+                                        JavaRefactoringBundle.message("caret.position.warning.message"),
                                         REFACTORING_NAME, "refactoring.migrateType");
   }
 
@@ -94,8 +94,8 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
       return;
     }
 
-    CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("only.fields.variables.of.methods.of.valid.type.can.be.considered"),
-                                   RefactoringBundle.message("unable.to.start.type.migration"), null);
+    CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("only.fields.variables.of.methods.of.valid.type.can.be.considered"),
+                                   JavaRefactoringBundle.message("unable.to.start.type.migration"), null);
 
   }
 

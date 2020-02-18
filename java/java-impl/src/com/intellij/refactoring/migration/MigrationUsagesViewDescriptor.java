@@ -16,8 +16,8 @@
 
 package com.intellij.refactoring.migration;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
   @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return RefactoringBundle.message("references.in.code.to.elements.from.migration.map", myMigrationMap.getName(),
+    return JavaRefactoringBundle.message("references.in.code.to.elements.from.migration.map", myMigrationMap.getName(),
                                      UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
@@ -58,7 +58,7 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getInfo() {
-    return RefactoringBundle.message("press.the.do.migrate.button", myMigrationMap.getName());
+    return JavaRefactoringBundle.message("press.the.do.migrate.button", myMigrationMap.getName());
   }
 
 }

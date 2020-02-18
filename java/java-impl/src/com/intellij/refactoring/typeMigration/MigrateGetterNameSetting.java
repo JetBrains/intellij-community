@@ -15,11 +15,11 @@
  */
 package com.intellij.refactoring.typeMigration;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeMigration.usageInfo.OverriddenUsageInfo;
 import com.intellij.util.ui.UIUtil;
 
@@ -72,7 +72,7 @@ class MigrateGetterNameSetting {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return messageText.contains("dontMigrateName") ? 3 : 1;
     } else {
-      return Messages.showIdeaMessageDialog(null, messageText, RefactoringBundle.message("type.migration.action.name"), CODES, 0, null, null);
+      return Messages.showIdeaMessageDialog(null, messageText, JavaRefactoringBundle.message("type.migration.action.name"), CODES, 0, null, null);
     }
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.extractInterface;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -119,7 +120,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
 
   @Override
   protected String getDocCommentPanelName() {
-    return RefactoringBundle.message("extractSuperInterface.javadoc");
+    return JavaRefactoringBundle.message("extractSuperInterface.javadoc");
   }
 
   @Override

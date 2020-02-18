@@ -16,9 +16,9 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageViewUtil;
@@ -32,12 +32,12 @@ public class SubmemberHidesMemberUsageInfo extends UnresolvableCollisionUsageInf
   public String getDescription() {
     String descr;
     if (!(getElement() instanceof PsiMethod)) {
-      descr = RefactoringBundle.message("0.will.hide.renamed.1",
+      descr = JavaRefactoringBundle.message("0.will.hide.renamed.1",
                                         RefactoringUIUtil.getDescription(getElement(), true),
                                         UsageViewUtil.getType(getElement()));
     }
     else {
-      descr = RefactoringBundle.message("0.will.override.renamed.1",
+      descr = JavaRefactoringBundle.message("0.will.override.renamed.1",
                                         RefactoringUIUtil.getDescription(getElement(), true),
                                         UsageViewUtil.getType(getElement()));
     }

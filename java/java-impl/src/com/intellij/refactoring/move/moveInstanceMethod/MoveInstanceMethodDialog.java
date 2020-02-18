@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -111,7 +112,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     if (myThisClassesMap.size() == 0) return null;
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
     for (PsiClass aClass : myThisClassesMap.keySet()) {
-      final String text = RefactoringBundle.message("move.method.this.parameter.label", ObjectUtils.notNull(aClass.getName(), ""));
+      final String text = JavaRefactoringBundle.message("move.method.this.parameter.label", ObjectUtils.notNull(aClass.getName(), ""));
       panel.add(new TitledSeparator(text, null));
 
       String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(aClass);
@@ -133,7 +134,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
         String parameterName = field.getText().trim();
         if (!PsiNameHelper.getInstance(myMethod.getProject()).isIdentifier(parameterName)) {
           Messages
-            .showErrorDialog(getProject(), RefactoringBundle.message("move.method.enter.a.valid.name.for.parameter"), myRefactoringName);
+            .showErrorDialog(getProject(), JavaRefactoringBundle.message("move.method.enter.a.valid.name.for.parameter"), myRefactoringName);
           return;
         }
         parameterNames.put(aClass, parameterName);

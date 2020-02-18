@@ -5,13 +5,13 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -105,7 +105,7 @@ public abstract class SliceNullnessAnalyzerBase {
 
     String encouragementPiece = " (may very well take the whole day)";
     ProgressManager.getInstance().run(new Task.Backgroundable(
-      root.getProject(), RefactoringBundle.message("dataflow.to.here.expand.progress", encouragementPiece), true) {
+      root.getProject(), JavaRefactoringBundle.message("dataflow.to.here.expand.progress", encouragementPiece), true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         NullAnalysisResult l = calcNullableLeaves(root, treeStructure, map);

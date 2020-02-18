@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.java.JavaLanguage;
@@ -203,8 +204,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       for (PsiMethod method : superMethods) {
         String className = Objects.requireNonNull(method.getContainingClass()).getQualifiedName();
         final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
-                               RefactoringBundle.message("inlined.method.implements.method.from.0", className) :
-                               RefactoringBundle.message("inlined.method.overrides.method.from.0", className);
+                               JavaRefactoringBundle.message("inlined.method.implements.method.from.0", className) :
+                               JavaRefactoringBundle.message("inlined.method.overrides.method.from.0", className);
         conflicts.putValue(method, message);
       }
 
@@ -228,7 +229,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           }
         }
         if (element instanceof PsiReferenceExpression && myTransformerChooser.apply((PsiReference)element).isFallBackTransformer()) {
-          conflicts.putValue(element, RefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
+          conflicts.putValue(element, JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
         }
 
         final String errorMessage = checkUnableToInsertCodeBlock(myMethod.getBody(), element);
@@ -238,7 +239,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
     else if (myReference != null && myTransformerChooser.apply(myReference).isFallBackTransformer()) {
-      conflicts.putValue(myReference, RefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
+      conflicts.putValue(myReference, JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
     }
 
     myInliners = GenericInlineHandler.initInliners(myMethod, usagesIn, new InlineHandler.Settings() {

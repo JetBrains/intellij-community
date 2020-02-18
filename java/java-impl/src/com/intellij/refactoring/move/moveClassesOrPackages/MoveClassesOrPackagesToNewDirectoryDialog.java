@@ -2,6 +2,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -16,7 +17,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.*;
+import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.JavaRefactoringFactory;
+import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.move.MoveHandler;
@@ -70,13 +74,13 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
     });
     if (elementsToMove.length == 1) {
       PsiElement firstElement = elementsToMove[0];
-      myNameLabel.setText(RefactoringBundle.message("move.single.class.or.package.name.label", UsageViewUtil.getType(firstElement),
+      myNameLabel.setText(JavaRefactoringBundle.message("move.single.class.or.package.name.label", UsageViewUtil.getType(firstElement),
                                                     UsageViewUtil.getLongName(firstElement)));
     }
     else if (elementsToMove.length > 1) {
       myNameLabel.setText(elementsToMove[0] instanceof PsiClass
-                          ? RefactoringBundle.message("move.specified.classes")
-                          : RefactoringBundle.message("move.specified.packages"));
+                          ? JavaRefactoringBundle.message("move.specified.classes")
+                          : JavaRefactoringBundle.message("move.specified.packages"));
     }
     final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
     mySearchInCommentsAndStringsCheckBox.setSelected(refactoringSettings.MOVE_SEARCH_IN_COMMENTS);
@@ -156,15 +160,15 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
       }
     });
     if (directory == null) {
-      Messages.showErrorDialog(project, RefactoringBundle.message("cannot.find.or.create.destination.directory"),
-                               RefactoringBundle.message("cannot.move"));
+      Messages.showErrorDialog(project, JavaRefactoringBundle.message("cannot.find.or.create.destination.directory"),
+                               JavaRefactoringBundle.message("cannot.move"));
       return;
     }
 
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage == null) {
-      Messages.showErrorDialog(project, RefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),
-                               RefactoringBundle.message("cannot.move"));
+      Messages.showErrorDialog(project, JavaRefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),
+                               JavaRefactoringBundle.message("cannot.move"));
       return;
     }
 
@@ -222,8 +226,8 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
     final Project project = aPackage.getProject();
     final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
     if (sourceRoot == null) {
-      Messages.showErrorDialog(project, RefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),
-                               RefactoringBundle.message("cannot.move"));
+      Messages.showErrorDialog(project, JavaRefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),
+                               JavaRefactoringBundle.message("cannot.move"));
       return null;
     }
 

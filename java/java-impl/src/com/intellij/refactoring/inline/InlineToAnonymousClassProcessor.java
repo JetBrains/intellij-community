@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -332,7 +333,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected String getCommandName() {
-    return RefactoringBundle.message("inline.to.anonymous.command.name", myClass.getQualifiedName());
+    return JavaRefactoringBundle.message("inline.to.anonymous.command.name", myClass.getQualifiedName());
   }
 
 }

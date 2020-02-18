@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -11,7 +12,6 @@ import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -68,7 +68,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
     MoveFilesOrDirectoriesUtil
       .doMove(project, elements, new PsiElement[]{targetContainer}, callback,
               elements1 -> WriteCommandAction.writeCommandAction(project).withName(
-                RefactoringBundle.message("move.files.regrouping.command.name")).compute(() -> {
+                JavaRefactoringBundle.message("move.files.regrouping.command.name")).compute(() -> {
                 final List<PsiElement> adjustedElements = new ArrayList<>();
                 for (int i = 0, length = elements1.length; i < length; i++) {
                   PsiElement element = elements1[i];

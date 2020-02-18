@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -31,7 +32,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     final String occurrencesString = myOccurrencesNumber > -1 ? "has " + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? "" : "s") : "";
 
     String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,PsiSubstitutor.EMPTY);
-    return RefactoringBundle.message("inline.field.field.name.label", fieldText, occurrencesString);
+    return JavaRefactoringBundle.message("inline.field.field.name.label", fieldText, occurrencesString);
   }
 
   @Override
@@ -41,17 +42,17 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getInlineThisText() {
-    return RefactoringBundle.message("this.reference.only.and.keep.the.field");
+    return JavaRefactoringBundle.message("this.reference.only.and.keep.the.field");
   }
 
   @Override
   protected String getInlineAllText() {
-    return RefactoringBundle.message(myField.isWritable() ?"all.references.and.remove.the.field" : "all.invocations.in.project");
+    return JavaRefactoringBundle.message(myField.isWritable() ?"all.references.and.remove.the.field" : "all.invocations.in.project");
   }
 
   @Override
   protected String getKeepTheDeclarationText() {
-    if (myField.isWritable()) return RefactoringBundle.message("all.references.keep.field");
+    if (myField.isWritable()) return JavaRefactoringBundle.message("all.references.keep.field");
     return super.getKeepTheDeclarationText();
   }
 
@@ -108,6 +109,6 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
   }
 
   public static String getRefactoringName() {
-    return RefactoringBundle.message("inline.field.title");
+    return JavaRefactoringBundle.message("inline.field.title");
   }
 }

@@ -79,7 +79,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
       protected boolean reportConflicts(MultiMap<PsiElement, String> conflicts, final Project project, IntroduceVariableSettings dialog) {
         assertEquals(2, conflicts.size());
         Collection<String> conflictsMessages = conflicts.values();
-        assertTrue(conflictsMessages.contains(RefactoringBundle.message("introducing.variable.may.break.code.logic")));
+        assertTrue(conflictsMessages.contains(JavaRefactoringBundle.message("introducing.variable.may.break.code.logic")));
         assertTrue(conflictsMessages.contains("Local variable <b><code>c</code></b> is modified in loop body"));
         return false;
       }
@@ -113,7 +113,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     catch (RuntimeException e) {
       assertEquals("Error message:" +
                    RefactoringBundle.message("cannot.perform.refactoring") + "\n" +
-                   RefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"), e.getMessage());
+                   JavaRefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"), e.getMessage());
       return;
     }
     fail("Should not be able to perform refactoring");
@@ -126,7 +126,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     catch (RuntimeException e) {
       assertEquals("Error message:" +
                    RefactoringBundle.message("cannot.perform.refactoring") + "\n" +
-                   RefactoringBundle.message("selected.expression.introduces.pattern.variable", "s"), e.getMessage());
+                   JavaRefactoringBundle.message("selected.expression.introduces.pattern.variable", "s"), e.getMessage());
       return;
     }
     fail("Should not be able to perform refactoring");

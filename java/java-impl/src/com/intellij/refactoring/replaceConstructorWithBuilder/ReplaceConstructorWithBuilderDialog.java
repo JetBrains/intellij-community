@@ -5,6 +5,7 @@ package com.intellij.refactoring.replaceConstructorWithBuilder;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -112,10 +113,10 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel(RefactoringBundle.message("constructor.with.builder.parameters.to.pass.to.the.builder.title")), BorderLayout.CENTER);
+    panel.add(new JLabel(JavaRefactoringBundle.message("constructor.with.builder.parameters.to.pass.to.the.builder.title")), BorderLayout.CENTER);
 
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.addAction(new AnAction(RefactoringBundle.message("constructor.with.builder.rename.setters.prefix.action.name")) {
+    actionGroup.addAction(new AnAction(JavaRefactoringBundle.message("constructor.with.builder.rename.setters.prefix.action.name")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         applyNewSetterPrefix();
@@ -130,8 +131,8 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   }
 
   private void applyNewSetterPrefix() {
-    final String setterPrefix = Messages.showInputDialog(myTable, RefactoringBundle
-                                                           .message("constructor.with.builder.new.setter.prefix.dialog.message"), RefactoringBundle
+    final String setterPrefix = Messages.showInputDialog(myTable, JavaRefactoringBundle
+                                                           .message("constructor.with.builder.new.setter.prefix.dialog.message"), JavaRefactoringBundle
                                                            .message("constructor.with.builder.rename.setters.prefix.action.name"), null,
                                                          mySetterPrefix, new MySetterPrefixInputValidator());
     if (setterPrefix != null) {

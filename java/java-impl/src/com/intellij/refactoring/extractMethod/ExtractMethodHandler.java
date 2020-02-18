@@ -18,6 +18,7 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -235,7 +236,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
       if (element instanceof PsiStatement && JavaHighlightUtil.isSuperOrThisCall((PsiStatement)element, true, true)) {
         if (showErrorMessages) {
           String message = RefactoringBundle
-            .getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
+            .getCannotRefactorMessage(JavaRefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
           CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_METHOD);
         }
         return null;
@@ -243,7 +244,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
       if (element instanceof PsiStatement && PsiTreeUtil.getParentOfType(element, PsiClass.class) == null) {
         if (showErrorMessages) {
           String message = RefactoringBundle
-            .getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.statement.outside.of.class"));
+            .getCannotRefactorMessage(JavaRefactoringBundle.message("selected.block.contains.statement.outside.of.class"));
           CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_METHOD);
         }
         return null;

@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
@@ -180,7 +181,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
             result.add(new UnresolvableCollisionUsageInfo(methodInBaseClass, methodToRename) {
               @Override
               public String getDescription() {
-                return RefactoringBundle
+                return JavaRefactoringBundle
                   .message("renaming.method.will.override.final.0", RefactoringUIUtil.getDescription(methodInBaseClass, true));
               }
             });
@@ -224,7 +225,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
                 result.add(new UnresolvableCollisionUsageInfo(element, methodToRename) {
                   @Override
                   public String getDescription() {
-                    return RefactoringBundle.message("method.call.would.be.linked.to.0.after.rename",
+                    return JavaRefactoringBundle.message("method.call.would.be.linked.to.0.after.rename",
                                                      RefactoringUIUtil.getDescription(resolveResultElement, true));
                   }
                 });

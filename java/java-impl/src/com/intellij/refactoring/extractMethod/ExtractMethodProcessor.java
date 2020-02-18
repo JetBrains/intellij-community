@@ -16,6 +16,7 @@ import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -882,7 +883,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       extract.run();
     } else {
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(collectOverloads,
-                                                                             RefactoringBundle.message("collect.overloads"), true, myProject)) return;
+                                                                             JavaRefactoringBundle.message("collect.overloads"), true, myProject)) return;
       ApplicationManager.getApplication().runWriteAction(extract);
     }
 
@@ -2120,7 +2121,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, attributes, true, null);
       String message = RefactoringBundle
-        .getCannotRefactorMessage(RefactoringBundle.message("there.are.multiple.exit.points.in.the.selected.code.fragment"));
+        .getCannotRefactorMessage(JavaRefactoringBundle.message("there.are.multiple.exit.points.in.the.selected.code.fragment"));
       CommonRefactoringUtil.showErrorHint(myProject, myEditor, message, myRefactoringName, myHelpId);
       WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
     }
@@ -2143,15 +2144,15 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected String buildMultipleOutputMessageError(PsiType expressionType) {
     StringBuilder buffer = new StringBuilder();
     buffer.append(RefactoringBundle.getCannotRefactorMessage(
-      RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
+      JavaRefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
     buffer.append("\n");
     if (myHasExpressionOutput) {
-      buffer.append("    ").append(RefactoringBundle.message("expression.result")).append(": ");
+      buffer.append("    ").append(JavaRefactoringBundle.message("expression.result")).append(": ");
       buffer.append(PsiFormatUtil.formatType(expressionType, 0, PsiSubstitutor.EMPTY));
       buffer.append(",\n");
     }
     if (myGenerateConditionalExit) {
-      buffer.append("    ").append(RefactoringBundle.message("boolean.method.result"));
+      buffer.append("    ").append(JavaRefactoringBundle.message("boolean.method.result"));
       buffer.append(",\n");
     }
     for (int i = 0; i < myOutputVariables.length; i++) {
@@ -2280,10 +2281,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     final String changedSignature = MatchUtil
       .getChangedSignature(match, myExtractedMethod, needToBeStatic, VisibilityUtil.getVisibilityStringToDisplay(myExtractedMethod));
     if (changedSignature != null) {
-      return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", changedSignature);
+      return JavaRefactoringBundle.message("replace.this.code.fragment.and.change.signature", changedSignature);
     }
     if (needToBeStatic && !myExtractedMethod.hasModifierProperty(PsiModifier.STATIC)) {
-      return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
+      return JavaRefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
     }
     return null;
   }
@@ -2315,7 +2316,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   @Override
   public String getReplaceDuplicatesTitle(int idx, int size) {
-    return RefactoringBundle.message("process.duplicates.title", idx, size);
+    return JavaRefactoringBundle.message("process.duplicates.title", idx, size);
   }
 
   public InputVariables getInputVariables() {

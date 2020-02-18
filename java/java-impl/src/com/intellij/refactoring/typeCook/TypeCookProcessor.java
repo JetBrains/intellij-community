@@ -15,12 +15,12 @@
  */
 package com.intellij.refactoring.typeCook;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.deductive.builder.Result;
 import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
@@ -31,7 +31,9 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class TypeCookProcessor extends BaseRefactoringProcessor {
   private PsiElement[] myElements;
@@ -121,7 +123,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected String getCommandName() {
-    return RefactoringBundle.message("type.cook.command");
+    return JavaRefactoringBundle.message("type.cook.command");
   }
 
   public List<PsiElement> getElements() {

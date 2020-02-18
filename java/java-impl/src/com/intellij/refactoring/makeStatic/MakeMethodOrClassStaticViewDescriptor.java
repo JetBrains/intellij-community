@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
@@ -34,7 +35,7 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
   ) {
     myMember = member;
     String who = StringUtil.capitalize(UsageViewUtil.getType(myMember));
-    myProcessedElementsHeader = RefactoringBundle.message("make.static.elements.header", who);
+    myProcessedElementsHeader = JavaRefactoringBundle.message("make.static.elements.header", who);
   }
 
   @Override

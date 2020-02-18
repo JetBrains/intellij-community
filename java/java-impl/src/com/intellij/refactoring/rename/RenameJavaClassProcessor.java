@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -19,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -190,7 +190,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
             result.add(new UnresolvableCollisionUsageInfo(aClass, typeParameter) {
               @Override
               public String getDescription() {
-                return RefactoringBundle
+                return JavaRefactoringBundle
                   .message("there.is.already.type.parameter.in.0.with.name.1", RefactoringUIUtil.getDescription(aClass, false), newName);
               }
             });
@@ -312,7 +312,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       PsiClass[] innerClasses = containingClass.getInnerClasses();
       for (PsiClass innerClass : innerClasses) {
         if (newName.equals(innerClass.getName())) {
-          conflicts.putValue(innerClass, RefactoringBundle.message("inner.class.0.is.already.defined.in.class.1", newName, containingClass.getQualifiedName()));
+          conflicts.putValue(innerClass, JavaRefactoringBundle.message("inner.class.0.is.already.defined.in.class.1", newName, containingClass.getQualifiedName()));
           break;
         }
       }
@@ -323,7 +323,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       final PsiClass conflictingClass =
         JavaPsiFacade.getInstance(project).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(project));
       if (conflictingClass != null) {
-        conflicts.putValue(conflictingClass, RefactoringBundle.message("class.0.already.exists", qualifiedNameAfterRename));
+        conflicts.putValue(conflictingClass, JavaRefactoringBundle.message("class.0.already.exists", qualifiedNameAfterRename));
       }
     }
   }

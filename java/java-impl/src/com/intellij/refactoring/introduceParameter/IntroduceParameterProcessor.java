@@ -19,6 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +34,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.listeners.RefactoringEventData;
@@ -253,7 +253,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
           PsiElement element = usageInfo.getElement();
           if (!(element instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(myMethodToReplaceIn.getContainingClass(), element, false)) {
-              String message = RefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
+              String message = JavaRefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
                                                          CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER));
               conflicts.putValue(myParameterInitializer, message);
               break;
@@ -293,7 +293,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
               if (element instanceof PsiMember &&
                   !JavaPsiFacade.getInstance(myProject).getResolveHelper().isAccessible((PsiMember)element, place, null)) {
                 String message =
-                  RefactoringBundle.message(
+                  JavaRefactoringBundle.message(
                     "0.is.not.accessible.from.1.value.for.introduced.parameter.in.that.method.call.will.be.incorrect",
                     RefactoringUIUtil.getDescription(element, true),
                     RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(place), true));
@@ -336,7 +336,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         }
       }
       if (myParameterName.equals(variable.getName())) {
-        String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
+        String descr = JavaRefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
                                                  RefactoringUIUtil.getDescription(variable, true));
 
         conflict = Pair.create(variable, CommonRefactoringUtil.capitalize(descr));
@@ -478,7 +478,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
                                             new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
     };
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable),
-                                                                      RefactoringBundle.message("introduce.parameter.duplicates.progress"), true, myProject);
+                                                                      JavaRefactoringBundle.message("introduce.parameter.duplicates.progress"), true, myProject);
   }
 
   private PsiMethod generateDelegate(final PsiMethod methodToReplaceIn) throws IncorrectOperationException {
@@ -606,7 +606,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   @Override
   @NotNull
   protected String getCommandName() {
-    return RefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(myMethodToReplaceIn));
+    return JavaRefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(myMethodToReplaceIn));
   }
 
   @Nullable

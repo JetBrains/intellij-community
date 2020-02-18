@@ -16,9 +16,9 @@
 
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AutomaticOverloadsRenamer extends AutomaticRenamer {
@@ -34,12 +34,12 @@ public class AutomaticOverloadsRenamer extends AutomaticRenamer {
 
   @Override
   public String getDialogTitle() {
-    return RefactoringBundle.message("rename.overloads.dialog.title");
+    return JavaRefactoringBundle.message("rename.overloads.dialog.title");
   }
 
   @Override
   public String getDialogDescription() {
-    return RefactoringBundle.message("rename.overloads.to.dialog.description");
+    return JavaRefactoringBundle.message("rename.overloads.to.dialog.description");
   }
 
   @Override

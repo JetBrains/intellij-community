@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -109,9 +110,9 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     myNameField = new NameSuggestionsField(suggestMethodNames(), myProject);
 
     myMakeStatic = new NonFocusableCheckBox();
-    myMakeStatic.setText(RefactoringBundle.message("declare.static.checkbox"));
+    myMakeStatic.setText(JavaRefactoringBundle.message("declare.static.checkbox"));
     if (canBeChainedConstructor) {
-      myCbChainedConstructor = new NonFocusableCheckBox(RefactoringBundle.message("extract.chained.constructor.checkbox"));
+      myCbChainedConstructor = new NonFocusableCheckBox(JavaRefactoringBundle.message("extract.chained.constructor.checkbox"));
     }
     myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
     myDuplicatesCountSupplier = duplicatesCountSupplier;
@@ -175,7 +176,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ApplicationManager.getApplication().runReadAction(
         () -> checkMethodConflicts(conflicts)
-      ), RefactoringBundle.message("checking.conflicts"), true, myProject)) {
+      ), JavaRefactoringBundle.message("checking.conflicts"), true, myProject)) {
       return;
     }
 
@@ -313,7 +314,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
     //optionsPanel.add(new JLabel("Options: "));
 
-    createStaticOptions(optionsPanel, RefactoringBundle.message("declare.static.pass.fields.checkbox"));
+    createStaticOptions(optionsPanel, JavaRefactoringBundle.message("declare.static.pass.fields.checkbox"));
 
     myFoldParameters.setSelected(myVariableData.isFoldingSelectedByDefault());
     myFoldParameters.setVisible(myVariableData.isFoldable());
@@ -340,7 +341,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     }
 
     if (canBeVarargs) {
-      myMakeVarargs = new NonFocusableCheckBox(RefactoringBundle.message("declare.varargs.checkbox"));
+      myMakeVarargs = new NonFocusableCheckBox(JavaRefactoringBundle.message("declare.varargs.checkbox"));
       myMakeVarargs.setBorder(emptyBorder);
       updateVarargsEnabled();
       myMakeVarargs.addItemListener(e -> updateSignature());
@@ -350,7 +351,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
     if (myNullability != null && myNullability != Nullability.UNKNOWN) {
       final boolean isSelected = PropertiesComponent.getInstance(myProject).getBoolean(EXTRACT_METHOD_GENERATE_ANNOTATIONS, true);
-      myGenerateAnnotations = new JCheckBox(RefactoringBundle.message("declare.generated.annotations"), isSelected);
+      myGenerateAnnotations = new JCheckBox(JavaRefactoringBundle.message("declare.generated.annotations"), isSelected);
       myGenerateAnnotations.addItemListener(e -> updateSignature());
       optionsPanel.add(myGenerateAnnotations);
     }
@@ -469,9 +470,9 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   private JBLabel createDuplicatesCountLabel() {
     JBLabel duplicatesCount = new JBLabel();
     if (myDuplicatesCountSupplier != null) {
-      duplicatesCount.setText(RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.pending"));
+      duplicatesCount.setText(JavaRefactoringBundle.message("refactoring.extract.method.dialog.duplicates.pending"));
       ProgressManager.getInstance().run(
-        new Task.Backgroundable(myProject, RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.progress")) {
+        new Task.Backgroundable(myProject, JavaRefactoringBundle.message("refactoring.extract.method.dialog.duplicates.progress")) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             int count = ReadAction.compute(myDuplicatesCountSupplier::get);
@@ -479,7 +480,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
               () -> {
                 if (count != 0) {
                   showCount(UIUtil.getBalloonInformationIcon(),
-                            " " + RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.count", count),
+                            " " + JavaRefactoringBundle.message("refactoring.extract.method.dialog.duplicates.count", count),
                             JBUI.Borders.empty(18, 0));
                 }
                 else {

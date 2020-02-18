@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -24,7 +25,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessorBase;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -178,7 +178,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   @Override
   @NotNull
   protected String getCommandName() {
-    return RefactoringBundle.message("extract.subclass.command");
+    return JavaRefactoringBundle.message("extract.subclass.command");
   }
 
   @NotNull

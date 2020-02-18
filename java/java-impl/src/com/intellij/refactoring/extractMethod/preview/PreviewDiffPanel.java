@@ -15,6 +15,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Range;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -36,7 +37,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.ExtractMethodSnapshot;
@@ -93,7 +93,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     PsiElement[] pattern = getPatternElements();
     if (pattern.length == 0) {
       // todo suggest re-running the refactoring
-      CommonRefactoringUtil.showErrorHint(myProject, null, RefactoringBundle.message("refactoring.extract.method.preview.failed"),
+      CommonRefactoringUtil.showErrorHint(myProject, null, JavaRefactoringBundle.message("refactoring.extract.method.preview.failed"),
                                           ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD);
       return;
     }
@@ -109,7 +109,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
   public void initLater() {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject,
-                                                              RefactoringBundle.message("refactoring.extract.method.preview.preparing")) {
+                                                              JavaRefactoringBundle.message("refactoring.extract.method.preview.preparing")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         updateLaterImpl(indicator, false);
@@ -119,7 +119,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
   public void updateLater() {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject,
-                                                              RefactoringBundle.message("refactoring.extract.method.preview.updating")) {
+                                                              JavaRefactoringBundle.message("refactoring.extract.method.preview.updating")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         updateLaterImpl(indicator, true);
@@ -419,8 +419,8 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
         }
       }
     }
-    Messages.showErrorDialog(myProject, RefactoringBundle.message("can.t.restore.context.for.method.extraction"),
-                             RefactoringBundle.message("failed.to.re.run.refactoring"));
+    Messages.showErrorDialog(myProject, JavaRefactoringBundle.message("can.t.restore.context.for.method.extraction"),
+                             JavaRefactoringBundle.message("failed.to.re.run.refactoring"));
   }
 
   private PsiElement @NotNull [] getPatternElements() {

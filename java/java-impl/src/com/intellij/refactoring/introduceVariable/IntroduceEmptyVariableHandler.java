@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -37,7 +38,7 @@ public class IntroduceEmptyVariableHandler {
     PsiElement anchorStatement = RefactoringUtil.getParentStatement(at, false);
     if (anchorStatement == null) {
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(
-        RefactoringBundle.message("invalid.expression.context")),
+        JavaRefactoringBundle.message("invalid.expression.context")),
                                           RefactoringBundle.message("introduce.variable.title"), HelpID.INTRODUCE_VARIABLE);
       return;
     }

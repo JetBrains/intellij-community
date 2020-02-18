@@ -18,6 +18,7 @@ package com.intellij.refactoring.move.moveInstanceMethod;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -132,14 +133,14 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
               PsiExpression instanceValue = expressions[index];
               instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
               if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
-                String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
+                String message = JavaRefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
                                                            RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
                                                            CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
                 conflicts.putValue(instanceValue, message);
               }
             }
           } else if (methodCall instanceof PsiMethodReferenceExpression && shouldBeExpandedToLambda((PsiMethodReferenceExpression)methodCall, index)) {
-            conflicts.putValue(methodCall, RefactoringBundle.message("expand.method.reference.warning"));
+            conflicts.putValue(methodCall, JavaRefactoringBundle.message("expand.method.reference.warning"));
           }
         }
       }

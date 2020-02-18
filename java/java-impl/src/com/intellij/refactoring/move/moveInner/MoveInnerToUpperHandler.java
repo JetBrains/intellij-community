@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.jvm.JvmLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -61,7 +62,7 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
       final PsiClass containingClass = aClass.getContainingClass();
       if (containingClass instanceof JspClass) {
-        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("move.nonstatic.class.from.jsp.not.supported"),
+        CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("move.nonstatic.class.from.jsp.not.supported"),
                                             RefactoringBundle.message("move.title"), null);
         return true;
       }
@@ -74,7 +75,7 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
   @Nullable
   @Override
   public String getActionName(PsiElement @NotNull [] elements) {
-    return RefactoringBundle.message("move.inner.class.to.upper.level.action.name");
+    return JavaRefactoringBundle.message("move.inner.class.to.upper.level.action.name");
   }
 
   @Override
