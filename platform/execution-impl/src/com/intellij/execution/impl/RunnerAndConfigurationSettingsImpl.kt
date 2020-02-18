@@ -108,23 +108,28 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     level = if (value) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
   }
 
-  override fun isShared() = level == RunConfigurationLevel.PROJECT
-
-  override fun setShared(value: Boolean) {
-    if (value) {
-      level = RunConfigurationLevel.PROJECT
-    }
-    else if (level == RunConfigurationLevel.PROJECT) {
+  override fun storeInLocalWorkspace() {
+    if (level != RunConfigurationLevel.TEMPORARY) {
       level = RunConfigurationLevel.WORKSPACE
     }
+    pathIfStoredInArbitraryFile = null
   }
 
-  fun isStoreInArbitraryFileInProject() = level == RunConfigurationLevel.PROJECT && pathIfStoredInArbitraryFile != null
+  override fun isStoredInLocalWorkspace() = level == RunConfigurationLevel.WORKSPACE || level == RunConfigurationLevel.TEMPORARY
 
-  fun setStoreInArbitraryFileInProject(filePath:String) {
+  override fun storeInDotIdeaFolder() {
+    level = RunConfigurationLevel.PROJECT
+    pathIfStoredInArbitraryFile = null
+  }
+
+  override fun isStoredInDotIdeaFolder() = level == RunConfigurationLevel.PROJECT && pathIfStoredInArbitraryFile == null
+
+  override fun storeInArbitraryFileInProject(filePath: String) {
     level = RunConfigurationLevel.PROJECT
     pathIfStoredInArbitraryFile = filePath
   }
+
+  override fun isStoredInArbitraryFileInProject() = level == RunConfigurationLevel.PROJECT && pathIfStoredInArbitraryFile != null
 
   override fun getConfiguration() = _configuration ?: UnknownConfigurationType.getInstance().createTemplateConfiguration(manager.project)
 
@@ -186,10 +191,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun getFolderName() = folderName
 
-  fun readExternal(element: Element, isShared: Boolean) {
+  fun readExternal(element: Element, isStoredInDotIdeaFolder: Boolean) {
     isTemplate = element.getAttributeBooleanValue(TEMPLATE_FLAG_ATTRIBUTE)
 
-    if (isShared) {
+    if (isStoredInDotIdeaFolder) {
       level = RunConfigurationLevel.PROJECT
     }
     else {
@@ -395,6 +400,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     isEditBeforeRun = template.isEditBeforeRun
     isActivateToolWindowBeforeRun = template.isActivateToolWindowBeforeRun
     level = template.level
+    pathIfStoredInArbitraryFile = template.pathIfStoredInArbitraryFile
   }
 
   private fun <T> importFromTemplate(templateItem: RunnerItem<T>, item: RunnerItem<T>) {
@@ -574,7 +580,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
 // always write method element for shared settings for now due to preserve backward compatibility
 private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
-  get() = ApplicationManager.getApplication().isUnitTestMode || !isShared
+  get() = ApplicationManager.getApplication().isUnitTestMode || isStoredInLocalWorkspace
 
 fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
   when (configuration) {

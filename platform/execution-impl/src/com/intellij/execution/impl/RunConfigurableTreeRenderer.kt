@@ -48,11 +48,10 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
           isShared = userObject.isStoreProjectConfiguration
           icon = ProgramRunnerUtil.getConfigurationIcon(configurationSettings, !userObject.isValid)
         }
-        else if (userObject is RunnerAndConfigurationSettingsImpl) {
-          val settings = userObject as RunnerAndConfigurationSettings
-          isShared = (settings as RunnerAndConfigurationSettingsImpl).isStoreInArbitraryFileInProject() || settings.isShared
-          icon = runManager.getConfigurationIcon(settings)
-          configuration = settings
+        else if (userObject is RunnerAndConfigurationSettings) {
+          isShared = userObject.isShared
+          icon = runManager.getConfigurationIcon(userObject)
+          configuration = userObject
         }
         if (configuration != null) {
           append(name, if (configuration.isTemporary) SimpleTextAttributes.GRAY_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)

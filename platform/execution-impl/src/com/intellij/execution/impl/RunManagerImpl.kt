@@ -379,12 +379,12 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       }
       else {
         when {
-          settings.isStoreInArbitraryFileInProject() -> {
-            projectSchemeManager.removeScheme(settings)
+          settings.isStoredInDotIdeaFolder -> {
+            rcInArbitraryFileManager.removeRunConfiguration(settings)
             workspaceSchemeManager.removeScheme(settings)
           }
-          settings.isShared -> {
-            rcInArbitraryFileManager.removeRunConfiguration(settings)
+          settings.isStoredInArbitraryFileInProject -> {
+            projectSchemeManager.removeScheme(settings)
             workspaceSchemeManager.removeScheme(settings)
           }
           else -> {
@@ -396,8 +396,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
       // scheme level can be changed (workspace -> project), so, ensure that scheme is added to corresponding scheme manager (if exists, doesn't harm)
       when {
-        settings.isStoreInArbitraryFileInProject() -> rcInArbitraryFileManager.addRunConfiguration(settings)
-        settings.isShared -> projectSchemeManager.addScheme(settings)
+        settings.isStoredInDotIdeaFolder -> projectSchemeManager.addScheme(settings)
+        settings.isStoredInArbitraryFileInProject -> rcInArbitraryFileManager.addRunConfiguration(settings)
         else -> workspaceSchemeManager.addScheme(settings)
       }
     }
@@ -839,10 +839,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     removedConfigurations.forEach { eventPublisher.runConfigurationRemoved(it) }
   }
 
-  fun loadConfiguration(element: Element, isShared: Boolean): RunnerAndConfigurationSettings {
+  fun loadConfiguration(element: Element, isStoredInDotIdeaFolder: Boolean): RunnerAndConfigurationSettings {
     val settings = RunnerAndConfigurationSettingsImpl(this)
     LOG.runAndLogException {
-      settings.readExternal(element, isShared)
+      settings.readExternal(element, isStoredInDotIdeaFolder)
     }
     addConfiguration(element, settings)
     return settings
@@ -1070,7 +1070,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     if (value && settings.isTemporary) {
       doMakeStable(settings)
     }
-    settings.isShared = value
+
+    if (value) {
+      settings.storeInDotIdeaFolder()
+    }
+    else {
+      settings.storeInLocalWorkspace()
+    }
+
     fireRunConfigurationChanged(settings)
   }
 
@@ -1132,8 +1139,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
           settings as RunnerAndConfigurationSettingsImpl
           when {
-            settings.isStoreInArbitraryFileInProject() -> rcInArbitraryFileManager.removeRunConfiguration(settings)
-            settings.isShared -> projectSchemeManager.removeScheme(settings)
+            settings.isStoredInDotIdeaFolder -> projectSchemeManager.removeScheme(settings)
+            settings.isStoredInArbitraryFileInProject -> rcInArbitraryFileManager.removeRunConfiguration(settings)
             else -> workspaceSchemeManager.removeScheme(settings)
           }
 

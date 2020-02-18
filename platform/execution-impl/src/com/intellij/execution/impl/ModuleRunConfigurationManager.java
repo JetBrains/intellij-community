@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.ProjectTopics;
@@ -39,7 +39,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
   private final Module myModule;
   @NotNull
   private final Condition<RunnerAndConfigurationSettings> myModuleConfigCondition =
-    settings -> settings != null && usesMyModule(settings.getConfiguration());
+    settings -> settings != null && usesMyModule(settings);
 
   public ModuleRunConfigurationManager(@NotNull Module module) {
     myModule = module;
@@ -108,7 +108,11 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
     return (RunManagerImpl)RunManager.getInstance(myModule.getProject());
   }
 
-  private boolean usesMyModule(RunConfiguration config) {
+  private boolean usesMyModule(@NotNull RunnerAndConfigurationSettings runnerAndConfigurationSettings) {
+    // Presence of run configs stored in arbitrary file in project is controlled by the file presence, ModuleRunConfigurationManager doeshouldn't handle them.
+    if (runnerAndConfigurationSettings.isStoredInArbitraryFileInProject()) return false;
+
+    RunConfiguration config = runnerAndConfigurationSettings.getConfiguration();
     return config instanceof ModuleBasedConfiguration
            && myModule.equals(((ModuleBasedConfiguration)config).getConfigurationModule().getModule());
   }
@@ -117,7 +121,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
     LOG.debug("writeExternal(" + myModule + "); shared: " + isShared);
     getRunManager().writeConfigurations(
       element,
-      ContainerUtil.filter(getModuleRunConfigurationSettings(), settings -> settings.isShared() == isShared)
+      ContainerUtil.filter(getModuleRunConfigurationSettings(), settings -> settings.isStoredInDotIdeaFolder() == isShared)
     );
     return element;
   }

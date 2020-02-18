@@ -32,7 +32,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
 
   fun addRunConfiguration(runConfig: RunnerAndConfigurationSettingsImpl) {
     val filePath = runConfig.pathIfStoredInArbitraryFile
-    if (!runConfig.isStoreInArbitraryFileInProject() || filePath == null) {
+    if (!runConfig.isStoredInArbitraryFileInProject || filePath == null) {
       LOG.error("Unexpected run configuration, path: $filePath")
       return
     }
@@ -120,7 +120,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
         // This is to make sure that it is not parsed as a template RC in runConfig.readExternal()
         configElement.removeAttribute(TEMPLATE_FLAG_ATTRIBUTE)
         runConfig.readExternal(configElement, true)
-        runConfig.setStoreInArbitraryFileInProject(filePath)
+        runConfig.storeInArbitraryFileInProject(filePath)
         loadedRunConfigs.add(runConfig)
         loadedDigests.add(runConfig.writeScheme().digest())
       }

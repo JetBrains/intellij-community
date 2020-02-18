@@ -45,14 +45,85 @@ public interface RunnerAndConfigurationSettings {
   boolean isTemporary();
 
   /**
-   * Is stored in the versioned part of the project files
+   * Checks whether this run configuration is stored in a file (therefore, could be shared through VCS).
+   * Note that there are 2 different ways of storing run configuration in a file: <code>.xml</code> file in <code>.idea/runConfigurations</code> folder and arbitrary <code>.run.xml</code> file anywhere within the project content.
+   * Effectively, this method is equivalent to <code>isStoredInDotIdeaFolder() || isStoredInArbitraryFileInProject()</code>
+   *
+   * @see #isStoredInLocalWorkspace()
+   * @see #isStoredInDotIdeaFolder()
+   * @see #isStoredInArbitraryFileInProject()
    */
   default boolean isShared() {
-    return false;
+    return isStoredInDotIdeaFolder() || isStoredInArbitraryFileInProject();
   }
 
+  /**
+   * @deprecated There are different ways of storing run configuration in a file,
+   * use {@link #storeInLocalWorkspace()}, {@link #storeInDotIdeaFolder()} or {@link #storeInArbitraryFileInProject(String)}
+   */
+  @Deprecated
   default void setShared(boolean value) {
+    if (value) {
+      storeInDotIdeaFolder();
+    }
+    else {
+      storeInLocalWorkspace();
+    }
   }
+
+  /**
+   * Make this run configuration impossible to share through VCS, store it in <code>.idea/workspace.xml</code> file.
+   *
+   * @see #storeInDotIdeaFolder()
+   * @see #storeInArbitraryFileInProject(String)
+   */
+  void storeInLocalWorkspace();
+
+  /**
+   * Checks if this run configuration is not shared through VCS, i.e. stored it in <code>.idea/workspace.xml</code> file.
+   *
+   * @see #isStoredInDotIdeaFolder()
+   * @see #isStoredInArbitraryFileInProject()
+   */
+  boolean isStoredInLocalWorkspace();
+
+  /**
+   * Make this run configuration possible to share through VCS: store it as an <code>.xml</code> file in <code>.idea/runConfigurations</code> folder.
+   * Note that there are 2 different ways of storing run configuration in a file: <code>.xml</code> file in <code>.idea/runConfigurations</code> folder and arbitrary <code>.run.xml</code> file anywhere within the project content.
+   *
+   * @see #storeInArbitraryFileInProject(String)
+   * @see #storeInLocalWorkspace()
+   */
+  void storeInDotIdeaFolder();
+
+  /**
+   * Checks if this run configuration is stored as an <code>.xml</code> file in <code>.idea/runConfigurations</code> folder.
+   * Note that there are 2 different ways of storing run configuration in a file: <code>.xml</code> file in <code>.idea/runConfigurations</code> folder and arbitrary <code>.run.xml</code> file anywhere within the project content.
+   *
+   * @see #isStoredInArbitraryFileInProject()
+   * @see #isStoredInLocalWorkspace()
+   */
+  boolean isStoredInDotIdeaFolder();
+
+  /**
+   * Make this run configuration possible to share through VCS: store it in a <code>.run.xml</code> file anywhere within the project content.
+   * It's possible to store more than one run configuration in one <code>.run.xml</code> file.
+   * Note that there are 2 different ways of storing run configuration in a file: <code>.xml</code> file in <code>.idea/runConfigurations</code> folder and arbitrary <code>.run.xml</code> file anywhere within the project content.
+   *
+   * @param filePath needs to be within the project content, otherwise the run configuration will be removed from the model.
+   * @see #storeInDotIdeaFolder()
+   * @see #storeInLocalWorkspace()
+   */
+  void storeInArbitraryFileInProject(@NotNull String filePath);
+
+  /**
+   * Checks if this run configuration is stored in a <code>.run.xml</code> file within the project content.
+   * Note that there are 2 different ways of storing run configuration in a file: <code>.xml</code> file in <code>.idea/runConfigurations</code> folder and arbitrary <code>.run.xml</code> file anywhere within the project content.
+   *
+   * @see #isStoredInDotIdeaFolder()
+   * @see #isStoredInLocalWorkspace()
+   */
+  boolean isStoredInArbitraryFileInProject();
 
   /**
    * Marks the configuration as temporary or permanent.

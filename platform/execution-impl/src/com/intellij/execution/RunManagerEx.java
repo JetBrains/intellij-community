@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -26,9 +26,20 @@ public abstract class RunManagerEx extends RunManager {
     setSelectedConfiguration(configuration);
   }
 
+  /**
+   * @deprecated Use {@link #addConfiguration(RunnerAndConfigurationSettings)}.
+   */
   @Deprecated
-  public final void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, List<BeforeRunTask> tasks, boolean addTemplateTasksIfAbsent) {
-    settings.setShared(isShared);
+  public final void addConfiguration(RunnerAndConfigurationSettings settings,
+                                     boolean storeInDotIdeaFolder,
+                                     List<BeforeRunTask> tasks,
+                                     boolean addTemplateTasksIfAbsent) {
+    if (storeInDotIdeaFolder) {
+      settings.storeInDotIdeaFolder();
+    }
+    else {
+      settings.storeInLocalWorkspace();
+    }
     setBeforeRunTasks(settings.getConfiguration(), tasks, addTemplateTasksIfAbsent);
     addConfiguration(settings);
   }

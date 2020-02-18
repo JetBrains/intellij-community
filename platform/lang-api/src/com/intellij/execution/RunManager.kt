@@ -152,13 +152,24 @@ abstract class RunManager {
   abstract fun addConfiguration(settings: RunnerAndConfigurationSettings)
 
   /**
-   * Adds the specified run configuration to the list of run configurations stored in the project.
-   * @param settings the run configuration settings.
-   * @param isShared true if the configuration is marked as shared (stored in the versioned part of the project files), false if it's local
-   * *                 (stored in the workspace file).
+   * This method is deprecated because there are different ways of storing run configuration in a file.
+   * Clients should use [addConfiguration(RunnerAndConfigurationSettings)] and before that, if needed,
+   * [RunnerAndConfigurationSettings#storeInDotIdeaFolder()], [RunnerAndConfigurationSettings#storeInArbitraryFileInProject(String)]
+   * or [RunnerAndConfigurationSettings#storeInLocalWorkspace()].
+   * @see RunnerAndConfigurationSettings.storeInDotIdeaFolder
+   * @see RunnerAndConfigurationSettings.storeInArbitraryFileInProject
+   * @see RunnerAndConfigurationSettings.storeInLocalWorkspace
    */
-  fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean) {
-    settings.isShared = isShared
+  @Deprecated("There are different ways of storing run configuration in a file. " +
+              "Clients should use RunManager.addConfiguration(RunnerAndConfigurationSettings) and before that, if needed, " +
+              "RunnerAndConfigurationSettings.storeInDotIdeaFolder(), storeInArbitraryFileInProject(String) or storeInLocalWorkspace().")
+  fun addConfiguration(settings: RunnerAndConfigurationSettings, storeInDotIdeaFolder: Boolean) {
+    if (storeInDotIdeaFolder) {
+      settings.storeInDotIdeaFolder()
+    }
+    else {
+      settings.storeInLocalWorkspace()
+    }
     addConfiguration(settings)
   }
 
