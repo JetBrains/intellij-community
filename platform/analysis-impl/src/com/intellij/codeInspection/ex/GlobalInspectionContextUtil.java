@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.GlobalInspectionContext;
@@ -33,10 +33,10 @@ public class GlobalInspectionContextUtil {
                                           final boolean online,
                                           @NotNull Runnable rerunAction) {
     for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
-      if (factory.isProjectConfiguredToRunInspections(project, online, rerunAction)) {
-        return true;
+      if (!factory.isProjectConfiguredToRunInspections(project, online, rerunAction)) {
+        return false;
       }
     }
-    return false;
+    return true;
   }
 }
