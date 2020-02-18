@@ -3873,11 +3873,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    private boolean inlayWithCustomContextMenuExists(@NotNull Point point) {
+    private boolean hasBlockInlay(@NotNull Point point) {
       Inlay inlay = myInlayModel.getElementAt(point);
-      if (inlay == null) return false;
-      EditorCustomElementRenderer renderer = inlay.getRenderer();
-      return renderer.getContextMenuGroupId(inlay) != null || renderer.getContextMenuGroup(inlay) != null;
+      return inlay != null && (inlay.getPlacement() == Inlay.Placement.ABOVE_LINE || inlay.getPlacement() == Inlay.Placement.BELOW_LINE);
     }
 
     private boolean processMousePressed(@NotNull final MouseEvent e) {
@@ -3951,8 +3949,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // at 'line markers' area). Also, don't move caret when context menu for an inlay is invoked.
       boolean moveCaret = eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA ||
                   isInsideGutterWhitespaceArea(e) ||
-                  eventArea == EditorMouseEventArea.EDITING_AREA &&
-                  !(e.getButton() == MouseEvent.BUTTON3 && inlayWithCustomContextMenuExists(e.getPoint()));
+                  eventArea == EditorMouseEventArea.EDITING_AREA && !hasBlockInlay(e.getPoint());
       if (moveCaret) {
         VisualPosition visualPosition = getTargetPosition(x, y, true);
         LogicalPosition pos = visualToLogicalPosition(visualPosition);

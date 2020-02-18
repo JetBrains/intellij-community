@@ -60,6 +60,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
    * Primary intention for this key is to hint popup position for the non-caret location.
    */
   public static final Key<VisualPosition> ANCHOR_POPUP_POSITION = Key.create("popup.anchor.position");
+  /**
+   * If corresponding value is defined for an {@link Editor}, popups shown for the editor will be located at specified point. This allows to
+   * show popups for non-default locations (caret location is used by default).
+   *
+   * @see JBPopupFactory#guessBestPopupLocation(Editor)
+   */
+  public static final Key<Point> ANCHOR_POPUP_POINT = Key.create("popup.anchor.point");
 
   private static final Logger LOG = Logger.getInstance(PopupFactoryImpl.class);
 
@@ -563,25 +570,27 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @Nullable
   private static Point getVisibleBestPopupLocation(@NotNull Editor editor) {
-    VisualPosition visualPosition = editor.getUserData(ANCHOR_POPUP_POSITION);
+    int lineHeight = editor.getLineHeight();
+    Point p = editor.getUserData(ANCHOR_POPUP_POINT);
+    if (p == null) {
+      VisualPosition visualPosition = editor.getUserData(ANCHOR_POPUP_POSITION);
 
-    if (visualPosition == null) {
-      CaretModel caretModel = editor.getCaretModel();
-      if (caretModel.isUpToDate()) {
-        visualPosition = caretModel.getVisualPosition();
+      if (visualPosition == null) {
+        CaretModel caretModel = editor.getCaretModel();
+        if (caretModel.isUpToDate()) {
+          visualPosition = caretModel.getVisualPosition();
+        }
+        else {
+          visualPosition = editor.offsetToVisualPosition(caretModel.getOffset());
+        }
       }
-      else {
-        visualPosition = editor.offsetToVisualPosition(caretModel.getOffset());
-      }
+
+      p = editor.visualPositionToXY(visualPosition);
+      p.y += lineHeight;
     }
 
-    final int lineHeight = editor.getLineHeight();
-    Point p = editor.visualPositionToXY(visualPosition);
-    p.y += lineHeight;
-
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    return !visibleArea.contains(p) && !visibleArea.contains(p.x, p.y - lineHeight)
-           ? null : p;
+    return !visibleArea.contains(p) && !visibleArea.contains(p.x, p.y - lineHeight) ? null : p;
   }
 
   @Override
