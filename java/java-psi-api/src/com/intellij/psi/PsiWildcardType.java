@@ -33,8 +33,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     myBound = bound;
   }
 
-  @NotNull
-  public static PsiWildcardType createUnbounded(@NotNull PsiManager manager) {
+  public static @NotNull PsiWildcardType createUnbounded(@NotNull PsiManager manager) {
     PsiWildcardType unboundedWildcard = manager.getUserData(UNBOUNDED_WILDCARD);
     if (unboundedWildcard == null) {
       unboundedWildcard = manager.putUserDataIfAbsent(UNBOUNDED_WILDCARD, new PsiWildcardType(manager, false, null));
@@ -42,33 +41,28 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     return unboundedWildcard;
   }
 
-  @NotNull
-  public static PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {
+  public static @NotNull PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {
     LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiType.NULL, bound);
     return new PsiWildcardType(manager, true, bound);
   }
 
-  @NotNull
-  public static PsiWildcardType createSuper(@NotNull PsiManager manager, @NotNull PsiType bound) {
+  public static @NotNull PsiWildcardType createSuper(@NotNull PsiManager manager, @NotNull PsiType bound) {
     LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiType.NULL, bound);
     return new PsiWildcardType(manager, false, bound);
   }
 
-  @NotNull
   @Override
-  public String getPresentableText(boolean annotated) {
-    return getText(false, annotated, myBound == null ? null : myBound.getPresentableText());
+  public @NotNull String getPresentableText(boolean annotated) {
+    return getText(false, annotated, myBound == null ? null : myBound.getPresentableText(annotated));
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText(boolean annotated) {
+  public @NotNull String getCanonicalText(boolean annotated) {
     return getText(true, annotated, myBound == null ? null : myBound.getCanonicalText(annotated));
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return getText(true, true, myBound == null ? null : myBound.getInternalCanonicalText());
   }
 
@@ -91,8 +85,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     if (myBound != null) {
       GlobalSearchScope scope = myBound.getResolveScope();
       if (scope != null) {
@@ -120,8 +113,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     }
   }
 
-  @NotNull
-  public PsiManager getManager() {
+  public @NotNull PsiManager getManager() {
     return myManager;
   }
 
@@ -149,8 +141,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
    *
    * @return {@code null} if unbounded, a bound otherwise.
    */
-  @Nullable
-  public PsiType getBound() {
+  public @Nullable PsiType getBound() {
     return myBound;
   }
 
@@ -202,8 +193,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
    *
    * @return {@code PsiType} representing a lower bound. Never returns {@code null}.
    */
-  @NotNull
-  public PsiType getExtendsBound() {
+  public @NotNull PsiType getExtendsBound() {
     if (myBound == null || !myIsExtending) {
       return getJavaLangObject(myManager, getResolveScope());
     }
@@ -221,20 +211,17 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
    *
    * @return {@code PsiType} representing an upper bound. Never returns {@code null}.
    */
-  @NotNull
-  public PsiType getSuperBound() {
+  public @NotNull PsiType getSuperBound() {
     return myBound == null || myIsExtending ? NULL : myBound;
   }
 
-  @NotNull
   @Override
-  public JvmType upperBound() {
+  public @NotNull JvmType upperBound() {
     return getExtendsBound();
   }
 
-  @NotNull
   @Override
-  public JvmType lowerBound() {
+  public @NotNull JvmType lowerBound() {
     return getSuperBound();
   }
 }

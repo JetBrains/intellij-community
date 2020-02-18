@@ -31,7 +31,7 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   @NotNull
   @Override
   public String getPresentableText(boolean annotated) {
-    return getText(myComponentType.getPresentableText(), "[]", false, annotated);
+    return getText(myComponentType.getPresentableText(annotated), "[]", false, annotated);
   }
 
   @NotNull
