@@ -126,11 +126,20 @@ public class CanonicalTypes {
       if (myBound == null) {
         type = PsiWildcardType.createUnbounded(manager);
       }
-      else if (myIsExtending) {
-        type = PsiWildcardType.createExtends(manager, myBound.getType(context, manager));
-      }
       else {
-        type = PsiWildcardType.createSuper(manager, myBound.getType(context, manager));
+        PsiType boundType = myBound.getType(context, manager);
+        if (boundType.equals(PsiType.NULL)) {
+          throw new IncorrectOperationException("Bound type is null " + getTypeText());
+        }
+        if (boundType instanceof PsiWildcardType) {
+          throw new IncorrectOperationException("Bound type is a wildcard " + getTypeText() + "; " + boundType.getCanonicalText());
+        }
+        if (myIsExtending) {
+          type = PsiWildcardType.createExtends(manager, boundType);
+        }
+        else {
+          type = PsiWildcardType.createSuper(manager, boundType);
+        }
       }
       return type.annotate(myProvider);
     }
