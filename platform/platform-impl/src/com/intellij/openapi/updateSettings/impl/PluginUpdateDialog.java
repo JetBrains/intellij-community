@@ -192,13 +192,17 @@ public class PluginUpdateDialog extends DialogWrapper {
       return;
     }
 
+    runUpdateAll(toDownloads, getContentPanel());
+  }
+
+  public static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownloads, @Nullable JComponent ownerComponent) {
     new Task.Backgroundable(null, IdeBundle.message("update.notifications.title"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final List<PluginDownloader> downloaders = UpdateInstaller.downloadPluginUpdates(toDownloads, indicator);
+        List<PluginDownloader> downloaders = UpdateInstaller.downloadPluginUpdates(toDownloads, indicator);
         if (!downloaders.isEmpty()) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            final PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, getContentPanel(), true);
+            PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, ownerComponent, true);
             if (result.getPluginsInstalled().size() > 0) {
               if (result.getRestartRequired()) {
                 if (WelcomeFrame.getInstance() == null) {

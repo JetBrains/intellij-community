@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -44,6 +45,7 @@ import java.net.HttpURLConnection
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
+import javax.swing.JComponent
 import kotlin.collections.HashSet
 import kotlin.collections.set
 
@@ -469,6 +471,14 @@ object UpdateChecker {
           val plugins = updatedPlugins.joinToString { downloader -> downloader.pluginName }
           val message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size, plugins)
           showNotification(project, title, message, runnable, { notification ->
+            notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.title")
+            notification.actions.add(0, object : NotificationAction(
+                IdeBundle.message(if (updatedPlugins.size == 1) "plugins.configurable.update.button" else "plugin.manager.update.all")) {
+              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                notification.expire()
+                PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?)
+              }
+            })
             notification.addAction(object : NotificationAction(
               IdeBundle.message(if (updatedPlugins.size == 1) "updates.ignore.update.button" else "updates.ignore.updates.button")) {
               override fun actionPerformed(e: AnActionEvent, notification: Notification) {
