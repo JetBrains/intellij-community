@@ -2017,10 +2017,6 @@
                  defaultValue="https://idea-indexes-cdn.s3-eu-west-1.amazonaws.com/"
                  description="Shared Indexes download URL" />
 
-    <registryKey key="shared.indexes.download"
-                 defaultValue="false"
-                 description="Automatically download and use Shared JDK indexes?" />
-
     <registryKey key="shared.indexes.eventLogMessages"
                  defaultValue="true"
                  description="Show noisy event log messages of the actual progress" />
