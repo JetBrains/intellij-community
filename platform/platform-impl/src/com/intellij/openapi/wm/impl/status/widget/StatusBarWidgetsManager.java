@@ -61,9 +61,18 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     }
   }
 
+  public void updateWidget(@NotNull Class<StatusBarWidgetFactory> factoryExtension) {
+    StatusBarWidgetFactory factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension);
+    if (factory == null) {
+      LOG.error("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factoryExtension.getName());
+      return;
+    }
+    updateWidget(factory);
+  }
+
   public void updateWidget(@NotNull StatusBarWidgetFactory factory) {
     disableWidget(factory);
-    if (isAvailable(factory) && myProject.getService(StatusBarWidgetSettings.class).isEnabled(factory)) {
+    if (isAvailable(factory) && (!factory.isConfigurable() || myProject.getService(StatusBarWidgetSettings.class).isEnabled(factory))) {
       enableWidget(factory);
     }
   }
@@ -95,6 +104,11 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   private void enableWidget(@NotNull StatusBarWidgetFactory factory) {
+    if (!myWidgetFactories.containsKey(factory)) {
+      LOG.error("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factory.getId());
+      return;
+    }
+
     StatusBarWidget createdWidget = myWidgetFactories.get(factory);
     if (createdWidget != null) {
       LOG.error("Cannot add a widget created by the same factory twice: " + factory.getId());

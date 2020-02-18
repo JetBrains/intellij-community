@@ -58,6 +58,14 @@ public interface StatusBarWidgetFactory {
   boolean canBeEnabledOn(@NotNull StatusBar statusBar);
 
   /**
+   * @return true if widget should be created by default.
+   * Otherwise, a user will need to enabled it explicitely via Status bar context menu or via the Settings.
+   */
+  default boolean isEnabledByDefault() {
+    return true;
+  }
+
+  /**
    * @return whether user should be able to enable or disable the widget.
    *
    * Some widgets are controlled by application-level settings (e.g. Memory indicator)

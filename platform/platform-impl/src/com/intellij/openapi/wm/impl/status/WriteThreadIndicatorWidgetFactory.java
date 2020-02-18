@@ -57,6 +57,11 @@ public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory
     return ApplicationManager.getApplication().isInternal();
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return false;
+  }
+
   private static class WriteThreadWidget implements CustomStatusBarWidget {
     private static final Dimension WIDGET_SIZE = new Dimension(100, 20);
     private final JPanel myComponent = new MyComponent();
