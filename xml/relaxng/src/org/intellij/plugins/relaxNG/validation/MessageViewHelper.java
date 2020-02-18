@@ -30,8 +30,8 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.xml.XmlBundle;
 import gnu.trove.THashSet;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -122,7 +122,7 @@ public class MessageViewHelper {
       messageView.getContentManager().addContentManagerListener(new CloseListener(content, myContentName, myErrorsView));
       ContentManagerUtil.cleanupContents(content, myProject, myContentName);
       messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView, myKey));
-    }, XmlBundle.message("open.message.view"), null);
+    }, RelaxngBundle.message("open.message.view"), null);
 
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
   }
@@ -171,8 +171,8 @@ public class MessageViewHelper {
       if (event.getContent() == myContent) {
         if (myErrorsView != null && myErrorsView.canControlProcess() && !myErrorsView.isProcessStopped()) {
           int result = Messages.showYesNoDialog(
-            XmlBundle.message("0.running", myContentName),
-            XmlBundle.message("0.is.still.running.close.anyway", myContentName),
+            RelaxngBundle.message("0.running", myContentName),
+            RelaxngBundle.message("0.is.still.running.close.anyway", myContentName),
               Messages.getQuestionIcon()
           );
           if (result != Messages.YES) {

@@ -21,7 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomMetaData;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.xml.XmlBundle;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.xml.dom.RngDefine;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +51,6 @@ public class RngDefineMetaData extends DomMetaData<RngDefine> {
 
   @Override
   public String getTypeName() {
-    return XmlBundle.message("pattern.definition");
+    return RelaxngBundle.message("pattern.definition");
   }
 }

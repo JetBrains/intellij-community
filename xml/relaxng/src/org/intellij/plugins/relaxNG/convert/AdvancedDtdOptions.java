@@ -27,7 +27,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.xml.XmlAttributeDecl;
 import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.xml.XmlBundle;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,7 +87,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
     myNamespaceMap.getColumnModel().getColumn(0).setMaxWidth((int)(new JLabel(CommonBundle.message("label.prefix")).getPreferredSize().width * 1.2));
 
     final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new AnAction(Presentation.NULL_STRING, XmlBundle.lazyMessage("action.AdvancedDtdOptions.Anonymous.text.remove.entry"),
+    group.add(new AnAction(Presentation.NULL_STRING, RelaxngBundle.lazyMessage("action.AdvancedDtdOptions.Anonymous.text.remove.entry"),
                            AllIcons.General.Remove) {
       @Override
       public void update(@NotNull AnActionEvent e) {

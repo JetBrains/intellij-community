@@ -25,7 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.SmartList;
-import com.intellij.xml.XmlBundle;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.model.Define;
 import org.intellij.plugins.relaxNG.model.Grammar;
 import org.intellij.plugins.relaxNG.model.resolve.GrammarFactory;
@@ -88,7 +88,7 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
   @Override
   @Nullable
   public String getTooltipText() {
-    return XmlBundle.message("is.overridden");
+    return RelaxngBundle.message("is.overridden");
   }
 
   @Override

@@ -33,7 +33,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.XmlBundle;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.intellij.plugins.relaxNG.compact.psi.*;
@@ -142,7 +142,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
-    return XmlBundle.message("unresolved.pattern.reference.0");
+    return RelaxngBundle.message("unresolved.pattern.reference.0");
   }
 
   @Override
@@ -163,13 +163,13 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     @NotNull
     @Override
     public String getName() {
-      return XmlBundle.message("create.pattern.0", myReference.getCanonicalText());
+      return RelaxngBundle.message("create.pattern.0", myReference.getCanonicalText());
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return XmlBundle.message("create.pattern");
+      return RelaxngBundle.message("create.pattern");
     }
 
     @Override

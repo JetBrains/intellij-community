@@ -20,7 +20,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.xml.XmlBundle;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,7 +35,7 @@ public class AdvancedOptionsDialog extends DialogWrapper {
 
   protected AdvancedOptionsDialog(Project project, SchemaType inputType, SchemaType outputType) {
     super(project, false);
-    setTitle(XmlBundle.message("advanced.conversion.options"));
+    setTitle(RelaxngBundle.message("advanced.conversion.options"));
 
     if (inputType == SchemaType.DTD) {
       myInputOptions = new AdvancedDtdOptions();

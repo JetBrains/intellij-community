@@ -19,7 +19,7 @@ package org.intellij.plugins.relaxNG.compact;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.xml.XmlBundle;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,7 @@ public class RncFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return XmlBundle.message("relax.ng.compact.syntax");
+    return RelaxngBundle.message("relax.ng.compact.syntax");
   }
 
   @Override

@@ -40,8 +40,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
-import com.intellij.xml.XmlBundle;
 import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.psi.RncDefine;
 import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
 import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
@@ -93,7 +93,7 @@ public class UnusedDefineInspection extends BaseInspection {
       if (processRncUsages(pattern, new LocalSearchScope(collector.toArray()))) return;
 
       final ASTNode astNode = ((RncDefineImpl)pattern).getNameNode();
-      myHolder.registerProblem(astNode.getPsi(), XmlBundle.message("unreferenced.define"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(pattern));
+      myHolder.registerProblem(astNode.getPsi(), RelaxngBundle.message("unreferenced.define"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(pattern));
     }
 
     private static boolean processRncUsages(PsiElement tag, LocalSearchScope scope) {
@@ -162,7 +162,7 @@ public class UnusedDefineInspection extends BaseInspection {
 
       if (processUsages(tag, value, new LocalSearchScope(collector.toArray()))) return;
 
-      myHolder.registerProblem(value, XmlBundle.message("unreferenced.define"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(tag));
+      myHolder.registerProblem(value, RelaxngBundle.message("unreferenced.define"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(tag));
     }
 
     private static boolean processUsages(PsiElement tag, XmlAttributeValue value, LocalSearchScope scope) {
@@ -189,7 +189,7 @@ public class UnusedDefineInspection extends BaseInspection {
       @Override
       @NotNull
       public String getFamilyName() {
-        return XmlBundle.message("remove.define");
+        return RelaxngBundle.message("remove.define");
       }
 
       @Override

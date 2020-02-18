@@ -26,7 +26,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlBundle;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.intellij.plugins.relaxNG.compact.psi.*;
 import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
@@ -149,7 +149,7 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
 
     @Override
     public String getTypeName() {
-      return XmlBundle.message("pattern.definition");
+      return RelaxngBundle.message("pattern.definition");
     }
 
     @Override

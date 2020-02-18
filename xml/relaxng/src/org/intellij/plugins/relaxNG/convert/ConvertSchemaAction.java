@@ -29,8 +29,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.XmlBundle;
 import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.validation.RngValidateHandler;
 import org.jetbrains.annotations.NotNull;
@@ -47,9 +47,9 @@ public class ConvertSchemaAction extends AnAction {
       final SchemaType type = getInputType(project, files);
       e.getPresentation().setEnabled(type != null);
       if (type == SchemaType.XML) {
-        e.getPresentation().setText(XmlBundle.message("generate.schema.from.xml.file.0", files.length > 1 ? "s" : ""));
+        e.getPresentation().setText(RelaxngBundle.message("generate.schema.from.xml.file.0", files.length > 1 ? "s" : ""));
       } else {
-        e.getPresentation().setText(XmlBundle.message("convert.schema"));
+        e.getPresentation().setText(RelaxngBundle.message("convert.schema"));
       }
     } else {
       e.getPresentation().setEnabled(false);

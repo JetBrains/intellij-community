@@ -32,7 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.xml.XmlBundle;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.jetbrains.annotations.NotNull;
 
@@ -131,8 +131,8 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(firstFile);
     descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, module);
 
-    myOutputDestination.addBrowseFolderListener(XmlBundle.message("schema.conversion.destination"),
-                                                XmlBundle.message("please.select.the.destination.the.generated.file.s.should.be.placed.at"), project, descriptor);
+    myOutputDestination.addBrowseFolderListener(RelaxngBundle.message("schema.conversion.destination"),
+                                                RelaxngBundle.message("please.select.the.destination.the.generated.file.s.should.be.placed.at"), project, descriptor);
 
     final JTextField tf = myOutputDestination.getTextField();
     tf.getDocument().addDocumentListener(new DocumentAdapter() {
