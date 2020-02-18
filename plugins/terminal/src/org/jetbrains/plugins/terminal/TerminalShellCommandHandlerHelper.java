@@ -5,6 +5,7 @@ import com.google.common.base.Ascii;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,7 +57,7 @@ public class TerminalShellCommandHandlerHelper {
   public static boolean isFeatureEnabled() {
     Experiments experiments = myExperiments;
     if (experiments == null) {
-      experiments = Experiments.getInstance();
+      experiments = ReadAction.compute(() -> Experiments.getInstance());
       myExperiments = experiments;
     }
     return experiments.isFeatureEnabled(FEATURE_ID);
@@ -108,7 +109,7 @@ public class TerminalShellCommandHandlerHelper {
   private PropertiesComponent getPropertiesComponent() {
     PropertiesComponent propertiesComponent = myPropertiesComponent;
     if (propertiesComponent == null) {
-      propertiesComponent = PropertiesComponent.getInstance(myWidget.getProject());
+      propertiesComponent = ReadAction.compute(() -> PropertiesComponent.getInstance(myWidget.getProject()));
       myPropertiesComponent = propertiesComponent;
     }
     return propertiesComponent;
