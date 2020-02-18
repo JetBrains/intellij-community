@@ -6,6 +6,7 @@ import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible {
+final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
   public @NotNull String getText() {
