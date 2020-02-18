@@ -85,7 +85,7 @@ public final class PluginInstaller {
     synchronized (ourLock) {
       if (PluginManagerCore.isPluginInstalled(pluginDescriptor.getPluginId())) {
         if (pluginDescriptor.isBundled()) {
-          PluginManagerMain.LOG.error("Plugin is bundled: " + pluginDescriptor.getPluginId());
+          LOG.error("Plugin is bundled: " + pluginDescriptor.getPluginId());
         }
         else {
           boolean needRestart = !DynamicPlugins.allowLoadUnloadWithoutRestart((IdeaPluginDescriptorImpl)pluginDescriptor);

@@ -382,7 +382,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         cancel = true;
       }
       catch (Throwable e) {
-        PluginManagerMain.LOG.error(e);
+        LOG.error(e);
         error = true;
       }
 
@@ -904,7 +904,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
     catch (IOException e) {
-      PluginManagerMain.LOG.error(e);
+      LOG.error(e);
     }
     return needRestartForUninstall;
   }

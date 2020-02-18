@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
@@ -71,6 +72,8 @@ import java.util.function.Function;
  */
 public class PluginManagerConfigurable
   implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
+
+  private static final Logger LOG = Logger.getInstance(PluginManagerConfigurable.class);
 
   public static final String ID = "preferences.pluginManager";
   public static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
@@ -389,8 +392,7 @@ public class PluginManagerConfigurable
               addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.top.rated"), "orderBy=rating", "/sortBy:rating");
             }
             catch (IOException e) {
-              PluginManagerMain.LOG
-                .info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
+              LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
             }
 
             for (String host : UpdateSettings.getInstance().getPluginHosts()) {
@@ -406,7 +408,7 @@ public class PluginManagerConfigurable
             }
           }
           catch (IOException e) {
-            PluginManagerMain.LOG.info(e);
+            LOG.info(e);
           }
           finally {
             ApplicationManager.getApplication().invokeLater(() -> {
@@ -730,7 +732,7 @@ public class PluginManagerConfigurable
                 }
               }
               catch (IOException e) {
-                PluginManagerMain.LOG.info(e);
+                LOG.info(e);
 
                 ApplicationManager.getApplication().invokeLater(() -> myPanel.getEmptyText().setText(
                   IdeBundle.message("plugins.configurable.search.result.not.loaded"))
@@ -1528,7 +1530,7 @@ public class PluginManagerConfigurable
       }
     }
     catch (IOException e) {
-      PluginManagerMain.LOG.info(e);
+      LOG.info(e);
     }
     return Collections.emptyList();
   }
@@ -1561,11 +1563,10 @@ public class PluginManagerConfigurable
       }
       catch (IOException e) {
         if (host == null) {
-          PluginManagerMain.LOG
-            .info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
+          LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
         }
         else {
-          PluginManagerMain.LOG.info(host, e);
+          LOG.info(host, e);
         }
       }
     }
