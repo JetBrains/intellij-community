@@ -7,6 +7,8 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.sh.psi.ResolveUtil;
 import com.intellij.sh.psi.ShCompositeElement;
 import com.intellij.usageView.UsageViewUtil;
@@ -32,6 +34,16 @@ public class ShCompositeElementImpl extends ASTWrapperPsiElement implements ShCo
 
   private static boolean processDeclarations(@NotNull PsiElement element, @NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     return processor.execute(element, state) && ResolveUtil.processChildren(element, processor, state, lastParent, place);
+  }
+
+  @Override
+  public @NotNull GlobalSearchScope getResolveScope() {
+    return GlobalSearchScope.fileScope(getContainingFile());
+  }
+
+  @Override
+  public @NotNull SearchScope getUseScope() {
+    return GlobalSearchScope.fileScope(getContainingFile());
   }
 
   @Override
