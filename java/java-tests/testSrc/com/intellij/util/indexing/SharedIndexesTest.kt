@@ -108,10 +108,6 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
                                                             processor: Processor<UpdatableIndex<Key, Value, FileContent>>) {
         throw AssertionFailedError()
       }
-
-      override fun disposeIndexChunkData(indexId: ID<*, *>, chunkId: Int) {
-        throw AssertionFailedError()
-      }
     })
     val index = FileContentHashIndex(extension, object : IndexStorage<Long?, Void?> {
       val map: MutableMap<Long, UpdatableValueContainer<Void?>> = HashMap()
