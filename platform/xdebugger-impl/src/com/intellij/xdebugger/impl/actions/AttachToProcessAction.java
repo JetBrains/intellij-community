@@ -11,8 +11,8 @@ public class AttachToProcessAction extends AttachToProcessActionBase {
     super(XDebuggerBundle.message("xdebugger.attach.action"),
           XDebuggerBundle.message("xdebugger.attach.action.description"),
           AllIcons.Debugger.AttachToProcess,
-          () -> XAttachDebuggerProvider.getAttachDebuggerProviders(),
-          () -> XAttachHostProvider.EP.getExtensionList(),
+          XAttachDebuggerProvider::getAttachDebuggerProviders,
+          XAttachHostProvider.EP::getExtensionList,
           XDebuggerBundle.message("xdebugger.attach.popup.selectDebugger.title")
     );
   }
