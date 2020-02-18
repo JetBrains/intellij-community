@@ -2,7 +2,6 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
@@ -17,6 +16,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.XmlDomBundle;
 import com.intellij.util.xml.highlighting.DomCollectionProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
@@ -412,7 +412,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   public static class EditAction extends AnAction {
 
     public EditAction() {
-      super(ApplicationBundle.message("action.edit"), null, IconUtil.getEditIcon());
+      super(XmlDomBundle.message("action.edit"), null, IconUtil.getEditIcon());
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.EDIT));
     }
 
@@ -434,7 +434,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
   public static class RemoveAction extends AnAction {
     public RemoveAction() {
-      super(ApplicationBundle.message("action.remove"), null, IconUtil.getRemoveIcon());
+      super(XmlDomBundle.message("action.remove"), null, IconUtil.getRemoveIcon());
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE));
     }
 

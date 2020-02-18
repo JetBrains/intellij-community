@@ -25,8 +25,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.Function;
+import com.intellij.util.xml.XmlDomBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -101,7 +101,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
           builder.setDimensionServiceKey("TextControl");
           builder.setCenterPanel(textArea);
           builder.setPreferredFocusComponent(textArea);
-          builder.setTitle(UIBundle.message("big.text.control.window.title"));
+          builder.setTitle(XmlDomBundle.message("big.text.control.window.title"));
           builder.addCloseButton();
           builder.show();
         }

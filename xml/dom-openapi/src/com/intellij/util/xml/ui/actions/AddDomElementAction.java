@@ -3,17 +3,13 @@ package com.intellij.util.xml.ui.actions;
 
 import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.ElementPresentationManager;
-import com.intellij.util.xml.TypeChooser;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +22,7 @@ import java.util.List;
 
 public abstract class AddDomElementAction extends AnAction {
  public AddDomElementAction() {
-    super(ApplicationBundle.lazyMessage("action.add"), IconUtil.getAddIcon());
+    super(XmlDomBundle.lazyMessage("action.add"), IconUtil.getAddIcon());
   }
 
   @Override
@@ -115,7 +111,7 @@ public abstract class AddDomElementAction extends AnAction {
           icon = ElementPresentationManager.getIconForClass(rawType);
           //          }
         }
-        actions.add(createAddingAction(e, ApplicationBundle.message("action.add") + " " + name, icon, type, description));
+        actions.add(createAddingAction(e, XmlDomBundle.message("action.add") + " " + name, icon, type, description));
       }
     }
     if (actions.size() > 1 && showAsPopup()) {
@@ -157,7 +153,7 @@ public abstract class AddDomElementAction extends AnAction {
     protected final ActionGroup myGroup;
 
     protected ShowPopupAction(ActionGroup group) {
-      super(ApplicationBundle.message("action.add"), null, IconUtil.getAddIcon());
+      super(XmlDomBundle.message("action.add"), null, IconUtil.getAddIcon());
       myGroup = group;
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
     }

@@ -19,14 +19,10 @@ package com.intellij.util.xml.tree.actions;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.ElementPresentation;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomFileElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
@@ -82,10 +78,10 @@ public class DeleteDomElement extends BaseDomTreeAction {
 
 
     if (enabled) {
-      e.getPresentation().setText(getPresentationText(selectedNode, ApplicationBundle.message("action.remove")));
+      e.getPresentation().setText(getPresentationText(selectedNode, XmlDomBundle.message("action.remove")));
     }
     else {
-      e.getPresentation().setText(ApplicationBundle.lazyMessage("action.remove"));
+      e.getPresentation().setText(XmlDomBundle.lazyMessage("action.remove"));
     }
 
     e.getPresentation().setIcon(AllIcons.General.Remove);
