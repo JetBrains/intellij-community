@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.util.List;
 import java.util.*;
 import java.util.Map.Entry;
@@ -96,10 +98,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       return true;
     }
 
-    int rowCount = getRowCount();
-
-    for (int i = 0; i < rowCount; i++) {
-      IdeaPluginDescriptor descriptor = getObjectAt(i);
+    for (IdeaPluginDescriptor descriptor : view) {
       boolean enabledInTable = isEnabled(descriptor);
 
       if (descriptor.isEnabled() != enabledInTable) {
@@ -200,9 +199,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     List<IdeaPluginDescriptor> pluginDescriptorsToDisable = new ArrayList<>();
     List<IdeaPluginDescriptor> pluginDescriptorsToEnable = new ArrayList<>();
 
-    int rowCount = getRowCount();
-    for (int i = 0; i < rowCount; i++) {
-      IdeaPluginDescriptor descriptor = getObjectAt(i);
+    for (IdeaPluginDescriptor descriptor : view) {
       if (myDynamicPluginsToUninstall.contains(descriptor)) {
         continue;
       }
@@ -215,8 +212,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (shouldEnable != descriptor.isEnabled()) {
         if (shouldEnable) {
           pluginDescriptorsToEnable.add(descriptor);
-        }
-        else {
+        } else {
           pluginDescriptorsToDisable.add(descriptor);
         }
       }
@@ -982,5 +978,43 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
 
     return message;
+  }
+
+  protected List<IdeaPluginDescriptor> getAllRepoPlugins() {
+    try {
+      List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
+      if (list != null) {
+        return list;
+      }
+    }
+    catch (IOException ignored) {
+    }
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  private List<IdeaPluginDescriptor> dependent(@NotNull IdeaPluginDescriptor rootDescriptor) {
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    PluginId rootId = rootDescriptor.getPluginId();
+
+    List<IdeaPluginDescriptor> result = new ArrayList<>();
+    for (IdeaPluginDescriptor plugin : getAllPlugins()) {
+      PluginId pluginId = plugin.getPluginId();
+      if (pluginId == rootId || appInfo.isEssentialPlugin(pluginId) || !plugin.isEnabled() || plugin.isImplementationDetail()) {
+        continue;
+      }
+      if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
+        continue;
+      }
+
+      PluginManagerCore.processAllDependencies(plugin, false, descriptor -> {
+        if (descriptor.getPluginId() == rootId) {
+          result.add(plugin);
+          return FileVisitResult.TERMINATE;
+        }
+        return FileVisitResult.CONTINUE;
+      });
+    }
+    return result;
   }
 }

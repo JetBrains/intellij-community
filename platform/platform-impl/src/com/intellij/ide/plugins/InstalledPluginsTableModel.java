@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -8,15 +8,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.nio.file.FileVisitResult;
 import java.util.*;
 
 /**
  * @author stathik
  */
-public class InstalledPluginsTableModel extends PluginTableModel {
+public class InstalledPluginsTableModel {
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
+
+  protected final List<IdeaPluginDescriptor> view = new ArrayList<>();
 
   private final Map<PluginId, Boolean> myEnabled = new HashMap<>();
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<>();
@@ -37,8 +38,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       setEnabled(descriptor, descriptor.isEnabled());
     }
     updatePluginDependencies();
+  }
 
-    setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
+  public List<IdeaPluginDescriptor> getAllPlugins() {
+    return new ArrayList<>(view);
   }
 
   public boolean hasProblematicDependencies(PluginId pluginId) {
@@ -67,15 +70,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       }
 
       setEnabled(descriptor, true);
-      fireTableDataChanged();
     }
   }
-
-  @Override
-  public int getNameColumn() {
-    return 0;
-  }
-
   private void setEnabled(IdeaPluginDescriptor ideaPluginDescriptor, boolean enabled) {
     PluginId pluginId = ideaPluginDescriptor.getPluginId();
     if (!enabled && !PluginManagerCore.isDisabled(pluginId)) {
@@ -93,13 +89,11 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   protected void updatePluginDependencies() {
     myDependentToRequiredListMap.clear();
 
-    int rowCount = getRowCount();
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = null;
-    for (int i = 0; i < rowCount; i++) {
-      final IdeaPluginDescriptor rootDescriptor = getObjectAt(i);
+    for (final IdeaPluginDescriptor rootDescriptor : view) {
       final PluginId pluginId = rootDescriptor.getPluginId();
       myDependentToRequiredListMap.remove(pluginId);
-      if (rootDescriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)rootDescriptor).isDeleted()) {
+      if (rootDescriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl) rootDescriptor).isDeleted()) {
         continue;
       }
 
@@ -120,7 +114,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
         Boolean enabled1 = myEnabled.get(depId);
         if ((enabled1 == null && !ourState.wasUpdated(depId)) ||
-            (enabled1 != null && !enabled1.booleanValue())) {
+                (enabled1 != null && !enabled1.booleanValue())) {
           Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
           if (required == null) {
             required = new HashSet<>();
