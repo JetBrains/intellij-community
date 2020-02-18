@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal
 
+import com.intellij.index.SharedIndexExtensions
 import com.intellij.internal.SharedIndexesLogger.logDownloadNotifications
 import com.intellij.internal.SharedIndexesLogger.logNotification
 import com.intellij.notification.NotificationGroup
@@ -26,7 +27,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.concurrency.await
 import java.nio.file.Path
 
-private fun isSharedIndexesDownloadEnabled() = ApplicationManager.getApplication()?.isUnitTestMode == false && Registry.`is`("shared.indexes.download")
+private fun isSharedIndexesDownloadEnabled() = ApplicationManager.getApplication()?.isUnitTestMode == false && Registry.`is`(SharedIndexExtensions.SHARED_INDEXES_DOWNLOAD_KEY)
 
 class SharedJdkIndexChunkPreloader : JdkInstallerListener {
   override fun onJdkDownloadStarted(request: JdkInstallRequest, project: Project?) {
