@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.changeReminder.changes
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
@@ -31,10 +30,6 @@ internal class ChangeReminderBrowserNode(private val predictionData: PredictionD
     "${if (predictionSize > 1) "are" else "is"} usually committed together with " +
     "the ${pluralize("file", changeList.changes.size)} from the ${changeList.name}"
 
-  private fun getHelpToolTipText(): String =
-    "${ApplicationNamesInfo.getInstance().fullProductName} " +
-    "predicts files that are usually committed together, so that they are not forgotten by mistake."
-
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     renderer.append(NODE_TITLE, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     renderer.icon = AllIcons.Nodes.Related
@@ -50,11 +45,6 @@ internal class ChangeReminderBrowserNode(private val predictionData: PredictionD
     }
     val changeListManager = ChangeListManager.getInstance(project)
     val defaultChangeList = changeListManager.defaultChangeList
-    if (predictionData.predictionToDisplay.isNotEmpty()) {
-      renderer.toolTipText = getPredictionToolTipText(predictionData.predictionToDisplay.size, defaultChangeList)
-    }
-    else {
-      renderer.toolTipText = getHelpToolTipText()
-    }
+    renderer.toolTipText = getPredictionToolTipText(predictionData.predictionToDisplay.size, defaultChangeList)
   }
 }
