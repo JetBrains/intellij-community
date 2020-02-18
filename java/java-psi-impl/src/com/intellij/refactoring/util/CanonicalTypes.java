@@ -24,11 +24,9 @@ public class CanonicalTypes {
   private CanonicalTypes() { }
 
   public abstract static class Type {
-    @NotNull
-    public abstract PsiType getType(@Nullable PsiElement context, PsiManager manager) throws IncorrectOperationException;
+    public abstract @NotNull PsiType getType(@Nullable PsiElement context, PsiManager manager) throws IncorrectOperationException;
 
-    @NotNull
-    public PsiType getType(@NotNull PsiElement context) {
+    public @NotNull PsiType getType(@NotNull PsiElement context) {
       return getType(context, context.getManager());
     }
 
@@ -59,9 +57,8 @@ public class CanonicalTypes {
       myType = type;
     }
 
-    @NotNull
     @Override
-    public PsiType getType(PsiElement context, PsiManager manager) {
+    public @NotNull PsiType getType(PsiElement context, PsiManager manager) {
       return myType.annotate(myProvider);
     }
 
@@ -73,21 +70,22 @@ public class CanonicalTypes {
 
   private static class Array extends AnnotatedType {
     final Type myComponentType;
+    private final String myPresentableText;
 
     private Array(@NotNull PsiType original, @NotNull Type componentType) {
       super(original.getAnnotationProvider());
+      myPresentableText = original.getPresentableText(true);
       myComponentType = componentType;
     }
 
-    @NotNull
     @Override
-    public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
+    public @NotNull PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
       return myComponentType.getType(context, manager).createArrayType().annotate(myProvider);
     }
 
     @Override
     public String getTypeText() {
-      return myComponentType.getTypeText() + "[]";
+      return myPresentableText;
     }
 
     @Override
@@ -106,15 +104,9 @@ public class CanonicalTypes {
       super(original, componentType);
     }
 
-    @NotNull
     @Override
-    public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
+    public @NotNull PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
       return new PsiEllipsisType(myComponentType.getType(context, manager)).annotate(myProvider);
-    }
-
-    @Override
-    public String getTypeText() {
-      return myComponentType.getTypeText() + "...";
     }
   }
 
@@ -128,9 +120,8 @@ public class CanonicalTypes {
       myBound = bound;
     }
 
-    @NotNull
     @Override
-    public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
+    public @NotNull PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
       PsiWildcardType type;
       if (myBound == null) {
         type = PsiWildcardType.createUnbounded(manager);
@@ -167,13 +158,12 @@ public class CanonicalTypes {
     private final String myCanonicalText;
 
     private UnresolvedType(@NotNull PsiType original) {
-      myPresentableText = original.getPresentableText();
+      myPresentableText = original.getPresentableText(true);
       myCanonicalText = original.getCanonicalText(true);
     }
 
-    @NotNull
     @Override
-    public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
+    public @NotNull PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
       return JavaPsiFacade.getElementFactory(manager.getProject()).createTypeFromText(myCanonicalText, context);
     }
 
@@ -195,14 +185,13 @@ public class CanonicalTypes {
 
     private ClassType(@NotNull PsiType original, @NotNull String classQName, @NotNull Map<String, Type> substitutor) {
       super(TypeAnnotationProvider.Static.create(original.getAnnotations()));
-      myPresentableText = original.getPresentableText();
+      myPresentableText = original.getPresentableText(true);
       myClassQName = classQName;
       mySubstitutor = substitutor;
     }
 
-    @NotNull
     @Override
-    public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
+    public @NotNull PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
       PsiElementFactory factory = facade.getElementFactory();
 
@@ -244,9 +233,8 @@ public class CanonicalTypes {
       myDisjunction = disjunction;
     }
 
-    @NotNull
     @Override
-    public PsiType getType(final PsiElement context, final PsiManager manager) throws IncorrectOperationException {
+    public @NotNull PsiType getType(final PsiElement context, final PsiManager manager) throws IncorrectOperationException {
       List<PsiType> types = ContainerUtil.map(myTypes, type -> type.getType(context, manager));
       return myDisjunction ? new PsiDisjunctionType(types, manager) : PsiIntersectionType.createIntersection(types);
     }
@@ -283,8 +271,7 @@ public class CanonicalTypes {
       return new Array(type, substituteComponents(type));
     }
 
-    @NotNull
-    private Type substituteComponents(PsiArrayType type) {
+    private @NotNull Type substituteComponents(PsiArrayType type) {
       final PsiType componentType = type.getComponentType();
       final Type substituted = componentType.accept(this);
       LOG.assertTrue(substituted != null, componentType);
@@ -325,9 +312,8 @@ public class CanonicalTypes {
       return new LogicalOperationType(types, true);
     }
 
-    @Nullable
     @Override
-    public Type visitIntersectionType(@NotNull PsiIntersectionType type) {
+    public @Nullable Type visitIntersectionType(@NotNull PsiIntersectionType type) {
       List<Type> types = ContainerUtil.map(type.getConjuncts(), type1 -> type1.accept(this));
       return new LogicalOperationType(types, false);
     }
