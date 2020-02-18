@@ -163,7 +163,7 @@ public class LaterInvocator {
   }
 
   public static void enterModal(@NotNull Object modalEntity, @NotNull ModalityStateEx appendedState) {
-    LOG.assertTrue(isDispatchThread(), "enterModal() should be invoked in event-dispatch thread");
+    LOG.assertTrue(isWriteThread(), "enterModal() should be invoked in write thread");
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enterModal:" + modalEntity);
@@ -221,7 +221,7 @@ public class LaterInvocator {
   }
 
   public static void leaveModal(Project project, Dialog dialog) {
-    LOG.assertTrue(isDispatchThread(), "leaveModal() should be invoked in event-dispatch thread");
+    LOG.assertTrue(isWriteThread(), "leaveModal() should be invoked in write thread");
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + dialog.getName() + " ; for project: " + project.getName());
@@ -262,7 +262,7 @@ public class LaterInvocator {
 
 
   public static void leaveModal(@NotNull Object modalEntity) {
-    LOG.assertTrue(isDispatchThread(), "leaveModal() should be invoked in event-dispatch thread");
+    LOG.assertTrue(isWriteThread(), "leaveModal() should be invoked in write thread");
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + modalEntity);
@@ -304,7 +304,7 @@ public class LaterInvocator {
   }
 
   public static boolean isInModalContextForProject(final Project project) {
-    LOG.assertTrue(isDispatchThread());
+    LOG.assertTrue(isWriteThread());
 
     if (ourModalEntities.isEmpty()) return false;
 
@@ -319,6 +319,10 @@ public class LaterInvocator {
 
   private static boolean isDispatchThread() {
     return ApplicationManager.getApplication().isDispatchThread();
+  }
+
+  private static boolean isWriteThread() {
+    return ApplicationManager.getApplication().isWriteThread();
   }
 
   private static FlushQueue getRunnableQueue(boolean onEdt) {
@@ -398,7 +402,7 @@ public class LaterInvocator {
 
   @TestOnly
   public static void dispatchPendingFlushes() {
-    if (!isDispatchThread()) throw new IllegalStateException("Must call from EDT");
+    if (!SwingUtilities.isEventDispatchThread()) throw new IllegalStateException("Must call from EDT");
 
     Semaphore semaphore = new Semaphore();
     semaphore.down();
