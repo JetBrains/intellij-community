@@ -39,5 +39,6 @@ public class DomUsageTypeProvider implements UsageTypeProvider {
     return null;
   }
 
+  @SuppressWarnings("UnresolvedPropertyKey")
   private static final UsageType DOM_USAGE_TYPE = new UsageType(XmlDomBundle.lazyMessage("dom.usage.type"));
 }
