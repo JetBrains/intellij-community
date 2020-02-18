@@ -100,6 +100,10 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
         throw AssertionFailedError()
       }
 
+      override fun attachExistingChunk(chunkId: Int, project: Project): Boolean {
+        throw AssertionFailedError()
+      }
+
       override fun <Value : Any?, Key : Any?> getChunk(indexId: ID<Key, Value>, chunkId: Int): HashBasedMapReduceIndex<Key, Value>? {
         throw AssertionFailedError()
       }
