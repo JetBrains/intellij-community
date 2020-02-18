@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -67,7 +68,8 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   }
 
   public GeneralSettings() {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    Application application = ApplicationManager.getApplication();
+    if (application != null && application.isHeadlessEnvironment()) {
       return;
     }
 
