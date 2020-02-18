@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -456,7 +457,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  public void addSeparator(@Nullable String separatorText) {
+  public void addSeparator(@Nullable @Nls String separatorText) {
     add(Separator.create(separatorText));
   }
 
