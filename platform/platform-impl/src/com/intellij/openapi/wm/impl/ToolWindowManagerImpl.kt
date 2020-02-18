@@ -736,7 +736,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     EDT.assertIsEdt()
     val info = layout.getInfo(id) ?: throw IllegalThreadStateException("window with id=\"$id\" is unknown")
     val entry = idToEntry.get(id)!!
-    if (!entry.readOnlyWindowInfo.isVisible && showToolWindowImpl(entry, info, dirtyMode = false)) {
+    if (entry.readOnlyWindowInfo.isVisible) {
+      LOG.assertTrue(entry.toolWindow.getComponentIfInitialized() != null)
+      return
+    }
+
+    if (showToolWindowImpl(entry, info, dirtyMode = false)) {
       checkInvariants("id: $id")
       fireStateChanged()
     }
@@ -925,9 +930,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val disposable = Disposer.newDisposable(task.id)
     Disposer.register(project, disposable)
 
-    val windowInfoSnapshot = info.copy()
-
     val contentFactory = task.contentFactory
+
+    val windowInfoSnapshot = info.copy()
+    if (windowInfoSnapshot.isVisible && contentFactory == null) {
+      // isVisible cannot be true if contentFactory is null, because we cannot show toolwindow without content
+      windowInfoSnapshot.isVisible = false
+    }
+
     val toolWindow = ToolWindowImpl(this, task.id, task.canCloseContent, task.canWorkInDumbMode, task.component, disposable,
       windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable, stripeTitle = getStripeTitle(task, bean))
 
