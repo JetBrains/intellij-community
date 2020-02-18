@@ -2,49 +2,44 @@
 package com.jetbrains.changeReminder.changes
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil.spaceAndThinSpace
+import com.jetbrains.changeReminder.ChangeReminderBundle
 import com.jetbrains.changeReminder.predict.PredictionData
 import com.jetbrains.changeReminder.predict.PredictionService
 
-internal class ChangeReminderBrowserNode(private val predictionData: PredictionData,
-                                         private val predictionService: PredictionService
+internal class ChangeReminderBrowserNode(
+  private val predictionData: PredictionData,
+  private val predictionService: PredictionService
 ) : ChangesBrowserNode<PredictionData>(predictionData) {
-  companion object {
-    private const val NODE_TITLE = "People who change the files in the active changelist also change"
-    private const val LOADING_ATTRIBUTE = "Git Log is loading..."
-    private const val CALCULATING_ATTRIBUTE = "Calculating..."
-  }
-
   private fun ChangesBrowserNodeRenderer.appendCustomState(state: String) {
     this.append("${if (countText.isEmpty()) spaceAndThinSpace() else ", "}$state", SimpleTextAttributes.GRAYED_ATTRIBUTES)
   }
 
-  private fun getPredictionToolTipText(predictionSize: Int, changeList: LocalChangeList): String =
-    "${pluralize("This", predictionSize)} $predictionSize ${pluralize("file", predictionSize)} " +
-    "${if (predictionSize > 1) "are" else "is"} usually committed together with " +
-    "the ${pluralize("file", changeList.changes.size)} from the ${changeList.name}"
-
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-    renderer.append(NODE_TITLE, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    renderer.append(ChangeReminderBundle.message("changes.browser.node.title"), SimpleTextAttributes.REGULAR_ATTRIBUTES)
     renderer.icon = AllIcons.Nodes.Related
     appendCount(renderer)
     val project = predictionService.project
     if (predictionService.isReadyToDisplay) {
       if (predictionService.inProgress) {
-        renderer.appendCustomState(CALCULATING_ATTRIBUTE)
+        renderer.appendCustomState(ChangeReminderBundle.message("changes.browser.node.attribute.prediction.is.calculating"))
       }
     }
     else {
-      renderer.appendCustomState(LOADING_ATTRIBUTE)
+      renderer.appendCustomState(ChangeReminderBundle.message("changes.browser.node.attribute.git.log.is.loading"))
     }
     val changeListManager = ChangeListManager.getInstance(project)
     val defaultChangeList = changeListManager.defaultChangeList
-    renderer.toolTipText = getPredictionToolTipText(predictionData.predictionToDisplay.size, defaultChangeList)
+    val predictionSize = predictionData.predictionToDisplay.size
+    renderer.toolTipText = ChangeReminderBundle.message(
+      "changes.browser.node.prediction.tooltip.text",
+      predictionSize,
+      defaultChangeList.changes.size,
+      defaultChangeList.name
+    )
   }
 }
