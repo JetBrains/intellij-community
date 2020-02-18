@@ -15,6 +15,7 @@
   <depends>com.intellij.properties</depends>
   <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.json</depends>
+  <depends>com.intellij.platform.images</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
   <depends config-file="groovy-devkit.xml" optional="true">org.intellij.groovy</depends>
   <depends config-file="uidesigner-devkit.xml" optional="true">com.intellij.uiDesigner</depends>

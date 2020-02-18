@@ -632,8 +632,7 @@ public final class PluginManagerCore {
     }
   }
 
-  @NotNull
-  private static URL localFileToUrl(@NotNull Path file, IdeaPluginDescriptor descriptor) {
+  private static @NotNull URL localFileToUrl(@NotNull Path file, @NotNull IdeaPluginDescriptor descriptor) {
     try {
       // it is important not to have traversal elements in classpath
       return new URL("file", "", file.normalize().toUri().getRawPath());
@@ -1692,10 +1691,23 @@ public final class PluginManagerCore {
     }
   }
 
-  private static IdeaPluginDescriptorImpl @NotNull [] getTopologicallySorted(@NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> graph) {
+  private static @NotNull IdeaPluginDescriptorImpl @NotNull [] getTopologicallySorted(@NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> graph) {
     DFSTBuilder<IdeaPluginDescriptorImpl> requiredOnlyGraph = new DFSTBuilder<>(GraphGenerator.generate(graph));
     IdeaPluginDescriptorImpl[] sortedRequired = graph.getNodes().toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
-    Arrays.sort(sortedRequired, requiredOnlyGraph.comparator());
+    Comparator<IdeaPluginDescriptorImpl> comparator = requiredOnlyGraph.comparator();
+    // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
+    // so, ensure that core plugin is always first (otherwise not possible to register actions - parent group not defined)
+    Arrays.sort(sortedRequired, (o1, o2) -> {
+      if (o1.getPluginId() == CORE_ID) {
+        return -1;
+      }
+      else if (o2.getPluginId() == CORE_ID) {
+        return 1;
+      }
+      else {
+        return comparator.compare(o1, o2);
+      }
+    });
     return sortedRequired;
   }
 

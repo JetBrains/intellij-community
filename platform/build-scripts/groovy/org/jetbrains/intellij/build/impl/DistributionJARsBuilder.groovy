@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
@@ -142,7 +142,6 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.credentialStore")
       withModule("intellij.json")
       withModule("intellij.spellchecker")
-      withModule("intellij.platform.images")
       withModule("intellij.platform.statistics")
       withModule("intellij.platform.statistics.uploader")
       withModule("intellij.platform.statistics.devkit")
@@ -767,12 +766,13 @@ class DistributionJARsBuilder {
    * directory name return the old module name to temporary keep layout of plugins unchanged.
    */
   static String getActualPluginDirectoryName(PluginLayout plugin, BuildContext context) {
-    if (!plugin.directoryNameSetExplicitly && plugin.directoryName == BaseLayout.convertModuleNameToFileName(plugin.mainModule)
+    // do not use old name for intellij.platform. modules
+    if (!plugin.directoryNameSetExplicitly && !plugin.mainModule.startsWith("intellij.platform.") && plugin.directoryName == BaseLayout.convertModuleNameToFileName(plugin.mainModule)
                                            && context.getOldModuleName(plugin.mainModule) != null) {
       context.getOldModuleName(plugin.mainModule)
     }
     else {
-      plugin.directoryName
+      return plugin.directoryName
     }
   }
 
@@ -786,7 +786,7 @@ class DistributionJARsBuilder {
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory) {
     addSearchableOptions(layoutBuilder)
     def enabledModulesSet = enabledPluginModules
-    pluginsToInclude.each { plugin ->
+    (buildContext.options.runBuildStepsInParallel ? pluginsToInclude.parallelStream() : pluginsToInclude.stream()).each { plugin ->
       def actualModuleJars = plugin.getActualModules(enabledModulesSet)
       checkOutputOfPluginModules(plugin.mainModule, actualModuleJars.values(), plugin.moduleExcludes)
       List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {

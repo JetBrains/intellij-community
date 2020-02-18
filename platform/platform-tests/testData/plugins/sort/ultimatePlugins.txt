@@ -1,5 +1,5 @@
--org-jetbrains-python-concurrency-visualiser-
 + com.intellij
+  -org-jetbrains-python-concurrency-visualiser-
 + -HtmlTools-
 + -PerforceDirectPlugin-
 + -Refactor-X-
