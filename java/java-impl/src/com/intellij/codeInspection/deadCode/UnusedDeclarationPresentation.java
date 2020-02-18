@@ -47,6 +47,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -423,35 +424,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @NotNull
   @Override
   public RefElementNode createRefNode(@Nullable RefEntity entity, @NotNull InspectionTreeModel model, @NotNull InspectionTreeNode parent) {
-    return new RefElementNode(entity, this, parent) {
-      @Nullable
-      @Override
-      public String getTailText() {
-        final UnusedDeclarationHint hint = myFixedElements.get(getElement());
-        if (hint != null) {
-          return hint.getDescription();
-        }
-        return super.getTailText();
-      }
-
-      @Override
-      public boolean isQuickFixAppliedFromView() {
-        return myFixedElements.containsKey(getElement());
-      }
-
-      @Override
-      protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
-        if (!isExcluded() && isLeaf() && !isProblemResolved(getElement()) && !isSuppressed(getElement())) {
-          HighlightSeverity severity = InspectionToolPresentation.getSeverity(getElement(), null, getPresentation());
-          HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
-          if (!counter.adjustValue(level, 1)) {
-            counter.put(level, 1);
-          }
-          return;
-        }
-        super.visitProblemSeverities(counter);
-      }
-    };
+    return new UnusedDeclarationRefElementNode(entity, this, parent);
   }
 
   @Override
@@ -681,5 +654,41 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public boolean showProblemCount() {
     return false;
+  }
+
+  @ApiStatus.Internal
+  protected static class UnusedDeclarationRefElementNode extends RefElementNode {
+    public UnusedDeclarationRefElementNode(@Nullable RefEntity entity, @NotNull UnusedDeclarationPresentation presentation, @NotNull InspectionTreeNode parent) {
+      super(entity, presentation, parent);
+    }
+
+    @Nullable
+    @Override
+    public String getTailText() {
+      final UnusedDeclarationHint hint = ((UnusedDeclarationPresentation)getPresentation()).myFixedElements.get(getElement());
+      if (hint != null) {
+        return hint.getDescription();
+      }
+      return super.getTailText();
+    }
+
+    @Override
+    public boolean isQuickFixAppliedFromView() {
+      return ((UnusedDeclarationPresentation)getPresentation()).myFixedElements.containsKey(getElement());
+    }
+
+    @Override
+    protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+      if (!isExcluded() && isLeaf() && !getPresentation().isProblemResolved(getElement()) && !getPresentation()
+        .isSuppressed(getElement())) {
+        HighlightSeverity severity = InspectionToolPresentation.getSeverity(getElement(), null, getPresentation());
+        HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+        if (!counter.adjustValue(level, 1)) {
+          counter.put(level, 1);
+        }
+        return;
+      }
+      super.visitProblemSeverities(counter);
+    }
   }
 }
