@@ -20,10 +20,7 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -71,7 +68,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
       return 0;
     }
     if (file instanceof VirtualFileWindow) return -1;
-    return Arrays.stream(patternProvider.getIndexPatterns()).mapToInt(indexPattern -> fetchCount(file, indexPattern)).sum();
+    return fetchCount(file, patternProvider.getIndexPatterns());
   }
 
   @Override
@@ -83,15 +80,13 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
     return fetchCount(file, pattern);
   }
 
-  private int fetchCount(@NotNull VirtualFile file, @NotNull IndexPattern indexPattern) {
+  private int fetchCount(@NotNull VirtualFile file, IndexPattern @NotNull ... indexPatterns) {
     final int[] count = {0};
     FileBasedIndex.getInstance().ignoreDumbMode(() -> {
-      FileBasedIndex.getInstance().processValues(
-        TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), file,
-        (file1, value) -> {
-          count[0] += value.intValue();
-          return true;
-        }, GlobalSearchScope.fileScope(myProject, file));
+      Map<TodoIndexEntry, Integer> data = FileBasedIndex.getInstance().getFileData(TodoIndex.NAME, file, myProject);
+      for (IndexPattern indexPattern : indexPatterns) {
+        count[0] += data.getOrDefault(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), 0);
+      }
     }, myProject, DumbModeAccessType.RELIABLE_DATA_ONLY);
     return count[0];
   }
