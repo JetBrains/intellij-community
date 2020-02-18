@@ -17,12 +17,12 @@ package com.intellij.application.options;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   public static class Holder {
     public static String getDisplayName() {
-      return ApplicationBundle.message("title.html");
+      return XmlBundle.message("title.html");
     }
   }
 

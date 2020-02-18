@@ -2,7 +2,6 @@
 package com.intellij.ide.browsers.actions
 
 import com.intellij.ide.GeneralSettings
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.BrowserLauncherAppless
 import com.intellij.ide.browsers.DefaultBrowserPolicy
 import com.intellij.ide.browsers.WebBrowser
@@ -10,6 +9,7 @@ import com.intellij.ide.browsers.WebBrowserManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.xml.XmlBundle
 import com.intellij.xml.util.HtmlUtil
 
 class OpenFileInDefaultBrowserAction : DumbAwareAction() {
@@ -18,7 +18,7 @@ class OpenFileInDefaultBrowserAction : DumbAwareAction() {
 
     var description = templatePresentation.description
     if (HtmlUtil.isHtmlFile(result.file)) {
-      description += " (" + IdeBundle.message("browser.shortcut")+ ")"
+      description += " (" + XmlBundle.message("browser.shortcut") + ")"
     }
 
     val presentation = e.presentation

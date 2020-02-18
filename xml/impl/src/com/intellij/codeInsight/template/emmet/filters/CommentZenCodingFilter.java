@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.template.emmet.filters;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +80,6 @@ public class CommentZenCodingFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String getDisplayName() {
-    return CodeInsightBundle.message("emmet.filter.comment.tags");
+    return XmlBundle.message("emmet.filter.comment.tags");
   }
 }

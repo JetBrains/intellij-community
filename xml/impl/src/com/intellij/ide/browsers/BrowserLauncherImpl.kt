@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Urls
+import com.intellij.xml.XmlBundle
 import org.jetbrains.ide.BuiltInServerManager
 
 class BrowserLauncherImpl : BrowserLauncherAppless() {
@@ -63,7 +64,7 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
 
   override fun showError(error: String?, browser: WebBrowser?, project: Project?, title: String?, fix: (() -> Unit)?) {
     AppUIExecutor.onUiThread().expireWith(project ?: Disposable {}).submit {
-      if (showOkNoDialog(title ?: IdeBundle.message("browser.error"), error ?: IdeBundle.message("unknown.error"), project,
+      if (showOkNoDialog(title ?: XmlBundle.message("browser.error"), error ?: IdeBundle.message("unknown.error"), project,
                          okText = IdeBundle.message("button.fix"),
                          noText = Messages.getOkButton())) {
         val browserSettings = BrowserSettings()

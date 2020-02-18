@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.template.emmet.filters;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.lang.xml.XMLLanguage;
@@ -24,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
@@ -49,7 +49,7 @@ public class TrimZenCodingFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String getDisplayName() {
-    return CodeInsightBundle.message("emmet.filter.trim.line.markers");
+    return XmlBundle.message("emmet.filter.trim.line.markers");
   }
 
   @NotNull

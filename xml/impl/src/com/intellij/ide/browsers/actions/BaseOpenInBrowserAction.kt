@@ -21,6 +21,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.BitUtil
 import com.intellij.util.Url
+import com.intellij.xml.XmlBundle
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -41,7 +42,7 @@ internal fun openInBrowser(request: OpenInBrowserRequest, preferLocalUrl: Boolea
     }
   }
   catch (e: WebBrowserUrlProvider.BrowserException) {
-    Messages.showErrorDialog(e.message, IdeBundle.message("browser.error"))
+    Messages.showErrorDialog(e.message, XmlBundle.message("browser.error"))
   }
   catch (e: Exception) {
     LOG.error(e)
@@ -105,7 +106,7 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
 
         if (HtmlUtil.isHtmlFile(result.file)) {
           append(if (shortcut != null) ", " else "")
-          append(IdeBundle.message("browser.shortcut"))
+          append(XmlBundle.message("browser.shortcut"))
         }
       }
       if (shortcutInfo.isNotEmpty()) {
@@ -166,7 +167,7 @@ private fun chooseUrl(urls: Collection<Url>): Promise<Url> {
       label.icon = AllIcons.Nodes.Servlet
       label.text = (value as Url).toDecodedForm()
     })
-    .setTitle(IdeBundle.message("browser.url.popup"))
+    .setTitle(XmlBundle.message("browser.url.popup"))
     .setItemChosenCallback { value ->
       result.setResult(value)
     }

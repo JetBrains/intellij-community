@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,8 +18,8 @@ public class RequiredAttributesInspection extends RequiredAttributesInspectionBa
   @Nullable
   public JComponent createOptionsPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    FieldPanel additionalAttributesPanel = new FieldPanel(InspectionsBundle.message("inspection.javadoc.html.not.required.label.text"),
-                                                          InspectionsBundle.message("inspection.javadoc.html.not.required.dialog.title"),
+    FieldPanel additionalAttributesPanel = new FieldPanel(XmlBundle.message("inspection.javadoc.html.not.required.label.text"),
+                                                          XmlBundle.message("inspection.javadoc.html.not.required.dialog.title"),
                                                           null, null);
 
     panel.add(additionalAttributesPanel, BorderLayout.NORTH);

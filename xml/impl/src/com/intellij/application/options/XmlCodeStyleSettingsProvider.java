@@ -15,12 +15,12 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,7 +31,7 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
-    return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.xml")){
+    return new CodeStyleAbstractConfigurable(settings, originalSettings, XmlBundle.message("title.xml")){
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new XmlCodeStyleMainPanel(getCurrentSettings(), settings);
@@ -55,6 +55,6 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   }
 
   public static String getConfigurableDisplayNameText() {
-    return ApplicationBundle.message("title.xml");
+    return XmlBundle.message("title.xml");
   }
 }

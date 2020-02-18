@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.template.emmet.filters;
 
 import com.intellij.application.options.emmet.EmmetOptions;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.Key;
@@ -10,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String getDisplayName() {
-    return CodeInsightBundle.message("emmet.filter.BEM");
+    return XmlBundle.message("emmet.filter.BEM");
   }
 
   @NotNull

@@ -2,7 +2,6 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -15,9 +14,12 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.LocalPathCellEditor;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import com.intellij.util.ui.table.TableModelEditor;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +38,7 @@ final class BrowserSettingsPanel {
   private static final FileChooserDescriptor APP_FILE_CHOOSER_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
 
   private static final EditableColumnInfo<ConfigurableWebBrowser, String> PATH_COLUMN_INFO =
-    new EditableColumnInfo<ConfigurableWebBrowser, String>(IdeBundle.message("settings.browsers.column.path")) {
+    new EditableColumnInfo<ConfigurableWebBrowser, String>(XmlBundle.message("settings.browsers.column.path")) {
       @Override
       public String valueOf(ConfigurableWebBrowser item) {
         return PathUtil.toSystemDependentName(item.getPath());
@@ -72,7 +74,7 @@ final class BrowserSettingsPanel {
   };
 
   private static final ColumnInfo[] COLUMNS = {ACTIVE_COLUMN_INFO,
-    new EditableColumnInfo<ConfigurableWebBrowser, String>(IdeBundle.message("settings.browsers.column.name")) {
+    new EditableColumnInfo<ConfigurableWebBrowser, String>(XmlBundle.message("settings.browsers.column.name")) {
       @Override
       public String valueOf(ConfigurableWebBrowser item) {
         return item.getName();
@@ -83,7 +85,7 @@ final class BrowserSettingsPanel {
         item.setName(value);
       }
     },
-    new ColumnInfo<ConfigurableWebBrowser, BrowserFamily>(IdeBundle.message("settings.browsers.column.family")) {
+    new ColumnInfo<ConfigurableWebBrowser, BrowserFamily>(XmlBundle.message("settings.browsers.column.family")) {
       @Override
       public Class getColumnClass() {
         return BrowserFamily.class;
@@ -130,7 +132,7 @@ final class BrowserSettingsPanel {
   private String customPathValue;
 
   BrowserSettingsPanel() {
-    alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR);
+    alternativeBrowserPathField.addBrowseFolderListener(XmlBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR);
     defaultBrowserPanel.setBorder(TitledSeparator.createEmptyBorder());
 
     ArrayList<DefaultBrowserPolicy> defaultBrowserPolicies = new ArrayList<>();
@@ -158,9 +160,9 @@ final class BrowserSettingsPanel {
     });
 
     defaultBrowserPolicyComboBox.setRenderer(SimpleListCellRenderer.create("", value -> {
-      String text = value == DefaultBrowserPolicy.SYSTEM ? IdeBundle.message("settings.browsers.system.default") :
-                    value == DefaultBrowserPolicy.FIRST ? IdeBundle.message("settings.browsers.first.listed") :
-                    value == DefaultBrowserPolicy.ALTERNATIVE ? IdeBundle.message("settings.browsers.custom.path") :
+      String text = value == DefaultBrowserPolicy.SYSTEM ? XmlBundle.message("settings.browsers.system.default") :
+                    value == DefaultBrowserPolicy.FIRST ? XmlBundle.message("settings.browsers.first.listed") :
+                    value == DefaultBrowserPolicy.ALTERNATIVE ? XmlBundle.message("settings.browsers.custom.path") :
                     null;
       if (text == null) throw new IllegalStateException(String.valueOf(value));
       return text;
@@ -230,7 +232,7 @@ final class BrowserSettingsPanel {
         return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
       }
     };
-    browsersEditor = new TableModelEditor<>(COLUMNS, itemEditor, IdeBundle.message("settings.browsers.no.web.browsers.configured"))
+    browsersEditor = new TableModelEditor<>(COLUMNS, itemEditor, XmlBundle.message("settings.browsers.no.web.browsers.configured"))
       .modelListener(new TableModelEditor.DataChangedListener<ConfigurableWebBrowser>() {
         @Override
         public void tableChanged(@NotNull TableModelEvent event) {

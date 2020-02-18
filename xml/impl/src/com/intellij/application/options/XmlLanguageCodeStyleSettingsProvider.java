@@ -19,10 +19,10 @@ import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAcces
 import com.intellij.application.options.codeStyle.properties.MagicIntegerConstAccessor;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.util.PlatformUtils;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,6 +122,6 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
   }
 
   public static String getConfigurableDisplayNameText() {
-    return ApplicationBundle.message("title.xml");
+    return XmlBundle.message("title.xml");
   }
 }

@@ -20,12 +20,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.xml.XmlBundle;
 
 /**
  * @author yole
@@ -43,10 +43,10 @@ public class XmlVcsSelectionProvider implements VcsSelectionProvider {
       final String actionName;
 
       if (psiElement instanceof XmlTag) {
-        actionName = VcsBundle.message("action.name.show.history.for.tag");
+        actionName = XmlBundle.message("action.name.show.history.for.tag");
       }
       else if (psiElement instanceof XmlText) {
-        actionName = VcsBundle.message("action.name.show.history.for.text");
+        actionName = XmlBundle.message("action.name.show.history.for.text");
       }
       else {
         return null;
