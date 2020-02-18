@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
@@ -308,6 +309,9 @@ public class DfaUtil {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
       if (value instanceof DfaBoxedValue || TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
         return SpecialField.UNBOX.createValue(value.getFactory(), value);
+      }
+      if (value.getDfType() instanceof DfReferenceType) {
+        return value.getFactory().getObjectType(type, Nullability.NOT_NULL);
       }
     }
     return value;

@@ -401,8 +401,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     PsiMethod method = instruction.getTargetMethod();
     boolean varargCall = instruction.isVarArgCall();
     DfaValue[] argValues = null;
+    PsiParameterList paramList = null;
     if (method != null) {
-      PsiParameterList paramList = method.getParameterList();
+      paramList = method.getParameterList();
       int paramCount = paramList.getParametersCount();
       if (paramCount == argCount || method.isVarArgs() && argCount >= paramCount - 1) {
         argValues = new DfaValue[paramCount];
@@ -422,6 +423,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       PsiElement anchor = instruction.getArgumentAnchor(paramIndex);
       if (instruction.getContext() instanceof PsiMethodReferenceExpression) {
         PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)instruction.getContext();
+        if (paramList != null) {
+          PsiParameter parameter = paramList.getParameter(paramIndex);
+          if (parameter != null) {
+            arg = DfaUtil.boxUnbox(arg, parameter.getType());
+          }
+        }
         Nullability nullability = instruction.getArgRequiredNullability(paramIndex);
         if (nullability == Nullability.NOT_NULL) {
           arg = dereference(memState, arg, NullabilityProblemKind.passingToNotNullMethodRefParameter.problem(methodRef, null));

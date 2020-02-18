@@ -195,6 +195,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testStreamAnyMatchIsNull() { doTest(); }
   public void testStreamCustomSumMethod() { doTest(); }
+  public void testStreamReduceLogicalAnd() { doTest(); }
   
   public void testMapGetWithNotNullKeys() { doTestWithCustomAnnotations(); }
   public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }
