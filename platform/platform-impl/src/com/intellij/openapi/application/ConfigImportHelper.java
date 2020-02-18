@@ -192,8 +192,7 @@ public final class ConfigImportHelper {
   }
 
   static boolean isConfigDirectory(@NotNull Path candidate) {
-    return Arrays.stream(OPTIONS).anyMatch(name -> Files.exists(candidate.resolve(name)) ||
-                                                   Files.exists(candidate.resolve(CONFIG + '/' + name)));
+    return Arrays.stream(OPTIONS).anyMatch(name -> Files.exists(candidate.resolve(name)));
   }
 
   static @NotNull List<Path> findConfigDirectories(@NotNull Path newConfigDir) {
