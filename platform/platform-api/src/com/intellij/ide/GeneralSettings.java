@@ -69,7 +69,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
 
   public GeneralSettings() {
     Application application = ApplicationManager.getApplication();
-    if (application != null && application.isHeadlessEnvironment()) {
+    if (application == null || application.isHeadlessEnvironment()) {
       return;
     }
 
