@@ -139,7 +139,8 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
             StackFrame frame = proxy.getStackFrame();
             return createDfaRunner(frame, pointer.getElement());
           }
-          catch (VMDisconnectedException | VMOutOfMemoryException | InternalException | EvaluateException ignore) {
+          catch (VMDisconnectedException | VMOutOfMemoryException | InternalException | 
+            EvaluateException | InconsistentDebugInfoException ignore) {
             return null;
           }
         };
