@@ -913,9 +913,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project))
     }
 
-    if (LOG.isDebugEnabled) {
-      LOG.debug("enter: installToolWindow($task)")
-    }
+    LOG.debug { "enter: installToolWindow($task)" }
 
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (idToEntry.containsKey(task.id)) {
