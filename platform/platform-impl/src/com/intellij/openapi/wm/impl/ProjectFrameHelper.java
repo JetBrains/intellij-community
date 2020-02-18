@@ -422,7 +422,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
     IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
-    addWidget(project, statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
     addWidget(project, statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
 
     LineSeparatorPanel lineSeparatorPanel = new LineSeparatorPanel(project);
