@@ -39,6 +39,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiSwitchLabelStatementBase labelStatement = findLabelStatement(editor, element);
+    if (labelStatement == null || labelStatement.getEnclosingSwitchBlock() == null) return false;
     if (labelStatement instanceof PsiSwitchLabelStatement) {
       if (isMultiValueCase(labelStatement)) {
         // mixed syntax "case 1, 2: some code"
