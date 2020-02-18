@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +63,6 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
   @NotNull
   @Override
   public String ID() {
-    return "LineSeparator";
+    return StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL;
   }
 }
