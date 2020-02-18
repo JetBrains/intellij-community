@@ -12,22 +12,22 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.C
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowIdFor
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.UIUtil.getClientProperty
 import com.intellij.util.ui.UIUtil.putClientProperty
 import javax.swing.JPanel
 
-private val ToolWindow.project: Project? get() = (this as? ToolWindowImpl)?.toolWindowManager?.project
-private val Project.changesViewContentManager: ChangesViewContentI get() = ChangesViewContentManager.getInstance(this)
+private val Project.changesViewContentManager: ChangesViewContentI
+  get() = ChangesViewContentManager.getInstance(this)
 
 private val IS_CONTENT_CREATED = Key.create<Boolean>("ToolWindow.IsContentCreated")
 private val CHANGES_VIEW_EXTENSION = Key.create<ChangesViewContentEP>("Content.ChangesViewExtension")
 
 abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(window: ToolWindow) {
-    val project = window.project ?: return
+    val project = (window as ToolWindowEx).project
 
     updateState(project, window)
     with(project.messageBus.connect()) {
@@ -67,7 +67,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       toolWindow.isShowStripeButton = true
     }
 
-    toolWindow.setAvailable(available, null)
+    toolWindow.setAvailable(available)
   }
 
   private fun updateContent(project: Project, toolWindow: ToolWindow) {

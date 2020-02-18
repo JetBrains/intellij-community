@@ -77,8 +77,8 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
     myIdLabel = null;
   }
 
-  void setTabDoubleClickActions(AnAction @NotNull ... actions) {
-    myDoubleClickActions = ContainerUtil.newArrayList(actions);
+  void setTabDoubleClickActions(@NotNull List<AnAction> actions) {
+    myDoubleClickActions = actions;
   }
 
   private Rectangle getMoreRect() {

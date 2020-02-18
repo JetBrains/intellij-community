@@ -47,17 +47,19 @@ import kotlin.math.abs
 
 private val LOG = logger<ToolWindowImpl>()
 
-class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManagerImpl,
-                                          private val id: String,
-                                          private val canCloseContent: Boolean,
-                                          private val dumbAware: Boolean,
-                                          component: JComponent?,
-                                          private val parentDisposable: Disposable,
-                                          windowInfo: WindowInfo,
-                                          private var contentFactory: ToolWindowFactory?,
-                                          private var isAvailable: Boolean = true,
-                                          private var stripeTitle: String? = null) : ToolWindowEx {
+internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
+                              private val id: String,
+                              private val canCloseContent: Boolean,
+                              private val dumbAware: Boolean,
+                              component: JComponent?,
+                              private val parentDisposable: Disposable,
+                              windowInfo: WindowInfo,
+                              private var contentFactory: ToolWindowFactory?,
+                              private var isAvailable: Boolean = true,
+                              private var stripeTitle: String? = null) : ToolWindowEx {
   override fun getId() = id
+
+  override fun getProject() = toolWindowManager.project
 
   var windowInfo: WindowInfo = windowInfo
     private set
@@ -300,8 +302,12 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     decorator!!.setTabActions(actions)
   }
 
-  fun setTabDoubleClickActions(vararg actions: AnAction) {
-    contentUi?.setTabDoubleClickActions(*actions)
+  override fun setTabDoubleClickActions(actions: List<AnAction>) {
+    contentUi?.setTabDoubleClickActions(actions)
+  }
+
+  override fun setAvailable(value: Boolean) {
+    isAvailable = value
   }
 
   override fun setAvailable(value: Boolean, runnable: Runnable?) {
@@ -588,7 +594,8 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     override fun isDumbAware() = true
   }
 
-  private inner class RemoveStripeButtonAction : AnAction(ActionsBundle.message("action.RemoveStripeButton.text"), ActionsBundle.message("action.RemoveStripeButton.description"), null), DumbAware {
+  private inner class RemoveStripeButtonAction : AnAction(ActionsBundle.message("action.RemoveStripeButton.text"),
+                                                          ActionsBundle.message("action.RemoveStripeButton.description"), null), DumbAware {
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isShowStripeButton
     }

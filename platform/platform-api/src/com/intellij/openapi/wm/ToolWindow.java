@@ -164,6 +164,10 @@ public interface ToolWindow extends BusyObject {
    */
   void setAvailable(boolean value, @Nullable Runnable runnable);
 
+  default void setAvailable(boolean value) {
+    setAvailable(value, null);
+  }
+
   void setContentUiType(@NotNull ToolWindowContentUiType type, @Nullable Runnable runnable);
 
   void setDefaultContentUiType(@NotNull ToolWindowContentUiType type);

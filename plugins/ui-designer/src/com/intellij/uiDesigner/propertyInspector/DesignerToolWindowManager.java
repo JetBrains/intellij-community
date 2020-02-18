@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.designer.DesignerEditorPanelFacade;
@@ -71,7 +71,7 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
     content.setPreferredFocusableComponent(myToolWindowPanel.getComponentTree());
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, true);
-    myToolWindow.setAvailable(false, null);
+    myToolWindow.setAvailable(false);
   }
 
   @Override
@@ -79,10 +79,10 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
     myToolWindowPanel.update((GuiEditor)designer);
 
     if (designer == null) {
-      myToolWindow.setAvailable(false, null);
+      myToolWindow.setAvailable(false);
     }
     else {
-      myToolWindow.setAvailable(true, null);
+      myToolWindow.setAvailable(true);
       myToolWindow.show(null);
     }
   }

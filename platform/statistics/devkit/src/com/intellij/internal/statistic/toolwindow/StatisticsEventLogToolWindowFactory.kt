@@ -12,21 +12,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.content.ContentFactory
-
 
 private const val DEFAULT_RECORDER = "FUS"
 
 /**
  * Creates a toolwindow with feature usage statistics event log
  */
-class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware {
+private class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     createNewTab(project, toolWindow, DEFAULT_RECORDER)
     toolWindow.setToHideOnEmptyContent(true)
-    if (toolWindow is ToolWindowImpl) {
+    if (toolWindow is ToolWindowEx) {
       val newSessionActionGroup = createNewSessionActionGroup(project)
       toolWindow.setTabActions(newSessionActionGroup)
     }

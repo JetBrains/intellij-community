@@ -6,6 +6,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
@@ -20,7 +21,7 @@ public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbA
     }
 
     TerminalView terminalView = TerminalView.getInstance(project);
-    terminalView.initToolWindow(toolWindow);
+    terminalView.initToolWindow((ToolWindowEx)toolWindow);
     TerminalArrangementManager terminalArrangementManager = TerminalArrangementManager.getInstance(project);
     terminalView.restoreTabs(terminalArrangementManager.getArrangementState());
     // allow to save tabs after the tabs are restored

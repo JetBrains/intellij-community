@@ -49,6 +49,7 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
@@ -572,8 +573,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     fireStateChanged()
   }
 
-  @ApiStatus.Internal
-  open fun updateToolWindow(toolWindow: ToolWindowImpl, component: Component) {
+  internal fun updateToolWindow(toolWindow: ToolWindowImpl, component: Component) {
     toolWindow.setFocusedComponent(component)
     if (toolWindow.isAvailable && !toolWindow.isActive) {
       toolWindow.activate(null, true, false)
@@ -672,7 +672,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   override fun getIdsOn(anchor: ToolWindowAnchor) = getVisibleToolWindowsOn(anchor).map { it.id }.toList()
 
   @ApiStatus.Internal
-  fun getToolWindowsOn(anchor: ToolWindowAnchor, excludedId: String) = getVisibleToolWindowsOn(anchor).filter { it.id != excludedId  }.map { it.toolWindow }.toList()
+  fun getToolWindowsOn(anchor: ToolWindowAnchor, excludedId: String): List<ToolWindowEx> {
+    return getVisibleToolWindowsOn(anchor)
+      .filter { it.id != excludedId  }
+      .map { it.toolWindow }
+      .toList()
+  }
 
   @ApiStatus.Internal
   fun getDockedInfoAt(anchor: ToolWindowAnchor?, side: Boolean): WindowInfo? {
@@ -894,7 +899,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     fireToolWindowShown(entry.id, entry.toolWindow)
   }
 
-  override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindowImpl {
+  override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow {
     val toolWindow = doRegisterToolWindow(task, bean = null).toolWindow
     toolWindowPane!!.validate()
     toolWindowPane!!.repaint()
@@ -1544,7 +1549,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
   }
 
-  fun setDefaultState(toolWindow: ToolWindowImpl, anchor: ToolWindowAnchor?, type: ToolWindowType?, floatingBounds: Rectangle?) {
+  internal fun setDefaultState(toolWindow: ToolWindowImpl, anchor: ToolWindowAnchor?, type: ToolWindowType?, floatingBounds: Rectangle?) {
     val info = getRegisteredMutableInfoOrLogError(toolWindow.id)
     if (info.isFromPersistentSettings) {
       return
@@ -1561,7 +1566,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
   }
 
-  fun setDefaultContentUiType(toolWindow: ToolWindowImpl, type: ToolWindowContentUiType) {
+  internal fun setDefaultContentUiType(toolWindow: ToolWindowImpl, type: ToolWindowContentUiType) {
     val info = getRegisteredMutableInfoOrLogError(toolWindow.id)
     if (info.isFromPersistentSettings) {
       return
@@ -1569,7 +1574,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     toolWindow.setContentUiType(type, null)
   }
 
-  fun stretchWidth(toolWindow: ToolWindowImpl, value: Int) {
+  internal fun stretchWidth(toolWindow: ToolWindowImpl, value: Int) {
     toolWindowPane!!.stretchWidth(toolWindow, value)
   }
 
@@ -1596,7 +1601,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     toolWindowPane!!.setMaximized(window, maximized)
   }
 
-  fun stretchHeight(toolWindow: ToolWindowImpl?, value: Int) {
+  internal fun stretchHeight(toolWindow: ToolWindowImpl?, value: Int) {
     toolWindowPane!!.stretchHeight((toolWindow)!!, value)
   }
 
@@ -1742,7 +1747,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     ActivateToolWindowAction.updateToolWindowActionPresentation(toolWindow)
   }
 
-  fun activated(toolWindow: ToolWindowImpl) {
+  internal fun activated(toolWindow: ToolWindowImpl) {
     activateToolWindow(idToEntry.get(toolWindow.id)!!, getRegisteredMutableInfoOrLogError(toolWindow.id))
   }
 

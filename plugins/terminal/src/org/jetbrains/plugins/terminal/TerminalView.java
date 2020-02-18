@@ -33,7 +33,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.InternalDecorator;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -64,6 +63,7 @@ import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -91,14 +91,14 @@ public final class TerminalView {
     return project.getService(TerminalView.class);
   }
 
-  void initToolWindow(@NotNull ToolWindow toolWindow) {
+  void initToolWindow(@NotNull ToolWindowEx toolWindow) {
     if (myToolWindow != null) {
       LOG.error("Terminal tool window already initialized");
       return;
     }
     myToolWindow = toolWindow;
 
-    ((ToolWindowEx)toolWindow).setTabActions(
+    toolWindow.setTabActions(
       new DumbAwareAction(IdeBundle.lazyMessage("action.DumbAware.TerminalView.text.new.session"),
                           IdeBundle.lazyMessage("action.DumbAware.TerminalView.description.create.new.session"), AllIcons.General.Add) {
       @Override
@@ -106,8 +106,7 @@ public final class TerminalView {
         newTab(toolWindow, null);
       }
     });
-    ((ToolWindowImpl)toolWindow).setTabDoubleClickActions(new RenameTerminalSessionAction());
-
+    toolWindow.setTabDoubleClickActions(Collections.singletonList(new RenameTerminalSessionAction()));
     toolWindow.setToHideOnEmptyContent(true);
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {

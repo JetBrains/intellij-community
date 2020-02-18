@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
 import com.intellij.execution.filters.Filter;
@@ -32,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -64,7 +49,6 @@ import java.awt.event.KeyListener;
 import java.util.List;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
-
   public static final DataKey<String> SELECTED_TEXT_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " selected text");
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
 
@@ -217,7 +201,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   static boolean isInTerminalToolWindow(@NotNull DataContext dataContext) {
     ToolWindow toolWindow = dataContext.getData(PlatformDataKeys.TOOL_WINDOW);
-    return toolWindow instanceof ToolWindowImpl && "Terminal".equals(((ToolWindowImpl)toolWindow).getId());
+    return "Terminal".equals(toolWindow.getId());
   }
 
   @Override

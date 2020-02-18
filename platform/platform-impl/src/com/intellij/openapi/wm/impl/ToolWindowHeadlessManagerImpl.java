@@ -191,9 +191,16 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   public static class MockToolWindow implements ToolWindowEx {
     final ContentManager myContentManager = new MockContentManager();
+    private final Project project;
 
     public MockToolWindow(@NotNull Project project) {
+      this.project = project;
       Disposer.register(project, myContentManager);
+    }
+
+    @Override
+    public @NotNull Project getProject() {
+      return project;
     }
 
     @NotNull
@@ -423,6 +430,10 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void setTabActions(@NotNull AnAction... actions) {
+    }
+
+    @Override
+    public void setTabDoubleClickActions(@NotNull List<AnAction> actions) {
     }
   }
 

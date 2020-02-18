@@ -38,7 +38,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.*;
@@ -888,7 +887,7 @@ public final class Switcher extends AnAction implements DumbAware {
       final Map<String, ToolWindow> keymap = new HashMap<>(windows.size());
       final List<ToolWindow> otherTW = new ArrayList<>();
       for (ToolWindow window : windows) {
-        int index = ActivateToolWindowAction.getMnemonicForToolWindow(project, ((ToolWindowImpl)window).getId());
+        int index = ActivateToolWindowAction.getMnemonicForToolWindow(project, window.getId());
         if (index >= '0' && index <= '9') {
           keymap.put(getIndexShortcut(index - '0'), window);
         }
@@ -1021,7 +1020,7 @@ public final class Switcher extends AnAction implements DumbAware {
         else if (value instanceof ToolWindow) {
           final ToolWindow toolWindow = (ToolWindow)value;
           if (toolWindowManager instanceof ToolWindowManagerImpl) {
-            ((ToolWindowManagerImpl)toolWindowManager).hideToolWindow(((ToolWindowImpl)toolWindow).getId(), false, false);
+            ((ToolWindowManagerImpl)toolWindowManager).hideToolWindow(toolWindow.getId(), false, false);
           }
           else {
             toolWindow.hide(null);

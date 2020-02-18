@@ -18,17 +18,17 @@ public final class ContentManagerWatcher {
   }
 
   public static void watchContentManager(@NotNull ToolWindow toolWindow, @NotNull ContentManager contentManager) {
-    toolWindow.setAvailable(contentManager.getContentCount() > 0, null);
+    toolWindow.setAvailable(contentManager.getContentCount() > 0);
 
     contentManager.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentAdded(@NotNull ContentManagerEvent e) {
-        toolWindow.setAvailable(true, null);
+        toolWindow.setAvailable(true);
       }
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent e) {
-        toolWindow.setAvailable(contentManager.getContentCount() > 0, null);
+        toolWindow.setAvailable(contentManager.getContentCount() > 0);
       }
     });
   }

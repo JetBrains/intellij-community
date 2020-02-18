@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
@@ -712,15 +713,15 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     // if all components are hidden for anchor we should find the second component to put in a splitter
     // otherwise we add empty splitter
     if (c == null) {
-      List<ToolWindowImpl> toolWindows = manager.getToolWindowsOn(anchor, Objects.requireNonNull(info.getId()));
-      for (Iterator<ToolWindowImpl> iterator = toolWindows.iterator(); iterator.hasNext(); ) {
-        ToolWindowImpl window = iterator.next();
+      List<ToolWindowEx> toolWindows = manager.getToolWindowsOn(anchor, Objects.requireNonNull(info.getId()));
+      for (Iterator<ToolWindowEx> iterator = toolWindows.iterator(); iterator.hasNext(); ) {
+        ToolWindow window = iterator.next();
         if (window == null || window.isSplitMode() == info.isSplit() || !window.isVisible()) {
           iterator.remove();
         }
       }
       if (!toolWindows.isEmpty()) {
-        c = toolWindows.get(0).getDecoratorComponent();
+        c = ((ToolWindowImpl)toolWindows.get(0)).getDecoratorComponent();
       }
       if (c == null) {
         LOG.error("Empty splitter @ " + anchor + " during AddAndSplitDockedComponentCmd for " + info.getId());

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.RunManagerListener;
@@ -344,7 +344,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
       boolean hasMavenProjects = !MavenProjectsManager.getInstance(myProject).getProjects().isEmpty();
 
       if (myToolWindow.isAvailable() != hasMavenProjects) {
-        myToolWindow.setAvailable(hasMavenProjects, null);
+        myToolWindow.setAvailable(hasMavenProjects);
 
         if (hasMavenProjects) {
           myToolWindow.activate(null);

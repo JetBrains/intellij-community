@@ -17,7 +17,7 @@ public class ProjectProblemsToolWindowFactory implements ToolWindowFactory {
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    toolWindow.setAvailable(true, null);
+    toolWindow.setAvailable(true);
     toolWindow.setTitle(ToolWindowId.PROJECT_PROBLEMS_VIEW);
     ProjectProblemsView problemsView = ProjectProblemsView.SERVICE.INSTANCE.getInstance(project);
     problemsView.init(toolWindow);

@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.Gray;
@@ -49,7 +49,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   private final Project myProject;
   private final Alarm myAlarm = new Alarm();
 
-  private ToolWindowImpl myToolWindow;
+  private ToolWindowEx myToolWindow;
 
   private ContentManager myContentManager;
   private Content myEmptyStateContent;
@@ -128,7 +128,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
       return;
     }
     if (isAvailable() && toolWindowManager.getToolWindow(ToolWindowId.PREVIEW) == null) {
-      myToolWindow = (ToolWindowImpl)toolWindowManager
+      myToolWindow = (ToolWindowEx)toolWindowManager
         .registerToolWindow(ToolWindowId.PREVIEW, myEmptyStatePanel, ToolWindowAnchor.RIGHT, myProject, false);
       myContentManager = myToolWindow.getContentManager();
       myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPreview);

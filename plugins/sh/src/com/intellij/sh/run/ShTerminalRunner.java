@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.run;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,10 +21,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class ShTerminalRunner extends ShRunner {
+final class ShTerminalRunner extends ShRunner {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
 
-  protected ShTerminalRunner(@NotNull Project project) {
+  private ShTerminalRunner(@NotNull Project project) {
     super(project);
   }
 
