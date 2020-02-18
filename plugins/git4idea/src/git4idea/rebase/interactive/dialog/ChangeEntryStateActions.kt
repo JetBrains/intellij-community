@@ -103,8 +103,18 @@ internal open class ChangeEntryStateButtonAction(
   override fun createCustomComponent(presentation: Presentation, place: String) = buttonPanel
 }
 
-internal class FixupAction(table: GitRebaseCommitsTableView) : ChangeEntryStateButtonAction(GitRebaseEntry.Action.FIXUP, table) {
-  override fun actionPerformed(e: AnActionEvent) {
+internal open class UniteCommitsAction(action: GitRebaseEntry.Action, table: GitRebaseCommitsTableView) :
+  ChangeEntryStateSimpleAction(action, null, table) {
+
+  override fun updateButton(e: AnActionEvent) {
+    super.updateButton(e)
+    val selectedRows = table.selectedRows
+    if (selectedRows.size == 1 && table.model.getFixupRootRow(selectedRows.single()) == null) {
+      actionIsEnabled(e, false)
+    }
+  }
+
+  final override fun actionPerformed(e: AnActionEvent) {
     val selectedRows = table.selectedRows
     if (selectedRows.size == 1) {
       val fixupCommitRow = selectedRows.single()
@@ -115,19 +125,24 @@ internal class FixupAction(table: GitRebaseCommitsTableView) : ChangeEntryStateB
     }
   }
 
-  private fun fixupCommits(fixupRootRow: Int, commitRows: List<Int>) {
+  protected open fun fixupCommits(fixupRootRow: Int, commitRows: List<Int>) {
     table.model.keepCommit(fixupRootRow)
     commitRows.forEach { row ->
-      table.setValueAt(action, row, GitRebaseCommitsTableModel.COMMIT_ICON_COLUMN)
+      table.setValueAt(GitRebaseEntry.Action.FIXUP, row, GitRebaseCommitsTableModel.COMMIT_ICON_COLUMN)
     }
   }
+}
 
-  override fun updateButton(e: AnActionEvent) {
-    super.updateButton(e)
-    val selectedRows = table.selectedRows
-    if (selectedRows.size == 1 && table.model.getFixupRootRow(selectedRows.single()) == null) {
-      actionIsEnabled(e, false)
-    }
+internal class FixupAction(table: GitRebaseCommitsTableView) : UniteCommitsAction(GitRebaseEntry.Action.FIXUP, table)
+
+// squash = reword + fixup
+internal class SquashAction(table: GitRebaseCommitsTableView) : UniteCommitsAction(GitRebaseEntry.Action.SQUASH, table) {
+  override fun fixupCommits(fixupRootRow: Int, commitRows: List<Int>) {
+    super.fixupCommits(fixupRootRow, commitRows)
+    val model = table.model
+    model.setValueAt(model.uniteCommitMessages(listOf(fixupRootRow) + commitRows), fixupRootRow, GitRebaseCommitsTableModel.SUBJECT_COLUMN)
+    TableUtil.selectRows(table, intArrayOf(fixupRootRow))
+    TableUtil.editCellAt(table, fixupRootRow, GitRebaseCommitsTableModel.SUBJECT_COLUMN)
   }
 }
 

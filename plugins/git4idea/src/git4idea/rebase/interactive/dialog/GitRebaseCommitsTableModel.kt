@@ -144,6 +144,10 @@ internal class GitRebaseCommitsTableModel(initialEntries: List<GitRebaseEntryWit
     return root.takeIf { it >= 0 }
   }
 
+  fun uniteCommitMessages(rows: List<Int>) = rows.joinToString(System.lineSeparator().repeat(3)) { row ->
+    getEntry(row).newMessage
+  }
+
   private class CommitTableModelRow(val initialIndex: Int, val entry: GitRebaseEntryWithEditedMessage) {
     val initialAction = entry.entry.action
     val details = entry.entry.commitDetails
