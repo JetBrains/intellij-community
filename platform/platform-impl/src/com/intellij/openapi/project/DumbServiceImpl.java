@@ -8,6 +8,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
@@ -434,6 +435,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public boolean showDumbModeDialog(@NotNull List<String> actionNames) {
+    if (LightEdit.owns(myProject)) return false;
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isDumb()) {
       UIEventLogger.logUIEvent(UIEventId.DumbModeDialogWasNotNeeded, new FeatureUsageData().addProject(myProject));
