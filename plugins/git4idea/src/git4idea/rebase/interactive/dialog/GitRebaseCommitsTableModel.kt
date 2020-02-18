@@ -130,6 +130,20 @@ internal class GitRebaseCommitsTableModel(initialEntries: List<GitRebaseEntryWit
     return true
   }
 
+  fun keepCommit(row: Int) {
+    if (isFixupOrDrop(row)) {
+      setValueAt(GitRebaseEntry.Action.PICK, row, COMMIT_ICON_COLUMN)
+    }
+  }
+
+  fun getFixupRootRow(row: Int): Int? {
+    var root = row - 1
+    while (root >= 0 && isFixupOrDrop(root)) {
+      root--
+    }
+    return root.takeIf { it >= 0 }
+  }
+
   private class CommitTableModelRow(val initialIndex: Int, val entry: GitRebaseEntryWithEditedMessage) {
     val initialAction = entry.entry.action
     val details = entry.entry.commitDetails

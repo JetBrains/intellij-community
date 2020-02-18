@@ -107,12 +107,26 @@ internal class FixupAction(table: GitRebaseCommitsTableView) : ChangeEntryStateB
   override fun actionPerformed(e: AnActionEvent) {
     val selectedRows = table.selectedRows
     if (selectedRows.size == 1) {
-      table.setValueAt(action, selectedRows.first(), GitRebaseCommitsTableModel.COMMIT_ICON_COLUMN)
+      val fixupCommitRow = selectedRows.single()
+      fixupCommits(table.model.getFixupRootRow(fixupCommitRow)!!, listOf(fixupCommitRow))
     }
     else {
-      selectedRows.drop(1).forEach { row ->
-        table.setValueAt(action, row, GitRebaseCommitsTableModel.COMMIT_ICON_COLUMN)
-      }
+      fixupCommits(selectedRows.first(), selectedRows.drop(1))
+    }
+  }
+
+  private fun fixupCommits(fixupRootRow: Int, commitRows: List<Int>) {
+    table.model.keepCommit(fixupRootRow)
+    commitRows.forEach { row ->
+      table.setValueAt(action, row, GitRebaseCommitsTableModel.COMMIT_ICON_COLUMN)
+    }
+  }
+
+  override fun updateButton(e: AnActionEvent) {
+    super.updateButton(e)
+    val selectedRows = table.selectedRows
+    if (selectedRows.size == 1 && table.model.getFixupRootRow(selectedRows.single()) == null) {
+      actionIsEnabled(e, false)
     }
   }
 }
