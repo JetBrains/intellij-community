@@ -11,10 +11,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.LightEditFrame;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarPopupActionGroup;
@@ -48,6 +45,18 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
   @Override
   protected IdeRootPane createIdeRootPane() {
     return new LightEditRootPane(getFrame(), this, this);
+  }
+
+  private boolean addWidget(@NotNull Disposable disposable,
+                            @NotNull IdeStatusBarImpl statusBar,
+                            @NotNull StatusBarWidget widget,
+                            @NotNull String anchor) {
+    statusBar.doAddWidget(widget, anchor);
+    final String id = widget.ID();
+    Disposer.register(disposable, () -> {
+      statusBar.removeWidget(id);
+    });
+    return true;
   }
 
   @Override

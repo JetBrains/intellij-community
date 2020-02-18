@@ -937,5 +937,9 @@
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
+    
+    <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" topic="com.intellij.ide.ui.UISettingsListener"/>
+    <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" topic="com.intellij.notification.LogModel"/>
+    <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
   </applicationListeners>
 </idea-plugin>

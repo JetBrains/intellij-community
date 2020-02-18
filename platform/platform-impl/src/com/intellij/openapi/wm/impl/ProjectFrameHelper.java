@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -25,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -37,7 +34,6 @@ import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import gnu.trove.THashSet;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +50,6 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -399,31 +394,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     });
   }
 
-  private final Set<String> widgetIds = new THashSet<>();
-
-  protected boolean addWidget(@NotNull Disposable disposable,
-                              @NotNull IdeStatusBarImpl statusBar,
-                              @NotNull StatusBarWidget widget,
-                              @NotNull String anchor) {
-    if (!widgetIds.add(widget.ID())) {
-      LOG.error("Attempting to add more than one widget with ID: " + widget.ID());
-      return false;
-    }
-
-    statusBar.doAddWidget(widget, anchor);
-
-    final String id = widget.ID();
-    Disposer.register(disposable, () -> {
-      widgetIds.remove(id);
-      statusBar.removeWidget(id);
-    });
-    return true;
-  }
-
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
     IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
-    addWidget(project, statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-
     StatusBarWidgetsManager widgetsManager = project.getService(StatusBarWidgetsManager.class);
     widgetsManager.updateAllWidgets();
     PopupHandler.installPopupHandler(statusBar, new StatusBarPopupActionGroup(widgetsManager), ActionPlaces.STATUS_BAR_PLACE);
