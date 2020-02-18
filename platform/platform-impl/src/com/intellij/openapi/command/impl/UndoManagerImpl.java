@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.DataManager;
@@ -53,22 +53,6 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   private static final int FREE_QUEUES_LIMIT = 30;
 
   @Nullable private final ProjectEx myProject;
-
-  private final NotNullLazyValue<List<UndoProvider>> myUndoProviders = new AtomicNotNullLazyValue<List<UndoProvider>>() {
-    @NotNull
-    @Override
-    protected List<UndoProvider> compute() {
-      List<UndoProvider> list = myProject == null
-                                ? UndoProvider.EP_NAME.getExtensionList()
-                                : UndoProvider.PROJECT_EP_NAME.getExtensionList(myProject);
-      for (UndoProvider undoProvider : list) {
-        if (undoProvider instanceof Disposable) {
-          Disposer.register(UndoManagerImpl.this, (Disposable)undoProvider);
-        }
-      }
-      return list;
-    }
-  };
 
   private CurrentEditorProvider myEditorProvider;
 
@@ -163,9 +147,14 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     return myCommandLevel > 0;
   }
 
+  @NotNull
+  private List<UndoProvider> getUndoProviders() {
+    return myProject == null ? UndoProvider.EP_NAME.getExtensionList() : UndoProvider.PROJECT_EP_NAME.getExtensionList(myProject);
+  }
+
   private void onCommandStarted(final Project project, UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
     if (myCommandLevel == 0) {
-      for (UndoProvider undoProvider : myUndoProviders.getValue()) {
+      for (UndoProvider undoProvider : getUndoProviders()) {
         undoProvider.commandStarted(project);
       }
       myCurrentActionProject = project;
@@ -179,7 +168,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   private void onCommandFinished(final Project project, final String commandName, final Object commandGroupId) {
     commandFinished(commandName, commandGroupId);
     if (myCommandLevel == 0) {
-      for (UndoProvider undoProvider : myUndoProviders.getValue()) {
+      for (UndoProvider undoProvider : getUndoProviders()) {
         undoProvider.commandFinished(project);
       }
       myCurrentActionProject = DummyProject.getInstance();
