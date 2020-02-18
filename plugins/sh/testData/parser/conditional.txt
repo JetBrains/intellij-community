@@ -813,7 +813,7 @@ SHELL_SCRIPT
     FUNCTION_DEFINITION
       PsiElement(function)('function')
       PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
+      FUNCTION_NAME
         PsiElement(word)('test')
       PsiElement(()('(')
       PsiElement())(')')

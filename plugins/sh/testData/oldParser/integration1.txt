@@ -38,7 +38,8 @@ SHELL_SCRIPT
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
           FUNCTION_DEFINITION
-            PsiElement(word)('splash_progress')
+            FUNCTION_NAME
+              PsiElement(word)('splash_progress')
             PsiElement(()('(')
             PsiElement())(')')
             PsiWhiteSpace(' ')

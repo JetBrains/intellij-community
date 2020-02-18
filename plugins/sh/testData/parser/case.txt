@@ -536,7 +536,8 @@ SHELL_SCRIPT
   PsiElement(\n)('\n')
   COMMANDS_LIST
     FUNCTION_DEFINITION
-      PsiElement(word)('monthnoToName')
+      FUNCTION_NAME
+        PsiElement(word)('monthnoToName')
       PsiElement(()('(')
       PsiElement())(')')
       PsiElement(\n)('\n')
@@ -982,7 +983,8 @@ SHELL_SCRIPT
     FUNCTION_DEFINITION
       PsiElement(function)('function')
       PsiWhiteSpace(' ')
-      PsiElement(word)('tokenReader')
+      FUNCTION_NAME
+        PsiElement(word)('tokenReader')
       PsiWhiteSpace(' ')
       BLOCK
         PsiElement({)('{')

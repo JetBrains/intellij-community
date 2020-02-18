@@ -1,7 +1,8 @@
 SHELL_SCRIPT
   COMMANDS_LIST
     FUNCTION_DEFINITION
-      PsiElement(word)('foo')
+      FUNCTION_NAME
+        PsiElement(word)('foo')
       PsiElement(()('(')
       PsiElement())(')')
       PsiWhiteSpace(' ')

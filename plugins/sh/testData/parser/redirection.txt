@@ -1,7 +1,8 @@
 SHELL_SCRIPT
   COMMANDS_LIST
     FUNCTION_DEFINITION
-      PsiElement(word)('dump-host-id')
+      FUNCTION_NAME
+        PsiElement(word)('dump-host-id')
       PsiElement(()('(')
       PsiElement())(')')
       PsiWhiteSpace(' ')
