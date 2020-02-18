@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -495,20 +495,11 @@ public class CommandLineUtil {
   }
 
   /**
-   * If {@code stringToQuote} is unquoted, quotes it with single quotes, according to the bash rules, replacing single quotes
-   * with badly readable but recursion safe {@code '"'"'}
+   * When necessary, quotes the specified argument with single quotes, according to the POSIX shell rules,
+   * replacing single quotes with hardly readable but recursion-safe {@code '"'"'}.
    */
-  @NotNull
-  public static String posixQuote(@NotNull String stringToQuote) {
-    return shouldWrapWithQuotes(stringToQuote) ? "'" + replace(stringToQuote, "'", "'\"'\"'") + "'" : stringToQuote;
-  }
-
-  /**
-   * @see CommandLineUtil#posixQuote(String)
-   */
-  public static void posixQuote(@NotNull StringBuilder commandOrArgument) {
-    String newValue = posixQuote(commandOrArgument.toString());
-    commandOrArgument.replace(0, commandOrArgument.length(), newValue);
+  public static @NotNull String posixQuote(@NotNull String argument) {
+    return shouldWrapWithQuotes(argument) ? "'" + replace(argument, "'", "'\"'\"'") + "'" : argument;
   }
 
   private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument) {
@@ -516,7 +507,7 @@ public class CommandLineUtil {
       char c = argument.charAt(i);
       if (!Character.isAlphabetic(c) &&
           !Character.isDigit(c) &&
-          !contains(SHELL_WHITELIST_CHARACTERS, 0, SHELL_WHITELIST_CHARACTERS.length(), c)) {
+          !containsChar(SHELL_WHITELIST_CHARACTERS, c)) {
         return true;
       }
     }

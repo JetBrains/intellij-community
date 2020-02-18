@@ -1470,7 +1470,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static <T> String join(@NotNull Iterable<? extends T> items,
-                                @NotNull Function<? super T, String> f,
+                                @NotNull Function<? super T, ? extends CharSequence> f,
                                 @NotNull String separator) {
     StringBuilder result = new StringBuilder();
     join(items, f, separator, result);
@@ -1478,12 +1478,12 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static <T> void join(@NotNull Iterable<? extends T> items,
-                              @NotNull Function<? super T, String> f,
+                              @NotNull Function<? super T, ? extends CharSequence> f,
                               @NotNull String separator,
                               @NotNull StringBuilder result) {
     boolean isFirst = true;
     for (T item : items) {
-      String string = f.fun(item);
+      CharSequence string = f.fun(item);
       if (!isEmpty(string)) {
         if (isFirst) {
           isFirst = false;

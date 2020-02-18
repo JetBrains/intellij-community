@@ -15,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.execution.CommandLineArgumentEncoder;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.IdeUtilIoBundle;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -316,15 +315,7 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   @NotNull
   public String getCommandLineString(@Nullable String exeName) {
-    return getCommandLineString(exeName, CommandLineArgumentEncoder.DEFAULT_ENCODER);
-  }
-
-  /**
-   * @see GeneralCommandLine#getCommandLineString(String)
-   * @param commandLineArgumentEncoder used to handle (quote or escape) special characters in command line argument
-   */
-  public String getCommandLineString(@Nullable String exeName, @NotNull CommandLineArgumentEncoder commandLineArgumentEncoder) {
-    return ParametersListUtil.join(getCommandLineList(exeName), commandLineArgumentEncoder);
+    return ParametersListUtil.join(getCommandLineList(exeName));
   }
 
   @NotNull
