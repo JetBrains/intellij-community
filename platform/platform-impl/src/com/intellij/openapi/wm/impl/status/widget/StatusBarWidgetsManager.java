@@ -120,7 +120,13 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     for (int i = indexOf + 1; i < factories.size(); i++) {
       StatusBarWidgetFactory nextFactory = factories.get(i);
       if (myWidgetFactories.get(nextFactory) != null) {
-        return StatusBar.Anchors.after(nextFactory.getId());
+        return StatusBar.Anchors.before(nextFactory.getId());
+      }
+    }
+    for (int i = indexOf - 1; i >= 0; i--) {
+      StatusBarWidgetFactory prevFactory = factories.get(i);
+      if (myWidgetFactories.get(prevFactory) != null) {
+        return StatusBar.Anchors.after(prevFactory.getId());
       }
     }
     return StatusBar.Anchors.DEFAULT_ANCHOR;
