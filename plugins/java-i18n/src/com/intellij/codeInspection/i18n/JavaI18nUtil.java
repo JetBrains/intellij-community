@@ -75,7 +75,15 @@ public class JavaI18nUtil extends I18nUtil {
     if (parameter == null) return false;
     int paramIndex = ArrayUtil.indexOf(psiMethod.getParameterList().getParameters(), parameter);
     if (paramIndex == -1) return false;
-    return isMethodParameterAnnotatedWith(psiMethod, paramIndex, null, AnnotationUtil.PROPERTY_KEY, null, null);
+    @Nullable Ref<PsiAnnotationMemberValue> ref = resourceBundleRef != null ? new Ref<>() : null;
+    boolean isAnnotated = isMethodParameterAnnotatedWith(psiMethod, paramIndex, null, AnnotationUtil.PROPERTY_KEY, ref, null);
+    if (ref != null) {
+      PsiAnnotationMemberValue memberValue = ref.get();
+      if (memberValue != null) {
+        resourceBundleRef.set(UastContextKt.toUElementOfExpectedTypes(memberValue, UExpression.class));
+      }
+    }
+    return isAnnotated;
   }
 
   static boolean isPassedToAnnotatedParam(@NotNull PsiExpression expression,
