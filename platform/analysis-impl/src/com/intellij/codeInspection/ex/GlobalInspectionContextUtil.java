@@ -32,11 +32,14 @@ public class GlobalInspectionContextUtil {
   public static boolean canRunInspections(@NotNull Project project,
                                           final boolean online,
                                           @NotNull Runnable rerunAction) {
+    if( InspectionExtensionsFactory.EP_NAME.getExtensionList().size() == 0){
+      return true;
+    }
     for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
-      if (!factory.isProjectConfiguredToRunInspections(project, online, rerunAction)) {
-        return false;
+      if (factory.isProjectConfiguredToRunInspections(project, online, rerunAction)) {
+        return true;
       }
     }
-    return true;
+    return false;
   }
 }
