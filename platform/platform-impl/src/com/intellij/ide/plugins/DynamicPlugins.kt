@@ -45,6 +45,7 @@ import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ConcurrentFactoryMap
+import com.intellij.util.containers.toArray
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.xmlb.BeanBinding
@@ -473,10 +474,10 @@ object DynamicPlugins {
         }
 
         if (wasDisabled) {
-          // Update list of disabled plugins
-          (PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl)?.setLoader(
-            pluginDescriptor.pluginClassLoader)
-          PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
+          val newPlugins = PluginManagerCore.getPlugins()
+            .map { if (it.pluginId == pluginDescriptor.pluginId) pluginDescriptor else it }
+            .toTypedArray()
+          PluginManagerCore.setPlugins(newPlugins)
         }
         else {
           PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
