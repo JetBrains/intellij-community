@@ -13,7 +13,6 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -21,6 +20,7 @@ import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +34,7 @@ import static com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt.g
  * @see ApplicationUsagesCollector
  * @see ProjectUsagesCollector
  */
-public class RecordStateStatisticsEventLogAction extends AnAction {
+public class RecordStateStatisticsEventLogAction extends DumbAwareAction {
   private final boolean myShowNotification;
 
   public RecordStateStatisticsEventLogAction() {

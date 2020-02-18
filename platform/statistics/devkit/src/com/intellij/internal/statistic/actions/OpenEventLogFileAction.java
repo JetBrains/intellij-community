@@ -10,16 +10,16 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class OpenEventLogFileAction extends AnAction {
+public class OpenEventLogFileAction extends DumbAwareAction {
   private final String myRecorderId;
 
   public OpenEventLogFileAction(String recorderId) {

@@ -4,14 +4,14 @@ package com.intellij.internal.statistic.actions
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.LayeredIcon
 
-class CleanupLocalWhitelistAction : AnAction {
+class CleanupLocalWhitelistAction : DumbAwareAction {
   private val recorderId: String?
 
   constructor() : super(ActionsBundle.message("action.CleanupLocalWhitelistAction.text"),

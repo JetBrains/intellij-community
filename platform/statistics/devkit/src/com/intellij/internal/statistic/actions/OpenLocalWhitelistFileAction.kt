@@ -7,8 +7,8 @@ import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.OpenWhitelistFileAction.Companion.openFileInEditor
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.JBColor
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.TextIcon
@@ -17,9 +17,9 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Font
 
 class OpenLocalWhitelistFileAction(private val myRecorderId: String = "FUS")
-  : AnAction(StatisticsBundle.message("stats.open.0.local.whitelist.file", myRecorderId),
-             ActionsBundle.message("group.OpenLocalWhitelistFileAction.description"),
-             ICON) {
+  : DumbAwareAction(StatisticsBundle.message("stats.open.0.local.whitelist.file", myRecorderId),
+                    ActionsBundle.message("group.OpenLocalWhitelistFileAction.description"),
+                    ICON) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 

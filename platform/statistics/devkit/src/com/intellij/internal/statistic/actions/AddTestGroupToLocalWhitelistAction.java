@@ -8,11 +8,11 @@ import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStor
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
@@ -25,7 +25,7 @@ import java.io.IOException;
  * <p>
  * If "Add custom validation rules" is disabled, all event id and event data values from the group will be allowed.
  */
-public class AddTestGroupToLocalWhitelistAction extends AnAction {
+public class AddTestGroupToLocalWhitelistAction extends DumbAwareAction {
   public AddTestGroupToLocalWhitelistAction() {
     super(ActionsBundle.lazyMessage("action.AddTestGroupToLocalWhitelistAction.text"),
           ActionsBundle.lazyMessage("action.AddTestGroupToLocalWhitelistAction.description"), ICON);
