@@ -13,16 +13,14 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 @State(name = "XDebuggerSettings", storages = @Storage("debugger.xml"))
 public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingManagerImpl.SettingsState> {
-  private Map<String, XDebuggerSettings<?>> mySettingsById;
-  private Map<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>> mySettingsByClass;
   private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
   private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();
 
@@ -36,27 +34,23 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager implem
     settingsState.setDataViewSettings(myDataViewSettings);
     settingsState.setGeneralSettings(myGeneralSettings);
 
-    initSettings();
-    if (!mySettingsById.isEmpty()) {
-      for (XDebuggerSettings<?> settings : mySettingsById.values()) {
-        Object subState = settings.getState();
-        if (subState != null) {
-          Element serializedState = XmlSerializer.serialize(subState);
-          if (serializedState != null) {
-            SpecificSettingsState state = new SpecificSettingsState();
-            state.id = settings.getId();
-            state.configuration = serializedState;
-            settingsState.specificStates.add(state);
-          }
+    for (XDebuggerSettings settings : XDebuggerSettings.EXTENSION_POINT.getExtensionList()) {
+      Object subState = settings.getState();
+      if (subState != null) {
+        Element serializedState = XmlSerializer.serialize(subState);
+        if (serializedState != null) {
+          SpecificSettingsState state = new SpecificSettingsState();
+          state.id = settings.getId();
+          state.configuration = serializedState;
+          settingsState.specificStates.add(state);
         }
       }
     }
     return settingsState;
   }
 
-  public Collection<XDebuggerSettings<?>> getSettingsList() {
-    initSettings();
-    return Collections.unmodifiableCollection(mySettingsById.values());
+  public Collection<XDebuggerSettings> getSettingsList() {
+    return XDebuggerSettings.EXTENSION_POINT.getExtensionList();
   }
 
   @Override
@@ -81,27 +75,8 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager implem
     }
   }
 
-  private XDebuggerSettings findSettings(String id) {
-    initSettings();
-    return mySettingsById.get(id);
-  }
-
-  private void initSettings() {
-    if (mySettingsById == null) {
-      XDebuggerSettings[] extensions = XDebuggerSettings.EXTENSION_POINT.getExtensions();
-      mySettingsById = new TreeMap<>();
-      mySettingsByClass = new THashMap<>(extensions.length);
-      for (XDebuggerSettings settings : extensions) {
-        mySettingsById.put(settings.getId(), settings);
-        mySettingsByClass.put(settings.getClass(), settings);
-      }
-    }
-  }
-
-  public <T extends XDebuggerSettings<?>> T getSettings(final Class<T> aClass) {
-    initSettings();
-    //noinspection unchecked
-    return (T)mySettingsByClass.get(aClass);
+  private static XDebuggerSettings findSettings(String id) {
+    return XDebuggerSettings.EXTENSION_POINT.extensions().filter(e -> id.equals(e.getId())).findFirst().orElse(null);
   }
 
   public static class SettingsState {

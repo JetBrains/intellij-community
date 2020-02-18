@@ -86,15 +86,10 @@ import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
 public class XDebuggerUtilImpl extends XDebuggerUtil {
   private static final Ref<Boolean> SHOW_BREAKPOINT_AD = new Ref<>(true);
-  private XLineBreakpointType<?>[] myLineBreakpointTypes;
-  private Map<Class<? extends XBreakpointType>, XBreakpointType> myBreakpointTypeByClass;
 
   @Override
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
-    if (myLineBreakpointTypes == null) {
-      myLineBreakpointTypes = XBreakpointUtil.breakpointTypes().select(XLineBreakpointType.class).toArray(XLineBreakpointType<?>[]::new);
-    }
-    return myLineBreakpointTypes;
+    return XBreakpointUtil.breakpointTypes().select(XLineBreakpointType.class).toArray(XLineBreakpointType<?>[]::new);
   }
 
   @Override
@@ -379,17 +374,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public <T extends XBreakpointType> T findBreakpointType(@NotNull Class<T> typeClass) {
-    if (myBreakpointTypeByClass == null) {
-      myBreakpointTypeByClass = XBreakpointUtil.breakpointTypes().toMap(XBreakpointType::getClass, t -> t);
-    }
-    XBreakpointType type = myBreakpointTypeByClass.get(typeClass);
-    //noinspection unchecked
-    return (T)type;
+    return XBreakpointUtil.breakpointTypes().select(typeClass).findFirst().orElse(null);
   }
 
   @Override
   public <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass) {
-    return XDebuggerSettingManagerImpl.getInstanceImpl().getSettings(aClass);
+    return XDebuggerSettings.EXTENSION_POINT.findExtension(aClass);
   }
 
   @Override

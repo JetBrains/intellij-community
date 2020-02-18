@@ -4,7 +4,10 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
@@ -79,6 +82,26 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
         }
       }
     });
+
+    XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<XBreakpointType>() {
+      @Override
+      public void extensionAdded(@NotNull XBreakpointType type, @NotNull PluginDescriptor pluginDescriptor) {
+        //noinspection unchecked
+        WriteAction.run(() -> addDefaultBreakpoint(type));
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull XBreakpointType type, @NotNull PluginDescriptor pluginDescriptor) {
+        WriteAction.run(() -> {
+          //noinspection unchecked
+          for (Object b : getBreakpoints(type)) {
+            XBreakpoint bpt = (XBreakpoint)b;
+            doRemoveBreakpointImpl(bpt, isDefaultBreakpoint(bpt));
+          }
+          myBreakpointsDefaults.remove(type);
+        });
+      }
+    }, project);
   }
 
   public void init() {
