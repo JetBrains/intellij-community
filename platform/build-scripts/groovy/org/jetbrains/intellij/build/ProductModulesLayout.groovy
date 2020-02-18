@@ -11,6 +11,8 @@ import java.util.function.Consumer
 
 @CompileStatic
 class ProductModulesLayout {
+  public static List<String> DEFAULT_BUNDLED_PLUGINS = ["intellij.platform.images"]
+
   /**
    * Name of the main product JAR file. Outputs of {@link #productImplementationModules} will be packed into it.
    */
@@ -32,7 +34,7 @@ class ProductModulesLayout {
    * from these plugins which need to be included into the plugin distribution for this product. Layouts of the bundled plugins are specified
    * in {@link #allNonTrivialPlugins} list.
    */
-  List<String> bundledPluginModules = ["com.intellij.platform.images"]
+  List<String> bundledPluginModules = new ArrayList<>(DEFAULT_BUNDLED_PLUGINS)
 
   /**
    * @deprecated use {@link #bundledPluginModules} directly instead
