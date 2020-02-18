@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -61,7 +61,7 @@ public class XmlStructureViewBuilderFactory implements PsiStructureViewFactory {
 
   private static XmlStructureViewBuilderProvider[] getStructureViewBuilderProviders() {
     return (XmlStructureViewBuilderProvider[])Extensions.getRootArea()
-      .getExtensionPoint(XmlStructureViewBuilderProvider.EXTENSION_POINT_NAME).getExtensions();
+      .getExtensionPoint(XmlStructureViewBuilderProvider.EP_NAME).getExtensions();
   }
 
   @Nullable
