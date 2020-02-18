@@ -9,7 +9,7 @@ import com.intellij.psi.PsiClass;
 
 public abstract class DebuggerManager {
   public static DebuggerManager getInstance(Project project) {
-    return project.getComponent(DebuggerManager.class);
+    return project.getService(DebuggerManager.class);
   }
 
   public abstract DebugProcess getDebugProcess(ProcessHandler processHandler);

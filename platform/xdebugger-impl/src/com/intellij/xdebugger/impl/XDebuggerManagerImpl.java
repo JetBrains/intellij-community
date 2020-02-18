@@ -180,6 +180,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     eventMulticaster.addEditorMouseListener(listener, myProject);
   }
 
+  @Override
+  public void initializeComponent() {
+    myBreakpointManager.init();
+  }
+
   private void updateExecutionPoint(@NotNull VirtualFile file, boolean navigate) {
     if (file.equals(myExecutionPointHighlighter.getCurrentFile())) {
       myExecutionPointHighlighter.update(navigate);
@@ -375,6 +380,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     myBreakpointManager.loadState(state.getBreakpointManagerState());
     myWatchesManager.loadState(state.getWatchesManagerState());
     myPinToTopManager.loadState(state.getPinToTopManagerState());
+  }
+
+  @Override
+  public void noStateLoaded() {
+    myBreakpointManager.noStateLoaded();
   }
 
   public void showExecutionPosition() {

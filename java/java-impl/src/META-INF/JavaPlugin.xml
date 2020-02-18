@@ -24,7 +24,6 @@
   <xi:include href="/META-INF/JvmAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaIndexingPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaPsiPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/componentSets/Debugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/IntentionPowerPack.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
@@ -419,6 +418,7 @@
     <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.TraceSettings"/>
     <projectService serviceInterface="com.intellij.debugger.ui.HotSwapUI" serviceImplementation="com.intellij.debugger.ui.HotSwapUIImpl"/>
+    <projectService serviceInterface="com.intellij.debugger.DebuggerManager" serviceImplementation="com.intellij.debugger.impl.DebuggerManagerImpl"/>
 
     <statistics.counterUsagesCollector groupId="java.find.usages" version="1"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>

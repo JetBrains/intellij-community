@@ -20,7 +20,7 @@ public abstract class XDebuggerManager {
     new Topic<>("XDebuggerManager events", XDebuggerManagerListener.class);
 
   public static XDebuggerManager getInstance(@NotNull Project project) {
-    return project.getComponent(XDebuggerManager.class);
+    return project.getService(XDebuggerManager.class);
   }
 
   @NotNull
