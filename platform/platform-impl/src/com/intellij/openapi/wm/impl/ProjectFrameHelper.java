@@ -30,7 +30,6 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.status.ColumnSelectionModePanel;
-import com.intellij.openapi.wm.impl.status.EncodingPanel;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.ToggleReadOnlyAttributePanel;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarPopupActionGroup;
@@ -426,7 +425,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
     IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
     addWidget(project, statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-    addWidget(project, statusBar, new EncodingPanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL));
     addWidget(project, statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL));
     addWidget(project, statusBar, new ToggleReadOnlyAttributePanel(), StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
 
