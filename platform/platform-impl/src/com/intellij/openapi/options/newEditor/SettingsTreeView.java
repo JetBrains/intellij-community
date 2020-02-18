@@ -71,7 +71,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private final Map<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<>();
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsTreeView", 150, false, this, this, this)
     .setRestartTimerOnAdd(true);
-  
+
   private final MyRoot myRoot;
 
   private Configurable myQueuedConfigurable;
@@ -167,7 +167,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myBuilder.setFilteringMerge(300, null);
     Disposer.register(this, myBuilder);
   }
-  
+
   @Override
   public void updateUI() {
     super.updateUI();
@@ -425,7 +425,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       @Override
       public void setRejected() {
         super.setRejected();
-        promise.setError(Promises.getObsoleteError());
+        promise.cancel();
       }
     });
     return promise;

@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
-val obsoleteError: RuntimeException by lazy { MessageError("Obsolete", false) }
+private val obsoleteError: RuntimeException by lazy { MessageError("Obsolete", false) }
 
 val Promise<*>.isRejected: Boolean
   get() = state == Promise.State.REJECTED
