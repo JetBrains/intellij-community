@@ -225,7 +225,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     updateUI();
 
     UIThemeProvider.EP_NAME.addExtensionPointListener(new UIThemeEPListener(), this);
-    LafProvider.EP_NAME.addExtensionPointListener(new LafProviderEPListener(), this);
+//    LafProvider.EP_NAME.addExtensionPointListener(new LafProviderEPListener(), this);
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
