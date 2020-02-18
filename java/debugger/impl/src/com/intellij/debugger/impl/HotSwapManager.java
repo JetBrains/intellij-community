@@ -26,11 +26,6 @@ import java.util.*;
 public final class HotSwapManager {
   private final Map<DebuggerSession, Long> myTimeStamps = new HashMap<>();
   private static final String CLASS_EXTENSION = ".class";
-  private final Project myProject;
-
-  public HotSwapManager(@NotNull Project project) {
-    myProject = project;
-  }
 
   private long getTimeStamp(DebuggerSession session) {
     Long tStamp = myTimeStamps.get(session);
@@ -50,7 +45,7 @@ public final class HotSwapManager {
     final Map<String, HotSwapFile> modifiedClasses = new HashMap<>();
 
     List<String> paths = outputPaths != null ? outputPaths.getValue() :
-                         ReadAction.compute(() -> JBIterable.of(OrderEnumerator.orderEntries(myProject).classes().getRoots())
+                         ReadAction.compute(() -> JBIterable.of(OrderEnumerator.orderEntries(session.getProject()).classes().getRoots())
                            .filterMap(o -> o.isDirectory() && !o.getFileSystem().isReadOnly() ? o.getPath() : null)
                            .toList()
                          );
