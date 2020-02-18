@@ -127,7 +127,6 @@
     <extensionPoint qualifiedName="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
     <extensionPoint qualifiedName="com.intellij.externalAnnotationsArtifactsResolver"
                     interface="com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver"/>
     <extensionPoint qualifiedName="com.intellij.java.externalAnnotation.locationProvider"
@@ -220,8 +219,11 @@
     <extensionPoint qualifiedName="com.intellij.canBeEmpty"
                     interface="com.intellij.openapi.util.Condition"/>
 
+    <extensionPoint qualifiedName="com.intellij.debuggerClassFilterProvider"
+                    interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.debugger.codeFragmentFactory"
-                    interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory"/>
+                    interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.nodeRenderer"
                     interface="com.intellij.debugger.ui.tree.render.NodeRenderer" dynamic="true"/>
@@ -230,11 +232,11 @@
                     interface="com.intellij.debugger.engine.JavaDebugAware" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.javaBreakpointHandlerFactory"
-                    interface="com.intellij.debugger.engine.JavaBreakpointHandlerFactory"/>
+                    interface="com.intellij.debugger.engine.JavaBreakpointHandlerFactory" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.positionManagerFactory"
                     interface="com.intellij.debugger.PositionManagerFactory"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.jvmSmartStepIntoHandler"
                     interface="com.intellij.debugger.actions.JvmSmartStepIntoHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.jvmSteppingCommandProvider"
@@ -269,7 +271,7 @@
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
                     area="IDEA_PROJECT" dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.debugger.impl.EditorTextProvider"/>
     </extensionPoint>
 

@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.PositionManagerFactory;
+import com.intellij.debugger.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
@@ -26,6 +23,8 @@ import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -353,6 +352,16 @@ public class DebugProcessEvents extends DebugProcessImpl {
         .map(factory -> factory.createPositionManager(this))
         .filter(Objects::nonNull)
         .forEach(this::appendPositionManager);
+
+      PositionManagerFactory.EP_NAME.getPoint(getProject()).addExtensionPointListener(new ExtensionPointListener<PositionManagerFactory>() {
+        @Override
+        public void extensionAdded(@NotNull PositionManagerFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
+          PositionManager manager = extension.createPositionManager(DebugProcessEvents.this);
+          if (manager != null) {
+            appendPositionManager(manager);
+          }
+        }
+      }, false, myDisposable);
 
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 

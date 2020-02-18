@@ -13,7 +13,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.ui.ClassesFilteredView;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -29,6 +28,8 @@ import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -38,6 +39,7 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -63,7 +65,7 @@ import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 public class JavaDebugProcess extends XDebugProcess {
   private final DebuggerSession myJavaSession;
   private final JavaDebuggerEditorsProvider myEditorsProvider;
-  private final XBreakpointHandler<?>[] myBreakpointHandlers;
+  private volatile XBreakpointHandler<?>[] myBreakpointHandlers;
   private final NodeManagerImpl myNodeManager;
   private final JvmSmartStepIntoActionHandler mySmartStepIntoActionHandler;
 
@@ -91,6 +93,14 @@ public class JavaDebugProcess extends XDebugProcess {
       .append(JavaBreakpointHandlerFactory.EP_NAME.extensions())
       .map(factory -> factory.createHandler(process))
       .toArray(XBreakpointHandler[]::new);
+
+    JavaBreakpointHandlerFactory.EP_NAME.addExtensionPointListener(new ExtensionPointListener<JavaBreakpointHandlerFactory>() {
+      @Override
+      public void extensionAdded(@NotNull JavaBreakpointHandlerFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
+        //noinspection NonAtomicOperationOnVolatileField
+        myBreakpointHandlers = ArrayUtil.append(myBreakpointHandlers, extension.createHandler(myJavaSession.getProcess()));
+      }
+    }, process.myDisposable);
 
     myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override
