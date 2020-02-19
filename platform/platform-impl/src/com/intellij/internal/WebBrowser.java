@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefBrowser;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ public class WebBrowser extends AnAction implements DumbAware {
     Window activeFrame = IdeFrameImpl.getActiveFrame();
     if (activeFrame == null) return;
 
-    if (!Registry.is("ide.browser.jcef.enabled")) {
+    if (!JBCefApp.isEnabled()) {
       JBPopupFactory.getInstance().createComponentPopupBuilder(
         new JTextArea("Set the reg key to enable JCEF:\n\"ide.browser.jcef.enabled=true\""), null).
         setTitle("JCEF web browser is not available").

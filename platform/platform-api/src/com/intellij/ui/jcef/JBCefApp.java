@@ -97,7 +97,9 @@ public abstract class JBCefApp {
   }
 
   /**
-   * @deprecated temporary
+   * Should be used to check if JCEF is enabled in the platform, until it is enabled by default.
+   *
+   * @deprecated should not be used after JCEF is enabled by default
    */
   @Deprecated
   public static boolean isEnabled() {
@@ -120,6 +122,7 @@ public abstract class JBCefApp {
   @NotNull
   protected abstract CefAppConfig getCefAppConfig();
 
+  @SuppressWarnings("HardCodedStringLiteral")
   private static class JBCefAppMac extends JBCefApp {
     @NotNull
     @Override
@@ -133,6 +136,7 @@ public abstract class JBCefApp {
     }
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   private static class JBCefAppWindows extends JBCefApp {
     @NotNull
     @Override
@@ -146,6 +150,7 @@ public abstract class JBCefApp {
     }
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   private static class JBCefAppLinux extends JBCefApp {
     @NotNull
     @Override
@@ -179,7 +184,6 @@ public abstract class JBCefApp {
     ourSchemeHandlerFactoryList.add(factory);
   }
 
-  @SuppressWarnings("NullableProblems")
   public interface JBCefSchemeHandlerFactory extends CefSchemeHandlerFactory {
     /**
      * A callback to register the scheme handler via calling:

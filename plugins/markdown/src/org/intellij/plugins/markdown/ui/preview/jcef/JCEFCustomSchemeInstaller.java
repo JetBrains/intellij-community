@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefFileSchemeHandler;
 import org.cef.browser.CefBrowser;
@@ -20,7 +19,7 @@ final class JCEFCustomSchemeInstaller {
   private static final String MD_FILE_SCHEME_NAME = "jcef-md-image";
 
   JCEFCustomSchemeInstaller() {
-    if (!RegistryManager.getInstance().is("ide.browser.jcef.enabled")) {
+    if (!JBCefApp.isEnabled()) {
       return;
     }
 
