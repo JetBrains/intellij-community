@@ -56,7 +56,7 @@ public abstract class JBCefApp {
     Color bg = JBColor.background();
     config.mySettings.background_color = config.mySettings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     if (ApplicationManager.getApplication().isInternal()) {
-      config.mySettings.remote_debugging_port = 9229;
+      config.mySettings.remote_debugging_port = 9230;
     }
     CefApp.addAppHandler(new MyCefAppHandler(config.myAppArgs));
     myCefApp = CefApp.getInstance(config.mySettings);
