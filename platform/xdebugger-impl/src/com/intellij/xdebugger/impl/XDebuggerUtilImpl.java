@@ -374,7 +374,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public <T extends XBreakpointType> T findBreakpointType(@NotNull Class<T> typeClass) {
-    return XBreakpointUtil.breakpointTypes().select(typeClass).findFirst().orElse(null);
+    return XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass);
   }
 
   @Override
