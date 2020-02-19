@@ -6,10 +6,14 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.target.*;
+import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -28,7 +32,10 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
   @NotNull private RunProfile myRunProfile;
   @NotNull private final Executor myExecutor;
+
   @NotNull private ExecutionTarget myTarget;
+  private TargetEnvironmentFactory myTargetEnvironmentFactory;
+  private TargetEnvironment myPrepareRemoteEnvironment;
 
   @Nullable private RunnerSettings myRunnerSettings;
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
@@ -89,6 +96,40 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     this.callback = callback;
   }
 
+  @ApiStatus.Experimental
+  public @NotNull TargetEnvironmentFactory getTargetEnvironmentFactory() {
+    if (myTargetEnvironmentFactory != null) {
+      return myTargetEnvironmentFactory;
+    }
+    return myTargetEnvironmentFactory = createTargetEnvironmentFactory();
+  }
+
+  @NotNull
+  private TargetEnvironmentFactory createTargetEnvironmentFactory() {
+    if (myRunProfile instanceof TargetEnvironmentAwareRunProfile &&
+        Experiments.getInstance().isFeatureEnabled("runtime.environments")) {
+      String targetName = ((TargetEnvironmentAwareRunProfile)myRunProfile).getDefaultTargetName();
+      if (targetName != null) {
+        TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
+        if (config != null) {
+          return config.createEnvironmentFactory(myProject);
+        }
+      }
+    }
+    return new LocalTargetEnvironmentFactory();
+  }
+
+  @ApiStatus.Experimental
+  public @NotNull TargetEnvironment getPreparedTargetEnvironment(@NotNull ProgressIndicator progressIndicator) {
+    if (myPrepareRemoteEnvironment != null) {
+      return myPrepareRemoteEnvironment;
+    }
+
+    TargetEnvironmentFactory factory = getTargetEnvironmentFactory();
+    TargetEnvironmentRequest environmentRequest = factory.createRequest();
+    return myPrepareRemoteEnvironment = factory.prepareRemoteEnvironment(environmentRequest, progressIndicator);
+  }
+  
   @ApiStatus.Internal
   public void setCallback(@Nullable ProgramRunner.Callback callback) {
     this.callback = callback;

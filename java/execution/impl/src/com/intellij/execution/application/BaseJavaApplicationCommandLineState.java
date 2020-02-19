@@ -14,9 +14,7 @@ import com.intellij.execution.target.*;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,13 +26,11 @@ import java.util.Map;
 import java.util.Optional;
 
 public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase & CommonJavaRunConfigurationParameters>
-  extends JavaCommandLineState implements RemoteConnectionCreator, TargetEnvironmentAwareRunProfileState {
+  extends JavaCommandLineState implements RemoteConnectionCreator {
 
   @NotNull protected final T myConfiguration;
 
-  @Nullable private TargetEnvironmentFactory myTargetEnvironmentFactory;
   @Nullable private RemoteConnection myRemoteConnection;
-  private TargetEnvironment myPreparedRemoteEnvironment;
 
   public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, @NotNull final T configuration) {
     super(environment);
@@ -54,7 +50,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
     try {
-      TargetEnvironmentFactory environmentFactory = getTargetEnvironmentFactory(environment);
+      TargetEnvironmentFactory environmentFactory = environment.getTargetEnvironmentFactory();
       if (!(environmentFactory instanceof LocalTargetEnvironmentFactory)) {
         final String remotePort = "12345";
         final String remoteAddressForVmParams;
@@ -103,7 +99,8 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
-    TargetEnvironmentRequest request = getPreparedRemoteEnvironment().getRequest();
+    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(new EmptyProgressIndicator());
+    TargetEnvironmentRequest request = remoteEnvironment.getRequest();
     if (myRemoteConnection != null) {
       final int remotePort = StringUtil.parseInt(myRemoteConnection.getApplicationAddress(), -1);
       if (remotePort > 0) {
@@ -114,9 +111,8 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
       }
     }
 
-    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, getTargetEnvironmentFactory(getEnvironment()).getTargetConfiguration());
+    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, getEnvironment().getTargetEnvironmentFactory().getTargetConfiguration());
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
-    TargetEnvironment remoteEnvironment = getPreparedRemoteEnvironment();
     Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
 
     Map<String, String> content = targetedCommandLineBuilder.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
@@ -130,40 +126,6 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
-  }
-
-  @Override
-  @NotNull
-  public TargetEnvironment prepareEnvironment(@NotNull ProgressIndicator progressIndicator) throws ExecutionException {
-    TargetEnvironmentFactory factory = getTargetEnvironmentFactory(getEnvironment());
-    myPreparedRemoteEnvironment = factory.prepareRemoteEnvironment(factory.createRequest(), progressIndicator);
-    return myPreparedRemoteEnvironment;
-  }
-
-  protected TargetEnvironment getPreparedRemoteEnvironment() throws ExecutionException {
-    if (myPreparedRemoteEnvironment != null) {
-      return myPreparedRemoteEnvironment;
-    }
-    return prepareEnvironment(new EmptyProgressIndicator());
-  }
-
-  @NotNull
-  private TargetEnvironmentFactory getTargetEnvironmentFactory(@NotNull ExecutionEnvironment environment)
-    throws ExecutionException {
-    if (myTargetEnvironmentFactory != null) {
-      return myTargetEnvironmentFactory;
-    }
-    if (myConfiguration instanceof TargetEnvironmentAwareRunProfile && Experiments.getInstance().isFeatureEnabled("runtime.environments")) {
-      String targetName = ((TargetEnvironmentAwareRunProfile)myConfiguration).getDefaultTargetName();
-      if (targetName != null) {
-        TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
-        if (config == null) {
-          throw new ExecutionException("Cannot find target " + targetName);
-        }
-        return myTargetEnvironmentFactory = config.createEnvironmentFactory(environment.getProject());
-      }
-    }
-    return myTargetEnvironmentFactory = new LocalTargetEnvironmentFactory();
   }
 
   @NotNull

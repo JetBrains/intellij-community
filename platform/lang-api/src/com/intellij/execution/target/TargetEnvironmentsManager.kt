@@ -1,7 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
@@ -12,7 +16,7 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
   companion object {
     @JvmStatic
     val instance: TargetEnvironmentsManager
-      get() = service()
+      get() = ApplicationManager.getApplication().getService(TargetEnvironmentsManager::class.java)
   }
 
   val targets: ContributedConfigurationsList<TargetEnvironmentConfiguration, TargetEnvironmentType<*>> = TargetsList()
@@ -40,7 +44,7 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
     targets.removeConfig(target)
   }
 
-  internal fun ensureUniqueName(target: TargetEnvironmentConfiguration) {
+  fun ensureUniqueName(target: TargetEnvironmentConfiguration) {
     if (!targets.resolvedConfigs().contains(target)) {
       val existingNames = targets.resolvedConfigs().map { it.displayName }.toSet() + targets.unresolvedNames()
       val uniqueName = UniqueNameGenerator.generateUniqueName(target.displayName, existingNames)
@@ -48,7 +52,8 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
     }
   }
 
-  internal class TargetsList : ContributedConfigurationsList<TargetEnvironmentConfiguration, TargetEnvironmentType<*>>(TargetEnvironmentType.EXTENSION_NAME) {
+  internal class TargetsList : ContributedConfigurationsList<TargetEnvironmentConfiguration, TargetEnvironmentType<*>>(
+    TargetEnvironmentType.EXTENSION_NAME) {
     override fun toBaseState(config: TargetEnvironmentConfiguration): OneTargetState =
       OneTargetState().also {
         it.loadFromConfiguration(config)

@@ -53,7 +53,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
     executionManager
       .executePreparationTasks(environment, state)
-      .onSuccess(preparedEnvironment -> {
+      .onSuccess(__ -> {
         executionManager.startRunProfile(environment, state, state1 -> {
           return doExecute(state, environment);
         });

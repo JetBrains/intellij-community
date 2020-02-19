@@ -16,9 +16,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
-import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
@@ -527,9 +525,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     }
   }
 
-  override fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<TargetEnvironment?> {
-    if (!(currentState is TargetEnvironmentAwareRunProfileState &&
-          environment.runProfile is TargetEnvironmentAwareRunProfile &&
+  override fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<Any?> {
+    if (!(environment.runProfile is TargetEnvironmentAwareRunProfile &&
           Experiments.getInstance().isFeatureEnabled("runtime.environments"))) {
       return resolvedPromise()
     }
@@ -542,7 +539,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     val descriptor = RunContentDescriptor(executionResult.executionConsole, executionResult.processHandler,
                                           executionResult.executionConsole.component,
                                           "Prepare " + environment.executionTarget.displayName)
-    val promise = AsyncPromise<TargetEnvironment?>()
+    val promise = AsyncPromise<Any?>()
     ApplicationManager.getApplication().executeOnPooledThread {
       try {
         executionResult.processHandler.startNotify()
@@ -555,7 +552,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
             processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
           }
         }
-        promise.setResult(currentState.prepareEnvironment(progressIndicator))
+        promise.setResult(environment.getPreparedTargetEnvironment(progressIndicator))
       }
       catch (t: Throwable) {
         promise.setError(t)

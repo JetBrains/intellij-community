@@ -4,7 +4,6 @@ package com.intellij.execution
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.project.Project
@@ -87,5 +86,5 @@ abstract class ExecutionManager {
   abstract fun isStarting(executorId: String, runnerId: String): Boolean
 
   @ApiStatus.Experimental
-  abstract fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<TargetEnvironment?>
+  abstract fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<Any?>
 }

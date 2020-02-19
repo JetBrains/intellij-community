@@ -10,9 +10,7 @@ import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetedCommandLineBuilder;
+import com.intellij.execution.target.*;
 import com.intellij.execution.testDiscovery.JavaAutoRunManager;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -31,6 +29,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -126,7 +125,18 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     appendForkInfo(executor);
     appendRepeatMode();
 
-    OSProcessHandler processHandler = new KillableColoredProcessHandler.Silent(createCommandLine());
+    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(new EmptyProgressIndicator());
+
+    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(remoteEnvironment.getRequest(),
+                                                                                      getEnvironment().getTargetEnvironmentFactory().getTargetConfiguration());
+    TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
+    Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
+
+    OSProcessHandler processHandler = new KillableColoredProcessHandler.Silent(process,
+                                                                               targetedCommandLine.getCommandPresentation(remoteEnvironment),
+                                                                               targetedCommandLine.getCharset(),
+                                                                               targetedCommandLineBuilder.getFilesToDeleteOnTermination());
+
     ProcessTerminatedListener.attach(processHandler);
     final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
     if (searchForTestsTask != null) {
