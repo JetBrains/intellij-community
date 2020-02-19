@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -31,9 +32,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
-import com.intellij.openapi.editor.markup.AnalyzerStatus;
-import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -52,6 +51,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.DropDownLink;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -226,6 +226,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   public void caretPositionChanged(@NotNull CaretEvent event) {
     VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
     Point point = myEditor.visualPositionToXY(pos);
+    point = SwingUtilities.convertPoint(myEditor.getContentComponent(), point, myEditor.getScrollPane());
+
     if (statusToolbar.getComponent().getBounds().contains(point)) {
       System.out.println(System.identityHashCode(event) + ": hide toolbar");
     }
@@ -1583,16 +1585,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private class InspectionPopupManager {
     private AnalyzerStatus myCurrentStatus;
     private ComponentPopupBuilder myPopupBuilder;
-    private Dimension preferredPopupSize = JBUI.emptySize();
     private JBPopup myPopup;
+    private JComponent myContent;
 
     private void showPopup(AnActionEvent event) {
       hidePopup();
 
       if (myCurrentStatus != analyzerStatus) {
         myCurrentStatus = analyzerStatus;
-        myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(createContent(), null);
-
+        myContent = createContent();
+        myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null);
         myEditor.getComponent().addAncestorListener(new AncestorListenerAdapter() {
           @Override
           public void ancestorMoved(AncestorEvent event) {
@@ -1604,9 +1606,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       myPopup = myPopupBuilder.createPopup();
 
       JComponent owner = (JComponent)event.getInputEvent().getComponent();
+      Dimension size = myContent.getPreferredSize();
+      size.width = Math.max(size.width, JBUIScale.scale(296));
+
       RelativePoint point = new RelativePoint(owner,
-            new Point(owner.getWidth() - owner.getInsets().right + JBUIScale.scale(DELTA_X) - preferredPopupSize.width,
+            new Point(owner.getWidth() - owner.getInsets().right + JBUIScale.scale(DELTA_X) - size.width,
                       owner.getHeight() + JBUIScale.scale(DELTA_Y)));
+
+      myPopup.setSize(size);
       myPopup.show(point);
     }
 
@@ -1634,52 +1641,79 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       presentation.setIcon(AllIcons.Actions.More);
       presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
 
-      ActionButton menuButton = new ActionButton(myCurrentStatus.getActionMenu().invoke(),
+      AnalyzerController controller = myCurrentStatus.getController().invoke();
+      ActionButton menuButton = new ActionButton(controller.getActionMenu(),
                                                  presentation,
                                                  ActionPlaces.EDITOR_POPUP,
                                                  ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
-      contentPanel.add(menuButton,
-                       gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
+      contentPanel.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
+      contentPanel.add(createLowerPanel(controller),
+                       gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
 
-      DropDownLink<String> inspectionLevel = new DropDownLink<>("All Problems",
-                  Arrays.asList("None", "Errors Only", "All Problems"),
-                  i -> System.out.println(i + " selected"), true);
-
-      JLabel highlightLabel = new JLabel("Highlight: ");
-      highlightLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
-
-      JPanel lowerPanel = JBUI.Panels.simplePanel(inspectionLevel).addToLeft(highlightLabel);
-      lowerPanel.setOpaque(true);
-      lowerPanel.setBackground(UIUtil.getToolTipActionBackground());
-      lowerPanel.setBorder(JBUI.Borders.empty(4, 10));
-
-      contentPanel.add(lowerPanel,
-                       gc.nextLine().next().
-                         anchor(GridBagConstraints.LINE_START).
-                         fillCellHorizontally().coverLine().
-                         weightx(1));
-
-      preferredPopupSize = contentPanel.getPreferredSize();
-      preferredPopupSize.width = Math.max(preferredPopupSize.width, JBUIScale.scale(296));
-      contentPanel.setPreferredSize(preferredPopupSize);
       return contentPanel;
     }
+
+    private void revalidatePopup() {
+      if (myContent != null && myPopup != null && !myPopup.isDisposed()) {
+        myContent.revalidate();
+
+        Dimension size = myContent.getPreferredSize();
+        size.width = Math.max(size.width, JBUIScale.scale(296));
+        myPopup.setSize(size);
+      }
+    }
+
+    private JPanel createLowerPanel(AnalyzerController controller) {
+      JPanel panel = new JPanel(new GridBagLayout());
+      GridBag gc = new GridBag().nextLine();
+
+      if (PowerSaveMode.isEnabled()) {
+        LinkLabel<String> powerMode = new LinkLabel<>("Disable power save mode", null,
+          (__, ___) -> {
+            PowerSaveMode.setEnabled(false);
+            hidePopup();
+          });
+        panel.add(powerMode, gc.next().anchor(GridBagConstraints.LINE_START));
+      }
+      else {
+        List<LanguageHighlightLevel> levels = controller.getHighlightLevels();
+
+        if (levels.size() == 1) {
+          JLabel highlightLabel = new JLabel("Highlight: ");
+          highlightLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
+          panel.add(highlightLabel, gc.next().anchor(GridBagConstraints.LINE_START));
+
+          LanguageHighlightLevel level = levels.get(0);
+          DropDownLink<AHLevel> levelLink = new DropDownLink<>(level.getLevel(), controller.getAvailableLevels(),
+                                                               l -> {
+                                                                 controller.setHighLightLevel(level.copy(level.getLanguage(), l));
+                                                                 revalidatePopup();
+                                                               }, true);
+
+          panel.add(levelLink, gc.next());
+        }
+        else if (levels.size() > 1) {
+          for(LanguageHighlightLevel level: levels) {
+            JLabel highlightLabel = new JLabel(level.getLanguage().getDisplayName() + ": ");
+            highlightLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
+            panel.add(highlightLabel, gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc);
+
+            DropDownLink<AHLevel> levelLink = new DropDownLink<>(level.getLevel(), controller.getAvailableLevels(),
+                                                                 l -> {
+                                                                   controller.setHighLightLevel(level.copy(level.getLanguage(), l));
+                                                                   revalidatePopup();
+                                                                 }, true);
+
+            panel.add(levelLink, gc.next());
+          }
+        }
+      }
+
+      panel.add(Box.createHorizontalGlue(), gc.next().fillCellHorizontally().weightx(1.0));
+      panel.setOpaque(true);
+      panel.setBackground(UIUtil.getToolTipActionBackground());
+      panel.setBorder(JBUI.Borders.empty(4, 10));
+      return panel;
+    }
   }
-
-
-  //private static class DelegatedAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
-  //  private final AnAction delegateAction;
-  //  private DelegatedAction(AnAction action) {
-  //    delegateAction = action;
-  //    getTemplatePresentation().setText(delegateAction.getTemplateText(), true);
-  //    copyShortcutFrom(delegateAction);
-  //  }
-  //
-  //  @Override
-  //  public void actionPerformed(@NotNull AnActionEvent e) {
-  //    if (e.getPlace() == ActionPlaces.EDITOR_POPUP) {
-  //      delegateAction.actionPerformed(e);
-  //    }
-  //  }
-  //}
 }
