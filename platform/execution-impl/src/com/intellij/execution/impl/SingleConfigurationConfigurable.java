@@ -13,26 +13,30 @@ import com.intellij.execution.target.TargetEnvironmentsConfigurable;
 import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorListener;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.ComponentValidator;
-import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.project.ProjectKt;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
@@ -45,23 +49,24 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public final class SingleConfigurationConfigurable<Config extends RunConfiguration>
-  extends BaseRCSettingsConfigurable {
+public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends BaseRCSettingsConfigurable {
   public static final DataKey<String> RUN_ON_TARGET_NAME_KEY = DataKey.create("RunOnTargetName");
 
   private static final Logger LOG = Logger.getInstance(SingleConfigurationConfigurable.class);
 
   private final PlainDocument myNameDocument = new PlainDocument();
+
+  @NotNull private final Project myProject;
   @Nullable private final Executor myExecutor;
 
   private ValidationResult myLastValidationResult = null;
@@ -79,6 +84,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private SingleConfigurationConfigurable(@NotNull RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
     super(new ConfigurationSettingsEditorWrapper(settings), settings);
 
+    myProject = settings.getConfiguration().getProject();
     myExecutor = executor;
 
     final Config configuration = getConfiguration();
@@ -96,7 +102,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         if (!myChangingNameFromCode) {
           RunConfiguration runConfiguration = getSettings().getConfiguration();
           if (runConfiguration instanceof LocatableConfigurationBase) {
-            ((LocatableConfigurationBase) runConfiguration).setNameChangedByUser(true);
+            ((LocatableConfigurationBase)runConfiguration).setNameChangedByUser(true);
           }
         }
       }
@@ -111,14 +117,16 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   @NotNull
-  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(@NotNull RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
+  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(@NotNull RunnerAndConfigurationSettings settings,
+                                                                                                       @Nullable Executor executor) {
     SingleConfigurationConfigurable<Config> configurable = new SingleConfigurationConfigurable<>(settings, executor);
     configurable.reset();
     return configurable;
   }
 
   @Override
-  boolean isSnapshotSpecificallyModified(@NotNull RunnerAndConfigurationSettings original, @NotNull RunnerAndConfigurationSettings snapshot) {
+  boolean isSnapshotSpecificallyModified(@NotNull RunnerAndConfigurationSettings original,
+                                         @NotNull RunnerAndConfigurationSettings snapshot) {
     return original.isShared() != myStoreProjectConfiguration;
   }
 
@@ -135,7 +143,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     settings.setFolderName(myFolderName);
     settings.setShared(myStoreProjectConfiguration);
     super.apply();
-    RunManagerImpl.getInstanceImpl(runConfiguration.getProject()).addConfiguration(settings);
+    RunManagerImpl.getInstanceImpl(myProject).addConfiguration(settings);
   }
 
   @Override
@@ -147,7 +155,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     setNameText(configuration.getName());
     super.reset();
     if (myComponent == null) {
-      myComponent = new MyValidatableComponent(configuration.getConfiguration().getProject());
+      myComponent = new MyValidatableComponent();
     }
     myComponent.doReset(configuration);
   }
@@ -168,7 +176,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         return getEditor();
       }
       if (RUN_ON_TARGET_NAME_KEY.is(dataId)) {
-        RunOnTargetComboBox runOnComboBox = (RunOnTargetComboBox) myComponent.myRunOnComboBox;
+        RunOnTargetComboBox runOnComboBox = (RunOnTargetComboBox)myComponent.myRunOnComboBox;
         if (runOnComboBox != null) {
           return runOnComboBox.getSelectedTargetName();
         }
@@ -212,7 +220,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   private ValidationResult createValidationResult(RunnerAndConfigurationSettings snapshot, ConfigurationException e) {
-    if (!e.shouldShowInDumbMode() && DumbService.isDumb(getConfiguration().getProject())) return null;
+    if (!e.shouldShowInDumbMode() && DumbService.isDumb(myProject)) return null;
 
     return new ValidationResult(
       e.getLocalizedMessage(),
@@ -264,8 +272,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myNameDocument.addDocumentListener(listener);
   }
 
-  public final void addSharedListener(ChangeListener changeListener) {
-    myComponent.myCbStoreProjectConfiguration.addChangeListener(changeListener);
+  public final void addSharedListener(ActionListener listener) {
+    myComponent.myStoreAsFileCheckBox.addActionListener(listener);
   }
 
   public final void setNameText(final String name) {
@@ -348,22 +356,22 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JBLabel myWarningLabel;
     private JButton myFixButton;
     private JSeparator mySeparator;
-    private JCheckBox myCbStoreProjectConfiguration;
     private JBCheckBox myIsAllowRunningInParallelCheckBox;
+
+    private JBCheckBox myStoreAsFileCheckBox;
+    private ActionButton myStoreAsFileGearButton;
+
     private JPanel myValidationPanel;
     private JBScrollPane myJBScrollPane;
-    private JPanel myCbStoreProjectConfigurationPanel;
 
     private ComboBox myRunOnComboBox;
     private JLabel myManageTargetsLabel;
     private JPanel myRunOnPanel;
     private JPanel myRunOnPanelInner;
 
-    private final ComponentValidator myCbStoreProjectConfigurationValidator;
-
     private Runnable myQuickFix = null;
 
-    MyValidatableComponent(@NotNull Project project) {
+    MyValidatableComponent() {
       myNameLabel.setLabelFor(myNameText);
       myNameText.setDocument(myNameDocument);
 
@@ -390,43 +398,24 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           updateWarning();
         }
       });
-      myCbStoreProjectConfigurationValidator =
-        new ComponentValidator(getEditor()).withValidator(() -> getStoreProjectConfigurationValidationInfo())
-          .withHyperlinkListener(new HyperlinkListener() {
-            @Override
-            public void hyperlinkUpdate(HyperlinkEvent e) {
-              if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                VcsIgnoreManager.getInstance(getConfiguration().getProject()).removeRunConfigurationFromVcsIgnore(getConfiguration().getName());
-                myCbStoreProjectConfigurationValidator.revalidate();
-              }
-            }
-          })
-          .installOn(myCbStoreProjectConfiguration);
-      myCbStoreProjectConfiguration.addActionListener(e -> {
-        setModified(true);
-        myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
-        myCbStoreProjectConfigurationValidator.revalidate();
-      });
+
       myIsAllowRunningInParallelCheckBox.addActionListener(e -> {
         setModified(true);
         myIsAllowRunningInParallel = myIsAllowRunningInParallelCheckBox.isSelected();
       });
+
+      myStoreAsFileCheckBox.addActionListener(e -> {
+        myStoreProjectConfiguration = myStoreAsFileCheckBox.isSelected();
+        setModified(true);
+
+        myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
+        if (myStoreAsFileCheckBox.isSelected()) {
+          manageStorageFileLocation();
+        }
+      });
+
       myJBScrollPane.setBorder(JBUI.Borders.empty());
       myJBScrollPane.setViewportBorder(JBUI.Borders.empty());
-
-      ComponentPanelBuilder componentPanelBuilder = UI.PanelFactory.panel(myCbStoreProjectConfiguration);
-      @SystemIndependent VirtualFile projectFile = project.getProjectFile();
-      if (projectFile != null) {
-        componentPanelBuilder.withTooltip(
-          ProjectKt.isDirectoryBased(project)
-          ? ExecutionBundle.message("run.configuration.share.hint", ".idea folder")
-          : ExecutionBundle.message("run.configuration.share.hint", projectFile.getName())
-        );
-      }
-      componentPanelBuilder.addToPanel(myCbStoreProjectConfigurationPanel,
-                                       new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0,
-                                                              GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                              JBUI.emptyInsets(), 0, 0), false);
 
       myRunOnPanel.setBorder(JBUI.Borders.emptyLeft(5));
       UI.PanelFactory.panel(myRunOnPanelInner)
@@ -454,37 +443,19 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       });
     }
 
-    @Nullable
-    private ValidationInfo getStoreProjectConfigurationValidationInfo() {
-      Project project = getConfiguration().getProject();
-      @SystemIndependent VirtualFile projectFile = project.getProjectFile();
-      if (projectFile == null) return null;
-      if (!myCbStoreProjectConfiguration.isSelected()) return null;
-
-      if (!ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) {
-        String fileAddToVcs = ProjectKt.isDirectoryBased(project)
-                              ? Project.DIRECTORY_STORE_FOLDER + "/runConfigurations"
-                              : projectFile.getName();
-        return new ValidationInfo(ExecutionBundle.message("run.configuration.share.vcs.disabled", fileAddToVcs),
-                                  myCbStoreProjectConfiguration).asWarning();
-      }
-      else if (VcsIgnoreManager.getInstance(getConfiguration().getProject()).isRunConfigurationVcsIgnored(getConfiguration().getName())) {
-        return new ValidationInfo(ExecutionBundle.message("run.configuration.share.vcs.ignored", getConfiguration().getName()),
-                                  myCbStoreProjectConfiguration).asWarning();
-      }
-      return null;
-    }
-
     private void doReset(RunnerAndConfigurationSettings settings) {
       RunConfiguration configuration = settings.getConfiguration();
       boolean isManagedRunConfiguration = configuration.getType().isManaged();
       myStoreProjectConfiguration = settings.isShared();
-      myCbStoreProjectConfiguration.setEnabled(isManagedRunConfiguration);
-      myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
-      myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
-      myCbStoreProjectConfigurationValidator.revalidate();
 
-      boolean targetAware = configuration instanceof TargetEnvironmentAwareRunProfile && Experiments.getInstance().isFeatureEnabled("runtime.environments");
+      myStoreAsFileCheckBox.setVisible(!settings.isTemplate());
+      myStoreAsFileCheckBox.setEnabled(isManagedRunConfiguration);
+      myStoreAsFileCheckBox.setSelected(myStoreProjectConfiguration);
+      myStoreAsFileGearButton.setVisible(!settings.isTemplate() && isManagedRunConfiguration);
+      myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
+
+      boolean targetAware =
+        configuration instanceof TargetEnvironmentAwareRunProfile && Experiments.getInstance().isFeatureEnabled("runtime.environments");
       myRunOnPanel.setVisible(targetAware);
       if (targetAware) {
         String defaultTargetName = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultTargetName();
@@ -551,14 +522,15 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     private void createUIComponents() {
       myComponentPlace = new NonOpaquePanel();
-      Project project = getConfiguration().getProject();
-      myRunOnComboBox = new RunOnTargetComboBox(project);
-      myManageTargetsLabel = LinkLabel.create(ExecutionBundle.message("edit.run.configuration.run.configuration.manage.targets.label"), () -> {
-            String selectedName = ((RunOnTargetComboBox)myRunOnComboBox).getSelectedTargetName();
-            TargetEnvironmentsConfigurable configurable = new TargetEnvironmentsConfigurable(project, selectedName);
-            if (ShowSettingsUtil.getInstance().editConfigurable(myWholePanel, configurable)) {
-              resetRunOnComboBox(selectedName);
-            }
+      myStoreAsFileGearButton = createStoreAsFileGearButton();
+      myRunOnComboBox = new RunOnTargetComboBox(myProject);
+      myManageTargetsLabel =
+        LinkLabel.create(ExecutionBundle.message("edit.run.configuration.run.configuration.manage.targets.label"), () -> {
+          String selectedName = ((RunOnTargetComboBox)myRunOnComboBox).getSelectedTargetName();
+          TargetEnvironmentsConfigurable configurable = new TargetEnvironmentsConfigurable(myProject, selectedName);
+          if (ShowSettingsUtil.getInstance().editConfigurable(myWholePanel, configurable)) {
+            resetRunOnComboBox(selectedName);
+          }
         });
       myJBScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
         @Override
@@ -578,6 +550,46 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           return d;
         }
       };
+    }
+
+    @NotNull
+    private ActionButton createStoreAsFileGearButton() {
+      AnAction showStoragePathAction = new DumbAwareAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          manageStorageFileLocation();
+        }
+      };
+      Presentation presentation = new Presentation(ExecutionBundle.message("run.configuration.manage.file.location"));
+      presentation.setIcon(new LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown));
+      return new ActionButton(showStoragePathAction, presentation, ActionPlaces.TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    }
+
+    private void manageStorageFileLocation() {
+      @NotNull Disposable balloonDisposable = Disposer.newDisposable();
+      RunConfigurationStorageUi storageUi = new RunConfigurationStorageUi(myProject, balloonDisposable);
+      Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(storageUi.getMainPanel())
+        .setDialogMode(true)
+        .setBorderInsets(JBUI.insets(20, 15, 10, 15))
+        .setFillColor(UIUtil.getPanelBackground())
+        .setHideOnAction(false)
+        .setHideOnLinkClick(false)
+        .setRequestFocus(true)
+        .createBalloon();
+      balloon.setAnimationEnabled(false);
+
+      String path = ""; // TODO
+      storageUi.reset(path, () -> balloon.hide());
+
+      balloon.addListener(new JBPopupListener() {
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          Disposer.dispose(balloonDisposable);
+        }
+      });
+
+      balloon.show(RelativePoint.getSouthOf(myStoreAsFileCheckBox), Balloon.Position.below);
+      IdeFocusManager.getInstance(myProject).requestFocus(storageUi.getPreferredFocusedComponent(), true);
     }
   }
 }
