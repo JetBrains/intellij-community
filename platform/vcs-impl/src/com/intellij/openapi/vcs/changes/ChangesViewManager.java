@@ -296,16 +296,20 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
     @NotNull private static final RegistryValue isCommitSplitHorizontal =
       Registry.get("vcs.non.modal.commit.split.horizontal.if.no.diff.preview");
+    @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
 
     @NotNull private final Project myProject;
     @NotNull private final ChangesViewManager myChangesViewManager;
     @NotNull private final VcsConfiguration myVcsConfiguration;
 
+    @NotNull private final BorderLayoutPanel myMainPanel;
+    @NotNull private final BorderLayoutPanel myContentPanel;
     @NotNull private final ChangesViewPanel myChangesPanel;
     @NotNull private final ChangesListView myView;
 
     @NotNull private final ChangesViewCommitPanelSplitter myCommitPanelSplitter;
-    @NotNull private final ChangesViewPreview myDiffPreview;
+    private ChangesViewDiffPreviewProcessor myChangeProcessor;
+    private ChangesViewPreview myDiffPreview;
     @NotNull private final Wrapper myProgressLabel = new Wrapper();
 
     @Nullable private ChangesViewCommitPanel myCommitPanel;
@@ -355,7 +359,7 @@ public class ChangesViewManager implements ChangesViewEx,
       Disposer.register(this, myCommitPanelSplitter);
       myCommitPanelSplitter.setFirstComponent(myChangesPanel);
 
-      BorderLayoutPanel contentPanel = new BorderLayoutPanel() {
+      myContentPanel = new BorderLayoutPanel() {
         @Override
         public Dimension getMinimumSize() {
           return isMinimumSizeSet() || myChangesPanel.isToolbarHorizontal()
@@ -363,69 +367,18 @@ public class ChangesViewManager implements ChangesViewEx,
                  : myChangesPanel.getToolbar().getComponent().getPreferredSize();
         }
       };
-      contentPanel.addToCenter(myCommitPanelSplitter);
+      myContentPanel.addToCenter(myCommitPanelSplitter);
+      myMainPanel = simplePanel(myContentPanel);
 
-      boolean isPreviewInEditor = Registry.is("show.diff.preview.as.editor.tab");
-      String place = isPreviewInEditor ? DiffPlaces.DEFAULT : DiffPlaces.CHANGES_VIEW;
+      setDiffPreview();
+      isEditorDiffPreview.addListener(new RegistryValueListener() {
+        @Override
+        public void afterValueChanged(@NotNull RegistryValue value) {
+          setDiffPreview();
+        }
+      }, this);
 
-      ChangesViewDiffPreviewProcessor changeProcessor = new ChangesViewDiffPreviewProcessor(myView, place);
-      Disposer.register(this, changeProcessor);
-
-      JComponent mainPanel;
-      if (isPreviewInEditor) {
-        EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
-          @Override
-          protected String getCurrentName() {
-            return changeProcessor.getCurrentChangeName();
-          }
-
-          @Override
-          protected boolean hasContent() {
-            return changeProcessor.getCurrentChangeName() != null;
-          }
-
-          @Override
-          protected boolean skipPreviewUpdate() {
-            if (super.skipPreviewUpdate()) return true;
-            if (!myView.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
-
-            return !myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN || myModelUpdateInProgress;
-          }
-
-          @Override
-          public void updatePreview(boolean fromModelRefresh) {
-            if (!myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return;
-
-            super.updatePreview(fromModelRefresh);
-          }
-        };
-        editorPreview.setEscapeHandler(() -> {
-          ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
-          if (toolWindow != null) toolWindow.activate(null);
-        });
-        editorPreview.installOn(myView);
-        editorPreview.installNextDiffActionOn(contentPanel);
-
-        myDiffPreview = editorPreview;
-        mainPanel = contentPanel;
-
-        UIUtil.putClientProperty(myView, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);
-      }
-      else {
-        PreviewDiffSplitterComponent previewSplitter =
-          new PreviewDiffSplitterComponent(changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
-        previewSplitter.setFirstComponent(contentPanel);
-        previewSplitter.setPreviewVisible(myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
-
-        myDiffPreview = previewSplitter;
-        mainPanel = previewSplitter;
-
-        myView.addTreeSelectionListener(e -> {
-          boolean fromModelRefresh = myModelUpdateInProgress;
-          invokeLater(() -> myDiffPreview.updatePreview(fromModelRefresh));
-        });
-      }
-      setContent(simplePanel(mainPanel).addToBottom(myProgressLabel));
+      setContent(myMainPanel.addToBottom(myProgressLabel));
 
       setCommitSplitOrientation();
       isCommitSplitHorizontal.addListener(new RegistryValueListener() {
@@ -476,6 +429,84 @@ public class ChangesViewManager implements ChangesViewEx,
       synchronized (myTreeUpdateIndicatorLock) {
         myTreeUpdateIndicator.cancel();
       }
+    }
+
+    private void setDiffPreview() {
+      boolean isEditorPreview = isEditorDiffPreview.asBoolean();
+      if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
+      if (!isEditorPreview && myDiffPreview instanceof PreviewDiffSplitterComponent) return;
+
+      if (myChangeProcessor != null) Disposer.dispose(myChangeProcessor);
+
+      String place = isEditorPreview ? DiffPlaces.DEFAULT : DiffPlaces.CHANGES_VIEW;
+      myChangeProcessor = new ChangesViewDiffPreviewProcessor(myView, place);
+      Disposer.register(this, myChangeProcessor);
+
+      myDiffPreview = isEditorPreview ? installEditorPreview(myChangeProcessor) : installSplitterPreview(myChangeProcessor);
+    }
+
+    @NotNull
+    private EditorTabPreview installEditorPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor) {
+      EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
+        @Override
+        protected String getCurrentName() {
+          return changeProcessor.getCurrentChangeName();
+        }
+
+        @Override
+        protected boolean hasContent() {
+          return changeProcessor.getCurrentChangeName() != null;
+        }
+
+        @Override
+        protected boolean skipPreviewUpdate() {
+          if (super.skipPreviewUpdate()) return true;
+          if (!myView.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
+
+          return !myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN || myModelUpdateInProgress;
+        }
+
+        @Override
+        public void updatePreview(boolean fromModelRefresh) {
+          if (!myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return;
+
+          super.updatePreview(fromModelRefresh);
+        }
+      };
+      editorPreview.setEscapeHandler(() -> {
+        ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
+        if (toolWindow != null) toolWindow.activate(null);
+      });
+      editorPreview.installOn(myView);
+      editorPreview.installNextDiffActionOn(myContentPanel);
+
+      UIUtil.putClientProperty(myView, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);
+
+      return editorPreview;
+    }
+
+    @NotNull
+    private PreviewDiffSplitterComponent installSplitterPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor) {
+      PreviewDiffSplitterComponent previewSplitter =
+        new PreviewDiffSplitterComponent(changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
+      previewSplitter.setFirstComponent(myContentPanel);
+      previewSplitter.setPreviewVisible(myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+
+      myView.addSelectionListener(() -> {
+        boolean fromModelRefresh = myModelUpdateInProgress;
+        invokeLater(() -> previewSplitter.updatePreview(fromModelRefresh));
+      }, changeProcessor);
+
+      myMainPanel.addToCenter(previewSplitter);
+      Disposer.register(changeProcessor, () -> {
+        myMainPanel.remove(previewSplitter);
+        myMainPanel.addToCenter(myContentPanel);
+
+        myMainPanel.revalidate();
+        myMainPanel.repaint();
+      });
+
+      return previewSplitter;
     }
 
     @Nullable

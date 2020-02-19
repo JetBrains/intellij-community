@@ -33,6 +33,8 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -616,15 +618,19 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   private static final class ShelfToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
+    @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
+
     private final Project myProject;
     private final ShelveChangesManager myShelveChangesManager;
     private final VcsConfiguration myVcsConfiguration;
 
+    @NotNull private final JScrollPane myTreeScrollPane;
     private final ShelfTree myTree;
     private final ActionToolbar myToolbar;
-    private final JPanel myRootPanel;
+    @NotNull private final JPanel myRootPanel = new JPanel(new BorderLayout());
 
-    private final ChangesViewPreview myDiffPreview;
+    private MyShelvedPreviewProcessor myChangeProcessor;
+    private ChangesViewPreview myDiffPreview;
 
     private ShelfToolWindowPanel(@NotNull Project project) {
       myProject = project;
@@ -667,60 +673,23 @@ public class ShelvedChangesViewManager implements Disposable {
       final EditSourceAction editSourceAction = new EditSourceAction();
       editSourceAction.registerCustomShortcutSet(editSourceAction.getShortcutSet(), myTree);
 
-      JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT);
-
       DefaultActionGroup actionGroup = new DefaultActionGroup();
       actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbar"));
       actionGroup.add(new MyToggleDetailsAction(), new Constraints(AFTER, "ShelvedChanges.ShowHideDeleted"));
 
-      MyShelvedPreviewProcessor changeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
-      Disposer.register(this, changeProcessor);
-
       myToolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
-      myRootPanel = new JPanel(new BorderLayout());
+      myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT);
+      myRootPanel.add(myTreeScrollPane, BorderLayout.CENTER);
       addToolbar(isCommitToolWindow(myProject));
       myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this);
 
-      if (Registry.is("show.diff.preview.as.editor.tab")) {
-        EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
-          @Override
-          protected String getCurrentName() {
-            ShelvedWrapper myCurrentShelvedElement = changeProcessor.myCurrentShelvedElement;
-            return myCurrentShelvedElement != null ? myCurrentShelvedElement.getRequestName() : VcsBundle.message("shelved.version.name");
-          }
-
-          @Override
-          protected boolean hasContent() {
-            return changeProcessor.myCurrentShelvedElement != null;
-          }
-
-          @Override
-          protected boolean skipPreviewUpdate() {
-            if (super.skipPreviewUpdate()) return true;
-            if (!myTree.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
-
-            return !myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
-          }
-        };
-        editorPreview.setEscapeHandler(() -> {
-          ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
-          if (toolWindow != null) toolWindow.activate(null);
-        });
-        editorPreview.installOn(myTree);
-        editorPreview.installNextDiffActionOn(pane);
-
-        myDiffPreview = editorPreview;
-        myRootPanel.add(pane);
-      } else {
-        PreviewDiffSplitterComponent previewSplitter =
-          new PreviewDiffSplitterComponent(changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION);
-        previewSplitter.setFirstComponent(pane);
-        previewSplitter.setPreviewVisible(myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
-
-        myDiffPreview = previewSplitter;
-        myRootPanel.add(previewSplitter, BorderLayout.CENTER);
-        myTree.addSelectionListener(() -> myDiffPreview.updatePreview(false));
-      }
+      setDiffPreview();
+      isEditorDiffPreview.addListener(new RegistryValueListener() {
+        @Override
+        public void afterValueChanged(@NotNull RegistryValue value) {
+          setDiffPreview();
+        }
+      }, this);
 
       DataManager.registerDataProvider(myRootPanel, myTree);
 
@@ -745,6 +714,72 @@ public class ShelvedChangesViewManager implements Disposable {
         myToolbar.setOrientation(SwingConstants.VERTICAL);
         myRootPanel.add(myToolbar.getComponent(), BorderLayout.WEST);
       }
+    }
+
+    private void setDiffPreview() {
+      boolean isEditorPreview = isEditorDiffPreview.asBoolean();
+      if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
+      if (!isEditorPreview && myDiffPreview instanceof PreviewDiffSplitterComponent) return;
+
+      if (myChangeProcessor != null) Disposer.dispose(myChangeProcessor);
+
+      myChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
+      Disposer.register(this, myChangeProcessor);
+
+      myDiffPreview = isEditorPreview ? installEditorPreview(myChangeProcessor) : installSplitterPreview(myChangeProcessor);
+    }
+
+    @NotNull
+    private EditorTabPreview installEditorPreview(@NotNull MyShelvedPreviewProcessor changeProcessor) {
+      EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
+        @Override
+        protected String getCurrentName() {
+          ShelvedWrapper myCurrentShelvedElement = changeProcessor.myCurrentShelvedElement;
+          return myCurrentShelvedElement != null ? myCurrentShelvedElement.getRequestName() : VcsBundle.message("shelved.version.name");
+        }
+
+        @Override
+        protected boolean hasContent() {
+          return changeProcessor.myCurrentShelvedElement != null;
+        }
+
+        @Override
+        protected boolean skipPreviewUpdate() {
+          if (super.skipPreviewUpdate()) return true;
+          if (!myTree.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
+
+          return !myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
+        }
+      };
+      editorPreview.setEscapeHandler(() -> {
+        ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
+        if (toolWindow != null) toolWindow.activate(null);
+      });
+      editorPreview.installOn(myTree);
+      editorPreview.installNextDiffActionOn(myTreeScrollPane);
+
+      return editorPreview;
+    }
+
+    @NotNull
+    private PreviewDiffSplitterComponent installSplitterPreview(@NotNull MyShelvedPreviewProcessor changeProcessor) {
+      PreviewDiffSplitterComponent previewSplitter =
+        new PreviewDiffSplitterComponent(changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION);
+      previewSplitter.setFirstComponent(myTreeScrollPane);
+      previewSplitter.setPreviewVisible(myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
+
+      myTree.addSelectionListener(() -> previewSplitter.updatePreview(false), changeProcessor);
+
+      myRootPanel.add(previewSplitter, BorderLayout.CENTER);
+      Disposer.register(changeProcessor, () -> {
+        myRootPanel.remove(previewSplitter);
+        myRootPanel.add(myTreeScrollPane, BorderLayout.CENTER);
+
+        myRootPanel.revalidate();
+        myRootPanel.repaint();
+      });
+
+      return previewSplitter;
     }
 
     @Nullable
