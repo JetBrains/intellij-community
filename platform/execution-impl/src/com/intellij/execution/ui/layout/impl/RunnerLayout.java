@@ -156,14 +156,6 @@ public class RunnerLayout  {
     myTabs.clear();
   }
 
-  public boolean isToolbarHorizontal() {
-    return false;
-  }
-
-  public void setToolbarHorizontal(boolean horizontal) {
-    myGeneral.horizontalToolbar = horizontal;
-  }
-
   @NotNull
   public ViewImpl getStateFor(@NotNull Content content) {
     return getOrCreateView(getOrCreateContentId(content));

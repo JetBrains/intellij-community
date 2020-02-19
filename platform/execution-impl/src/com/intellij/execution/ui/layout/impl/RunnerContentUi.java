@@ -73,6 +73,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Stream;
 
 import static com.intellij.ui.tabs.JBTabsEx.NAVIGATION_ACTIONS_KEY;
 
@@ -109,18 +110,20 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   };
   private final Project myProject;
 
-  private ActionGroup myTopActions = new DefaultActionGroup();
+  private ActionGroup myTopLeftActions = new DefaultActionGroup();
+  private ActionGroup myTopRightActions = new DefaultActionGroup();
 
   private final DefaultActionGroup myViewActions = new DefaultActionGroup();
 
   private final Map<GridImpl, Wrapper> myMinimizedButtonsPlaceholder = new HashMap<>();
-  private final Map<GridImpl, Wrapper> myCommonActionsPlaceholder = new HashMap<>();
-  private final Map<GridImpl, AnAction[]> myContextActions = new HashMap<>();
+  private final Map<GridImpl, TopToolbarWrappers> myCommonActionsPlaceholder = new HashMap<>();
+  private final Map<GridImpl, TopToolbarContextActions> myContextActions = new HashMap<>();
 
   private boolean myUiLastStateWasRestored;
 
   private final Set<Object> myRestoreStateRequestors = new HashSet<>();
-  private String myActionsPlace = ActionPlaces.UNKNOWN;
+  private String myTopLeftActionsPlace = ActionPlaces.UNKNOWN;
+  private String myTopRightActionsPlace = ActionPlaces.UNKNOWN;
   private final IdeFocusManager myFocusManager;
 
   private boolean myMinimizeActionEnabled = true;
@@ -176,9 +179,16 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     myWindow = window == 0 ? original.findFreeWindow() : window;
   }
 
-  void setTopActions(@NotNull final ActionGroup topActions, @NotNull String place) {
-    myTopActions = topActions;
-    myActionsPlace = place;
+  void setTopLeftActions(@NotNull final ActionGroup topActions, @NotNull String place) {
+    myTopLeftActions = topActions;
+    myTopLeftActionsPlace = place;
+
+    rebuildCommonActions();
+  }
+
+  void setTopRightActions(@NotNull final ActionGroup topActions, @NotNull String place) {
+    myTopRightActions = topActions;
+    myTopRightActionsPlace = place;
 
     rebuildCommonActions();
   }
@@ -832,8 +842,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText("Tab");
 
-    Wrapper left = new Wrapper();
-    myCommonActionsPlaceholder.put(grid, left);
+    Wrapper leftWrapper = new Wrapper();
+    Wrapper rightWrapper = new Wrapper();
+    myCommonActionsPlaceholder.put(grid, new TopToolbarWrappers(leftWrapper, rightWrapper));
 
     Wrapper minimizedToolbar = new Wrapper();
     myMinimizedButtonsPlaceholder.put(grid, minimizedToolbar);
@@ -847,7 +858,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     TwoSideComponent right = new TwoSideComponent(searchComponent, minimizedToolbar);
 
 
-    NonOpaquePanel sideComponent = new TwoSideComponent(left, right);
+    NonOpaquePanel sideComponent = new TwoSideComponent(leftWrapper, new TwoSideComponent(right, rightWrapper));
 
     tab.setSideComponent(sideComponent);
 
@@ -926,47 +937,44 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   private boolean rebuildCommonActions() {
     boolean hasToolbarContent = false;
-    for (Map.Entry<GridImpl, Wrapper> entry : myCommonActionsPlaceholder.entrySet()) {
-      Wrapper eachPlaceholder = entry.getValue();
-      List<Content> contentList = entry.getKey().getContents();
+    for (Map.Entry<GridImpl, TopToolbarWrappers> entry : myCommonActionsPlaceholder.entrySet()) {
+      Wrapper leftPlaceHolder = entry.getValue().left;
+      Wrapper rightPlaceHolder = entry.getValue().right;
 
-      Set<Content> contents = new HashSet<>(contentList);
+      TopToolbarContextActions topToolbarContextActions = myContextActions.get(entry.getKey());
 
-      DefaultActionGroup groupToBuild;
-      JComponent contextComponent = null;
-      if (isHorizontalToolbar() && contents.size() == 1) {
-        Content content = contentList.get(0);
-        groupToBuild = new DefaultActionGroup();
-        if (content.getActions() != null) {
-          groupToBuild.addAll(content.getActions());
-          groupToBuild.addSeparator();
-          contextComponent = content.getActionsContextComponent();
-        }
-        groupToBuild.addAll(myTopActions);
-      }
-      else {
-        final DefaultActionGroup group = new DefaultActionGroup();
-        group.addAll(myTopActions);
-        groupToBuild = group;
+      DefaultActionGroup leftGroupToBuild = new DefaultActionGroup();
+      leftGroupToBuild.addAll(myTopLeftActions);
+      final AnAction[] leftActions = leftGroupToBuild.getChildren(null);
+
+      if (topToolbarContextActions == null || !Arrays.equals(leftActions, topToolbarContextActions.left)) {
+        setActions(leftPlaceHolder, myTopLeftActionsPlace, leftGroupToBuild);
       }
 
-      final AnAction[] actions = groupToBuild.getChildren(null);
-      if (!Arrays.equals(actions, myContextActions.get(entry.getKey()))) {
-        String adjustedPlace = myActionsPlace == ActionPlaces.UNKNOWN ? ActionPlaces.TOOLBAR : myActionsPlace;
-        ActionToolbar tb = myActionManager.createActionToolbar(adjustedPlace, groupToBuild, true);
-        tb.getComponent().setBorder(null);
-        tb.setTargetComponent(contextComponent);
-        eachPlaceholder.setContent(tb.getComponent());
+      DefaultActionGroup rightGroupToBuild = new DefaultActionGroup();
+      rightGroupToBuild.addAll(myTopRightActions);
+      final AnAction[] rightActions = rightGroupToBuild.getChildren(null);
+
+      if (topToolbarContextActions == null || !Arrays.equals(rightActions, topToolbarContextActions.right)) {
+        setActions(rightPlaceHolder, myTopRightActionsPlace, rightGroupToBuild);
       }
 
-      if (groupToBuild.getChildrenCount() > 0) {
+      myContextActions.put(entry.getKey(), new TopToolbarContextActions(leftActions, rightActions));
+
+      if (leftGroupToBuild.getChildrenCount() > 0 || rightGroupToBuild.getChildrenCount() > 0) {
         hasToolbarContent = true;
       }
-
-      myContextActions.put(entry.getKey(), actions);
     }
 
     return hasToolbarContent;
+  }
+
+  private void setActions(Wrapper placeHolder, String place, DefaultActionGroup group) {
+    String adjustedPlace = place == ActionPlaces.UNKNOWN ? ActionPlaces.TOOLBAR : place;
+    ActionToolbar tb = myActionManager.createActionToolbar(adjustedPlace, group, true);
+    tb.getComponent().setBorder(null);
+
+    placeHolder.setContent(tb.getComponent());
   }
 
   private boolean rebuildMinimizedActions() {
@@ -1157,17 +1165,6 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return ContainerUtil.map(myTabs.getTabs(), RunnerContentUi::getGridFor);
   }
 
-  public void setHorizontalToolbar(final boolean state) {
-    myLayoutSettings.setToolbarHorizontal(state);
-    for (GridImpl each : getGrids()) {
-      each.setToolbarHorizontal(state);
-    }
-
-    myContextActions.clear();
-    updateTabsUI(false);
-  }
-
-
   @Override
   public boolean isSingleSelection() {
     return false;
@@ -1237,7 +1234,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     myContextActions.clear();
 
     myOriginal = null;
-    myTopActions = null;
+    myTopLeftActions = null;
+    myTopRightActions = null;
     myAdditionalFocusActions = null;
     myLeftToolbarActions = null;
   }
@@ -1296,7 +1294,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   public void updateActionsImmediately() {
-    StreamEx.of(myToolbar).append(myCommonActionsPlaceholder.values())
+    Collection<TopToolbarWrappers> values = myCommonActionsPlaceholder.values();
+    Stream<Wrapper> leftWrappers = values.stream().map(it -> it.left);
+    Stream<Wrapper> rightWrappers = values.stream().map(it -> it.right);
+    StreamEx.of(myToolbar).append(leftWrappers).append(rightWrappers)
       .map(Wrapper::getTargetComponent)
       .select(ActionToolbar.class)
       .distinct()
@@ -1690,10 +1691,6 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return myLayoutSettings.getStateFor(content);
   }
 
-  private boolean isHorizontalToolbar() {
-    return myLayoutSettings.isToolbarHorizontal();
-  }
-
   @Override
   public ActionCallback select(@NotNull final Content content, final boolean requestFocus) {
     final GridImpl grid = (GridImpl)findGridFor(content);
@@ -1992,6 +1989,26 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private void fireContentClosed(Content content) {
     for (Listener each : myDockingListeners) {
       each.contentRemoved(content);
+    }
+  }
+
+  private static class TopToolbarContextActions {
+    public final AnAction[] left;
+    public final AnAction[] right;
+
+    private TopToolbarContextActions(AnAction[] left, AnAction[] right) {
+      this.left = left;
+      this.right = right;
+    }
+  }
+
+  private static class TopToolbarWrappers {
+    public final Wrapper left;
+    public final Wrapper right;
+
+    private TopToolbarWrappers(Wrapper left, Wrapper right) {
+      this.left = left;
+      this.right = right;
     }
   }
 }

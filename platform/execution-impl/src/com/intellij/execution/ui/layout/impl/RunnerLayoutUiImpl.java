@@ -71,8 +71,22 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
 
   @Override
   @NotNull
+  @Deprecated
   public LayoutViewOptions setTopToolbar(@NotNull ActionGroup actions, @NotNull String place) {
-    myContentUI.setTopActions(actions, place);
+    return setTopLeftToolbar(actions, place);
+  }
+
+  @Override
+  @NotNull
+  public LayoutViewOptions setTopLeftToolbar(@NotNull ActionGroup actions, @NotNull String place) {
+    myContentUI.setTopLeftActions(actions, place);
+    return this;
+  }
+
+  @Override
+  @NotNull
+  public LayoutViewOptions setTopRightToolbar(@NotNull ActionGroup actions, @NotNull String place) {
+    myContentUI.setTopRightActions(actions, place);
     return this;
   }
 

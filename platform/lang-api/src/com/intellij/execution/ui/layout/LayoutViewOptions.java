@@ -27,7 +27,14 @@ public interface LayoutViewOptions {
   String STARTUP = "startup";
 
   @NotNull
+  @Deprecated
   LayoutViewOptions setTopToolbar(@NotNull ActionGroup actions, @NotNull String place);
+
+  @NotNull
+  LayoutViewOptions setTopLeftToolbar(@NotNull ActionGroup actions, @NotNull String place);
+
+  @NotNull
+  LayoutViewOptions setTopRightToolbar(@NotNull ActionGroup actions, @NotNull String place);
 
   @NotNull
   LayoutViewOptions setLeftToolbar(@NotNull ActionGroup leftToolbar, @NotNull String place);

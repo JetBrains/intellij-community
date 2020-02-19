@@ -70,7 +70,7 @@ public final class GridCellImpl implements GridCell {
       return null;
     });
 
-    myTabs.getPresentation().setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
+    myTabs.getPresentation().setSideComponentVertical(true)
       .setFocusCycle(false).setPaintFocus(true)
       .setTabDraggingEnabled(context.isMoveToGridActionEnabled()).setSideComponentOnTabs(false);
 
