@@ -46,6 +46,10 @@ public final class MacrosDialog extends DialogWrapper {
     init();
   }
 
+  public static void show(@NotNull JTextComponent textComponent) {
+    show(textComponent, null);
+  }
+
   public static void show(@NotNull JTextComponent textComponent, @Nullable Condition<? super Macro> filter) {
     MacrosDialog dialog = new MacrosDialog(textComponent);
     if (filter != null) {
