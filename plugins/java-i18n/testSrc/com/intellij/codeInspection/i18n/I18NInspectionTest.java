@@ -4,11 +4,9 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.impl.JavaPsiFacadeEx;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 
 public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
@@ -20,6 +18,11 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting("i18n/" + getTestName(false) + ".java");
   }
 
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
   public void testHardCodedStringLiteralAsParameter() { doTest(); }
   public void testReturnTypeInheritsNonNlsAnnotationFromParent() { doTest(); }
   public void testRecursiveInheritance() { doTest(); }
@@ -29,17 +32,7 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testInAnnotationArguments() { doTest(); }
   public void testAnonymousClassConstructorParameter() { doTest(); }
   public void testStringBufferNonNls() { doTest(); }
-  public void testEnum() {
-     final JavaPsiFacade facade = JavaPsiFacadeEx.getInstanceEx(getProject());
-     final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-     LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-     try {
-       doTest();
-     }
-     finally {
-       LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(effectiveLanguageLevel);
-     }
-   }
+  public void testEnum() { doTest(); }
 
   public void testVarargNonNlsParameter() { doTest(); }
   public void testInitializerInAnonymousClass() { doTest(); }
