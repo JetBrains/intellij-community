@@ -3,6 +3,7 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
@@ -49,7 +50,7 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
 
   @Override
   public String getDisplayName() {
-    return JavaBundle.message("scope.class.hierarchy");
+    return IdeBundle.message("scope.class.hierarchy");
   }
 
   @Override
