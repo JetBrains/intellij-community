@@ -72,6 +72,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_K
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindow;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.ToggleChangesViewCommitUiActionKt.isToggleCommitUi;
@@ -292,7 +293,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
   }
 
-  public static class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
+  public static class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
     @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
     @NotNull private static final RegistryValue isCommitSplitHorizontal =
       Registry.get("vcs.non.modal.commit.split.horizontal.if.no.diff.preview");
@@ -377,6 +378,7 @@ public class ChangesViewManager implements ChangesViewEx,
           setDiffPreview();
         }
       }, this);
+      myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this);
 
       setContent(myMainPanel.addToBottom(myProgressLabel));
 
@@ -431,8 +433,13 @@ public class ChangesViewManager implements ChangesViewEx,
       }
     }
 
+    @Override
+    public void toolWindowMappingChanged() {
+      setDiffPreview();
+    }
+
     private void setDiffPreview() {
-      boolean isEditorPreview = isEditorDiffPreview.asBoolean();
+      boolean isEditorPreview = isCommitToolWindow(myProject) || isEditorDiffPreview.asBoolean();
       if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
       if (!isEditorPreview && myDiffPreview instanceof PreviewDiffSplitterComponent) return;
 

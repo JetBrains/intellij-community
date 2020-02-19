@@ -681,8 +681,6 @@ public class ShelvedChangesViewManager implements Disposable {
       myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT);
       myRootPanel.add(myTreeScrollPane, BorderLayout.CENTER);
       addToolbar(isCommitToolWindow(myProject));
-      myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this);
-
       setDiffPreview();
       isEditorDiffPreview.addListener(new RegistryValueListener() {
         @Override
@@ -690,6 +688,7 @@ public class ShelvedChangesViewManager implements Disposable {
           setDiffPreview();
         }
       }, this);
+      myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this);
 
       DataManager.registerDataProvider(myRootPanel, myTree);
 
@@ -703,6 +702,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public void toolWindowMappingChanged() {
       addToolbar(isCommitToolWindow(myProject));
+      setDiffPreview();
     }
 
     private void addToolbar(boolean isHorizontal) {
@@ -717,7 +717,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private void setDiffPreview() {
-      boolean isEditorPreview = isEditorDiffPreview.asBoolean();
+      boolean isEditorPreview = isCommitToolWindow(myProject) || isEditorDiffPreview.asBoolean();
       if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
       if (!isEditorPreview && myDiffPreview instanceof PreviewDiffSplitterComponent) return;
 
