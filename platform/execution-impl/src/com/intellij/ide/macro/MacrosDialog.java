@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.macro;
 
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -13,6 +15,8 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +48,16 @@ public final class MacrosDialog extends DialogWrapper {
     super(parent, true);
     MacroManager.getInstance().cacheMacrosPreview(DataManager.getInstance().getDataContext(parent));
     init();
+  }
+
+  public static void addTextFieldExtension(@NotNull ExtendableTextField textField) {
+    addTextFieldExtension(textField, null);
+  }
+
+  public static void addTextFieldExtension(@NotNull ExtendableTextField textField, @Nullable Condition<? super Macro> macroFilter) {
+    textField.addExtension(ExtendableTextComponent.Extension.create(
+      AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, ExecutionBundle.message("insert.macros"),
+      () -> show(textField, macroFilter)));
   }
 
   public static void show(@NotNull JTextComponent textComponent) {
