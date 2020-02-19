@@ -9,7 +9,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class PlatformEditorBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.PlatformEditorBundle";
+  @NonNls public static final String BUNDLE = "messages.PlatformEditorBundle";
   private static final PlatformEditorBundle INSTANCE = new PlatformEditorBundle();
 
   private PlatformEditorBundle() {

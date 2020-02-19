@@ -10,6 +10,7 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
@@ -158,7 +159,7 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
                 .applyToComponent { isSelected = modelBinding.get() != null }
               component(ComboBox(supportedValues.toTypedArray()))
                 .enableIf(enableColorBlindness.selected)
-                .applyToComponent { renderer = SimpleListCellRenderer.create<ColorBlindness>("") { UIBundle.message(it.key) } }
+                .applyToComponent { renderer = SimpleListCellRenderer.create<ColorBlindness>("") { PlatformEditorBundle.message(it.key) } }
                 .withBinding({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
                              { it, value -> it.selectedItem = value ?: supportedValues.first() },
                              modelBinding)
