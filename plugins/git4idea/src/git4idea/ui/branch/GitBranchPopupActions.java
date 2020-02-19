@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
+import com.intellij.CommonBundle;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -21,12 +24,14 @@ import git4idea.GitRemoteBranch;
 import git4idea.actions.GitOngoingOperationAction;
 import git4idea.branch.*;
 import git4idea.fetch.GitFetchSupport;
+import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushSource;
 import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import icons.DvcsImplIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +85,7 @@ public class GitBranchPopupActions {
       popupGroup.addAll(toInsert);
     }
 
-    popupGroup.addSeparator("Local Branches" + repoInfo);
+    popupGroup.addSeparator(GitBundle.message("branches.local.branches", repoInfo));
     GitLocalBranch currentBranch = myRepository.getCurrentBranch();
     GitBranchesCollection branchesCollection = myRepository.getBranches();
 
@@ -103,7 +108,7 @@ public class GitBranchPopupActions {
                                topShownBranches, firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null,
                                firstLevelGroup);
 
-    popupGroup.addSeparator("Remote Branches" + repoInfo);
+    popupGroup.addSeparator(GitBundle.message("branches.remote.branches", repoInfo));
     List<RemoteBranchActions> remoteBranchActions = of(branchesCollection.getRemoteBranches())
       .map(GitBranch::getName)
       .sorted(StringUtil::naturalCompare)
@@ -169,7 +174,7 @@ public class GitBranchPopupActions {
     private final List<GitRepository> myRepositories;
 
     CheckoutRevisionActions(Project project, List<GitRepository> repositories) {
-      super("Checkout Tag or Revision...");
+      super(GitBundle.message("branches.checkout.tag.or.revision"));
       myProject = project;
       myRepositories = repositories;
     }
@@ -178,8 +183,8 @@ public class GitBranchPopupActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       // TODO: on type check ref validity, on OK check ref existence.
 
-      GitRefDialog dialog = new GitRefDialog(myProject, myRepositories, "Checkout",
-                                             "Enter reference (branch, tag) name or commit hash:");
+      GitRefDialog dialog = new GitRefDialog(myProject, myRepositories, GitBundle.message("branches.checkout"),
+                                             GitBundle.message("branches.enter.reference.branch.tag.name.or.commit.hash"));
       if (dialog.showAndGet()) {
         String reference = dialog.getReference();
         GitBrancher brancher = GitBrancher.getInstance(myProject);
@@ -192,7 +197,7 @@ public class GitBranchPopupActions {
       boolean isFresh = and(myRepositories, repository -> repository.isFresh());
       if (isFresh) {
         e.getPresentation().setEnabled(false);
-        e.getPresentation().setDescription("Checkout is not possible before the first commit");
+        e.getPresentation().setDescription(GitBundle.message("branches.checkout.is.not.possible.before.the.first.commit"));
       }
     }
   }
@@ -210,7 +215,7 @@ public class GitBranchPopupActions {
     @NotNull private final GitBranchIncomingOutgoingManager myIncomingOutgoingManager;
 
     public LocalBranchActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
-                       @NotNull GitRepository selectedRepository) {
+                              @NotNull GitRepository selectedRepository) {
       myProject = project;
       myRepositories = immutableList(repositories);
       myBranchName = branchName;
@@ -237,23 +242,20 @@ public class GitBranchPopupActions {
       return myBranchName;
     }
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
     @Nullable
     private String constructTooltip() {
       boolean incoming = hasIncomingCommits();
       boolean outgoing = hasOutgoingCommits();
       if (!incoming && !outgoing) return null;
 
-      StringBuilder stringBuilder = new StringBuilder("There are ");
-      String delimiter = "";
+      if (incoming && outgoing) {
+        return GitBundle.message("branches.there.are.incoming.and.outgoing.commits");
+      }
       if (incoming) {
-        stringBuilder.append("incoming ");
-        delimiter = "and ";
+        return GitBundle.message("branches.there.are.incoming.commits");
       }
-      if (outgoing) {
-        stringBuilder.append(delimiter).append("outgoing ");
-      }
-      stringBuilder.append("commits");
-      return stringBuilder.toString();
+      return GitBundle.message("branches.there.are.outgoing.commits");
     }
 
     @Override
@@ -310,7 +312,7 @@ public class GitBranchPopupActions {
       private final String myBranchName;
 
       public CheckoutAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-        super("Checkout");
+        super(GitBundle.lazyMessage("branches.checkout"));
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
@@ -339,7 +341,7 @@ public class GitBranchPopupActions {
                        @NotNull List<GitRepository> repositories,
                        @NotNull String branchName,
                        boolean hasCommitsToPush) {
-        super("Push...");
+        super(ActionsBundle.lazyMessage("action.Vcs.Push.text"));
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
@@ -366,7 +368,7 @@ public class GitBranchPopupActions {
       @NotNull private final String myCurrentBranchName;
 
       RenameBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String currentBranchName) {
-        super("Rename...");
+        super(ActionsBundle.lazyMessage("action.RenameAction.text"));
         myProject = project;
         myRepositories = repositories;
         myCurrentBranchName = currentBranchName;
@@ -377,10 +379,14 @@ public class GitBranchPopupActions {
         rename(myProject, myRepositories, myCurrentBranchName);
       }
 
-      public static void rename(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String currentBranchName) {
-        GitNewBranchOptions options =
-          new GitNewBranchDialog(project, repositories, "Rename Branch " + currentBranchName, currentBranchName, false, false,
-                                 false, GitBranchOperationType.RENAME).showAndGetOptions();
+      public static void rename(@NotNull Project project,
+                                @NotNull List<? extends GitRepository> repositories,
+                                @NotNull String currentBranchName) {
+        GitNewBranchOptions options = new GitNewBranchDialog(project, repositories,
+                                                             GitBundle.message("branches.rename.branch", currentBranchName),
+                                                             currentBranchName,
+                                                             false, false,
+                                                             false, GitBranchOperationType.RENAME).showAndGetOptions();
         if (options != null) {
           GitBrancher brancher = GitBrancher.getInstance(project);
           brancher.renameBranch(currentBranchName, options.getName(), repositories);
@@ -391,7 +397,7 @@ public class GitBranchPopupActions {
       public void update(@NotNull AnActionEvent e) {
         if (myRepositories.stream().anyMatch(Repository::isFresh)) {
           e.getPresentation().setEnabled(false);
-          e.getPresentation().setDescription("Renaming branch is not possible before the first commit");
+          e.getPresentation().setDescription(GitBundle.message("branches.renaming.branch.is.not.possible.before.the.first.commit"));
         }
       }
     }
@@ -402,7 +408,7 @@ public class GitBranchPopupActions {
       private final String myBranchName;
 
       DeleteAction(Project project, List<? extends GitRepository> repositories, String branchName) {
-        super("Delete");
+        super(IdeBundle.lazyMessage("action.delete"));
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
@@ -418,9 +424,9 @@ public class GitBranchPopupActions {
 
   public static class CurrentBranchActions extends LocalBranchActions {
     public CurrentBranchActions(@NotNull Project project,
-                         @NotNull List<? extends GitRepository> repositories,
-                         @NotNull String branchName,
-                         @NotNull GitRepository selectedRepository) {
+                                @NotNull List<? extends GitRepository> repositories,
+                                @NotNull String branchName,
+                                @NotNull GitRepository selectedRepository) {
       super(project, repositories, branchName, selectedRepository);
       setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.Favorite,
                AllIcons.Nodes.NotFavoriteOnHover);
@@ -446,7 +452,7 @@ public class GitBranchPopupActions {
     @NotNull private final GitBranchManager myGitBranchManager;
 
     public RemoteBranchActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
-                        @NotNull GitRepository selectedRepository) {
+                               @NotNull GitRepository selectedRepository) {
 
       myProject = project;
       myRepositories = repositories;
@@ -486,7 +492,7 @@ public class GitBranchPopupActions {
 
       CheckoutRemoteBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
                                  @NotNull String remoteBranchName) {
-        super("Checkout");
+        super(GitBundle.lazyMessage("branches.checkout"));
         myProject = project;
         myRepositories = repositories;
         myRemoteBranchName = remoteBranchName;
@@ -518,9 +524,10 @@ public class GitBranchPopupActions {
         if (hasCommits) {
           int result =
             Messages.showYesNoCancelDialog(
-              "Branch " + suggestedLocalName + " already exists and has commits which do not exist in " + remoteBranchName
-              + ". Would you like to rebase or reset them?", "Checkout " + remoteBranchName, "Checkout and Rebase", "Overwrite",
-              "Cancel", null);
+              GitBundle.message("branch.0.already.exists.and.has.commits.which.do.not.exist.in.1.would.you.like.to.rebase.or.reset.them",
+                                suggestedLocalName, remoteBranchName), GitBundle.message("checkout.0", remoteBranchName),
+              GitBundle.message("checkout.and.rebase"), CommonBundle.message("button.overwrite"),
+              IdeBundle.message("button.cancel"), null);
           if (result == Messages.CANCEL) return;
           if (result == Messages.YES) {
             checkout(project, repositories, remoteBranchName, suggestedLocalName, true);
@@ -541,14 +548,16 @@ public class GitBranchPopupActions {
                                                       @NotNull String remoteBranchName, @NotNull String suggestedLocalName) {
         //do not allow name conflicts
         GitNewBranchOptions options =
-          new GitNewBranchDialog(project, repositories, "Checkout " + remoteBranchName, suggestedLocalName, false, true)
+          new GitNewBranchDialog(project, repositories, GitBundle.message("branches.checkout.s", remoteBranchName), suggestedLocalName,
+                                 false, true)
             .showAndGetOptions();
         if (options == null) return;
         GitBrancher brancher = GitBrancher.getInstance(project);
         brancher.checkoutNewBranchStartingFrom(options.getName(), remoteBranchName, options.shouldReset(), repositories, null);
       }
 
-      private static boolean hasTrackingConflicts(@NotNull Map<GitRepository, GitLocalBranch> conflictingLocalBranches, @NotNull String remoteBranchName) {
+      private static boolean hasTrackingConflicts(@NotNull Map<GitRepository, GitLocalBranch> conflictingLocalBranches,
+                                                  @NotNull String remoteBranchName) {
         return of(conflictingLocalBranches.keySet()).anyMatch(r -> {
           GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(r, conflictingLocalBranches.get(r));
           return trackInfo != null && !BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, trackInfo.getRemoteBranch().getName());
@@ -562,7 +571,7 @@ public class GitBranchPopupActions {
       private final String myBranchName;
 
       RemoteDeleteAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-        super("Delete");
+        super(IdeBundle.lazyMessage("action.delete"));
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
@@ -587,7 +596,7 @@ public class GitBranchPopupActions {
     private final String myBranchName;
 
     CheckoutAsNewBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-      super("New Branch from Selected...");
+      super(GitBundle.lazyMessage("branches.new.branch.from.selected"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -595,7 +604,8 @@ public class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      createOrCheckoutNewBranch(myProject, myRepositories, myBranchName + "^0", "Create New Branch From " + myBranchName);
+      createOrCheckoutNewBranch(myProject, myRepositories, myBranchName + "^0",
+                                GitBundle.message("action.Git.New.Branch.dialog.title", myBranchName));
     }
   }
 
@@ -606,7 +616,7 @@ public class GitBranchPopupActions {
     private final String myBranchName;
 
     CompareAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-      super("Compare with Current");
+      super(GitBundle.lazyMessage("branches.compare.with.current"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -622,9 +632,9 @@ public class GitBranchPopupActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      String description = String.format("Show commits in %1$s that are missing in %2$s",
-                                         getBranchPresentation(myBranchName),
-                                         getCurrentBranchPresentation(myRepositories));
+      String description = GitBundle.message("branches.show.commits.in",
+                                             getBranchPresentation(myBranchName),
+                                             getCurrentBranchPresentation(myRepositories));
       e.getPresentation().setDescription(description);
     }
   }
@@ -636,7 +646,7 @@ public class GitBranchPopupActions {
     private final String myBranchName;
 
     ShowDiffWithBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-      super("Show Diff with Working Tree");
+      super(GitBundle.lazyMessage("branches.show.diff.with.working.tree"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -651,7 +661,7 @@ public class GitBranchPopupActions {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(!new GitMultiRootBranchConfig(myRepositories).diverged());
-      String description = String.format("Compare the current working tree with the tree in %1$s", getBranchPresentation(myBranchName));
+      String description = GitBundle.message("branches.compare.the.current.working.tree.with", getBranchPresentation(myBranchName));
       e.getPresentation().setDescription(description);
     }
   }
@@ -665,7 +675,7 @@ public class GitBranchPopupActions {
 
     MergeAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
                 boolean localBranch) {
-      super("Merge into Current");
+      super(GitBundle.lazyMessage("branches.merge.into.current"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -674,9 +684,9 @@ public class GitBranchPopupActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      String description = String.format("Merge %s into %s",
-                                         getBranchPresentation(myBranchName),
-                                         getCurrentBranchPresentation(myRepositories));
+      String description = GitBundle.message("branches.merge.into",
+                                             getBranchPresentation(myBranchName),
+                                             getCurrentBranchPresentation(myRepositories));
       e.getPresentation().setDescription(description);
     }
 
@@ -687,7 +697,7 @@ public class GitBranchPopupActions {
     }
 
     private GitBrancher.DeleteOnMergeOption deleteOnMerge() {
-      if (myLocalBranch && !myBranchName.equals("master")) {
+      if (myLocalBranch && !myBranchName.equals("master")) { // NON-NLS
         return GitBrancher.DeleteOnMergeOption.PROPOSE;
       }
       return GitBrancher.DeleteOnMergeOption.NOTHING;
@@ -700,7 +710,7 @@ public class GitBranchPopupActions {
     private final String myBranchName;
 
     RebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-      super("Rebase Current onto Selected");
+      super(GitBundle.lazyMessage("branches.rebase.current.onto.selected"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -711,10 +721,10 @@ public class GitBranchPopupActions {
       boolean isOnBranch = and(myRepositories, GitRepository::isOnBranch);
 
       String description = isOnBranch
-                           ? String.format("Rebase %s onto %s",
-                                           getCurrentBranchPresentation(myRepositories),
-                                           getBranchPresentation(myBranchName))
-                           : "Rebase is not possible in the detached HEAD state";
+                           ? GitBundle.message("branches.rebase.onto",
+                                               getCurrentBranchPresentation(myRepositories),
+                                               getBranchPresentation(myBranchName))
+                           : GitBundle.message("branches.rebase.is.not.possible.in.the.detached.head.state");
       e.getPresentation().setDescription(description);
       e.getPresentation().setEnabled(isOnBranch);
     }
@@ -732,7 +742,7 @@ public class GitBranchPopupActions {
     private final String myBranchName;
 
     CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-      super("Checkout and Rebase onto Current");
+      super(GitBundle.lazyMessage("branches.checkout.and.rebase.onto.current"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -740,10 +750,10 @@ public class GitBranchPopupActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      String description = String.format("Checkout %s, and rebase it onto %s in one step (like `git rebase HEAD %s`)",
-                                         getBranchPresentation(myBranchName),
-                                         getCurrentBranchPresentation(myRepositories),
-                                         myBranchName);
+      String description = GitBundle.message("branches.checkout.and.rebase.onto.in.one.step",
+                                             getBranchPresentation(myBranchName),
+                                             getCurrentBranchPresentation(myRepositories),
+                                             myBranchName);
       e.getPresentation().setDescription(description);
     }
 
@@ -754,7 +764,7 @@ public class GitBranchPopupActions {
     }
   }
 
-  private static class UpdateSelectedBranchAction extends DumbAwareAction implements CustomIconProvider  {
+  private static class UpdateSelectedBranchAction extends DumbAwareAction implements CustomIconProvider {
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
@@ -765,7 +775,7 @@ public class GitBranchPopupActions {
                                @NotNull List<? extends GitRepository> repositories,
                                @NotNull String branchName,
                                boolean hasIncoming) {
-      super("Update");
+      super(GitBundle.lazyMessage("branches.update"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -782,19 +792,19 @@ public class GitBranchPopupActions {
         return;
       }
       String branchPresentation = getBranchPresentation(myBranchName);
-      String description = String.format("Fetch remote tracking branch and fast-forward %s (like `git fetch %s:%s`)",
-                                         branchPresentation, myBranchName, myBranchName);
+      String description = GitBundle.message("branches.fetch.remote.and.fast.forward",
+                                             branchPresentation, myBranchName, myBranchName);
       presentation.setDescription(description);
       if (GitFetchSupport.fetchSupport(myProject).isFetchRunning()) {
         presentation.setEnabled(false);
-        presentation.setDescription("Update is already running");
+        presentation.setDescription(GitBundle.message("branches.update.is.already.running"));
         return;
       }
 
       boolean trackingInfosExist = isTrackingInfosExist(myBranchNameList, myRepositories);
       presentation.setEnabled(trackingInfosExist);
       if (!trackingInfosExist) {
-        presentation.setDescription(String.format("Tracking branch doesn't configured for %s", branchPresentation));
+        presentation.setDescription(GitBundle.message("branches.tracking.branch.doesn.t.configured.for.s", branchPresentation));
       }
     }
 
@@ -836,7 +846,7 @@ public class GitBranchPopupActions {
       private final String myTagName;
 
       DeleteTagAction(Project project, List<? extends GitRepository> repositories, String tagName) {
-        super("Delete");
+        super(IdeBundle.message("button.delete"));
         myProject = project;
         myRepositories = repositories;
         myTagName = tagName;
@@ -856,7 +866,7 @@ public class GitBranchPopupActions {
                                           repo -> notNull(repo.getCurrentBranchName(),
                                                           getShortHash(Objects.requireNonNull(repo.getCurrentRevision()))));
     if (currentBranches.size() == 1) return getBranchPresentation(currentBranches.iterator().next());
-    return "current branch";
+    return GitBundle.message("branches.current.branch");
   }
 
   @NotNull

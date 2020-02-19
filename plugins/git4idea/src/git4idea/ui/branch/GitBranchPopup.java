@@ -42,10 +42,12 @@ import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.config.GitVcsSettings;
 import git4idea.fetch.GitFetchResult;
 import git4idea.fetch.GitFetchSupport;
+import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,10 +71,10 @@ import static java.util.stream.Collectors.toList;
  * <p/>
  */
 public class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
-  private static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
-  static final String SHOW_ALL_LOCALS_KEY = "Git.Branch.Popup.ShowAllLocals";
-  static final String SHOW_ALL_REMOTES_KEY = "Git.Branch.Popup.ShowAllRemotes";
-  static final String SHOW_ALL_REPOSITORIES = "Git.Branch.Popup.ShowAllRepositories";
+  @NonNls private static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
+  @NonNls static final String SHOW_ALL_LOCALS_KEY = "Git.Branch.Popup.ShowAllLocals";
+  @NonNls static final String SHOW_ALL_REMOTES_KEY = "Git.Branch.Popup.ShowAllRemotes";
+  @NonNls static final String SHOW_ALL_REPOSITORIES = "Git.Branch.Popup.ShowAllRepositories";
   static final Icon LOADING_ICON = new AnimatedIcon.Default();
 
   /**
@@ -161,7 +163,7 @@ public class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setIcon(isBusy(project) ? LOADING_ICON : AllIcons.Actions.Refresh);
-        e.getPresentation().setText(isBusy(project) ? "Fetching..." : "Fetch");
+        e.getPresentation().setText(isBusy(project) ? GitBundle.message("fetching") : GitBundle.message("action.fetch.text"));
       }
 
       private boolean isBusy(@NotNull Project project) {
@@ -172,7 +174,8 @@ public class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
   @NotNull
   private static AnAction createUnsupportedIncomingAction(@NotNull Project project) {
-    AnAction updateBranchInfoWithAuthenticationAction = DumbAwareAction.create("Update Checks not Supported. Git 2.9+ Required",
+    AnAction updateBranchInfoWithAuthenticationAction = DumbAwareAction.create(
+      GitBundle.message("update.checks.not.supported.git.2.9.required"),
                                                                                e -> ShowSettingsUtil.getInstance()
                                                                                  .showSettingsDialog(project, GitVcs.NAME));
     Presentation presentation = updateBranchInfoWithAuthenticationAction.getTemplatePresentation();
@@ -195,7 +198,7 @@ public class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
     popupGroup.addAll(createRepositoriesActions());
 
-    popupGroup.addSeparator("Common Local Branches");
+    popupGroup.addSeparator(GitBundle.message("common.local.branches"));
     List<BranchActionGroup> localBranchActions = myMultiRootBranchConfig.getLocalBranchNames().stream()
       .filter(branchName -> !branchName.equals(myMultiRootBranchConfig.getCurrentBranch()))
       .map(l -> createLocalBranchActions(allRepositories, l))
@@ -209,7 +212,7 @@ public class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       topShownBranches++;
     }
     wrapWithMoreActionIfNeeded(myProject, popupGroup, localBranchActions, topShownBranches, SHOW_ALL_LOCALS_KEY, true);
-    popupGroup.addSeparator("Common Remote Branches");
+    popupGroup.addSeparator(GitBundle.message("common.remote.branches"));
 
     List<BranchActionGroup> remoteBranchActions = map(((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches(),
                                                       remoteBranch -> new GitBranchPopupActions.RemoteBranchActions(myProject,
@@ -230,7 +233,7 @@ public class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   @Override
   protected LightActionGroup createRepositoriesActions() {
     LightActionGroup popupGroup = new LightActionGroup(false);
-    popupGroup.addSeparator("Repositories");
+    popupGroup.addSeparator(GitBundle.message("repositories"));
     List<ActionGroup> rootActions = map(DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()),
                                         repo -> new RootAction<>(repo, new GitBranchPopupActions(repo.getProject(), repo)
                                           .createActions(), getDisplayableBranchText(repo)));

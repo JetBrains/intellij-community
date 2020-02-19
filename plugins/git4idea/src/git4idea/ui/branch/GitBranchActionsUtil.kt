@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.GitUtil
@@ -23,7 +22,9 @@ import git4idea.branch.GitNewBranchOptions
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchSupport
 import git4idea.history.GitHistoryUtils
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 object L {
@@ -35,8 +36,11 @@ internal fun checkCommitsUnderProgress(project: Project,
                                        startRef: String,
                                        branchName: String): Boolean =
   ProgressManager.getInstance().runProcessWithProgressSynchronously<Boolean, RuntimeException>({
-    checkCommitsBetweenRefAndBranchName(project, repositories, startRef, branchName)
-  }, "Checking Existing Commits...", true, project)
+                                                                                                 checkCommitsBetweenRefAndBranchName(
+                                                                                                   project, repositories, startRef,
+                                                                                                   branchName)
+                                                                                               }, GitBundle.message(
+    "branches.checking.existing.commits.process"), true, project)
 
 private fun checkCommitsBetweenRefAndBranchName(project: Project,
                                                 repositories: List<GitRepository>,
@@ -53,7 +57,7 @@ private fun hasCommits(project: Project, repository: GitRepository, startRef: St
     return GitHistoryUtils.collectTimedCommits(project, repository.root, "$startRef..$endRef").isNotEmpty()
   }
   catch (ex: VcsException) {
-    L.LOG.warn("Couldn't collect commits in ${repository.presentableUrl} for $startRef..$endRef")
+    L.LOG.warn("Couldn't collect commits in ${repository.presentableUrl} for $startRef..$endRef") // NON-NLS
     return true
   }
 }
@@ -83,7 +87,8 @@ internal fun checkoutOrReset(project: Project,
     val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
     if (hasCommits) {
       VcsNotifier.getInstance(project)
-        .notifyError("Checkout Failed", "Can't overwrite $name branch because some commits can be lost")
+        .notifyError(GitBundle.message("branches.checkout.failed.title"),
+                     GitBundle.message("branches.checkout.failed.description", name))
       return
     }
     val brancher = GitBrancher.getInstance(project)
@@ -97,8 +102,8 @@ internal fun createNewBranch(project: Project, repositories: List<GitRepository>
   if (options.reset) {
     val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
     if (hasCommits) {
-      VcsNotifier.getInstance(project).notifyError("New Branch Creation Failed",
-                                                   "Can't overwrite $name branch because some commits can be lost")
+      VcsNotifier.getInstance(project).notifyError(GitBundle.message("branches.creation.failed.title"),
+                                                   GitBundle.message("branches.checkout.failed.description", name))
       return
     }
 
@@ -121,7 +126,8 @@ internal fun createNewBranch(project: Project, repositories: List<GitRepository>
 internal fun createOrCheckoutNewBranch(project: Project,
                                        repositories: List<GitRepository>,
                                        startPoint: String,
-                                       title: String = "Create New Branch",
+                                       @Nls(capitalization = Nls.Capitalization.Title)
+                                       title: String = GitBundle.message("branches.create.new.branch.dialog.title"),
                                        initialName: String? = null) {
   val options = GitNewBranchDialog(project, repositories, title, initialName, true, true, true).showAndGetOptions() ?: return
   if (options.checkout) {
@@ -137,7 +143,7 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
     repositories.associateWith { it.branchTrackInfos.filter { info -> branchNames.contains(info.localBranch.name) } }
   if (repoToTrackingInfos.isEmpty()) return
 
-  GitVcs.runInBackground(object : Task.Backgroundable(project, "Updating branches...", true) {
+  GitVcs.runInBackground(object : Task.Backgroundable(project, GitBundle.message("branches.updating.process"), true) {
     var successFetches = 0
     override fun run(indicator: ProgressIndicator) {
       val fetchSupport = GitFetchSupport.fetchSupport(project)
@@ -150,7 +156,7 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
             successFetches += 1
           }
           catch (ignored: VcsException) {
-            fetchResult.showNotificationIfFailed("Update Failed")
+            fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))
           }
         }
       }
@@ -158,16 +164,17 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
 
     override fun onSuccess() {
       if (successFetches > 0) {
-        VcsNotifier.getInstance(myProject).notifySuccess("Selected ${pluralize("Branch", branchNames.size)} Updated")
+        VcsNotifier.getInstance(myProject).notifySuccess(GitBundle.message("branches.selected.branches.updated.title",
+                                                                           branchNames.size))
       }
     }
   })
 }
 
 internal fun isTrackingInfosExist(branchNames: List<String>, repositories: List<GitRepository>) =
-    repositories
-      .flatMap(GitRepository::getBranchTrackInfos)
-      .any { trackingBranchInfo -> branchNames.any { branchName -> branchName == trackingBranchInfo.localBranch.name } }
+  repositories
+    .flatMap(GitRepository::getBranchTrackInfos)
+    .any { trackingBranchInfo -> branchNames.any { branchName -> branchName == trackingBranchInfo.localBranch.name } }
 
 internal fun hasRemotes(project: Project): Boolean {
   return GitUtil.getRepositories(project).any { repository -> !repository.remotes.isEmpty() }

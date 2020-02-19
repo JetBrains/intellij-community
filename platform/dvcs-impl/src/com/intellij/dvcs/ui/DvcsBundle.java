@@ -23,7 +23,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class DvcsBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.DvcsBundle";
+  @NonNls static final String BUNDLE = "messages.DvcsBundle";
   private static final DvcsBundle INSTANCE = new DvcsBundle();
 
   private DvcsBundle() { super(BUNDLE); }

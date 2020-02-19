@@ -5,6 +5,7 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.diverged
 import com.intellij.dvcs.repo.Repository
+import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.service
@@ -94,8 +95,8 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class NewBranchAction : BranchesActionBase({ com.intellij.dvcs.ui.NewBranchAction.text },
-                                             { com.intellij.dvcs.ui.NewBranchAction.description },
+  class NewBranchAction : BranchesActionBase({ DvcsBundle.message("new.branch.action.text") },
+                                             { DvcsBundle.message("new.branch.action.text") },
                                              com.intellij.dvcs.ui.NewBranchAction.icon) {
 
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
@@ -369,7 +370,7 @@ internal object BranchesDashboardActions {
         return
       }
       val branch = branches.firstOrNull()
-      if (branch == null || !branch.isLocal || branch.repositories.any(Repository::isFresh)){
+      if (branch == null || !branch.isLocal || branch.repositories.any(Repository::isFresh)) {
         e.presentation.isEnabled = false
       }
     }

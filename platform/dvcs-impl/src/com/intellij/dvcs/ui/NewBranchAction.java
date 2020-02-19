@@ -27,15 +27,14 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class NewBranchAction<T extends Repository> extends DumbAwareAction {
-  public static final String text = "New Branch";
-  public static final String description = "Create and checkout new branch";
   public static final Icon icon = AllIcons.General.Add;
 
   protected final List<T> myRepositories;
   protected final Project myProject;
 
   public NewBranchAction(@NotNull Project project, @NotNull List<T> repositories) {
-    super(text, description, icon);
+    super(DvcsBundle.lazyMessage("new.branch.action.text"),
+          DvcsBundle.lazyMessage("new.branch.action.description"), icon);
     myRepositories = repositories;
     myProject = project;
   }

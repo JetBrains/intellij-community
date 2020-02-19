@@ -26,6 +26,7 @@ import git4idea.repo.GitRepository
 import git4idea.validators.checkRefName
 import git4idea.validators.conflictsWithLocalBranch
 import git4idea.validators.conflictsWithRemoteBranch
+import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 import javax.swing.JCheckBox
 import javax.swing.JTextField
@@ -44,7 +45,7 @@ enum class GitBranchOperationType(val text: String, val description: String = ""
 
 internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
                                                             private val repositories: Collection<GitRepository>,
-                                                            dialogTitle: String,
+                                                            @Nls(capitalization = Nls.Capitalization.Title) dialogTitle: String,
                                                             initialName: String?,
                                                             private val showCheckOutOption: Boolean = true,
                                                             private val showResetOption: Boolean = false,

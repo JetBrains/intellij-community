@@ -14,6 +14,7 @@ import git4idea.GitRemoteBranch
 import git4idea.GitUtil.HEAD
 import git4idea.GitUtil.getRepositoryManager
 import git4idea.config.GitVcsSettings
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.createOrCheckoutNewBranch
 
@@ -22,8 +23,9 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     when (val data = collectData(e)) {
       is Data.WithCommit -> createOrCheckoutNewBranch(data.repository.project, listOf(data.repository), data.hash.toString(),
-                                                      "Create New Branch From ${data.hash.toShortString()}", data.name)
-      is Data.NoCommit -> createOrCheckoutNewBranch(data.project, data.repositories, HEAD, "Create New Branch")
+                                                      GitBundle.message("action.Git.New.Branch.dialog.title", data.hash.toShortString()),
+                                                      data.name)
+      is Data.NoCommit -> createOrCheckoutNewBranch(data.project, data.repositories, HEAD)
     }
   }
 
