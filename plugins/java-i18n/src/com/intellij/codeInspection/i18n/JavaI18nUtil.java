@@ -135,10 +135,10 @@ public class JavaI18nUtil extends I18nUtil {
     PsiParameter parameter = method.getParameterList().getParameter(idx.getAsInt());
     if (parameter != null) {
       PsiType parameterType = parameter.getType();
-      PsiType receiverType = callExpression.getReceiverType();
-      if (receiverType instanceof PsiClassType) {
-        PsiClassType.ClassResolveResult result = ((PsiClassType)receiverType).resolveGenerics();
-        parameterType = result.getSubstitutor().substitute(parameterType);
+      PsiElement psi = callExpression.getSourcePsi();
+      if (psi instanceof PsiMethodCallExpression) {
+        PsiSubstitutor substitutor = ((PsiMethodCallExpression)psi).getMethodExpression().advancedResolve(false).getSubstitutor();
+        parameterType = substitutor.substitute(parameterType);
       }
       if (AnnotationUtil.findTypeAnnotationInHierarchy(parameterType, Collections.singleton(annFqn)) != null) {
         return true;
