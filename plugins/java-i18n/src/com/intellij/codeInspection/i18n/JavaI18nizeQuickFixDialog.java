@@ -108,9 +108,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       myRBEditorTextField = new EditorComboBox(document, myProject, StdFileTypes.JAVA);
       myResourceBundleSuggester.add(UI.PanelFactory.panel(myRBEditorTextField)
                                       .withLabel(CodeInsightBundle.message("i18n.quickfix.code.panel.resource.bundle.expression.label"))
-                                      .withComment(
-                                        InspectionsBundle.message(
-                                          "comment.if.the.resource.bundle.is.invalid.either.declare.it.as.an.object"))
+                                      .withComment(InspectionsBundle.message("comment.if.the.resource.bundle.is.invalid.either.declare.it.as.an.object"))
                                       .createPanel(), BorderLayout.NORTH);
       suggestAvailableResourceBundleExpressions();
       myRBEditorTextField.addDocumentListener(new DocumentListener() {

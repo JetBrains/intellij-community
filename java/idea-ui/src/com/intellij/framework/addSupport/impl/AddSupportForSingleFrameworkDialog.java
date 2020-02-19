@@ -162,8 +162,8 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
         final String name = existingEntries.get(0).getPresentableName();
         message = "There is already a " + myFrameworkType.getPresentableName() + " library '" + name + "'.\n Do you want to replace it?";
       }
-      final int result = Messages.showYesNoCancelDialog(rootModel.getProject(), message, JavaUiBundle.message(
-        "dialog.title.library.already.exists"),
+      final int result = Messages.showYesNoCancelDialog(rootModel.getProject(), message,
+                                                        JavaUiBundle.message("dialog.title.library.already.exists"),
                                                         CommonBundle.message("button.replace.r"),
                                                         CommonBundle.message("button.add.a"),
                                                         CommonBundle.message("button.cancel.c"), null);

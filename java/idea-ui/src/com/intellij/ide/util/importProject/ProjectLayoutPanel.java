@@ -396,8 +396,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       if (elements.size() == 1) {
         final T element = elements.get(0);
-        final String newName = Messages.showInputDialog(ProjectLayoutPanel.this, JavaUiBundle
-                                                          .message("label.new.name.for.0.1", getElementTypeName(), getElementName(element)),
+        final String newName = Messages.showInputDialog(ProjectLayoutPanel.this,
+                                                        JavaUiBundle.message("label.new.name.for.0.1", getElementTypeName(), getElementName(element)),
                                                         JavaUiBundle.message("dialog.title.rename.module.or.library.0", StringUtil.capitalize(getElementTypeName())),
                                                         Messages.getQuestionIcon(),
                                                         getElementName(element),
