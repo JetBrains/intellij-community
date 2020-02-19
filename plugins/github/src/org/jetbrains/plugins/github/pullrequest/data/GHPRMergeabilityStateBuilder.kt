@@ -1,25 +1,35 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import org.jetbrains.plugins.github.api.data.GHBranchProtectionRules
-import org.jetbrains.plugins.github.api.data.GHCommitCheckSuiteConclusion
-import org.jetbrains.plugins.github.api.data.GHCommitCheckSuiteStatusState
-import org.jetbrains.plugins.github.api.data.GHCommitStatusContextState
+import com.intellij.util.containers.nullize
+import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeStateStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState.ChecksState
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 
 class GHPRMergeabilityStateBuilder(private val details: GHPullRequest,
                                    private val mergeabilityData: GHPullRequestMergeabilityData) {
 
-  private var baseBranchProtectionRules: GHBranchProtectionRules? = null
-  private var isAdmin: Boolean = false
+  private var canOverrideAsAdmin = false
+  private var requiredContexts = emptyList<String>()
+  private var isRestricted = false
+  private var requiredApprovingReviewsCount = 0
 
-  fun withWriteAccess(baseBranchProtectionRules: GHBranchProtectionRules, isAdmin: Boolean) {
-    this.baseBranchProtectionRules = baseBranchProtectionRules
-    this.isAdmin = isAdmin
+  fun withRestrictions(securityService: GHPRSecurityService, baseBranchProtectionRules: GHBranchProtectionRules) {
+    canOverrideAsAdmin = baseBranchProtectionRules.enforceAdmins?.enabled == false &&
+                         securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.ADMIN)
+    requiredContexts = baseBranchProtectionRules.requiredStatusChecks?.contexts.orEmpty()
+
+    val restrictions = baseBranchProtectionRules.restrictions
+    val allowedLogins = restrictions?.users?.map { it.login }.nullize()
+    val allowedTeams = restrictions?.teams?.map { it.slug }.nullize()
+    isRestricted = (allowedLogins != null && !allowedLogins.contains(securityService.currentUser.login)) ||
+                   (allowedTeams != null && !securityService.isUserInAnyTeam(allowedTeams))
+
+    requiredApprovingReviewsCount = baseBranchProtectionRules.requiredPullRequestReviews?.requiredApprovingReviewCount ?: 0
   }
 
   fun build(): GHPRMergeabilityState {
@@ -67,10 +77,9 @@ class GHPRMergeabilityStateBuilder(private val details: GHPullRequest,
       }
     }
 
-    val canOverrideAsAdmin = baseBranchProtectionRules?.enforceAdmins?.enabled == false
     val canBeMerged = when {
       mergeabilityData.mergeStateStatus.canMerge() -> true
-      mergeabilityData.mergeStateStatus.adminCanMerge() && canOverrideAsAdmin && isAdmin -> true
+      mergeabilityData.mergeStateStatus.adminCanMerge() && canOverrideAsAdmin -> true
       else -> false
     }
 
@@ -84,7 +93,6 @@ class GHPRMergeabilityStateBuilder(private val details: GHPullRequest,
       GHPullRequestMergeStateStatus.UNSTABLE -> summaryChecksState
       GHPullRequestMergeStateStatus.BEHIND -> ChecksState.BLOCKING_BEHIND
       GHPullRequestMergeStateStatus.BLOCKED -> {
-        val requiredContexts = baseBranchProtectionRules?.requiredStatusChecks?.contexts.orEmpty()
         if (requiredContexts.isEmpty()
             || contexts
               .filter { it.state == GHCommitStatusContextState.SUCCESS }
@@ -96,11 +104,17 @@ class GHPRMergeabilityStateBuilder(private val details: GHPullRequest,
       }
     }
 
+    val actualRequiredApprovingReviewsCount =
+      if (mergeabilityData.mergeStateStatus == GHPullRequestMergeStateStatus.BLOCKED && !isRestricted && checksState != ChecksState.BLOCKING_FAILING)
+        requiredApprovingReviewsCount
+      else 0
+
     return GHPRMergeabilityState(details.number, details.headRefOid, details.url,
                                  hasConflicts,
                                  failedChecks, pendingChecks, successfulChecks,
                                  checksState,
-                                 canBeMerged, mergeabilityData.canBeRebased)
+                                 canBeMerged, mergeabilityData.canBeRebased,
+                                 isRestricted, actualRequiredApprovingReviewsCount)
   }
 
   private fun getChecksSummaryState(failed: Int, pending: Int, successful: Int): ChecksState {

@@ -26,6 +26,16 @@ object GHGQLRequests {
                                         "organization", "teams")
       }
 
+      fun findByUserLogins(server: GithubServerPath, organization: String, logins: List<String>,
+                           pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHTeam>> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.findOrganizationTeams,
+                                 mapOf("organization" to organization,
+                                       "logins" to logins,
+                                       "pageSize" to pagination?.pageSize,
+                                       "cursor" to pagination?.afterCursor),
+                                 TeamsConnection::class.java,
+                                 "organization", "teams")
+
       private class TeamsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHTeam>)
         : GHConnection<GHTeam>(pageInfo, nodes)
     }

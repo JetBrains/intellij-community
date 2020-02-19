@@ -144,7 +144,7 @@ object GithubApiRequests {
 
       @JvmStatic
       fun getProtection(repository: GHRepositoryCoordinates, branchName: String): GithubApiRequest<GHBranchProtectionRules> =
-        Get.json(getUrl(repository, urlSuffix, "/$branchName", "/protection"))
+        Get.json(getUrl(repository, urlSuffix, "/$branchName", "/protection"), "application/vnd.github.luke-cage-preview+json")
     }
 
     object Commits : Entity("/commits") {

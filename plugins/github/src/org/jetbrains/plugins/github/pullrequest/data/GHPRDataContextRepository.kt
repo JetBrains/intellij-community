@@ -16,8 +16,10 @@ import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
@@ -51,6 +53,15 @@ internal class GHPRDataContextRepository(private val project: Project) {
 
     val currentUser = GHUser(accountDetails.nodeId, accountDetails.login, accountDetails.htmlUrl, accountDetails.avatarUrl!!,
                              accountDetails.name)
+
+    indicator.text = "Loading user teams information"
+    val repoOwner = repoWithPermissions.owner
+    val currentUserTeams = if (repoOwner is GHRepositoryOwnerName.Organization)
+      SimpleGHGQLPagesLoader(requestExecutor, {
+        GHGQLRequests.Organization.Team.findByUserLogins(account.server, repoOwner.login, listOf(currentUser.login), it)
+      }).loadAll(indicator)
+    else emptyList()
+
     val repositoryCoordinates = GHRepositoryCoordinates(account.server, repoWithPermissions.path)
 
     val messageBus = MessageBusFactory.getInstance().createMessageBus(object : MessageBusOwner {
@@ -59,7 +70,8 @@ internal class GHPRDataContextRepository(private val project: Project) {
       override fun createListener(descriptor: ListenerDescriptor) = throw UnsupportedOperationException()
     })
 
-    val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project), currentUser, repoWithPermissions)
+    val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project), currentUser, currentUserTeams,
+                                                  repoWithPermissions)
     val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor,
                                               repositoryCoordinates)
     val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor,
@@ -103,7 +115,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
       }
     })
     val metadataService = GHPRMetadataServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, account.server,
-                                                  repoWithPermissions.path, repoWithPermissions.owner)
+                                                  repoWithPermissions.path, repoOwner)
     val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), messageBus,
                                             requestExecutor, account.server, repoWithPermissions.path)
 

@@ -13,7 +13,10 @@ class GHPRMergeabilityState(val number: Long,
                             val checksState: ChecksState,
 
                             val canBeMerged: Boolean,
-                            val canBeRebased: Boolean) {
+                            val canBeRebased: Boolean,
+
+                            val isRestricted: Boolean,
+                            val requiredApprovingReviewsCount: Int) {
 
   enum class ChecksState {
     BLOCKING_BEHIND, BLOCKING_FAILING, FAILING, PENDING, SUCCESSFUL, NONE

@@ -207,10 +207,18 @@ internal class GHPRStatePanel(private val project: Project,
         val conflictsLabel = JLabel()
         ConflictsController(mergeabilityModel, conflictsLabel)
 
+        val requiredReviewsLabel = JLabel()
+        RequiredReviewsController(mergeabilityModel, requiredReviewsLabel)
+
+        val restrictionsLabel = JLabel()
+        RestrictionsController(mergeabilityModel, restrictionsLabel)
+
         val accessDeniedLabel = createAccessDeniedLabel()
         return JPanel(VerticalLayout(STATUSES_GAP)).apply {
           add(statusChecks, VerticalLayout.FILL_HORIZONTAL)
+          add(requiredReviewsLabel, VerticalLayout.FILL_HORIZONTAL)
           add(conflictsLabel, VerticalLayout.FILL_HORIZONTAL)
+          add(restrictionsLabel, VerticalLayout.FILL_HORIZONTAL)
           if (accessDeniedLabel != null)
             add(accessDeniedLabel, VerticalLayout.FILL_HORIZONTAL)
         }
@@ -316,6 +324,39 @@ internal class GHPRStatePanel(private val project: Project,
               label.icon = AllIcons.RunConfigurations.TestNotRan
               label.text = "Checking for ability to merge automatically..."
             }
+          }
+        }
+      }
+
+      private class RequiredReviewsController(private val mergeabilityModel: SingleValueModel<GHPRMergeabilityState>,
+                                              private val label: JLabel) {
+
+        init {
+          mergeabilityModel.addAndInvokeValueChangedListener(::update)
+        }
+
+        private fun update() {
+          val requiredApprovingReviewsCount = mergeabilityModel.value.requiredApprovingReviewsCount
+          label.isVisible = requiredApprovingReviewsCount > 0
+          with(label) {
+            icon = AllIcons.RunConfigurations.TestError
+            text = "At least $requiredApprovingReviewsCount approving review is required by reviewers with write access"
+          }
+        }
+      }
+
+      private class RestrictionsController(private val mergeabilityModel: SingleValueModel<GHPRMergeabilityState>,
+                                           private val label: JLabel) {
+
+        init {
+          mergeabilityModel.addAndInvokeValueChangedListener(::update)
+        }
+
+        private fun update() {
+          with(label) {
+            isVisible = mergeabilityModel.value.isRestricted
+            icon = AllIcons.RunConfigurations.TestError
+            text = "You are not authorized to merge pull requests into this branch"
           }
         }
       }

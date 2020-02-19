@@ -16,7 +16,6 @@ import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.data.GHBranchProtectionRules
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -138,30 +137,29 @@ internal class GHPRDataProviderImpl(private val project: Project,
   override val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>> by backgroundProcessValue(reviewThreadsRequestValue)
 
   private val baseBranchProtectionRulesRequestValue = backingValue {
+    if (!securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)) return@backingValue null
+
     val detailsRequest = detailsRequestValue.value
     val baseBranch = detailsRequest.joinCancellable().baseRefName
     try {
       requestExecutor.execute(GithubApiRequests.Repos.Branches.getProtection(repository, baseBranch))
     }
     catch (e: GithubStatusCodeException) {
-      if (e.statusCode != 404) throw e
-      GHBranchProtectionRules(GHBranchProtectionRules.RequiredStatusChecks(false, emptyList()),
-                              GHBranchProtectionRules.EnforceAdmins(false))
+      if (e.statusCode == 404) null
+      else throw e
     }
   }
   private val mergeabilityStateRequestValue = backingValue {
     val detailsRequest = detailsRequestValue.value
-    val baseBranchProtectionRulesRequest = if (securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE))
-      baseBranchProtectionRulesRequestValue.value
-    else null
+    val baseBranchProtectionRulesRequest = baseBranchProtectionRulesRequestValue.value
 
     val mergeabilityData = requestExecutor.execute(GHGQLRequests.PullRequest.mergeabilityData(repository, number))
                            ?: error("Could not find pull request $number")
     val builder = GHPRMergeabilityStateBuilder(detailsRequest.joinCancellable(),
                                                mergeabilityData)
-    if (baseBranchProtectionRulesRequest != null) {
-      builder.withWriteAccess(baseBranchProtectionRulesRequest.joinCancellable(),
-                              securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.ADMIN))
+    val protectionRules = baseBranchProtectionRulesRequest.joinCancellable()
+    if (protectionRules != null) {
+      builder.withRestrictions(securityService, protectionRules)
     }
     builder.build()
   }
