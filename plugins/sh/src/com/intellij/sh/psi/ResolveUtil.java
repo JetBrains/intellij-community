@@ -37,10 +37,10 @@ public class ResolveUtil {
                                  @NotNull ResolveState substitutor,
                                  @Nullable PsiElement lastParent,
                                  @NotNull PsiElement place) {
-    PsiElement parent = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
-    PsiElement run = lastParent;
+    PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
+
     while (run != null) {
-      if (run instanceof ShCompositeElement && !run.processDeclarations(processor, substitutor, parent, place)) {
+      if (run instanceof ShCompositeElement && !run.processDeclarations(processor, substitutor, element, place)) {
         return false;
       }
       run = run.getPrevSibling();

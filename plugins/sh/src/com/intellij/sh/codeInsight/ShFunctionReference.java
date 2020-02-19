@@ -26,7 +26,7 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
   @Nullable
   private PsiElement resolveFunction() {
     ShFunctionDeclarationProcessor functionProcessor = new ShFunctionDeclarationProcessor(myElement.getText());
-    PsiTreeUtil.treeWalkUp(functionProcessor, myElement , null, ResolveState.initial());
+    PsiTreeUtil.treeWalkUp(functionProcessor, myElement , myElement.getContainingFile(), ResolveState.initial());
     return functionProcessor.getFunction();
   }
 
