@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.list.ListCellBackgroundSupplier;
@@ -20,6 +21,7 @@ import static com.intellij.ui.paint.RectanglePainter.DRAW;
  * @noinspection ALL
  */
 public final class WideSelectionListUI extends BasicListUI {
+  private static final Logger LOG = Logger.getInstance(WideSelectionListUI.class);
   private Rectangle myPaintBounds;
 
   @Override
@@ -56,7 +58,12 @@ public final class WideSelectionListUI extends BasicListUI {
         g.clipRect(rowBounds.x, rowBounds.y, rowBounds.width, rowBounds.height);
       }
     }
-    super.paintCell(g, row, rowBounds, renderer, model, selectionModel, leadSelectionIndex);
+    try {
+      super.paintCell(g, row, rowBounds, renderer, model, selectionModel, leadSelectionIndex);
+    }
+    catch (ArrayIndexOutOfBoundsException exception) {
+      LOG.error("model asynchronously modified: " + model.getClass() + " in " + list, exception);
+    }
     if (!isMac && g instanceof Graphics2D && row == leadSelectionIndex && list.hasFocus()) {
       int x = rowBounds.x;
       int width = rowBounds.width;
