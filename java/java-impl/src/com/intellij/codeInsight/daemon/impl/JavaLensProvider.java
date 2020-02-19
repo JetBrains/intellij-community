@@ -6,29 +6,21 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaLensSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaTelescope;
 import com.intellij.codeInsight.hints.*;
-import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresentation;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
-import com.intellij.codeInsight.hints.presentation.MouseButton;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
+import com.intellij.codeInsight.hints.presentation.SequencePresentation;
+import com.intellij.codeInsight.hints.presentation.SpacePresentation;
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseMotionListener;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.BlockInlayPriority;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,31 +30,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
-import java.util.Arrays;
 import java.util.List;
 
-public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, EditorMouseMotionListener {
+public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
   private static final SettingsKey<JavaLensSettings> KEY = new SettingsKey<>("JavaLens");
-
-  public JavaLensProvider() {
-    ApplicationManager.getApplication().getMessageBus()
-    .connect().subscribe(JavaLensSettings.JAVA_LENS_SETTINGS_CHANGED, settings->{
-      if (settings.isShowUsages() || settings.isShowImplementations()) {
-        EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this, ApplicationManager.getApplication());
-      }
-      else {
-        EditorFactory.getInstance().getEventMulticaster().removeEditorMouseMotionListener(this);
-      }
-    });
-  }
 
   public interface InlResult {
     void onClick(@NotNull Editor editor, @NotNull PsiElement element);
-    @NotNull
-    String getRegularText();
 
     @NotNull
-    default String getHoverText() { return getRegularText(); }
+    String getRegularText();
   }
 
   @Nullable
@@ -71,103 +48,98 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
                                              @NotNull Editor editor,
                                              @NotNull JavaLensSettings settings,
                                              @NotNull InlayHintsSink __) {
-    PresentationFactory factory = new PresentationFactory((EditorImpl)editor);
-    return (element, editor1, sink) -> {
-      if (!(element instanceof PsiMember) || element instanceof PsiTypeParameter) return true;
-      PsiMember member = (PsiMember)element;
-      if (member.getName() == null) return true;
+    return new FactoryInlayHintsCollector(editor) {
+      @Override
+      public boolean collect(@NotNull PsiElement element, @NotNull Editor editor, @NotNull InlayHintsSink sink) {
+        if (!(element instanceof PsiMember) || element instanceof PsiTypeParameter) return true;
+        PsiMember member = (PsiMember)element;
+        if (member.getName() == null) return true;
 
-      List<InlResult> hints = new SmartList<>();
-      if (settings.isShowUsages()) {
-        String usagesHint = JavaTelescope.usagesHint(member, file);
-        if (usagesHint != null) {
-          hints.add(new InlResult() {
-            @Override
-            public void onClick(@NotNull Editor editor, @NotNull PsiElement element) {
-              GotoDeclarationAction.startFindUsages(editor, file.getProject(), element);
-            }
-
-            @NotNull
-            @Override
-            public String getRegularText() {
-              return usagesHint;
-            }
-          });
-        }
-      }
-      if (settings.isShowImplementations()) {
-        if (element instanceof PsiClass) {
-          int inheritors = JavaTelescope.collectInheritingClasses((PsiClass)element);
-          if (inheritors != 0) {
+        List<InlResult> hints = new SmartList<>();
+        if (settings.isShowUsages()) {
+          String usagesHint = JavaTelescope.usagesHint(member, file);
+          if (usagesHint != null) {
             hints.add(new InlResult() {
               @Override
               public void onClick(@NotNull Editor editor, @NotNull PsiElement element) {
-                Point point = JBPopupFactory.getInstance().guessBestPopupLocation(editor).getScreenPoint();
-                MouseEvent event = new MouseEvent(new JLabel(), 0, 0, 0, point.x, point.y, 0, false);
-                GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.SUBCLASSED_CLASS.getNavigationHandler();
-                navigationHandler.navigate(event, ((PsiClass)element).getNameIdentifier());
+                GotoDeclarationAction.startFindUsages(editor, file.getProject(), element);
               }
 
               @NotNull
               @Override
               public String getRegularText() {
-                String prop = "{0, choice, 1#1 Implementation|2#{0,number} Implementations}";
-                return MessageFormat.format(prop, inheritors);
+                return usagesHint;
               }
             });
           }
         }
-        if (element instanceof PsiMethod) {
-          int overridings = JavaTelescope.collectOverridingMethods((PsiMethod)element);
-          if (overridings != 0) {
-            hints.add(new InlResult() {
-              @Override
-              public void onClick(@NotNull Editor editor, @NotNull PsiElement element) {
-                Point point = JBPopupFactory.getInstance().guessBestPopupLocation(editor).getScreenPoint();
-                MouseEvent event = new MouseEvent(new JLabel(), 0, 0, 0, point.x, point.y, 0, false);
-                GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.OVERRIDDEN_METHOD.getNavigationHandler();
-                navigationHandler.navigate(event, ((PsiMethod)element).getNameIdentifier());
-              }
+        if (settings.isShowImplementations()) {
+          if (element instanceof PsiClass) {
+            int inheritors = JavaTelescope.collectInheritingClasses((PsiClass)element);
+            if (inheritors != 0) {
+              hints.add(new InlResult() {
+                @Override
+                public void onClick(@NotNull Editor editor, @NotNull PsiElement element) {
+                  Point point = JBPopupFactory.getInstance().guessBestPopupLocation(editor).getScreenPoint();
+                  MouseEvent event = new MouseEvent(new JLabel(), 0, 0, 0, point.x, point.y, 0, false);
+                  GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.SUBCLASSED_CLASS.getNavigationHandler();
+                  navigationHandler.navigate(event, ((PsiClass)element).getNameIdentifier());
+                }
 
-              @NotNull
-              @Override
-              public String getRegularText() {
-                String prop = "{0, choice, 1#1 Implementation|2#{0,number} Implementations}";
-                return MessageFormat.format(prop, overridings);
-              }
-            });
+                @NotNull
+                @Override
+                public String getRegularText() {
+                  String prop = "{0, choice, 1#1 Implementation|2#{0,number} Implementations}";
+                  return MessageFormat.format(prop, inheritors);
+                }
+              });
+            }
+          }
+          if (element instanceof PsiMethod) {
+            int overridings = JavaTelescope.collectOverridingMethods((PsiMethod)element);
+            if (overridings != 0) {
+              hints.add(new InlResult() {
+                @Override
+                public void onClick(@NotNull Editor editor, @NotNull PsiElement element) {
+                  Point point = JBPopupFactory.getInstance().guessBestPopupLocation(editor).getScreenPoint();
+                  MouseEvent event = new MouseEvent(new JLabel(), 0, 0, 0, point.x, point.y, 0, false);
+                  GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.OVERRIDDEN_METHOD.getNavigationHandler();
+                  navigationHandler.navigate(event, ((PsiMethod)element).getNameIdentifier());
+                }
+
+                @NotNull
+                @Override
+                public String getRegularText() {
+                  String prop = "{0, choice, 1#1 Implementation|2#{0,number} Implementations}";
+                  return MessageFormat.format(prop, overridings);
+                }
+              });
+            }
           }
         }
-      }
 
-      if (!hints.isEmpty()) {
-        int offset = getAnchorOffset(element);
-        int line = editor1.getDocument().getLineNumber(offset);
-        int lineStart = editor1.getDocument().getLineStartOffset(line);
-        int indent = offset - lineStart;
-
-        InlayPresentation[] presentations = new InlayPresentation[hints.size() * 2 + 1];
-        presentations[0] = factory.text(StringUtil.repeat(" ", indent));
-        int o = 1;
-        for (int i = 0; i < hints.size(); i++) {
-          InlResult hint = hints.get(i);
-          if (i != 0) {
-            presentations[o++] = factory.text(" ");
+        if (!hints.isEmpty()) {
+          PresentationFactory factory = getFactory();
+          Document document = editor.getDocument();
+          int offset = getAnchorOffset(element);
+          int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
+          int line = document.getLineNumber(offset);
+          int startOffset = document.getLineStartOffset(line);
+          int column = offset - startOffset;
+          List<InlayPresentation> presentations = new SmartList<>();
+          presentations.add(new SpacePresentation(column * columnWidth, 0));
+          for (InlResult inlResult : hints) {
+            presentations.add(createPresentation(factory, element, editor, inlResult));
+            presentations.add(new SpacePresentation(columnWidth, 0));
           }
-          presentations[o++] = createPresentation(factory, element, editor1, hint);
+          SequencePresentation shiftedPresentation = new SequencePresentation(presentations);
+          InlayPresentation withSettingsAppearing = factory.changeOnHover(shiftedPresentation, () -> {
+            return factory.seq(shiftedPresentation, settings(factory, element, editor));
+          }, e -> true);
+          sink.addBlockElement(startOffset, true, true, BlockInlayPriority.CODE_VISION, withSettingsAppearing);
         }
-        presentations[o] = factory.text("          "); // placeholder for "Settings..."
-
-        InlayPresentation seq = factory.seq(presentations);
-        InlayPresentation withAppearingSettings = factory.changeOnHover(seq, () -> {
-          InlayPresentation[] trimmedSpace = Arrays.copyOf(presentations, presentations.length - 1);
-          InlayPresentation[] spaceAndSettings = {factory.text("  "), settings(factory, element, editor)};
-          InlayPresentation[] withSettings = ArrayUtil.mergeArrays(trimmedSpace, spaceAndSettings);
-          return factory.seq(withSettings);
-        }, e -> true);
-        sink.addBlockElement(lineStart, true, true, BlockInlayPriority.CODE_VISION, withAppearingSettings);
+        return true;
       }
-      return true;
     };
   }
 
@@ -190,24 +162,9 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
 
     InlayPresentation text = factory.smallText(result.getRegularText());
 
-    return factory.changeOnHover(text, () -> {
-      InlayPresentation onClick = factory.onClick(text, MouseButton.Left, (___, __) -> {
-        result.onClick(editor, element);
-        return null;
-      });
-      return referenceColor(onClick);
-    }, __ -> true);
-  }
-
-  @NotNull
-  private static InlayPresentation referenceColor(@NotNull InlayPresentation presentation) {
-    return new AttributesTransformerPresentation(presentation,
-           __ -> {
-             TextAttributes attributes =
-               EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).clone();
-             attributes.setEffectType(EffectType.LINE_UNDERSCORE);
-             return attributes;
-           });
+    return factory.referenceOnHover(text, () -> {
+      result.onClick(editor, element);
+    });
   }
 
   @NotNull
@@ -269,21 +226,5 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
   @Override
   public boolean isVisibleInSettings() {
     return false;
-  }
-
-  @Override
-  public void mouseMoved(@NotNull EditorMouseEvent e) {
-    Point point = e.getMouseEvent().getPoint();
-    Editor editor = e.getEditor();
-    boolean hoverOverJavaLens = isHoverOverJavaLens(editor, point);
-    Cursor cursor = hoverOverJavaLens ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null;
-    ((EditorEx)editor).setCustomCursor(this, cursor);
-  }
-
-  private static boolean isHoverOverJavaLens(@NotNull Editor editor, @NotNull Point point) {
-    InlayModel inlayModel = editor.getInlayModel();
-    Inlay at = inlayModel.getElementAt(point);
-    //return at != null && InlayHintsPass.getSettingsKey(at) == KEY;
-    return false; // TODO get back!
   }
 }
