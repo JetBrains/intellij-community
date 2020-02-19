@@ -95,7 +95,6 @@ fun prepareRequirementsText(module: Module, settings: PyPackageRequirementsSetti
         module.rootManager.fileIndex.iterateContent {
           indicator.checkCanceled()
           if (!it.isDirectory && it.extension == "py") {
-            println(it.path)
             addImports(psiManager.findFile(it) as PyFile, imported)
           }
           return@iterateContent true
