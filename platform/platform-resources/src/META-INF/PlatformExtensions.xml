@@ -285,7 +285,7 @@
                         testServiceImplementation="com.intellij.ide.passwordSafe.impl.BasePasswordSafe"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.credentialStore.PasswordSafeConfigurable"
-                             bundle="messages.IdeBundle"
+                             bundle="messages.CredentialStoreBundle"
                              key="password.safe.configurable"
                              id="application.passwordSafe"/>
     <applicationService serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistry"/>

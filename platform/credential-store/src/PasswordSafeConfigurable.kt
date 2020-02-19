@@ -37,7 +37,7 @@ import javax.swing.JPanel
 import javax.swing.JRadioButton
 
 internal class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
-                                                                                                             IdeBundle.message("password.safe.configurable"),
+                                                                                                             CredentialStoreBundle.message("password.safe.configurable"),
                                                                                                              "reference.ide.settings.password.safe") {
   private val settings = service<PasswordSafeSettings>()
 
@@ -141,7 +141,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
       }
       catch (e: Exception) {
         LOG.error(e)
-        throw ConfigurationException(IdeBundle.message("settings.password.internal.error", e.message))
+        throw ConfigurationException(CredentialStoreBundle.message("settings.password.internal.error", e.message ?: e.toString()))
       }
     }
 
@@ -158,14 +158,14 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
   // for KeePass not clear - should we append in-memory credentials to existing database or not
   // (and if database doesn't exist, should we append or not), so, wait first user request (prefer to keep implementation simple)
   private fun createAndSaveKeePassDatabaseWithNewOptions(settings: PasswordSafeSettings) {
-    val newDbFile = getNewDbFile() ?: throw ConfigurationException(IdeBundle.message("settings.password.keepass.database.path.is.empty"))
+    val newDbFile = getNewDbFile() ?: throw ConfigurationException(CredentialStoreBundle.message("settings.password.keepass.database.path.is.empty"))
     if (newDbFile.isDirectory()) {
       // we do not normalize as we do on file choose because if user decoded to type path manually,
       // it should be valid path and better to avoid any magic here
-      throw ConfigurationException(IdeBundle.message("settings.password.keepass.database.file.is.directory."))
+      throw ConfigurationException(CredentialStoreBundle.message("settings.password.keepass.database.file.is.directory."))
     }
     if (!newDbFile.fileName.toString().endsWith(".kdbx")) {
-      throw ConfigurationException(IdeBundle.message("settings.password.keepass.database.file.should.ends.with.kdbx"))
+      throw ConfigurationException(CredentialStoreBundle.message("settings.password.keepass.database.file.should.ends.with.kdbx"))
     }
 
     settings.keepassDb = newDbFile.toString()
@@ -174,11 +174,11 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
       KeePassFileManager(newDbFile, getDefaultMasterPasswordFile(), getEncryptionSpec(), secureRandom).useExisting()
     }
     catch (e: IncorrectMasterPasswordException) {
-      throw ConfigurationException(IdeBundle.message("settings.password.master.password.for.keepass.database.is.not.correct"))
+      throw ConfigurationException(CredentialStoreBundle.message("settings.password.master.password.for.keepass.database.is.not.correct"))
     }
     catch (e: Exception) {
       LOG.error(e)
-      throw ConfigurationException(IdeBundle.message("settings.password.internal.error", e.message))
+      throw ConfigurationException(CredentialStoreBundle.message("settings.password.internal.error", e.message ?: e.toString()))
     }
   }
 
@@ -188,22 +188,22 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
 
   override fun getComponent(): JPanel {
     myPanel = panel {
-      row { label(IdeBundle.message("passwordSafeConfigurable.save.password")) }
+      row { label(CredentialStoreBundle.message("passwordSafeConfigurable.save.password")) }
 
       buttonGroup(settings::providerType) {
         if (SystemInfo.isLinux || isMacOsCredentialStoreSupported) {
           row {
-            radioButton(IdeBundle.message("passwordSafeConfigurable.in.native.keychain"), ProviderType.KEYCHAIN)
+            radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.native.keychain"), ProviderType.KEYCHAIN)
           }
         }
 
         row {
-          keepassRadioButton = radioButton(IdeBundle.message("passwordSafeConfigurable.in.keepass"), ProviderType.KEEPASS).component
-          row(IdeBundle.message("settings.password.database")) {
+          keepassRadioButton = radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.keepass"), ProviderType.KEEPASS).component
+          row(CredentialStoreBundle.message("settings.password.database")) {
             val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
               it.isDirectory || it.name.endsWith(".kdbx")
             }
-            keePassDbFile = textFieldWithBrowseButton(IdeBundle.message("passwordSafeConfigurable.keepass.database.file"),
+            keePassDbFile = textFieldWithBrowseButton(CredentialStoreBundle.message("passwordSafeConfigurable.keepass.database.file"),
                                                       fileChooserDescriptor = fileChooserDescriptor,
                                                       fileChosen = {
                                                         when {
@@ -212,7 +212,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
                                                         }
                                                       })
               .apply {
-                if (!SystemInfo.isWindows) comment(IdeBundle.message("passwordSafeConfigurable.weak.encryption"))
+                if (!SystemInfo.isWindows) comment(CredentialStoreBundle.message("passwordSafeConfigurable.weak.encryption"))
               }.component
             gearButton(
               ClearKeePassDatabaseAction(),
@@ -241,7 +241,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
           }
         }
         row {
-          radioButton(IdeBundle.message("passwordSafeConfigurable.do.not.save"), ProviderType.MEMORY_ONLY)
+          radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.do.not.save"), ProviderType.MEMORY_ONLY)
         }
       }
     }
@@ -249,8 +249,8 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
   }
 
   private fun usePgpKeyText(): String {
-    val prefix = IdeBundle.message("passwordSafeConfigurable.protect.master.password.using.pgp.key")
-    return if (pgpListModel.isEmpty) "$prefix ${IdeBundle.message("passwordSafeConfigurable.no.keys.configured")}" else "$prefix:"
+    val prefix = CredentialStoreBundle.message("passwordSafeConfigurable.protect.master.password.using.pgp.key")
+    return if (pgpListModel.isEmpty) "$prefix ${CredentialStoreBundle.message("passwordSafeConfigurable.no.keys.configured")}" else "$prefix:"
   }
 
   private fun getSelectedPgpKey(): PgpKey? {
@@ -274,9 +274,9 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
 
   private inner class ClearKeePassDatabaseAction : DumbAwareAction("Clear") {
     override fun actionPerformed(event: AnActionEvent) {
-      if (!MessageDialogBuilder.yesNo(IdeBundle.message("passwordSafeConfigurable.clear.passwords"),
-                                      IdeBundle.message("passwordSafeConfigurable.are.you.sure")).yesText(
-          IdeBundle.message("passwordSafeConfigurable.remove.passwords")).isYes) {
+      if (!MessageDialogBuilder.yesNo(CredentialStoreBundle.message("passwordSafeConfigurable.clear.passwords"),
+                                      CredentialStoreBundle.message("passwordSafeConfigurable.are.you.sure")).yesText(
+          CredentialStoreBundle.message("passwordSafeConfigurable.remove.passwords")).isYes) {
         return
       }
 
@@ -311,7 +311,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
 
       // even if current provider is not KEEPASS, all actions for db file must be applied immediately (show error if new master password not applicable for existing db file)
       if (createKeePassFileManager()?.askAndSetMasterKey(event) == true) {
-        templatePresentation.text = IdeBundle.message("settings.password.change.master.password")
+        templatePresentation.text = CredentialStoreBundle.message("settings.password.change.master.password")
       }
     }
 
