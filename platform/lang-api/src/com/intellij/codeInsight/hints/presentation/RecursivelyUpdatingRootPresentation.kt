@@ -28,7 +28,6 @@ class RecursivelyUpdatingRootPresentation(private var current: InlayPresentation
     factory: InlayPresentationFactory
   ): Boolean {
     val changed = newPresentationContent.updateState(current)
-    if (!changed) return false
     current.removeListener(listener)
     current = newPresentationContent
     listener = MyPresentationListener()
