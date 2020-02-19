@@ -100,7 +100,7 @@ internal fun buildJsonSchema(state: BaseState,
           }
         }
         is CollectionStoredProperty<*, *> -> {
-          val listType = itemTypeInfoProvider.getListItemType(name) ?: return@map
+          val listType = itemTypeInfoProvider.getListItemType(name, logAsErrorIfPropertyNotFound = true) ?: return@map
           when {
             listType === java.lang.String::class.java -> {
               map("items") {

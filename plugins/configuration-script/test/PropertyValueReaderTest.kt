@@ -37,7 +37,7 @@ class PropertyValueReaderTest {
       sdks:
         - sdkName: foo
           sdkPath: /home/foo
-    """))
+    """).value)
 
     assertThat(result.sdks).hasSize(1)
     val sdks = result.sdks

@@ -11,10 +11,6 @@ import org.snakeyaml.engine.v2.nodes.NodeTuple
 import org.snakeyaml.engine.v2.nodes.ScalarNode
 import org.snakeyaml.engine.v2.nodes.SequenceNode
 
-internal fun <T : BaseState> readIntoObject(instance: T, node: MappingNode, affectedPropertyConsumer: ((StoredProperty<Any>) -> Unit)? = null): T {
-  return readIntoObject(instance, node.value, affectedPropertyConsumer)
-}
-
 internal fun <T : BaseState> readIntoObject(instance: T, nodes: List<NodeTuple>, affectedPropertyConsumer: ((StoredProperty<Any>) -> Unit)? = null): T {
   val properties = instance.__getProperties()
   val itemTypeInfoProvider = ItemTypeInfoProvider(instance.javaClass)
@@ -60,7 +56,7 @@ private fun readCollection(property: CollectionStoredProperty<*, *>, itemTypeInf
     return
   }
 
-  val itemType by lazy { itemTypeInfoProvider.getListItemType(property.name!!) }
+  val itemType by lazy { itemTypeInfoProvider.getListItemType(property.name!!, logAsErrorIfPropertyNotFound = false) }
 
   for (itemNode in valueNode.value) {
     if (itemNode is ScalarNode) {

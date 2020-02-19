@@ -9,10 +9,16 @@ internal class ItemTypeInfoProvider(private val hostClass: Class<out BaseState>)
     BeanBinding.getAccessors(hostClass)
   }
 
-  fun getListItemType(propertyName: String): Class<out BaseState>? {
+  fun getListItemType(propertyName: String, logAsErrorIfPropertyNotFound: Boolean): Class<out BaseState>? {
     val accessor = accessors.find { it.name == propertyName }
     if (accessor == null) {
-      LOG.warn("Property not found (name=$propertyName, hostClass=${hostClass.name})")
+      val message = "Property not found (name=$propertyName, hostClass=${hostClass.name})"
+      if (logAsErrorIfPropertyNotFound) {
+        LOG.error(message)
+      }
+      else {
+        LOG.warn(message)
+      }
       return null
     }
 
