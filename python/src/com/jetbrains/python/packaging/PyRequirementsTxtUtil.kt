@@ -153,13 +153,13 @@ private fun matchWithExistingRequirements(requirementsFile: PsiFile,
       .map { it.removeSuffix("\\") }
       .joinToString(" ")
 
-    if (line.startsWith("--") || line.startsWith("-e .")) {
+    if (isSkipableInstallOption(line)) {
       outputLines.addAll(lines)
       continue
     }
 
     val parsed = PyRequirementParser.fromText(line, requirementsFile.virtualFile, mutableSetOf())
-    if (line.startsWith("-r ")) {
+    if (isFileReference(line)) {
       if (parsed.isEmpty()) continue
 
       val (inImports, notInImports) = parsed.partition { it.name.toLowerCase() in importedPackages }
@@ -283,6 +283,11 @@ private fun addImports(file: PyFile, imported: MutableSet<String>) {
     .forEach { imported.add(it) }
 }
 
+private fun isSkipableInstallOption(line: String): Boolean =
+  isEditableSelf(line) || (line.startsWith("--") && !line.startsWith("--editable") && !isFileReference(line))
+
+private fun isFileReference(line: String): Boolean = line.startsWith("-r ") || line.startsWith("--requirement ")
+private fun isEditableSelf(line: String): Boolean = line.startsWith("--editable .") || line.startsWith("-e .")
 
 data class PyRequirementsAnalysisResult(val lines: MutableList<String>,
                                         val unhandled: List<String>,
