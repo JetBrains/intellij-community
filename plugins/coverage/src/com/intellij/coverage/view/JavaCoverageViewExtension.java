@@ -3,10 +3,10 @@ package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
 import com.intellij.coverage.*;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +39,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     PsiPackage aPackage = (PsiPackage)node.getValue();
     final String coverageInformationString = myAnnotator
       .getPackageCoverageInformationString(aPackage, null, myCoverageDataManager, myStateBean.myFlattenPackages);
-    return ExecutionBundle.message("coverage.view.node.summary", getNotCoveredMessage(coverageInformationString),
+    return JavaCoverageBundle.message("coverage.view.node.summary", getNotCoveredMessage(coverageInformationString),
                                    aPackage != null ? aPackage.getQualifiedName() : node.getName());
   }
 
@@ -66,12 +66,12 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       }
       coverageInformationString = JavaCoverageAnnotator.getCoverageInformationString(info, false);
     }
-    return ExecutionBundle.message("coverage.view.root.node.summary", getNotCoveredMessage(coverageInformationString));
+    return JavaCoverageBundle.message("coverage.view.root.node.summary", getNotCoveredMessage(coverageInformationString));
   }
 
   private static String getNotCoveredMessage(String coverageInformationString) {
     if (coverageInformationString == null) {
-      coverageInformationString = ExecutionBundle.message("coverage.view.no.coverage");
+      coverageInformationString = JavaCoverageBundle.message("coverage.view.no.coverage");
     }
     return coverageInformationString;
   }
@@ -277,9 +277,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   public ColumnInfo[] createColumnInfos() {
     ArrayList<ColumnInfo> infos = new ArrayList<>();
     infos.add(new ElementColumnInfo());
-    infos.add(new PercentageCoverageColumnInfo(1, ExecutionBundle.message("coverage.view.column.class"), mySuitesBundle, myStateBean));
-    infos.add(new PercentageCoverageColumnInfo(2, ExecutionBundle.message("coverage.view.column.method"), mySuitesBundle, myStateBean));
-    infos.add(new PercentageCoverageColumnInfo(3, ExecutionBundle.message("coverage.view.column.line"), mySuitesBundle, myStateBean));
+    infos.add(new PercentageCoverageColumnInfo(1, JavaCoverageBundle.message("coverage.view.column.class"), mySuitesBundle, myStateBean));
+    infos.add(new PercentageCoverageColumnInfo(2, JavaCoverageBundle.message("coverage.view.column.method"), mySuitesBundle, myStateBean));
+    infos.add(new PercentageCoverageColumnInfo(3, JavaCoverageBundle.message("coverage.view.column.line"), mySuitesBundle, myStateBean));
     RunConfigurationBase runConfiguration = mySuitesBundle.getRunConfiguration();
     if (runConfiguration != null) {
       JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(runConfiguration);
@@ -300,7 +300,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   private boolean isBranchColumnAvailable(ArrayList<? super ColumnInfo> infos, CoverageRunner coverageRunner, boolean sampling) {
     if (coverageRunner instanceof JavaCoverageRunner && ((JavaCoverageRunner)coverageRunner).isBranchInfoAvailable(sampling)) {
-      infos.add(new PercentageCoverageColumnInfo(4, ExecutionBundle.message("coverage.view.column.branch"), mySuitesBundle, myStateBean));
+      infos.add(new PercentageCoverageColumnInfo(4, JavaCoverageBundle.message("coverage.view.column.branch"), mySuitesBundle, myStateBean));
       return true;
     }
     return false;

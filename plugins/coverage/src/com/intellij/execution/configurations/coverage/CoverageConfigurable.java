@@ -2,16 +2,15 @@
 
 package com.intellij.execution.configurations.coverage;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.coverage.CoverageRunner;
 import com.intellij.coverage.JavaCoverageEngine;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PackageChooserDialog;
+import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -88,7 +87,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     @Override
     protected void addPatternFilter() {
       PackageChooser chooser =
-        new PackageChooserDialog(CodeInsightBundle.message("coverage.pattern.filter.editor.choose.package.title"), myProject);
+        new PackageChooserDialog(JavaCoverageBundle.message("coverage.pattern.filter.editor.choose.package.title"), myProject);
       if (chooser.showAndGet()) {
         List<PsiPackage> packages = chooser.getSelectedPackages();
         if (!packages.isEmpty()) {
@@ -107,7 +106,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
     @Override
     protected String getAddPatternButtonText() {
-      return CodeInsightBundle.message("coverage.button.add.package");
+      return JavaCoverageBundle.message("coverage.button.add.package");
     }
 
     @Override
@@ -220,13 +219,13 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     });
     myRunnerPanel = new JPanel(new GridBagLayout());
     myRunnerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-    myRunnerPanel.add(new JLabel(ExecutionBundle.message("run.configuration.choose.coverage.runner")), new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(10), 0, 0));
+    myRunnerPanel.add(new JLabel(JavaCoverageBundle.message("run.configuration.choose.coverage.runner")), new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(10), 0, 0));
     myRunnerPanel.add(myCoverageRunnerCb, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     final JPanel cPanel = new JPanel(new VerticalFlowLayout());
 
-    mySamplingRb = new JRadioButton(ExecutionBundle.message("run.configuration.coverage.sampling"));
+    mySamplingRb = new JRadioButton(JavaCoverageBundle.message("run.configuration.coverage.sampling"));
     cPanel.add(mySamplingRb);
-    myTracingRb = new JRadioButton(ExecutionBundle.message("run.configuration.coverage.tracing"));
+    myTracingRb = new JRadioButton(JavaCoverageBundle.message("run.configuration.coverage.tracing"));
     cPanel.add(myTracingRb);
 
     final ButtonGroup group = new ButtonGroup();
@@ -244,7 +243,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     mySamplingRb.addActionListener(samplingListener);
     myTracingRb.addActionListener(samplingListener);
 
-    myTrackPerTestCoverageCb = new JCheckBox(ExecutionBundle.message("run.configuration.track.per.test.coverage"));
+    myTrackPerTestCoverageCb = new JCheckBox(JavaCoverageBundle.message("run.configuration.track.per.test.coverage"));
     final JBPanel tracingPanel = JBUI.Panels.simplePanel(myTrackPerTestCoverageCb).withBorder(JBUI.Borders.emptyLeft(15));
     cPanel.add(tracingPanel);
     myRunnerPanel.add(cPanel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
@@ -259,11 +258,11 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     final GridBagConstraints bagConstraints =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                              JBUI.emptyInsets(), 0, 0);
-    panel.add(new TitledSeparator(ExecutionBundle.message("record.coverage.filters.title")), bagConstraints);
+    panel.add(new TitledSeparator(JavaCoverageBundle.message("record.coverage.filters.title")), bagConstraints);
     myClassFilterEditor = new MyClassFilterEditor(myProject);
     panel.add(myClassFilterEditor, bagConstraints);
 
-    panel.add(new TitledSeparator(ExecutionBundle.message("exclude.coverage.filters.title")), bagConstraints);
+    panel.add(new TitledSeparator(JavaCoverageBundle.message("exclude.coverage.filters.title")), bagConstraints);
     myExcludeClassFilterEditor = new MyClassFilterEditor(myProject) {
       @NotNull
       @Override
@@ -276,14 +275,14 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     panel.add(myExcludeClassFilterEditor, bagConstraints);
 
     bagConstraints.weighty = 0;
-    myTrackTestSourcesCb = new JCheckBox(ExecutionBundle.message("run.configuration.enable.coverage.in.test.folders"));
+    myTrackTestSourcesCb = new JCheckBox(JavaCoverageBundle.message("run.configuration.enable.coverage.in.test.folders"));
     panel.add(myTrackTestSourcesCb, bagConstraints);
 
     gc.weighty = 1;
     gc.fill = GridBagConstraints.BOTH;
     result.add(panel, gc);
 
-    myCoverageNotSupportedLabel = new JLabel(CodeInsightBundle.message("code.coverage.is.not.supported"));
+    myCoverageNotSupportedLabel = new JLabel(JavaCoverageBundle.message("code.coverage.is.not.supported"));
     myCoverageNotSupportedLabel.setIcon(AllIcons.General.WarningDialog);
     result.add(myCoverageNotSupportedLabel, gc);
     return result;
