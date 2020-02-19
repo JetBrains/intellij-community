@@ -2,10 +2,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.Splitter;
@@ -93,6 +90,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     add(decoratorChild, BorderLayout.CENTER);
 
     setBorder(new InnerPanelBorder(toolWindow));
+  }
+
+  public ActionToolbar getHeaderToolbar() {
+    return header.getToolbar();
   }
 
   @Override
@@ -280,6 +281,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   public void setHeaderVisible(boolean value) {
     header.setVisible(value);
+  }
+
+  public boolean isHeaderVisible() {
+    return header.isVisible();
   }
 
   @Override

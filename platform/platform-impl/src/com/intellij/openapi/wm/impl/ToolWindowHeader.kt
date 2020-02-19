@@ -14,8 +14,8 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.UIBundle
-import com.intellij.ui.layout.migLayout.*
-import com.intellij.ui.layout.migLayout.patched.*
+import com.intellij.ui.layout.migLayout.createLayoutConstraints
+import com.intellij.ui.layout.migLayout.patched.MigLayout
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.ui.*
@@ -136,6 +136,10 @@ abstract class ToolWindowHeader internal constructor(
         }
       }
     )
+  }
+
+  fun getToolbar(): ActionToolbar? {
+    return toolbar
   }
 
   override fun getData(dataId: String): Any? {
