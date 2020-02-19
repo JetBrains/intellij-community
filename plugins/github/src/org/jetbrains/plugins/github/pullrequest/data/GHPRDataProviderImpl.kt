@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
@@ -17,6 +17,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHCommit
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
@@ -53,7 +54,10 @@ internal class GHPRDataProviderImpl(private val project: Project,
       lastKnownBaseSha = details.baseRefOid
       lastKnownHeadSha?.run { if (this != details.headRefOid) needReload = true }
       lastKnownHeadSha = details.headRefOid
-      if (needReload) reloadChanges()
+      if (needReload) {
+        reloadChanges()
+        reloadMergeabilityData()
+      }
     }
     details
   }
@@ -118,6 +122,13 @@ internal class GHPRDataProviderImpl(private val project: Project,
   }
   override val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>> by backgroundProcessValue(reviewThreadsRequestValue)
 
+  private val mergeabilityDataRequestValue = backingValue {
+    requestExecutor.execute(GHGQLRequests.PullRequest.mergeabilityData(repository, number))
+    ?: error("Could not find pull request $number")
+  }
+  override val mergeabilityDataRequest: CompletableFuture<GHPullRequestMergeabilityData>
+    by backgroundProcessValue(mergeabilityDataRequestValue)
+
   private val timelineLoaderHolder = GHPRCountingTimelineLoaderHolder {
     val timelineModel = GHPRTimelineMergingModel()
     GHPRTimelineLoader(progressManager, requestExecutor,
@@ -142,6 +153,11 @@ internal class GHPRDataProviderImpl(private val project: Project,
     changesProviderValue.drop()
     requestsChangesEventDispatcher.multicaster.commitsRequestChanged()
     reloadReviewThreads()
+  }
+
+  override fun reloadMergeabilityData() {
+    mergeabilityDataRequestValue.drop()
+    requestsChangesEventDispatcher.multicaster.mergeabilityDataRequestChanged()
   }
 
   @CalledInAwt

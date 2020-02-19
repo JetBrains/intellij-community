@@ -1,0 +1,10 @@
+fragment pullRequestMergeability on PullRequest {
+    url
+    number
+
+    mergeable
+    canBeRebased
+    mergeStateStatus
+
+    headRefOid
+}

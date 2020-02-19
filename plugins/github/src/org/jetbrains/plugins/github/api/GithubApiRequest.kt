@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -104,7 +104,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
 
   abstract class Post<out T> @JvmOverloads constructor(override val bodyMimeType: String,
                                                        url: String,
-                                                       override val acceptMimeType: String? = null) : GithubApiRequest.WithBody<T>(url) {
+                                                       override var acceptMimeType: String? = null) : GithubApiRequest.WithBody<T>(url) {
     companion object {
       inline fun <reified T> json(url: String, body: Any, acceptMimeType: String? = null): Post<T> =
         Json(url, body, T::class.java, acceptMimeType)
@@ -236,7 +236,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
 
   abstract class Patch<T> @JvmOverloads constructor(override val bodyMimeType: String,
                                                     url: String,
-                                                    override val acceptMimeType: String? = null) : Post<T>(bodyMimeType,
+                                                    override var acceptMimeType: String? = null) : Post<T>(bodyMimeType,
                                                                                                            url,
                                                                                                            acceptMimeType) {
     companion object {

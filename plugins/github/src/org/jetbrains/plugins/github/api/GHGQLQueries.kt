@@ -9,6 +9,7 @@ object GHGQLQueries {
   const val pullRequestTimeline = "pullRequestTimeline"
   const val pullRequestReviewThreads = "pullRequestReviewThreads"
   const val pullRequestCommits = "pullRequestCommits"
+  const val pullRequestMergeability = "findPullRequestMergeability"
   const val getReviewCommentBody = "getReviewCommentBody"
   const val deleteReviewComment = "deleteReviewComment"
   const val updateReviewComment = "updateReviewComment"

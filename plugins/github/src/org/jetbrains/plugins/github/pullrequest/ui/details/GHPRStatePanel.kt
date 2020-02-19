@@ -15,7 +15,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
@@ -25,6 +25,9 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.*
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.DelayedTaskScheduler
+import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.FlowLayout
 import javax.swing.*
 import kotlin.properties.Delegates.observable
@@ -33,7 +36,7 @@ internal class GHPRStatePanel(private val project: Project,
                               private val dataProvider: GHPRDataProvider,
                               private val securityService: GHPRSecurityService,
                               private val stateService: GHPRStateService,
-                     private val detailsModel: SingleValueModel<out GHPullRequestShort>,
+                              private val detailsModel: SingleValueModel<GHPullRequestShort>,
                               parentDisposable: Disposable)
   : CardLayoutPanel<GHPullRequestState, GHPRStatePanel.StateUI, JComponent>() {
 
@@ -54,14 +57,8 @@ internal class GHPRStatePanel(private val project: Project,
     return when (key) {
       GHPullRequestState.MERGED -> StateUI.Merged
       GHPullRequestState.CLOSED -> StateUI.Closed(dataProvider, securityService, detailsModel.value.viewerDidAuthor, stateService)
-      GHPullRequestState.OPEN -> {
-        val fullDetailsModel = SingleValueModel<GHPullRequest?>(null)
-        detailsModel.addAndInvokeValueChangedListener(openComponentDisposable) {
-          val details = detailsModel.value
-          if (details is GHPullRequest) fullDetailsModel.value = details
-        }
-        StateUI.Open(project, dataProvider, securityService, detailsModel.value.viewerDidAuthor, stateService, fullDetailsModel)
-      }
+      GHPullRequestState.OPEN -> StateUI.Open(project, dataProvider, securityService, stateService,
+                                              detailsModel, openComponentDisposable)
     }
   }
 
@@ -147,11 +144,12 @@ internal class GHPRStatePanel(private val project: Project,
     class Open(private val project: Project,
                private val dataProvider: GHPRDataProvider,
                securityService: GHPRSecurityService,
-               viewerIsAuthor: Boolean,
                private val stateService: GHPRStateService,
-               private val fullDetailsModel: SingleValueModel<GHPullRequest?>) : StateUI() {
+               private val detailsModel: SingleValueModel<GHPullRequestShort>,
+               parentDisposable: Disposable) : StateUI() {
 
-      private val canClose = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) || viewerIsAuthor
+      private val canClose =
+        securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) || detailsModel.value.viewerDidAuthor
       private val canMerge = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)
       private val mergeForbidden = securityService.isMergeForbiddenForProject()
 
@@ -159,9 +157,38 @@ internal class GHPRStatePanel(private val project: Project,
       private val canSquashMerge = securityService.isSquashMergeAllowed()
       private val canRebaseMerge = securityService.isRebaseMergeAllowed()
 
+      private val mergeabilityModel = SingleValueModel<GHPullRequestMergeabilityData?>(null)
+      private val mergeabilityPoller = DelayedTaskScheduler(3, parentDisposable) {
+        dataProvider.reloadMergeabilityData()
+      }
+
+      init {
+        dataProvider.addRequestsChangesListener(parentDisposable, object : GHPRDataProvider.RequestsChangedListener {
+          override fun mergeabilityDataRequestChanged() {
+            loadMergeability()
+          }
+        })
+        loadMergeability()
+        mergeabilityModel.addValueChangedListener {
+          val state = mergeabilityModel.value
+          if (state != null && state.mergeable == GHPullRequestMergeableState.UNKNOWN) {
+            mergeabilityPoller.start()
+          }
+          else mergeabilityPoller.stop()
+        }
+      }
+
+      private fun loadMergeability() {
+        dataProvider.mergeabilityDataRequest.handleOnEdt { state: GHPullRequestMergeabilityData?, throwable: Throwable? ->
+          state
+        }.successOnEdt {
+          mergeabilityModel.value = it
+        }
+      }
+
       override fun createStatusComponent(): JComponent {
         val panel = Wrapper()
-        LoadingController(fullDetailsModel, panel, ::createNotLoadedComponent, ::createLoadedComponent)
+        LoadingController(mergeabilityModel, panel, ::createNotLoadedComponent, ::createLoadedComponent)
         return panel
       }
 
@@ -177,9 +204,9 @@ internal class GHPRStatePanel(private val project: Project,
         }
       }
 
-      private fun createLoadedComponent(detailsModel: SingleValueModel<GHPullRequest>): JComponent {
+      private fun createLoadedComponent(mergeabilityModel: SingleValueModel<GHPullRequestMergeabilityData>): JComponent {
         val conflictsLabel = JLabel()
-        ConflictsController(detailsModel, conflictsLabel)
+        ConflictsController(mergeabilityModel, conflictsLabel)
 
         val accessDeniedLabel = createAccessDeniedLabel()
         return if (accessDeniedLabel == null) conflictsLabel
@@ -222,13 +249,13 @@ internal class GHPRStatePanel(private val project: Project,
           val allowedActions = mutableListOf<Action>()
           if (canCommitMerge)
             allowedActions.add(GHPRCommitMergeAction(busyStateModel, errorHandler,
-                                                     fullDetailsModel, project, stateService))
+                                                     detailsModel, mergeabilityModel, project, stateService))
           if (canRebaseMerge)
             allowedActions.add(GHPRRebaseMergeAction(busyStateModel, errorHandler,
-                                                     fullDetailsModel, stateService))
+                                                     mergeabilityModel, stateService))
           if (canSquashMerge)
             allowedActions.add(GHPRSquashMergeAction(busyStateModel, errorHandler,
-                                                     fullDetailsModel, project, stateService, dataProvider))
+                                                     mergeabilityModel, project, stateService, dataProvider))
 
           val action = allowedActions.firstOrNull()
           val actions = if (allowedActions.size > 1) Array(allowedActions.size - 1) { allowedActions[it + 1] } else emptyArray()
@@ -245,39 +272,39 @@ internal class GHPRStatePanel(private val project: Project,
         return list
       }
 
-      private class LoadingController(private val detailsModel: SingleValueModel<GHPullRequest?>,
+      private class LoadingController(private val loadingMergeabilityModel: SingleValueModel<GHPullRequestMergeabilityData?>,
                                       private val panel: Wrapper,
                                       private val notLoadedContentFactory: () -> JComponent,
-                                      private val loadedContentFactory: (detailsModel: SingleValueModel<GHPullRequest>) -> JComponent) {
+                                      private val loadedContentFactory: (detailsModel: SingleValueModel<GHPullRequestMergeabilityData>) -> JComponent) {
 
         init {
-          detailsModel.addAndInvokeValueChangedListener(this::update)
+          loadingMergeabilityModel.addAndInvokeValueChangedListener(this::update)
         }
 
         private fun update() {
-          val details = detailsModel.value
-          if (details == null) {
+          val mergeability = loadingMergeabilityModel.value
+          if (mergeability == null) {
             panel.setContent(notLoadedContentFactory())
           }
           else {
-            val notNullModel = SingleValueModel(details)
-            detailsModel.addAndInvokeValueChangedListener {
-              notNullModel.value = detailsModel.value ?: return@addAndInvokeValueChangedListener
+            val mergeabilityModel = SingleValueModel(mergeability)
+            loadingMergeabilityModel.addAndInvokeValueChangedListener {
+              mergeabilityModel.value = loadingMergeabilityModel.value ?: return@addAndInvokeValueChangedListener
             }
-            panel.setContent(loadedContentFactory(notNullModel))
+            panel.setContent(loadedContentFactory(mergeabilityModel))
           }
         }
       }
 
-      private class ConflictsController(private val detailsModel: SingleValueModel<GHPullRequest>,
+      private class ConflictsController(private val mergeabilityModel: SingleValueModel<GHPullRequestMergeabilityData>,
                                         private val label: JLabel) {
 
         init {
-          detailsModel.addAndInvokeValueChangedListener(::update)
+          mergeabilityModel.addAndInvokeValueChangedListener(::update)
         }
 
         private fun update() {
-          when (detailsModel.value.mergeable) {
+          when (mergeabilityModel.value.mergeable) {
             GHPullRequestMergeableState.MERGEABLE -> {
               label.icon = AllIcons.RunConfigurations.TestPassed
               label.text = "Branch has no conflicts with base branch"

@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture
 
 internal class GHPRSquashMergeAction(busyStateModel: SingleValueModel<Boolean>,
                                      errorHandler: (String) -> Unit,
-                                     detailsModel: SingleValueModel<GHPullRequest?>,
+                                     detailsModel: SingleValueModel<GHPullRequestMergeabilityData?>,
                                      private val project: Project,
                                      private val stateService: GHPRStateService,
                                      private val dataProvider: GHPRDataProvider)
@@ -25,17 +25,17 @@ internal class GHPRSquashMergeAction(busyStateModel: SingleValueModel<Boolean>,
     update()
   }
 
-  override fun submitMergeTask(details: GHPullRequest): CompletableFuture<Unit>? = dataProvider.apiCommitsRequest.successOnEdt { commits ->
+  override fun submitMergeTask(mergeability: GHPullRequestMergeabilityData): CompletableFuture<Unit>? = dataProvider.apiCommitsRequest.successOnEdt { commits ->
     val body = "* " + StringUtil.join(commits, { it.message }, "\n\n* ")
     val dialog = GithubMergeCommitMessageDialog(project,
                                                 "Merge Pull Request",
-                                                "Merge pull request #${details.number}",
+                                                "Merge pull request #${mergeability.number}",
                                                 body)
     if (!dialog.showAndGet()) {
       throw ProcessCanceledException()
     }
     dialog.message
   }.thenCompose { message ->
-    stateService.squashMerge(EmptyProgressIndicator(), details.number, message, details.headRefOid)
+    stateService.squashMerge(EmptyProgressIndicator(), mergeability.number, message, mergeability.headRefOid)
   }
 }

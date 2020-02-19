@@ -51,6 +51,16 @@ object GHGQLRequests {
                                               "repository", "pullRequest")
     }
 
+    fun mergeabilityData(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPullRequestMergeabilityData?> =
+      GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestMergeability,
+                                       mapOf("repoOwner" to repository.repositoryPath.owner,
+                                             "repoName" to repository.repositoryPath.repository,
+                                             "number" to number),
+                                       GHPullRequestMergeabilityData::class.java,
+                                       "repository", "pullRequest").apply {
+        acceptMimeType = "application/vnd.github.antiope-preview+json,application/vnd.github.merge-info-preview+json"
+      }
+
     fun search(server: GithubServerPath, query: String, pagination: GHGQLRequestPagination? = null)
       : GQLQuery<GHGQLSearchQueryResponse<GHPullRequestShort>> {
 
