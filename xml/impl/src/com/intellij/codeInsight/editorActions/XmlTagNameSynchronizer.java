@@ -36,6 +36,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlExtension;
@@ -290,15 +291,19 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
     private RangeMarker findSupport(RangeMarker leader, PsiFile file, Document document) {
       final TextRange leaderRange = new TextRange(leader.getStartOffset(), leader.getEndOffset());
       final int offset = leader.getStartOffset();
-      PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(file, offset);
+      PsiElement element = findNameElement(InjectedLanguageUtil.findElementAtNoCommit(file, offset));
       TextRange support = findSupportRange(element);
       if (!isSupportRangeValid(document, leaderRange, support) && file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
-        element = file.getViewProvider().findElementAt(offset, myLanguage);
+        element = findNameElement(file.getViewProvider().findElementAt(offset, myLanguage));
         support = findSupportRange(element);
       }
 
       if (!isSupportRangeValid(document, leaderRange, support)) return findSupportForTagList(leader, element, document);
       return document.createRangeMarker(support.getStartOffset(), support.getEndOffset(), true);
+    }
+
+    private PsiElement findNameElement(@Nullable PsiElement element) {
+      return element instanceof OuterLanguageElement ? TemplateLanguageUtil.getSameLanguageTreeNext(element) : element;
     }
 
     private boolean isValidTagNameChar(char c) {
