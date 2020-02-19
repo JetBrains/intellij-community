@@ -18,8 +18,27 @@ data class GitFileStatus(val index: StatusCode,
 
   fun isUntracked() = isUntracked(index) || isUntracked(workTree)
   fun isIgnored() = isIgnored(index) || isIgnored(workTree)
+  fun isTracked() = !isIgnored(index) && !isUntracked(index)
 
   fun getStagedStatus(): FileStatus? = if (isIgnored(index) || isUntracked(index)) null else getFileStatus(index)
   fun getUnStagedStatus(): FileStatus? = if (isIgnored(workTree) || isUntracked(workTree)) null
   else getFileStatus(workTree)
 }
+
+fun GitFileStatus.has(contentVersion: ContentVersion): Boolean {
+  return when (contentVersion) {
+    ContentVersion.HEAD -> isTracked() && !isAdded(index)
+    ContentVersion.STAGED -> isTracked() && !isDeleted(index)
+    ContentVersion.LOCAL -> !isDeleted(workTree)
+  }
+}
+
+fun GitFileStatus.path(contentVersion: ContentVersion): FilePath {
+  return when (contentVersion) {
+    ContentVersion.HEAD -> origPath ?: path
+    ContentVersion.STAGED -> if (isRenamed(index)) path else origPath ?: path
+    ContentVersion.LOCAL -> path
+  }
+}
+
+enum class ContentVersion { HEAD, STAGED, LOCAL }

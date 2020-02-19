@@ -52,8 +52,18 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     treeMessageSplitter.firstComponent = progressStripe
     treeMessageSplitter.secondComponent = commitPanel
 
-    add(toolbar.component, BorderLayout.NORTH)
-    add(treeMessageSplitter, BorderLayout.CENTER)
+    val leftPanel = JPanel(BorderLayout())
+    leftPanel.add(toolbar.component, BorderLayout.NORTH)
+    leftPanel.add(treeMessageSplitter, BorderLayout.CENTER)
+
+    val diffPreview = GitStageDiffPreview(project, tree, tracker, this)
+    diffPreview.getToolbarWrapper().setVerticalSizeReferent(toolbar.component)
+
+    val commitDiffSplitter = OnePixelSplitter("git.stage.commit.diff.splitter", 0.5f)
+    commitDiffSplitter.firstComponent = leftPanel
+    commitDiffSplitter.secondComponent = diffPreview.component
+
+    add(commitDiffSplitter, BorderLayout.CENTER)
 
     tracker.addListener(MyGitStageTrackerListener(), this)
     if (tracker.isRefreshInProgress) {

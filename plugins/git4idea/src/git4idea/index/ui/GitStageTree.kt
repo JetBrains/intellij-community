@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
+import com.google.common.base.Objects
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
@@ -37,7 +38,7 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
         NodeKind.values().forEach { kind ->
           if (kind.`is`(status)) {
             val parentNode = parentNodes.getOrPut(kind) { ChangesBrowserKindNode(kind) }
-            val fileStatusInfo = GitFileStatusNode(root, status.path, kind, kind.status(status), kind.origPath(status))
+            val fileStatusInfo = GitFileStatusNode(root, status, kind)
             builder.insertPath(fileStatusInfo, parentNode)
           }
         }
@@ -63,7 +64,7 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
   }
 
   private class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
-    AbstractChangesBrowserFilePathNode<GitFileStatusNode>(node, node.status) {
+    AbstractChangesBrowserFilePathNode<GitFileStatusNode>(node, node.fileStatus) {
     private val movedRelativePath by lazy { getMovedRelativePath(getUserObject()) }
     override fun filePath(userObject: GitFileStatusNode): FilePath = userObject.filePath
     override fun originText(userObject: GitFileStatusNode): String? {
@@ -75,8 +76,8 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
     }
 
     private fun getMovedRelativePath(userObject: GitFileStatusNode): String? {
-      if (userObject.origPath == null || userObject.origPath.parentPath == userObject.filePath.parentPath) return null
-      return PlatformVcsPathPresenter.getPresentableRelativePath(userObject.filePath, userObject.origPath)
+      if (userObject.origPath == null || userObject.origPath!!.parentPath == userObject.filePath.parentPath) return null
+      return PlatformVcsPathPresenter.getPresentableRelativePath(userObject.filePath, userObject.origPath!!)
     }
   }
 
@@ -129,8 +130,29 @@ enum class NodeKind(@PropertyKey(resourceBundle = GitBundle.BUNDLE) @NonNls val 
   open fun origPath(status: GitFileStatus): FilePath? = null
 }
 
-data class GitFileStatusNode(val root: VirtualFile,
-                             val filePath: FilePath,
-                             val kind: NodeKind,
-                             val status: FileStatus,
-                             val origPath: FilePath? = null)
+class GitFileStatusNode(val root: VirtualFile, val status: GitFileStatus, val kind: NodeKind) {
+  val filePath: FilePath get() = status.path
+  val origPath: FilePath? get() = kind.origPath(status)
+  val fileStatus: FileStatus get() = kind.status(status)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as GitFileStatusNode
+
+    if (root != other.root) return false
+    if (status != other.status) return false
+    if (kind != other.kind) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return Objects.hashCode(root, fileStatus, kind)
+  }
+
+  override fun toString(): String {
+    return "GitFileStatusNode.Saved(root=$root, status=$fileStatus, kind=$kind)"
+  }
+}

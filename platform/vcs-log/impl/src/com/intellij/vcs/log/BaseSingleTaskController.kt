@@ -48,13 +48,16 @@ abstract class BaseSingleTaskController<Request, Result>(name: String, resultCon
 }
 
 fun runInEdt(disposable: Disposable, action: () -> Unit) {
-  val app = ApplicationManager.getApplication()
-  if (app.isDispatchThread) {
+  if (ApplicationManager.getApplication().isDispatchThread) {
     action()
   }
   else {
-    app.invokeLater(action, { Disposer.isDisposed(disposable) })
+    runInEdtAsync(disposable, action)
   }
+}
+
+fun runInEdtAsync(disposable: Disposable, action: () -> Unit) {
+  ApplicationManager.getApplication().invokeLater(action, { Disposer.isDisposed(disposable) })
 }
 
 fun ExecutorService.submitSafe(log: Logger, task: () -> Unit): Future<*> = this.submit {
