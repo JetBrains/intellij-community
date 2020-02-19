@@ -18,7 +18,6 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -44,12 +43,6 @@ public class PlatformDataKeys extends CommonDataKeys {
    * is unknown returns {@code null}.
    */
   public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create("isModalContext");
-
-  /**
-   * @deprecated see {@link com.intellij.diff.tools.util.DiffDataKeys}
-   */
-  @Deprecated
-  public static final DataKey<DiffViewer> DIFF_VIEWER = DataKey.create("diffViewer");
 
   /**
    * Returns help id.
