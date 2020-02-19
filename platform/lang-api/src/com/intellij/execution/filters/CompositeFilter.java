@@ -82,7 +82,15 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
           throw new RuntimeException("Error while applying " + filter + " to '" + line + "'", t);
         }
         if (result != null) {
-          resultItems = merge(resultItems, result, entireLength, filter);
+          try {
+            resultItems = merge(resultItems, result, entireLength, filter);
+          }
+          catch (ProcessCanceledException ignore) {
+            return null;
+          }
+          catch (Throwable t) {
+            throw new ApplyFilterException("Error while merging results from " + filter, t);
+          }
         }
 
         t0 = System.currentTimeMillis() - t0;
@@ -225,5 +233,15 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   @Override
   public String toString() {
     return "CompositeFilter: " + myFilters;
+  }
+
+  /**
+   * Android Studio: custom exception that doesn't contain any PII, so we can analyze why we're seeing exceptions in CompositeFilter.
+   * See b/146355865.
+   */
+  public static class ApplyFilterException extends RuntimeException {
+    private ApplyFilterException(String message, Throwable cause) {
+      super(message, cause);
+    }
   }
 }
