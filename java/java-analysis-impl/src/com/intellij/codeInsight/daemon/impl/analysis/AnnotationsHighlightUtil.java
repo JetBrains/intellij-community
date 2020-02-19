@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -770,7 +769,7 @@ public class AnnotationsHighlightUtil {
     @NotNull
     @Override
     public String getText() {
-      return CodeInsightBundle.message("intention.text.remove.annotation");
+      return JavaAnalysisBundle.message("intention.text.remove.annotation");
     }
 
     @NotNull
