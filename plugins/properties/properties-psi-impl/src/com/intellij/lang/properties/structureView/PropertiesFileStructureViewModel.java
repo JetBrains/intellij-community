@@ -2,7 +2,7 @@
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -41,7 +41,7 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
     @Override
     @NotNull
     public ActionPresentation getPresentation() {
-      String name = IdeBundle.message("action.sort.by.type");
+      String name = StructureViewBundle.message("action.sort.by.type");
       return new ActionPresentationData(name, name, AllIcons.ObjectBrowser.SortByType);
     }
 
