@@ -2,6 +2,7 @@
 package com.intellij.util.ui;
 
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -13,6 +14,11 @@ import java.util.Objects;
 public abstract class ColumnInfo<Item, Aspect> {
   private String myName;
   public static final ColumnInfo[] EMPTY_ARRAY = new ColumnInfo[0];
+
+  @SuppressWarnings("unchecked")
+  public static <I, A> @NotNull ColumnInfo<I, A> @NotNull [] emptyArray() {
+    return EMPTY_ARRAY;
+  }
 
   public ColumnInfo(@Nls(capitalization = Nls.Capitalization.Title) String name) {
     myName = name;
