@@ -804,6 +804,7 @@ public class AllIcons {
   public final static class Plugins {
     /** 16x16 */ public static final Icon Disabled = load("/plugins/disabled.svg");
     /** 12x12 */ public static final Icon Downloads = load("/plugins/downloads.svg");
+    /** 16x16 */ public static final Icon Hieroglyph = load("/plugins/hieroglyph.svg");
     /** 15x15 */ public static final Icon ModifierInvalid = load("/plugins/modifierInvalid.svg");
     /** 14x14 */ public static final Icon ModifierJBLogo = load("/plugins/modifierJBLogo.svg");
     /** 40x40 */ public static final Icon PluginLogo = load("/plugins/pluginLogo.svg");
