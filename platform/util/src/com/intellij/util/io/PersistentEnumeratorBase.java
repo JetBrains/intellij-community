@@ -467,6 +467,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   @Override
   public Data valueOf(int idx) throws IOException {
+    if (idx <= NULL_ID) return null;
     try {
 
       lockStorage();
@@ -479,7 +480,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       finally {
         unlockStorage();
       }
-
+    }
+    catch (NoDataException e) {
+      markCorrupted();
+      return null;
     }
     catch (IOException io) {
       markCorrupted();
