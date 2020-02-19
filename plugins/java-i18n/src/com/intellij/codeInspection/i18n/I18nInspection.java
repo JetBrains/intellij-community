@@ -860,8 +860,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
   private static boolean isReturnedFromAnnotatedMethod(final ULiteralExpression expression,
                                                        final String fqn,
-                                                       @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
+                                                       final @Nullable Set<? super PsiModifierListOwner> nonNlsTargets) {
     PsiMethod method;
+    PsiType returnType = null;
     UNamedExpression nameValuePair = UastUtils.getParentOfType(expression, UNamedExpression.class);
     if (nameValuePair != null) {
       method = UastUtils.getAnnotationMethod(nameValuePair);
@@ -873,12 +874,22 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
              ((UCallExpression)parent).getKind() == UastCallKind.NEW_ARRAY_WITH_INITIALIZER) {
         parent = parent.getUastParent();
       }
+      if (parent == null) return false;
       final UElement returnStmt = UastUtils.getParentOfType(parent, UReturnExpression.class, false, UCallExpression.class, ULambdaExpression.class);
       if (!(returnStmt instanceof UReturnExpression)) {
         return false;
       }
-      UMethod uMethod = UastUtils.getParentOfType(expression, UMethod.class);
-      method = uMethod != null ? uMethod.getJavaPsi() : null;
+      UElement jumpTarget = ((UReturnExpression)returnStmt).getJumpTarget();
+      if (jumpTarget instanceof UMethod) {
+        method = ((UMethod)jumpTarget).getJavaPsi();
+      }
+      else if (jumpTarget instanceof ULambdaExpression) {
+        PsiType type = ((ULambdaExpression)jumpTarget).getFunctionalInterfaceType();
+        returnType = LambdaUtil.getFunctionalInterfaceReturnType(type);
+        if (type == null) return false;
+        method = LambdaUtil.getFunctionalInterfaceMethod(type);
+      }
+      else return false;
     }
     if (method == null) return false;
 
@@ -891,6 +902,14 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     if (AnnotationUtil.isAnnotated(method, fqn, CHECK_HIERARCHY | CHECK_EXTERNAL)) {
       return true;
     }
+
+    if (returnType != null) {
+      PsiAnnotation typeAnnotation = AnnotationUtil.findTypeAnnotationInHierarchy(returnType, NON_NLS_NAMES);
+      if (typeAnnotation != null) {
+        return typeAnnotation.hasQualifiedName(fqn);
+      }
+    }
+
     if (nonNlsTargets != null) {
       nonNlsTargets.add(method);
     }

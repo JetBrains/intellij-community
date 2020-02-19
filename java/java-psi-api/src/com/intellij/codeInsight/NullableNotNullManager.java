@@ -5,7 +5,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -305,21 +304,8 @@ public abstract class NullableNotNullManager {
       if (annotation != memberAnno && !qualifiedNames.contains(annotation.getQualifiedName())) return null;
       return annotation;
     }
-    if (type != null && !(type instanceof PsiPrimitiveType)) {
-      Ref<PsiAnnotation> result = Ref.create(null);
-      InheritanceUtil.processSuperTypes(type, true, eachType -> {
-        for (PsiAnnotation annotation : eachType.getAnnotations()) {
-          String qualifiedName = annotation.getQualifiedName();
-          if (qualifiedNames.contains(qualifiedName)) {
-            result.set(annotation);
-            return false;
-          }
-        }
-        return !(type instanceof PsiClassType) || PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter;
-      });
-      return result.get();
-    }
-    return null;
+    if (type instanceof PsiPrimitiveType) return null;
+    return findTypeAnnotationInHierarchy(type, qualifiedNames);
   }
 
   private static @NotNull PsiAnnotation preferTypeAnnotation(@NotNull PsiAnnotation memberAnno, @Nullable PsiType type) {

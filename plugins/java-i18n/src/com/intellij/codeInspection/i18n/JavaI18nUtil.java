@@ -128,8 +128,23 @@ public class JavaI18nUtil extends I18nUtil {
     if (!idx.isPresent()) return false;
 
     PsiMethod method = callExpression.resolve();
-    return method != null && isMethodParameterAnnotatedWith(method, idx.getAsInt(), null, annFqn, null, nonNlsTargets);
-
+    if (method == null) return false;
+    if (isMethodParameterAnnotatedWith(method, idx.getAsInt(), null, annFqn, null, nonNlsTargets)) {
+      return true;
+    }
+    PsiParameter parameter = method.getParameterList().getParameter(idx.getAsInt());
+    if (parameter != null) {
+      PsiType parameterType = parameter.getType();
+      PsiType receiverType = callExpression.getReceiverType();
+      if (receiverType instanceof PsiClassType) {
+        PsiClassType.ClassResolveResult result = ((PsiClassType)receiverType).resolveGenerics();
+        parameterType = result.getSubstitutor().substitute(parameterType);
+      }
+      if (AnnotationUtil.findTypeAnnotationInHierarchy(parameterType, Collections.singleton(annFqn)) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

@@ -50,6 +50,7 @@ fun UElement.skipParentOfType(strict: Boolean, vararg parentClasses: Class<out U
   }
 }
 
+@SafeVarargs
 fun <T : UElement> UElement.getParentOfType(
   parentClass: Class<out UElement>,
   strict: Boolean = true,

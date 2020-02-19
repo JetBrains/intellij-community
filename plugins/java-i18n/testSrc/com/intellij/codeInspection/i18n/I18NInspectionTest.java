@@ -96,6 +96,16 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
       myTool.setIgnoreForEnumConstants(oldState);
     }
   }
+  
+  public void testNlsTypeUse() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
 
   @Override
   protected String getTestDataPath() {
