@@ -51,7 +51,7 @@ internal fun <T> List<T>.split(eachSize: Int): List<List<T>> {
   val result = mutableListOf<List<T>>()
   var start = 0
   while (start < this.size) {
-    val sub = this.subList(start, Math.min(start + eachSize, this.size))
+    val sub = this.subList(start, (start + eachSize).coerceAtMost(this.size))
     if (sub.isNotEmpty()) result += sub
     start += eachSize
   }
