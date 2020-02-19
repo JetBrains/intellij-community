@@ -95,7 +95,7 @@ public class Flake8InspectionSuppressorTest extends PyTestCase {
   // PY-16067
   public void testComparingWithNoneSuppressedByPycodestyleCode() {
     doTestByText("def func(p):\n" +
-                 "    if p == None:  # noqa: E713\n" +
+                 "    if p == None:  # noqa: E711\n" +
                  "        pass",
                  PyComparisonWithNoneInspection.class);
   }
