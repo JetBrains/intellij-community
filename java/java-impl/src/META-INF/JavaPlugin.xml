@@ -479,19 +479,19 @@
     <!-- Compiler -->
     <projectConfigurable groupId="build" groupWeight="130" instance="com.intellij.compiler.options.CompilerConfigurable"
                          id="project.propCompiler" order="after project"
-                         key="compiler.configurable.display.name" bundle="messages.CompilerBundle"
+                         key="compiler.configurable.display.name" bundle="messages.JavaCompilerBundle"
                          childrenEPName="com.intellij.compilerSettingsFactory">
       <configurable instance="com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable"
                     id="reference.projectsettings.compiler.excludes"
                     displayName="Excludes"/>
       <configurable instance="com.intellij.compiler.options.JavaCompilersTab" id="reference.projectsettings.compiler.javacompiler"
-                    key="java.compiler.description" bundle="messages.CompilerBundle"/>
+                    key="java.compiler.description" bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.AnnotationProcessorsConfigurable"
                     id="reference.projectsettings.compiler.annotationProcessors" displayName="Annotation Processors"/>
       <configurable instance="com.intellij.compiler.options.ValidationConfigurable" id="project.validation" key="validation.display.name"
-                    bundle="messages.CompilerBundle"/>
+                    bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.RmicConfigurable" id="reference.projectsettings.compiler.rmicompiler"
-                    key="rmi.compiler.description" bundle="messages.CompilerBundle"/>
+                    key="rmi.compiler.description" bundle="messages.JavaCompilerBundle"/>
     </projectConfigurable>
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>

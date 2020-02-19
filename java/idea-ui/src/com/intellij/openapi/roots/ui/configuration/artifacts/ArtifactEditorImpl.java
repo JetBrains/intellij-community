@@ -10,7 +10,7 @@ import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -95,9 +95,9 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myTopPanel.setBorder(JBUI.Borders.empty(0, 10));
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
     final String outputPath = artifact.getOutputPath();
-    myOutputDirectoryField.addBrowseFolderListener(CompilerBundle.message("dialog.title.output.directory.for.artifact"),
-                                                   CompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
-                                                                          getArtifact().getName()), myProject,
+    myOutputDirectoryField.addBrowseFolderListener(JavaCompilerBundle.message("dialog.title.output.directory.for.artifact"),
+                                                   JavaCompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
+                                                                              getArtifact().getName()), myProject,
                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myOutputDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
