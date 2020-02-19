@@ -56,7 +56,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
   protected abstract ID<?, ?> readStubIndexKey(@NotNull DataInput input, StubKeySerializationState stubKeySerializationState) throws IOException;
 
   @Override
-  public void save(@NotNull DataOutput out, Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs) throws IOException {
+  public final void save(@NotNull DataOutput out, Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs) throws IOException {
 
     DataInputOutputUtil.writeINT(out, indexedStubs.size());
     if (!indexedStubs.isEmpty()) {
@@ -72,7 +72,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
   }
 
   @Override
-  public Map<StubIndexKey, Map<Object, StubIdList>> read(@NotNull DataInput in) throws IOException {
+  public final Map<StubIndexKey, Map<Object, StubIdList>> read(@NotNull DataInput in) throws IOException {
     return doRead(in, null, null);
   }
 
@@ -134,7 +134,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
     }
   }
 
-  public static final class FileLocalStubForwardIndexExternalizer extends StubForwardIndexExternalizer<FileLocalStringEnumerator> {
+  private static final class FileLocalStubForwardIndexExternalizer extends StubForwardIndexExternalizer<FileLocalStringEnumerator> {
     private FileLocalStubForwardIndexExternalizer(SerializationManagerEx managerToInitialize) {
       super(managerToInitialize);
     }
@@ -160,7 +160,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
     protected FileLocalStringEnumerator createStubIndexKeySerializationState(@NotNull DataInput input, int stubIndexKeyCount)
       throws IOException {
       FileLocalStringEnumerator enumerator = new FileLocalStringEnumerator(false);
-      FileLocalStringEnumerator.readEnumeratedStrings(enumerator, input, UnaryOperator.identity());
+      enumerator.read(input, UnaryOperator.identity());
       return enumerator;
     }
 

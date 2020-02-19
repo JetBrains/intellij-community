@@ -9,7 +9,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.function.UnaryOperator;
 
@@ -66,16 +68,12 @@ class FileLocalStringEnumerator implements AbstractStringEnumerator {
   public void force() {
   }
 
-  static void readEnumeratedStrings(@NotNull FileLocalStringEnumerator enumerator, @NotNull DataInput stream, @NotNull UnaryOperator<String> interner) throws IOException {
-    final int numberOfStrings = DataInputOutputUtil.readINT(stream);
+  void read(@NotNull DataInput stream, @NotNull UnaryOperator<String> mapping) throws IOException {
+    int numberOfStrings = DataInputOutputUtil.readINT(stream);
     byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
-    enumerator.myStrings.ensureCapacity(numberOfStrings);
-
-    int i = 0;
-    while(i < numberOfStrings) {
-      String s = interner.apply(IOUtil.readUTFFast(buffer, stream));
-      enumerator.myStrings.add(s);
-      ++i;
+    myStrings.ensureCapacity(myStrings.size() + numberOfStrings);
+    for (int i = 0; i < numberOfStrings; i++) {
+      myStrings.add(mapping.apply(IOUtil.readUTFFast(buffer, stream)));
     }
   }
 }

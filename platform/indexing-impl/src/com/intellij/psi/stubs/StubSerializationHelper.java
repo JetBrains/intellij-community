@@ -15,13 +15,18 @@ import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Author: dmitrylomov
@@ -171,7 +176,7 @@ class StubSerializationHelper {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(false);
     StubInputStream inputStream = new StubInputStream(stream, storage);
     IntEnumerator serializerLocalEnumerator = IntEnumerator.read(inputStream);
-    FileLocalStringEnumerator.readEnumeratedStrings(storage, inputStream, this::intern);
+    storage.read(inputStream, this::intern);
 
     final int stubFilesCount = DataInputOutputUtil.readINT(inputStream);
     if (stubFilesCount <= 0) {
