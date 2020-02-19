@@ -2,10 +2,9 @@
 package com.intellij.configurationScript
 
 import com.intellij.configurationScript.inspection.InspectionJsonSchemaGenerator
-import com.intellij.configurationScript.providers.PluginsConfiguration
 import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
+import com.intellij.configurationScript.schemaGenerators.PluginJsonSchemaGenerator
 import com.intellij.configurationScript.schemaGenerators.RunConfigurationJsonSchemaGenerator
-import com.intellij.configurationScript.schemaGenerators.buildJsonSchema
 import com.intellij.json.JsonFileType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
@@ -85,6 +84,7 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
 
 private fun generateConfigurationSchema(): CharSequence {
   return doGenerateConfigurationSchema(listOf(
+    PluginJsonSchemaGenerator(),
     RunConfigurationJsonSchemaGenerator(),
     ComponentStateJsonSchemaGenerator(),
     InspectionJsonSchemaGenerator())
@@ -111,14 +111,6 @@ internal fun doGenerateConfigurationSchema(generators: List<SchemaGenerator>): C
     "type" to "object"
 
     map("properties") {
-      map(Keys.plugins) {
-        "type" to "object"
-        "description" to "The plugins"
-        map("properties") {
-          buildJsonSchema(PluginsConfiguration(), this, subObjectSchemaGenerator = null)
-        }
-      }
-
       for (generator in generators) {
         generator.generate(this)
       }
@@ -144,6 +136,4 @@ internal fun doGenerateConfigurationSchema(generators: List<SchemaGenerator>): C
 internal object Keys {
   const val runConfigurations = "runConfigurations"
   const val templates = "templates"
-
-  const val plugins = "plugins"
 }

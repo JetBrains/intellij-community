@@ -2,6 +2,7 @@ package com.intellij.configurationScript
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.configurationScript.providers.PluginsConfiguration
 import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
 import com.intellij.configurationScript.schemaGenerators.RunConfigurationJsonSchemaGenerator
 import com.intellij.json.JsonFileType
@@ -26,7 +27,7 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
   }
 
   fun `test map and description`() {
-    val variants = test("""
+    val variants = testRunConfigurations("""
     runConfigurations:
       java:
         <caret>
@@ -39,7 +40,7 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
   }
 
   fun `test array or object`() {
-    val variants = test("""
+    val variants = testRunConfigurations("""
     runConfigurations:
       java: <caret>
     """.trimIndent())
@@ -53,7 +54,7 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
   }
 
   fun `test no isAllowRunningInParallel if singleton policy not configurable`() {
-    val variants = test("""
+    val variants = testRunConfigurations("""
     runConfigurations:
       compound:
         <caret>
@@ -84,17 +85,6 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
     """)
   }
 
-  @Suppress("unused")
-  private class JdkAutoHint: BaseState() {
-    var sdkName by string()
-    var sdkPath by string()
-  }
-
-  private class JdkAutoHints : BaseState() {
-    @get:XCollection
-    val sdks by list<JdkAutoHint>()
-  }
-
   fun `test list of objects`() {
     testComponentState("sdks", """
       sdks:
@@ -102,11 +92,18 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
     """, beanClass = JdkAutoHints::class.java, expectedVariants = """sdks (array)""")
   }
 
+  fun `test list of strings`() {
+    testComponentState("plugins", """
+      plugins:
+        <caret>
+    """, beanClass = PluginsConfiguration::class.java, expectedVariants = """repositories (array)""")
+  }
+
   private fun testFooComponentState(path: String, fileContent: String) {
     testComponentState(path, fileContent, Foo::class.java, expectedVariants = "a (string)")
   }
 
-  private fun testComponentState(path: String, fileContent: String, beanClass: Class<out BaseState>, expectedVariants: String) {
+  private fun testComponentState(path: String, @Language("YAML") fileContent: String, beanClass: Class<out BaseState>, expectedVariants: String) {
     val variants = test(fileContent.trimIndent(), listOf(object : SchemaGenerator {
       private val componentStateJsonSchemaGenerator = ComponentStateJsonSchemaGenerator()
 
@@ -133,7 +130,11 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
     assertThat(presentation.typeText).isEqualTo(expectedDescription)
   }
 
-  private fun test(@Language("YAML") text: String, generators: List<SchemaGenerator> = listOf(RunConfigurationJsonSchemaGenerator()), schemaValidator: ((CharSequence) -> Unit)? = null): List<LookupElement> {
+  private fun testRunConfigurations(@Language("YAML") text: String, schemaValidator: ((CharSequence) -> Unit)? = null): List<LookupElement> {
+    return test(text, listOf(RunConfigurationJsonSchemaGenerator()), schemaValidator)
+  }
+
+  private fun test(@Language("YAML") text: String, generators: List<SchemaGenerator>, schemaValidator: ((CharSequence) -> Unit)? = null): List<LookupElement> {
     val position = EditorTestUtil.getCaretPosition(text)
     assertThat(position).isGreaterThan(0)
 
@@ -164,4 +165,15 @@ private fun getTypeTest(variant: LookupElement): String {
   val presentation = LookupElementPresentation()
   variant.renderElement(presentation)
   return presentation.typeText!!
+}
+
+@Suppress("unused")
+internal class JdkAutoHint: BaseState() {
+  var sdkName by string()
+  var sdkPath by string()
+}
+
+internal class JdkAutoHints : BaseState() {
+  @get:XCollection
+  val sdks by list<JdkAutoHint>()
 }

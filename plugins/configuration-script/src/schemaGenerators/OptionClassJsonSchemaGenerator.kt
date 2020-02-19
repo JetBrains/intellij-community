@@ -1,5 +1,6 @@
 package com.intellij.configurationScript.schemaGenerators
 
+import com.intellij.configurationScript.ItemTypeInfoProvider
 import com.intellij.configurationScript.LOG
 import com.intellij.configurationStore.Property
 import com.intellij.openapi.components.BaseState
@@ -9,10 +10,8 @@ import com.intellij.serialization.stateProperties.MapStoredProperty
 import com.intellij.util.ReflectionUtil
 import gnu.trove.THashMap
 import org.jetbrains.io.JsonObjectBuilder
-import java.lang.reflect.ParameterizedType
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.javaType
 
 internal class OptionClassJsonSchemaGenerator(val definitionNodeKey: String) {
   val definitionPointerPrefix = "#/$definitionNodeKey/"
@@ -71,6 +70,8 @@ internal fun buildJsonSchema(state: BaseState,
     propertyToAnnotation.put(property.name, annotation)
   }
 
+  val itemTypeInfoProvider = ItemTypeInfoProvider(state.javaClass)
+
   for (property in properties) {
     val name = property.name!!
     val annotation = propertyToAnnotation?.get(name)
@@ -99,31 +100,21 @@ internal fun buildJsonSchema(state: BaseState,
           }
         }
         is CollectionStoredProperty<*, *> -> {
-          val propertyInfo = state.javaClass.kotlin.members.first { it.name == property.name }
-          val type = propertyInfo.returnType.javaType
-          if (type !is ParameterizedType) {
-            LOG.error("$type not supported for collection property $propertyInfo")
-          }
-          else {
-            val actualTypeArguments = type.actualTypeArguments
-            LOG.assertTrue(actualTypeArguments.size == 1)
-            val listType = actualTypeArguments[0]
-
-            when {
-              listType === java.lang.String::class.java -> {
-                map("items") {
-                  "type" to "string"
-                }
+          val listType = itemTypeInfoProvider.getListItemType(name) ?: return@map
+          when {
+            listType === java.lang.String::class.java -> {
+              map("items") {
+                "type" to "string"
               }
-              subObjectSchemaGenerator == null -> {
-                LOG.error("$type not supported for collection property $propertyInfo because subObjectSchemaGenerator is not specified")
-              }
-              else -> {
-                map("items") {
-                  @Suppress("UNCHECKED_CAST")
-                  definitionReference(subObjectSchemaGenerator.definitionPointerPrefix,
-                                      subObjectSchemaGenerator.addClass(listType as Class<out BaseState>))
-                }
+            }
+            subObjectSchemaGenerator == null -> {
+              LOG.error("$listType not supported for collection property $name because subObjectSchemaGenerator is not specified")
+            }
+            else -> {
+              map("items") {
+                @Suppress("UNCHECKED_CAST")
+                definitionReference(subObjectSchemaGenerator.definitionPointerPrefix,
+                                    subObjectSchemaGenerator.addClass(listType))
               }
             }
           }
