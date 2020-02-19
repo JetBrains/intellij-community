@@ -442,7 +442,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                                               boolean isExhaustive) {
     PsiElement parent = statement.getParent();
     PsiElement anchor = parent instanceof PsiLabeledStatement ? parent : statement;
-    PsiVariable assignedVariable = null;
+    PsiLocalVariable assignedVariable = null;
     List<SwitchExpressionBranch> newBranches = new ArrayList<>();
     boolean hasAssignedBranch = false;
     boolean wasDefault = false;
@@ -479,17 +479,33 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       newBranches.add(new SwitchExpressionBranch(isDefault, branch.getCaseExpressions(), result, branch.getRelatedStatements()));
     }
     if (assignedVariable == null || !hasAssignedBranch) return null;
-    PsiExpression initializer = assignedVariable.getInitializer();
-    if (initializer != null && !wasDefault) {
-      newBranches.add(new SwitchExpressionBranch(true,
-                                                 Collections.emptyList(),
-                                                 new SwitchRuleExpressionResult(initializer),
-                                                 Collections.emptyList()));
-    } else {
-      if (!isExhaustive) return null;
-    }
     boolean isRightAfterDeclaration = isRightAfterDeclaration(anchor, assignedVariable);
+    if (!wasDefault || !isExhaustive) {
+      SwitchExpressionBranch defaultBranch = getVariableAssigningDefaultBranch(assignedVariable, isRightAfterDeclaration, statement);
+      if (defaultBranch == null) {
+      } else {
+        newBranches.add(defaultBranch);
+      }
+    }
     return new SwitchExistingVariableReplacer(assignedVariable, statement, expressionBeingSwitched, newBranches, isRightAfterDeclaration);
+  }
+
+  @Nullable
+  private static SwitchExpressionBranch getVariableAssigningDefaultBranch(@Nullable PsiLocalVariable assignedVariable,
+                                                                          boolean isRightAfterDeclaration,
+                                                                          @NotNull PsiStatement statement) {
+    if (assignedVariable == null) return null;
+    PsiExpression initializer = assignedVariable.getInitializer();
+    if (isRightAfterDeclaration && initializer != null) {
+      return new SwitchExpressionBranch(true, Collections.emptyList(), new SwitchRuleExpressionResult(initializer), Collections.emptyList());
+    }
+    PsiDeclarationStatement declaration = tryCast(assignedVariable.getParent(), PsiDeclarationStatement.class);
+    if (declaration == null) return null;
+    if (!VariableAccessUtils.variableIsAssignedAtPoint(assignedVariable, declaration.getParent(), statement)) return null;
+    Project project = assignedVariable.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiExpression reference = factory.createExpressionFromText(assignedVariable.getName(), assignedVariable);
+    return new SwitchExpressionBranch(true, Collections.emptyList(), new SwitchRuleExpressionResult(reference), Collections.emptyList());
   }
 
   private static boolean isRightAfterDeclaration(PsiElement anchor, PsiVariable assignedVariable) {
@@ -599,7 +615,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   private static class SwitchRuleExpressionResult implements SwitchRuleResult {
     private final PsiExpression myExpression;
 
-    private SwitchRuleExpressionResult(PsiExpression expression) {myExpression = expression;}
+    private SwitchRuleExpressionResult(@NotNull PsiExpression expression) {myExpression = expression;}
 
     @Override
     public String generate(CommentTracker ct) {
