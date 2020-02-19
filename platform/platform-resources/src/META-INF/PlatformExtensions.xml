@@ -765,6 +765,7 @@
 
     <sdkDownload implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloader" />
     <applicationService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader"/>
+    <applicationService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller"/>
     <unknownSdkResolver implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkAuto"/>
     <registryKey key="jdk.auto.setup" defaultValue="true" description="Attempt to use local or downloadable SDK to configure project"/>
     <registryKey key="jdk.downloader" defaultValue="true" description="Suggest JDK downloads"/>
