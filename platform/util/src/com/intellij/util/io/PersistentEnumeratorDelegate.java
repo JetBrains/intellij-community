@@ -107,14 +107,17 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
     myEnumerator.force();
   }
 
+  @Override
   public Data valueOf(int id) throws IOException {
     return myEnumerator.valueOf(id);
   }
 
+  @Override
   public int enumerate(Data name) throws IOException {
     return myEnumerator.enumerate(name);
   }
 
+  @Override
   public int tryEnumerate(Data name) throws IOException {
     return myEnumerator.tryEnumerate(name);
   }
