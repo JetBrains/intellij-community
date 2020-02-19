@@ -3,7 +3,6 @@ package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -121,10 +120,10 @@ public class TestNGFramework extends JavaTestFramework {
       }
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.YES :
-                 Messages.showYesNoDialog(manager.getProject(), ExecutionBundle.message("testng.create.setup.dialog.message", setUpName),
-                                          ExecutionBundle.message("testng.create.setup.dialog.title"),
-                                          ExecutionBundle.message("testng.annotate.dialog.title" ),
-                                          ExecutionBundle.message("testng.create.new.method.dialog.title"),
+                 Messages.showYesNoDialog(manager.getProject(), TestngBundle.message("testng.create.setup.dialog.message", setUpName),
+                                          TestngBundle.message("testng.create.setup.dialog.title"),
+                                          TestngBundle.message("testng.annotate.dialog.title" ),
+                                          TestngBundle.message("testng.create.new.method.dialog.title"),
                                           Messages.getWarningIcon());
       if (exit == Messages.YES) {
         new AddAnnotationFix(BeforeMethod.class.getName(), inClass).invoke(inClass.getProject(), null, inClass.getContainingFile());

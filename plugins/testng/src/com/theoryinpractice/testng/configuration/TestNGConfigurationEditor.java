@@ -36,6 +36,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.MessageInfoException;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.browser.GroupBrowser;
 import com.theoryinpractice.testng.configuration.browser.PackageBrowser;
 import com.theoryinpractice.testng.configuration.browser.SuiteBrowser;
@@ -167,7 +168,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     propertiesFile.getComponent().getTextField().setDocument(model.getPropertiesFileDocument());
     outputDirectory.getComponent().getTextField().setDocument(model.getOutputDirectoryDocument());
 
-    commonJavaParameters.setProgramParametersLabel(ExecutionBundle.message("junit.configuration.test.runner.parameters.label"));
+    commonJavaParameters.setProgramParametersLabel(TestngBundle.message("junit.configuration.test.runner.parameters.label"));
 
     myShortenCommandLineCombo.setComponent(new ShortenCommandLineModeCombo(project, alternateJDK, getModulesComponent()));
     setAnchor(outputDirectory.getLabel());
@@ -388,7 +389,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     TextFieldWithBrowseButton outputDirectoryButton = new TextFieldWithBrowseButton();
     outputDirectory.setComponent(outputDirectoryButton);
-    outputDirectoryButton.addBrowseFolderListener(ExecutionBundle.message("testng.output.directory.button.title"), ExecutionBundle.message("testng.select.output.directory"), project,
+    outputDirectoryButton.addBrowseFolderListener(TestngBundle.message("testng.output.directory.button.title"), TestngBundle.message("testng.select.output.directory"), project,
                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
     moduleClasspath.setEnabled(true);
 
@@ -407,7 +408,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     };
 
     textFieldWithBrowseButton
-      .addBrowseFolderListener(ExecutionBundle.message("testng.browse.button.title"), ExecutionBundle.message("testng.select.properties.file"), project, propertiesFileDescriptor);
+      .addBrowseFolderListener(TestngBundle.message("testng.browse.button.title"), TestngBundle.message("testng.select.properties.file"), project, propertiesFileDescriptor);
 
     propertiesTableView = new TableView(propertiesTableModel);
 

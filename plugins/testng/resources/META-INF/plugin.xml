@@ -11,6 +11,7 @@
     <depends>com.intellij.modules.java</depends>
 
     <depends optional="true" config-file="testng-intellilang.xml">org.intellij.intelliLang</depends>
+    <resource-bundle>messages.TestngBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
         <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGEntryPoint"/>
@@ -76,7 +77,7 @@
       <runConfigurationProducer
           implementation="com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfigurationProducer"/>
       <localInspection implementationClass="com.theoryinpractice.testng.inspection.SimplifiedTestNGAssertionInspection"
-                       groupPath="Java" language="JAVA" shortName="SimplifiedTestNGAssertion" bundle="messages.InspectionGadgetsBundle"
+                       groupPath="Java" language="JAVA" shortName="SimplifiedTestNGAssertion" bundle="messages.TestngBundle"
                        key="simplifiable.testng.assertion.display.name" groupName="TestNG"
                        enabledByDefault="true" level="WARNING"/>
       <localInspection groupPath="Java" language="JAVA" shortName="ConstantTestNGAssertArgument" displayName="Constant TestNG assert argument"
@@ -101,5 +102,4 @@
       <add-to-group anchor="first" group-id="RunContextGroup"/>
     </group>
   </actions>
-
 </idea-plugin>

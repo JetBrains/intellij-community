@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return InspectionsBundle.message("inspection.depends.on.method.name");
+    return TestngBundle.message("inspection.depends.on.method.name");
   }
 
   @NotNull
@@ -78,7 +79,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
                 element2Highlight = initializers[idx];
               }
             }
-            problemDescriptors.add(manager.createProblemDescriptor(element2Highlight, InspectionsBundle.message("inspection.depends.on.method.duplicated.name.problem", methodName),
+            problemDescriptors.add(manager.createProblemDescriptor(element2Highlight, TestngBundle.message("inspection.depends.on.method.duplicated.name.problem", methodName),
                                                                    (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                                    isOnTheFly));
           }
@@ -121,7 +122,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
       if (foundMethods.length == 0) {
         LOGGER.debug("dependsOnMethods method doesn't exist:" + methodName);
         problemDescriptors.add(manager.createProblemDescriptor(
-          value, InspectionsBundle.message("inspection.depends.on.method.unknown.method.problem", methodName), (LocalQuickFix)null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly));
+          value, TestngBundle.message("inspection.depends.on.method.unknown.method.problem", methodName), (LocalQuickFix)null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly));
       }
       else {
         boolean hasTestsOrConfigs = false;

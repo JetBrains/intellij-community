@@ -19,6 +19,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.browser.SuiteBrowser;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nls;
@@ -91,7 +92,7 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
       }
       final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       LOG.assertTrue(nameIdentifier != null);
-      return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier, InspectionsBundle.message("inspection.undeclared.test.problem.descriptor", aClass.getName()),
+      return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier, TestngBundle.message("inspection.undeclared.test.problem.descriptor", aClass.getName()),
                                                                      isOnTheFly, new LocalQuickFix[]{new RegisterClassFix(aClass),
                                                                        new CreateTestngFix()},
                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
@@ -109,13 +110,13 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("inspection.undeclared.test.register", myClassName);
+      return TestngBundle.message("inspection.undeclared.test.register", myClassName);
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.undeclared.test.register.test");
+      return TestngBundle.message("inspection.undeclared.test.register.test");
     }
 
     @Override
@@ -167,7 +168,7 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.undeclared.test.create.suite.fix");
+      return TestngBundle.message("inspection.undeclared.test.create.suite.fix");
     }
 
     @Override

@@ -15,12 +15,12 @@
  */
 package com.theoryinpractice.testng.configuration.browser;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.theoryinpractice.testng.TestngBundle;
 
 /**
  * @author Hani Suleiman
@@ -40,8 +40,8 @@ public class SuiteBrowser extends BrowseModuleValueActionListener
                 return virtualFile.isDirectory() || "xml".equals(virtualFile.getExtension()) || "yaml".equals(virtualFile.getExtension());
             }
         };
-        descriptor.setDescription((ExecutionBundle.message("testng.suite.browser.select.xml.or.yaml.suite.file")));
-        descriptor.setTitle(ExecutionBundle.message("testng.suite.browser.select.suite"));
+        descriptor.setDescription((TestngBundle.message("testng.suite.browser.select.xml.or.yaml.suite.file")));
+        descriptor.setTitle(TestngBundle.message("testng.suite.browser.select.suite"));
         VirtualFile file = FileChooser.chooseFile(descriptor, getProject(), null);
         return file != null ? file.getPath() : null;
     }

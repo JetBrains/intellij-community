@@ -4,10 +4,10 @@ package com.theoryinpractice.testng.inspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -63,7 +63,7 @@ public class ExpectedExceptionNeverThrownTestNGInspection extends AbstractBaseJa
           return;
         }
       }
-      myProblemsHolder.registerProblem(operand, InspectionsBundle.message("inspection.testng.expected.exception.never.thrown.problem", method.getName()));
+      myProblemsHolder.registerProblem(operand, TestngBundle.message("inspection.testng.expected.exception.never.thrown.problem", method.getName()));
     }
   }
 }

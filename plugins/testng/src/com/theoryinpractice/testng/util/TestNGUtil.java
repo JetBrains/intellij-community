@@ -2,7 +2,6 @@
 package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -29,6 +28,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.NanoXmlUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -363,7 +363,7 @@ public class TestNGUtil {
       for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
         if (filter.isAccepted(psiClass)) {
           if (indicator != null) {
-            indicator.setText2(ExecutionBundle.message("testng.util.found.test.class", ReadAction.compute(psiClass::getQualifiedName)));
+            indicator.setText2(TestngBundle.message("testng.util.found.test.class", ReadAction.compute(psiClass::getQualifiedName)));
           }
           set.add(psiClass);
         }
@@ -371,7 +371,7 @@ public class TestNGUtil {
       holder[0] = set.toArray(PsiClass.EMPTY_ARRAY);
     };
     if (sync) {
-       ProgressManager.getInstance().runProcessWithProgressSynchronously(process, ExecutionBundle.message("testng.util.searching.test.progress.title"), true, filter.getProject());
+       ProgressManager.getInstance().runProcessWithProgressSynchronously(process, TestngBundle.message("testng.util.searching.test.progress.title"), true, filter.getProject());
     }
     else {
        process.run();
@@ -403,8 +403,8 @@ public class TestNGUtil {
     if (JavaPsiFacade.getInstance(manager.getProject()).findClass(TestNG.class.getName(), psiElement.getResolveScope()) == null) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         if (Messages.showOkCancelDialog(psiElement.getProject(),
-                                        ExecutionBundle.message("testng.util.will.be.added.to.module.classpath"),
-                                        ExecutionBundle.message("testng.util.unable.to.convert"),
+                                        TestngBundle.message("testng.util.will.be.added.to.module.classpath"),
+                                        TestngBundle.message("testng.util.unable.to.convert"),
                                         Messages.getWarningIcon()) != Messages.OK) {
           return false;
         }

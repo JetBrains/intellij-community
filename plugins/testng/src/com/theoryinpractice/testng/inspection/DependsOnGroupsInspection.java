@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.AbstractBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -13,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -37,7 +36,7 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return InspectionsBundle.message("inspection.depends.on.groups.display.name");
+    return TestngBundle.message("inspection.depends.on.groups.display.name");
   }
 
   @NotNull
@@ -55,7 +54,7 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
   @Nullable
   public JComponent createOptionsPanel() {
     final LabeledComponent<JTextField> definedGroups = new LabeledComponent<>();
-    definedGroups.setText(InspectionsBundle.message("inspection.depends.on.groups.defined.groups.panel.title"));
+    definedGroups.setText(TestngBundle.message("inspection.depends.on.groups.defined.groups.panel.title"));
     final JTextField textField = new JTextField(StringUtil.join(ArrayUtilRt.toStringArray(groups), ","));
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -114,7 +113,7 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
             String methodName = matcher.group(1);
             if (!groups.contains(methodName)) {
               LOGGER.debug("group doesn't exist:" + methodName);
-              ProblemDescriptor descriptor = manager.createProblemDescriptor(annotation, InspectionsBundle.message("inspection.depends.on.groups.undefined.group.problem", methodName),
+              ProblemDescriptor descriptor = manager.createProblemDescriptor(annotation, TestngBundle.message("inspection.depends.on.groups.undefined.group.problem", methodName),
                                                                              new GroupNameQuickFix(methodName),
                                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
               problemDescriptors.add(descriptor);
@@ -138,13 +137,13 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
     @Override
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("inspection.depends.on.groups.add.as.defined.test.group.fix", myGroupName);
+      return TestngBundle.message("inspection.depends.on.groups.add.as.defined.test.group.fix", myGroupName);
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.depends.on.groups.family.name");
+      return TestngBundle.message("inspection.depends.on.groups.family.name");
     }
 
     @Override
