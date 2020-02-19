@@ -331,4 +331,5 @@
   <action id="ChangesView.Move"/>
   <action id="MoveStatementUp"/>
   <action id="MoveStatementDown"/>
+  <action id="ToggleRenderedDocPresentation"/>
 </keymap>
