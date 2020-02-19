@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.structureView;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
@@ -77,7 +77,7 @@ public class MarkdownStructureElement extends PsiTreeElementBase<PsiElement> imp
   public String getPresentableText() {
     final PsiElement tag = getElement();
     if (tag == null) {
-      return IdeBundle.message("node.structureview.invalid");
+      return StructureViewBundle.message("node.structureview.invalid");
     }
     return getPresentation().getPresentableText();
   }
