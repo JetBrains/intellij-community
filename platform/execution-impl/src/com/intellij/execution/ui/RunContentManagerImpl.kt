@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
@@ -44,7 +43,6 @@ import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Predicate
 import javax.swing.Icon
 
-private val LOG = logger<RunContentManagerImpl>()
 private val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
 private val CLOSE_LISTENER_KEY: Key<ContentManagerListener> = Key.create("CloseListener")
 
@@ -119,19 +117,19 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(id = toolWindowId, icon = executor.toolWindowIcon))
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
-      private var myInsideGetData = 0
+      private var insideGetData = 0
+
       override fun getData(dataId: String): Any? {
-        myInsideGetData++
-        return try {
-          if (PlatformDataKeys.HELP_ID.`is`(dataId)) {
-            executor.helpId
-          }
-          else {
-            if (myInsideGetData == 1) DataManager.getInstance().getDataContext(contentManager.component).getData(dataId) else null
+        insideGetData++
+        try {
+          return when {
+            PlatformDataKeys.HELP_ID.`is`(dataId) -> executor.helpId
+            insideGetData == 1 -> DataManager.getInstance().getDataContext(contentManager.component).getData(dataId)
+            else -> null
           }
         }
         finally {
-          myInsideGetData--
+          insideGetData--
         }
       }
     })
@@ -149,15 +147,11 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         }
 
         val content = event.content
-        var contentExecutor = executor
-        if (contentExecutor == null) {
-          // Content manager contains contents related with different executors.
-          // Try to get executor from content.
-          contentExecutor = getExecutorByContent(content)
-          // Must contain this user data since all content is added by this class.
-          LOG.assertTrue(contentExecutor != null)
-        }
-        syncPublisher.contentSelected(getRunContentDescriptorByContent(content), contentExecutor!!)
+        // Content manager contains contents related with different executors.
+        // Try to get executor from content.
+        // Must contain this user data since all content is added by this class.
+        val contentExecutor = executor ?: getExecutorByContent(content)!!
+        syncPublisher.contentSelected(getRunContentDescriptorByContent(content), contentExecutor)
         content.helpId = contentExecutor.helpId
       }
     })
@@ -355,14 +349,18 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
   private fun getOrCreateContentManagerForToolWindow(id: String, executor: Executor): ContentManager {
     val contentManager = getContentManagerByToolWindowId(id)
-    if (contentManager != null) return contentManager
+    if (contentManager != null) {
+      return contentManager
+    }
 
     val dashboardManager = RunDashboardManager.getInstance(project)
     if (dashboardManager.toolWindowId == id) {
       initToolWindow(null, dashboardManager.toolWindowId, dashboardManager.toolWindowIcon, dashboardManager.dashboardContentManager)
       return dashboardManager.dashboardContentManager
     }
-    return registerToolWindow(executor, getToolWindowManager())
+    else {
+      return registerToolWindow(executor, getToolWindowManager())
+    }
   }
 
   override fun getToolWindowByDescriptor(descriptor: RunContentDescriptor): ToolWindow? {
