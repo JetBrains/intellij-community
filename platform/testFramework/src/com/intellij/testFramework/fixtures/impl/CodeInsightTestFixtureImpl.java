@@ -878,13 +878,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
     configureByFiles(fileNames);
     EdtTestUtil.runInEdtAndWait(() -> {
+      myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES);
+    });
+    Disposer.register(getTestRootDisposable(), () -> {
       UsageViewContentManager usageViewManager = UsageViewContentManager.getInstance(getProject());
       Content selectedContent;
       while ((selectedContent = usageViewManager.getSelectedContent()) != null) {
         usageViewManager.closeContent(selectedContent);
       }
-
-      myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES);
     });
     return EdtTestUtil.runInEdtAndGet(() -> {
       long startMillis = System.currentTimeMillis();
