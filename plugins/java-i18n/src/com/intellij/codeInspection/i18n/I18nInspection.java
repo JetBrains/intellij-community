@@ -903,7 +903,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
 
     if (returnType != null) {
-      PsiAnnotation typeAnnotation = AnnotationUtil.findTypeAnnotationInHierarchy(returnType, NON_NLS_NAMES);
+      PsiAnnotation typeAnnotation = AnnotationUtil.findAnnotationInTypeHierarchy(returnType, NON_NLS_NAMES);
       if (typeAnnotation != null) {
         return typeAnnotation.hasQualifiedName(fqn);
       }

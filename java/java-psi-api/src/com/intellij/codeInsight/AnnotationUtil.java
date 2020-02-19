@@ -283,11 +283,11 @@ public class AnnotationUtil {
 
   /**
    * @param type type to check
-   * @param qualifiedNames annotation qualified names
+   * @param qualifiedNames annotation qualified names or TYPE_USE annotations to look for
    * @return found type annotation, or null if not found. For type parameter types upper bound annotations are also checked
    */
   @Contract("null, _ -> null")
-  public static @Nullable PsiAnnotation findTypeAnnotationInHierarchy(@Nullable PsiType type, @NotNull Set<String> qualifiedNames) {
+  public static @Nullable PsiAnnotation findAnnotationInTypeHierarchy(@Nullable PsiType type, @NotNull Set<String> qualifiedNames) {
     if (type == null) return null;
     Ref<PsiAnnotation> result = Ref.create(null);
     InheritanceUtil.processSuperTypes(type, true, eachType -> {

@@ -140,7 +140,7 @@ public class JavaI18nUtil extends I18nUtil {
         PsiSubstitutor substitutor = ((PsiMethodCallExpression)psi).getMethodExpression().advancedResolve(false).getSubstitutor();
         parameterType = substitutor.substitute(parameterType);
       }
-      if (AnnotationUtil.findTypeAnnotationInHierarchy(parameterType, Collections.singleton(annFqn)) != null) {
+      if (AnnotationUtil.findAnnotationInTypeHierarchy(parameterType, Collections.singleton(annFqn)) != null) {
         return true;
       }
     }

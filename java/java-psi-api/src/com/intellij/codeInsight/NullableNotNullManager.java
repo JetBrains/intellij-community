@@ -305,7 +305,7 @@ public abstract class NullableNotNullManager {
       return annotation;
     }
     if (type instanceof PsiPrimitiveType) return null;
-    return findTypeAnnotationInHierarchy(type, qualifiedNames);
+    return findAnnotationInTypeHierarchy(type, qualifiedNames);
   }
 
   private static @NotNull PsiAnnotation preferTypeAnnotation(@NotNull PsiAnnotation memberAnno, @Nullable PsiType type) {
