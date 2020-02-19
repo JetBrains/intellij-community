@@ -5,7 +5,10 @@ import org.junit.runner.JUnitCore
 
 @Suppress("unused")
 fun runTest(test: Class<*>) {
-  val result = muteStdOut {
+  val result = if (isUnderTeamCity()) {
+    JUnitCore.runClasses(test)
+  }
+  else muteStdOut {
     JUnitCore.runClasses(test)
   }
   println("$test, tests: ${result.runCount}, failed: ${result.failureCount}")

@@ -156,7 +156,13 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   fun iconsSyncRequired() = devChanges().isNotEmpty()
   fun devSyncRequired() = iconsChanges().isNotEmpty()
 
-  fun verifyDevIcons(repos: Collection<File>) = devIconsVerifier?.accept(repos)
+  fun verifyDevIcons(repos: Collection<File>) = try {
+    devIconsVerifier?.accept(repos)
+  }
+  catch (e: Exception) {
+    doFail("Test failures detected")
+  }
+
   fun doFail(report: String) {
     log(report)
     errorHandler.accept(report)
