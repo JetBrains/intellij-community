@@ -45,8 +45,6 @@ public final class UsageType {
   public static final UsageType DELEGATE_TO_ANOTHER_INSTANCE = new UsageType("Delegate to another instance method");
   public static final UsageType DELEGATE_TO_ANOTHER_INSTANCE_PARAMETERS_CHANGED = new UsageType("Delegate to another instance method, parameters changed");
 
-  @Deprecated
-  private final String myName;
   private final Supplier<String> myNameComputable;
 
   /**
@@ -55,12 +53,10 @@ public final class UsageType {
   @Deprecated
   public UsageType(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name) {
     myNameComputable = () -> name;
-    myName = name;
   }
 
   public UsageType(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) Supplier<String> nameComputable) {
     myNameComputable = nameComputable;
-    myName = nameComputable.get();
   }
 
   @NotNull
