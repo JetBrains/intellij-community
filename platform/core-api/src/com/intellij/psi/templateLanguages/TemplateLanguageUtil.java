@@ -72,4 +72,20 @@ public class TemplateLanguageUtil {
     }
     return current;
   }
+
+  public static PsiElement getSameLanguageTreePrev(@NotNull PsiElement element) {
+    PsiElement current = element.getNextSibling();
+    while (current instanceof OuterLanguageElement) {
+      current = current.getPrevSibling();
+    }
+    return current;
+  }
+
+  public static PsiElement getSameLanguageTreeNext(@NotNull PsiElement element) {
+    PsiElement current = element.getNextSibling();
+    while (current instanceof OuterLanguageElement) {
+      current = current.getNextSibling();
+    }
+    return current;
+  }
 }
