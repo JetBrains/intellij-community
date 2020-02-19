@@ -113,6 +113,7 @@ iml_project(
         "//tools/adt/idea/artwork:intellij.android.artwork",
         "//tools/adt/idea/assistant",
         "//tools/adt/idea/assistant:assistant-test",
+        "//tools/adt/idea/bleak:intellij.android.bleak",
         "//tools/adt/idea/build-attribution:intellij.android.build-attribution",
         "//tools/adt/idea/build-attribution:intellij.android.build-attribution.tests",
         "//tools/adt/idea/build-common:intellij.android.buildCommon",
