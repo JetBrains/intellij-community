@@ -50,9 +50,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   public static final String HIDE_ID_LABEL = "HideIdLabel";
   private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
 
-  private final ContentManager contentManager;
+  private final @NotNull ContentManager contentManager;
 
-  public ContentManager getContentManager() {
+  public @NotNull ContentManager getContentManager() {
     return contentManager;
   }
 
@@ -111,6 +111,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         getCurrentLayout().contentRemoved(event);
         ensureSelectedContentVisible();
         rebuild();
+
+        if (contentManager.getContentCount() == 0 && window.isToHideOnEmptyContent()) {
+          window.hide(null);
+        }
       }
 
       @Override
@@ -229,10 +233,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
     tabComponent.revalidate();
     tabComponent.repaint();
-
-    if (contentManager != null && contentManager.getContentCount() == 0 && window.isToHideOnEmptyContent()) {
-      window.hide(null);
-    }
   }
 
   private void update() {
