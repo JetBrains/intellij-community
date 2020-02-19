@@ -378,11 +378,11 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
   }
   @Override
   public String getPreviousContentActionName() {
-    return "Select Previous Tab";
+    return UIBundle.message("tabbed.pane.select.previous.tab");
   }
 
   @Override
   public String getNextContentActionName() {
-    return "Select Next Tab";
+    return UIBundle.message("tabbed.pane.select.next.tab");
   }
 }
