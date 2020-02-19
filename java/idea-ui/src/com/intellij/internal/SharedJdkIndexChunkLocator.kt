@@ -46,7 +46,7 @@ class SharedJdkIndexChunkPreloader : JdkInstallerListener {
   private fun prefetchSharedIndex(jdk: JdkItem,
                                   indicator: ProgressIndicator,
                                   project: Project?) {
-    val request = SharedIndexRequest(kind = "jdk", aliases = listOf(jdk.installFolderName, jdk.suggestedSdkName, "${jdk.jdkMajorVersion}"))
+    val request = SharedIndexRequest(kind = "jdk", aliases = jdk.sharedIndexAliases)
     val info = SharedIndexesLoader.getInstance().lookupSharedIndex(request, indicator)
 
     logNotification(project,"Shared Index entry for downloading ${jdk.fullPresentationText} is found with $info\n${info?.url}")
