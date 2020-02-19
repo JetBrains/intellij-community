@@ -519,7 +519,7 @@
 
       <action id="Debugger.StepOutOfBlock" class="com.intellij.debugger.actions.StepOutOfBlockAction"
               icon="AllIcons.Actions.StepOutCodeBlock">
-        <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="StepOut"/>
+        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="StepOut"/>
       </action>
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction"/>
