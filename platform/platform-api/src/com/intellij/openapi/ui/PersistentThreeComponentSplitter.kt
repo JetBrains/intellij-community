@@ -3,6 +3,7 @@ package com.intellij.openapi.ui
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import javax.swing.SwingUtilities
 import kotlin.math.roundToInt
@@ -12,6 +13,7 @@ class PersistentThreeComponentSplitter(
   onePixelDivider: Boolean,
   proportionKey: String,
   disposable: Disposable,
+  private val project: Project?,
   private val defaultFirstProportion: Float = 0.3f,
   private val defaultLastProportion: Float = 0.5f
 ) : ThreeComponentsSplitter(vertical, onePixelDivider, disposable) {
@@ -32,12 +34,14 @@ class PersistentThreeComponentSplitter(
     get() = getProportion(lastProportionKey, defaultLastProportion)
     set(value) = setProportion(lastProportionKey, value, defaultLastProportion)
 
-  private fun getProportion(key: String, defaultProportion: Float): Float = PropertiesComponent.getInstance().getFloat(key, defaultProportion)
+  private val propertiesComponent get() = if (project != null)  PropertiesComponent.getInstance(project) else PropertiesComponent.getInstance()
+
+  private fun getProportion(key: String, defaultProportion: Float): Float = propertiesComponent.getFloat(key, defaultProportion)
 
   private fun setProportion(key: String, value: Float, defaultProportion: Float) {
     if (value < 0 || value > 1) return
 
-    PropertiesComponent.getInstance().setValue(key, value, defaultProportion)
+    propertiesComponent.setValue(key, value, defaultProportion)
   }
 
   private val totalSize get() = if (orientation) height else width
