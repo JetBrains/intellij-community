@@ -6,6 +6,9 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @see DiffExtension
+ */
 public interface DiffTool {
   ExtensionPointName<DiffTool> EP_NAME = ExtensionPointName.create("com.intellij.diff.DiffTool");
 
