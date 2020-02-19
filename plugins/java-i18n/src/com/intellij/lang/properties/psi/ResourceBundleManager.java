@@ -4,6 +4,7 @@ package com.intellij.lang.properties.psi;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 public abstract class ResourceBundleManager {
   private static final ExtensionPointName<ResourceBundleManager> RESOURCE_BUNDLE_MANAGER = ExtensionPointName.create("com.intellij.java-i18n.resourceBundleManager");
@@ -27,8 +29,8 @@ public abstract class ResourceBundleManager {
   @Nullable
   public abstract PsiClass getResourceBundle();
 
-  public List<String> suggestPropertiesFiles(){
-    return I18nUtil.defaultSuggestPropertiesFiles(myProject);
+  public List<String> suggestPropertiesFiles(Set<Module> contextModules){
+    return I18nUtil.defaultSuggestPropertiesFiles(myProject, contextModules);
   }
 
   @Nullable

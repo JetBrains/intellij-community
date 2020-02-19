@@ -220,7 +220,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
 
   @Override
   protected List<String> defaultSuggestPropertiesFiles() {
-    return myResourceBundleManager.suggestPropertiesFiles();
+    return myResourceBundleManager.suggestPropertiesFiles(myContextModules);
   }
 
   public String getI18nizedText() {

@@ -18,6 +18,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -34,6 +36,7 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TextFieldWithHistory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,10 +48,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -66,6 +67,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   private JCheckBox myUseResourceBundle;
   protected final Project myProject;
   protected final PsiFile myContext;
+  protected final Set<Module> myContextModules;
 
   private JPanel myPropertiesFilePanel;
   protected JPanel myExtensibilityPanel;
@@ -108,13 +110,14 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   protected I18nizeQuickFixDialog(@NotNull Project project,
-                               @NotNull final PsiFile context,
-                               String defaultPropertyValue,
-                               DialogCustomization customization,
-                               boolean ancestorResponsible) {
+                                  @NotNull final PsiFile context,
+                                  String defaultPropertyValue,
+                                  DialogCustomization customization,
+                                  boolean ancestorResponsible) {
     super(false);
     myProject = project;
     myContext = FileContextUtil.getContextFile(context);
+    myContextModules = ContainerUtil.createMaybeSingletonSet(ModuleUtilCore.findModuleForFile(myContext));
 
     myDefaultPropertyValue = defaultPropertyValue;
     myCustomization = customization != null ? customization:new DialogCustomization();
@@ -297,12 +300,10 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     List<String> paths = suggestPropertiesFiles();
     final String lastUrl = suggestSelectedFileUrl(paths);
     final String lastPath = lastUrl == null ? null : FileUtil.toSystemDependentName(VfsUtil.urlToPath(lastUrl));
-    Collections.sort(paths, (path1, path2) -> {
-      if (lastPath != null && lastPath.equals(path1)) return -1;
-      if (lastPath != null && lastPath.equals(path2)) return 1;
-      int r = LastSelectedPropertiesFileStore.getUseCount(path2) - LastSelectedPropertiesFileStore.getUseCount(path1);
-      return r == 0 ? path1.compareTo(path2) : r;
-    });
+    if (lastPath != null) {
+      paths.remove(lastPath);
+      paths.add(0, lastPath);
+    }
     myPropertiesFile.setHistory(paths);
     if (lastPath != null) {
       myPropertiesFile.setSelectedItem(lastPath);
@@ -349,7 +350,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   protected List<String> defaultSuggestPropertiesFiles() {
-    return I18nUtil.defaultSuggestPropertiesFiles(myProject);
+    return I18nUtil.defaultSuggestPropertiesFiles(myProject, myContextModules);
   }
 
   protected PropertiesFile getPropertiesFile() {

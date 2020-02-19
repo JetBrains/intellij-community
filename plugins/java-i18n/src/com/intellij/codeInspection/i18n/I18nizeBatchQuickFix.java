@@ -14,6 +14,8 @@ import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -69,6 +71,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     Set<PsiElement> distinct = new HashSet<>();
     Map<String, ReplacementBean> keyValuePairs = new LinkedHashMap<>();
     UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
+    Set<Module> contextModules = new LinkedHashSet<>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
       ULiteralExpression literalExpression = UastUtils.findContaining(psiElement, ULiteralExpression.class);
@@ -92,6 +95,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
               uExpressions.add(literalExpression);
               keyValuePairs.put(value, new ReplacementBean(uniqueNameGenerator.generateUniqueName(key), value, uExpressions, elements, Collections.emptyList()));
             }
+            ContainerUtil.addIfNotNull(contextModules, ModuleUtilCore.findModuleForPsiElement(psiElement));
           }
         }
         else if (distinct.add(concatenation)) {
@@ -105,6 +109,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
                                                 Collections.singletonList(UastUtils.findContaining(concatenation, UPolyadicExpression.class)),
                                                 Collections.singletonList(concatenation),
                                                 ContainerUtil.map(args, arg -> UastUtils.findContaining(arg, UExpression.class))));
+          ContainerUtil.addIfNotNull(contextModules, ModuleUtilCore.findModuleForPsiElement(psiElement));
         }
       }
     }
@@ -112,7 +117,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     if (keyValuePairs.isEmpty()) return;
 
     ArrayList<ReplacementBean> replacements = new ArrayList<>(keyValuePairs.values());
-    I18NBatchDialog dialog = new I18NBatchDialog(project, replacements);
+    I18NBatchDialog dialog = new I18NBatchDialog(project, replacements, contextModules);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       Set<PsiFile> files = new HashSet<>();
@@ -238,13 +243,17 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
 
     @NotNull private final Project myProject;
     private final List<ReplacementBean> myKeyValuePairs;
+    private final Set<Module> myContextModules;
     private JComboBox<String> myPropertiesFile;
     private UsagePreviewPanel myUsagePreviewPanel;
 
-    protected I18NBatchDialog(@NotNull Project project, List<ReplacementBean> keyValuePairs) {
+    protected I18NBatchDialog(@NotNull Project project,
+                              List<ReplacementBean> keyValuePairs,
+                              Set<Module> contextModules) {
       super(project, true);
       myProject = project;
       myKeyValuePairs = keyValuePairs;
+      myContextModules = contextModules;
       setTitle(PropertiesBundle.message("i18nize.dialog.title"));
       init();
     }
@@ -257,7 +266,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
-      List<String> files = I18nUtil.defaultSuggestPropertiesFiles(myProject);
+      List<String> files = I18nUtil.defaultSuggestPropertiesFiles(myProject, myContextModules);
       myPropertiesFile = new ComboBox<>(ArrayUtil.toStringArray(files));
       new ComboboxSpeedSearch(myPropertiesFile);
       LabeledComponent<JComboBox<String>> component = new LabeledComponent<>();
