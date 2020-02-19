@@ -152,16 +152,12 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
       Stubs/Stubs.storage_i
       Stubs/Stubs.storage_i.len
       Stubs/java.class.fqn
-      Stubs/java.class.fqn/java.class.fqn.forward
-      Stubs/java.class.fqn/java.class.fqn.forward.len
       Stubs/java.class.fqn/java.class.fqn.storage
       Stubs/java.class.fqn/java.class.fqn.storage.len
       Stubs/java.class.fqn/java.class.fqn.storage.values.at
       Stubs/java.class.fqn/java.class.fqn.storage_i
       Stubs/java.class.fqn/java.class.fqn.storage_i.len
       Stubs/java.class.shortname
-      Stubs/java.class.shortname/java.class.shortname.forward
-      Stubs/java.class.shortname/java.class.shortname.forward.len
       Stubs/java.class.shortname/java.class.shortname.storage
       Stubs/java.class.shortname/java.class.shortname.storage.keystream
       Stubs/java.class.shortname/java.class.shortname.storage.keystream.len
@@ -170,8 +166,6 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
       Stubs/java.class.shortname/java.class.shortname.storage_i
       Stubs/java.class.shortname/java.class.shortname.storage_i.len
       Stubs/java.method.name
-      Stubs/java.method.name/java.method.name.forward
-      Stubs/java.method.name/java.method.name.forward.len
       Stubs/java.method.name/java.method.name.storage
       Stubs/java.method.name/java.method.name.storage.keystream
       Stubs/java.method.name/java.method.name.storage.keystream.len
@@ -278,16 +272,12 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
       source/Stubs/Stubs.storage_i
       source/Stubs/Stubs.storage_i.len
       source/Stubs/java.class.fqn
-      source/Stubs/java.class.fqn/java.class.fqn.forward
-      source/Stubs/java.class.fqn/java.class.fqn.forward.len
       source/Stubs/java.class.fqn/java.class.fqn.storage
       source/Stubs/java.class.fqn/java.class.fqn.storage.len
       source/Stubs/java.class.fqn/java.class.fqn.storage.values.at
       source/Stubs/java.class.fqn/java.class.fqn.storage_i
       source/Stubs/java.class.fqn/java.class.fqn.storage_i.len
       source/Stubs/java.class.shortname
-      source/Stubs/java.class.shortname/java.class.shortname.forward
-      source/Stubs/java.class.shortname/java.class.shortname.forward.len
       source/Stubs/java.class.shortname/java.class.shortname.storage
       source/Stubs/java.class.shortname/java.class.shortname.storage.keystream
       source/Stubs/java.class.shortname/java.class.shortname.storage.keystream.len
@@ -296,8 +286,6 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
       source/Stubs/java.class.shortname/java.class.shortname.storage_i
       source/Stubs/java.class.shortname/java.class.shortname.storage_i.len
       source/Stubs/java.method.name
-      source/Stubs/java.method.name/java.method.name.forward
-      source/Stubs/java.method.name/java.method.name.forward.len
       source/Stubs/java.method.name/java.method.name.storage
       source/Stubs/java.method.name/java.method.name.storage.keystream
       source/Stubs/java.method.name/java.method.name.storage.keystream.len
