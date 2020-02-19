@@ -164,7 +164,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
           catch (IOException e) {
             LOG.warn(e);
             ApplicationManager.getApplication().invokeLater(() -> {
-              String message = "Failed to download sources: " + myUrl;
+              String message = JavaUiBundle.message("error.message.failed.to.download.sources.0", myUrl);
               new Notification(myMessageGroupId, JavaUiBundle.message("notification.title.downloading.failed"), message, NotificationType.ERROR).notify(getProject());
               callback.setDone();
             });
