@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.ui.CyclicDependenciesPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependenciesToolWindow;
@@ -43,7 +44,7 @@ public class CyclicDependenciesHandler {
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject, myScope);
     final Runnable successRunnable = () -> SwingUtilities.invokeLater(() -> {
       CyclicDependenciesPanel panel = new CyclicDependenciesPanel(myProject, builder);
-      Content content = ContentFactory.SERVICE.getInstance().createContent(panel, AnalysisScopeBundle.message(
+      Content content = ContentFactory.SERVICE.getInstance().createContent(panel, JavaBundle.message(
         "action.analyzing.cyclic.dependencies.in.scope", builder.getScope().getDisplayName()), false);
       content.setDisposer(panel);
       panel.setContent(content);

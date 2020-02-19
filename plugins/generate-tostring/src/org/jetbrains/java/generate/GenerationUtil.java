@@ -3,10 +3,10 @@ package org.jetbrains.java.generate;
 
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.generation.PsiFieldMember;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -48,17 +48,17 @@ public class GenerationUtil {
         if (e instanceof GenerateCodeException) {
             // code generation error - display velocity error in error dialog so user can identify problem quicker
           Messages.showMessageDialog(project,
-                                     CodeInsightBundle.message("generate.tostring.handle.exception.velocity.error.message", e.getMessage()),
+                                     JavaBundle.message("generate.tostring.handle.exception.velocity.error.message", e.getMessage()),
                                      CommonBundle.message("title.warning"), Messages.getWarningIcon());
         }
         else if (e instanceof PluginException) {
             // plugin related error - could be recoverable.
-            Messages.showMessageDialog(project, CodeInsightBundle
+            Messages.showMessageDialog(project, JavaBundle
               .message("generate.tostring.handle.exception.plugin.warning.message", e.getMessage()), CommonBundle.message("title.warning"), Messages.getWarningIcon());
         } 
         else {
           // unknown error (such as NPE) - not recoverable
-          Messages.showMessageDialog(project, CodeInsightBundle.message("generate.tostring.handle.exception.error.message", e.getMessage()),
+          Messages.showMessageDialog(project, JavaBundle.message("generate.tostring.handle.exception.error.message", e.getMessage()),
                                      CommonBundle.getErrorTitle(), Messages.getErrorIcon());
           if (e instanceof RuntimeException) {
             throw (RuntimeException) e; // throw to make IDEA alert user

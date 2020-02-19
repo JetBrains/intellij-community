@@ -15,7 +15,7 @@
  */
 package org.jetbrains.java.generate.view;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.java.generate.config.CancelPolicy;
 import org.jetbrains.java.generate.config.ConflictResolutionPolicy;
@@ -51,8 +51,8 @@ public class MethodExistsDialog {
      */
     public static ConflictResolutionPolicy showDialog(String targetMethodName) {
         int exit = Messages.showYesNoCancelDialog(
-          CodeInsightBundle.message("generate.tostring.method.already.exists.dialog.me=ssage", targetMethodName),
-          CodeInsightBundle.message("generate.tostring.method.already.exists.dialog.title"), Messages.getQuestionIcon());
+          JavaBundle.message("generate.tostring.method.already.exists.dialog.me=ssage", targetMethodName),
+          JavaBundle.message("generate.tostring.method.already.exists.dialog.title"), Messages.getQuestionIcon());
         if (exit == Messages.CANCEL) {
             return CancelPolicy.getInstance();
         }

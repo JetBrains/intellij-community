@@ -23,6 +23,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -48,7 +49,7 @@ import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_PACKAGE_I
  */
 public class CreatePackageInfoAction extends CreateFromTemplateActionBase {
   public CreatePackageInfoAction() {
-    super(IdeBundle.lazyMessage("action.create.new.package-info.title"), IdeBundle.lazyMessage("action.create.new.package-info.description"), AllIcons.FileTypes.Java);
+    super(JavaBundle.lazyMessage("action.create.new.package-info.title"), JavaBundle.lazyMessage("action.create.new.package-info.description"), AllIcons.FileTypes.Java);
   }
 
   @Nullable
@@ -62,14 +63,14 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase {
       }
       if (directory.findFile(PsiPackage.PACKAGE_INFO_FILE) != null) {
         Messages.showErrorDialog(CommonDataKeys.PROJECT.getData(dataContext),
-                                 IdeBundle.message("error.package.already.contains.package-info", aPackage.getQualifiedName()),
+                                 JavaBundle.message("error.package.already.contains.package-info", aPackage.getQualifiedName()),
                                  IdeBundle.message("title.cannot.create.file"));
         return null;
       }
       else if (directory.findFile("package.html") != null) {
         if (Messages.showOkCancelDialog(CommonDataKeys.PROJECT.getData(dataContext),
-                                        IdeBundle.message("error.package.already.contains.package.html", aPackage.getQualifiedName()),
-                                        IdeBundle.message("error.package.html.found.title"),
+                                        JavaBundle.message("error.package.already.contains.package.html", aPackage.getQualifiedName()),
+                                        JavaBundle.message("error.package.html.found.title"),
                                         IdeBundle.message("button.create"), CommonBundle.getCancelButtonText(),
                                         Messages.getQuestionIcon()) != Messages.OK) {
           return null;

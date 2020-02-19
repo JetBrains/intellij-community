@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -132,7 +132,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
       Set<String> imported = new TreeSet<>();
       restoreReferences(referenceData, refs, imported);
       if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.YES && !imported.isEmpty()) {
-        String notificationText = CodeInsightBundle.message("copy.paste.reference.notification", imported.size());
+        String notificationText = JavaBundle.message("copy.paste.reference.notification", imported.size());
         ApplicationManager.getApplication().invokeLater(
           () -> showHint(editor, notificationText, e -> {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -147,8 +147,8 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
 
   private void reviewImports(Project project, PsiFile file, Set<String> importedClasses) {
     RestoreReferencesDialog dialog = new RestoreReferencesDialog(project, ArrayUtil.toObjectArray(importedClasses), false);
-    dialog.setTitle(CodeInsightBundle.message("dialog.import.on.paste.title3"));
-    dialog.setExplanation(CodeInsightBundle.message("dialog.paste.on.import.text3"));
+    dialog.setTitle(JavaBundle.message("dialog.import.on.paste.title3"));
+    dialog.setExplanation(JavaBundle.message("dialog.paste.on.import.text3"));
     if (dialog.showAndGet()) {
       Object[] selectedElements = dialog.getSelectedElements();
       if (selectedElements.length > 0) {

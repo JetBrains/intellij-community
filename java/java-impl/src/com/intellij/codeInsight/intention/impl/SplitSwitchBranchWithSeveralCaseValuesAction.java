@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -21,7 +21,6 @@ import java.util.Objects;
 
 import static com.intellij.psi.util.PsiTreeUtil.getNextSiblingOfType;
 import static com.intellij.psi.util.PsiTreeUtil.getPrevSiblingOfType;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.statementMayCompleteNormally;
 
 /**
@@ -33,7 +32,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.split.switch.branch.with.several.case.values.family");
+    return JavaBundle.message("intention.split.switch.branch.with.several.case.values.family");
   }
 
   @Override
@@ -44,7 +43,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
       if (isMultiValueCase(labelStatement)) {
         // mixed syntax "case 1, 2: some code"
         if (isAvailableForLabel(labelStatement)) {
-          setText(CodeInsightBundle.message("intention.split.switch.branch.with.several.case.values.split.text"));
+          setText(JavaBundle.message("intention.split.switch.branch.with.several.case.values.split.text"));
           return true;
         }
       }
@@ -52,7 +51,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
         // traditional syntax "case 1: case 2: some code"
         PsiSwitchLabelStatement lastSiblingLabel = findLastSiblingLabel(labelStatement, false);
         if (isAvailableForLabel(lastSiblingLabel)) {
-          setText(CodeInsightBundle.message("intention.split.switch.branch.with.several.case.values.copy.text"));
+          setText(JavaBundle.message("intention.split.switch.branch.with.several.case.values.copy.text"));
           return true;
         }
       }
@@ -62,7 +61,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
       if (isMultiValueCase(labelStatement)) {
         PsiStatement body = ((PsiSwitchLabeledRuleStatement)labelStatement).getBody();
         if (body != null && element.getTextOffset() < body.getTextOffset()) {
-          setText(CodeInsightBundle.message("intention.split.switch.branch.with.several.case.values.split.text"));
+          setText(JavaBundle.message("intention.split.switch.branch.with.several.case.values.split.text"));
           return true;
         }
       }

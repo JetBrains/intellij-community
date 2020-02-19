@@ -15,10 +15,10 @@
  */
 package com.intellij.diff.lang;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -31,7 +31,7 @@ public class JavaDiffIgnoredRangeProvider extends LangDiffIgnoredRangeProvider {
   @NotNull
   @Override
   public String getDescription() {
-    return DiffBundle.message("ignore.imports.and.formatting");
+    return JavaBundle.message("ignore.imports.and.formatting");
   }
 
   @Override

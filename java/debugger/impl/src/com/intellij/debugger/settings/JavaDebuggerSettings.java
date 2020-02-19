@@ -2,8 +2,8 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SimpleConfigurable;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
@@ -35,15 +35,15 @@ public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
     switch (category) {
       case GENERAL:
-        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.launching", OptionsBundle.message("options.java.display.name"),
+        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.launching", JavaBundle.message("options.java.display.name"),
                                                        DebuggerLaunchingConfigurable.class, DebuggerSettings::getInstance));
       case DATA_VIEWS:
         return createDataViewsConfigurable();
       case STEPPING:
-        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.stepping", OptionsBundle.message("options.java.display.name"),
+        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.stepping", JavaBundle.message("options.java.display.name"),
                                                        DebuggerSteppingConfigurable.class, DebuggerSettings::getInstance));
       case HOTSWAP:
-        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.hotswap", OptionsBundle.message("options.java.display.name"),
+        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.hotswap", JavaBundle.message("options.java.display.name"),
                                                        JavaHotSwapConfigurableUi.class, DebuggerSettings::getInstance));
     }
     return Collections.emptyList();

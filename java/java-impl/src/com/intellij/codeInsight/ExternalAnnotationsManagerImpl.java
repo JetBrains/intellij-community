@@ -9,6 +9,7 @@ import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -30,7 +31,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -465,8 +465,8 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
                                                  @NotNull Project project,
                                                  @NotNull ExternalAnnotation annotation) {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle(ProjectBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
-    descriptor.setDescription(ProjectBundle.message("external.annotations.root.chooser.description"));
+    descriptor.setTitle(JavaBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
+    descriptor.setDescription(JavaBundle.message("external.annotations.root.chooser.description"));
     final VirtualFile newRoot = FileChooser.chooseFile(descriptor, project, null);
     if (newRoot == null) {
       notifyAfterAnnotationChanging(annotation.getOwner(), annotation.getAnnotationFQName(), false);
@@ -955,7 +955,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     private final Project myProject;
 
     MyExternalPromptDialog(final Project project) {
-      super(project, getMessage(), ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
+      super(project, getMessage(), JavaBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
       myProject = project;
       init();
     }
@@ -974,7 +974,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     protected Action @NotNull [] createActions() {
       final Action okAction = getOKAction();
       assignMnemonic(getAddInCode(), okAction);
-      final String externalName = ProjectBundle.message("external.annotations.external.option");
+      final String externalName = JavaBundle.message("external.annotations.external.option");
       return new Action[]{okAction, new AbstractAction(externalName) {
         {
           assignMnemonic(externalName, this);
@@ -1013,11 +1013,11 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     }
 
     private static String getAddInCode() {
-      return ProjectBundle.message("external.annotations.in.code.option");
+      return JavaBundle.message("external.annotations.in.code.option");
     }
 
     private static String getMessage() {
-      return ProjectBundle.message("external.annotations.suggestion.message");
+      return JavaBundle.message("external.annotations.suggestion.message");
     }
   }
 

@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,7 +29,7 @@ public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMet
   @Override
   @NotNull
   public String getText() {
-    return CodeInsightBundle.message("intention.move.initializer.to.constructor");
+    return JavaBundle.message("intention.move.initializer.to.constructor");
   }
 
   @Override

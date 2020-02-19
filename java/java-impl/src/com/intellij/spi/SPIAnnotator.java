@@ -16,7 +16,7 @@
 package com.intellij.spi;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -39,7 +39,7 @@ public class SPIAnnotator implements Annotator{
         ClassUtil.findPsiClass(element.getManager(), serviceProviderName, null, true, element.getContainingFile().getResolveScope());
       if (element instanceof PsiFile) {
         if (psiClass == null) {
-          holder.newAnnotation(HighlightSeverity.ERROR, CodeInsightBundle.message("spi.no.provider.error.message", serviceProviderName)).fileLevel().create();
+          holder.newAnnotation(HighlightSeverity.ERROR, JavaBundle.message("spi.no.provider.error.message", serviceProviderName)).fileLevel().create();
         }
       }
       else if (element instanceof SPIClassProviderReferenceElement) {
@@ -49,7 +49,7 @@ public class SPIAnnotator implements Annotator{
         }
         else if (resolve instanceof PsiClass && psiClass != null) {
           if (!((PsiClass)resolve).isInheritor(psiClass, true)) {
-            holder.newAnnotation(HighlightSeverity.ERROR, CodeInsightBundle.message("spi.extension.error.message", serviceProviderName)).create();
+            holder.newAnnotation(HighlightSeverity.ERROR, JavaBundle.message("spi.extension.error.message", serviceProviderName)).create();
           }
         }
       }

@@ -9,6 +9,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
@@ -50,7 +51,7 @@ public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler
                                           new MethodCellRenderer(showMethodNames));
     }
     else {
-      NavigationUtil.getPsiElementPopup(superElements, CodeInsightBundle.message("goto.super.class.chooser.title"))
+      NavigationUtil.getPsiElementPopup(superElements, JavaBundle.message("goto.super.class.chooser.title"))
         .showInBestPositionFor(editor);
     }
   }

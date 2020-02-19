@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -70,7 +70,7 @@ public class SwapIfStatementsIntentionAction extends PsiElementBaseIntentionActi
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.family.swap.if.statements");
+    return JavaBundle.message("intention.family.swap.if.statements");
   }
 
   @NotNull

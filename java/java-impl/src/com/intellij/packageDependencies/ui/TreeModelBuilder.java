@@ -4,6 +4,7 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
@@ -409,7 +410,7 @@ public class TreeModelBuilder {
     if (!myShowIndividualLibs) {
       if (myGroupByScopeType) return getRootNode(ScopeType.LIB);
       if (myAllLibsNode == null) {
-        myAllLibsNode = new GeneralGroupNode(AnalysisScopeBundle.message("dependencies.libraries.node.text"),
+        myAllLibsNode = new GeneralGroupNode(JavaBundle.message("dependencies.libraries.node.text"),
                                              AllIcons.Nodes.PpLibFolder,
                                              myProject);
         getRootNode(ScopeType.LIB).add(myAllLibsNode);
@@ -450,11 +451,11 @@ public class TreeModelBuilder {
   }
 
   public static String getProductionName() {
-    return AnalysisScopeBundle.message("package.dependencies.production.node.text");
+    return JavaBundle.message("package.dependencies.production.node.text");
   }
 
   public static String getTestName() {
-    return AnalysisScopeBundle.message("package.dependencies.test.node.text");
+    return JavaBundle.message("package.dependencies.test.node.text");
   }
 
   public static String getLibraryName() {

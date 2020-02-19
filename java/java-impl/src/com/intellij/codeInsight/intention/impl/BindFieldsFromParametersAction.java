@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -75,7 +75,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
         LOG.assertTrue(psiParameter != null);
       }
 
-      setText(CodeInsightBundle.message("intention.bind.fields.from.parameters.text", method.isConstructor() ? "constructor" : "method"));
+      setText(JavaBundle.message("intention.bind.fields.from.parameters.text", method.isConstructor() ? "constructor" : "method"));
     }
     return isAvailable(psiParameter);
   }
@@ -150,7 +150,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.bind.fields.from.parameters.family");
+    return JavaBundle.message("intention.bind.fields.from.parameters.family");
   }
 
   @Override
@@ -209,7 +209,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
                                            ParameterClassMember @NotNull [] members) {
     final MemberChooser<ParameterClassMember> chooser = new MemberChooser<>(members, false, true, project);
     chooser.selectElements(getInitialSelection(method, members));
-    chooser.setTitle(CodeInsightBundle.message("dialog.title.choose.0.parameters", method.isConstructor() ? "Constructor" : "Method"));
+    chooser.setTitle(JavaBundle.message("dialog.title.choose.0.parameters", method.isConstructor() ? "Constructor" : "Method"));
     chooser.show();
     return chooser;
   }

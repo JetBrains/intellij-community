@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -23,7 +23,10 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author cdr
@@ -60,7 +63,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
         } else {
           range = new TextRange(0, assignment.getTextLength());
         }
-        holder.registerProblem(assignment, CodeInsightBundle.message("intention.move.field.assignment.to.declaration"),
+        holder.registerProblem(assignment, JavaBundle.message("intention.move.field.assignment.to.declaration"),
                                shouldWarn ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.INFORMATION,
                                range, new MoveFieldAssignmentToInitializerFix());
       }
@@ -201,7 +204,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getFamilyName() {
-      return CodeInsightBundle.message("intention.move.field.assignment.to.declaration");
+      return JavaBundle.message("intention.move.field.assignment.to.declaration");
     }
 
     @Override

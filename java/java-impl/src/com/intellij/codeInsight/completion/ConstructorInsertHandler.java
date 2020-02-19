@@ -17,6 +17,7 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -379,6 +380,6 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
   }
 
   private static String getCommandName() {
-    return CompletionBundle.message("completion.smart.type.generate.anonymous.body");
+    return JavaBundle.message("completion.smart.type.generate.anonymous.body");
   }
 }

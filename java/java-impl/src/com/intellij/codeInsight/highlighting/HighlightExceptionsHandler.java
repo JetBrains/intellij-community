@@ -15,9 +15,8 @@
  */
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.lang.LangBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -55,7 +54,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
 
   @Override
   protected void selectTargets(final List<PsiClass> targets, final Consumer<List<PsiClass>> selectionConsumer) {
-    new ChooseClassAndDoHighlightRunnable(myClassTypes, myEditor, CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title")) {
+    new ChooseClassAndDoHighlightRunnable(myClassTypes, myEditor, JavaBundle.message("highlight.exceptions.thrown.chooser.title")) {
       @Override
       protected void selected(PsiClass @NotNull ... classes) {
         selectionConsumer.consume(Arrays.asList(classes));
@@ -75,7 +74,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
       }
     }
 
-    buildStatusText(LangBundle.message("java.terms.exception"), myReadUsages.size() - 1 /* exclude target */);
+    buildStatusText(JavaBundle.message("java.terms.exception"), myReadUsages.size() - 1 /* exclude target */);
   }
 
   private void addExceptionThrowPlaces(PsiClassType type, PsiElement place) {

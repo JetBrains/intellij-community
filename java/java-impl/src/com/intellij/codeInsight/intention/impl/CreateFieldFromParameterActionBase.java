@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -31,7 +31,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
     if (parameter == null || !isAvailable(parameter)) {
       return false;
     }
-    setText(CodeInsightBundle.message("intention.create.field.from.parameter.text", parameter.getName()));
+    setText(JavaBundle.message("intention.create.field.from.parameter.text", parameter.getName()));
 
     return true;
   }
@@ -41,7 +41,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.create.field.from.parameter.family");
+    return JavaBundle.message("intention.create.field.from.parameter.family");
   }
 
   @Override

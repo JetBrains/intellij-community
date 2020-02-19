@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -21,8 +21,8 @@ final class RecordConstructorChooserDialog extends DialogWrapper {
   RecordConstructorChooserDialog(@NotNull PsiClass recordClass) {
     super(recordClass.getProject());
     myRecordClass = recordClass;
-    setTitle(CodeInsightBundle.message("generate.record.constructor.title"));
-    setOKButtonText(CodeInsightBundle.message("generate.button.title"));
+    setTitle(JavaBundle.message("generate.record.constructor.title"));
+    setOKButtonText(JavaBundle.message("generate.button.title"));
     myCompact = new JBRadioButton(JavaErrorBundle.message("record.compact.constructor"), true);
     myCanonical = new JBRadioButton(JavaErrorBundle.message("record.canonical.constructor"), false);
     myCustom = new JBRadioButton(ApplicationBundle.message("custom.option"), false);

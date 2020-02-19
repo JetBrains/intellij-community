@@ -19,7 +19,6 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver;
@@ -209,7 +208,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
       if (indicator != null) {
         indicator.setIndeterminate(true);
-        indicator.setText(CodeInsightBundle.message("infer.nullity.progress"));
+        indicator.setText(JavaBundle.message("infer.nullity.progress"));
       }
 
       inferrer.collect(usages);

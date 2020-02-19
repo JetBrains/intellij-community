@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -169,9 +169,9 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
       super(project);
       setTitle(QuickFixBundle.message("create.service.implementation"));
 
-      mySubclassButton.setText(CodeInsightBundle.message("radio.button.subclass.of.0", superClassName));
+      mySubclassButton.setText(JavaBundle.message("radio.button.subclass.of.0", superClassName));
       mySubclassButton.setSelected(true);
-      myProviderButton.setText(CodeInsightBundle.message("radio.button.with.provider.method"));
+      myProviderButton.setText(JavaBundle.message("radio.button.with.provider.method"));
 
       ButtonGroup group = new ButtonGroup();
       group.add(mySubclassButton);
@@ -197,7 +197,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     @Override
     protected JComponent createNorthPanel() {
       PanelGridBuilder builder = UI.PanelFactory.grid();
-      builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel(CodeInsightBundle.message("label.implementation")))
+      builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel(JavaBundle.message("label.implementation")))
              .add(UI.PanelFactory.panel(myProviderButton));
       if (myRootDirCombo.getModel().getSize() > 1) {
         builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("label.source.root") + ":"));

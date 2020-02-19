@@ -7,7 +7,7 @@ import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.PrimitiveRenderer;
 import com.intellij.debugger.ui.tree.render.ToStringRenderer;
-import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
@@ -68,7 +68,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
   @Override
   public String getDisplayName() {
-    return OptionsBundle.message("options.java.display.name");
+    return JavaBundle.message("options.java.display.name");
   }
 
   @Override

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.unwrap;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNewExpression;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaArrayInitializerUnwrapper extends JavaUnwrapper {
 
   public JavaArrayInitializerUnwrapper() {
-    super(CodeInsightBundle.message("unwrap.array.initializer"));
+    super(JavaBundle.message("unwrap.array.initializer"));
   }
 
   @Override

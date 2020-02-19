@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.fileTemplates;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -135,7 +135,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   @NotNull
   @Override
   public String getErrorMessage() {
-    return IdeBundle.message("title.cannot.create.class");
+    return JavaBundle.message("title.cannot.create.class");
   }
 
   @Override
@@ -149,7 +149,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   @NotNull
   @Override
   public String commandName(@NotNull FileTemplate template) {
-    return IdeBundle.message("command.create.class.from.template");
+    return JavaBundle.message("command.create.class.from.template");
   }
 
   public static boolean canCreate(PsiDirectory dir) {

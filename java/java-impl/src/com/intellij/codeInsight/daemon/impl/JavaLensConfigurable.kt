@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaLensSettings
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.java.JavaBundle
 
 class JavaLensConfigurable(val settings: JavaLensSettings) : ImmediateConfigurable {
   override fun createComponent(listener: ChangeListener): javax.swing.JPanel {
@@ -13,10 +14,10 @@ class JavaLensConfigurable(val settings: JavaLensSettings) : ImmediateConfigurab
 
   override val cases: List<ImmediateConfigurable.Case>
     get() = listOf(
-      ImmediateConfigurable.Case(CodeInsightBundle.message("settings.inlay.java.usages"), "usages", { settings.isShowUsages}, { settings.isShowUsages = it}),
-      ImmediateConfigurable.Case(CodeInsightBundle.message("settings.inlay.java.inheritors"), "inheritors", { settings.isShowImplementations}, { settings.isShowImplementations = it})
+      ImmediateConfigurable.Case(JavaBundle.message("settings.inlay.java.usages"), "usages", { settings.isShowUsages}, { settings.isShowUsages = it}),
+      ImmediateConfigurable.Case(JavaBundle.message("settings.inlay.java.inheritors"), "inheritors", { settings.isShowImplementations}, { settings.isShowImplementations = it})
     )
 
   override val mainCheckboxText: String
-    get() = CodeInsightBundle.message("settings.inlay.java.show.hints.for")
+    get() = JavaBundle.message("settings.inlay.java.show.hints.for")
 }

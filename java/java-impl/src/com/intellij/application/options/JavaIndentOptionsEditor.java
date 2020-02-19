@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -49,7 +50,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     myLabelIndentAbsolute = new JCheckBox(ApplicationBundle.message("checkbox.indent.absolute.label.indent"));
     add(myLabelIndentAbsolute, true);
 
-    myCbDontIndentTopLevelMembers = new JCheckBox(ApplicationBundle.message("checkbox.do.not.indent.top.level.class.members"));
+    myCbDontIndentTopLevelMembers = new JCheckBox(JavaBundle.message("checkbox.do.not.indent.top.level.class.members"));
     add(myCbDontIndentTopLevelMembers);
 
     myCbUseRelativeIndent = new JCheckBox(ApplicationBundle.message("checkbox.use.relative.indents"));

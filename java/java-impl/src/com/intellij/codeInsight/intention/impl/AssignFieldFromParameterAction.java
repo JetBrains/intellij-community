@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -64,7 +64,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
       }
       catch (AnalysisCanceledException ignored) { }
     }
-    setText(CodeInsightBundle.message("intention.assign.field.from.parameter.text", field.getName()));
+    setText(JavaBundle.message("intention.assign.field.from.parameter.text", field.getName()));
 
     return true;
   }
@@ -72,7 +72,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.assign.field.from.parameter.family");
+    return JavaBundle.message("intention.assign.field.from.parameter.family");
   }
 
   @Override

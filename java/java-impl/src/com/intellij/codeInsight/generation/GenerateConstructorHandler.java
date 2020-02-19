@@ -2,10 +2,10 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -32,7 +32,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   private boolean myCopyJavadoc;
 
   public GenerateConstructorHandler() {
-    super(CodeInsightBundle.message("generate.constructor.fields.chooser.title"));
+    super(JavaBundle.message("generate.constructor.fields.chooser.title"));
   }
 
   @Override
@@ -58,7 +58,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project) {
     if (aClass instanceof PsiAnonymousClass) {
       Messages.showMessageDialog(project,
-                                 CodeInsightBundle.message("error.attempt.to.generate.constructor.for.anonymous.class"),
+                                 JavaBundle.message("error.attempt.to.generate.constructor.for.anonymous.class"),
                                  CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
       return null;
@@ -94,7 +94,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
           final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
           PsiMethodMember[] constructors = ContainerUtil.map2Array(array, PsiMethodMember.class, s -> new PsiMethodMember(s, substitutor));
           MemberChooser<PsiMethodMember> chooser = new MemberChooser<>(constructors, false, true, project);
-          chooser.setTitle(CodeInsightBundle.message("generate.constructor.super.constructor.chooser.title"));
+          chooser.setTitle(JavaBundle.message("generate.constructor.super.constructor.chooser.title"));
           chooser.show();
           List<PsiMethodMember> elements = chooser.getSelectedElements();
           if (elements == null || elements.isEmpty()) return null;

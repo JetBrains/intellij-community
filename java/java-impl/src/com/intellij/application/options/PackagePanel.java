@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
@@ -70,7 +70,7 @@ public class PackagePanel {
         }
       }).disableUpDownActions().setPreferredSize(new Dimension(-1, 100)).createPanel();
 
-    UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.packages.to.use.import.with"), false));
+    UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(JavaBundle.message("title.packages.to.use.import.with"), false));
 
     return panel;
   }

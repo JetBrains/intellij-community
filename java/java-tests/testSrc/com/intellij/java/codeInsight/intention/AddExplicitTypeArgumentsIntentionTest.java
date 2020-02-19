@@ -15,8 +15,8 @@
  */
 package com.intellij.java.codeInsight.intention;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -117,7 +117,7 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
                                         "        l = get<caret>List();\n" +
                                         "    }\n" +
                                         "}");
-    final IntentionAction intentionAction = myFixture.getAvailableIntention(CodeInsightBundle.message("intention.add.explicit.type.arguments.family"));
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(JavaBundle.message("intention.add.explicit.type.arguments.family"));
     assertNull(intentionAction);
   }
 
@@ -131,13 +131,13 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
                                         "    }\n" +
                                         "\n" +
                                         "}");
-    final IntentionAction intentionAction = myFixture.getAvailableIntention(CodeInsightBundle.message("intention.add.explicit.type.arguments.family"));
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(JavaBundle.message("intention.add.explicit.type.arguments.family"));
     assertNull(intentionAction);
   }
 
   private void doTest(String beforeText, String afterText) {
     myFixture.configureByText("a.java", beforeText);
-    final IntentionAction intentionAction = myFixture.findSingleIntention(CodeInsightBundle.message("intention.add.explicit.type.arguments.family"));
+    final IntentionAction intentionAction = myFixture.findSingleIntention(JavaBundle.message("intention.add.explicit.type.arguments.family"));
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResult(afterText);

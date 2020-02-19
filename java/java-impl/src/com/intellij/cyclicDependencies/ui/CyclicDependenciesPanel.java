@@ -6,6 +6,7 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.actions.CyclicDependenciesHandler;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -34,8 +35,8 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class CyclicDependenciesPanel extends JPanel implements Disposable, DataProvider {
   private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
@@ -108,7 +109,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
       else {
         String pack1Name = ((PsiPackage)nextPackageNode.getPsiElement()).getQualifiedName();
         String pack2Name = ((PsiPackage)selectedPackageNode.getPsiElement()).getQualifiedName();
-        myBuilder.setRootNodeNameInUsageView(AnalysisScopeBundle.message("cyclic.dependencies.usage.view.root.node.text",
+        myBuilder.setRootNodeNameInUsageView(JavaBundle.message("cyclic.dependencies.usage.view.root.node.text",
                                                                          pack1Name, pack2Name));
         myUsagesPanel.findUsages(searchIn, searchFor);
       }
@@ -504,6 +505,6 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   }
 
   public static String getDefaultPackageAbbreviation() {
-    return AnalysisScopeBundle.message("dependencies.tree.node.default.package.abbreviation");
+    return JavaBundle.message("dependencies.tree.node.default.package.abbreviation");
   }
 }

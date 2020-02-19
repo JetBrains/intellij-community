@@ -1,8 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -86,7 +86,7 @@ public class BreakStringOnLineBreaksIntentionAction extends PsiElementBaseIntent
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("intention.break.string.on.line.breaks.text");
+    return JavaBundle.message("intention.break.string.on.line.breaks.text");
   }
 
   @NotNull

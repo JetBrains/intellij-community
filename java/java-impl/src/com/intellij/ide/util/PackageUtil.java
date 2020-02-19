@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CreateFileAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -118,8 +118,8 @@ public class PackageUtil {
       if (foundExistingDirectory == null) {
         if (!askedToCreate && askUserToCreate) {
           int toCreate = Messages.showYesNoDialog(project,
-                                                  IdeBundle.message("prompt.create.non.existing.package", packageName),
-                                                  IdeBundle.message("title.package.not.found"),
+                                                  JavaBundle.message("prompt.create.non.existing.package", packageName),
+                                                  JavaBundle.message("title.package.not.found"),
                                                   Messages.getQuestionIcon());
           if (toCreate != Messages.YES) {
             return null;
@@ -150,7 +150,7 @@ public class PackageUtil {
           exception[0] = e;
           return null;
         }
-      }), IdeBundle.message("command.create.new.subdirectory"), null);
+      }), JavaBundle.message("command.create.new.subdirectory"), null);
 
     if (exception[0] != null) throw exception[0];
 
@@ -216,8 +216,8 @@ public class PackageUtil {
         if (!askedToCreate && askUserToCreate) {
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
             int toCreate = Messages.showYesNoDialog(project,
-                                                    IdeBundle.message("prompt.create.non.existing.package", packageName),
-                                                    IdeBundle.message("title.package.not.found"),
+                                                    JavaBundle.message("prompt.create.non.existing.package", packageName),
+                                                    JavaBundle.message("title.package.not.found"),
                                                     Messages.getQuestionIcon());
             if (toCreate != Messages.YES) {
               return null;

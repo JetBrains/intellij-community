@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -86,14 +86,14 @@ public class SameErasureButDifferentMethodsFix extends LocalQuickFixAndIntention
   public String getText() {
     PsiMethod method = methodPtr.getElement();
     if (method == null || !method.isValid()) return getFamilyName();
-    return CodeInsightBundle.message("intention.text.fix.method.0.parameters.with.bounded.wildcards", method.getName());
+    return JavaBundle.message("intention.text.fix.method.0.parameters.with.bounded.wildcards", method.getName());
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.family.fix.bounded.wildcards");
+    return JavaBundle.message("intention.family.fix.bounded.wildcards");
   }
 
   @Override

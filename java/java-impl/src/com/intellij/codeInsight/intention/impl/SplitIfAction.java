@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -50,7 +50,7 @@ public class SplitIfAction extends BaseElementAtCaretIntentionAction {
     if (!PsiTreeUtil.isAncestor(ifStatement.getCondition(), expression, false)) return false;
     if (ifStatement.getThenBranch() == null) return false;
 
-    setText(CodeInsightBundle.message("intention.split.if.text"));
+    setText(JavaBundle.message("intention.split.if.text"));
 
     return true;
   }
@@ -58,7 +58,7 @@ public class SplitIfAction extends BaseElementAtCaretIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.split.if.family");
+    return JavaBundle.message("intention.split.if.family");
   }
 
   @Override

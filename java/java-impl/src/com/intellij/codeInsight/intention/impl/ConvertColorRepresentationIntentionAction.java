@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -64,7 +64,7 @@ public class ConvertColorRepresentationIntentionAction extends BaseColorIntentio
       return false;
     }
 
-    setText(CodeInsightBundle.message("intention.convert.color.representation.text", newArguments.getText()));
+    setText(JavaBundle.message("intention.convert.color.representation.text", newArguments.getText()));
 
     return true;
   }
@@ -226,6 +226,6 @@ public class ConvertColorRepresentationIntentionAction extends BaseColorIntentio
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.convert.color.representation.family");
+    return JavaBundle.message("intention.convert.color.representation.family");
   }
 }

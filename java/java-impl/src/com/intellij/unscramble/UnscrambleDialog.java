@@ -5,6 +5,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -234,7 +235,7 @@ public class UnscrambleDialog extends DialogWrapper {
       myUnscrambleChooser.addItem(unscrambleSupport);
     }
     myUnscrambleChooser.setRenderer(SimpleListCellRenderer.create(
-      IdeBundle.message("unscramble.no.unscrambler.item"), UnscrambleSupport::getPresentableName));
+      JavaBundle.message("unscramble.no.unscrambler.item"), UnscrambleSupport::getPresentableName));
   }
 
   @Override
@@ -279,7 +280,7 @@ public class UnscrambleDialog extends DialogWrapper {
 
   private final class NormalizeTextAction extends AbstractAction {
     NormalizeTextAction(){
-      putValue(NAME, IdeBundle.message("unscramble.normalize.button"));
+      putValue(NAME, JavaBundle.message("unscramble.normalize.button"));
       putValue(DEFAULT_ACTION, Boolean.FALSE);
     }
 
@@ -390,9 +391,9 @@ public class UnscrambleDialog extends DialogWrapper {
 
   private static RunContentDescriptor addConsole(final Project project, final List<ThreadState> threadDump, String unscrambledTrace) {
     Icon icon = null;
-    String message = IdeBundle.message("unscramble.unscrambled.stacktrace.tab");
+    String message = JavaBundle.message("unscramble.unscrambled.stacktrace.tab");
     if (!threadDump.isEmpty()) {
-      message = IdeBundle.message("unscramble.unscrambled.threaddump.tab");
+      message = JavaBundle.message("unscramble.unscrambled.threaddump.tab");
       icon = AllIcons.Actions.Dump;
     }
     else {
@@ -403,7 +404,7 @@ public class UnscrambleDialog extends DialogWrapper {
       }
     }
     if (ContainerUtil.find(threadDump, DEADLOCK_CONDITION) != null) {
-      message = IdeBundle.message("unscramble.unscrambled.deadlock.tab");
+      message = JavaBundle.message("unscramble.unscrambled.deadlock.tab");
       icon = AllIcons.Debugger.KillProcess;
     }
     return AnalyzeStacktraceUtil.addConsole(project, threadDump.size() > 1 ? new ThreadDumpConsoleFactory(project, threadDump) : null, message, unscrambledTrace, icon);

@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.generation.RecordConstructorMember;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -70,6 +70,6 @@ public class ConvertCompactConstructorToCanonicalAction extends PsiElementBaseIn
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
   public @NotNull String getFamilyName() {
-    return CodeInsightBundle.message("intention.convert.compact.constructor.to.canonical");
+    return JavaBundle.message("intention.convert.compact.constructor.to.canonical");
   }
 }

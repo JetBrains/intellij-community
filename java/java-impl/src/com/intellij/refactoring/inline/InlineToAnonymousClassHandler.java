@@ -16,7 +16,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -113,7 +113,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
 
     final PsiClassType superType = InlineToAnonymousClassProcessor.getSuperType(psiClass);
     if (superType == null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, ExecutionBundle.message("class.not.found.error.message", CommonClassNames.JAVA_LANG_OBJECT), JavaRefactoringBundle.message("inline.to.anonymous.refactoring"), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, JavaBundle.message("class.not.found.error.message", CommonClassNames.JAVA_LANG_OBJECT), JavaRefactoringBundle.message("inline.to.anonymous.refactoring"), null);
       return;
     }
 

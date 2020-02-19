@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.unwrap;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpressionList;
@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class JavaConditionalUnwrapper extends JavaUnwrapper {
   public JavaConditionalUnwrapper() {
-    super(CodeInsightBundle.message("unwrap.conditional"));
+    super(JavaBundle.message("unwrap.conditional"));
   }
 
   @Override

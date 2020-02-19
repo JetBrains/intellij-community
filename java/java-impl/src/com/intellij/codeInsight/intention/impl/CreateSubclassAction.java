@@ -30,6 +30,7 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -61,7 +62,7 @@ import java.util.List;
 
 public class CreateSubclassAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(CreateSubclassAction.class);
-  private String myText = CodeInsightBundle.message("intention.implement.abstract.class.default.text");
+  private String myText = JavaBundle.message("intention.implement.abstract.class.default.text");
 
   @Override
   @NotNull
@@ -72,7 +73,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.implement.abstract.class.family");
+    return JavaBundle.message("intention.implement.abstract.class.family");
   }
 
   @Override
@@ -130,7 +131,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     return psiClass.isInterface()
              ? CodeInsightBundle.message("intention.implement.abstract.class.interface.text")
              : psiClass.hasModifierProperty(PsiModifier.ABSTRACT)
-               ? CodeInsightBundle.message("intention.implement.abstract.class.default.text")
+               ? JavaBundle.message("intention.implement.abstract.class.default.text")
                : CodeInsightBundle.message("intention.implement.abstract.class.subclass.text");
   }
 
@@ -227,9 +228,9 @@ public class CreateSubclassAction extends BaseIntentionAction {
       }
       catch (final IncorrectOperationException e) {
         ApplicationManager.getApplication().invokeLater(
-          () -> Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
+          () -> Messages.showErrorDialog(project, JavaBundle.message("intention.error.cannot.create.class.message", className) +
                                                   "\n" + e.getLocalizedMessage(),
-                                         CodeInsightBundle.message("intention.error.cannot.create.class.title")));
+                                         JavaBundle.message("intention.error.cannot.create.class.title")));
         return;
       }
       startTemplate(oldTypeParameterList, project, psiClass, targetClass[0], false);

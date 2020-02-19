@@ -9,6 +9,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -190,7 +191,7 @@ public class TestsPattern extends TestPackage {
         throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.not.test.error.message", className));
       }
       if (psiClass == null && !pattern.contains("*")) {
-        throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.not.found.error.message", className));
+        throw new RuntimeConfigurationWarning(JavaBundle.message("class.not.found.error.message", className));
       }
     }
   }

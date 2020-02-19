@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.groovy.unwrap;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class GroovyConditionalUnwrapper extends GroovyUnwrapper {
   public GroovyConditionalUnwrapper() {
-    super(CodeInsightBundle.message("unwrap.conditional"));
+    super(JavaBundle.message("unwrap.conditional"));
   }
 
   @Override

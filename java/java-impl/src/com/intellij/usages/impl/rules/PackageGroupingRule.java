@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -13,7 +14,6 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
 
   @Override
   public String getActionTitle() {
-    return UsageViewBundle.message("action.group.by.package");
+    return JavaBundle.message("action.group.by.package");
   }
 
   private class PackageGroup implements UsageGroup, TypeSafeDataProvider {

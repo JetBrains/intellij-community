@@ -15,9 +15,8 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.*;
-import com.intellij.lang.LangBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -33,7 +32,7 @@ public class MethodNameMacro extends Macro {
 
   @Override
   public String getPresentableName() {
-    return CodeInsightBundle.message("macro.methodname");
+    return JavaBundle.message("macro.methodname");
   }
 
   @Override
@@ -50,8 +49,8 @@ public class MethodNameMacro extends Macro {
         return new TextResult(((PsiMethod)place).getName());
       } else if (place instanceof PsiClassInitializer) {
         return ((PsiClassInitializer) place).hasModifierProperty(PsiModifier.STATIC) ?
-               new TextResult(LangBundle.message("java.terms.static.initializer")) :
-               new TextResult(LangBundle.message("java.terms.instance.initializer"));
+               new TextResult(JavaBundle.message("java.terms.static.initializer")) :
+               new TextResult(JavaBundle.message("java.terms.instance.initializer"));
       }
       place = place.getParent();
     }

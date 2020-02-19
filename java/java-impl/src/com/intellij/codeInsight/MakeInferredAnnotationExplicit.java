@@ -17,6 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -47,7 +48,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   @Nls
   @Override
   public @NotNull String getFamilyName() {
-    return CodeInsightBundle.message("intention.family.make.inferred.annotations.explicit");
+    return JavaBundle.message("intention.family.make.inferred.annotations.explicit");
   }
 
   @Override
@@ -67,7 +68,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
                                    .map(MakeInferredAnnotationExplicit::getAnnotationPresentation)
                                    .joining(" ");
       if (!annotations.isEmpty()) {
-        setText(CodeInsightBundle.message("intention.text.insert.0.annotation", annotations));
+        setText(JavaBundle.message("intention.text.insert.0.annotation", annotations));
         return true;
       }
     }

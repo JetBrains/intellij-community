@@ -2,12 +2,11 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.google.common.collect.ImmutableList;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
 import com.intellij.ide.structureView.impl.java.JavaLambdaNodeProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.smartTree.NodeProvider;
-import com.intellij.lang.LangBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -50,10 +49,10 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
     }
     else if (object instanceof PsiPackage) {
       final String name = ((PsiPackage)object).getName();
-      return name != null ? name : AnalysisScopeBundle.message("dependencies.tree.node.default.package.abbreviation");
+      return name != null ? name : JavaBundle.message("dependencies.tree.node.default.package.abbreviation");
     }
     else if (object instanceof PsiDirectory && JrtFileSystem.isRoot(((PsiDirectory)object).getVirtualFile())) {
-      return LangBundle.message("jrt.node.short");
+      return JavaBundle.message("jrt.node.short");
     }
     else if (object instanceof PsiLambdaExpression) {
       return "Lambda";

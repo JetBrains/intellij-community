@@ -19,6 +19,7 @@ import com.intellij.application.options.*;
 import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -100,9 +101,9 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS", "Around type bounds", groupName);
 
       groupName = CodeStyleSettingsCustomizable.SPACES_OTHER;
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_COLON_IN_FOREACH", ApplicationBundle.message(
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_COLON_IN_FOREACH", JavaBundle.message(
         "checkbox.spaces.before.colon.in.foreach"), groupName);
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_INSIDE_ONE_LINE_ENUM_BRACES", ApplicationBundle.message(
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_INSIDE_ONE_LINE_ENUM_BRACES", JavaBundle.message(
         "checkbox.spaces.inside.one.line.enum"), groupName);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
@@ -198,25 +199,25 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ANNOTATION_PARAMETER_WRAP",
-                                ApplicationBundle.message("wrapping.annotation.parameters"),
+                                JavaBundle.message("wrapping.annotation.parameters"),
                                 null,
                                 CodeStyleSettingsCustomizable.WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ALIGN_MULTILINE_ANNOTATION_PARAMETERS",
                                 ApplicationBundle.message("wrapping.align.when.multiline"),
-                                ApplicationBundle.message("wrapping.annotation.parameters"));
+                                JavaBundle.message("wrapping.annotation.parameters"));
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ALIGN_MULTILINE_TEXT_BLOCKS",
                                 ApplicationBundle.message("wrapping.align.when.multiline"),
-                                ApplicationBundle.message("wrapping.text.blocks") );
+                                JavaBundle.message("wrapping.text.blocks") );
 
       String groupName = ApplicationBundle.message("wrapping.fields.annotation");
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", ApplicationBundle.message("checkbox.do.not.wrap.after.single.annotation"), groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), groupName);
 
       // Record components
-      String recordComponentsGroup = ApplicationBundle.message("wrapping.record.components");
+      String recordComponentsGroup = JavaBundle.message("wrapping.record.components");
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "RECORD_COMPONENTS_WRAP",
                                 recordComponentsGroup,
@@ -237,66 +238,66 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER", ApplicationBundle.message("editbox.blanklines.around.initializer"), CodeStyleSettingsCustomizable.BLANK_LINES);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER", JavaBundle.message("editbox.blanklines.around.initializer"), CodeStyleSettingsCustomizable.BLANK_LINES);
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
       consumer.showAllStandardOptions();
     }
     else if (settingsType == SettingsType.LANGUAGE_SPECIFIC) {
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_PARAM_COMMENTS",
-                                ApplicationBundle.message("checkbox.align.parameter.descriptions"),
+                                JavaBundle.message("checkbox.align.parameter.descriptions"),
                                 getAlignmentGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_EXCEPTION_COMMENTS",
-                                ApplicationBundle.message("checkbox.align.thrown.exception.descriptions"),
+                                JavaBundle.message("checkbox.align.thrown.exception.descriptions"),
                                 getAlignmentGroup());
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ADD_BLANK_AFTER_DESCRIPTION",
-                                ApplicationBundle.message("checkbox.after.description"),
+                                JavaBundle.message("checkbox.after.description"),
                                 getBlankLinesGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ADD_BLANK_AFTER_PARM_COMMENTS",
-                                ApplicationBundle.message("checkbox.after.parameter.descriptions"),
+                                JavaBundle.message("checkbox.after.parameter.descriptions"),
                                 getBlankLinesGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ADD_BLANK_AFTER_RETURN",
-                                ApplicationBundle.message("checkbox.after.return.tag"),
+                                JavaBundle.message("checkbox.after.return.tag"),
                                 getBlankLinesGroup());
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_INVALID_TAGS",
-                                ApplicationBundle.message("checkbox.keep.invalid.tags"),
+                                JavaBundle.message("checkbox.keep.invalid.tags"),
                                 getInvalidTagsGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_PARAMETER",
-                                ApplicationBundle.message("checkbox.keep.empty.param.tags"),
+                                JavaBundle.message("checkbox.keep.empty.param.tags"),
                                 getInvalidTagsGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_RETURN",
-                                ApplicationBundle.message("checkbox.keep.empty.return.tags"),
+                                JavaBundle.message("checkbox.keep.empty.return.tags"),
                                 getInvalidTagsGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_EXCEPTION",
-                                ApplicationBundle.message("checkbox.keep.empty.throws.tags"),
+                                JavaBundle.message("checkbox.keep.empty.throws.tags"),
                                 getInvalidTagsGroup());
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_LEADING_ASTERISKS_ARE_ENABLED",
-                                ApplicationBundle.message("checkbox.enable.leading.asterisks"),
+                                JavaBundle.message("checkbox.enable.leading.asterisks"),
                                 getOtherGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_USE_THROWS_NOT_EXCEPTION",
-                                ApplicationBundle.message("checkbox.use.throws.rather.than.exception"),
+                                JavaBundle.message("checkbox.use.throws.rather.than.exception"),
                                 getOtherGroup());
       consumer.showStandardOptions("WRAP_COMMENTS");
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_P_AT_EMPTY_LINES",
-                                ApplicationBundle.message("checkbox.generate.p.on.empty.lines"),
+                                JavaBundle.message("checkbox.generate.p.on.empty.lines"),
                                 getOtherGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_LINES",
-                                ApplicationBundle.message("checkbox.keep.empty.lines"),
+                                JavaBundle.message("checkbox.keep.empty.lines"),
                                 getOtherGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_DO_NOT_WRAP_ONE_LINE_COMMENTS",
-                                ApplicationBundle.message("checkbox.do.not.wrap.one.line.comments"),
+                                JavaBundle.message("checkbox.do.not.wrap.one.line.comments"),
                                 getOtherGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_PRESERVE_LINE_FEEDS",
-                                ApplicationBundle.message("checkbox.preserve.line.feeds"),
+                                JavaBundle.message("checkbox.preserve.line.feeds"),
                                 getOtherGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_PARAM_DESCRIPTION_ON_NEW_LINE",
-                                ApplicationBundle.message("checkbox.param.description.on.new.line"),
+                                JavaBundle.message("checkbox.param.description.on.new.line"),
                                 getOtherGroup());
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_INDENT_ON_CONTINUATION",
-                                ApplicationBundle.message("checkbox.param.indent.on.continuation"),
+                                JavaBundle.message("checkbox.param.indent.on.continuation"),
                                 getOtherGroup());
 
 

@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,13 +33,13 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.family");
+    return JavaBundle.message("intention.replace.concatenation.with.formatted.output.family");
   }
 
   @Override
   @NotNull
   public String getText() {
-    return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.text");
+    return JavaBundle.message("intention.replace.concatenation.with.formatted.output.text");
   }
 
   @Override

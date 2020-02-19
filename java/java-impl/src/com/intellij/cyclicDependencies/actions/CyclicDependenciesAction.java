@@ -18,6 +18,7 @@ package com.intellij.cyclicDependencies.actions;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.JavaAnalysisScope;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -43,7 +44,7 @@ public class CyclicDependenciesAction extends AnAction{
   public CyclicDependenciesAction() {
     myAnalysisVerb = AnalysisScopeBundle.message("action.analyze.verb");
     myAnalysisNoun = AnalysisScopeBundle.message("action.analysis.noun");
-    myTitle = AnalysisScopeBundle.message("action.cyclic.dependency.title");
+    myTitle = JavaBundle.message("action.cyclic.dependency.title");
   }
 
   @Override
@@ -168,7 +169,7 @@ public class CyclicDependenciesAction extends AnAction{
       myModuleName = moduleName;
       mySelectedScope = selectedScope;
       init();
-      setTitle(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.title", myTitle));
+      setTitle(JavaBundle.message("cyclic.dependencies.scope.dialog.title", myTitle));
       setHorizontalStretch(1.75f);
     }
 
@@ -180,11 +181,11 @@ public class CyclicDependenciesAction extends AnAction{
     protected JComponent createCenterPanel() {
       myScopePanel.setBorder(IdeBorderFactory.createTitledBorder(
         AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoun)));
-      myProjectButton.setText(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.project.button", myAnalysisVerb));
+      myProjectButton.setText(JavaBundle.message("cyclic.dependencies.scope.dialog.project.button", myAnalysisVerb));
       ButtonGroup group = new ButtonGroup();
       group.add(myProjectButton);
       if (myModuleName != null) {
-        myModuleButton.setText(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.module.button", myAnalysisVerb, myModuleName));
+        myModuleButton.setText(JavaBundle.message("cyclic.dependencies.scope.dialog.module.button", myAnalysisVerb, myModuleName));
         group.add(myModuleButton);
       }
       myModuleButton.setVisible(myModuleName != null);

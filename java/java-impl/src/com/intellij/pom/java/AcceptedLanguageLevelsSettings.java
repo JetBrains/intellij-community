@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -85,9 +85,9 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
 
           for (LanguageLevel level : unacceptedLevels.keySet()) {
             NOTIFICATION_GROUP.createNotification(
-              CodeInsightBundle.message("java.preview.features.alert.title"),
-              CodeInsightBundle.message("java.preview.features.legal.notice", level.getPresentableText(),
-                                        "<br/><br/><a href=''accept''>" + CodeInsightBundle.message("java.preview.features.accept.notification.link") + "</a>"),
+              JavaBundle.message("java.preview.features.alert.title"),
+              JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(),
+                                        "<br/><br/><a href=''accept''>" + JavaBundle.message("java.preview.features.accept.notification.link") + "</a>"),
               NotificationType.WARNING,
               (notification, event) -> {
                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -105,9 +105,9 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
           assert languageLevel.isPresent();
           int previewFeature = languageLevel.get().toJavaVersion().feature;
           Notification notification = PREVIEW_NOTIFICATION_GROUP.createNotification(
-            CodeInsightBundle.message("java.preview.features.notification.title"),
-            CodeInsightBundle.message("java.preview.features.notification.message"),
-            CodeInsightBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
+            JavaBundle.message("java.preview.features.notification.title"),
+            JavaBundle.message("java.preview.features.notification.message"),
+            JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
             NotificationType.WARNING);
           notification.addAction(new NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
             @Override
@@ -189,8 +189,8 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   }
 
   private static boolean showDialog(Component parent, LanguageLevel level) {
-    int result = LegalNoticeDialog.build(CodeInsightBundle.message("java.preview.features.alert.title"),
-                                         CodeInsightBundle.message("java.preview.features.legal.notice", level.getPresentableText(), "")).withParent(parent).show();
+    int result = LegalNoticeDialog.build(JavaBundle.message("java.preview.features.alert.title"),
+                                         JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(), "")).withParent(parent).show();
     if (result == DialogWrapper.OK_EXIT_CODE) {
       acceptAndRestore(null, null, level);
       return true;

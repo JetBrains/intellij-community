@@ -17,6 +17,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -106,8 +107,8 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
         return o.toString();
       })
       .setTitle(myImportStatic ?
-                CodeInsightBundle.message("highlight.imported.members.chooser.title") :
-                CodeInsightBundle.message("highlight.imported.classes.chooser.title"))
+                JavaBundle.message("highlight.imported.members.chooser.title") :
+                JavaBundle.message("highlight.imported.classes.chooser.title"))
       .setItemChosenCallback((selectedValue) -> {
         if (selectedValue.equals(allListed)) {
           selectionConsumer.consume(targets);

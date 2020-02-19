@@ -4,7 +4,7 @@ package com.intellij.lang.java;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.find.impl.HelpID;
 import com.intellij.ide.TypePresentationService;
-import com.intellij.lang.LangBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -14,7 +14,6 @@ import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.NotNull;
@@ -67,26 +66,26 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       return IndexingBundle.message("terms.file");
     }
     if (ThrowSearchUtil.isSearchable(element)) {
-      return LangBundle.message("java.terms.exception");
+      return JavaBundle.message("java.terms.exception");
     }
     if (element instanceof PsiPackage) {
       return JavaPsiBundle.message("java.terms.package");
     }
     if (element instanceof PsiLabeledStatement) {
-      return LangBundle.message("java.terms.label");
+      return JavaBundle.message("java.terms.label");
     }
     if (element instanceof PsiClass) {
       if (((PsiClass)element).isAnnotationType()) {
-        return LangBundle.message("java.terms.annotation.interface");
+        return JavaBundle.message("java.terms.annotation.interface");
       }
       if (((PsiClass)element).isEnum()) {
-        return LangBundle.message("java.terms.enum");
+        return JavaBundle.message("java.terms.enum");
       }
       if (((PsiClass)element).isInterface()) {
         return JavaPsiBundle.message("java.terms.interface");
       }
       if (element instanceof PsiTypeParameter) {
-        return LangBundle.message("java.terms.type.parameter");
+        return JavaBundle.message("java.terms.type.parameter");
       }
       return JavaPsiBundle.message("java.terms.class");
     }
@@ -103,18 +102,18 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       final PsiMethod psiMethod = (PsiMethod)element;
       final boolean isConstructor = psiMethod.isConstructor();
       if (isConstructor) {
-        return LangBundle.message("java.terms.constructor");
+        return JavaBundle.message("java.terms.constructor");
       }
       return JavaPsiBundle.message("java.terms.method");
     }
     if (element instanceof PsiExpression) {
-      return LangBundle.message("java.terms.expression");
+      return JavaBundle.message("java.terms.expression");
     }
     if (element instanceof PsiJavaModule) {
-      return LangBundle.message("java.terms.module");
+      return JavaBundle.message("java.terms.module");
     }
     if (element instanceof PsiRecordComponent) {
-      return LangBundle.message("java.terms.record.component");
+      return JavaBundle.message("java.terms.record.component");
     }
 
     final String name = TypePresentationService.getService().getTypePresentableName(element.getClass());
@@ -191,21 +190,21 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
 
   private static String getContainingClassDescription(PsiClass aClass, String formatted) {
     if (aClass instanceof PsiAnonymousClass) {
-      return LangBundle.message("java.terms.of.anonymous.class", formatted);
+      return JavaBundle.message("java.terms.of.anonymous.class", formatted);
     }
     else {
       final String qualifiedName = aClass.getQualifiedName();
       final String className = qualifiedName != null ? qualifiedName : aClass.getName();
       if (aClass.isInterface()) {
-        return LangBundle.message("java.terms.of.interface", formatted, className);
+        return JavaBundle.message("java.terms.of.interface", formatted, className);
       }
       if (aClass.isEnum()) {
-        return LangBundle.message("java.terms.of.enum", formatted, className);
+        return JavaBundle.message("java.terms.of.enum", formatted, className);
       }
       if (aClass.isAnnotationType()) {
-        return LangBundle.message("java.terms.of.annotation.type", formatted, className);
+        return JavaBundle.message("java.terms.of.annotation.type", formatted, className);
       }
-      return LangBundle.message("java.terms.of.class", formatted, className);
+      return JavaBundle.message("java.terms.of.class", formatted, className);
     }
   }
 
@@ -257,7 +256,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       PsiMethod method = (PsiMethod)((PsiParameter)element).getDeclarationScope();
       int varOptions = PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME;
       int methodOptions = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
-      String s = LangBundle.message("java.terms.variable.of.method",
+      String s = JavaBundle.message("java.terms.variable.of.method",
                                     PsiFormatUtil.formatVariable((PsiVariable)element, varOptions, PsiSubstitutor.EMPTY),
                                     PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, methodOptions, PsiFormatUtilBase.SHOW_TYPE));
       return appendClassName(s, method.getContainingClass());
@@ -282,7 +281,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (psiClass != null) {
       String qName = psiClass.getQualifiedName();
       if (qName != null) {
-        s = LangBundle.message(psiClass.isInterface() ? "java.terms.of.interface" : "java.terms.of.class", s, qName);
+        s = JavaBundle.message(psiClass.isInterface() ? "java.terms.of.interface" : "java.terms.of.class", s, qName);
       }
     }
     return s;
@@ -298,7 +297,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       if (includeRootDir) {
         String rootDir = getRootDirectoryForPackage(directory);
         if (rootDir != null) {
-          return UsageViewBundle.message("usage.target.package.in.directory", packageName, rootDir);
+          return JavaBundle.message("usage.target.package.in.directory", packageName, rootDir);
         }
       }
       return packageName;
@@ -332,6 +331,6 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   }
 
   public static String getDefaultPackageName() {
-    return UsageViewBundle.message("default.package.presentable.name");
+    return JavaBundle.message("default.package.presentable.name");
   }
 }

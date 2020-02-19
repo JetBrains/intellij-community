@@ -16,11 +16,11 @@
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,13 +45,13 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
   @Override
   @NotNull
   public String getText() {
-    return CodeInsightBundle.message("deannotate.intention.action.text") + (myAnnotationName != null ? " @" + myAnnotationName : "...");
+    return JavaBundle.message("deannotate.intention.action.text") + (myAnnotationName != null ? " @" + myAnnotationName : "...");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("deannotate.intention.action.text");
+    return JavaBundle.message("deannotate.intention.action.text");
   }
 
   @Override
@@ -85,7 +85,7 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
       deannotate(externalAnnotations[0], project, file, annotationsManager, listOwner);
       return;
     }
-    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiAnnotation>(CodeInsightBundle.message("deannotate.intention.chooser.title"), externalAnnotations) {
+    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiAnnotation>(JavaBundle.message("deannotate.intention.chooser.title"), externalAnnotations) {
       @Override
       public PopupStep<?> onChosen(final PsiAnnotation selectedValue, final boolean finalChoice) {
         if (finalChoice) {

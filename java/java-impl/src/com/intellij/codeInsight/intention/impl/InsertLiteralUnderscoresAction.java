@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -62,12 +62,12 @@ public class InsertLiteralUnderscoresAction extends PsiElementBaseIntentionActio
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.underscores.in.literals.family");
+    return JavaBundle.message("intention.underscores.in.literals.family");
   }
 
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("intention.insert.literal.underscores");
+    return JavaBundle.message("intention.insert.literal.underscores");
   }
 }

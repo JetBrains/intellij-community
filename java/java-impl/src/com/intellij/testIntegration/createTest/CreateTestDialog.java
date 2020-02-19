@@ -5,10 +5,10 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -82,11 +82,11 @@ public class CreateTestDialog extends DialogWrapper {
   private EditorTextField myTargetClassNameField;
   private ReferenceEditorComboWithBrowseButton mySuperClassField;
   private ReferenceEditorComboWithBrowseButton myTargetPackageField;
-  private final JCheckBox myGenerateBeforeBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.setUp"));
-  private final JCheckBox myGenerateAfterBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.tearDown"));
-  private final JCheckBox myShowInheritedMethodsBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.show.inherited"));
+  private final JCheckBox myGenerateBeforeBox = new JCheckBox(JavaBundle.message("intention.create.test.dialog.setUp"));
+  private final JCheckBox myGenerateAfterBox = new JCheckBox(JavaBundle.message("intention.create.test.dialog.tearDown"));
+  private final JCheckBox myShowInheritedMethodsBox = new JCheckBox(JavaBundle.message("intention.create.test.dialog.show.inherited"));
   private final MemberSelectionTable myMethodsTable = new MemberSelectionTable(Collections.emptyList(), null);
-  private final JButton myFixLibraryButton = new JButton(CodeInsightBundle.message("intention.create.test.dialog.fix.library"));
+  private final JButton myFixLibraryButton = new JButton(JavaBundle.message("intention.create.test.dialog.fix.library"));
   private JPanel myFixLibraryPanel;
   private JLabel myFixLibraryLabel;
 
@@ -137,7 +137,7 @@ public class CreateTestDialog extends DialogWrapper {
     }
     else {
       myFixLibraryPanel.setVisible(true);
-      String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
+      String text = JavaBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
       myFixLibraryLabel.setText(text);
       myFixLibraryButton.setVisible(descriptor instanceof JavaTestFramework && ((JavaTestFramework)descriptor).getFrameworkLibraryDescriptor() != null
                                     || descriptor.getLibraryPath() != null);
@@ -236,7 +236,7 @@ public class CreateTestDialog extends DialogWrapper {
     constr.gridy = gridy++;
     constr.gridx = 0;
     constr.weightx = 0;
-    final JLabel libLabel = new JLabel(CodeInsightBundle.message("intention.create.test.dialog.testing.library"));
+    final JLabel libLabel = new JLabel(JavaBundle.message("intention.create.test.dialog.testing.library"));
     libLabel.setLabelFor(myLibrariesCombo);
     panel.add(libLabel, constr);
 
@@ -263,7 +263,7 @@ public class CreateTestDialog extends DialogWrapper {
     constr.gridx = 0;
     constr.weightx = 0;
     constr.gridwidth = 1;
-    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.class.name")), constr);
+    panel.add(new JLabel(JavaBundle.message("intention.create.test.dialog.class.name")), constr);
 
     myTargetClassNameField = new EditorTextField(suggestTestClassName(myTargetClass));
     myTargetClassNameField.getDocument().addDocumentListener(new DocumentListener() {
@@ -281,7 +281,7 @@ public class CreateTestDialog extends DialogWrapper {
     constr.gridy = gridy++;
     constr.gridx = 0;
     constr.weightx = 0;
-    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.super.class")), constr);
+    panel.add(new JLabel(JavaBundle.message("intention.create.test.dialog.super.class")), constr);
 
     mySuperClassField = new ReferenceEditorComboWithBrowseButton(new MyChooseSuperClassAction(), null, myProject, true,
                                                                  JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, RECENT_SUPERS_KEY);
@@ -294,14 +294,14 @@ public class CreateTestDialog extends DialogWrapper {
     constr.gridy = gridy++;
     constr.gridx = 0;
     constr.weightx = 0;
-    panel.add(new JLabel(CodeInsightBundle.message("dialog.create.class.destination.package.label")), constr);
+    panel.add(new JLabel(JavaBundle.message("dialog.create.class.destination.package.label")), constr);
 
     constr.gridx = 1;
     constr.weightx = 1;
 
 
     String targetPackageName = myTargetPackage != null ? myTargetPackage.getQualifiedName() : "";
-    myTargetPackageField = new PackageNameReferenceEditorCombo(targetPackageName, myProject, RECENTS_KEY, CodeInsightBundle.message("dialog.create.class.package.chooser.title"));
+    myTargetPackageField = new PackageNameReferenceEditorCombo(targetPackageName, myProject, RECENTS_KEY, JavaBundle.message("dialog.create.class.package.chooser.title"));
 
     new AnAction() {
       @Override
@@ -318,7 +318,7 @@ public class CreateTestDialog extends DialogWrapper {
     constr.gridy = gridy++;
     constr.gridx = 0;
     constr.weightx = 0;
-    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.generate")), constr);
+    panel.add(new JLabel(JavaBundle.message("intention.create.test.dialog.generate")), constr);
 
     constr.gridx = 1;
     constr.weightx = 1;
@@ -332,7 +332,7 @@ public class CreateTestDialog extends DialogWrapper {
     constr.gridy = gridy++;
     constr.gridx = 0;
     constr.weightx = 0;
-    final JLabel membersLabel = new JLabel(CodeInsightBundle.message("intention.create.test.dialog.select.methods"));
+    final JLabel membersLabel = new JLabel(JavaBundle.message("intention.create.test.dialog.select.methods"));
     membersLabel.setLabelFor(myMethodsTable);
     panel.add(membersLabel, constr);
 
@@ -498,7 +498,7 @@ public class CreateTestDialog extends DialogWrapper {
 
     if (errorMessage != null) {
       final int result = Messages
-        .showOkCancelDialog(myProject, IdeBundle.message("dialog.message.0.update.existing.class", errorMessage), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+        .showOkCancelDialog(myProject, JavaBundle.message("dialog.message.0.update.existing.class", errorMessage), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       if (result == Messages.CANCEL) {
         return;
       }
@@ -601,7 +601,7 @@ public class CreateTestDialog extends DialogWrapper {
     public void actionPerformed(ActionEvent e) {
       TreeClassChooserFactory f = TreeClassChooserFactory.getInstance(myProject);
       TreeClassChooser dialog =
-        f.createAllProjectScopeChooser(CodeInsightBundle.message("intention.create.test.dialog.choose.super.class"));
+        f.createAllProjectScopeChooser(JavaBundle.message("intention.create.test.dialog.choose.super.class"));
       dialog.showDialog();
       PsiClass aClass = dialog.getSelected();
       if (aClass != null) {

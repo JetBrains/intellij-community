@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.type;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnonymousClass;
@@ -37,7 +37,7 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
     if (!(element instanceof PsiClass)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     final PsiClass psiClass = (PsiClass)element;
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) {
-      return new Object[]{IdeBundle.message("node.hierarchy.java.lang.object")};
+      return new Object[]{JavaBundle.message("node.hierarchy.java.lang.object")};
     }
     if (psiClass instanceof PsiAnonymousClass) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     if (psiClass.hasModifierProperty(PsiModifier.FINAL)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;

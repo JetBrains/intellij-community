@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -40,7 +40,7 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.family.expand.static.import");
+    return JavaBundle.message("intention.family.expand.static.import");
   }
 
   @Override
@@ -55,7 +55,7 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
     if (resolveScope instanceof PsiImportStaticStatement) {
       final PsiClass targetClass = ((PsiImportStaticStatement)resolveScope).resolveTargetClass();
       if (targetClass == null) return false;
-      setText(CodeInsightBundle.message("intention.text.replace.static.import.with.qualified.access.to.0", targetClass.getName()));
+      setText(JavaBundle.message("intention.text.replace.static.import.with.qualified.access.to.0", targetClass.getName()));
       return true;
     }
     return false;

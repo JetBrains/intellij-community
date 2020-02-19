@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
+import com.intellij.java.JavaBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
@@ -62,7 +63,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
     get() = ourKey
 
   override fun createConfigurable(settings: Settings) = object : ImmediateConfigurable {
-    val uniqueTypeCountName = CodeInsightBundle.message("settings.inlay.java.minimal.unique.type.count.to.show.hints")
+    val uniqueTypeCountName = JavaBundle.message("settings.inlay.java.minimal.unique.type.count.to.show.hints")
 
     private val uniqueTypeCount = JBIntSpinner(1, 1, 10)
 
@@ -97,7 +98,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
   override fun createSettings() = Settings()
 
   override val name: String
-    get() = CodeInsightBundle.message("settings.inlay.java.method.chains")
+    get() = JavaBundle.message("settings.inlay.java.method.chains")
 
   override val previewText: String?
     @Language("JAVA")

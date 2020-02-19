@@ -16,6 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -45,7 +46,7 @@ public class MakeExternalAnnotationExplicit extends BaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.family.make.external.annotations.explicit");
+    return JavaBundle.message("intention.family.make.external.annotations.explicit");
   }
 
   @Override
@@ -62,7 +63,7 @@ public class MakeExternalAnnotationExplicit extends BaseIntentionAction {
           final String name = nameRef != null ? nameRef.getReferenceName() : annotation.getQualifiedName();
           return "@" + name + annotation.getParameterList().getText();
         }, " ");
-        setText(CodeInsightBundle.message("intention.text.insert.0.annotation", annos));
+        setText(JavaBundle.message("intention.text.insert.0.annotation", annos));
         return true;
       }
     }

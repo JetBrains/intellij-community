@@ -15,11 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.find.FindBundle;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -67,8 +67,8 @@ public class GroovyFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFa
             final boolean doSearch;
             if (arePhysical(getters) || arePhysical(setters)) {
               if (ApplicationManager.getApplication().isUnitTestMode()) return PsiElement.EMPTY_ARRAY;
-              doSearch = Messages.showYesNoDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
-                                             FindBundle.message("find.field.accessors.title"),
+              doSearch = Messages.showYesNoDialog(JavaBundle.message("find.field.accessors.prompt", field.getName()),
+                                             JavaBundle.message("find.field.accessors.title"),
                                              Messages.getQuestionIcon()) == Messages.YES;
             }
             else {

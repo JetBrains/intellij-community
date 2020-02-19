@@ -19,6 +19,7 @@
  */
 package org.jetbrains.java.generate.view;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,6 @@ import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.util.Cloner;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
-import com.intellij.ui.UIBundle;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -101,7 +101,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     @Override
     @Nls
     public String getDisplayName() {
-      return UIBundle.message("configurable.TemplatesPanel.display.name");
+      return JavaBundle.message("configurable.TemplatesPanel.display.name");
     }
 
   @Override

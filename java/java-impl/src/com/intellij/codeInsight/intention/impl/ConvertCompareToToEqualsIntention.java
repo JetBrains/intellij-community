@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -118,12 +118,12 @@ public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntenti
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("convert.compareto.expression.to.equals.call");
+    return JavaBundle.message("convert.compareto.expression.to.equals.call");
   }
 
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("convert.compareto.expression.to.equals.call.may.change.semantics");
+    return JavaBundle.message("convert.compareto.expression.to.equals.call.may.change.semantics");
   }
 }

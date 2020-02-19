@@ -6,9 +6,9 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -465,7 +465,7 @@ public class JavaDocInfoGenerator {
     boolean generateLink = place == SignaturePlace.Javadoc;
     generateAnnotations(buffer, aClass, place, true);
     generateModifiers(buffer, aClass, false);
-    buffer.append(LangBundle.message(aClass.isInterface() ? "java.terms.interface"
+    buffer.append(JavaBundle.message(aClass.isInterface() ? "java.terms.interface"
                                                           : aClass.isEnum() ? "java.terms.enum" : "java.terms.class"));
     buffer.append(' ');
     String refText = JavaDocUtil.getReferenceText(aClass.getProject(), aClass);
@@ -533,7 +533,7 @@ public class JavaDocInfoGenerator {
         }
       }
     }
-    generateParametersSection(buffer, CodeInsightBundle.message("javadoc.type.parameters"), result);
+    generateParametersSection(buffer, JavaBundle.message("javadoc.type.parameters"), result);
   }
 
   @Nullable
@@ -961,7 +961,7 @@ public class JavaDocInfoGenerator {
         PsiElement[] elements = pair.first;
         if (elements != null) {
           PsiClass aClass = pair.second.getElement();
-          startHeaderSection(buffer, CodeInsightBundle.message(aClass.isInterface() ? "javadoc.description.copied.from.interface"
+          startHeaderSection(buffer, JavaBundle.message(aClass.isInterface() ? "javadoc.description.copied.from.interface"
                                                                                     : "javadoc.description.copied.from.class"))
             .append("<p>");
           generateLink(buffer, aClass, JavaDocUtil.getShortestClassName(aClass, method), false);
@@ -979,7 +979,7 @@ public class JavaDocInfoGenerator {
         if (field != null) {
           PsiDocComment fieldDocComment = field.getDocComment();
           if (fieldDocComment != null && !isEmptyDescription(fieldDocComment)) {
-            startHeaderSection(buffer, CodeInsightBundle.message("javadoc.description.copied.from.field"))
+            startHeaderSection(buffer, JavaBundle.message("javadoc.description.copied.from.field"))
               .append("<p>");
             generateLink(buffer, field, field.getName(), false);
             buffer.append(BR_TAG);
@@ -1377,7 +1377,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateDeprecatedSection(StringBuilder buffer, PsiDocComment comment) {
-    generateSingleTagSection(buffer, comment, "deprecated", CodeInsightBundle.lazyMessage("javadoc.deprecated"));
+    generateSingleTagSection(buffer, comment, "deprecated", JavaBundle.lazyMessage("javadoc.deprecated"));
   }
 
   private void generateSingleTagSection(StringBuilder buffer,
@@ -1393,13 +1393,13 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateSinceSection(StringBuilder buffer, PsiDocComment comment) {
-    generateSingleTagSection(buffer, comment, "since", CodeInsightBundle.lazyMessage("javadoc.since"));
+    generateSingleTagSection(buffer, comment, "since", JavaBundle.lazyMessage("javadoc.since"));
   }
 
   protected void generateSeeAlsoSection(StringBuilder buffer, PsiDocComment comment) {
     PsiDocTag[] tags = comment.findTagsByName("see");
     if (tags.length > 0) {
-      startHeaderSection(buffer, CodeInsightBundle.message("javadoc.see.also")).append("<p>");
+      startHeaderSection(buffer, JavaBundle.message("javadoc.see.also")).append("<p>");
       for (int i = 0; i < tags.length; i++) {
         PsiDocTag tag = tags[i];
         PsiElement[] elements = tag.getDataElements();
@@ -1452,7 +1452,7 @@ public class JavaDocInfoGenerator {
         collectedTags.add(parmTag);
       }
     }
-    generateParametersSection(buffer, CodeInsightBundle.message("javadoc.type.parameters"), collectedTags);
+    generateParametersSection(buffer, JavaBundle.message("javadoc.type.parameters"), collectedTags);
   }
 
   private void generateParametersSection(StringBuilder buffer, String titleMessage, List<? extends ParamInfo> collectedTags) {
@@ -1665,7 +1665,7 @@ public class JavaDocInfoGenerator {
       PsiClass superClass = superMethod.getContainingClass();
       if (superClass == null) continue;
       if (!headerGenerated) {
-        startHeaderSection(buffer, CodeInsightBundle.message(overrides ? "javadoc.method.overrides" : "javadoc.method.specified.by"));
+        startHeaderSection(buffer, JavaBundle.message(overrides ? "javadoc.method.overrides" : "javadoc.method.specified.by"));
         buffer.append("<p>");
         headerGenerated = true;
       }
@@ -1678,10 +1678,10 @@ public class JavaDocInfoGenerator {
       StringBuilder classBuffer = new StringBuilder();
       generateLink(classBuffer, superClass, superClass.getName(), false);
       if (superClass.isInterface()) {
-        buffer.append(CodeInsightBundle.message("javadoc.method.in.interface", methodBuffer.toString(), classBuffer.toString()));
+        buffer.append(JavaBundle.message("javadoc.method.in.interface", methodBuffer.toString(), classBuffer.toString()));
       }
       else {
-        buffer.append(CodeInsightBundle.message("javadoc.method.in.class", methodBuffer.toString(), classBuffer.toString()));
+        buffer.append(JavaBundle.message("javadoc.method.in.class", methodBuffer.toString(), classBuffer.toString()));
       }
     }
     if (headerGenerated) {

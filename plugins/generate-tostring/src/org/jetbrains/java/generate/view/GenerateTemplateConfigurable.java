@@ -19,7 +19,7 @@
  */
 package org.jetbrains.java.generate.view;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -104,7 +104,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
       }
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(component, BorderLayout.CENTER);
-      String availableVariables = CodeInsightBundle.message("generate.tostring.available.implicit.variables.label", StringUtil.join(availableImplicits, ", "));
+      String availableVariables = JavaBundle.message("generate.tostring.available.implicit.variables.label", StringUtil.join(availableImplicits, ", "));
       JLabel label =
         new JLabel(XmlStringUtil.wrapInHtml(
           (!availableImplicits.isEmpty() ? availableVariables + "<br/>" : "") +

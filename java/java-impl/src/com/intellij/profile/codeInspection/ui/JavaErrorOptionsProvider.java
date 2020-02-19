@@ -17,13 +17,13 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.ConfigurableBuilder;
 
 public class JavaErrorOptionsProvider extends ConfigurableBuilder implements ErrorOptionsProvider {
   public JavaErrorOptionsProvider() {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    checkBox(ApplicationBundle.message("checkbox.suppress.with.suppresswarnings"),
+    checkBox(JavaBundle.message("checkbox.suppress.with.suppresswarnings"),
              settings::isSuppressWarnings, settings::setSuppressWarnings);
   }
 }

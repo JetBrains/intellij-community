@@ -21,6 +21,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.MethodCellRenderer;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,8 +65,8 @@ public class CopyAbstractMethodImplementationHandler {
   public void invoke() {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> searchExistingImplementations()), CodeInsightBundle.message("searching.for.implementations"), false, myProject);
     if (mySourceMethods.isEmpty()) {
-      Messages.showErrorDialog(myProject, CodeInsightBundle.message("copy.abstract.method.no.existing.implementations.found"),
-                               CodeInsightBundle.message("copy.abstract.method.title"));
+      Messages.showErrorDialog(myProject, JavaBundle.message("copy.abstract.method.no.existing.implementations.found"),
+                               JavaBundle.message("copy.abstract.method.title"));
       return;
     }
     if (mySourceMethods.size() == 1) {
@@ -81,7 +82,7 @@ public class CopyAbstractMethodImplementationHandler {
         .createPopupChooserBuilder(mySourceMethods)
         .setRenderer(new MethodCellRenderer(true))
         .setItemChosenCallback((element) -> copyImplementation(element))
-        .setTitle(CodeInsightBundle.message("copy.abstract.method.popup.title"))
+        .setTitle(JavaBundle.message("copy.abstract.method.popup.title"))
         .createPopup()
         .showInBestPositionFor(myEditor);
     }

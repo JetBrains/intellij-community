@@ -17,6 +17,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -321,7 +322,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     if (targetElements == null || targetElements.length == 0) return null;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       MemberChooser<PsiElementClassMember> chooser = new MemberChooser<>(targetElements, false, false, project);
-      chooser.setTitle(CodeInsightBundle.message("generate.delegate.target.chooser.title"));
+      chooser.setTitle(JavaBundle.message("generate.delegate.target.chooser.title"));
       chooser.setCopyJavadocVisible(false);
       chooser.show();
 

@@ -2,12 +2,12 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceClassFixBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.actions.TemplateKindCombo;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -59,14 +59,14 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("intention.text.create.a.class.in.0", myPackageName);
+    return JavaBundle.message("intention.text.create.a.class.in.0", myPackageName);
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.family.create.a.class.in.package");
+    return JavaBundle.message("intention.family.create.a.class.in.package");
   }
 
   @Override
@@ -142,7 +142,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     CreateClassInPackageDialog(@Nullable Project project, PsiDirectory @NotNull [] rootDirs) {
       super(project);
       myProject = project;
-      setTitle(CodeInsightBundle.message("dialog.title.create.class.in.package"));
+      setTitle(JavaBundle.message("dialog.title.create.class.in.package"));
 
       myRootDirCombo.setRenderer(new CreateServiceClassFixBase.PsiDirectoryListCellRenderer());
       myRootDirCombo.setModel(new DefaultComboBoxModel<>(rootDirs));
@@ -176,7 +176,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
       PanelGridBuilder builder = UI.PanelFactory.grid();
       builder.add(UI.PanelFactory.panel(myNameTextField)
                     .withLabel(CommonBundle.message("label.name") + ":")
-                    .withComment(CodeInsightBundle.message("comment.the.class.will.be.created.in.the.package.0", myPackageName)));
+                    .withComment(JavaBundle.message("comment.the.class.will.be.created.in.the.package.0", myPackageName)));
       if (myRootDirCombo.getModel().getSize() > 1) {
         builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("label.source.root") + ":"));
       }
@@ -194,7 +194,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
       if (PsiNameHelper.getInstance(myProject).isIdentifier(name, level)) {
         return null;
       }
-      return new ValidationInfo(CodeInsightBundle.message("error.text.this.is.not.a.valid.java.class.name"), myNameTextField);
+      return new ValidationInfo(JavaBundle.message("error.text.this.is.not.a.valid.java.class.name"), myNameTextField);
     }
 
     @NotNull

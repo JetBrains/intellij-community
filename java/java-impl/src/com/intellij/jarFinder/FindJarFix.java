@@ -5,8 +5,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -73,7 +73,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
   @NotNull
   @Override
   public String getFamilyName() {
-    return IdeBundle.message("quickfix.name.find.jar.on.web");
+    return JavaBundle.message("quickfix.name.find.jar.on.web");
   }
 
   @Override
@@ -101,7 +101,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     if (fqns.size() > 1) {
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(fqns)
-        .setTitle(IdeBundle.message("popup.title.select.qualified.name"))
+        .setTitle(JavaBundle.message("popup.title.select.qualified.name"))
         .setItemChosenCallback((value) -> findJarsForFqn(value, editor))
         .createPopup()
         .showInBestPositionFor(editor);
@@ -112,7 +112,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
   }
 
   private void findJarsForFqn(final String fqn, @NotNull Editor editor) {
-    ProgressManager.getInstance().run(new Task.Modal(editor.getProject(), IdeBundle.message("progress.title.looking.for.libraries"), true) {
+    ProgressManager.getInstance().run(new Task.Modal(editor.getProject(), JavaBundle.message("progress.title.looking.for.libraries"), true) {
       final Map<String, String> libs = new HashMap<>();
 
       @Override
@@ -156,7 +156,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
           else {
             JBPopupFactory.getInstance()
             .createListPopupBuilder(libNames)
-            .setTitle(IdeBundle.message("popup.title.select.a.jar.file"))
+            .setTitle(JavaBundle.message("popup.title.select.a.jar.file"))
             .setItemChoosenCallback(() -> {
               String jarName = libNames.getSelectedValue();
               String url = libs.get(jarName);
@@ -172,7 +172,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
   }
 
   private void initiateDownload(@NotNull String url, @NotNull String jarName, @Nullable Project project) {
-    ProgressManager.getInstance().run(new Task.Modal(project, IdeBundle.message("progress.title.download.library.descriptor"), true) {
+    ProgressManager.getInstance().run(new Task.Modal(project, JavaBundle.message("progress.title.download.library.descriptor"), true) {
       private String jarUrl;
 
       @Override
@@ -215,8 +215,8 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     final String dirPath = PropertiesComponent.getInstance(project).getValue("findjar.last.used.dir");
     VirtualFile toSelect = dirPath == null ? null : LocalFileSystem.getInstance().findFileByIoFile(new File(dirPath));
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(
-      IdeBundle.message("chooser.title.select.path.to.save.jar"))
-      .withDescription(IdeBundle.message("chooser.text.choose.where.to.save.0", jarName));
+      JavaBundle.message("chooser.title.select.path.to.save.jar"))
+      .withDescription(JavaBundle.message("chooser.text.choose.where.to.save.0", jarName));
     final VirtualFile file = FileChooser.chooseFile(descriptor, project, toSelect);
     if (file != null) {
       PropertiesComponent.getInstance(project).setValue("findjar.last.used.dir", file.getPath());

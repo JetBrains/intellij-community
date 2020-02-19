@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -251,7 +252,7 @@ public class MarkerType {
   private static void navigateToOverriddenMethod(MouseEvent e, @NotNull final PsiMethod method) {
     if (DumbService.isDumb(method.getProject())) {
       DumbService.getInstance(method.getProject()).showDumbModeNotification(
-        CodeInsightBundle.message("notification.navigation.to.overriding.classes"));
+        JavaBundle.message("notification.navigation.to.overriding.classes"));
       return;
     }
 
@@ -330,7 +331,7 @@ public class MarkerType {
                                                PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
     if (DumbService.isDumb(aClass.getProject())) {
       DumbService.getInstance(aClass.getProject()).showDumbModeNotification(
-        CodeInsightBundle.message("notification.navigation.to.overriding.methods"));
+        JavaBundle.message("notification.navigation.to.overriding.methods"));
       return;
     }
 

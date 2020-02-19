@@ -4,6 +4,7 @@ package com.intellij.find.findUsages;
 import com.intellij.CommonBundle;
 import com.intellij.find.FindBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -82,8 +83,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   private static boolean askWhetherShouldSearchForParameterInOverridingMethods(@NotNull PsiElement psiElement, @NotNull PsiParameter parameter) {
     return Messages.showOkCancelDialog(psiElement.getProject(),
-                               FindBundle.message("find.parameter.usages.in.overriding.methods.prompt", parameter.getName()),
-                               FindBundle.message("find.parameter.usages.in.overriding.methods.title"),
+                               JavaBundle.message("find.parameter.usages.in.overriding.methods.prompt", parameter.getName()),
+                               JavaBundle.message("find.parameter.usages.in.overriding.methods.title"),
                                CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(),
                                Messages.getQuestionIcon()) == Messages.OK;
   }
@@ -183,10 +184,10 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   private static boolean askShouldSearchAccessors(@NotNull String fieldName) {
-    return Messages.showOkCancelDialog(FindBundle.message("find.field.accessors.prompt", fieldName),
-                                       FindBundle.message("find.field.accessors.title"),
-                                       FindBundle.message("include.accessors"),
-                                       FindBundle.message("exclude.accessors"), Messages.getQuestionIcon()) == Messages.OK;
+    return Messages.showOkCancelDialog(JavaBundle.message("find.field.accessors.prompt", fieldName),
+                                       JavaBundle.message("find.field.accessors.title"),
+                                       JavaBundle.message("include.accessors"),
+                                       JavaBundle.message("exclude.accessors"), Messages.getQuestionIcon()) == Messages.OK;
   }
 
   @Override

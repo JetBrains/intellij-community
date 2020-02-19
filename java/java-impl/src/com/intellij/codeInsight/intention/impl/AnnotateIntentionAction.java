@@ -9,6 +9,7 @@ import com.intellij.codeInsight.externalAnnotation.AnnotationProvider;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -111,7 +112,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
       List<AnnotationProvider> annotations = availableAnnotations(owner, project).collect(Collectors.toList());
       if (annotations.isEmpty()) return;
       JBPopupFactory.getInstance().createListPopup(
-        new BaseListPopupStep<AnnotationProvider>(CodeInsightBundle.message("annotate.intention.chooser.title"), annotations) {
+        new BaseListPopupStep<AnnotationProvider>(JavaBundle.message("annotate.intention.chooser.title"), annotations) {
           @Override
           public PopupStep onChosen(final AnnotationProvider selectedValue, final boolean finalChoice) {
             return doFinalStep(() -> selectedValue.createFix(owner).invoke(project, editor, file));

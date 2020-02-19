@@ -16,6 +16,7 @@
 package com.intellij.usageView;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -31,7 +32,7 @@ public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvi
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (location instanceof UsageViewShortNameLocation) {
       if (element instanceof PsiThrowStatement) {
-        return UsageViewBundle.message("usage.target.exception");
+        return JavaBundle.message("usage.target.exception");
       }
       else if (element instanceof PsiAnonymousClass) {
         String name = ((PsiAnonymousClass)element).getBaseClassReference().getReferenceName();

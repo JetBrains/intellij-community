@@ -16,7 +16,7 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
@@ -42,8 +42,8 @@ public class MarkGeneratedSourceRootAction extends MarkRootActionBase {
     if (handler == null) return;
     
     String typeName = handler.getFullRootTypeName();
-    presentation.setText(IdeBundle.message("action.text.generated.root.0", typeName));
-    presentation.setDescription(IdeBundle.message("action.description.mark.directory.as.a.0.for.generated.files", typeName.toLowerCase(Locale.getDefault())));
+    presentation.setText(JavaBundle.message("action.text.generated.root.0", typeName));
+    presentation.setDescription(JavaBundle.message("action.description.mark.directory.as.a.0.for.generated.files", typeName.toLowerCase(Locale.getDefault())));
   }
 
   @Override

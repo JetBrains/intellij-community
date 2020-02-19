@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.generation.ui;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -108,7 +108,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
   @Override
   @Nls
   public String getDisplayName() {
-    return CodeInsightBundle.message("configurable.EqualsHashCodeTemplatesPanel.display.name");
+    return JavaBundle.message("configurable.EqualsHashCodeTemplatesPanel.display.name");
   }
 
   @Override
@@ -144,14 +144,14 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
         final Splitter splitter = new Splitter(true);
 
         final JPanel eqPanel = new JPanel(new BorderLayout());
-        eqPanel.add(new TitledSeparator(CodeInsightBundle.message("generate.equals.template.title")), BorderLayout.NORTH);
+        eqPanel.add(new TitledSeparator(JavaBundle.message("generate.equals.template.title")), BorderLayout.NORTH);
         final JComponent eqPane = equalsConfigurable.createComponent();
         eqPane.setPreferredSize(JBUI.size(300, 200));
         eqPanel.add(eqPane, BorderLayout.CENTER);
         splitter.setFirstComponent(eqPanel);
 
         final JPanel hcPanel = new JPanel(new BorderLayout());
-        hcPanel.add(new TitledSeparator(CodeInsightBundle.message("generate.hashcode.template.title")), BorderLayout.NORTH);
+        hcPanel.add(new TitledSeparator(JavaBundle.message("generate.hashcode.template.title")), BorderLayout.NORTH);
         final JComponent hcPane = hashCodeConfigurable.createComponent();
         hcPane.setPreferredSize(JBUI.size(300, 200));
         hcPanel.add(hcPane, BorderLayout.CENTER);

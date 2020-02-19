@@ -2,7 +2,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.ide.IdeBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -98,7 +98,7 @@ public class SuperMethodWarningUtil {
         PsiMethod[] siblingSuperMethod = new PsiMethod[1];
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(()->{
           siblingSuperMethod[0] = ReadAction.compute(()->FindSuperElementsHelper.getSiblingInheritedViaSubClass(method));
-        }, IdeBundle.message("progress.title.searching.for.sub.classes"), true, aClass.getProject())) {
+        }, JavaBundle.message("progress.title.searching.for.sub.classes"), true, aClass.getProject())) {
           throw new ProcessCanceledException();
         }
         if (siblingSuperMethod[0] != null) {
@@ -207,8 +207,8 @@ public class SuperMethodWarningUtil {
                                 String @NotNull ... classNames) {
     String message = getDialogMessage(name, actionString, isSuperAbstract, isParentInterface, isContainedInInterface, classNames);
     return Messages.showYesNoCancelDialog(project,
-                                          message, IdeBundle.message("dialog.title.super.method.found"), IdeBundle.message("button.base.method"),
-                                          IdeBundle.message("button.current.method"),
+                                          message, JavaBundle.message("dialog.title.super.method.found"), JavaBundle.message("button.base.method"),
+                                          JavaBundle.message("button.current.method"),
                                           Messages.getCancelButton(), Messages.getQuestionIcon());
   }
 
@@ -220,18 +220,18 @@ public class SuperMethodWarningUtil {
                                          boolean isContainedInInterface,
                                          String @NotNull [] classNames) {
     StringBuilder labelText = new StringBuilder();
-    String classType = isParentInterface ? IdeBundle.message("element.of.interface") : IdeBundle.message("element.of.class");
+    String classType = isParentInterface ? JavaBundle.message("element.of.interface") : JavaBundle.message("element.of.class");
     String methodString = JavaPsiBundle.message("element.method");
-    labelText.append("<html>").append(IdeBundle.message("label.method", name)).append("<br>");
+    labelText.append("<html>").append(JavaBundle.message("label.method", name)).append("<br>");
     if (classNames.length == 1) {
       final String className = classNames[0];
       labelText.append(isContainedInInterface || !isSuperAbstract
-                       ? IdeBundle.message("label.overrides.method.of_class_or_interface.name", methodString, classType, className)
-                       : IdeBundle.message("label.implements.method.of_class_or_interface.name", methodString, classType, className));
+                       ? JavaBundle.message("label.overrides.method.of_class_or_interface.name", methodString, classType, className)
+                       : JavaBundle.message("label.implements.method.of_class_or_interface.name", methodString, classType, className));
       labelText.append("<br>");
     }
     else {
-      labelText.append(IdeBundle.message("label.implements.method.of_interfaces"));
+      labelText.append(JavaBundle.message("label.implements.method.of_interfaces"));
 
       for (final String className : classNames) {
         labelText.append("<br>&emsp;'").append(className).append("'");
@@ -239,7 +239,7 @@ public class SuperMethodWarningUtil {
     }
 
     labelText.append("<br>");
-    labelText.append(IdeBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", actionString, classNames.length));
+    labelText.append(JavaBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", actionString, classNames.length));
     return labelText.toString();
   }
 }

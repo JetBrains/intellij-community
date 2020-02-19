@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -429,7 +430,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   public static void advertiseSecondCompletion(Project project, CompletionResultSet result) {
     if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.SECOND_BASIC_COMPLETION, project)) {
-      result.addLookupAdvertisement(CompletionBundle.message("press.0.to.see.non.imported.classes",
+      result.addLookupAdvertisement(JavaBundle.message("press.0.to.see.non.imported.classes",
                                                              KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION)));
     }
   }
@@ -666,7 +667,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.GLOBAL_MEMBER_NAME)) {
           final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION);
           if (StringUtil.isNotEmpty(shortcut)) {
-            return CompletionBundle.message("pressing.0.twice.without.a.class.qualifier", shortcut);
+            return JavaBundle.message("pressing.0.twice.without.a.class.qualifier", shortcut);
           }
         }
       }
@@ -676,7 +677,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL)) {
         final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
         if (StringUtil.isNotEmpty(shortcut)) {
-          return CompletionBundle.message("completion.smart.hint", shortcut);
+          return JavaBundle.message("completion.smart.hint", shortcut);
         }
       }
     }
@@ -690,7 +691,7 @@ public class JavaCompletionContributor extends CompletionContributor {
             for (final PsiType psiType : psiTypes) {
               final PsiType type = PsiUtil.extractIterableTypeParameter(psiType, false);
               if (type != null) {
-                return CompletionBundle.message("completion.smart.aslist.hint", shortcut, type.getPresentableText());
+                return JavaBundle.message("completion.smart.aslist.hint", shortcut, type.getPresentableText());
               }
             }
           }
@@ -702,7 +703,7 @@ public class JavaCompletionContributor extends CompletionContributor {
               if (psiType instanceof PsiArrayType) {
                 final PsiType componentType = ((PsiArrayType)psiType).getComponentType();
                 if (!(componentType instanceof PsiPrimitiveType)) {
-                  return CompletionBundle.message("completion.smart.toar.hint", shortcut, componentType.getPresentableText());
+                  return JavaBundle.message("completion.smart.toar.hint", shortcut, componentType.getPresentableText());
                 }
               }
             }
@@ -712,7 +713,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_CHAIN)) {
           final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
           if (StringUtil.isNotEmpty(shortcut)) {
-            return CompletionBundle.message("completion.smart.chain.hint", shortcut);
+            return JavaBundle.message("completion.smart.chain.hint", shortcut);
           }
         }
       }
@@ -751,12 +752,12 @@ public class JavaCompletionContributor extends CompletionContributor {
 
           if (deepComponentType instanceof PsiClassType) {
             if (((PsiClassType)deepComponentType).resolve() != null) {
-              return CompletionBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
+              return JavaBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
             }
-            return CompletionBundle.message("completion.unknown.type", expectedType) + suffix;
+            return JavaBundle.message("completion.unknown.type", expectedType) + suffix;
           }
           if (!PsiType.NULL.equals(type)) {
-            return CompletionBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
+            return JavaBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
           }
         }
       }

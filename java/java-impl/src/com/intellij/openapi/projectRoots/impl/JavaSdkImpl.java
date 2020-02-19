@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -250,8 +251,8 @@ public final class JavaSdkImpl extends JavaSdk {
     setupSdkPaths(sdk);
 
     if (sdk.getSdkModificator().getRoots(OrderRootType.CLASSES).length == 0) {
-      String title = ProjectBundle.message("sdk.cannot.create");
-      String message = ProjectBundle.message("sdk.java.no.classes", sdk.getHomePath());
+      String title = JavaBundle.message("sdk.cannot.create");
+      String message = JavaBundle.message("sdk.java.no.classes", sdk.getHomePath());
       Messages.showMessageDialog(message, title, Messages.getErrorIcon());
       return false;
     }

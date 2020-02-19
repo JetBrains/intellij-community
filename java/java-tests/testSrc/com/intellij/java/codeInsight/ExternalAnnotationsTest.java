@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -95,7 +95,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
   public void testFromSrcToExternal() {
     myFixture.configureByFiles("src/fromSrc/Foo.java", "content/anno/fromSrc/annotations.xml");
 
-    IntentionAction action = myFixture.findSingleIntention(CodeInsightBundle.message("intention.text.annotate.externally"));
+    IntentionAction action = myFixture.findSingleIntention(JavaBundle.message("intention.text.annotate.externally"));
     assertNotNull(action);
 
     myFixture.launchAction(action);

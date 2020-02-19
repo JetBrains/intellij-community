@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
@@ -251,7 +251,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.surround.resource.with.ARM.block");
+    return JavaBundle.message("intention.surround.resource.with.ARM.block");
   }
 
   @NotNull
@@ -286,7 +286,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
     @Override
     public String getTemplateDescription() {
-      return CodeInsightBundle.message("intention.surround.with.ARM.block.template");
+      return JavaBundle.message("intention.surround.with.ARM.block.template");
     }
 
     @Override

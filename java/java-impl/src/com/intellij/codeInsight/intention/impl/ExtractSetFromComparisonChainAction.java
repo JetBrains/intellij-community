@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
@@ -128,9 +128,9 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
     if (!copies.isEmpty()) {
       int answer = ApplicationManager.getApplication().isUnitTestMode() ? Messages.YES :
                    Messages.showYesNoDialog(project,
-                                            CodeInsightBundle.message("intention.extract.set.from.comparison.chain.duplicates",
+                                            JavaBundle.message("intention.extract.set.from.comparison.chain.duplicates",
                                                                       ApplicationNamesInfo.getInstance().getProductName(),
-                                                                      copies.size()), CodeInsightBundle.message(
+                                                                      copies.size()), JavaBundle.message(
                        "dialog.title.process.duplicates"),
                                             Messages.getQuestionIcon());
       if (answer == Messages.YES) {
@@ -215,7 +215,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.extract.set.from.comparison.chain.family");
+    return JavaBundle.message("intention.extract.set.from.comparison.chain.family");
   }
 
   @NotNull

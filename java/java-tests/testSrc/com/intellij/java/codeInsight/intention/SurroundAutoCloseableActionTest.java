@@ -16,7 +16,7 @@
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -43,7 +43,7 @@ public class SurroundAutoCloseableActionTest extends LightJavaCodeInsightFixture
 
   private void doTest() {
     String name = getTestName(false);
-    String intention = CodeInsightBundle.message("intention.surround.resource.with.ARM.block");
+    String intention = JavaBundle.message("intention.surround.resource.with.ARM.block");
     CodeInsightTestUtil.doIntentionTest(myFixture, intention, name + ".java", name + "_after.java");
   }
 }
