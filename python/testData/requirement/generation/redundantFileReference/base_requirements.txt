@@ -1,0 +1,4 @@
+# these packages are not used in the project
+requests==2.22.0
+Django>=3.0.0
+numpy
