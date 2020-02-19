@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -206,6 +207,6 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   public static String getName() {
-    return JavaUiBundle.message("modules.classpath.title");
+    return CompilerBundle.message("modules.classpath.title");
   }
 }
