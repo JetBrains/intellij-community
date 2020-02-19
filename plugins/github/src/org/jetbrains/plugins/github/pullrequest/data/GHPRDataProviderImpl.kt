@@ -16,11 +16,15 @@ import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.data.GHBranchProtectionRules
 import org.jetbrains.plugins.github.api.data.GHCommit
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
+import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
+import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
@@ -34,6 +38,7 @@ import kotlin.reflect.KProperty
 internal class GHPRDataProviderImpl(private val project: Project,
                                     private val progressManager: ProgressManager,
                                     private val git: Git,
+                                    private val securityService: GHPRSecurityService,
                                     private val requestExecutor: GithubApiRequestExecutor,
                                     private val gitRemote: GitRemoteUrlCoordinates,
                                     private val repository: GHRepositoryCoordinates,
@@ -42,21 +47,31 @@ internal class GHPRDataProviderImpl(private val project: Project,
 
   private val requestsChangesEventDispatcher = EventDispatcher.create(GHPRDataProvider.RequestsChangedListener::class.java)
 
+  private var lastKnownBaseBranch: String? = null
   private var lastKnownBaseSha: String? = null
   private var lastKnownHeadSha: String? = null
 
-  private val detailsRequestValue = backingValue {
+  private val detailsRequestValue: LazyCancellableBackgroundProcessValue<GHPullRequest> = backingValue {
     val details = requestExecutor.execute(it, GHGQLRequests.PullRequest.findOne(repository, number))
                   ?: throw GHNotFoundException("Pull request $number does not exist")
     invokeAndWaitIfNeeded {
-      var needReload = false
-      lastKnownBaseSha?.run { if (this != details.baseRefOid) needReload = true }
+
+      var baseBranchChanged = false
+      lastKnownBaseBranch?.run { if (this != details.baseRefName) baseBranchChanged = true }
+      lastKnownBaseBranch = details.baseRefName
+      if (baseBranchChanged) {
+        baseBranchProtectionRulesRequestValue.drop()
+        reloadMergeabilityState()
+      }
+
+      var hashesChanged = false
+      lastKnownBaseSha?.run { if (this != details.baseRefOid) hashesChanged = true }
       lastKnownBaseSha = details.baseRefOid
-      lastKnownHeadSha?.run { if (this != details.headRefOid) needReload = true }
+      lastKnownHeadSha?.run { if (this != details.headRefOid) hashesChanged = true }
       lastKnownHeadSha = details.headRefOid
-      if (needReload) {
+      if (hashesChanged) {
         reloadChanges()
-        reloadMergeabilityData()
+        reloadMergeabilityState()
       }
     }
     details
@@ -122,12 +137,36 @@ internal class GHPRDataProviderImpl(private val project: Project,
   }
   override val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>> by backgroundProcessValue(reviewThreadsRequestValue)
 
-  private val mergeabilityDataRequestValue = backingValue {
-    requestExecutor.execute(GHGQLRequests.PullRequest.mergeabilityData(repository, number))
-    ?: error("Could not find pull request $number")
+  private val baseBranchProtectionRulesRequestValue = backingValue {
+    val detailsRequest = detailsRequestValue.value
+    val baseBranch = detailsRequest.joinCancellable().baseRefName
+    try {
+      requestExecutor.execute(GithubApiRequests.Repos.Branches.getProtection(repository, baseBranch))
+    }
+    catch (e: GithubStatusCodeException) {
+      if (e.statusCode != 404) throw e
+      GHBranchProtectionRules(GHBranchProtectionRules.RequiredStatusChecks(false, emptyList()),
+                              GHBranchProtectionRules.EnforceAdmins(false))
+    }
   }
-  override val mergeabilityDataRequest: CompletableFuture<GHPullRequestMergeabilityData>
-    by backgroundProcessValue(mergeabilityDataRequestValue)
+  private val mergeabilityStateRequestValue = backingValue {
+    val detailsRequest = detailsRequestValue.value
+    val baseBranchProtectionRulesRequest = if (securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE))
+      baseBranchProtectionRulesRequestValue.value
+    else null
+
+    val mergeabilityData = requestExecutor.execute(GHGQLRequests.PullRequest.mergeabilityData(repository, number))
+                           ?: error("Could not find pull request $number")
+    val builder = GHPRMergeabilityStateBuilder(detailsRequest.joinCancellable(),
+                                               mergeabilityData)
+    if (baseBranchProtectionRulesRequest != null) {
+      builder.withWriteAccess(baseBranchProtectionRulesRequest.joinCancellable(),
+                              securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.ADMIN))
+    }
+    builder.build()
+  }
+  override val mergeabilityStateRequest: CompletableFuture<GHPRMergeabilityState>
+    by backgroundProcessValue(mergeabilityStateRequestValue)
 
   private val timelineLoaderHolder = GHPRCountingTimelineLoaderHolder {
     val timelineModel = GHPRTimelineMergingModel()
@@ -155,9 +194,9 @@ internal class GHPRDataProviderImpl(private val project: Project,
     reloadReviewThreads()
   }
 
-  override fun reloadMergeabilityData() {
-    mergeabilityDataRequestValue.drop()
-    requestsChangesEventDispatcher.multicaster.mergeabilityDataRequestChanged()
+  override fun reloadMergeabilityState() {
+    mergeabilityStateRequestValue.drop()
+    requestsChangesEventDispatcher.multicaster.mergeabilityStateRequestChanged()
   }
 
   @CalledInAwt

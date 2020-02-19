@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -14,7 +13,7 @@ interface GHPRDataProvider : GHPRTimelineLoaderHolder {
   val number: Long
 
   val detailsRequest: CompletableFuture<GHPullRequest>
-  val mergeabilityDataRequest: CompletableFuture<GHPullRequestMergeabilityData>
+  val mergeabilityStateRequest: CompletableFuture<GHPRMergeabilityState>
   val headBranchFetchRequest: CompletableFuture<Unit>
   val apiCommitsRequest: CompletableFuture<List<GHCommit>>
   val changesProviderRequest: CompletableFuture<out GHPRChangesProvider>
@@ -34,12 +33,12 @@ interface GHPRDataProvider : GHPRTimelineLoaderHolder {
   fun reloadReviewThreads()
 
   @CalledInAwt
-  fun reloadMergeabilityData()
+  fun reloadMergeabilityState()
 
   interface RequestsChangedListener : EventListener {
     fun detailsRequestChanged() {}
     fun commitsRequestChanged() {}
     fun reviewThreadsRequestChanged() {}
-    fun mergeabilityDataRequestChanged() {}
+    fun mergeabilityStateRequestChanged() {}
   }
 }

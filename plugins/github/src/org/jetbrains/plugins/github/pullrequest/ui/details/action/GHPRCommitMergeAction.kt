@@ -3,9 +3,9 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
+import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.util.concurrent.CompletableFuture
@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture
 internal class GHPRCommitMergeAction(busyStateModel: SingleValueModel<Boolean>,
                                      errorHandler: (String) -> Unit,
                                      private val detailsModel: SingleValueModel<GHPullRequestShort>,
-                                     mergeabilityModel: SingleValueModel<GHPullRequestMergeabilityData?>,
+                                     mergeabilityModel: SingleValueModel<GHPRMergeabilityState?>,
                                      private val project: Project,
                                      private val stateService: GHPRStateService)
   : GHPRMergeAction("Merge...", busyStateModel, errorHandler, mergeabilityModel) {
@@ -22,7 +22,7 @@ internal class GHPRCommitMergeAction(busyStateModel: SingleValueModel<Boolean>,
     update()
   }
 
-  override fun submitMergeTask(mergeability: GHPullRequestMergeabilityData): CompletableFuture<Unit>? {
+  override fun submitMergeTask(mergeability: GHPRMergeabilityState): CompletableFuture<Unit>? {
     val dialog = GithubMergeCommitMessageDialog(project,
                                                 "Merge Pull Request",
                                                 "Merge pull request #${mergeability.number}",

@@ -52,7 +52,7 @@ object GHGQLRequests {
     }
 
     fun mergeabilityData(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPullRequestMergeabilityData?> =
-      GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestMergeability,
+      GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestMergeabilityData,
                                        mapOf("repoOwner" to repository.repositoryPath.owner,
                                              "repoName" to repository.repositoryPath.repository,
                                              "number" to number),

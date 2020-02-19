@@ -15,18 +15,16 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.*
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.DelayedTaskScheduler
-import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.FlowLayout
 import javax.swing.*
@@ -157,21 +155,22 @@ internal class GHPRStatePanel(private val project: Project,
       private val canSquashMerge = securityService.isSquashMergeAllowed()
       private val canRebaseMerge = securityService.isRebaseMergeAllowed()
 
-      private val mergeabilityModel = SingleValueModel<GHPullRequestMergeabilityData?>(null)
+      private val mergeabilityModel = SingleValueModel<GHPRMergeabilityState?>(null)
       private val mergeabilityPoller = DelayedTaskScheduler(3, parentDisposable) {
-        dataProvider.reloadMergeabilityData()
+        dataProvider.reloadMergeabilityState()
       }
 
       init {
         dataProvider.addRequestsChangesListener(parentDisposable, object : GHPRDataProvider.RequestsChangedListener {
-          override fun mergeabilityDataRequestChanged() {
+          override fun mergeabilityStateRequestChanged() {
             loadMergeability()
           }
         })
         loadMergeability()
+
         mergeabilityModel.addValueChangedListener {
           val state = mergeabilityModel.value
-          if (state != null && state.mergeable == GHPullRequestMergeableState.UNKNOWN) {
+          if (state != null && state.hasConflicts == null) {
             mergeabilityPoller.start()
           }
           else mergeabilityPoller.stop()
@@ -179,9 +178,7 @@ internal class GHPRStatePanel(private val project: Project,
       }
 
       private fun loadMergeability() {
-        dataProvider.mergeabilityDataRequest.handleOnEdt { state: GHPullRequestMergeabilityData?, throwable: Throwable? ->
-          state
-        }.successOnEdt {
+        dataProvider.mergeabilityStateRequest.successOnEdt {
           mergeabilityModel.value = it
         }
       }
@@ -204,17 +201,18 @@ internal class GHPRStatePanel(private val project: Project,
         }
       }
 
-      private fun createLoadedComponent(mergeabilityModel: SingleValueModel<GHPullRequestMergeabilityData>): JComponent {
+      private fun createLoadedComponent(mergeabilityModel: SingleValueModel<GHPRMergeabilityState>): JComponent {
+        val statusChecks = GHPRStatusChecksComponent.create(mergeabilityModel)
+
         val conflictsLabel = JLabel()
         ConflictsController(mergeabilityModel, conflictsLabel)
 
         val accessDeniedLabel = createAccessDeniedLabel()
-        return if (accessDeniedLabel == null) conflictsLabel
-        else {
-          JPanel(VerticalLayout(STATUSES_GAP)).apply {
-            add(conflictsLabel, VerticalLayout.FILL_HORIZONTAL)
+        return JPanel(VerticalLayout(STATUSES_GAP)).apply {
+          add(statusChecks, VerticalLayout.FILL_HORIZONTAL)
+          add(conflictsLabel, VerticalLayout.FILL_HORIZONTAL)
+          if (accessDeniedLabel != null)
             add(accessDeniedLabel, VerticalLayout.FILL_HORIZONTAL)
-          }
         }
       }
 
@@ -272,10 +270,10 @@ internal class GHPRStatePanel(private val project: Project,
         return list
       }
 
-      private class LoadingController(private val loadingMergeabilityModel: SingleValueModel<GHPullRequestMergeabilityData?>,
+      private class LoadingController(private val loadingMergeabilityModel: SingleValueModel<GHPRMergeabilityState?>,
                                       private val panel: Wrapper,
                                       private val notLoadedContentFactory: () -> JComponent,
-                                      private val loadedContentFactory: (detailsModel: SingleValueModel<GHPullRequestMergeabilityData>) -> JComponent) {
+                                      private val loadedContentFactory: (mergeabilityModel: SingleValueModel<GHPRMergeabilityState>) -> JComponent) {
 
         init {
           loadingMergeabilityModel.addAndInvokeValueChangedListener(this::update)
@@ -292,11 +290,12 @@ internal class GHPRStatePanel(private val project: Project,
               mergeabilityModel.value = loadingMergeabilityModel.value ?: return@addAndInvokeValueChangedListener
             }
             panel.setContent(loadedContentFactory(mergeabilityModel))
+            panel.revalidate()
           }
         }
       }
 
-      private class ConflictsController(private val mergeabilityModel: SingleValueModel<GHPullRequestMergeabilityData>,
+      private class ConflictsController(private val mergeabilityModel: SingleValueModel<GHPRMergeabilityState>,
                                         private val label: JLabel) {
 
         init {
@@ -304,16 +303,16 @@ internal class GHPRStatePanel(private val project: Project,
         }
 
         private fun update() {
-          when (mergeabilityModel.value.mergeable) {
-            GHPullRequestMergeableState.MERGEABLE -> {
+          when (mergeabilityModel.value.hasConflicts) {
+            false -> {
               label.icon = AllIcons.RunConfigurations.TestPassed
               label.text = "Branch has no conflicts with base branch"
             }
-            GHPullRequestMergeableState.CONFLICTING -> {
+            true -> {
               label.icon = AllIcons.RunConfigurations.TestError
               label.text = "Branch has conflicts that must be resolved"
             }
-            GHPullRequestMergeableState.UNKNOWN -> {
+            null -> {
               label.icon = AllIcons.RunConfigurations.TestNotRan
               label.text = "Checking for ability to merge automatically..."
             }

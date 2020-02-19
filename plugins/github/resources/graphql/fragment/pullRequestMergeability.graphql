@@ -1,10 +1,27 @@
 fragment pullRequestMergeability on PullRequest {
-    url
-    number
-
     mergeable
     canBeRebased
     mergeStateStatus
 
-    headRefOid
+    commits(last: 1) {
+        nodes {
+            ...nodeInfo
+            commit {
+                ...commitHash
+                status {
+                    contexts {
+                        context
+                        state
+                    }
+                }
+
+                checkSuites(first: 100) {
+                    nodes {
+                        conclusion
+                        status
+                    }
+                }
+            }
+        }
+    }
 }

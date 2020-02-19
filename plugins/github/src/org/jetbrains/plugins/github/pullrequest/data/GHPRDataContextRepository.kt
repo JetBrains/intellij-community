@@ -71,8 +71,8 @@ internal class GHPRDataContextRepository(private val project: Project) {
                                         searchHolder)
 
     val dataLoader = GHPRDataLoaderImpl {
-      GHPRDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), requestExecutor, gitRemoteCoordinates,
-                           repositoryCoordinates, it)
+      GHPRDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), securityService, requestExecutor,
+                           gitRemoteCoordinates, repositoryCoordinates, it)
     }
     requestExecutor.addListener(dataLoader) {
       dataLoader.invalidateAllData()

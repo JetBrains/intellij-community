@@ -2,14 +2,14 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
+import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.util.concurrent.CompletableFuture
 
 internal class GHPRRebaseMergeAction(busyStateModel: SingleValueModel<Boolean>,
                                      errorHandler: (String) -> Unit,
-                                     private val mergeabilityModel: SingleValueModel<GHPullRequestMergeabilityData?>,
+                                     private val mergeabilityModel: SingleValueModel<GHPRMergeabilityState?>,
                                      private val stateService: GHPRStateService)
   : GHPRMergeAction("Rebase and Merge", busyStateModel, errorHandler, mergeabilityModel) {
 
@@ -21,6 +21,6 @@ internal class GHPRRebaseMergeAction(busyStateModel: SingleValueModel<Boolean>,
     return super.computeEnabled() && mergeabilityModel.value?.canBeRebased == true
   }
 
-  override fun submitMergeTask(mergeability: GHPullRequestMergeabilityData): CompletableFuture<Unit>? =
+  override fun submitMergeTask(mergeability: GHPRMergeabilityState): CompletableFuture<Unit>? =
     stateService.rebaseMerge(EmptyProgressIndicator(), mergeability.number, mergeability.headRefOid)
 }
