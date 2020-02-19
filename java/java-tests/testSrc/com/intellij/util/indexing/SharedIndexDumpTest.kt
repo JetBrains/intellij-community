@@ -135,11 +135,6 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
 
     assertEquals("""
       IdIndex
-      IdIndex/IdIndex.forward
-      IdIndex/IdIndex.forward.len
-      IdIndex/IdIndex.forward.values.at
-      IdIndex/IdIndex.forward_i
-      IdIndex/IdIndex.forward_i.len
       IdIndex/IdIndex.storage
       IdIndex/IdIndex.storage.len
       IdIndex/IdIndex.storage.values.at
@@ -181,11 +176,6 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
       Stubs/serializerNames/names_i
       Stubs/serializerNames/names_i.len
       Trigram.Index
-      Trigram.Index/Trigram.Index.forward
-      Trigram.Index/Trigram.Index.forward.len
-      Trigram.Index/Trigram.Index.forward.values.at
-      Trigram.Index/Trigram.Index.forward_i
-      Trigram.Index/Trigram.Index.forward_i.len
       Trigram.Index/Trigram.Index.storage
       Trigram.Index/Trigram.Index.storage.len
       Trigram.Index/Trigram.Index.storage.values.at
@@ -255,11 +245,6 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals("""
       source
       source/IdIndex
-      source/IdIndex/IdIndex.forward
-      source/IdIndex/IdIndex.forward.len
-      source/IdIndex/IdIndex.forward.values.at
-      source/IdIndex/IdIndex.forward_i
-      source/IdIndex/IdIndex.forward_i.len
       source/IdIndex/IdIndex.storage
       source/IdIndex/IdIndex.storage.len
       source/IdIndex/IdIndex.storage.values.at
@@ -301,11 +286,6 @@ class SharedIndexDumpTest : LightJavaCodeInsightFixtureTestCase() {
       source/Stubs/serializerNames/names_i
       source/Stubs/serializerNames/names_i.len
       source/Trigram.Index
-      source/Trigram.Index/Trigram.Index.forward
-      source/Trigram.Index/Trigram.Index.forward.len
-      source/Trigram.Index/Trigram.Index.forward.values.at
-      source/Trigram.Index/Trigram.Index.forward_i
-      source/Trigram.Index/Trigram.Index.forward_i.len
       source/Trigram.Index/Trigram.Index.storage
       source/Trigram.Index/Trigram.Index.storage.len
       source/Trigram.Index/Trigram.Index.storage.values.at
