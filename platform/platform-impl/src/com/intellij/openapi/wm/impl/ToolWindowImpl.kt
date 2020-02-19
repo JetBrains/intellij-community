@@ -307,16 +307,16 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun setAvailable(value: Boolean) {
-    isAvailable = value
-  }
-
-  override fun setAvailable(value: Boolean, runnable: Runnable?) {
     EDT.assertIsEdt()
 
     if (isAvailable != value) {
       isAvailable = value
       toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.AVAILABLE)
     }
+  }
+
+  override fun setAvailable(value: Boolean, runnable: Runnable?) {
+    setAvailable(value)
     callLater(runnable)
   }
 

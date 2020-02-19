@@ -357,6 +357,10 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public void setAvailable(boolean value) {
+    }
+
+    @Override
     public void installWatcher(ContentManager contentManager) {
     }
 
