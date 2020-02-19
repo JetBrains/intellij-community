@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectAttachProcessor;
+import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,15 +103,18 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
 
     // try to open as a project - unless the file is an .ipr of the current one
     if ((project == null || !file.equals(project.getProjectFile())) && OpenProjectFileChooserDescriptor.isProjectFile(file)) {
-      int answer = file.getFileType() instanceof ProjectFileType
-                   ? Messages.YES
-                   : Messages.showYesNoCancelDialog(project,
-                                                    IdeBundle.message("message.open.file.is.project", file.getName()),
-                                                    IdeBundle.message("title.open.project"),
-                                                    IdeBundle.message("message.open.file.is.project.open.as.project"),
-                                                    IdeBundle.message("message.open.file.is.project.open.as.file"),
-                                                    IdeBundle.message("button.cancel"),
-                                                    Messages.getQuestionIcon());
+      ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(file);
+      final int answer;
+      if (provider == null) {
+        answer = Messages.CANCEL;
+      }
+      else if (file.getFileType() instanceof ProjectFileType) {
+        answer = Messages.YES;
+      }
+      else {
+        answer = provider.askConfirmationForOpeningProject(file, project);
+      }
+
       if (answer == Messages.CANCEL) return;
 
       if (answer == Messages.YES) {
