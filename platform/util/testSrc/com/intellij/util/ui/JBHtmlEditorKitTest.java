@@ -15,7 +15,7 @@ public class JBHtmlEditorKitTest {
     String htmlWithCssReference =
       "<html><head><link rel='stylesheet' href='" + getClass().getResource("test.css") + "'/></head><body>text</body></html>";
     SwingUtilities.invokeAndWait(() -> {
-      JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, "");
+      JEditorPane pane = new JEditorPane();
 
       pane.setEditorKit(new JBHtmlEditorKit(false, false));
       pane.setText(htmlWithCssReference);
