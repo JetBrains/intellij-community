@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
+import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryAttachDialog
@@ -30,7 +31,6 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
-import com.intellij.projectModel.ProjectModelBundle
 import gnu.trove.THashSet
 import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
@@ -43,8 +43,8 @@ import java.util.*
 private val LOG = logger<ConvertToRepositoryLibraryActionBase>()
 
 abstract class ConvertToRepositoryLibraryActionBase(protected val context: StructureConfigurableContext) :
-  DumbAwareAction(ProjectModelBundle.lazyMessage("action.text.convert.to.repository.library"),
-                  ProjectModelBundle.lazyMessage("action.description.convert.to.repository.library"), null) {
+  DumbAwareAction(JavaUiBundle.lazyMessage("action.text.convert.to.repository.library"),
+                  JavaUiBundle.lazyMessage("action.description.convert.to.repository.library"), null) {
 
   protected val project: Project = context.project
 
@@ -74,8 +74,8 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
     val downloadedFiles = roots.filter { it.type == OrderRootType.CLASSES }.map { VfsUtilCore.virtualToIoFile(it.file) }
     if (downloadedFiles.isEmpty()) {
-      if (Messages.showYesNoDialog(ProjectModelBundle.message("dialog.message.no.files.were.downloaded"),
-                                   ProjectModelBundle.message("dialog.title.no.files.were.downloaded"),
+      if (Messages.showYesNoDialog(JavaUiBundle.message("dialog.message.no.files.were.downloaded"),
+                                   JavaUiBundle.message("dialog.title.no.files.were.downloaded"),
                                    null) != Messages.YES) {
         return
       }
@@ -124,12 +124,11 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
     if (detectedCoordinates.size == 1) {
       return detectedCoordinates[0]
     }
-    val message = if (detectedCoordinates.isEmpty())
-      ProjectModelBundle.message("dialog.message.cannot.detect.maven.coordinates")
-    else ProjectModelBundle.message("dialog.message.multiple.maven.coordinates")
+    val message = if (detectedCoordinates.isEmpty()) JavaUiBundle.message("dialog.message.cannot.detect.maven.coordinates")
+    else JavaUiBundle.message("dialog.message.multiple.maven.coordinates")
 
-    if (Messages.showYesNoDialog(project, "$message. ${ProjectModelBundle.message("dialog.message.do.you.want")}",
-                                 ProjectModelBundle.message("dialog.title.cannot.detect.maven.coordinates"), null) != Messages.YES) {
+    if (Messages.showYesNoDialog(project, "$message. ${JavaUiBundle.message("dialog.message.do.you.want")}",
+                                 JavaUiBundle.message("dialog.title.cannot.detect.maven.coordinates"), null) != Messages.YES) {
       return null
     }
     return specifyMavenCoordinates(detectedCoordinates)
@@ -186,7 +185,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 }
 
 private class ComparingJarFilesTask(project: Project, private val downloadedFiles: List<File>,
-                                    private val libraryFiles: List<File>) : Task.Modal(project, ProjectModelBundle.message("task.title.comparing.jar.files"), true) {
+                                    private val libraryFiles: List<File>) : Task.Modal(project, JavaUiBundle.message("task.title.comparing.jar.files"), true) {
   var cancelled = false
   var filesAreTheSame = false
   lateinit var downloadedFileToCompare: VirtualFile
