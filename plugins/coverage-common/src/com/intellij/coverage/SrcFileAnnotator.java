@@ -2,7 +2,6 @@
 
 package com.intellij.coverage;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.LocalHistory;
 import com.intellij.icons.AllIcons;
@@ -291,7 +290,7 @@ public class SrcFileAnnotator implements Disposable {
     if (engine.isInLibrarySource(myProject, file)) {
       // compare file and coverage timestamps
       if (fileTimeStamp > coverageTimeStamp) {
-        showEditorWarningMessage(CodeInsightBundle.message("coverage.data.outdated"));
+        showEditorWarningMessage(CoverageBundle.message("coverage.data.outdated"));
         return;
       }
       oldToNewLineMapping = null;
@@ -303,7 +302,7 @@ public class SrcFileAnnotator implements Disposable {
 
         // if history for file isn't available let's check timestamps
         if (fileTimeStamp > coverageTimeStamp && classesArePresentInCoverageData(data, qualifiedNames)) {
-          showEditorWarningMessage(CodeInsightBundle.message("coverage.data.outdated"));
+          showEditorWarningMessage(CoverageBundle.message("coverage.data.outdated"));
           return;
         }
       }
@@ -606,7 +605,7 @@ public class SrcFileAnnotator implements Disposable {
 
 
   private void coverageDataNotFound(final CoverageSuitesBundle suite) {
-    showEditorWarningMessage(CodeInsightBundle.message("coverage.data.not.found"));
+    showEditorWarningMessage(CoverageBundle.message("coverage.data.not.found"));
     for (CoverageSuite coverageSuite : suite.getSuites()) {
       CoverageDataManager.getInstance(myProject).removeCoverageSuite(coverageSuite);
     }

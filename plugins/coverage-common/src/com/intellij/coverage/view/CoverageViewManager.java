@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageOptionsProvider;
 import com.intellij.coverage.CoverageSuitesBundle;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
@@ -41,7 +41,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
 
     RegisterToolWindowTask registerToolWindowTask = RegisterToolWindowTask.closableSecondary(
       TOOLWINDOW_ID,
-      ExecutionBundle.lazyMessage("coverage.view.title"),
+      CoverageBundle.lazyMessage("coverage.view.title"),
       AllIcons.Toolwindows.ToolWindowCoverage,
       ToolWindowAnchor.RIGHT
     );

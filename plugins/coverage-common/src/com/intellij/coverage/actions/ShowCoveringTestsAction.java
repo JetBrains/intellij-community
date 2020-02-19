@@ -5,10 +5,10 @@ package com.intellij.coverage.actions;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.hint.PsiImplementationViewElement;
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageSuitesBundle;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -44,8 +44,8 @@ public class ShowCoveringTestsAction extends AnAction {
   private final LineData myLineData;
 
   public ShowCoveringTestsAction(final String classFQName, LineData lineData) {
-    super(ExecutionBundle.message("action.text.show.tests.covering.line"),
-          ExecutionBundle.message("action.description.show.tests.covering.line"), PlatformIcons.TEST_SOURCE_FOLDER);
+    super(CoverageBundle.message("action.text.show.tests.covering.line"),
+          CoverageBundle.message("action.description.show.tests.covering.line"), PlatformIcons.TEST_SOURCE_FOLDER);
     myClassFQName = classFQName;
     myLineData = lineData;
   }
@@ -63,7 +63,7 @@ public class ShowCoveringTestsAction extends AnAction {
 
     final Set<String> tests = new HashSet<>();
     if (ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> tests.addAll(coverageEngine.getTestsForLine(project, myClassFQName, myLineData.getLineNumber())),
-                                                                          ExecutionBundle.message("extract.information.about.tests"), false, project)) { //todo cache them? show nothing found message
+                                                                          CoverageBundle.message("extract.information.about.tests"), false, project)) { //todo cache them? show nothing found message
       final String[] testNames = ArrayUtilRt.toStringArray(tests);
       Arrays.sort(testNames);
       if (testNames.length == 0) {
@@ -85,7 +85,7 @@ public class ShowCoveringTestsAction extends AnAction {
           });
       } else {
         component = null;
-        final JPanel panel = new PanelWithText(ExecutionBundle
+        final JPanel panel = new PanelWithText(CoverageBundle
                                                  .message("following.test.0.could.not.be.found.1", testNames.length > 1 ? "s" : "",
                                                           StringUtil.join(testNames, "<br/>").replace("_", ".")));
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null);

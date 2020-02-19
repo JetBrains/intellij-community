@@ -3,7 +3,6 @@ package com.intellij.coverage.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.coverage.*;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -63,16 +62,16 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         });
       }
     };
-    mySuitesTree.getEmptyText().appendText(ExecutionBundle.message("no.coverage.suites.configured"));
+    mySuitesTree.getEmptyText().appendText(CoverageBundle.message("no.coverage.suites.configured"));
     mySuitesTree.setRootVisible(false);
     mySuitesTree.setShowsRootHandles(false);
     TreeUtil.installActions(mySuitesTree);
     TreeUtil.expandAll(mySuitesTree);
     TreeUtil.promiseSelectFirst(mySuitesTree);
     mySuitesTree.setMinimumSize(new Dimension(25, -1));
-    setOKButtonText(ExecutionBundle.message("coverage.data.show.selected.button"));
+    setOKButtonText(CoverageBundle.message("coverage.data.show.selected.button"));
     init();
-    setTitle(ExecutionBundle.message("choose.coverage.suite.to.display"));
+    setTitle(CoverageBundle.message("choose.coverage.suite.to.display"));
   }
 
   @Override
@@ -112,7 +111,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         continue;
       }
       if (!Comparing.equal(engine, suite.getCoverageEngine())) {
-        return Collections.singletonList(new ValidationInfo(ExecutionBundle.message("cannot.show.coverage.reports.from.different.engines"), mySuitesTree));
+        return Collections.singletonList(new ValidationInfo(CoverageBundle.message("cannot.show.coverage.reports.from.different.engines"), mySuitesTree));
       }
     }
     return super.doValidateAll();
@@ -132,7 +131,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   }
 
   private static String getCoverageRunnerTitle(CoverageRunner coverageRunner) {
-    return ExecutionBundle.message("coverage.data.runner.name", coverageRunner.getPresentableName());
+    return CoverageBundle.message("coverage.data.runner.name", coverageRunner.getPresentableName());
   }
 
   @Nullable
@@ -259,7 +258,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
   private class NoCoverageAction extends DialogWrapperAction {
     NoCoverageAction() {
-      super(ExecutionBundle.message("coverage.data.no.coverage.button"));
+      super(CoverageBundle.message("coverage.data.no.coverage.button"));
     }
 
     @Override
@@ -290,7 +289,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
         final CoverageRunner coverageRunner = getCoverageRunner(file);
         if (coverageRunner == null) {
-          Messages.showErrorDialog(myProject, ExecutionBundle.message("no.coverage.runner.available.for", file.getName()), CommonBundle.getErrorTitle());
+          Messages.showErrorDialog(myProject, CoverageBundle.message("no.coverage.runner.available.for", file.getName()), CommonBundle.getErrorTitle());
           return;
         }
 

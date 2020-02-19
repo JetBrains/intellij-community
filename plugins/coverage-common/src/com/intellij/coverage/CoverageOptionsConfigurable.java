@@ -7,7 +7,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +37,7 @@ public class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageO
   @Nls
   @Override
   public String getDisplayName() {
-    return UIBundle.message("configurable.CoverageOptionsConfigurable.display.name");
+    return CoverageBundle.message("configurable.CoverageOptionsConfigurable.display.name");
   }
 
   @Override

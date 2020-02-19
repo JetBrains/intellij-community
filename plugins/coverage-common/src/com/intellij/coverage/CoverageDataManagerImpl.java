@@ -1,10 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.coverage.view.CoverageViewManager;
 import com.intellij.coverage.view.CoverageViewSuiteListener;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -354,7 +352,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       if (myCurrentSuitesBundle != null) {
-        final String message = CodeInsightBundle.message("display.coverage.prompt", suite.getPresentableName());
+        final String message = CoverageBundle.message("display.coverage.prompt", suite.getPresentableName());
 
         final CoverageOptionsProvider coverageOptionsProvider = CoverageOptionsProvider.getInstance(myProject);
         final DialogWrapper.DoNotAskOption doNotAskOption = new DialogWrapper.DoNotAskOption() {
@@ -386,13 +384,13 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
         };
         final String[] options = myCurrentSuitesBundle.getCoverageEngine() == suite.getCoverageEngine() ?
                                  new String[] {
-                                   ExecutionBundle.message("coverage.replace.active.suites"),
-                                   ExecutionBundle.message("coverage.add.to.active.suites"),
-                                   ExecutionBundle.message("coverage.do.not.apply.collected.coverage")} :
+                                   CoverageBundle.message("coverage.replace.active.suites"),
+                                   CoverageBundle.message("coverage.add.to.active.suites"),
+                                   CoverageBundle.message("coverage.do.not.apply.collected.coverage")} :
                                  new String[] {
-                                   ExecutionBundle.message("coverage.replace.active.suites"),
-                                   ExecutionBundle.message("coverage.do.not.apply.collected.coverage")};
-        final int answer = doNotAskOption.isToBeShown() ? Messages.showDialog(message, CodeInsightBundle.message("code.coverage"),
+                                   CoverageBundle.message("coverage.replace.active.suites"),
+                                   CoverageBundle.message("coverage.do.not.apply.collected.coverage")};
+        final int answer = doNotAskOption.isToBeShown() ? Messages.showDialog(message, CoverageBundle.message("code.coverage"),
                                                                               options, 1, Messages.getQuestionIcon(),
                                                                               doNotAskOption) : coverageOptionsProvider.getOptionToReplace();
         if (answer == DialogWrapper.OK_EXIT_CODE) {

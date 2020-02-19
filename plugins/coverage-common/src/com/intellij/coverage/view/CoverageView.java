@@ -2,6 +2,7 @@
 package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.execution.ExecutionBundle;
@@ -65,11 +66,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     myTable = new JBTable(myModel);
     final StatusText emptyText = myTable.getEmptyText();
-    emptyText.setText(ExecutionBundle.message("coverage.view.no.coverage.results"));
+    emptyText.setText(CoverageBundle.message("coverage.view.no.coverage.results"));
     final RunConfigurationBase configuration = suitesBundle.getRunConfiguration();
     if (configuration != null) {
-      emptyText.appendText(" " + ExecutionBundle.message("coverage.view.edit.run.configuration.0") + " ");
-      emptyText.appendText(ExecutionBundle.message("coverage.view.edit.run.configuration.1"), SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
+      emptyText.appendText(" " + CoverageBundle.message("coverage.view.edit.run.configuration.0") + " ");
+      emptyText.appendText(CoverageBundle.message("coverage.view.edit.run.configuration.1"), SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
           final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(project).findSettings(configuration);
@@ -77,11 +78,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
             RunDialog.editConfiguration(project, configurationSettings, ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
           }
           else {
-            Messages.showErrorDialog(project, ExecutionBundle.message("coverage.view.configuration.was.not.found", configuration.getName()), CommonBundle.getErrorTitle());
+            Messages.showErrorDialog(project, CoverageBundle.message("coverage.view.configuration.was.not.found", configuration.getName()), CommonBundle.getErrorTitle());
           }
         }
       });
-      emptyText.appendText(" " + ExecutionBundle.message("coverage.view.edit.run.configuration.2"));
+      emptyText.appendText(" " + CoverageBundle.message("coverage.view.edit.run.configuration.2"));
     }
     TableColumnModel columnModel = myTable.getColumnModel();
     TableColumn nameColumn = columnModel.getColumn(0);
@@ -299,7 +300,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     private final CoverageViewTreeStructure myTreeStructure;
 
     GoUpAction(CoverageViewTreeStructure treeStructure) {
-      super(ExecutionBundle.message("coverage.view.action.go.up"), ExecutionBundle.message("coverage.view.action.go.up.description"), AllIcons.Nodes.UpLevel);
+      super(CoverageBundle.message("coverage.view.action.go.up"), CoverageBundle.message("coverage.view.action.go.up.description"), AllIcons.Nodes.UpLevel);
       myTreeStructure = treeStructure;
       registerCustomShortcutSet(KeyEvent.VK_BACK_SPACE, 0, myTable);
     }

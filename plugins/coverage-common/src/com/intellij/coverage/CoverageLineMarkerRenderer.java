@@ -25,7 +25,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.coverage.actions.HideCoverageInfoAction;
 import com.intellij.coverage.actions.ShowCoveringTestsAction;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -300,7 +299,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     GotoPreviousCoveredLineAction(final Editor editor, final int lineNumber) {
       super(editor, lineNumber);
       ActionUtil.copyFrom(this, IdeActions.ACTION_PREVIOUS_OCCURENCE);
-      getTemplatePresentation().setText(ExecutionBundle.message("coverage.previous.mark"));
+      getTemplatePresentation().setText(CoverageBundle.message("coverage.previous.mark"));
     }
 
     @Override
@@ -314,7 +313,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       super.update(e);
       final String nextChange = getNextChange();
       if (nextChange != null) {
-        e.getPresentation().setText(ExecutionBundle.message("coverage.previous.place", nextChange));
+        e.getPresentation().setText(CoverageBundle.message("coverage.previous.place", nextChange));
       }
     }
   }
@@ -324,7 +323,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     GotoNextCoveredLineAction(final Editor editor, final int lineNumber) {
       super(editor, lineNumber);
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE));
-      getTemplatePresentation().setText(ExecutionBundle.message("coverage.next.mark"));
+      getTemplatePresentation().setText(CoverageBundle.message("coverage.next.mark"));
     }
 
     @Override
@@ -338,7 +337,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       super.update(e);
       final String nextChange = getNextChange();
       if (nextChange != null) {
-        e.getPresentation().setText(ExecutionBundle.message("coverage.next.place", nextChange));
+        e.getPresentation().setText(CoverageBundle.message("coverage.next.place", nextChange));
       }
     }
   }
@@ -399,11 +398,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
         if (lineData != null) {
           switch (lineData.getStatus()) {
             case LineCoverage.NONE:
-              return ExecutionBundle.message("coverage.next.change.uncovered");
+              return CoverageBundle.message("coverage.next.change.uncovered");
             case LineCoverage.PARTIAL:
-              return ExecutionBundle.message("coverage.next.change.partial.covered");
+              return CoverageBundle.message("coverage.next.change.partial.covered");
             case LineCoverage.FULL:
-              return ExecutionBundle.message("coverage.next.change.fully.covered");
+              return CoverageBundle.message("coverage.next.change.fully.covered");
           }
         }
       }
@@ -421,7 +420,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     private final int myLineNumber;
 
     private EditCoverageColorsAction(Editor editor, int lineNumber) {
-      super(ExecutionBundle.message("coverage.edit.colors.action.name"), ExecutionBundle.message("coverage.edit.colors.description"), AllIcons.General.Settings);
+      super(CoverageBundle.message("coverage.edit.colors.action.name"), CoverageBundle.message("coverage.edit.colors.description"), AllIcons.General.Settings);
       myEditor = editor;
       myLineNumber = lineNumber;
     }
@@ -477,6 +476,6 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
   @NotNull
   @Override
   public String getAccessibleName() {
-    return ExecutionBundle.message("marker.code.coverage");
+    return CoverageBundle.message("marker.code.coverage");
   }
 }
