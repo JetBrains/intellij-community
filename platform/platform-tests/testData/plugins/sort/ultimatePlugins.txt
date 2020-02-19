@@ -64,6 +64,7 @@
 + -DevKit-
 + -com-intellij-velocity-
 + -com-intellij-micronaut-
++ -com-intellij-microservices-config-
 + -com-intellij-stats-completion-
 + -com-jetbrains-plugins-asp-
 + -com-jetbrains-plugins-ini4idea-
