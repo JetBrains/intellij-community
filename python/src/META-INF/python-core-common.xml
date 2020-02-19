@@ -772,7 +772,7 @@
     </action>
 
     <group id="PyPackagingMenu">
-      <action id="PySyncRequirements" class="com.jetbrains.python.packaging.PySyncRequirementsAction"/>
+      <action id="PySyncPythonRequirements" class="com.jetbrains.python.packaging.PySyncPythonRequirementsAction"/>
       <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
       <action id="RunSetupPyTask" class="com.jetbrains.python.packaging.setupPy.SetupTaskChooserAction"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>

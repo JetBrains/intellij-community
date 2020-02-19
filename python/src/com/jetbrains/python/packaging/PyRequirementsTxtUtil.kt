@@ -29,15 +29,14 @@ import javax.swing.DefaultComboBoxModel
 
 
 fun syncWithImports(module: Module) {
-  var requirementsFile = PyPackageUtil.findRequirementsTxt(module)
   val settings = PyPackageRequirementsSettings.getInstance(module)
 
-  if (requirementsFile == null) {
+  if (!ApplicationManager.getApplication().isUnitTestMode) {
     val proceed = showSpecifyRequirementsFileDialog(module.project, settings)
     if (!proceed) return
   }
 
-  requirementsFile = PyPackageUtil.findRequirementsTxt(module) // user might have specified an existing file
+  var requirementsFile = PyPackageUtil.findRequirementsTxt(module)
   val notificationGroup = NotificationGroup.balloonGroup(PyBundle.message("python.requirements.balloon"))
   val matchResult = try {
     prepareRequirementsText(module, settings)
@@ -240,7 +239,7 @@ private fun showSpecifyRequirementsFileDialog(project: Project, settings: PyPack
                                 fileChooserDescriptor = descriptor).focused()
     }
     row {
-      label(PyBundle.message("form.integrated.tools.packaging.version.type"))
+      label(PyBundle.message("python.requirements.version.label"))
       comboBox(DefaultComboBoxModel(PyRequirementsVersionSpecifierType.values()),
                { settings.versionSpecifier },
                { settings.versionSpecifier = it })

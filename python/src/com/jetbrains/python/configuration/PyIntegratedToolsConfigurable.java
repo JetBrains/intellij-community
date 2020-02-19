@@ -87,7 +87,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myPackagingPanel;
   private JPanel myTestsPanel;
   private TextFieldWithBrowseButton myPipEnvPathField;
-  private JComboBox<PyRequirementsVersionSpecifierType> myVersionSeparatorComboBox;
   private JPanel myPipEnvPanel;
 
 
@@ -118,8 +117,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myRequirementsPathField.addBrowseFolderListener(PyBundle.message("configurable.choose.path.to.the.package.requirements.file"), null, myProject,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myRequirementsPathField.setText(getRequirementsPath());
-    myVersionSeparatorComboBox.setModel(new CollectionComboBoxModel<>(
-      Arrays.asList(PyRequirementsVersionSpecifierType.values()), myPackagingSettings.getVersionSpecifier()));
 
     myPipEnvPathField.addBrowseFolderListener(null, null, null, FileChooserDescriptorFactory.createSingleFileDescriptor());
 
@@ -244,9 +241,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (!myPipEnvPathField.getText().equals(StringUtil.notNullize(PipenvKt.getPipEnvPath(PropertiesComponent.getInstance())))) {
       return true;
     }
-    if (!myPackagingSettings.getVersionSpecifier().equals(myVersionSeparatorComboBox.getSelectedItem())) {
-      return true;
-    }
     return false;
   }
 
@@ -276,7 +270,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     }
     myDocumentationSettings.setAnalyzeDoctest(analyzeDoctest.isSelected());
     myPackagingSettings.setRequirementsPath(myRequirementsPathField.getText());
-    myPackagingSettings.setVersionSpecifier((PyRequirementsVersionSpecifierType)myVersionSeparatorComboBox.getSelectedItem());
 
     DaemonCodeAnalyzer.getInstance(myProject).restart();
     PipenvKt.setPipEnvPath(PropertiesComponent.getInstance(), StringUtil.nullize(myPipEnvPathField.getText()));
@@ -308,8 +301,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
     myRequirementsPathField.setText(getRequirementsPath());
-    myVersionSeparatorComboBox.setSelectedItem(myPackagingSettings.getVersionSpecifier());
-    myVersionSeparatorComboBox.repaint();
     // TODO: Move pipenv settings into a separate configurable
     final JBTextField pipEnvText = ObjectUtils.tryCast(myPipEnvPathField.getTextField(), JBTextField.class);
     if (pipEnvText != null) {

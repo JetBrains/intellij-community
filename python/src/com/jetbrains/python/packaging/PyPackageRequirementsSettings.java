@@ -88,7 +88,7 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
 
     @NotNull
     @OptionTag("versionSpecifier")
-    public PyRequirementsVersionSpecifierType myVersionSpecifier = PyRequirementsVersionSpecifierType.STRONG_EQ;
+    public PyRequirementsVersionSpecifierType myVersionSpecifier = PyRequirementsVersionSpecifierType.COMPATIBLE;
   }
 
   @State(name = "AppPackageRequirementsSettings", storages = @Storage("PackageRequirementsSettings.xml"))
