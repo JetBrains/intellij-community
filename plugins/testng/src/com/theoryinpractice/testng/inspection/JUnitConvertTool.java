@@ -46,7 +46,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return TestngBundle.message("junit.convert.tool.display.name");
+    return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
   @NotNull

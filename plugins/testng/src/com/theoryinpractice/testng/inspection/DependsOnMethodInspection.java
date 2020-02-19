@@ -30,7 +30,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return TestngBundle.message("inspection.depends.on.method.name");
+    return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
   @NotNull
