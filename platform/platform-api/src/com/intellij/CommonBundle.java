@@ -7,35 +7,31 @@ import org.jetbrains.annotations.*;
 import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
-import static com.intellij.BundleUtil.loadLanguageBundle;
-
 /**
  * @author yole
  */
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public final class CommonBundle extends BundleBase {
+public final class CommonBundle extends DynamicBundle {
   private static final String BUNDLE = "messages.CommonBundle";
-  private static ResourceBundle ourBundle;
+  private static final CommonBundle INSTANCE = new CommonBundle();
 
-  private CommonBundle() { }
+  private CommonBundle() {
+    super(BUNDLE);
+  }
 
   @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    ResourceBundle bundle = getCommonBundle();
-    if (!bundle.containsKey(key)) {
+    if (!INSTANCE.containsKey(key)) {
       return UtilBundle.message(key, params);
     }
-    return AbstractBundle.message(bundle, key, params);
+    return INSTANCE.getMessage(key, params);
   }
 
   public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return () -> message(key, params);
-  }
-
-  @NotNull
-  private static ResourceBundle getCommonBundle() {
-    if (ourBundle != null) return ourBundle;
-    return ourBundle = ResourceBundle.getBundle(BUNDLE);
+    if (!INSTANCE.containsKey(key)) {
+      return () -> UtilBundle.message(key, params);
+    }
+    return INSTANCE.getLazyMessage(key, params);
   }
 
   /**
@@ -145,10 +141,5 @@ public final class CommonBundle extends BundleBase {
 
   public static String settingsActionPath() {
     return SystemInfo.isMac ? message("action.settings.path.mac") : message("action.settings.path");
-  }
-
-  public static void loadBundleFromPlugin(@Nullable ClassLoader pluginClassLoader) {
-    ResourceBundle bundle = loadLanguageBundle(pluginClassLoader, BUNDLE);
-    if (bundle != null) ourBundle = bundle;
   }
 }

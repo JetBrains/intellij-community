@@ -1,11 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.CommonBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.UtilBundle;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.UtilUiBundle;
 
 public class LanguageBundleListener implements ApplicationInitializedListener {
@@ -16,8 +14,6 @@ public class LanguageBundleListener implements ApplicationInitializedListener {
     if (pd == null) return;
     ClassLoader pluginClassLoader = pd.getPluginClassLoader();
     UtilBundle.loadBundleFromPlugin(pluginClassLoader);
-    CommonBundle.loadBundleFromPlugin(pluginClassLoader);
-    UIBundle.loadBundleFromPlugin(pluginClassLoader);
     UtilUiBundle.loadBundleFromPlugin(pluginClassLoader);
   }
 }
