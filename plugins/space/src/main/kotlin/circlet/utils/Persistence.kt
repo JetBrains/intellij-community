@@ -7,9 +7,6 @@ import runtime.json.*
 import runtime.persistence.*
 
 object IdeaPasswordSafePersistence : Persistence {
-    override suspend fun batchGetJson(keys: List<String>): List<Pair<String, JsonElement?>> {
-       return keys.map { it to get(it)?.let { jsonElement(it) } }
-    }
 
     override suspend fun putJson(key: String, value: JsonElement) {
         put(key, value.text())
@@ -17,10 +14,6 @@ object IdeaPasswordSafePersistence : Persistence {
 
     override suspend fun getJson(key: String): JsonElement? {
         return get(key)?.let { jsonElement(it) }
-    }
-
-    override suspend fun batchPutJson(keyValuePairs: List<Pair<String, JsonElement>>) {
-        TODO("not implemented")
     }
 
     override suspend fun put(key: String, value: String) {
@@ -32,11 +25,6 @@ object IdeaPasswordSafePersistence : Persistence {
 
     override suspend fun delete(key: String) {
         PasswordSafe.instance.setPassword(createCredentialAttributes(key), null)
-    }
-
-
-    override suspend fun batchDelete(keys: List<String>) {
-        TODO("not implemented")
     }
 
     override fun forEach(lifetime: Lifetime, key: String, callback: (String?) -> Unit) {
