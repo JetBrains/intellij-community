@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Registers {@link FileType} with specific file name extensions/patterns.
+ *
  * @author peter
- * @deprecated use {@code com.intellij.fileType} extension point instead
+ * @deprecated use {@code com.intellij.fileType} extension point instead for declarative registration
  */
 @Deprecated
 public abstract class FileTypeFactory {
