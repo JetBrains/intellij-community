@@ -22,26 +22,26 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Eugene Zhuravlev
- */
+/** Thread-safe implementation of persistent hash map (PHM). The implementation works in the following (generic) way:<ul>
+ <li> Particular key is translated via myEnumerator into an int. </li>
+ <li> As part of enumeration process for the new key, additional space is reserved in
+ myEnumerator.myStorage for offset in ".values" file (myValueStorage) where (serialized) value is stored. </li>
+ <li> Once new value is written the offset storage is updated. </li>
+ <li> When the key is removed from PHM, offset storage is set to zero. </li>
+ </ul>
+<p>
+ It is important to note that offset
+ is non-negative and can be 4 or 8 bytes, depending on the size of the ".values" file.
+ PHM can work in appendable mode: for particular key additional calculated chunk of value can be appended to ".values" file with the offset
+ of previously calculated chunk.
+ For performance reasons we try hard to minimize storage occupied by keys / offsets in ".values" file: this storage is allocated as (limited)
+ direct byte buffers so 4 bytes offset is used until it is possible. Generic record produced by enumerator used with PHM as part of new
+ key enumeration is <enumerated_id>? [.values file offset 4 or 8 bytes], however for unique integral keys enumerate_id isn't produced.
+ Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is non-negative integer the value can be stored
+ directly in storage used for offset and in case of btree enumerator directly in btree leaf.
+ **/
 public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key> implements PersistentMap<Key, Value> {
-  // PersistentHashMap (PHM) works in the following (generic) way:
-  // - Particular key is translated via myEnumerator into an int.
-  // - As part of enumeration process for the new key, additional space is reserved in
-  // myEnumerator.myStorage for offset in ".values" file (myValueStorage) where (serialized) value is stored.
-  // - Once new value is written the offset storage is updated.
-  // - When the key is removed from PHM, offset storage is set to zero.
-  //
-  // It is important to note that offset
-  // is non-negative and can be 4 or 8 bytes, depending on the size of the ".values" file.
-  // PHM can work in appendable mode: for particular key additional calculated chunk of value can be appended to ".values" file with the offset
-  // of previously calculated chunk.
-  // For performance reasons we try hard to minimize storage occupied by keys / offsets in ".values" file: this storage is allocated as (limited)
-  // direct byte buffers so 4 bytes offset is used until it is possible. Generic record produced by enumerator used with PHM as part of new
-  // key enumeration is <enumerated_id>? [.values file offset 4 or 8 bytes], however for unique integral keys enumerate_id isn't produced.
-  // Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is non-negative integer the value can be stored
-  // directly in storage used for offset and in case of btree enumerator directly in btree leaf.
+
   private static final Logger LOG = Logger.getInstance(PersistentHashMap.class);
   private static final boolean myDoTrace = SystemProperties.getBooleanProperty("idea.trace.persistent.map", false);
   private static final int DEAD_KEY_NUMBER_MASK = 0xFFFFFFFF;
