@@ -10,6 +10,7 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.lang.Language
+import com.intellij.model.psi.impl.ReferenceProviders
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -25,7 +26,6 @@ import com.intellij.openapi.extensions.ExtensionsArea
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.keymap.impl.BundledKeymapProvider
 import com.intellij.openapi.module.ModuleManager
@@ -326,6 +326,7 @@ object DynamicPlugins {
           for (project in ProjectManager.getInstance().openProjects) {
             (CachedValuesManager.getManager(project) as CachedValuesManagerImpl).clearCachedValues()
           }
+          ReferenceProviders.getInstance().clearCaches()
           jdomSerializer.clearSerializationCaches()
           BeanBinding.clearSerializationCaches()
           TypeFactory.defaultInstance().clearCache()
