@@ -26,4 +26,8 @@ public abstract class BooleanOptionDescription extends OptionDescription {
   public abstract boolean isOptionEnabled();
 
   public abstract void setOptionState(boolean enabled);
+
+  public interface RequiresRebuild {
+
+  }
 }
