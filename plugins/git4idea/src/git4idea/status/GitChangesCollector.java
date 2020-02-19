@@ -15,6 +15,7 @@
  */
 package git4idea.status;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,6 +54,8 @@ import java.util.*;
  * @author Kirill Likhodedov
  */
 class GitChangesCollector {
+  private static final Logger LOG = Logger.getInstance(GitChangesCollector.class);
+
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
   @NotNull private final GitRepository myRepository;
@@ -461,6 +464,15 @@ class GitChangesCollector {
   }
 
   private void reportChange(FileStatus status, ContentRevision before, ContentRevision after) {
-    myChanges.add(new Change(before, after, status));
+    Change change = new Change(before, after, status);
+
+    FilePath filePath = ChangesUtil.getFilePath(change);
+    VirtualFile root = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(filePath);
+    if (!myVcsRoot.equals(root)) {
+      LOG.warn(String.format("Ignoring change under another root: %s; root: %s; mapped root: %s", change, myVcsRoot, root));
+      return;
+    }
+
+    myChanges.add(change);
   }
 }
