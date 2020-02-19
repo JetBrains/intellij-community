@@ -134,6 +134,11 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
     return true;
   }
 
+  @Override
+  public boolean needsForwardIndexWhenSharing() {
+    return false;
+  }
+
   public static boolean hasIdentifierInFile(@NotNull PsiFile file, @NotNull String name) {
     PsiUtilCore.ensureValid(file);
     if (file.getVirtualFile() == null || DumbService.isDumb(file.getProject())) {
