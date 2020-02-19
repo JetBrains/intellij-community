@@ -60,7 +60,8 @@ private class ForcePushAction : PushActionBase() {
       DvcsBundle.message("action.force.push.confirmation.text")
     }
     val myDoNotAskOption = if (commonTarget != null) MyDoNotAskOptionForPush(aSupport!!, commonTarget) else null
-    val decision = showOkCancelDialog(title = DvcsBundle.message("action.force.push"), message = XmlStringUtil.wrapInHtml(message),
+    val decision = showOkCancelDialog(title = DvcsBundle.message("force.push.dialog.title"),
+                                      message = XmlStringUtil.wrapInHtml(message),
                                       okText = DvcsBundle.message("action.force.push"),
                                       icon = Messages.getWarningIcon(), doNotAskOption = myDoNotAskOption,
                                       project = project)
