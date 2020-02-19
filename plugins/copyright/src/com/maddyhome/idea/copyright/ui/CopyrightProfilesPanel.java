@@ -15,8 +15,8 @@
  */
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.CopyrightBundle;
 import com.intellij.copyright.CopyrightManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -75,8 +75,8 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
       ObjectUtils.doIfNotNull((MyNode)treePath.getLastPathComponent(), c -> c.getDisplayName()), true);
 
     StatusText emptyText = myTree.getEmptyText();
-    emptyText.setText(IdeBundle.message("copyright.profiles.empty"));
-    emptyText.appendSecondaryText(IdeBundle.message("copyright.profiles.add.profile"), SimpleTextAttributes.LINK_ATTRIBUTES, __ -> doAddProfile());
+    emptyText.setText(CopyrightBundle.message("copyright.profiles.empty"));
+    emptyText.appendSecondaryText(CopyrightBundle.message("copyright.profiles.add.profile"), SimpleTextAttributes.LINK_ATTRIBUTES, __ -> doAddProfile());
     String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
     if (!shortcutText.isEmpty()) {
       emptyText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
@@ -115,7 +115,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
 
   @Override
   public String getDisplayName() {
-    return IdeBundle.message("configurable.CopyrightProfilesPanel.display.name");
+    return CopyrightBundle.message("configurable.CopyrightProfilesPanel.display.name");
   }
 
   @Override
@@ -180,8 +180,8 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
   @Nullable
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
-    result.add(new DumbAwareAction(IdeBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.text.add"),
-                                   IdeBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.description.add"),
+    result.add(new DumbAwareAction(CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.text.add"),
+                                   CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.description.add"),
                                    IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
@@ -194,8 +194,8 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
     });
     result.add(new MyDeleteAction());
     result.add(new DumbAwareAction(
-      IdeBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.text.copy"),
-      IdeBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.description.copy"),
+      CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.text.copy"),
+      CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.description.copy"),
       PlatformIcons.COPY_ICON) {
       {
         registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myTree);
@@ -220,8 +220,8 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
         event.getPresentation().setEnabled(getSelectedObject() != null);
       }
     });
-    result.add(new DumbAwareAction(IdeBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.text.import"),
-                                   IdeBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.description.import"),
+    result.add(new DumbAwareAction(CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.text.import"),
+                                   CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.description.import"),
                                    PlatformIcons.IMPORT_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
@@ -322,7 +322,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
 
   @Override
   protected String getEmptySelectionString() {
-    return IdeBundle.message("copyright.profiles.select.profile");
+    return CopyrightBundle.message("copyright.profiles.select.profile");
   }
 
   void addItemsChangeListener(final Runnable runnable) {

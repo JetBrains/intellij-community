@@ -14,7 +14,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectConfigurable groupId="editor" groupWeight="110" dynamic="true"
-                         bundle="messages.IdeBundle"
+                         bundle="messages.CopyrightBundle"
                          key="configurable.CopyrightProjectConfigurable.display.name"
                          id="copyright"
                          instance="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable"/>
@@ -54,4 +54,5 @@
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
   </actions>
+  <resource-bundle>messages.CopyrightBundle</resource-bundle>
 </idea-plugin>
