@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.internal.statistic.utils.StatisticsUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.fileTypes.FileType;
@@ -16,6 +17,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.search.FileTypeIndex;
@@ -40,7 +42,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   @NotNull
@@ -59,15 +61,22 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
       }
       promises.add(ReadAction.nonBlocking(() -> {
         IProjectStore stateStore = ProjectKt.getStateStore(project);
+        Ref<Integer> counter = new Ref<>(0);
         FileTypeIndex.processFiles(fileType, file -> {
           ProgressManager.checkCanceled();
           //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
           if (!stateStore.isProjectFile(file)) {
-            events.add(new MetricEvent("file.in.project", newFeatureUsageData(fileType)));
-            return false;
+            counter.set(counter.get() + 1);
           }
           return true;
         }, GlobalSearchScope.projectScope(project));
+
+        Integer count = counter.get();
+        if (count != 0) {
+          FeatureUsageData data = newFeatureUsageData(fileType);
+          data.addCount(StatisticsUtil.getNextPowerOfTwo(count));
+          events.add(new MetricEvent("file.in.project", data));
+        }
       }).wrapProgress(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
     }
     return ((CancellablePromise<Set<MetricEvent>>)Promises.all(promises).then(o -> events));

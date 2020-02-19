@@ -277,3 +277,12 @@ fun getPluginType(clazz: Class<*>): PluginType {
   val listed = !plugin.isBundled && isSafeToReportFrom(plugin)
   return if (listed) PluginType.LISTED else PluginType.NOT_LISTED
 }
+
+object StatisticsUtil {
+  /**
+   * Anonymizes sensitive project properties by rounding it to the next power of two
+   * @see com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
+   */
+  @JvmStatic
+  fun getNextPowerOfTwo(value: Int): Int = if (value <= 1) 1 else Integer.highestOneBit(value - 1) shl 1
+}

@@ -16,6 +16,7 @@
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getCountingUsage
 import org.junit.Test
@@ -89,6 +90,20 @@ class StatisticsUtilTest {
   fun `test counting usage if value is less than the first step`() {
     val steps = listOf(1, 5, 10)
     assertCountingUsage("test.value.count.<1", 0, steps)
+  }
+
+  @Test
+  fun `test next power of two`() {
+    testPowerOfTwo(0, 1)
+    testPowerOfTwo(-5, 1)
+    testPowerOfTwo(1, 1)
+    testPowerOfTwo(2, 2)
+    testPowerOfTwo(3, 4)
+    testPowerOfTwo(5, 8)
+  }
+
+  private fun testPowerOfTwo(value: Int, expected: Int) {
+    assertEquals(expected, getNextPowerOfTwo(value), "Incorrect key for value `$value`")
   }
 
   private fun assertCountingUsage(expectedKey: String, actualValue: Int, steps: List<Int>) {
