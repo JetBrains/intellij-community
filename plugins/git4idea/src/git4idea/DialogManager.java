@@ -4,6 +4,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,9 +24,9 @@ public class DialogManager {
     dialogManager().showDialog(dialog);
   }
 
-  public static int showMessage(@NotNull final String description,
-                                @NotNull final String title,
-                                final String @NotNull [] options,
+  public static int showMessage(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) final String description,
+                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) final String title,
+                                final String @NotNull @Nls(capitalization = Nls.Capitalization.Title) [] options,
                                 final int defaultButtonIndex,
                                 final int focusedButtonIndex,
                                 @Nullable final Icon icon,
@@ -34,22 +35,23 @@ public class DialogManager {
   }
 
   public static int showOkCancelDialog(@NotNull Project project,
-                                       @NotNull String message,
-                                       @NotNull String title,
-                                       @NotNull String okButtonText,
-                                       @NotNull String cancelButtonText,
+                                       @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                       @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                       @NotNull @Nls(capitalization = Nls.Capitalization.Title) String okButtonText,
+                                       @NotNull @Nls(capitalization = Nls.Capitalization.Title) String cancelButtonText,
                                        @Nullable Icon icon) {
     return dialogManager().showMessageDialog(project, message, title, new String[]{okButtonText, cancelButtonText}, 0, icon);
   }
 
   public static int showYesNoCancelDialog(@NotNull Project project,
-                                          @NotNull String message,
-                                          @NotNull String title,
-                                          @NotNull String yesButtonText,
-                                          @NotNull String noButtonText,
-                                          @NotNull String cancelButtonText,
+                                          @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String yesButtonText,
+                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String noButtonText,
+                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String cancelButtonText,
                                           @Nullable Icon icon) {
-    return dialogManager().showMessageDialog(project, message, title, new String[]{yesButtonText, noButtonText, cancelButtonText}, 0, 1, icon);
+    return dialogManager()
+      .showMessageDialog(project, message, title, new String[]{yesButtonText, noButtonText, cancelButtonText}, 0, 1, icon);
   }
 
   protected void showDialog(@NotNull DialogWrapper dialog) {
@@ -57,27 +59,27 @@ public class DialogManager {
   }
 
   protected int showMessageDialog(@NotNull Project project,
-                                  @NotNull String message,
-                                  @NotNull String title,
-                                  String @NotNull [] options,
+                                  @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                  @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                  String @NotNull @Nls(capitalization = Nls.Capitalization.Title) [] options,
                                   int defaultButtonIndex,
                                   @Nullable Icon icon) {
     return Messages.showDialog(project, message, title, options, defaultButtonIndex, icon);
   }
 
   protected int showMessageDialog(@NotNull Project project,
-                                  @NotNull String message,
-                                  @NotNull String title,
-                                  String @NotNull [] options,
+                                  @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                  @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                  String @NotNull @Nls(capitalization = Nls.Capitalization.Title) [] options,
                                   int defaultButtonIndex,
                                   int focusedButtonIndex,
                                   @Nullable Icon icon) {
     return Messages.showDialog(project, message, title, null, options, defaultButtonIndex, focusedButtonIndex, icon);
   }
 
-  protected int showMessageDialog(@NotNull String description,
-                                  @NotNull String title,
-                                  String @NotNull [] options,
+  protected int showMessageDialog(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                                  @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                  String @NotNull @Nls(capitalization = Nls.Capitalization.Title) [] options,
                                   int defaultButtonIndex,
                                   int focusedButtonIndex,
                                   @Nullable Icon icon,
