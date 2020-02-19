@@ -21,6 +21,8 @@ public class AllIcons {
     /** 16x16 */ public static final Icon AddMulticaret = load("/actions/AddMulticaret.svg");
     /** 16x16 */ public static final Icon Amend = load("/actions/amend.svg");
     /** 16x16 */ public static final Icon Annotate = load("/actions/annotate.svg");
+    /** 16x16 */ public static final Icon ArrowCollapse = load("/actions/arrowCollapse.svg");
+    /** 16x16 */ public static final Icon ArrowExpand = load("/actions/arrowExpand.svg");
     /** 16x16 */ public static final Icon Back = load("/actions/back.svg");
     /** 16x16 */ public static final Icon BuildLoadChanges = load("/actions/buildLoadChanges.svg");
     /** 16x16 */ public static final Icon Cancel = load("/actions/cancel.svg");
