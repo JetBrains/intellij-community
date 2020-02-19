@@ -465,7 +465,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (JUnitConfiguration.BY_SOURCE_CHANGES.equals(id)) {
       return new TestsByChanges(configuration, environment);
     }
-    LOG.info(ExecutionBundle.message("configuration.not.specified.message", id));
+    LOG.info(JUnitBundle.message("configuration.not.specified.message", id));
     return null;
   }
 

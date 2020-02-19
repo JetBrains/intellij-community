@@ -6,6 +6,7 @@ import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
@@ -37,14 +38,14 @@ class JUnit5MalformedRepeatedTestInspection : AbstractBaseJavaLocalInspectionToo
         if (repeatedAnno != null) {
           val testAnno = AnnotationUtil.findAnnotations(method, JUnitUtil.TEST5_JUPITER_ANNOTATIONS)
           if (testAnno.isNotEmpty()) {
-            holder.registerProblem(testAnno[0], InspectionGadgetsBundle.message("junit5.malformed.repetition.description.suspicious.combination"),
+            holder.registerProblem(testAnno[0], JUnitBundle.message("junit5.malformed.repetition.description.suspicious.combination"),
                                    DeleteElementFix(testAnno[0]))
           }
           val repeatedNumber = repeatedAnno.findDeclaredAttributeValue("value")
           if (repeatedNumber is PsiExpression) {
             val constant = ExpressionUtils.computeConstantExpression(repeatedNumber)
             if (constant is Int && constant <= 0) {
-              holder.registerProblem(repeatedNumber, InspectionGadgetsBundle.message("junit5.malformed.repetition.description.positive.number"))
+              holder.registerProblem(repeatedNumber, JUnitBundle.message("junit5.malformed.repetition.description.positive.number"))
             }
           }
         }
@@ -55,20 +56,20 @@ class JUnit5MalformedRepeatedTestInspection : AbstractBaseJavaLocalInspectionToo
           if (repetitionInfoParam != null) {
             if (MetaAnnotationUtil.isMetaAnnotated(method, Annotations.NON_REPEATED_ANNOTATIONS)) {
               holder.registerProblem(repetitionInfoParam.nameIdentifier ?: repetitionInfoParam,
-                                     InspectionGadgetsBundle.message("junit5.malformed.repetition.description.injected.for.repeatedtest"))
+                                     JUnitBundle.message("junit5.malformed.repetition.description.injected.for.repeatedtest"))
             }
             else {
               val anno = MetaAnnotationUtil.findMetaAnnotations(method, JUnitUtil.TEST5_STATIC_CONFIG_METHODS).findFirst().orElse(null)
               if (anno != null) {
                 val qName = anno.qualifiedName
                 holder.registerProblem(repetitionInfoParam.nameIdentifier ?: repetitionInfoParam,
-                                       InspectionGadgetsBundle.message(
+                                       JUnitBundle.message(
                                          "junit5.malformed.repetition.description.injected.for.each", StringUtil.getShortName(qName!!)))
               }
               else {
                 if (MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_CONFIG_METHODS) && method.containingClass?.methods?.find { MetaAnnotationUtil.isMetaAnnotated(it, Annotations.NON_REPEATED_ANNOTATIONS)} != null) {
                   holder.registerProblem(repetitionInfoParam.nameIdentifier ?: repetitionInfoParam,
-                                         InspectionGadgetsBundle.message("junit5.malformed.repetition.description.injected.for.test"))
+                                         JUnitBundle.message("junit5.malformed.repetition.description.injected.for.test"))
                 }
               }
             }

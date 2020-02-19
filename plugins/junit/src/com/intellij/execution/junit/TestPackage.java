@@ -250,7 +250,7 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     return data.getPackageName().trim().length() > 0
            ? ExecutionBundle.message("test.in.scope.presentable.text", data.getPackageName())
-           : ExecutionBundle.message("all.tests.scope.presentable.text");
+           : JUnitBundle.message("all.tests.scope.presentable.text");
   }
 
   @Override
@@ -273,7 +273,7 @@ public class TestPackage extends TestObject {
     final String packageName = getConfiguration().getPersistentData().getPackageName();
     final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);
     if (aPackage == null) {
-      throw new RuntimeConfigurationWarning(ExecutionBundle.message("package.does.not.exist.error.message", packageName));
+      throw new RuntimeConfigurationWarning(JUnitBundle.message("package.does.not.exist.error.message", packageName));
     }
     if (getSourceScope() == null) {
       getConfiguration().getConfigurationModule().checkForWarning();

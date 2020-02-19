@@ -2,7 +2,7 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
@@ -39,12 +39,12 @@ public class JUnitConfigurationType implements ConfigurationType {
   @NotNull
   @Override
   public String getDisplayName() {
-    return ExecutionBundle.message("junit.configuration.display.name");
+    return JUnitBundle.message("junit.configuration.display.name");
   }
 
   @Override
   public String getConfigurationTypeDescription() {
-    return ExecutionBundle.message("junit.configuration.description");
+    return JUnitBundle.message("junit.configuration.description");
   }
 
   @Override

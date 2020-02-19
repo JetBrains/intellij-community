@@ -4,6 +4,7 @@ package com.intellij.execution.junit2.configuration;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitConfiguration;
@@ -255,7 +256,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     final DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
     myChangeListLabeledComponent.getComponent().setModel(model);
-    model.addElement(ExecutionBundle.message("test.discovery.by.all.changes.combo.item"));
+    model.addElement(JUnitBundle.message("test.discovery.by.all.changes.combo.item"));
 
     if (!project.isDefault()) {
       final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
@@ -724,7 +725,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       catch (JUnitUtil.NoJUnitException e) {
         throw new NoFilterException(new MessagesEx.MessageInfo(getProject(),
                                                                e.getMessage(),
-                                                               ExecutionBundle.message("cannot.browse.test.inheritors.dialog.title")));
+                                                               JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
       }
     }
 
@@ -758,12 +759,12 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
         final String moduleName = moduleSelector.getModuleName();
         throw new NoFilterException(new MessagesEx.MessageInfo(
           project,
-          moduleName.isEmpty() ? "No module selected" : ExecutionBundle.message("module.does.not.exists", moduleName, project.getName()),
-          ExecutionBundle.message("cannot.browse.test.inheritors.dialog.title")));
+          moduleName.isEmpty() ? "No module selected" : JUnitBundle.message("module.does.not.exists", moduleName, project.getName()),
+          JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
       }
       final ClassFilter.ClassFilterWithScope classFilter;
       try {
-        final JUnitConfiguration configurationCopy = new JUnitConfiguration(ExecutionBundle.message("default.junit.configuration.name"), getProject());
+        final JUnitConfiguration configurationCopy = new JUnitConfiguration(JUnitBundle.message("default.junit.configuration.name"), getProject());
         applyEditorTo(configurationCopy);
         SourceScope sourceScope = SourceScope.modulesWithDependencies(configurationCopy.getModules());
         GlobalSearchScope globalSearchScope = sourceScope.getGlobalSearchScope();
@@ -785,8 +786,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       catch (JUnitUtil.NoJUnitException e) {
         throw new NoFilterException(new MessagesEx.MessageInfo(
           module.getProject(),
-          ExecutionBundle.message("junit.not.found.in.module.error.message", module.getName()),
-          ExecutionBundle.message("cannot.browse.test.inheritors.dialog.title")));
+          JUnitBundle.message("junit.not.found.in.module.error.message", module.getName()),
+          JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
       }
       return classFilter;
     }

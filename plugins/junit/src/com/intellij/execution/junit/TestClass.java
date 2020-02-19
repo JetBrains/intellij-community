@@ -18,6 +18,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
@@ -93,7 +94,7 @@ class TestClass extends TestObject {
     super.checkConfiguration();
     final String testClassName = getConfiguration().getPersistentData().getMainClassName();
     final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
-    final PsiClass testClass = configurationModule.checkModuleAndClassName(testClassName, ExecutionBundle.message("no.test.class.specified.error.text"));
+    final PsiClass testClass = configurationModule.checkModuleAndClassName(testClassName, JUnitBundle.message("no.test.class.specified.error.text"));
     if (!JUnitUtil.isTestClass(testClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.isnt.test.class.error.message", testClassName));
     }

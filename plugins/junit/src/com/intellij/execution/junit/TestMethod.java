@@ -103,12 +103,12 @@ class TestMethod extends TestObject {
     final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String testClass = data.getMainClassName();
-    final PsiClass psiClass = configurationModule.checkModuleAndClassName(testClass, ExecutionBundle.message("no.test.class.specified.error.text"));
+    final PsiClass psiClass = configurationModule.checkModuleAndClassName(testClass, JUnitBundle.message("no.test.class.specified.error.text"));
 
     final String methodName = data.getMethodName();
     String methodNameWithSignature = data.getMethodNameWithSignature();
     if (methodName == null || methodName.trim().length() == 0) {
-      throw new RuntimeConfigurationError(ExecutionBundle.message("method.name.not.specified.error.message"));
+      throw new RuntimeConfigurationError(JUnitBundle.message("method.name.not.specified.error.message"));
     }
     final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(psiClass);
     boolean found = false;
@@ -120,7 +120,7 @@ class TestMethod extends TestObject {
       if (JUnitUtil.isTestAnnotated(method)) testAnnotated = true;
     }
     if (!found) {
-      throw new RuntimeConfigurationWarning(ExecutionBundle.message("test.method.doesnt.exist.error.message", methodName));
+      throw new RuntimeConfigurationWarning(JUnitBundle.message("test.method.doesnt.exist.error.message", methodName));
     }
 
     if (!testAnnotated && 
@@ -129,12 +129,12 @@ class TestMethod extends TestObject {
       try {
         final PsiClass testCaseClass = JUnitUtil.getTestCaseClass(configurationModule.getModule());
         if (!psiClass.isInheritor(testCaseClass, true)) {
-          throw new RuntimeConfigurationError(ExecutionBundle.message("class.isnt.inheritor.of.testcase.error.message", testClass));
+          throw new RuntimeConfigurationError(JUnitBundle.message("class.isnt.inheritor.of.testcase.error.message", testClass));
         }
       }
       catch (JUnitUtil.NoJUnitException e) {
         throw new RuntimeConfigurationWarning(
-          ExecutionBundle.message("junit.jar.not.found.in.module.class.path.error.message", configurationModule.getModuleName()));
+          JUnitBundle.message("junit.jar.not.found.in.module.class.path.error.message", configurationModule.getModuleName()));
       }
     }
   }
