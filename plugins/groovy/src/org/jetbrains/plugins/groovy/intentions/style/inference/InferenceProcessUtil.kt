@@ -239,14 +239,16 @@ fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterLis
   return newMethod
 }
 
-fun convertToGroovyMethod(method: PsiMethod): GrMethod {
+fun convertToGroovyMethod(method: PsiMethod): GrMethod? {
   // because method may be ClsMethod
   val factory = GroovyPsiElementFactory.getInstance(method.project)
   return if (method.isConstructor) {
-    factory.createConstructorFromText(method.name, method.text, method)
+    val constructorBody = method.body?.text ?: return null
+    factory.createConstructorFromText(method.name, constructorBody, method)
   }
   else {
-    factory.createMethodFromText(method.text, method)
+    val methodText = method.text ?: return null
+    factory.createMethodFromText(methodText, method)
   }
 }
 

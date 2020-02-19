@@ -23,7 +23,7 @@ fun runInferenceProcess(method: GrMethod, options: SignatureInferenceOptions): G
   val originalMethod = getOriginalMethod(method)
   val overridableMethod = findOverridableMethod(originalMethod)
   if (overridableMethod != null) {
-    return convertToGroovyMethod(overridableMethod)
+    return convertToGroovyMethod(overridableMethod) ?: method
   }
   val newOptions = options.copy(calls = lazy(NONE) {
     ReferencesSearch.search(originalMethod, options.searchScope).findAll().sortedBy { it.element.textOffset }
