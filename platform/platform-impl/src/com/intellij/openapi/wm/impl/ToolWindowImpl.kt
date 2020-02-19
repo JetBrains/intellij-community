@@ -186,7 +186,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   override fun getDisposable() = parentDisposable
 
   override fun remove() {
-    toolWindowManager.doUnregisterToolWindow(id)
+    @Suppress("DEPRECATION")
+    toolWindowManager.unregisterToolWindow(id)
   }
 
   override fun activate(runnable: Runnable?) {

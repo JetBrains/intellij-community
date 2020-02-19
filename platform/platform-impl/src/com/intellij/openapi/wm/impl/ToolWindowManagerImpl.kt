@@ -1000,9 +1000,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   internal fun doUnregisterToolWindow(id: String) {
-    if (LOG.isDebugEnabled) {
-      LOG.debug("enter: unregisterToolWindow($id)")
-    }
+    LOG.debug { "enter: unregisterToolWindow($id)" }
 
     ApplicationManager.getApplication().assertIsDispatchThread()
 
