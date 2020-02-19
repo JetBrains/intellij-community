@@ -502,7 +502,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
             String value = elementChild.getAttributeValue("value");
             if (name != null) {
               if (name.equals("os")) {
-                if (!isComponentSuitableForOs(value)) {
+                if (value != null && !isSuitableForOs(value)) {
                   continue loop;
                 }
               }
@@ -1003,8 +1003,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return "PluginDescriptor(name=" + myName + ", id=" + myId + ", path=" + myPath + ")";
   }
 
-  private static boolean isComponentSuitableForOs(@Nullable String os) {
-    if (StringUtil.isEmpty(os)) {
+  private static boolean isSuitableForOs(@NotNull String os) {
+    if (os.isEmpty()) {
       return true;
     }
 
@@ -1069,6 +1069,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         }
 
         Element child = (Element)item;
+
+        String os = child.getAttributeValue("os");
+        if (os != null && !isSuitableForOs(os)) {
+          continue;
+        }
+
         String listenerClassName = child.getAttributeValue("class");
         String topicClassName = child.getAttributeValue("topic");
         if (listenerClassName == null || topicClassName == null) {
@@ -1282,7 +1288,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         String os = extensionElement.getAttributeValue("os");
         if (os != null) {
           extensionElement.removeAttribute("os");
-          if (!isComponentSuitableForOs(os)) {
+          if (!isSuitableForOs(os)) {
             continue;
           }
         }
