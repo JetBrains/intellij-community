@@ -22,9 +22,13 @@ public class ResolveUtil {
   public static boolean processFunctionDeclarations(@Nullable PsiElement element, @NotNull TextRange lastParentTextRange,
                                                     @NotNull PsiScopeProcessor processor, @NotNull ResolveState state) {
     if (element == null) return true;
-    for (PsiElement e = element; e != null; e = e.getPrevSibling()) {
-      if (violateTextRangeRestrictions(e.getTextRange(), lastParentTextRange)) continue;
-      if (!processor.execute(e, state) || (!violateRestrictions(e) && !processFunctionDeclarations(e.getLastChild(), lastParentTextRange,
+    if (!processor.execute(element, state)) return false;
+    PsiElement[] children = element.getChildren();
+    if (children.length == 0) return true;
+    for (int i = children.length - 1; i >= 0; i--) {
+      PsiElement child = children[i];
+      if (violateTextRangeRestrictions(child.getTextRange(), lastParentTextRange)) continue;
+      if (!processor.execute(child, state) || (!violateRestrictions(child) && !processFunctionDeclarations(child.getLastChild(), lastParentTextRange,
                                                                                                    processor, state))) {
         return false;
       }
@@ -37,13 +41,11 @@ public class ResolveUtil {
                                  @NotNull ResolveState substitutor,
                                  @Nullable PsiElement lastParent,
                                  @NotNull PsiElement place) {
-    PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
-
-    while (run != null) {
-      if (run instanceof ShCompositeElement && !run.processDeclarations(processor, substitutor, element, place)) {
-        return false;
-      }
-      run = run.getPrevSibling();
+    PsiElement[] children = element.getChildren();
+    if (children.length == 0) return true;
+    for (int i = children.length - 1; i >= 0; i--) {
+      PsiElement child = children[i];
+      if (!child.processDeclarations(processor, substitutor, element, place)) return false;
     }
     return true;
   }

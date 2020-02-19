@@ -13,7 +13,7 @@ public class ShFunctionDeclarationProcessor implements PsiScopeProcessor {
   private final String myFunctionName;
   private ShFunctionName myResult;
 
-  public ShFunctionDeclarationProcessor(String name) {
+  public ShFunctionDeclarationProcessor(@NotNull String name) {
     myFunctionName = name;
   }
 

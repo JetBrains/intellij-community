@@ -32,7 +32,7 @@ public class ShFile extends PsiFileBase {
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    return ResolveUtil.processFunctionDeclarations(this.getLastChild(), place.getTextRange(), processor, state);
+    return ResolveUtil.processFunctionDeclarations(this, place.getTextRange(), processor, state);
   }
 
   @Nullable
