@@ -190,9 +190,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
     try {
       myMap.close();
     }
-    catch (IOException | RuntimeException e) {
-      LOG.info(e);
-    }
+    catch (Exception ignored) { }
     try {
       IOUtil.deleteAllFilesStartingWith(getStorageFile().toFile());
       initMapAndCache();
