@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
 import com.amazon.ion.IonReader
@@ -72,6 +72,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
 
     val bindings = bindings
     val properties = properties
+    @Suppress("ReplaceManualRangeWithIndicesCalls")
     for (i in 0 until bindings.size) {
       val property = properties[i]
       val binding = bindings[i]

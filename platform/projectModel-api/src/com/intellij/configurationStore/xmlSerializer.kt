@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
@@ -23,10 +23,12 @@ inline fun <reified T: Any> deserialize(element: Element): T = jdomSerializer.de
 
 fun <T> Element.deserialize(clazz: Class<T>): T = jdomSerializer.deserialize(this, clazz)
 
-fun Element.deserializeInto(bean: Any) = jdomSerializer.deserializeInto(bean, this)
+fun Element.deserializeInto(bean: Any) {
+  jdomSerializer.deserializeInto(bean, this)
+}
 
 @JvmOverloads
-fun <T> deserializeAndLoadState(component: PersistentStateComponent<T>, element: Element, clazz: Class<T> = ComponentSerializationUtil.getStateClass<T>(component::class.java)) {
+fun <T> deserializeAndLoadState(component: PersistentStateComponent<T>, element: Element, clazz: Class<T> = ComponentSerializationUtil.getStateClass(component::class.java)) {
   val state = jdomSerializer.deserialize(element, clazz)
   (state as? BaseState)?.resetModificationCount()
   component.loadState(state)
@@ -43,6 +45,7 @@ fun serializeStateInto(component: PersistentStateComponent<*>, element: Element)
   }
 }
 
+@ApiStatus.Internal
 interface JdomSerializer {
   fun <T : Any> serialize(obj: T, filter: SerializationFilter?, createElementIfEmpty: Boolean = false): Element?
 
