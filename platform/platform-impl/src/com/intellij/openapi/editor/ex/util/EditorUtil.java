@@ -668,6 +668,17 @@ public final class EditorUtil {
     return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
   }
 
+  /**
+   * Maps {@code y} to a logical line in editor (in the same way as {@link #yPositionToLogicalLine(Editor, int)} does), except that for
+   * coordinates, corresponding to block inlay locations, {@code -1} is returned.
+   */
+  public static int yToLogicalLineNoBlockInlays(@NotNull Editor editor, int y) {
+    int visualLine = editor.yToVisualLine(y);
+    int visualLineStartY = editor.visualLineToY(visualLine);
+    if (y < visualLineStartY || y >= visualLineStartY + editor.getLineHeight()) return -1;
+    return visualLine > 0 ? editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line : 0;
+  }
+
   public static boolean isAtLineEnd(@NotNull Editor editor, int offset) {
     Document document = editor.getDocument();
     if (offset < 0 || offset > document.getTextLength()) {

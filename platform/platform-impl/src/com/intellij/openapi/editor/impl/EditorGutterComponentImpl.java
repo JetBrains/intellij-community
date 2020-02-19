@@ -1676,10 +1676,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
       else {
         final int line = getLineNumAtPoint(point);
-        toolTip = provider.getToolTip(line, myEditor);
-        if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
-          TooltipController.getInstance().cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
-          myLastGutterToolTip = toolTip;
+        if (line >= 0) {
+          toolTip = provider.getToolTip(line, myEditor);
+          if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
+            TooltipController.getInstance().cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
+            myLastGutterToolTip = toolTip;
+          }
         }
       }
       showToolTip(toolTip, point, Balloon.Position.atRight);
@@ -1760,7 +1762,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           EditorGutterAction action = myProviderToListener.get(provider);
           if (action != null) {
             int line = getLineNumAtPoint(e.getPoint());
-            cursor = action.getCursor(line);
+            if (line >= 0) {
+              cursor = action.getCursor(line);
+            }
           }
         }
       }
@@ -1811,7 +1815,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int getLineNumAtPoint(final Point clickPoint) {
-    return EditorUtil.yPositionToLogicalLine(myEditor, clickPoint);
+    return EditorUtil.yToLogicalLineNoBlockInlays(myEditor, clickPoint.y);
   }
 
   @Nullable
