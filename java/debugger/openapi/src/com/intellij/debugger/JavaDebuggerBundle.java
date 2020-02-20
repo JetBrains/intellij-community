@@ -25,7 +25,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class JavaDebuggerBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.DebuggerBundle";
+  @NonNls private static final String BUNDLE = "messages.JavaDebuggerBundle";
   private static final JavaDebuggerBundle INSTANCE = new JavaDebuggerBundle();
 
   private JavaDebuggerBundle() { super(BUNDLE); }

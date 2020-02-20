@@ -21,7 +21,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/DebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.shmem.address"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.shmem.address"/>
             </properties>
           </component>
           <component id="af504" class="javax.swing.JTextField" binding="myAddressField">
@@ -49,7 +49,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/DebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.port"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.port"/>
             </properties>
           </component>
           <component id="3f860" class="javax.swing.JTextField" binding="myPortField">
@@ -67,7 +67,7 @@
           <grid row="1" column="1" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/DebuggerBundle" key="button.debugger.settings"/>
+          <text resource-bundle="messages/JavaDebuggerBundle" key="button.debugger.settings"/>
         </properties>
       </component>
       <grid id="b10c7" binding="myTransportPanel" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -83,7 +83,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/DebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.transport"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.transport"/>
             </properties>
           </component>
           <component id="f3bb4" class="javax.swing.JRadioButton" binding="mySocketTransport">
@@ -92,7 +92,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text resource-bundle="messages/DebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.socket"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.socket"/>
             </properties>
           </component>
           <component id="3bb61" class="javax.swing.JRadioButton" binding="myShmemTransport">
@@ -100,7 +100,7 @@
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/DebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.shmem"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.shmem"/>
             </properties>
           </component>
           <hspacer id="b3e0f">
