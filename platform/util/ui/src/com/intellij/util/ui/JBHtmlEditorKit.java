@@ -25,9 +25,24 @@ import java.util.List;
 public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final Logger LOG = Logger.getInstance(JBHtmlEditorKit.class);
   static {
+    ourCommonStyle = StartupUiUtil.createStyleSheet(
+      "code { font-size: 100%; }" +  // small by Swing's default
+      "small { font-size: small; }" +  // x-small by Swing's default
+      "a { text-decoration: none;}" +
+      // override too large default margin "ul {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
+      "ul { margin-left-ltr: 10; margin-right-rtl: 10; }" +
+      // override too large default margin "ol {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
+      // Select ol margin to have the same indentation as "ul li" and "ol li" elements (seems value 22 suites well)
+      "ol { margin-left-ltr: 22; margin-right-rtl: 22; }"
+    );
+    ourNoGapsBetweenParagraphsStyle = StartupUiUtil.createStyleSheet(
+      "p { margin-top: 0; }"
+    );
     StartupUiUtil.configureHtmlKitStylesheet();
   }
   private static final ViewFactory ourViewFactory = new JBHtmlFactory();
+  private static final StyleSheet ourCommonStyle;
+  private static final StyleSheet ourNoGapsBetweenParagraphsStyle;
 
   @Override
   public Cursor getDefaultCursor() {
@@ -53,7 +68,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   public JBHtmlEditorKit(boolean noGapsBetweenParagraphs, boolean disableLinkedCss) {
     myDisableLinkedCss = disableLinkedCss;
     style = createStyleSheet();
-    if (noGapsBetweenParagraphs) style.addRule("p { margin-top: 0; }");
+    if (noGapsBetweenParagraphs) style.addStyleSheet(ourNoGapsBetweenParagraphsStyle);
     myHyperlinkListener = new HyperlinkListener() {
       @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -103,16 +118,9 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   public static StyleSheet createStyleSheet() {
     StyleSheet style = new StyleSheet();
-    style.addStyleSheet(StartupUiUtil.isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : StartupUiUtil.getDefaultHtmlKitCss());
-    style.addRule("code { font-size: 100%; }"); // small by Swing's default
-    style.addRule("small { font-size: small; }"); // x-small by Swing's default
-    style.addRule("a { text-decoration: none;}");
-    // override too large default margin "ul {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
-    style.addRule("ul { margin-left-ltr: 10; margin-right-rtl: 10; }");
-    // override too large default margin "ol {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
-    // Select ol margin to have the same indentation as "ul li" and "ol li" elements (seems value 22 suites well)
-    style.addRule("ol { margin-left-ltr: 22; margin-right-rtl: 22; }");
-
+    style.addStyleSheet(StartupUiUtil.isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle")
+                                                       : StartupUiUtil.getDefaultHtmlKitCss());
+    style.addStyleSheet(ourCommonStyle);
     return style;
   }
 
