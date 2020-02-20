@@ -480,11 +480,12 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
     if (assignedVariable == null || !hasAssignedBranch) return null;
     boolean isRightAfterDeclaration = isRightAfterDeclaration(anchor, assignedVariable);
-    if (!wasDefault || !isExhaustive) {
+    if (!wasDefault) {
       SwitchExpressionBranch defaultBranch = getVariableAssigningDefaultBranch(assignedVariable, isRightAfterDeclaration, statement);
-      if (defaultBranch == null) {
-      } else {
+      if (defaultBranch != null) {
         newBranches.add(defaultBranch);
+      } else if (!isExhaustive) {
+        return null;
       }
     }
     return new SwitchExistingVariableReplacer(assignedVariable, statement, expressionBeingSwitched, newBranches, isRightAfterDeclaration);
