@@ -310,7 +310,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     if (isMoveToPackage()) {
       String name = getTargetPackage().trim();
       if (name.length() != 0 && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(name)) {
-        throw new ConfigurationException("\'" + name + "\' is invalid destination package name");
+        throw new ConfigurationException("'" + name + "' is invalid destination package name");
       }
     }
     else {
