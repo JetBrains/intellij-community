@@ -1,17 +1,17 @@
 package com.intellij.notification.impl.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkAllNotificationsAsReadAction extends DumbAwareAction {
   public MarkAllNotificationsAsReadAction() {
-    super(VcsBundle.lazyMessage("action.MarkAllNotificationsAsReadAction.text"),
-          VcsBundle.lazyMessage("action.MarkAllNotificationsAsReadAction.description"), AllIcons.Actions.Selectall);
+    super(IdeBundle.lazyMessage("action.MarkAllNotificationsAsReadAction.text"),
+          IdeBundle.lazyMessage("action.MarkAllNotificationsAsReadAction.description"), AllIcons.Actions.Selectall);
   }
 
   @Override
