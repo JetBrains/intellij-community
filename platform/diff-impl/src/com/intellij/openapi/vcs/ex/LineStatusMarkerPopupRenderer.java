@@ -18,6 +18,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -428,7 +429,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     protected abstract void actionPerformed(@NotNull Editor editor, @NotNull Range range);
   }
 
-  public class ShowNextChangeMarkerAction extends RangeMarkerAction {
+  public class ShowNextChangeMarkerAction extends RangeMarkerAction implements LightEditCompatible {
     public ShowNextChangeMarkerAction(@NotNull Editor editor, @NotNull Range range) {
       super(editor, range, "VcsShowNextChangeMarker");
     }
@@ -447,7 +448,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
   }
 
-  public class ShowPrevChangeMarkerAction extends RangeMarkerAction {
+  public class ShowPrevChangeMarkerAction extends RangeMarkerAction implements LightEditCompatible {
     public ShowPrevChangeMarkerAction(@NotNull Editor editor, @NotNull Range range) {
       super(editor, range, "VcsShowPrevChangeMarker");
     }
@@ -466,7 +467,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
   }
 
-  public class CopyLineStatusRangeAction extends RangeMarkerAction {
+  public class CopyLineStatusRangeAction extends RangeMarkerAction implements LightEditCompatible {
     public CopyLineStatusRangeAction(@NotNull Editor editor, @NotNull Range range) {
       super(editor, range, IdeActions.ACTION_COPY);
     }
@@ -483,7 +484,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
   }
 
-  public class ShowLineStatusRangeDiffAction extends RangeMarkerAction {
+  public class ShowLineStatusRangeDiffAction extends RangeMarkerAction implements LightEditCompatible {
     public ShowLineStatusRangeDiffAction(@NotNull Editor editor, @NotNull Range range) {
       super(editor, range, IdeActions.ACTION_SHOW_DIFF_COMMON);
     }
@@ -531,7 +532,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
   }
 
-  public class ToggleByWordDiffAction extends ToggleAction implements DumbAware {
+  public class ToggleByWordDiffAction extends ToggleAction implements DumbAware, LightEditCompatible {
     @NotNull private final Editor myEditor;
     @NotNull private final Range myRange;
     @Nullable private final Point myMousePosition;

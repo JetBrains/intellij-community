@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.ex
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
@@ -115,7 +116,7 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
     override fun getFileType(): FileType = tracker.virtualFile.fileType
 
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
-      : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
+      : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK), LightEditCompatible {
       override fun isEnabled(editor: Editor, range: Range): Boolean = true
 
       override fun actionPerformed(editor: Editor, range: Range) {
