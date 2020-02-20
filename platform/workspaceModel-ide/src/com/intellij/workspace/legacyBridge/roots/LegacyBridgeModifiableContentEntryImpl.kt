@@ -228,7 +228,7 @@ internal class LegacyBridgeModifiableContentEntryImpl(
     addSourceFolder(VirtualFileUrlManager.fromUrl(url), type, properties)
 
   override fun getFile(): VirtualFile? = currentContentEntry.value.file
-  override fun getUrl(): String = currentContentEntry.value.url
+  override fun getUrl(): String = contentEntryUrl.url
   override fun getSourceFolders(): Array<SourceFolder> = currentContentEntry.value.sourceFolders
   override fun getSourceFolders(rootType: JpsModuleSourceRootType<*>): List<SourceFolder> =
     currentContentEntry.value.getSourceFolders(rootType)
