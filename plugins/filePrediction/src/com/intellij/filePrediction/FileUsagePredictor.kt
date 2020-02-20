@@ -41,7 +41,7 @@ internal object FileUsagePredictor {
   }
 
   private fun calculateExternalReferences(project: Project, prevFile: VirtualFile?): ExternalReferencesResult {
-    return ApplicationManager.getApplication().runReadAction(Computable<ExternalReferencesResult> {
+    return ApplicationManager.getApplication().runReadAction(Computable {
       if (prevFile?.isValid == false) {
         return@Computable FAILED_COMPUTATION
       }
@@ -68,16 +68,18 @@ internal object FileUsagePredictor {
   }
 
   private fun selectFileCandidates(project: Project, currentFile: VirtualFile, refs: Set<VirtualFile>): List<VirtualFile> {
-    val result = ArrayList<VirtualFile>()
-    addWithLimit(refs.iterator(), result, currentFile, MAX_CANDIDATE / 2)
+    return ApplicationManager.getApplication().runReadAction(Computable {
+      val result = ArrayList<VirtualFile>()
+      addWithLimit(refs.iterator(), result, currentFile, MAX_CANDIDATE / 2)
 
-    val fileIndex = FileIndexFacade.getInstance(project)
-    var parent = currentFile.parent
-    while (parent != null && parent.isDirectory && result.size < MAX_CANDIDATE && fileIndex.isInProjectScope(parent)) {
-      addWithLimit(parent.children.iterator(), result, currentFile, MAX_CANDIDATE)
-      parent = parent.parent
-    }
-    return result
+      val fileIndex = FileIndexFacade.getInstance(project)
+      var parent = currentFile.parent
+      while (parent != null && parent.isDirectory && result.size < MAX_CANDIDATE && fileIndex.isInProjectScope(parent)) {
+        addWithLimit(parent.children.iterator(), result, currentFile, MAX_CANDIDATE)
+        parent = parent.parent
+      }
+      result
+    })
   }
 
   private fun addWithLimit(from: Iterator<VirtualFile>, to: MutableList<VirtualFile>, skip: VirtualFile, limit: Int) {
