@@ -351,7 +351,7 @@ public class LaterInvocator {
 
   public static void pollWriteThreadEventsOnce() {
     LOG.assertTrue(!SwingUtilities.isEventDispatchThread());
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteThread());
 
     ourWtQueue.flushNow();
   }

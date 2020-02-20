@@ -14,11 +14,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.*;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -60,9 +60,9 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
 
   private final boolean isSync;
 
+  private final boolean isModal;
+
   private final ThreadToUse myThreadToUse;
-  @Nullable
-  private final BiConsumer<P, Runnable> myBlockEdtRunnable;
   @Nullable
   private final CompletableFuture<P> myProgressIndicatorFuture;
 
@@ -106,24 +106,27 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
    * @param computation runnable to be executed under progress
    */
   public ProgressRunner(@NotNull Function<? super ProgressIndicator, R> computation) {
-    this(computation, false, ThreadToUse.POOLED, null, null);
+    this(computation, false, false, ThreadToUse.POOLED, null);
   }
 
   private ProgressRunner(@NotNull Function<? super ProgressIndicator, R> computation,
                          boolean sync,
-                         @NotNull ThreadToUse use,
-                         @Nullable CompletableFuture<P> progressIndicatorFuture,
-                         @Nullable BiConsumer<P, Runnable> blockEdtRunnable) {
+                         boolean modal, @NotNull ThreadToUse use,
+                         @Nullable CompletableFuture<P> progressIndicatorFuture) {
     myComputation = computation;
     isSync = sync;
+    isModal = modal;
     myThreadToUse = use;
     myProgressIndicatorFuture = progressIndicatorFuture;
-    myBlockEdtRunnable = blockEdtRunnable;
   }
 
   @NotNull
   public ProgressRunner<R, P> sync() {
-    return new ProgressRunner<>(myComputation, true, myThreadToUse, myProgressIndicatorFuture, myBlockEdtRunnable);
+    return new ProgressRunner<>(myComputation, true, isModal, myThreadToUse, myProgressIndicatorFuture);
+  }
+
+  public ProgressRunner<R, P> modal() {
+    return new ProgressRunner<>(myComputation, isSync, true, myThreadToUse, myProgressIndicatorFuture);
   }
 
   /**
@@ -133,7 +136,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
    */
   @NotNull
   public ProgressRunner<R, P> onThread(@NotNull ThreadToUse thread) {
-    return new ProgressRunner<>(myComputation, isSync, thread, myProgressIndicatorFuture, myBlockEdtRunnable);
+    return new ProgressRunner<>(myComputation, isSync, isModal, thread, myProgressIndicatorFuture);
   }
 
   /**
@@ -143,7 +146,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
    */
   @NotNull
   public <P1 extends ProgressIndicator> ProgressRunner<R, P1> withProgress(@NotNull P1 progressIndicator) {
-    return new ProgressRunner<>(myComputation, isSync, myThreadToUse, CompletableFuture.completedFuture(progressIndicator), null);
+    return new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, CompletableFuture.completedFuture(progressIndicator));
   }
 
   /**
@@ -153,21 +156,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
    */
   @NotNull
   public <P1 extends ProgressIndicator> ProgressRunner<R, P1> withProgress(@NotNull CompletableFuture<P1> progressIndicatorFuture) {
-    return new ProgressRunner<>(myComputation, isSync, myThreadToUse, progressIndicatorFuture, null);
-  }
-
-  /**
-   * Specifies an action to be executed to open modal progress window and start pumping EDT events. Only works in case
-   * if this progress runner is called from EDT with IW lock obtained.
-   *
-   * @param blockEdtRunnable modal blocking action, usually {@code ProgressWindow::startBlocking}
-   */
-  @NotNull
-  public ProgressRunner<R, P> withBlockingEdtStart(@NotNull BiConsumer<P, Runnable> blockEdtRunnable) {
-    if (myProgressIndicatorFuture == null) {
-      throw new IllegalStateException("Blocking with no progress indicator is strange");
-    }
-    return new ProgressRunner<>(myComputation, isSync, myThreadToUse, myProgressIndicatorFuture, blockEdtRunnable);
+    return new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, progressIndicatorFuture);
   }
 
   /**
@@ -224,13 +213,11 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
       });
     }
 
-    boolean shouldWaitForModality = myBlockEdtRunnable != null && !forceSyncExec;
-
-    final Semaphore modalityEntered = new Semaphore(1);
+    final Semaphore modalityEntered = new Semaphore(forceSyncExec ? 0 : 1);
 
     Supplier<R> onThreadCallable = () -> {
       Ref<R> result = Ref.create();
-      if (shouldWaitForModality) {
+      if (isModal) {
         modalityEntered.waitFor();
       }
 
@@ -261,7 +248,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
       resultFuture = legacyExec(progressFuture, modalityEntered, onThreadCallable);
     }
     else {
-      resultFuture = normalExec(progressFuture, modalityEntered, onThreadCallable, shouldWaitForModality);
+      resultFuture = normalExec(progressFuture, modalityEntered, onThreadCallable);
     }
 
     return resultFuture.handle((result, e) -> {
@@ -272,20 +259,23 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
     });
   }
 
-  // The case of sync exec from the EDT without the ability to poll events (no ProgressWindow#startBlocking or presence of Write Action)
+  // The case of sync exec from the EDT without the ability to poll events (no BlockingProgressIndicator#startBlocking or presence of Write Action)
   // must be handled by very synchronous direct call (alt: use proper progress indicator, i.e. PotemkinProgress or ProgressWindow).
   // Note: running sync task on pooled thread from EDT can lead to deadlock if pooled thread will try to invokeAndWait.
   private boolean checkIfForceDirectExecNeeded() {
-    if (!isSync && myBlockEdtRunnable != null) {
-      throw new IllegalStateException("Async execution with blocking EDT event pumping is nonsense, might lead to deadlock");
+    if (isSync && EDT.isCurrentThreadEdt() && !ApplicationManager.getApplication().isWriteThread()) {
+      throw new IllegalStateException("Running sync tasks on pure EDT (w/o IW lock) is dangerous for several reasons.");
+    }
+    if (!isSync && isModal && EDT.isCurrentThreadEdt()) {
+      throw new IllegalStateException("Running async modal tasks from EDT is impossible: modal implies sync dialog show + polling events");
     }
 
     boolean forceDirectExec = isSync && ApplicationManager.getApplication().isDispatchThread()
-                            && (ApplicationManager.getApplication().isWriteAccessAllowed() || myBlockEdtRunnable == null);
+                            && (ApplicationManager.getApplication().isWriteAccessAllowed() || !isModal);
     if (forceDirectExec) {
-      String reason = ApplicationManager.getApplication().isWriteAccessAllowed() ? "inside Write Action" : "no ProgressWindow supplied";
+      String reason = ApplicationManager.getApplication().isWriteAccessAllowed() ? "inside Write Action" : "not modal execution";
       String failedConstraints = "";
-      if (myBlockEdtRunnable != null) failedConstraints += "Use ProgressWindow; ";
+      if (isModal) failedConstraints += "Use Modal execution; ";
       if (myThreadToUse == ThreadToUse.POOLED) failedConstraints += "Use pooled thread; ";
       failedConstraints = StringUtil.defaultIfEmpty(failedConstraints, "none");
       Logger.getInstance(ProgressRunner.class)
@@ -298,18 +288,18 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
   private CompletableFuture<R> legacyExec(CompletableFuture<? extends ProgressIndicator> progressFuture,
                                           Semaphore modalityEntered,
                                           Supplier<R> onThreadCallable) {
-    CompletableFuture<R> resultFuture = launchTask(onThreadCallable, myProgressIndicatorFuture);
+    CompletableFuture<R> resultFuture = launchTask(onThreadCallable, progressFuture);
 
-    if (myBlockEdtRunnable != null) {
-      ProgressIndicator progressIndicator;
-      try {
-        progressIndicator = progressFuture.get();
-      }
-      catch (Throwable e) {
-        throw new RuntimeException("Can't get progress", e);
-      }
-      //noinspection unchecked
-      myBlockEdtRunnable.accept((P)progressIndicator, modalityEntered::up);
+    if (isModal) {
+      progressFuture.thenAccept(progressIndicator -> {
+        if (progressIndicator instanceof BlockingProgressIndicator) {
+          ((BlockingProgressIndicator)progressIndicator).startBlocking(modalityEntered::up);
+        }
+        else {
+          Logger.getInstance(ProgressRunner.class).warn("Can't go modal without BlockingProgressIndicator");
+          modalityEntered.up();
+        }
+      });
     }
 
     if (isSync) {
@@ -326,14 +316,14 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
   @NotNull
   private CompletableFuture<R> normalExec(CompletableFuture<? extends ProgressIndicator> progressFuture,
                                           Semaphore modalityEntered,
-                                          Supplier<R> onThreadCallable, boolean shouldWaitForModality) {
+                                          Supplier<R> onThreadCallable) {
     Function<ProgressIndicator, ProgressIndicator> modalityRunnable = (progressIndicator) -> {
       LaterInvocator.enterModal(progressIndicator, (ModalityStateEx)progressIndicator.getModalityState());
       modalityEntered.up();
       return progressIndicator;
     };
 
-    if (shouldWaitForModality) {
+    if (isModal) {
       // If a progress indicator has not been calculated yet, grabbing IW lock might lead to deadlock, as progress might need it for init
       progressFuture = progressFuture.thenApplyAsync(modalityRunnable, r -> {
         if (ApplicationManager.getApplication().isWriteThread()) {
@@ -345,12 +335,12 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
       });
     }
 
-    final CompletableFuture<R> resultFuture = launchTask(onThreadCallable, progressFuture);
+    CompletableFuture<R> resultFuture = launchTask(onThreadCallable, progressFuture);
 
-    resultFuture
-      .handle((r, throwable) -> r) // ignore result computation exception
-      .thenAcceptBoth(progressFuture, (r, progressIndicator) -> {
-        if (shouldWaitForModality) {
+    if (isModal) {
+      CompletableFuture<Void> modalityExitFuture = resultFuture
+        .handle((r, throwable) -> r) // ignore result computation exception
+        .thenAcceptBoth(progressFuture, (r, progressIndicator) -> {
           if (ApplicationManager.getApplication().isWriteThread()) {
             LaterInvocator.leaveModal(progressIndicator);
           }
@@ -358,36 +348,50 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
             ApplicationManager.getApplication()
               .invokeLaterOnWriteThread(() -> LaterInvocator.leaveModal(progressIndicator), progressIndicator.getModalityState());
           }
-        }
-      });
+        });
+
+      // It's better to associate task future with modality exit so that future finish will lead to expected state (modality exit)
+      resultFuture = resultFuture.thenCombine(modalityExitFuture, (r, __) -> r);
+    }
 
     if (isSync) {
-      if (ApplicationManager.getApplication().isWriteThread()) {
-        ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
-          while (true) {
-            try {
-              resultFuture.get(10, TimeUnit.MILLISECONDS);
-            }
-            catch (TimeoutException ignore) {
-              ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(() -> LaterInvocator.pollWriteThreadEventsOnce());
-              continue;
-            }
-            catch (Throwable ignored) {
-            }
-            break;
-          }
-          return null;
-        });
-      }
-      else {
-        try {
-          resultFuture.get();
-        }
-        catch (Throwable ignore) {
-        }
-      }
+      waitForFutureUnlockingThread(resultFuture);
     }
     return resultFuture;
+  }
+
+  private static void waitForFutureUnlockingThread(CompletableFuture<?> resultFuture) {
+    if (ApplicationManager.getApplication().isWriteThread()) {
+      pollLaterInvocatorActively(resultFuture, LaterInvocator::pollWriteThreadEventsOnce);
+    }
+    else if (EDT.isCurrentThreadEdt()) {
+      throw new UnsupportedOperationException("Sync waiting from pure EDT is dangerous.");
+    }
+    else {
+      try {
+        resultFuture.get();
+      }
+      catch (Throwable ignore) {
+      }
+    }
+  }
+
+  private static void pollLaterInvocatorActively(CompletableFuture<?> resultFuture, @NotNull Runnable pollAction) {
+    ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
+      while (true) {
+        try {
+          resultFuture.get(10, TimeUnit.MILLISECONDS);
+        }
+        catch (TimeoutException ignore) {
+          ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(pollAction);
+          continue;
+        }
+        catch (Throwable ignored) {
+        }
+        break;
+      }
+      return null;
+    });
   }
 
   public static boolean isCanceled(@NotNull Future<? extends ProgressIndicator> progressFuture) {

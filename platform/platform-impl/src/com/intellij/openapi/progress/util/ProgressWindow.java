@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -170,11 +169,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  @Override
   public void startBlocking() {
     startBlocking(EmptyRunnable.getInstance());
   }
 
+  @Override
   public void startBlocking(@NotNull Runnable init) {
     assert EventQueue.isDispatchThread();
     synchronized (getLock()) {
@@ -187,18 +186,22 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
     try {
       ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
-        IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
-          if (isCancellationEvent(event)) {
-            cancel();
-          }
-          return wasStarted() && !isRunning();
-        });
+        pumpEventsForHierarchy();
         return null;
       });
     }
     finally {
       exitModality();
     }
+  }
+
+  public void pumpEventsForHierarchy() {
+    IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
+      if (isCancellationEvent(event)) {
+        cancel();
+      }
+      return wasStarted() && !isRunning();
+    });
   }
 
   final boolean isCancellationEvent(@Nullable AWTEvent event) {
@@ -245,7 +248,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         Disposer.dispose(this);
       });
 
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
     }
   }

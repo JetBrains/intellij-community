@@ -421,8 +421,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     ProgressRunner<?, ?> progressRunner = new ProgressRunner<>(process)
       .sync()
       .onThread(ProgressRunner.ThreadToUse.POOLED)
-      .withProgress(progress)
-      .withBlockingEdtStart(ProgressWindow::startBlocking);
+      .modal()
+      .withProgress(progress);
 
     ProgressResult<?> result = progressRunner.submitAndGet();
 
@@ -456,7 +456,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       .sync()
       .onThread(ProgressRunner.ThreadToUse.POOLED)
       .withProgress(progress)
-      .withBlockingEdtStart(ProgressWindow::startBlocking)
+      .modal()
       .submitAndGet();
 
     return !result.isCanceled();
@@ -949,7 +949,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       .sync()
       .onThread(ProgressRunner.ThreadToUse.WRITE)
       .withProgress(progress)
-      .withBlockingEdtStart(ProgressWindow::startBlocking)
+      .modal()
       .submitAndGet();
 
     if (result.getThrowable() instanceof RuntimeException) {
