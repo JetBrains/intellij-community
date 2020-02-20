@@ -23,6 +23,9 @@ import java.awt.*;
  */
 @ApiStatus.Experimental
 public class JBCefBrowser implements JBCefDisposable {
+  @SuppressWarnings("HardCodedStringLiteral")
+  private static final String BLANK_URI = "about:blank";
+
   @NotNull private final JBCefClient myCefClient;
   @NotNull private final MyComponent myComponent;
   @NotNull private final CefBrowser myCefBrowser;
@@ -32,32 +35,29 @@ public class JBCefBrowser implements JBCefDisposable {
 
   private final boolean myIsDefaultClient;
   private volatile boolean myIsCefBrowserCreated;
-  @Nullable private volatile URLLoadDeferrer myLoadDeferrer;
+  @Nullable private volatile LoadDeferrer myLoadDeferrer;
 
-  private static class URLLoadDeferrer {
+  private static class LoadDeferrer {
+    @Nullable protected final String myHtml;
     @NotNull protected final String myUrl;
 
-    URLLoadDeferrer(@NotNull String url) {
+    LoadDeferrer(@NotNull String url) {
+      this(null, url);
+    }
+
+    LoadDeferrer(@Nullable String html, @NotNull String url) {
+      myHtml = html;
       myUrl = url;
     }
 
     public void load(@NotNull CefBrowser browser) {
       // JCEF demands async loading.
-      EventQueue.invokeLater(() -> browser.loadURL(myUrl));
-    }
-  }
-
-  private static class HTMLLoadDeferrer extends URLLoadDeferrer {
-    @NotNull protected final String myHtml;
-
-    HTMLLoadDeferrer(@NotNull String html, @NotNull String url) {
-      super(url);
-      myHtml = html;
-    }
-
-    @Override
-    public void load(@NotNull CefBrowser browser) {
-      EventQueue.invokeLater(() -> browser.loadString(myHtml, myUrl));
+      if (myHtml == null) {
+        EventQueue.invokeLater(() -> browser.loadURL(myUrl));
+      }
+      else {
+        EventQueue.invokeLater(() -> browser.loadString(myHtml, myUrl));
+      }
     }
   }
 
@@ -87,7 +87,7 @@ public class JBCefBrowser implements JBCefDisposable {
     myComponent.setBackground(JBColor.background());
 
     myCefBrowser = cefBrowser != null ?
-      cefBrowser : myCefClient.getCefClient().createBrowser(url != null ? url : "about:blank", false, false);
+      cefBrowser : myCefClient.getCefClient().createBrowser(url != null ? url : BLANK_URI, false, false);
     myComponent.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
 
     if (cefBrowser == null) {
@@ -95,7 +95,7 @@ public class JBCefBrowser implements JBCefDisposable {
           @Override
           public void onAfterCreated(CefBrowser browser) {
             myIsCefBrowserCreated = true;
-            URLLoadDeferrer loader = myLoadDeferrer;
+            LoadDeferrer loader = myLoadDeferrer;
             if (loader != null) {
               loader.load(browser);
               myLoadDeferrer = null;
@@ -128,7 +128,7 @@ public class JBCefBrowser implements JBCefDisposable {
       myCefBrowser.loadURL(url);
     }
     else {
-      myLoadDeferrer = new URLLoadDeferrer(url);
+      myLoadDeferrer = new LoadDeferrer(url);
     }
   }
 
@@ -143,7 +143,7 @@ public class JBCefBrowser implements JBCefDisposable {
       myCefBrowser.loadString(html, url);
     }
     else {
-      myLoadDeferrer = new HTMLLoadDeferrer(html, url);
+      myLoadDeferrer = new LoadDeferrer(html, url);
     }
   }
 
@@ -151,7 +151,7 @@ public class JBCefBrowser implements JBCefDisposable {
    * Loads html content.
    */
   public void loadHTML(@NotNull String html) {
-    loadHTML(html, "about:blank");
+    loadHTML(html, BLANK_URI);
   }
 
   /**

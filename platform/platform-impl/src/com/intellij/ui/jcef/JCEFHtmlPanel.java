@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author tav
@@ -21,11 +22,7 @@ public class JCEFHtmlPanel extends JBCefBrowser {
     });
   }
 
-  public JCEFHtmlPanel() {
-    this(null);
-  }
-
-  public JCEFHtmlPanel(String url) {
+  public JCEFHtmlPanel(@Nullable String url) {
     this(ourCefClient, url);
   }
 
