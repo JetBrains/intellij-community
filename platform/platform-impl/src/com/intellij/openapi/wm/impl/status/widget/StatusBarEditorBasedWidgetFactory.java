@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class StatusBarEditorBasedWidgetFactory implements StatusBarWidgetFactory {
   @Override
   public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
-    return getFileEditor(statusBar) != null;
+    return getTextEditor(statusBar) != null;
   }
 
   @Nullable
