@@ -15,7 +15,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,8 +37,13 @@ public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory
   }
 
   @Override
-  public @Nullable StatusBarWidget createWidget(@NotNull Project project) {
-    return ApplicationManager.getApplication().isInternal() ? new WriteThreadWidget() : null;
+  public boolean isAvailable(@NotNull Project project) {
+    return ApplicationManager.getApplication().isInternal();
+  }
+
+  @Override
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
+    return new WriteThreadWidget();
   }
 
   @Override

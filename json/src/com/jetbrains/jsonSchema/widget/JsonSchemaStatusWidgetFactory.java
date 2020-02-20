@@ -9,7 +9,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class JsonSchemaStatusWidgetFactory extends StatusBarEditorBasedWidgetFactory {
   @Override
@@ -33,9 +32,8 @@ public class JsonSchemaStatusWidgetFactory extends StatusBarEditorBasedWidgetFac
     return JsonSchemaStatusWidget.isAvailableOnFile(project, editor != null ? editor.getFile() : null);
   }
 
-  @Nullable
   @Override
-  public StatusBarWidget createWidget(@NotNull Project project) {
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return new JsonSchemaStatusWidget(project);
   }
 

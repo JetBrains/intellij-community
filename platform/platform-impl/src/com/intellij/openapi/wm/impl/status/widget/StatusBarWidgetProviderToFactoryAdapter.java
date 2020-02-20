@@ -54,13 +54,22 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
   }
 
   @Override
+  public boolean isAvailable(@NotNull Project project) {
+    IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
+    if (frame == null || !myProvider.isCompatibleWith(frame)) {
+      return false;
+    }
+    return getWidget() != null;
+  }
+
+  @Override
   public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
     return true;
   }
 
   @Override
-  public @Nullable StatusBarWidget createWidget(@NotNull Project project) {
-    return getWidget();
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
+    return Objects.requireNonNull(getWidget());
   }
 
   @Nullable
@@ -80,10 +89,6 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
 
   public @NotNull String getAnchor() {
     return myProvider.getAnchor();
-  }
-
-  public boolean isCompatibleWith(IdeFrame frame) {
-    return myProvider.isCompatibleWith(frame);
   }
 
   @Override

@@ -3,7 +3,10 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Extension point for adding new widgets to status bar
@@ -30,19 +33,33 @@ public interface StatusBarWidgetFactory {
   String getDisplayName();
 
   /**
+   * Returns availability of widget.
+   * <p>
+   * `False` means that IDE won't try to create a widget or will dispose it on {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager#updateWidget} call.
+   * <p>
+   * E.g. `false` can be returned for
+   * - notifications widget if Event log is shown as a tool window
+   * - memory indicator widget if it is disabled in the appearance settings
+   * - git widget if there are no git repos in a project
+   * <p>
+   * Whenever availability is changed, you need to call {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager#updateWidget(StatusBarWidgetFactory)}
+   * explicitly to get status bar updated.
+   */
+  boolean isAvailable(@NotNull Project project);
+
+  /**
    * Creates a widget to be added on the status bar.
    * <p>
-   * `null` means nothing to add. E.g. you should return `null` for Branches widget if VCS integration is not configured for a project.
-   * <p>
-   * Once the method is invoked on project initialization, the widget won't be recreated.
+   * Once the method is invoked on project initialization, the widget won't be recreated or disposed implicitly.
    * <p>
    * You may need to recreate If you still need to recreate a widget if:
-   * - its availability is changed (e.g. Git integration was enabled and this changes availability of branches widget)
-   * - its visibility is changed (e.g. users enabled/disabled widget in the settings)
-   * you need to explicitely invoke {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager#updateWidget(StatusBarWidgetFactory)}
+   * - its availability is changed. See {@link #isAvailable(Project)}
+   * - its visibility is changed. See {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings}
+   * <p>
+   * To do this, you need to explicitly invoke {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager#updateWidget(StatusBarWidgetFactory)}
    * to recreate the widget and re-add it to the status bar.
    */
-  @Nullable
+  @NotNull
   StatusBarWidget createWidget(@NotNull Project project);
 
   void disposeWidget(@NotNull StatusBarWidget widget);
@@ -67,11 +84,11 @@ public interface StatusBarWidgetFactory {
 
   /**
    * @return whether user should be able to enable or disable the widget.
-   *
+   * <p>
    * Some widgets are controlled by application-level settings (e.g. Memory indicator)
-   * or cannot be disabled (e.g. Write thread indicator). 
-   *
-   * So they should not be shown neither in the Status bar context menu nor in the Settings. 
+   * or cannot be disabled (e.g. Write thread indicator).
+   * <p>
+   * So they should not be shown neither in the Status bar context menu nor in the Settings.
    */
   default boolean isConfigurable() {
     return true;

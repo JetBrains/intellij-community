@@ -12,7 +12,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class FatalErrorWidgetFactory implements StatusBarWidgetFactory {
   @Override
@@ -26,7 +25,12 @@ public class FatalErrorWidgetFactory implements StatusBarWidgetFactory {
   }
 
   @Override
-  public @Nullable StatusBarWidget createWidget(@NotNull Project project) {
+  public boolean isAvailable(@NotNull Project project) {
+    return true;
+  }
+
+  @Override
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return new IdeMessagePanel(WindowManager.getInstance().getIdeFrame(project), MessagePool.getInstance());
   }
 

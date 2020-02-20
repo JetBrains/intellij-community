@@ -10,7 +10,6 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class MemoryIndicatorWidgetFactory implements StatusBarWidgetFactory {
   @Override
@@ -24,8 +23,13 @@ public class MemoryIndicatorWidgetFactory implements StatusBarWidgetFactory {
   }
 
   @Override
-  public @Nullable StatusBarWidget createWidget(@NotNull Project project) {
-    return UISettings.getInstance().getShowMemoryIndicator() ? new MemoryUsagePanel() : null;
+  public boolean isAvailable(@NotNull Project project) {
+    return UISettings.getInstance().getShowMemoryIndicator();
+  }
+
+  @Override
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
+    return new MemoryUsagePanel();
   }
 
   @Override

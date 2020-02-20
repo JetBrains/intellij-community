@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameHeader;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
@@ -344,7 +343,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     UIUtil.decorateWindowHeader(this);
-    updateMemoryIndicator(uiSettings.getShowMemoryIndicator());
+    updateMemoryIndicator();
     updateToolbarVisibility();
     updateStatusBarVisibility();
     updateMainMenuVisibility();
@@ -365,14 +364,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  private void updateMemoryIndicator(boolean visible) {
-    MemoryIndicatorWidgetFactory widgetFactory = StatusBarWidgetFactory.EP_NAME.findExtension(MemoryIndicatorWidgetFactory.class);
+  private void updateMemoryIndicator() {
     Project project = myStatusBar.getProject();
-    if (widgetFactory != null && project != null) {
-      StatusBarWidgetsManager widgetsManager = project.getService(StatusBarWidgetsManager.class);
-      if (widgetsManager.wasWidgetCreated(widgetFactory) != visible) {
-        widgetsManager.updateWidget(widgetFactory);
-      }
+    if (project != null) {
+      project.getService(StatusBarWidgetsManager.class).updateWidget(MemoryIndicatorWidgetFactory.class);
     }
   }
 

@@ -61,7 +61,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     }
   }
 
-  public void updateWidget(@NotNull Class<StatusBarWidgetFactory> factoryExtension) {
+  public void updateWidget(@NotNull Class<? extends StatusBarWidgetFactory> factoryExtension) {
     StatusBarWidgetFactory factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension);
     if (factory == null) {
       LOG.error("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factoryExtension.getName());
@@ -71,22 +71,16 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   public void updateWidget(@NotNull StatusBarWidgetFactory factory) {
-    disableWidget(factory);
-    if (isAvailable(factory) && (!factory.isConfigurable() || myProject.getService(StatusBarWidgetSettings.class).isEnabled(factory))) {
+    if (factory.isAvailable(myProject) && (!factory.isConfigurable() || myProject.getService(StatusBarWidgetSettings.class).isEnabled(factory))) {
       enableWidget(factory);
+    }
+    else {
+      disableWidget(factory);
     }
   }
 
   public boolean wasWidgetCreated(@Nullable StatusBarWidgetFactory factory) {
     return myWidgetFactories.get(factory) != null;
-  }
-
-  private boolean isAvailable(@NotNull StatusBarWidgetFactory factory) {
-    if (factory instanceof StatusBarWidgetProviderToFactoryAdapter) {
-      IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
-      return frame != null && ((StatusBarWidgetProviderToFactoryAdapter)factory).isCompatibleWith(frame);
-    }
-    return true;
   }
 
   @Override
@@ -111,7 +105,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
 
     StatusBarWidget createdWidget = myWidgetFactories.get(factory);
     if (createdWidget != null) {
-      LOG.error("Cannot add a widget created by the same factory twice: " + factory.getId());
+      // widget is already enabled
       return;
     }
 
@@ -122,14 +116,12 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     }
 
     StatusBarWidget widget = factory.createWidget(myProject);
-    if (widget != null) {
-      if (!widget.ID().equals(factory.getId())) {
-        LOG.warn("Factory id doesn't match widget id. It may affect ordering: " + factory.getId());
-      }
-      myWidgetFactories.put(factory, widget);
-      statusBar.addWidget(widget, getAnchor(factory), this);
-      Disposer.register(this, () -> disableWidget(factory));
+    if (!widget.ID().equals(factory.getId())) {
+      LOG.warn("Factory id doesn't match widget id. It may affect ordering: " + factory.getId());
     }
+    myWidgetFactories.put(factory, widget);
+    statusBar.addWidget(widget, getAnchor(factory), this);
+    Disposer.register(this, () -> disableWidget(factory));
   }
 
   @NotNull
@@ -166,7 +158,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   public boolean canBeEnabledOnStatusBar(@NotNull StatusBarWidgetFactory factory, @NotNull StatusBar statusBar) {
-    return isAvailable(factory) && factory.isConfigurable() && factory.canBeEnabledOn(statusBar);
+    return factory.isAvailable(myProject) && factory.isConfigurable() && factory.canBeEnabledOn(statusBar);
   }
 
   private void addWidgetFactory(@NotNull StatusBarWidgetFactory factory) {

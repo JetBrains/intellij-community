@@ -9,7 +9,6 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFact
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ReadOnlyAttributeWidgetFactory extends StatusBarEditorBasedWidgetFactory {
   @Override
@@ -23,7 +22,7 @@ public class ReadOnlyAttributeWidgetFactory extends StatusBarEditorBasedWidgetFa
   }
 
   @Override
-  public @Nullable StatusBarWidget createWidget(@NotNull Project project) {
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return new ToggleReadOnlyAttributePanel();
   }
 
