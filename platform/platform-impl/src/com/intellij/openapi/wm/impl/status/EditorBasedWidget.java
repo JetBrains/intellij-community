@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -36,7 +38,14 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
 
   @Nullable
   protected Editor getEditor() {
-    return StatusBarUtil.getCurrentTextEditor(myStatusBar);
+    Editor editor = StatusBarUtil.getCurrentTextEditor(myStatusBar);
+    if (editor != null) {
+      return editor;
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+    }
+    return null;
   }
 
   public boolean isOurEditor(Editor editor) {
