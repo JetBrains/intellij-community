@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.project;
 
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.lightEdit.LightEditServiceImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -36,6 +37,7 @@ public final class LightEditProjectManager {
   public void close() {
     Project project = myProject;
     if (project != null) {
+      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project);
       ProjectManagerEx.getInstanceEx().forceCloseProject(project);
     }
     myProject = null;
