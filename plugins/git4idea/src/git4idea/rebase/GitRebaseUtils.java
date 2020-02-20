@@ -244,30 +244,33 @@ public class GitRebaseUtils {
     return GitUtil.getRepositoriesInState(project, Repository.State.REBASING);
   }
 
-  public static int getNumberOfCommitsToRebase(@NotNull GitRepository repository) throws VcsException {
+  public static int getNumberOfCommitsToRebase(@NotNull GitRepository repository, @NotNull String upstream, @Nullable String branch)
+    throws VcsException {
+
+    String rebasingBranch = branch;
+    if (rebasingBranch == null) {
+      if (repository.isRebaseInProgress()) {
+        rebasingBranch = getRebasingBranchHash(repository).asString();
+      }
+      else {
+        rebasingBranch = GitUtil.HEAD;
+      }
+    }
+
     return GitHistoryUtils.collectTimedCommits(
       repository.getProject(),
       repository.getRoot(),
-      getOntoHash(repository) + ".." + getRebasingBranchHash(repository)
+      upstream + ".." + rebasingBranch
     ).size();
   }
 
   @NotNull
-  private static Hash getOntoHash(@NotNull GitRepository repository) throws VcsException {
-    return readHashFromFile(repository, "onto");
-  }
-
-  @NotNull
   private static Hash getRebasingBranchHash(@NotNull GitRepository repository) throws VcsException {
-    return readHashFromFile(repository, "orig-head");
-  }
-
-  private static Hash readHashFromFile(@NotNull GitRepository repository, @NotNull String fileName) throws VcsException {
     try {
-      return HashImpl.build(FileUtil.loadFile(new File(getRebaseDir(repository.getProject(), repository.getRoot()), fileName)).trim());
+      return HashImpl.build(FileUtil.loadFile(new File(getRebaseDir(repository.getProject(), repository.getRoot()), "orig-head")).trim());
     }
     catch (IOException e) {
-      throw new VcsException("Couldn't read from file " + fileName, e);
+      throw new VcsException("Couldn't resolve orig-head", e);
     }
   }
 

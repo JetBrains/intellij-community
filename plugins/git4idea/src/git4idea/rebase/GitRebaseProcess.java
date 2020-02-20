@@ -217,7 +217,12 @@ public class GitRebaseProcess {
 
     int commitsToRebase = 0;
     try {
-      commitsToRebase = GitRebaseUtils.getNumberOfCommitsToRebase(repository);
+      GitRebaseParams params = myRebaseSpec.getParams();
+      if (params != null) {
+        String upstream = params.getUpstream();
+        String branch = params.getBranch();
+        commitsToRebase = GitRebaseUtils.getNumberOfCommitsToRebase(repository, upstream, branch);
+      }
     }
     catch (VcsException e) {
       LOG.warn("Couldn't get the number of commits to rebase", e);
