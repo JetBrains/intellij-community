@@ -44,7 +44,8 @@
                       groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="ERROR"
                       implementationClass="com.intellij.codeInspection.i18n.inconsistentResourceBundle.InconsistentResourceBundleInspection"/>
     <localInspection language="Properties" shortName="UnusedMessageFormatParameter" bundle="messages.JavaI18nBundle"
-                     key="unused.message.format.parameter.display.name" groupKey="properties.files.inspection.group.display.name"
+                     key="unused.message.format.parameter.display.name"
+                     groupBundle="messages.PropertiesBundle" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.lang.properties.UnusedMessageFormatParameterInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DuplicateStringLiteralInspection" bundle="messages.JavaI18nBundle"
