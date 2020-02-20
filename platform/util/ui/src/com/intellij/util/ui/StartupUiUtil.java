@@ -24,6 +24,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Locale;
 import java.util.Map;
 
@@ -91,6 +93,17 @@ public final class StartupUiUtil {
     // Applied to all JLabel instances, including subclasses. Supported in JBR only.
     UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", JBHtmlEditorKit.createStyleSheet());
     activity.end();
+  }
+
+  public static @NotNull StyleSheet createStyleSheet(@NotNull String css) {
+    StyleSheet styleSheet = new StyleSheet();
+    try {
+      styleSheet.loadRules(new StringReader(css), null);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e); // shouldn't happen
+    }
+    return styleSheet;
   }
 
   public static boolean isUnderDarcula() {
