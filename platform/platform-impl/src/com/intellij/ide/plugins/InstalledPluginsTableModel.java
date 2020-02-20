@@ -118,6 +118,9 @@ public class InstalledPluginsTableModel {
     setNewEnabled(ideaPluginDescriptors, tempEnabled, value);
 
     if (suggestToChangeDependencies(ideaPluginDescriptors, tempEnabled, value)) {
+      for (IdeaPluginDescriptor descriptor : ideaPluginDescriptors) {
+        handleBeforeChangeEnableState(descriptor, value);
+      }
       setNewEnabled(ideaPluginDescriptors, myEnabled, value);
       updatePluginDependencies();
     }
@@ -239,5 +242,8 @@ public class InstalledPluginsTableModel {
       return true;
     }
     return false;
+  }
+
+  protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor, boolean value) {
   }
 }

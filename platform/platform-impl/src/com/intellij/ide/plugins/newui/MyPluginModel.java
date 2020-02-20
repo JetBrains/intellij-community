@@ -74,6 +74,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private final Set<IdeaPluginDescriptor> myDynamicPluginsToUninstall = new HashSet<>();
   private final Set<IdeaPluginDescriptor> myPluginsToRemoveOnCancel = new HashSet<>();
 
+  private final Set<PluginId> myErrorPluginsToDisable = new HashSet<>();
+
   protected MyPluginModel() {
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
     myStatusBar = getStatusBar(window);
@@ -212,11 +214,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (shouldEnable != descriptor.isEnabled()) {
         if (shouldEnable) {
           pluginDescriptorsToEnable.add(descriptor);
-        } else {
+        }
+        else {
           pluginDescriptorsToDisable.add(descriptor);
         }
       }
-      else if (!shouldEnable && PluginManagerCore.getPlugin(pluginId) != null) {
+      else if (!shouldEnable && myErrorPluginsToDisable.contains(pluginId)) {
         pluginDescriptorsToDisable.add(descriptor);
       }
     }
@@ -805,6 +808,20 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     if (!requiredPlugins.isEmpty()) {
       enablePlugins(requiredPlugins);
+    }
+  }
+
+  @Override
+  protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor, boolean value) {
+    PluginId pluginId = descriptor.getPluginId();
+    myErrorPluginsToDisable.remove(pluginId);
+
+    if (value || descriptor.isEnabled()) {
+      return;
+    }
+
+    if (PluginManagerCore.isIncompatible(descriptor) || hasProblematicDependencies(pluginId)) {
+      myErrorPluginsToDisable.add(pluginId);
     }
   }
 
