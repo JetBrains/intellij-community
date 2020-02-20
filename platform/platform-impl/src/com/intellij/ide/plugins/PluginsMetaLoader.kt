@@ -122,23 +122,6 @@ object PluginsMetaLoader {
       }
   }
 
-  fun getLastCompatiblePluginUpdate(pluginId: PluginId, buildNumber: BuildNumber?): IdeCompatibleUpdate? {
-    val url = Urls
-      .newFromEncoded(COMPATIBLE_UPDATE_URL)
-      .addParameters(mapOf(
-        "build" to PluginDownloader.getBuildNumberForDownload(buildNumber),
-        "pluginXmlId" to pluginId.idString,
-        "max" to "1"
-      ))
-    return HttpRequests.request(url).connect {
-      ObjectMapper()
-        .readValue(
-          it.inputStream,
-          object : TypeReference<List<IdeCompatibleUpdate>>() {}
-        ).firstOrNull()
-    }
-  }
-
   @JvmStatic
   fun parsePluginList(reader: Reader): List<PluginNode> {
     try {
