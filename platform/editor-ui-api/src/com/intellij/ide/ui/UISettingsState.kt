@@ -181,6 +181,8 @@ class UISettingsState : BaseState() {
   var smoothScrolling by property(true)
   @get:OptionTag("NAVIGATE_TO_PREVIEW")
   var navigateToPreview by property(false)
+  @get:OptionTag("FULL_PATHS_IN_TITLE_BAR")
+  var fullPathsInWindowHeader by property(false)
 
   var animatedScrolling by property(!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm)
   var animatedScrollingDuration by property(

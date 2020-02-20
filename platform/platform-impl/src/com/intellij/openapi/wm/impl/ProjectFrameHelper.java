@@ -327,7 +327,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     private final StringBuilder sb = new StringBuilder();
 
     Builder append(@Nullable String s) {
-      return append(s, " - ");
+      return append(s, " \u2013 ");
     }
 
     Builder append(@Nullable String s, String separator) {

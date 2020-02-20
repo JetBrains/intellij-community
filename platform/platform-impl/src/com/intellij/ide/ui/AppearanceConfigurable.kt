@@ -68,6 +68,7 @@ private val cdDnDWithAlt                              get() = CheckboxDescriptor
 private val cdUseTransparentMode                      get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"), PropertyBinding({ settings.state.enableAlphaMode }, { settings.state.enableAlphaMode = it }))
 private val cdOverrideLaFFont                         get() = CheckboxDescriptor(message("checkbox.override.default.laf.fonts"), settings::overrideLafFonts)
 private val cdUseContrastToolbars                     get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
+private val cdFullPathsInTitleBar                     get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 // @formatter:on
 
 internal val appearanceOptionDescriptors: List<OptionDescription> = listOf(
@@ -89,7 +90,8 @@ internal val appearanceOptionDescriptors: List<OptionDescription> = listOf(
   cdShowTreeIndents,
   cdMoveCursorOnButton,
   cdHideNavigationPopups,
-  cdDnDWithAlt
+  cdDnDWithAlt,
+  cdFullPathsInTitleBar
 ).map(CheckboxDescriptor::asOptionDescriptor)
 
 class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
@@ -266,6 +268,9 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
           { checkBox(cdLeftToolWindowLayout) },
           { checkBox(cdRightToolWindowLayout) }
         )
+        fullRow {
+          checkBox(cdFullPathsInTitleBar)
+        }
       }
       titledRow(message("group.presentation.mode")) {
         fullRow {

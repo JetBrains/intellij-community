@@ -428,6 +428,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     });
   }
 
+  void updateFrameTitle() {
+    getActiveSplittersAsync().onSuccess((splitters) -> splitters.updateFileName(null));
+  }
+
   @Override
   public VirtualFile getFile(@NotNull FileEditor editor) {
     EditorComposite editorComposite = getEditorComposite(editor);
@@ -1909,6 +1913,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         updateFileName(file);
         updateFileBackgroundColor(file);
       }
+
+      // "Show full paths in window header"
+      updateFrameTitle();
     }
   }
 
