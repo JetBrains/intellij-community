@@ -15,7 +15,7 @@
  */
 package com.intellij.find.findUsages;
 
-import com.intellij.find.FindBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
@@ -58,7 +58,7 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
   @Override
   protected void addUsageTypes(@NotNull LinkedHashSet<? super String> to) {
     if (this.isUsages || this.isClassesUsages) {
-      to.add(FindBundle.message("find.usages.panel.title.usages"));
+      to.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }
   }
 
