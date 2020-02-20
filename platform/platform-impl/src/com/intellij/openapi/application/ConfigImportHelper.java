@@ -141,15 +141,12 @@ public final class ConfigImportHelper {
 
   private static boolean shouldAskForConfig(@NotNull Logger log) {
     try {
-      String val = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
-      if (val != null) {
-        return Boolean.parseBoolean(val);
-      }
+      return Boolean.getBoolean(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
     }
     catch (Throwable t) {
       log.error(t);
+      return false;
     }
-    return false;
   }
 
   @Nullable
