@@ -15,8 +15,12 @@
  */
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,7 +51,7 @@ public class InconsistentPropertiesEndsInspectionProvider implements Inconsisten
   @NotNull
   @Override
   public String getPresentableName() {
-    return InspectionsBundle.message("inconsistent.bundle.report.inconsistent.properties.ends");
+    return JavaI18nBundle.message("inconsistent.bundle.report.inconsistent.properties.ends");
   }
 
   @Override
@@ -82,11 +86,11 @@ public class InconsistentPropertiesEndsInspectionProvider implements Inconsisten
           if (lastChar != parentLastChar) {
             final String message;
             if (PROPERTY_VALUE_END_CHECK_SYMBOLS.contains(parentLastChar)) {
-              message = InspectionsBundle
+              message = JavaI18nBundle
                 .message("inconsistent.bundle.property.inconsistent.end.parent.end.from.check.symbols", lastChar, parentLastChar,
                          parent.getName());
             } else {
-              message = InspectionsBundle.message("inconsistent.bundle.property.inconsistent.end", lastChar);
+              message = JavaI18nBundle.message("inconsistent.bundle.property.inconsistent.end", lastChar);
             }
             final PsiElement propertyPsiElement = property.getPsiElement();
             processor.addProblemElement(refManager.getReference(file.getContainingFile()),

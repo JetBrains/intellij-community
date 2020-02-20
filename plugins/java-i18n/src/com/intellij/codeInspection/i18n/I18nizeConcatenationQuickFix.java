@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.I18nizedTextGenerator;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +28,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     if (concatenation != null) return;
-    String message = CodeInsightBundle.message("quickfix.i18n.concatentation.error");
+    String message = JavaI18nBundle.message("quickfix.i18n.concatentation.error");
     throw new IncorrectOperationException(message);
   }
 
@@ -44,7 +44,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("quickfix.i18n.concatentation");
+    return JavaI18nBundle.message("quickfix.i18n.concatentation");
   }
 
   @Override

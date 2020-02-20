@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.capitalization;
 
 import com.intellij.codeInspection.*;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.project.Project;
@@ -80,7 +81,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
                                           @NotNull ProblemsHolder holder,
                                           Nls.Capitalization capitalization) {
     if (titleValue != null && !titleValue.isSatisfied(capitalization)) {
-      holder.registerProblem(e, InspectionsBundle
+      holder.registerProblem(e, JavaI18nBundle
                                .message("inspection.title.capitalization.description", titleValue, StringUtil.toLowerCase(capitalization.toString())),
                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                              titleValue.canFix() ? new TitleCapitalizationFix(titleValue, capitalization) : null);
@@ -147,7 +148,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("quickfix.text.title.capitalization", myTitleValue);
+      return JavaI18nBundle.message("quickfix.text.title.capitalization", myTitleValue);
     }
 
     @Override
@@ -194,7 +195,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("quickfix.family.title.capitalization.fix");
+      return JavaI18nBundle.message("quickfix.family.title.capitalization.fix");
     }
   }
 

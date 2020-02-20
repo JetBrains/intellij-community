@@ -3,6 +3,7 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -99,7 +100,7 @@ public class I18nizeAction extends AnAction {
       handler.checkApplicability(psiFile, editor);
     }
     catch (IncorrectOperationException ex) {
-      CommonRefactoringUtil.showErrorHint(project, editor, ex.getMessage(), CodeInsightBundle.message("i18nize.error.title"), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, ex.getMessage(), JavaI18nBundle.message("i18nize.error.title"), null);
       return;
     }
 

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,7 +49,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("inspection.i18n.quickfix");
+    return JavaI18nBundle.message("inspection.i18n.quickfix");
   }
 
   @Override
@@ -65,7 +66,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
         return;
       }
     }
-    String message = CodeInsightBundle.message("i18nize.error.message");
+    String message = JavaI18nBundle.message("i18nize.error.message");
     throw new IncorrectOperationException(message);
   }
 
@@ -85,8 +86,8 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
     }
     catch (IncorrectOperationException e) {
       ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(project,
-                                                                                     CodeInsightBundle.message("inspection.i18n.expression.is.invalid.error.message"),
-                                                                                     CodeInsightBundle.message("inspection.error.dialog.title")));
+                                                                                     JavaI18nBundle.message("inspection.i18n.expression.is.invalid.error.message"),
+                                                                                     JavaI18nBundle.message("inspection.error.dialog.title")));
     }
   }
 

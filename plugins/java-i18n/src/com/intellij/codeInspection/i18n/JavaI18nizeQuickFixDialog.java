@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.I18nizedTextGenerator;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
@@ -107,8 +106,8 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(expressionCodeFragment);
       myRBEditorTextField = new EditorComboBox(document, myProject, StdFileTypes.JAVA);
       myResourceBundleSuggester.add(UI.PanelFactory.panel(myRBEditorTextField)
-                                      .withLabel(CodeInsightBundle.message("i18n.quickfix.code.panel.resource.bundle.expression.label"))
-                                      .withComment(InspectionsBundle.message("comment.if.the.resource.bundle.is.invalid.either.declare.it.as.an.object"))
+                                      .withLabel(JavaI18nBundle.message("i18n.quickfix.code.panel.resource.bundle.expression.label"))
+                                      .withComment(JavaI18nBundle.message("comment.if.the.resource.bundle.is.invalid.either.declare.it.as.an.object"))
                                       .createPanel(), BorderLayout.NORTH);
       suggestAvailableResourceBundleExpressions();
       myRBEditorTextField.addDocumentListener(new DocumentListener() {
@@ -123,7 +122,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     final String templateName = getTemplateName();
 
     if (templateName != null) {
-      HyperlinkLabel link = new HyperlinkLabel(CodeInsightBundle.message("i18nize.dialog.template.link.label"));
+      HyperlinkLabel link = new HyperlinkLabel(JavaI18nBundle.message("i18nize.dialog.template.link.label"));
       link.addHyperlinkListener(new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -155,7 +154,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
 
   public static boolean isAvailable(PsiFile file) {
     final Project project = file.getProject();
-    final String title = CodeInsightBundle.message("i18nize.dialog.error.jdk.title");
+    final String title = JavaI18nBundle.message("i18nize.dialog.error.jdk.title");
     try {
       return ResourceBundleManager.getManager(file) != null;
     }

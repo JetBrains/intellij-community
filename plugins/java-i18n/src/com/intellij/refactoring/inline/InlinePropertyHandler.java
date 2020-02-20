@@ -1,9 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -66,17 +65,17 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     );
 
     if (!result) {
-      CommonRefactoringUtil.showErrorHint(project, editor, InspectionsBundle.message("error.hint.property.has.non.method.usages"), getRefactoringName(), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, JavaI18nBundle.message("error.hint.property.has.non.method.usages"), getRefactoringName(), null);
     }
     if (occurrences.isEmpty()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, InspectionsBundle.message("error.hint.property.has.no.usages"), getRefactoringName(), null);
+      CommonRefactoringUtil.showErrorHint(project, editor, JavaI18nBundle.message("error.hint.property.has.no.usages"), getRefactoringName(), null);
       return;
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       String occurrencesString = RefactoringBundle.message("occurrences.string", occurrences.size());
       String question =
-        PropertiesBundle.message("inline.property.confirmation", property.getName(), propertyValue) + " " + occurrencesString;
+        JavaI18nBundle.message("inline.property.confirmation", property.getName(), propertyValue) + " " + occurrencesString;
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(getRefactoringName(), question, HelpID.INLINE_VARIABLE,
                                                                      "OptionPane.questionIcon", true, project);
       if (!dialog.showAndGet()) {
@@ -105,6 +104,6 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
   }
 
   public static String getRefactoringName() {
-    return PropertiesBundle.message("inline.property.refactoring");
+    return JavaI18nBundle.message("inline.property.refactoring");
   }
 }

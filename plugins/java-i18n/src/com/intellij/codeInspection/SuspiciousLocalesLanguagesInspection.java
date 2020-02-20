@@ -1,8 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.i18n.JavaI18nBundle;
+import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
@@ -96,7 +99,7 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
       return null;
     }
     final ProblemDescriptor descriptor = manager.createProblemDescriptor(file,
-                                                                         PropertiesBundle.message(
+                                                                         JavaI18nBundle.message(
                                                                            "resource.bundle.contains.locales.with.suspicious.locale.languages.desciptor"),
                                                                          new DissociateResourceBundleQuickFix(resourceBundle),
                                                                          ProblemHighlightType.WEAK_WARNING,
@@ -114,7 +117,7 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return PropertiesBundle.message("dissociate.resource.bundle.quick.fix.name");
+      return JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.name");
     }
 
     @Override
@@ -138,14 +141,14 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
 
     public JPanel getComponent() {
       final JPanel panel = new JPanel(new BorderLayout());
-      panel.add(new JLabel(PropertiesBundle.message("dissociate.resource.bundle.quick.fix.options.label")), BorderLayout.NORTH);
+      panel.add(new JLabel(JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.options.label")), BorderLayout.NORTH);
       panel.add(
         ToolbarDecorator.createDecorator(myAdditionalLocalesList)
           .setAddAction(new AnActionButtonRunnable() {
             @Override
             public void run(AnActionButton button) {
-              Messages.showInputDialog(panel, PropertiesBundle.message("dissociate.resource.bundle.quick.fix.options.input.text"),
-                                       PropertiesBundle.message("dissociate.resource.bundle.quick.fix.options.input.title"), null, "", new InputValidator() {
+              Messages.showInputDialog(panel, JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.options.input.text"),
+                                       JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.options.input.title"), null, "", new InputValidator() {
                 @Override
                 public boolean checkInput(String inputString) {
                   return 1 < inputString.length() && inputString.length() < 9 && !myAdditionalLanguages.contains(inputString);

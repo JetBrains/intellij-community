@@ -16,8 +16,8 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
@@ -51,7 +51,7 @@ public class DuplicateStringLiteralInspectionTest extends JavaCodeInsightFixture
     final List<IntentionAction> fixes = myFixture.getAllQuickFixes("ApplyRenameForWholeFile.java");
     fixes
       .stream()
-      .filter(i -> InspectionsBundle.message("inspection.duplicates.replace.family.quickfix").equals(i.getFamilyName()))
+      .filter(i -> JavaI18nBundle.message("inspection.duplicates.replace.family.quickfix").equals(i.getFamilyName()))
       .forEach(myFixture::launchAction);
     myFixture.checkResultByFile("ApplyRenameForWholeFileAfter.java");
   }

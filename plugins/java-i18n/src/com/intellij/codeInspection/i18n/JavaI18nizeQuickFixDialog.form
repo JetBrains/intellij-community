@@ -22,7 +22,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="etched" title-resource-bundle="messages/CodeInsightBundle" title-key="i18n.quickfix.preview.panel.title"/>
+        <border type="etched" title-resource-bundle="messages/JavaI18nBundle" title-key="i18n.quickfix.preview.panel.title"/>
         <children>
           <component id="77d27" class="com.intellij.openapi.ui.ex.MultiLineLabel" binding="myPreviewLabel">
             <constraints>
@@ -64,7 +64,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="etched" title-resource-bundle="messages/CodeInsightBundle" title-key="i18n.quickfix.code.panel.title"/>
+        <border type="etched" title-resource-bundle="messages/JavaI18nBundle" title-key="i18n.quickfix.code.panel.title"/>
         <children>
           <xy id="cf4d4" binding="myResourceBundleSuggester" layout-manager="XYLayout" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>

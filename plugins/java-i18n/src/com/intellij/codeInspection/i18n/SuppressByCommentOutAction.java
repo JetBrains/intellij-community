@@ -17,8 +17,8 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -95,6 +95,6 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return InspectionsBundle.message("intention.text.suppress.with.0.comment", nonNlsCommentPattern);
+    return JavaI18nBundle.message("intention.text.suppress.with.0.comment", nonNlsCommentPattern);
   }
 }
