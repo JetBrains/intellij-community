@@ -23,8 +23,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConcurrencyAnnotationsManager {
-  private static final String[] FRAMEWORKS = {"net.jcip.annotations", "javax.annotation.concurrent", "org.apache.http.annotation",
-    "com.android.annotations.concurrency"};
+  private static final String[] FRAMEWORKS = {
+    "net.jcip.annotations",
+    "javax.annotation.concurrent",
+    "org.apache.http.annotation",
+    "com.android.annotations.concurrency",
+    "androidx.annotation",
+  };
   
   private static final String IMMUTABLE = "Immutable";
   private static final String GUARDED_BY = "GuardedBy";
