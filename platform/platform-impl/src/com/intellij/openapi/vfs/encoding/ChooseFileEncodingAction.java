@@ -3,6 +3,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -46,7 +47,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
                                   @NotNull List<? extends Charset> charsets,
                                   @NotNull final Function<? super Charset, String> charsetFilter) {
     for (final Charset charset : charsets) {
-      AnAction action = new DumbAwareAction(charset.displayName(), null, EmptyIcon.ICON_16) {
+      AnAction action = new CharsetAction(charset.displayName(), null, EmptyIcon.ICON_16) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           chosen(virtualFile, charset);
@@ -142,5 +143,11 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), charsetFilter);
     }
     return group;
+  }
+
+  private abstract static class CharsetAction extends DumbAwareAction implements LightEditCompatible {
+    CharsetAction(String name, String description, Icon icon) {
+      super(name, description, icon);
+    }
   }
 }

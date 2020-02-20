@@ -2,11 +2,12 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public class CopyAction extends AnAction implements DumbAware {
+public class CopyAction extends AnAction implements DumbAware, LightEditCompatible {
 
   public CopyAction() {
     setEnabledInModalContext(true);

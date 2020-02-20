@@ -97,7 +97,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
       .findFirst().ifPresent(tabInfo -> select(tabInfo, true));
   }
 
-  private class CloseTabAction extends DumbAwareAction {
+  private class CloseTabAction extends DumbAwareAction implements LightEditCompatible {
     private final LightEditorInfo myEditorInfo;
 
     private CloseTabAction(@NotNull LightEditorInfo editorInfo) {

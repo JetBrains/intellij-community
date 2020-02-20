@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.util.EditorGotoLineNumberDialog;
 import com.intellij.ide.util.GotoLineNumberDialog;
 import com.intellij.openapi.actionSystem.*;
@@ -12,7 +13,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class GotoLineAction extends AnAction implements DumbAware {
+public class GotoLineAction extends AnAction implements DumbAware, LightEditCompatible {
   public GotoLineAction() {
     setEnabledInModalContext(true);
   }

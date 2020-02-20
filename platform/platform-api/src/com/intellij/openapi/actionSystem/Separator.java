@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import java.util.function.Supplier;
  * Represents a separator.
  */
 @SuppressWarnings("ComponentNotRegistered")
-public final class Separator extends AnAction implements DumbAware {
+public final class Separator extends AnAction implements DumbAware, LightEditCompatible {
 
   private static final Separator ourInstance = new Separator();
   private final Supplier<String> myDynamicText;
