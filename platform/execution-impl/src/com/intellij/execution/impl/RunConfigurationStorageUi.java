@@ -7,13 +7,12 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.ui.BrowseFolderRunnable;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
@@ -24,9 +23,11 @@ import org.jetbrains.annotations.SystemIndependent;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.util.Collection;
 
-public class RunConfigurationStorageUi {
+class RunConfigurationStorageUi {
   private final JPanel myMainPanel;
   private final ComboBox<String> myPathComboBox;
 
@@ -34,11 +35,20 @@ public class RunConfigurationStorageUi {
 
   private Runnable myClosePopupAction;
 
-  public RunConfigurationStorageUi(@NotNull Project project,
-                                   @NotNull String dotIdeaStoragePath,
-                                   @NotNull Disposable uiDisposable) {
+  RunConfigurationStorageUi(@NotNull Project project,
+                            @NotNull String dotIdeaStoragePath,
+                            @NotNull Function<String, String> pathToErrorMessage,
+                            @NotNull Disposable uiDisposable) {
     myDotIdeaStoragePath = dotIdeaStoragePath;
     myPathComboBox = createPathComboBox(project, uiDisposable);
+
+    JTextComponent comboBoxEditorComponent = (JTextComponent)myPathComboBox.getEditor().getEditorComponent();
+    new ComponentValidator(uiDisposable).withValidator(() -> {
+      String errorMessage = pathToErrorMessage.fun(getPath());
+      return errorMessage != null ? new ValidationInfo(errorMessage, myPathComboBox) : null;
+    })
+      .andRegisterOnDocumentListener(comboBoxEditorComponent)
+      .installOn(comboBoxEditorComponent);
 
     JPanel comboBoxPanel = UI.PanelFactory.panel(myPathComboBox)
       .withLabel(ExecutionBundle.message("run.configuration.store.in")).moveLabelOnTop()
@@ -65,7 +75,6 @@ public class RunConfigurationStorageUi {
   private ComboBox<String> createPathComboBox(@NotNull Project project, @NotNull Disposable uiDisposable) {
     ComboBox<String> comboBox = new ComboBox<>(JBUI.scale(450));
     comboBox.setEditable(true);
-    comboBox.addActionListener(event -> updateWarningsAndErrors());
 
     // choosefiles is set to true to be able to select project.ipr file in IPR-based projects. Other files are not visible/selectable in the chooser
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
@@ -97,7 +106,7 @@ public class RunConfigurationStorageUi {
   }
 
   @NotNull
-  private String getCompatibilityHintText(@NotNull Project project) {
+  private static String getCompatibilityHintText(@NotNull Project project) {
     String oldStorage = ProjectKt.isDirectoryBased(project)
                         ? FileUtil.toSystemDependentName(".idea/runConfigurations")
                         : PathUtil.getFileName(StringUtil.notNullize(project.getProjectFilePath()));
@@ -112,27 +121,23 @@ public class RunConfigurationStorageUi {
     return compatibilityHint;
   }
 
-  public JPanel getMainPanel() {
+  JPanel getMainPanel() {
     return myMainPanel;
   }
 
   @NotNull
-  public JComponent getPreferredFocusedComponent() {
+  JComponent getPreferredFocusedComponent() {
     return myPathComboBox;
   }
 
-  public void reset(@NotNull @SystemIndependent String folderPath, @NotNull Runnable closePopupAction) {
-    myPathComboBox.addItem(FileUtil.toSystemDependentName(myDotIdeaStoragePath));
+  void reset(@NotNull @SystemIndependent String folderPath, Collection<String> pathsToSuggest, @NotNull Runnable closePopupAction) {
     myPathComboBox.setSelectedItem(FileUtil.toSystemDependentName(folderPath));
 
+    for (String s : pathsToSuggest) {
+      myPathComboBox.addItem(FileUtil.toSystemDependentName(s));
+    }
+
     myClosePopupAction = closePopupAction;
-
-    updateWarningsAndErrors();
-  }
-
-  private void updateWarningsAndErrors() {
-    String path = getPath();
-    // TODO
   }
 
   @NotNull String getPath() {

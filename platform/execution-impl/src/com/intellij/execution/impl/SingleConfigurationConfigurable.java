@@ -26,6 +26,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -34,6 +35,8 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.DocumentAdapter;
@@ -45,6 +48,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -59,6 +63,9 @@ import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends BaseRCSettingsConfigurable {
 
@@ -209,9 +216,36 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   @Nullable
   @Contract("_,null -> !null")
-  private static String getErrorIfBadFolderPathForStoringInArbitraryFile(@NotNull Project project, @Nullable String path) {
+  private static String getErrorIfBadFolderPathForStoringInArbitraryFile(@NotNull Project project,
+                                                                         @Nullable @NonNls @SystemIndependent String path) {
+    if (getDotIdeaStoragePath(project).equals(path)) return null; // that's ok
+
     if (StringUtil.isEmpty(path)) return ExecutionBundle.message("run.configuration.storage.folder.path.not.specified");
-    return null;
+    if (path.endsWith("/.idea") || path.contains("/.idea/")) {
+      return ExecutionBundle.message("run.configuration.storage.folder.dot.idea.forbidden", File.separator);
+    }
+
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+    if (file != null && !file.isDirectory()) return ExecutionBundle.message("run.configuration.storage.folder.such.file.exists");
+
+    String parentPath = PathUtil.getParentPath(path);
+    while (file == null && !parentPath.isEmpty()) {
+      file = LocalFileSystem.getInstance().findFileByPath(parentPath);
+      parentPath = PathUtil.getParentPath(parentPath);
+    }
+
+    if (file == null) return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
+
+    if (ProjectFileIndex.getInstance(project).getContentRootForFile(file, true) == null) {
+      if (ProjectFileIndex.getInstance(project).getContentRootForFile(file, false) == null) {
+        return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
+      }
+      else {
+        return ExecutionBundle.message("run.configuration.storage.folder.in.excluded.root");
+      }
+    }
+
+    return null; // ok
   }
 
   void updateWarning() {
@@ -407,11 +441,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
    */
   @NonNls
   @NotNull
-  private String getDotIdeaStoragePath() {
+  private static String getDotIdeaStoragePath(@NotNull Project project) {
     // notNullize is to make inspections happy. Paths can't be null for non-default project
-    return ProjectKt.isDirectoryBased(myProject)
-           ? StringUtil.notNullize(myProject.getBasePath()) + "/.idea/runConfigurations"
-           : StringUtil.notNullize(myProject.getProjectFilePath());
+    return ProjectKt.isDirectoryBased(project)
+           ? StringUtil.notNullize(project.getBasePath()) + "/.idea/runConfigurations"
+           : StringUtil.notNullize(project.getProjectFilePath());
   }
 
   private void setStorageTypeAndPathToTheBestPossibleState() {
@@ -670,8 +704,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
 
     private void manageStorageFileLocation() {
-      @NotNull Disposable balloonDisposable = Disposer.newDisposable();
-      RunConfigurationStorageUi storageUi = new RunConfigurationStorageUi(myProject, getDotIdeaStoragePath(), balloonDisposable);
+      Disposable balloonDisposable = Disposer.newDisposable();
+
+      Function<String, String> pathToErrorMessage = path -> getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, path);
+      RunConfigurationStorageUi storageUi =
+        new RunConfigurationStorageUi(myProject, getDotIdeaStoragePath(myProject), pathToErrorMessage, balloonDisposable);
+
       Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(storageUi.getMainPanel())
         .setDialogMode(true)
         .setBorderInsets(JBUI.insets(20, 15, 10, 15))
@@ -683,9 +721,20 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       balloon.setAnimationEnabled(false);
 
       String path = myRCStorageType == RCStorageType.DotIdeaFolder
-                    ? getDotIdeaStoragePath()
+                    ? getDotIdeaStoragePath(myProject)
                     : StringUtil.notNullize(myFolderPathIfStoredInArbitraryFile);
-      storageUi.reset(path, () -> balloon.hide());
+
+      Set<String> pathsToSuggest = new LinkedHashSet<>();
+      if (getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, path) == null) {
+        pathsToSuggest.add(path);
+      }
+      if (getSettings().isStoredInArbitraryFileInProject()) {
+        pathsToSuggest.add(PathUtil.getParentPath(StringUtil.notNullize(getSettings().getPathIfStoredInArbitraryFileInProject())));
+      }
+      pathsToSuggest.add(getDotIdeaStoragePath(myProject));
+      // TODO maybe add storage paths used in other run configurations to pathsToSuggest
+
+      storageUi.reset(path, pathsToSuggest, () -> balloon.hide());
 
       balloon.addListener(new JBPopupListener() {
         @Override
@@ -705,7 +754,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
 
     private void applyChangedStoragePath(String newPath) {
-      if (newPath.equals(getDotIdeaStoragePath())) {
+      if (newPath.equals(getDotIdeaStoragePath(myProject))) {
         myRCStorageType = RCStorageType.DotIdeaFolder;
         myFolderPathIfStoredInArbitraryFile = null;
       }
