@@ -932,6 +932,7 @@
     <gutterMarkPreprocessor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringGutterMarkPreprocessor"/>
     <statistics.counterUsagesCollector groupId="suggested.refactorings" version="1"/>
 
+    <applicationInitializedListener implementation="com.intellij.ide.customize.WelcomeWizardHelper"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
