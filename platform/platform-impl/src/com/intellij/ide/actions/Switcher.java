@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
@@ -210,7 +211,7 @@ public final class Switcher extends AnAction implements DumbAware {
     }
   }
 
-  public static class ToggleCheckBoxAction extends DumbAwareAction implements DumbAware {
+  public static class ToggleCheckBoxAction extends DumbAwareAction implements DumbAware, LightEditCompatible {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();

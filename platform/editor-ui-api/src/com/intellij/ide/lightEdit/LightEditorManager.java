@@ -29,4 +29,6 @@ public interface LightEditorManager {
 
   @NotNull
   Collection<VirtualFile> getOpenFiles();
+
+  boolean isFileOpen(@NotNull VirtualFile file);
 }

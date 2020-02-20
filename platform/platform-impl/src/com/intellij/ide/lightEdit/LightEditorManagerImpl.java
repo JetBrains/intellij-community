@@ -10,9 +10,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -63,6 +61,9 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     ObjectUtils.consumeIfCast(LightEditorInfoImpl.getEditor(editorInfo), EditorImpl.class,
                               editorImpl -> editorImpl.setDropHandler(new LightEditDropHandler()));
     myEditors.add(editorInfo);
+    project.getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(
+      FileEditorManager.getInstance(project), file
+    );
     return editorInfo;
   }
 
@@ -172,6 +173,11 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   @NotNull
   public Collection<VirtualFile> getOpenFiles() {
     return myEditors.stream().map(info -> info.getFile()).collect(Collectors.toSet());
+  }
+
+  @Override
+  public boolean isFileOpen(@NotNull VirtualFile file) {
+    return myEditors.stream().anyMatch(editorInfo -> file.equals(editorInfo.getFile()));
   }
 
   @Override

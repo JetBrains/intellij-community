@@ -7,10 +7,12 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ProjectLoadHelper;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,7 +32,8 @@ final class LightEditProjectImpl extends ProjectImpl implements LightEditCompati
     "com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager",
     "com.intellij.openapi.command.undo.UndoManager",
     "com.intellij.openapi.fileEditor.FileEditorManager",
-    "com.intellij.dvcs.repo.VcsRepositoryManager"
+    "com.intellij.dvcs.repo.VcsRepositoryManager",
+    "com.intellij.problems.WolfTheProblemSolver"
   );
 
   LightEditProjectImpl() {
@@ -54,7 +57,9 @@ final class LightEditProjectImpl extends ProjectImpl implements LightEditCompati
     }
     registerService(DirectoryIndex.class, LightEditDirectoryIndex.class, pluginDescriptor, true);
     registerService(ProjectFileIndex.class, LightEditProjectFileIndex.class, pluginDescriptor, true);
+    registerService(FileIndexFacade.class, LightEditFileIndexFacade.class, pluginDescriptor, true);
     registerService(DumbService.class, LightEditDumbService.class, pluginDescriptor, true);
+    registerComponent(FileEditorManager.class, LightEditFileEditorManagerImpl.class, pluginDescriptor, true);
   }
 
   @NotNull
