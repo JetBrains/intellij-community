@@ -29,6 +29,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.ItemEvent
 import java.awt.event.MouseEvent
+import java.util.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import kotlin.jvm.internal.CallableReference
@@ -548,9 +549,33 @@ private fun TextFieldWithBrowseButton.bind(property: GraphProperty<String>) {
 
 private fun JTextField.bind(property: GraphProperty<String>) {
   property.afterChange { if (text != it) text = it }
-  document.addDocumentListener(object : DocumentAdapter() {
-    override fun textChanged(e: DocumentEvent) {
-      property.set(text)
+  document.addDocumentListener(
+    object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent) {
+        property.set(text)
+      }
     }
-  })
+  )
+}
+
+fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {
+  val slider = JSlider()
+  UIUtil.setSliderIsFilled(slider, true)
+  slider.paintLabels = true
+  slider.paintTicks = true
+  slider.paintTrack = true
+  slider.minimum = min
+  slider.maximum = max
+  slider.minorTickSpacing = minorTick
+  slider.majorTickSpacing = majorTick
+  return slider()
+}
+
+fun <T : JSlider> CellBuilder<T>.labelTable(table: Hashtable<Int, JComponent>.() -> Unit): CellBuilder<T> {
+  component.labelTable = Hashtable<Int, JComponent>().apply(table)
+  return this
+}
+
+fun <T : JSlider> CellBuilder<T>.withValueBinding(modelBinding: PropertyBinding<Int>): CellBuilder<T> {
+  return withBinding(JSlider::getValue, JSlider::setValue, modelBinding)
 }

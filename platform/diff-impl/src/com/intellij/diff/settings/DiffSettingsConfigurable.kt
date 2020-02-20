@@ -13,67 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.settings;
+package com.intellij.diff.settings
 
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.options.SearchableConfigurable;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
+import com.intellij.openapi.diff.DiffBundle.message
+import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.layout.*
+import javax.swing.JLabel
 
-import javax.swing.*;
+class DiffSettingsConfigurable : BoundSearchableConfigurable(
+  message("configurable.DiffSettingsConfigurable.display.name"),
+  "diff.base"
+) {
 
-public class DiffSettingsConfigurable implements SearchableConfigurable {
-  private DiffSettingsPanel mySettingsPane;
+  override fun createPanel(): DialogPanel {
+    val textSettings = TextDiffSettings.getSettings()
+    val diffSettings = DiffSettings.getSettings()
 
-  @NotNull
-  @Override
-  public String getId() {
-    return getHelpTopic();
-  }
-
-  @Nls
-  @Override
-  public String getDisplayName() {
-    return DiffBundle.message("configurable.DiffSettingsConfigurable.display.name");
-  }
-
-  @NotNull
-  @Override
-  public String getHelpTopic() {
-    return "diff.base";
-  }
-
-  @Nullable
-  @Override
-  public JComponent createComponent() {
-    if (mySettingsPane == null) {
-      mySettingsPane = new DiffSettingsPanel();
+    return panel {
+      titledRow(message("settings.diff.name")) {
+        row {
+          cell(isFullWidth = true) {
+            label(message("settings.context.lines"))
+            slider(0, TextDiffSettingsHolder.CONTEXT_RANGE_MODES.size - 1, 1, 1)
+              .labelTable {
+                TextDiffSettingsHolder.CONTEXT_RANGE_MODES.forEachIndexed { index, range ->
+                  put(index, JLabel(TextDiffSettingsHolder.CONTEXT_RANGE_MODE_LABELS[index]))
+                }
+              }
+              .withValueBinding(
+                PropertyBinding(
+                  { TextDiffSettingsHolder.CONTEXT_RANGE_MODES.indexOf(textSettings.contextRange).coerceAtLeast(0) },
+                  { textSettings.contextRange = TextDiffSettingsHolder.CONTEXT_RANGE_MODES[it] }
+                )
+              )
+          }
+        }
+        row { checkBox(message("settings.go.to.the.next.file.after.reaching.last.change"), diffSettings::isGoToNextFileOnNextDifference) }
+      }
+      titledRow(message("settings.merge.text")) {
+        row { checkBox(message("settings.automatically.apply.non.conflicting.changes"), textSettings::isAutoApplyNonConflictedChanges) }
+        row { checkBox(message("settings.highlight.modified.lines.in.gutter"), textSettings::isEnableLstGutterMarkersInMerge) }
+      }
     }
-    return mySettingsPane.getPanel();
-  }
-
-  @Override
-  public boolean isModified() {
-    return mySettingsPane != null && mySettingsPane.isModified();
-  }
-
-  @Override
-  public void apply() {
-    if (mySettingsPane != null) {
-      mySettingsPane.apply();
-    }
-  }
-
-  @Override
-  public void reset() {
-    if (mySettingsPane != null) {
-      mySettingsPane.reset();
-    }
-  }
-
-  @Override
-  public void disposeUIResources() {
-    mySettingsPane = null;
   }
 }

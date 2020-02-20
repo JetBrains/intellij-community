@@ -208,10 +208,11 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
                 put(50, JLabel("50%"))
                 put(100, JLabel("100%"))
               }
-              .withBinding({ it.value },
-                           { it, value -> it.value = value },
-                           PropertyBinding({ (settingsState.alphaModeRatio * 100f).toInt() },
-                                           { settingsState.alphaModeRatio = it / 100f })
+              .withValueBinding(
+                PropertyBinding(
+                  { (settingsState.alphaModeRatio * 100f).toInt() },
+                  { settingsState.alphaModeRatio = it / 100f }
+                )
               )
               .applyToComponent {
                 addChangeListener { toolTipText = "${value}%" }
@@ -306,24 +307,6 @@ private fun Cell.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defa
   val model = DefaultComboBoxModel(UIUtil.getStandardFontSizes())
   return comboBox(model, { getter().toString() }, { setter(getIntValue(it, defaultValue)) })
     .applyToComponent { isEditable = true }
-}
-
-private fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {
-  val slider = JSlider()
-  UIUtil.setSliderIsFilled(slider, true)
-  slider.paintLabels = true
-  slider.paintTicks = true
-  slider.paintTrack = true
-  slider.minimum = min
-  slider.maximum = max
-  slider.minorTickSpacing = minorTick
-  slider.majorTickSpacing = majorTick
-  return slider()
-}
-
-private fun CellBuilder<JSlider>.labelTable(table: Hashtable<Int, JComponent>.() -> Unit): CellBuilder<JSlider> {
-  component.labelTable = Hashtable<Int, JComponent>().apply(table)
-  return this
 }
 
 private fun RowBuilder.fullRow(init: InnerCell.() -> Unit): Row = row { cell(isFullWidth = true, init = init) }
