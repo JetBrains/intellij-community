@@ -3,7 +3,7 @@ package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
@@ -75,7 +75,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
       }
 
       if (parameters.getInvocationCount() <= 1 && JavaCompletionUtil.mayHaveSideEffects(expression)) {
-        CompletionService.getCompletionService().setAdvertisementText(DebuggerBundle.message("invoke.completion.once.more"));
+        CompletionService.getCompletionService().setAdvertisementText(JavaDebuggerBundle.message("invoke.completion.once.more"));
         return null;
       }
 

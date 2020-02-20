@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
@@ -64,7 +64,7 @@ public class ResumeThreadAction extends DebuggerAction{
 
     boolean visible = false;
     boolean enabled = false;
-    String text = DebuggerBundle.message("action.resume.thread.text.resume");
+    String text = JavaDebuggerBundle.message("action.resume.thread.text.resume");
 
     if(selectedNodes != null && selectedNodes.length > 0){
       visible = true;

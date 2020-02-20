@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -32,18 +32,18 @@ public class AddWildcardBreakpointDialog extends DialogWrapper {
 
   public AddWildcardBreakpointDialog(Project project) {
     super(project, true);
-    setTitle(DebuggerBundle.message("add.method.breakpoint"));
+    setTitle(JavaDebuggerBundle.message("add.method.breakpoint"));
     init();
   }
 
   @Override
   protected void doOKAction() {
     if (getClassPattern().length() == 0) {
-      Messages.showErrorDialog(myPanel, DebuggerBundle.message("class.pattern.not.specified"));
+      Messages.showErrorDialog(myPanel, JavaDebuggerBundle.message("class.pattern.not.specified"));
       return;
     }
     if (getMethodName().length() == 0) {
-      Messages.showErrorDialog(myPanel, DebuggerBundle.message("method.name.not.specified"));
+      Messages.showErrorDialog(myPanel, JavaDebuggerBundle.message("method.name.not.specified"));
       return;
     }
     super.doOKAction();

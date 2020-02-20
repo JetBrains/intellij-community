@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerManagerListener;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -166,7 +166,7 @@ public class HotSwapUIImpl extends HotSwapUI {
 
       final Application application = ApplicationManager.getApplication();
       if (modifiedClasses.isEmpty()) {
-        final String message = DebuggerBundle.message("status.hotswap.uptodate");
+        final String message = JavaDebuggerBundle.message("status.hotswap.uptodate");
         HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(myProject);
         callbackWrapper.onSuccess(sessions);
         return;
@@ -193,8 +193,8 @@ public class HotSwapUIImpl extends HotSwapUI {
         else {
           if (shouldDisplayHangWarning) {
             final int answer = Messages.showCheckboxMessageDialog(
-              DebuggerBundle.message("hotswap.dialog.hang.warning"),
-              DebuggerBundle.message("hotswap.dialog.title"),
+              JavaDebuggerBundle.message("hotswap.dialog.hang.warning"),
+              JavaDebuggerBundle.message("hotswap.dialog.title"),
               new String[]{"Perform &Reload Classes", "&Skip Reload Classes"},
               UIBundle.message("dialog.options.do.not.show"),
               false, 1, 1, Messages.getWarningIcon(),

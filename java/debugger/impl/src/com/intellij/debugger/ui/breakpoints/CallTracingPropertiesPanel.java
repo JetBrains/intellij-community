@@ -3,7 +3,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.CommonBundle;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.settings.TraceSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -42,7 +42,7 @@ public class CallTracingPropertiesPanel extends XBreakpointCustomPropertiesPanel
     _panel.add(myStartTracing);
     _panel.add(myEndTracing);
     _panel.add(filters);
-    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("checkbox.tracing")));
+    _panel.setBorder(IdeBorderFactory.createTitledBorder(JavaDebuggerBundle.message("checkbox.tracing")));
 
     ActionListener listener = new ActionListener() {
       @Override
@@ -69,7 +69,7 @@ public class CallTracingPropertiesPanel extends XBreakpointCustomPropertiesPanel
       EditClassFiltersDialog dialog = new EditClassFiltersDialog(myProject);
       TraceSettings traceSettings = TraceSettings.getInstance();
       dialog.setFilters(traceSettings.getClassFilters(), traceSettings.getClassExclusionFilters());
-      dialog.setTitle(DebuggerBundle.message("tracing.class.filters"));
+      dialog.setTitle(JavaDebuggerBundle.message("tracing.class.filters"));
       dialog.show();
       if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
         traceSettings.setClassFilters(dialog.getFilters());

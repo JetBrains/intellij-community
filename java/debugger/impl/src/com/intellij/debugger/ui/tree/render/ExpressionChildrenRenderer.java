@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -70,7 +70,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
     }
     catch (final EvaluateException e) {
       List<DebuggerTreeNode> errorChildren = new ArrayList<>();
-      errorChildren.add(nodeManager.createMessageNode(DebuggerBundle.message("error.unable.to.evaluate.expression") + " " + e.getMessage()));
+      errorChildren.add(nodeManager.createMessageNode(JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + " " + e.getMessage()));
       builder.setChildren(errorChildren);
     }
   }
@@ -123,7 +123,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
   public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     Value expressionValue = getLastChildrenValue(node.getParent().getDescriptor());
     if (expressionValue == null) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.unable.to.evaluate.expression"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.expression"));
     }
 
     NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue, (ValueDescriptor) node.getParent().getDescriptor());

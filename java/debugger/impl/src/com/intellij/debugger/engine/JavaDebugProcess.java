@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
 import com.intellij.debugger.engine.dfaassist.DfaAssist;
@@ -363,7 +363,7 @@ public class JavaDebugProcess extends XDebugProcess {
         final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session, process, tracker);
 
         final Content memoryViewContent =
-          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, DebuggerBundle.message("memory.toolwindow.title"),
+          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, JavaDebuggerBundle.message("memory.toolwindow.title"),
                            null, classesFilteredView.getDefaultFocusedComponent());
 
         memoryViewContent.setCloseable(false);
@@ -396,7 +396,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
         DebugProcessImpl process = myJavaSession.getProcess();
         OverheadView monitor = new OverheadView(process);
-        Content overheadContent = ui.createContent("OverheadMonitor", monitor, DebuggerBundle.message("overhead.toolwindow.title"), null, monitor.getDefaultFocusedComponent());
+        Content overheadContent = ui.createContent("OverheadMonitor", monitor, JavaDebuggerBundle.message("overhead.toolwindow.title"), null, monitor.getDefaultFocusedComponent());
 
         monitor.setBouncer(() -> ui.setBouncing(overheadContent, true));
 
@@ -426,7 +426,7 @@ public class JavaDebugProcess extends XDebugProcess {
     private volatile boolean myAutoModeEnabled;
 
     AutoVarsSwitchAction() {
-      super(DebuggerBundle.message("action.auto.variables.mode"), DebuggerBundle.message("action.auto.variables.mode.description"), null);
+      super(JavaDebuggerBundle.message("action.auto.variables.mode"), JavaDebuggerBundle.message("action.auto.variables.mode.description"), null);
       myAutoModeEnabled = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
     }
 
@@ -448,9 +448,9 @@ public class JavaDebugProcess extends XDebugProcess {
     private final String myTextUnavailable;
 
     WatchLastMethodReturnValueAction() {
-      super("", DebuggerBundle.message("action.watch.method.return.value.description"), null);
-      myText = DebuggerBundle.message("action.watches.method.return.value.enable");
-      myTextUnavailable = DebuggerBundle.message("action.watches.method.return.value.unavailable.reason");
+      super("", JavaDebuggerBundle.message("action.watch.method.return.value.description"), null);
+      myText = JavaDebuggerBundle.message("action.watches.method.return.value.enable");
+      myTextUnavailable = JavaDebuggerBundle.message("action.watches.method.return.value.unavailable.reason");
     }
 
     @Override

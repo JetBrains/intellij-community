@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -113,7 +113,7 @@ public class FieldEvaluator implements Evaluator {
         field = refType.fieldByName(myFieldName);
       }
       if (field == null || !field.isStatic()) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.static.field", myFieldName));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.static.field", myFieldName));
       }
       myEvaluatedField = field;
       myEvaluatedQualifier = refType;
@@ -124,7 +124,8 @@ public class FieldEvaluator implements Evaluator {
       ObjectReference objRef = (ObjectReference)object;
       ReferenceType refType = objRef.referenceType();
       if (!(refType instanceof ClassType || refType instanceof ArrayType)) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.class.or.array.expected", myFieldName));
+        throw EvaluateExceptionUtil.createEvaluateException(
+          JavaDebuggerBundle.message("evaluation.error.class.or.array.expected", myFieldName));
       }
 
       // expressions like 'array.length' must be treated separately
@@ -138,7 +139,7 @@ public class FieldEvaluator implements Evaluator {
       }
 
       if (field == null) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.field", myFieldName));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.instance.field", myFieldName));
       }
       myEvaluatedQualifier = field.isStatic() ? refType : objRef;
       myEvaluatedField = field;
@@ -149,7 +150,7 @@ public class FieldEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(new NullPointerException());
     }
 
-    throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.evaluating.field", myFieldName));
+    throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.evaluating.field", myFieldName));
   }
 
   @Override

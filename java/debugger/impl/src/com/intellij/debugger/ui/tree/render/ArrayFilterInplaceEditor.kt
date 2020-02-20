@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render
 
-import com.intellij.debugger.DebuggerBundle
+import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.actions.ArrayAction
 import com.intellij.debugger.actions.ArrayFilterAction
@@ -82,7 +82,7 @@ class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp: Boolean, thi
     nameLabel.ipad.right = 0
     nameLabel.ipad.left = 0
     nameLabel.icon = myNode.icon
-    nameLabel.append(DebuggerBundle.message("message.node.filtered"), SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    nameLabel.append(JavaDebuggerBundle.message("message.node.filtered"), SimpleTextAttributes.REGULAR_ATTRIBUTES)
     val offset = nameLabel.preferredSize.width
 
     bounds.x += offset
@@ -141,7 +141,7 @@ class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp: Boolean, thi
       var temp = false
       var node = parentNode.children.find { ArrayFilterAction.isArrayFilter(it) }
       if (node == null) {
-        node = parentNode.addTemporaryEditorNode(AllIcons.General.Filter, DebuggerBundle.message("message.node.filtered"))
+        node = parentNode.addTemporaryEditorNode(AllIcons.General.Filter, JavaDebuggerBundle.message("message.node.filtered"))
         temp = true
       }
       edit(node as XDebuggerTreeNode, temp)

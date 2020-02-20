@@ -3,7 +3,7 @@ package com.intellij.debugger.settings;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationsPanel;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
@@ -139,8 +139,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton(DebuggerBundle.lazyMessage("action.AnActionButton.text.duplicate"),
-                                                       DebuggerBundle.lazyMessage("action.AnActionButton.description.duplicate"),
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.lazyMessage("action.AnActionButton.text.duplicate"),
+                                                       JavaDebuggerBundle.lazyMessage("action.AnActionButton.description.duplicate"),
                                                        PlatformIcons.COPY_ICON) {
       @Override
       public boolean isEnabled() {
@@ -161,8 +161,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton(DebuggerBundle.lazyMessage("action.AnActionButton.text.enable.selected"),
-                                                       DebuggerBundle.lazyMessage("action.AnActionButton.description.enable.selected"),
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.lazyMessage("action.AnActionButton.text.enable.selected"),
+                                                       JavaDebuggerBundle.lazyMessage("action.AnActionButton.description.enable.selected"),
                                                        PlatformIcons.SELECT_ALL_ICON) {
       @Override
       public boolean isEnabled() {
@@ -175,8 +175,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         table.repaint();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton(DebuggerBundle.lazyMessage("action.AnActionButton.text.disable.selected"),
-                                                       DebuggerBundle.lazyMessage("action.AnActionButton.description.disable.selected"),
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.lazyMessage("action.AnActionButton.text.disable.selected"),
+                                                       JavaDebuggerBundle.lazyMessage("action.AnActionButton.description.disable.selected"),
                                                        PlatformIcons.UNSELECT_ALL_ICON) {
       @Override
       public boolean isEnabled() {
@@ -203,8 +203,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), table);
 
-    decorator.addExtraAction(new DumbAwareActionButton(DebuggerBundle.lazyMessage("action.AnActionButton.text.import"),
-                                                       DebuggerBundle.lazyMessage("action.AnActionButton.description.import"),
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.lazyMessage("action.AnActionButton.text.import"),
+                                                       JavaDebuggerBundle.lazyMessage("action.AnActionButton.description.import"),
                                                        AllIcons.Actions.Install) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -220,8 +220,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
             return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
           }
         };
-        descriptor.setDescription(DebuggerBundle.message("please.select.a.file.to.import"));
-        descriptor.setTitle(DebuggerBundle.message("import.capture.points"));
+        descriptor.setDescription(JavaDebuggerBundle.message("please.select.a.file.to.import"));
+        descriptor.setTitle(JavaDebuggerBundle.message("import.capture.points"));
 
         VirtualFile[] files = FileChooser.chooseFiles(descriptor, e.getProject(), null);
         if (ArrayUtil.isEmpty(files)) return;
@@ -238,18 +238,18 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           catch (Exception ex) {
             final String msg = ex.getLocalizedMessage();
             Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(),
-                                     DebuggerBundle.message("export.failed"));
+                                     JavaDebuggerBundle.message("export.failed"));
           }
         }
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton(DebuggerBundle.lazyMessage("action.AnActionButton.text.export"),
-                                                       DebuggerBundle.lazyMessage("action.AnActionButton.description.export"),
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.lazyMessage("action.AnActionButton.text.export"),
+                                                       JavaDebuggerBundle.lazyMessage("action.AnActionButton.description.export"),
                                                        AllIcons.ToolbarDecorator.Export) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
-          .createSaveFileDialog(new FileSaverDescriptor(DebuggerBundle.message("export.selected.capture.points.to.file"), "", "xml"), e.getProject())
+          .createSaveFileDialog(new FileSaverDescriptor(JavaDebuggerBundle.message("export.selected.capture.points.to.file"), "", "xml"), e.getProject())
           .save(null, null);
         if (wrapper == null) return;
 
@@ -270,7 +270,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         catch (Exception ex) {
           final String msg = ex.getLocalizedMessage();
           Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(),
-                                   DebuggerBundle.message("export.failed"));
+                                   JavaDebuggerBundle.message("export.failed"));
         }
       }
 
@@ -283,7 +283,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     myConfigureAnnotationsButton.addActionListener(e -> new AsyncAnnotationsDialog(myProject).show());
 
     myCapturePanel.setBorder(
-      IdeBorderFactory.createTitledBorder(DebuggerBundle.message("settings.breakpoints.based"), false, JBUI.insetsTop(8))
+      IdeBorderFactory.createTitledBorder(JavaDebuggerBundle.message("settings.breakpoints.based"), false, JBUI.insetsTop(8))
         .setShowLine(false));
     myCapturePanel.add(decorator.createPanel(), BorderLayout.CENTER);
 
@@ -308,12 +308,12 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     @NotNull
     private static String[] getColumns() {
       return new String[]{"",
-        DebuggerBundle.message("settings.capture.column.capture.class.name"),
-        DebuggerBundle.message("settings.capture.column.capture.method.name"),
-        DebuggerBundle.message("settings.capture.column.capture.key.expression"),
-        DebuggerBundle.message("settings.capture.column.insert.class.name"),
-        DebuggerBundle.message("settings.capture.column.insert.method.name"),
-        DebuggerBundle.message("settings.capture.column.insert.key.expression")};
+        JavaDebuggerBundle.message("settings.capture.column.capture.class.name"),
+        JavaDebuggerBundle.message("settings.capture.column.capture.method.name"),
+        JavaDebuggerBundle.message("settings.capture.column.capture.key.expression"),
+        JavaDebuggerBundle.message("settings.capture.column.insert.class.name"),
+        JavaDebuggerBundle.message("settings.capture.column.insert.method.name"),
+        JavaDebuggerBundle.message("settings.capture.column.insert.key.expression")};
     }
 
     List<CapturePoint> myCapturePoints;
@@ -537,7 +537,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   @Nls
   @Override
   public String getDisplayName() {
-    return DebuggerBundle.message("async.stacktraces.configurable.display.name");
+    return JavaDebuggerBundle.message("async.stacktraces.configurable.display.name");
   }
 
   interface CapturePointConsumer {
@@ -587,19 +587,19 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       super(project, true);
       mySettings = DebuggerProjectSettings.getInstance(myProject);
       myAsyncSchedulePanel = new AnnotationsPanel(project,
-                                                  DebuggerBundle.message("settings.async.schedule"),
+                                                  JavaDebuggerBundle.message("settings.async.schedule"),
                                                   "",
                                                   getAsyncAnnotations(mySettings, true),
                                                   Collections.singletonList(getAnnotationName(true)),
                                                   Collections.emptySet(), false, false);
       myAsyncExecutePanel = new AnnotationsPanel(project,
-                                                 DebuggerBundle.message("settings.async.execute"),
+                                                 JavaDebuggerBundle.message("settings.async.execute"),
                                                  "",
                                                  getAsyncAnnotations(mySettings, false),
                                                  Collections.singletonList(getAnnotationName(false)),
                                                  Collections.emptySet(), false, false);
       init();
-      setTitle(DebuggerBundle.message("settings.async.annotations.configuration"));
+      setTitle(JavaDebuggerBundle.message("settings.async.annotations.configuration"));
     }
 
     @Override

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
@@ -82,7 +82,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
         }
         catch (EvaluateException e) {
           LOG.debug(e);
-          process.printToConsole(DebuggerBundle.message("error.unable.to.evaluate.capture.expression", e.getMessage()) + "\n");
+          process.printToConsole(JavaDebuggerBundle.message("error.unable.to.evaluate.capture.expression", e.getMessage()) + "\n");
         }
       }
     }
@@ -176,7 +176,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
           catch (EvaluateException e) {
             LOG.debug(e);
             if (!(e.getCause() instanceof IncompatibleThreadStateException)) {
-              debugProcess.printToConsole(DebuggerBundle.message("error.unable.to.evaluate.insert.expression", e.getMessage()) + "\n");
+              debugProcess.printToConsole(JavaDebuggerBundle.message("error.unable.to.evaluate.insert.expression", e.getMessage()) + "\n");
             }
           }
         }

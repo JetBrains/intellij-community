@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.agent;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -292,7 +292,7 @@ public class MemoryAgentUtil {
               .toArray(Attachment.EMPTY_ARRAY);
             RuntimeExceptionWithAttachments exception =
               new RuntimeExceptionWithAttachments("Could not start debug process with memory agent", mentionsInOutput);
-            String checkboxName = DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent");
+            String checkboxName = JavaDebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent");
             String description =
               "Memory agent could not be loaded. <a href=\"Disable\">Disable</a> the agent. To enable it back use \"" +
               checkboxName + "\" option in File | Settings | Build, Execution, Deployment | Debugger";

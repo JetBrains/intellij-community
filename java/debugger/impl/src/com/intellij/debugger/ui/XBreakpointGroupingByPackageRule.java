@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.icons.AllIcons;
@@ -32,7 +32,7 @@ import java.util.Collection;
 public class XBreakpointGroupingByPackageRule<B> extends XBreakpointGroupingRule<B, XBreakpointPackageGroup> {
 
   protected XBreakpointGroupingByPackageRule() {
-    super("XBreakpointGroupingByPackageRule", DebuggerBundle.message("rule.name.group.by.package"));
+    super("XBreakpointGroupingByPackageRule", JavaDebuggerBundle.message("rule.name.group.by.package"));
   }
 
   @Override

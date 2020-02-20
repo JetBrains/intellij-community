@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -134,7 +134,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     ApplicationManager.getApplication().invokeAndWait(
       () -> {
         ProgressWindow progress =
-          new ProgressWindow(true, false, debugProcess.getProject(), DebuggerBundle.message("cancel.emulation"));
+          new ProgressWindow(true, false, debugProcess.getProject(), JavaDebuggerBundle.message("cancel.emulation"));
         progress.setDelayInMillis(2000);
         indicatorRef.set(progress);
       });
@@ -297,7 +297,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
       if(!hasMethod) {
         debugProcess.getRequestsManager().setInvalid(
-          this, DebuggerBundle.message("error.invalid.breakpoint.method.not.found", classType.name())
+          this, JavaDebuggerBundle.message("error.invalid.breakpoint.method.not.found", classType.name())
         );
         return;
       }
@@ -358,11 +358,11 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
     String locationFileName = DebuggerUtilsEx.getSourceName(location, e -> defaultFileName);
     int locationLine = location.lineNumber();
-    return DebuggerBundle.message(entry ? "status.method.entry.breakpoint.reached" : "status.method.exit.breakpoint.reached",
+    return JavaDebuggerBundle.message(entry ? "status.method.entry.breakpoint.reached" : "status.method.exit.breakpoint.reached",
                                   method.declaringType().name() + "." + method.name() + "()",
-                                  locationQName,
-                                  locationFileName,
-                                  locationLine
+                                      locationQName,
+                                      locationFileName,
+                                      locationLine
     );
   }
 
@@ -408,7 +408,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
     }
     else {
-      buffer.append(DebuggerBundle.message("status.breakpoint.invalid"));
+      buffer.append(JavaDebuggerBundle.message("status.breakpoint.invalid"));
     }
     return buffer.toString();
   }
@@ -557,7 +557,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
     progressIndicator.setIndeterminate(false);
     progressIndicator.start();
-    progressIndicator.setText(DebuggerBundle.message("label.method.breakpoints.processing.classes"));
+    progressIndicator.setText(JavaDebuggerBundle.message("label.method.breakpoints.processing.classes"));
     try {
       MultiMap<ReferenceType, ReferenceType> inheritance = new MultiMap<>();
       List<ReferenceType> allTypes = classType.virtualMachine().allClasses();
@@ -578,7 +578,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
       List<ReferenceType> types = StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).skip(1).toList();
 
-      progressIndicator.setText(DebuggerBundle.message("label.method.breakpoints.setting.breakpoints"));
+      progressIndicator.setText(JavaDebuggerBundle.message("label.method.breakpoints.setting.breakpoints"));
 
       ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(allTypes);
 

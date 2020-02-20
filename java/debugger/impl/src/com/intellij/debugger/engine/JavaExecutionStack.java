@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.AsyncStacksToggleAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -123,7 +123,7 @@ public class JavaExecutionStack extends XExecutionStack {
         if (container.isObsolete()) return;
         int status = myThreadProxy.status();
         if (status == ThreadReference.THREAD_STATUS_ZOMBIE) {
-          container.errorOccurred(DebuggerBundle.message("frame.panel.thread.finished"));
+          container.errorOccurred(JavaDebuggerBundle.message("frame.panel.thread.finished"));
         }
         else if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
           if (!(status == ThreadReference.THREAD_STATUS_UNKNOWN) && !(status == ThreadReference.THREAD_STATUS_NOT_STARTED)) {
@@ -143,7 +143,7 @@ public class JavaExecutionStack extends XExecutionStack {
           }
         }
         else {
-          container.errorOccurred(DebuggerBundle.message("frame.panel.frames.not.available"));
+          container.errorOccurred(JavaDebuggerBundle.message("frame.panel.frames.not.available"));
         }
       }
     });
@@ -283,9 +283,9 @@ public class JavaExecutionStack extends XExecutionStack {
     final String threadStatusText = DebuggerUtilsEx.getThreadStatusText(thread.status());
     //noinspection HardCodedStringLiteral
     if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {
-      return DebuggerBundle.message("label.thread.node.in.group", name, thread.uniqueID(), threadStatusText, grname);
+      return JavaDebuggerBundle.message("label.thread.node.in.group", name, thread.uniqueID(), threadStatusText, grname);
     }
-    return DebuggerBundle.message("label.thread.node", name, thread.uniqueID(), threadStatusText);
+    return JavaDebuggerBundle.message("label.thread.node", name, thread.uniqueID(), threadStatusText);
   }
 
   @Override

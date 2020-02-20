@@ -2,7 +2,7 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.CommonBundle;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -39,7 +39,7 @@ final class ImageObjectRenderer extends CompoundReferenceRenderer implements Ful
 
   @Override
   public @NotNull XFullValueEvaluator getFullValueEvaluator(final EvaluationContextImpl evaluationContext, final ValueDescriptorImpl valueDescriptor) {
-    return new IconPopupEvaluator(DebuggerBundle.message("message.node.show.image"), evaluationContext) {
+    return new IconPopupEvaluator(JavaDebuggerBundle.message("message.node.show.image"), evaluationContext) {
       @Override
       protected Icon getData() {
         return getIcon(getEvaluationContext(), valueDescriptor.getValue(), "imageToBytes");

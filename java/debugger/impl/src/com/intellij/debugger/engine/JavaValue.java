@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.JavaReferringObjectsValue;
 import com.intellij.debugger.actions.JumpToObjectAction;
@@ -152,7 +152,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Override
   public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
     if (isOnDemand() && !isCalculated()) {
-      node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(DebuggerBundle.message("message.node.evaluate")));
+      node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(JavaDebuggerBundle.message("message.node.evaluate")));
       node.setPresentation(AllIcons.Debugger.Db_watch, new XRegularValuePresentation("", null, ""), false);
       return;
     }
@@ -164,7 +164,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
       @Override
       protected void commandCancelled() {
-        node.setPresentation(null, new XErrorValuePresentation(DebuggerBundle.message("error.context.has.changed")), false);
+        node.setPresentation(null, new XErrorValuePresentation(JavaDebuggerBundle.message("error.context.has.changed")), false);
       }
 
       @Override
@@ -268,7 +268,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
         @Override
         protected void commandCancelled() {
-          callback.errorOccurred(DebuggerBundle.message("error.context.has.changed"));
+          callback.errorOccurred(JavaDebuggerBundle.message("error.context.has.changed"));
         }
 
         @Override
@@ -402,7 +402,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
       @Override
       protected void commandCancelled() {
-        node.setErrorMessage(DebuggerBundle.message("error.context.has.changed"));
+        node.setErrorMessage(JavaDebuggerBundle.message("error.context.has.changed"));
       }
     });
     return true;
@@ -568,7 +568,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         myEvaluationContext.getManagerThread().schedule(new DebuggerCommandImpl() {
           @Override
           protected void commandCancelled() {
-            callback.errorOccurred(DebuggerBundle.message("error.context.has.changed"));
+            callback.errorOccurred(JavaDebuggerBundle.message("error.context.has.changed"));
           }
 
           @Override

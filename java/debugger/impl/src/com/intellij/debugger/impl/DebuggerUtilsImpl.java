@@ -2,7 +2,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -239,9 +239,9 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     if (connection instanceof PidRemoteConnection) {
       return "pid " + ((PidRemoteConnection)connection).getPid();
     }
-    String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
-    String transportName = DebuggerBundle.getTransportName(connection);
-    return DebuggerBundle.message("string.connection", addressDisplayName, transportName);
+    String addressDisplayName = JavaDebuggerBundle.getAddressDisplayName(connection);
+    String transportName = JavaDebuggerBundle.getTransportName(connection);
+    return JavaDebuggerBundle.message("string.connection", addressDisplayName, transportName);
   }
 
   public static boolean instanceOf(@Nullable ReferenceType type, @NotNull ReferenceType superType) {

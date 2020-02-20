@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -177,7 +177,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       return elementFactory.createExpressionFromText(fieldName, null);
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException(DebuggerBundle.message("error.invalid.field.name", getName()), e);
+      throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.field.name", getName()), e);
     }
   }
 

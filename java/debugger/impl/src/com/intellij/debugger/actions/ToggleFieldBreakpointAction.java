@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.SourcePosition;
@@ -92,7 +92,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
       presentation.setVisible(toEnable);
     }
     else if(DebuggerAction.isContextView(event)) {
-      presentation.setText(DebuggerBundle.lazyMessage("action.add.field.watchpoint.text"));
+      presentation.setText(JavaDebuggerBundle.lazyMessage("action.add.field.watchpoint.text"));
       Project project = event.getData(CommonDataKeys.PROJECT);
       if(project != null && place != null) {
         Document document = PsiDocumentManager.getInstance(project).getDocument(place.getFile());

@@ -20,7 +20,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -48,7 +48,7 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
 
   @Override
   public String getDisplayName() {
-    return DebuggerBundle.message("breakpoint.any.exception.display.name");
+    return JavaDebuggerBundle.message("breakpoint.any.exception.display.name");
   }
 
   @Override

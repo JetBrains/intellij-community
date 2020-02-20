@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -78,7 +78,7 @@ public class PrimitiveRenderer extends NodeRendererImpl {
       }
     }
     else {
-      return DebuggerBundle.message("label.undefined");
+      return JavaDebuggerBundle.message("label.undefined");
     }
   }
 

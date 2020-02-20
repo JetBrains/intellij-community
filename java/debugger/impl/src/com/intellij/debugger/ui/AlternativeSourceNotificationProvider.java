@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -151,7 +151,7 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
                                               final Project project,
                                               final VirtualFile file,
                                               String locationDeclName) {
-      setText(DebuggerBundle.message("editor.notification.alternative.source", aClass.getQualifiedName()));
+      setText(JavaDebuggerBundle.message("editor.notification.alternative.source", aClass.getQualifiedName()));
       final ComboBox<ComboBoxClassElement> switcher = new ComboBox<>(alternatives);
       switcher.addActionListener(new ActionListener() {
         @Override
@@ -181,7 +181,7 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
         }
       });
       myLinksPanel.add(switcher);
-      createActionLabel(DebuggerBundle.message("action.disable.text"), () -> {
+      createActionLabel(JavaDebuggerBundle.message("action.disable.text"), () -> {
         DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE = false;
         setFileProcessed(file, false);
         FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);

@@ -2,7 +2,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -129,11 +129,11 @@ public class SourceCodeChecker {
               FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
               if (editor instanceof TextEditor) {
                 HintManager.getInstance().showErrorHint(((TextEditor)editor).getEditor(),
-                                                        DebuggerBundle.message("warning.source.code.not.match"));
+                                                        JavaDebuggerBundle.message("warning.source.code.not.match"));
               }
               else {
                 XDebuggerManagerImpl.NOTIFICATION_GROUP
-                  .createNotification(DebuggerBundle.message("warning.source.code.not.match"), NotificationType.WARNING)
+                  .createNotification(JavaDebuggerBundle.message("warning.source.code.not.match"), NotificationType.WARNING)
                   .notify(project);
               }
             }

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.ide.actions.ActionsCollector;
@@ -72,7 +72,7 @@ public final class HotSwapManager {
     else { // not a dir
       if (SystemInfo.isFileSystemCaseSensitive? StringUtil.endsWith(filePath, CLASS_EXTENSION) : StringUtil.endsWithIgnoreCase(filePath, CLASS_EXTENSION)) {
         if (file.lastModified() > timeStamp) {
-          progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));
+          progress.setText(JavaDebuggerBundle.message("progress.hotswap.scanning.path", filePath));
           final String qualifiedName = filePath.substring(rootPath.length(), filePath.length() - CLASS_EXTENSION.length()).replace('/', '.');
           container.put(qualifiedName, new HotSwapFile(file));
         }
@@ -154,7 +154,7 @@ public final class HotSwapManager {
       });
     }
 
-    swapProgress.setTitle(DebuggerBundle.message("progress.hotswap.scanning.classes"));
+    swapProgress.setTitle(JavaDebuggerBundle.message("progress.hotswap.scanning.classes"));
     scanClassesCommand.run();
 
     if (swapProgress.isCancelled()) {
@@ -188,7 +188,7 @@ public final class HotSwapManager {
       });
     }
 
-    reloadClassesProgress.setTitle(DebuggerBundle.message("progress.hotswap.reloading"));
+    reloadClassesProgress.setTitle(JavaDebuggerBundle.message("progress.hotswap.reloading"));
     reloadClassesCommand.run();
     ActionsCollector.getInstance().record("Reload Classes", HotSwapManager.class);
   }

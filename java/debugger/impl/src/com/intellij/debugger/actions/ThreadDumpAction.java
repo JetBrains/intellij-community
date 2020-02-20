@@ -2,7 +2,7 @@
 
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -91,7 +91,7 @@ public class ThreadDumpAction extends DumbAwareAction implements AnAction.Transp
         if (daemon != null) {
           Value value = threadReference.getValue(daemon);
           if (value instanceof BooleanValue && ((BooleanValue)value).booleanValue()) {
-            buffer.append(" ").append(DebuggerBundle.message("threads.export.attribute.label.daemon"));
+            buffer.append(" ").append(JavaDebuggerBundle.message("threads.export.attribute.label.daemon"));
             threadState.setDaemon(true);
           }
         }
@@ -101,7 +101,7 @@ public class ThreadDumpAction extends DumbAwareAction implements AnAction.Transp
         if (priority != null) {
           Value value = threadReference.getValue(priority);
           if (value instanceof IntegerValue) {
-            buffer.append(" ").append(DebuggerBundle.message("threads.export.attribute.label.priority", ((IntegerValue)value).intValue()));
+            buffer.append(" ").append(JavaDebuggerBundle.message("threads.export.attribute.label.priority", ((IntegerValue)value).intValue()));
           }
         }
 
@@ -109,14 +109,14 @@ public class ThreadDumpAction extends DumbAwareAction implements AnAction.Transp
         if (tid != null) {
           Value value = threadReference.getValue(tid);
           if (value instanceof LongValue) {
-            buffer.append(" ").append(DebuggerBundle.message("threads.export.attribute.label.tid", Long.toHexString(((LongValue)value).longValue())));
+            buffer.append(" ").append(JavaDebuggerBundle.message("threads.export.attribute.label.tid", Long.toHexString(((LongValue)value).longValue())));
             buffer.append(" nid=NA");
           }
         }
       }
       //ThreadGroupReference groupReference = threadReference.threadGroup();
       //if (groupReference != null) {
-      //  buffer.append(", ").append(DebuggerBundle.message("threads.export.attribute.label.group", groupReference.name()));
+      //  buffer.append(", ").append(JavaDebuggerBundle.message("threads.export.attribute.label.group", groupReference.name()));
       //}
       final String state = threadState.getState();
       if (state != null) {
@@ -136,7 +136,7 @@ public class ThreadDumpAction extends DumbAwareAction implements AnAction.Transp
             for (ThreadReference thread : waiting) {
               final String waitingThreadName = threadName(thread);
               waitingMap.put(waitingThreadName, threadName);
-              buffer.append("\n\t ").append(DebuggerBundle.message("threads.export.attribute.label.blocks.thread", waitingThreadName));
+              buffer.append("\n\t ").append(JavaDebuggerBundle.message("threads.export.attribute.label.blocks.thread", waitingThreadName));
             }
           }
         }
@@ -149,7 +149,8 @@ public class ThreadDumpAction extends DumbAwareAction implements AnAction.Transp
               final String monitorOwningThreadName = threadName(waitedMonitorOwner);
               waitingMap.put(threadName, monitorOwningThreadName);
               buffer.append("\n\t ")
-                .append(DebuggerBundle.message("threads.export.attribute.label.waiting.for.thread", monitorOwningThreadName, renderObject(waitedMonitor)));
+                .append(JavaDebuggerBundle
+                          .message("threads.export.attribute.label.waiting.for.thread", monitorOwningThreadName, renderObject(waitedMonitor)));
             }
           }
         }
@@ -191,7 +192,7 @@ public class ThreadDumpAction extends DumbAwareAction implements AnAction.Transp
         }
       }
       catch (IncompatibleThreadStateException e) {
-        buffer.append("\n\t ").append(DebuggerBundle.message("threads.export.attribute.error.incompatible.state"));
+        buffer.append("\n\t ").append(JavaDebuggerBundle.message("threads.export.attribute.error.incompatible.state"));
       }
       threadState.setStackTrace(buffer.toString(), hasEmptyStack);
       ThreadDumpParser.inferThreadStateDetail(threadState);
@@ -220,7 +221,7 @@ public class ThreadDumpAction extends DumbAwareAction implements AnAction.Transp
   }
 
   private static String renderLockedObject(ObjectReference monitor) {
-    return DebuggerBundle.message("threads.export.attribute.label.locked", renderObject(monitor));
+    return JavaDebuggerBundle.message("threads.export.attribute.label.locked", renderObject(monitor));
   }
 
   public static String renderObject(ObjectReference monitor) {
@@ -231,7 +232,7 @@ public class ThreadDumpAction extends DumbAwareAction implements AnAction.Transp
     catch (Throwable e) {
       monitorTypeName = "Error getting object type: '" + e.getMessage() + "'";
     }
-    return DebuggerBundle.message("threads.export.attribute.label.object-id", Long.toHexString(monitor.uniqueID()), monitorTypeName);
+    return JavaDebuggerBundle.message("threads.export.attribute.label.object-id", Long.toHexString(monitor.uniqueID()), monitorTypeName);
   }
 
   private static String threadStatusToJavaThreadState(int status) {
@@ -277,10 +278,10 @@ public class ThreadDumpAction extends DumbAwareAction implements AnAction.Transp
   }
 
   public static String renderLocation(final Location location) {
-    return DebuggerBundle.message("export.threads.stackframe.format",
-                                  DebuggerUtilsEx.getLocationMethodQName(location),
-                                  DebuggerUtilsEx.getSourceName(location, e -> "Unknown Source"),
-                                  DebuggerUtilsEx.getLineNumber(location, false));
+    return JavaDebuggerBundle.message("export.threads.stackframe.format",
+                                      DebuggerUtilsEx.getLocationMethodQName(location),
+                                      DebuggerUtilsEx.getSourceName(location, e -> "Unknown Source"),
+                                      DebuggerUtilsEx.getLineNumber(location, false));
   }
 
   private static String threadName(ThreadReference threadReference) {

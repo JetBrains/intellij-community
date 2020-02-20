@@ -99,20 +99,21 @@ public class DebugProcessEvents extends DebugProcessImpl {
     final Breakpoint breakpoint = descriptor.getFirst();
     if (event instanceof LocatableEvent) {
       try {
-        text = breakpoint != null ? breakpoint.getEventMessage(((LocatableEvent)event)) : DebuggerBundle.message("status.generic.breakpoint.reached");
+        text = breakpoint != null ? breakpoint.getEventMessage(((LocatableEvent)event)) : JavaDebuggerBundle
+          .message("status.generic.breakpoint.reached");
       }
       catch (InternalException e) {
-        text = DebuggerBundle.message("status.generic.breakpoint.reached");
+        text = JavaDebuggerBundle.message("status.generic.breakpoint.reached");
       }
     }
     else if (event instanceof VMStartEvent) {
-      text = DebuggerBundle.message("status.process.started");
+      text = JavaDebuggerBundle.message("status.process.started");
     }
     else if (event instanceof VMDeathEvent) {
-      text = DebuggerBundle.message("status.process.terminated");
+      text = JavaDebuggerBundle.message("status.process.terminated");
     }
     else if (event instanceof VMDisconnectEvent) {
-      text = DebuggerBundle.message("status.disconnected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection()));
+      text = JavaDebuggerBundle.message("status.disconnected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection()));
     }
     return text;
   }
@@ -387,7 +388,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         trackClassRedefinitions();
       }
 
-      showStatusText(DebuggerBundle.message("status.connected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection())));
+      showStatusText(JavaDebuggerBundle.message("status.connected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection())));
       LOG.debug("leave: processVMStartEvent()");
 
       if (session != null) {
@@ -536,7 +537,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           final boolean[] considerRequestHit = new boolean[]{true};
           DebuggerInvocationUtil.invokeAndWait(getProject(), () -> {
             final String displayName = requestor instanceof Breakpoint? ((Breakpoint)requestor).getDisplayName() : requestor.getClass().getSimpleName();
-            final String message = DebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, ex.getMessage());
+            final String message = JavaDebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, ex.getMessage());
             considerRequestHit[0] = Messages.showYesNoDialog(getProject(), message, ex.getTitle(), Messages.getQuestionIcon()) == Messages.YES;
           }, ModalityState.NON_MODAL);
           requestHit = considerRequestHit[0];
@@ -606,7 +607,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (event != null && myNotificationsCoolDown.compareAndSet(false, true)) {
       AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> myNotificationsCoolDown.set(false), 1, TimeUnit.SECONDS);
       XDebuggerManagerImpl.NOTIFICATION_GROUP
-        .createNotification(DebuggerBundle.message("message.breakpoint.skipped", event.location()), MessageType.WARNING)
+        .createNotification(JavaDebuggerBundle.message("message.breakpoint.skipped", event.location()), MessageType.WARNING)
         .notify(getProject());
     }
   }

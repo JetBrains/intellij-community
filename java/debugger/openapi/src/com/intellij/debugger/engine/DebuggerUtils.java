@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -96,11 +96,12 @@ public abstract class DebuggerUtils {
           }
           catch (Exception ignored) {
             throw EvaluateExceptionUtil.createEvaluateException(
-              DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
+              JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
           }
         }
         if (toStringMethod == null) {
-          throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
+          throw EvaluateExceptionUtil.createEvaluateException(
+            JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
         Method finalToStringMethod = toStringMethod;
         final Value result = evaluationContext.computeAndKeep(
@@ -112,7 +113,7 @@ public abstract class DebuggerUtils {
         }
         return result instanceof StringReference ? ((StringReference)result).value() : result.toString();
       }
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.unsupported.expression.type"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.unsupported.expression.type"));
     }
     catch (ObjectCollectedException ignored) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
@@ -123,7 +124,7 @@ public abstract class DebuggerUtils {
     throws EvaluateException {
     StackFrameProxy frameProxy = context.getFrameProxy();
     if (frameProxy != null && frameProxy.location().method().isConstructor() && reference.equals(context.computeThisObject())) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.object.is.being.initialized"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.object.is.being.initialized"));
     }
   }
 
@@ -449,10 +450,11 @@ public abstract class DebuggerUtils {
   public static void checkSyntax(PsiCodeFragment codeFragment) throws EvaluateException {
     PsiElement[] children = codeFragment.getChildren();
 
-    if(children.length == 0) throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.empty.code.fragment"));
+    if(children.length == 0) throw EvaluateExceptionUtil.createEvaluateException(
+      JavaDebuggerBundle.message("evaluation.error.empty.code.fragment"));
     for (PsiElement child : children) {
       if (child instanceof PsiErrorElement) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", child.getText()));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.expression", child.getText()));
       }
     }
   }

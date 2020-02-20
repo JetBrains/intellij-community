@@ -453,7 +453,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private VirtualMachine createVirtualMachineInt() throws ExecutionException {
     try {
       if (myArguments != null) {
-        throw new IOException(DebuggerBundle.message("error.debugger.already.listening"));
+        throw new IOException(JavaDebuggerBundle.message("error.debugger.already.listening"));
       }
 
       final String port = myConnection.getDebuggerAddress();
@@ -463,13 +463,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (myConnection instanceof PidRemoteConnection && !((PidRemoteConnection)myConnection).isFixedAddress()) {
         String pid = ((PidRemoteConnection)myConnection).getPid();
         if (StringUtil.isEmpty(pid)) {
-          throw new CantRunException(DebuggerBundle.message("error.no.pid"));
+          throw new CantRunException(JavaDebuggerBundle.message("error.no.pid"));
         }
         setConnectorArgument("pid", pid);
       }
       else if (myConnection.isServerMode()) {
         if (myArguments == null) {
-          throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
+          throw new CantRunException(JavaDebuggerBundle.message("error.no.debug.listen.port"));
         }
       }
       else { // is client mode, should attach to already running process
@@ -479,13 +479,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             setConnectorArgument("hostname", debuggerHostName);
           }
           if (port == null) {
-            throw new CantRunException(DebuggerBundle.message("error.no.debug.attach.port"));
+            throw new CantRunException(JavaDebuggerBundle.message("error.no.debug.attach.port"));
           }
           setConnectorArgument("port", port);
         }
         else {
           if (port == null) {
-            throw new CantRunException(DebuggerBundle.message("error.no.shmem.address"));
+            throw new CantRunException(JavaDebuggerBundle.message("error.no.shmem.address"));
           }
           setConnectorArgument("name", port);
         }
@@ -496,7 +496,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
              : connectorListen(port, (ListeningConnector)connector);
     }
     catch (IOException e) {
-      throw new ExecutionException(processIOException(e, DebuggerBundle.getAddressDisplayName(myConnection)), e);
+      throw new ExecutionException(processIOException(e, JavaDebuggerBundle.getAddressDisplayName(myConnection)), e);
     }
     catch (IllegalConnectorArgumentsException e) {
       throw new ExecutionException(processError(e), e);
@@ -516,7 +516,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private VirtualMachine connectorListen(String address, ListeningConnector connector)
     throws CantRunException, IOException, IllegalConnectorArgumentsException {
     if (address == null) {
-      throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
+      throw new CantRunException(JavaDebuggerBundle.message("error.no.debug.listen.port"));
     }
     // zero port number means the caller leaves to debugger to decide at which port to listen
     final Connector.Argument portArg = myConnection.isUseSockets() ? myArguments.get("port") : myArguments.get("name");
@@ -604,13 +604,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         virtualMachineManager = Bootstrap.virtualMachineManager();
       }
       catch (Error e) {
-        throw new ExecutionException(DebuggerBundle.message("debugger.jdi.bootstrap.error",
+        throw new ExecutionException(JavaDebuggerBundle.message("debugger.jdi.bootstrap.error",
                                                             e.getClass().getName() + " : " + e.getLocalizedMessage()));
       }
     }
     return StreamEx.of(virtualMachineManager.allConnectors())
       .findFirst(c -> connectorName.equals(c.name()))
-      .orElseThrow(() -> new CantRunException(DebuggerBundle.message("error.debug.connector.not.found", connectorName)));
+      .orElseThrow(() -> new CantRunException(JavaDebuggerBundle.message("error.debug.connector.not.found", connectorName)));
   }
 
   private void checkVirtualMachineVersion(VirtualMachine vm) {
@@ -618,7 +618,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if ("1.4.0".equals(versionString)) {
       DebuggerInvocationUtil.swingInvokeLater(myProject, () -> Messages.showMessageDialog(
         myProject,
-        DebuggerBundle.message("warning.jdk140.unstable"), DebuggerBundle.message("title.jdk140.unstable"), Messages.getWarningIcon()
+        JavaDebuggerBundle.message("warning.jdk140.unstable"), JavaDebuggerBundle.message("title.jdk140.unstable"), Messages.getWarningIcon()
       ));
     }
     if (getSession().getAlternativeJre() == null) {
@@ -629,10 +629,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           .filter(sdk -> versionMatch(sdk, version))
           .findFirst().ifPresent(sdk -> {
           XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
-            DebuggerBundle.message("message.remote.jre.version.mismatch",
-                                   versionString,
+            JavaDebuggerBundle.message("message.remote.jre.version.mismatch",
+                                       versionString,
                                    runjre != null ? runjre.getVersionString() : "unknown",
-                                   sdk.getName())
+                                       sdk.getName())
             , MessageType.INFO).notify(myProject);
           getSession().setAlternativeJre(sdk);
         });
@@ -872,14 +872,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     else if (e instanceof IllegalConnectorArgumentsException) {
       IllegalConnectorArgumentsException e1 = (IllegalConnectorArgumentsException)e;
       final List<String> invalidArgumentNames = e1.argumentNames();
-      message = formatMessage(DebuggerBundle.message("error.invalid.argument", invalidArgumentNames.size()) + ": "+ e1.getLocalizedMessage()) + invalidArgumentNames;
+      message = formatMessage(
+        JavaDebuggerBundle.message("error.invalid.argument", invalidArgumentNames.size()) + ": " + e1.getLocalizedMessage()) + invalidArgumentNames;
       LOG.debug(e1);
     }
     else if (e instanceof CantRunException) {
       message = e.getLocalizedMessage();
     }
     else if (e instanceof VMDisconnectedException) {
-      message = DebuggerBundle.message("error.vm.disconnected");
+      message = JavaDebuggerBundle.message("error.vm.disconnected");
     }
     else if (e instanceof IOException) {
       message = processIOException((IOException)e, null);
@@ -888,7 +889,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       message = e.getLocalizedMessage();
     }
     else {
-      message = DebuggerBundle.message("error.exception.while.connecting", e.getClass().getName(), e.getLocalizedMessage());
+      message = JavaDebuggerBundle.message("error.exception.while.connecting", e.getClass().getName(), e.getLocalizedMessage());
       LOG.debug(e);
     }
     return message;
@@ -897,7 +898,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @NotNull
   public static String processIOException(@NotNull IOException e, @Nullable String address) {
     if (e instanceof UnknownHostException) {
-      return DebuggerBundle.message("error.unknown.host") + (address != null ? " (" + address + ")" : "") + ":\n" + e.getLocalizedMessage();
+      return JavaDebuggerBundle.message("error.unknown.host") + (address != null ? " (" + address + ")" : "") + ":\n" + e.getLocalizedMessage();
     }
 
     // Failed SA attach
@@ -910,7 +911,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     StringBuilder buf = new StringBuilder();
     if (address != null) {
-      buf.append(DebuggerBundle.message("error.cannot.open.debugger.port"));
+      buf.append(JavaDebuggerBundle.message("error.cannot.open.debugger.port"));
       buf.append(" (").append(address).append("): ");
     }
     buf.append(e.getClass().getName()).append(" ");
@@ -1346,10 +1347,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     if (!internalEvaluate) {
       if (method != null) {
-        showStatusText(DebuggerBundle.message("progress.evaluating", DebuggerUtilsEx.methodName(method)));
+        showStatusText(JavaDebuggerBundle.message("progress.evaluating", DebuggerUtilsEx.methodName(method)));
       }
       else {
-        showStatusText(DebuggerBundle.message("title.evaluating"));
+        showStatusText(JavaDebuggerBundle.message("title.evaluating"));
       }
     }
   }
@@ -1550,7 +1551,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     @Override
     public void contextAction() {
-      showStatusText(DebuggerBundle.message("status.step.out"));
+      showStatusText(JavaDebuggerBundle.message("status.step.out"));
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl thread = getContextThread();
       RequestHint hint = new RequestHint(thread, suspendContext, StepRequest.STEP_OUT);
@@ -1580,7 +1581,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     @Override
     public void contextAction() {
-      showStatusText(DebuggerBundle.message("status.step.into"));
+      showStatusText(JavaDebuggerBundle.message("status.step.into"));
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl stepThread = getContextThread();
       final RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, myMethodFilter);
@@ -1626,7 +1627,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     @NotNull
     protected String getStatusText() {
-      return DebuggerBundle.message("status.step.over");
+      return JavaDebuggerBundle.message("status.step.over");
     }
 
     @NotNull
@@ -1675,7 +1676,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     @Override
     public void contextAction() {
-      showStatusText(DebuggerBundle.message("status.run.to.cursor"));
+      showStatusText(JavaDebuggerBundle.message("status.run.to.cursor"));
       cancelRunToCursorBreakpoint();
       if (myRunToCursorBreakpoint == null) {
         return;
@@ -1694,8 +1695,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       else {
         DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
           Messages.showErrorDialog(
-            DebuggerBundle.message("error.running.to.cursor.no.executable.code",
-                                   myRunToCursorBreakpoint.getSourcePosition().getFile().getName(),
+            JavaDebuggerBundle.message("error.running.to.cursor.no.executable.code",
+                                       myRunToCursorBreakpoint.getSourcePosition().getFile().getName(),
                                    myRunToCursorBreakpoint.getLineIndex() + 1),
             UIUtil.removeMnemonic(ActionsBundle.actionText(XDebuggerActions.RUN_TO_CURSOR)));
           DebuggerSession session = debugProcess.getSession();
@@ -1750,7 +1751,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     @Override
     public void contextAction() {
-      showStatusText(DebuggerBundle.message("status.process.resumed"));
+      showStatusText(JavaDebuggerBundle.message("status.process.resumed"));
       resumeAction();
       myDebugProcessDispatcher.getMulticaster().resumed(getSuspendContext());
     }
@@ -1869,7 +1870,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
 
       if (myStackFrame.isBottom()) {
-        DebuggerInvocationUtil.swingInvokeLater(myProject, () -> Messages.showMessageDialog(myProject, DebuggerBundle.message("error.pop.bottom.stackframe"), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon()));
+        DebuggerInvocationUtil.swingInvokeLater(myProject, () -> Messages.showMessageDialog(myProject, JavaDebuggerBundle
+          .message("error.pop.bottom.stackframe"), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon()));
         return;
       }
 
@@ -1879,7 +1881,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       catch (final EvaluateException e) {
         DebuggerInvocationUtil.swingInvokeLater(myProject,
-                                                () -> Messages.showMessageDialog(myProject, DebuggerBundle.message("error.pop.stackframe", e.getLocalizedMessage()), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon()));
+                                                () -> Messages.showMessageDialog(myProject, JavaDebuggerBundle
+                                                  .message("error.pop.stackframe", e.getLocalizedMessage()), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon()));
         LOG.info(e);
       }
     }
@@ -2180,8 +2183,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     RunToCursorCommand runToCursorCommand = new RunToCursorCommand(suspendContext, position, ignoreBreakpoints);
     if (runToCursorCommand.myRunToCursorBreakpoint == null) {
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(position.getFile());
-      throw new EvaluateException(DebuggerBundle.message("error.running.to.cursor.no.executable.code", psiFile != null? psiFile.getName() : "<No File>",
-                                                         position.getLine()), null);
+      throw new EvaluateException(
+        JavaDebuggerBundle.message("error.running.to.cursor.no.executable.code", psiFile != null ? psiFile.getName() : "<No File>",
+                                   position.getLine()), null);
     }
     return runToCursorCommand;
   }

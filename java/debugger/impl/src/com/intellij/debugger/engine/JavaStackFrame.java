@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -243,7 +243,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
     catch (InternalException e) {
       if (e.errorCode() == JvmtiError.INVALID_SLOT) {
-        node.setErrorMessage(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()));
+        node.setErrorMessage(JavaDebuggerBundle.message("error.corrupt.debug.info", e.getMessage()));
       }
       else {
         throw e;

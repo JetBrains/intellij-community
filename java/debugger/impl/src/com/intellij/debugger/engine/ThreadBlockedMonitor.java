@@ -2,7 +2,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -91,8 +91,8 @@ public class ThreadBlockedMonitor {
                                       @NotNull final ThreadReference blockingThread,
                                       final DebugProcessImpl process) {
     XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
-      DebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
-      DebuggerBundle.message("status.thread.blocked.by.resume", blockingThread.name()),
+      JavaDebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
+      JavaDebuggerBundle.message("status.thread.blocked.by.resume", blockingThread.name()),
       NotificationType.INFORMATION, (notification, event) -> {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           notification.expire();

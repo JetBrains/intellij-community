@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
@@ -78,14 +78,16 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     }
     final JPanel panel = new JPanel(new GridBagLayout());
 
-    myCbAutoscroll = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.autoscroll"));
-    myCbDfaAssist = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.dfa.assist"));
-    myCbShowSyntheticFields = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.synthetic.fields"));
-    myCbShowValFieldsAsLocalVariables = new StateRestoringCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.val.fields.as.locals"));
-    myCbHideNullArrayElements = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.hide.null.array.elements"));
-    myCbShowStatic = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.fields"));
-    myCbShowStaticFinalFields = new StateRestoringCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.final.fields"));
-    myCbEnableAlternateViews = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.alternate.view"));
+    myCbAutoscroll = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.autoscroll"));
+    myCbDfaAssist = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.dfa.assist"));
+    myCbShowSyntheticFields = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.synthetic.fields"));
+    myCbShowValFieldsAsLocalVariables = new StateRestoringCheckBox(
+      JavaDebuggerBundle.message("label.base.renderer.configurable.show.val.fields.as.locals"));
+    myCbHideNullArrayElements = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.hide.null.array.elements"));
+    myCbShowStatic = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.static.fields"));
+    myCbShowStaticFinalFields = new StateRestoringCheckBox(
+      JavaDebuggerBundle.message("label.base.renderer.configurable.show.static.final.fields"));
+    myCbEnableAlternateViews = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.alternate.view"));
     myCbShowStatic.addChangeListener(new ChangeListener(){
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -108,16 +110,16 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
         }
       }
     });
-    myCbShowDeclaredType = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.declared.type"));
-    myCbShowFQNames = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.fq.names"));
-    myCbShowObjectId = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.object.id"));
-    myCbHexValue = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.hex.value"));
-    myCbShowStringsType = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.strings.type"));
-    myCbPopulateThrowableStack = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.populate.throwable.stack"));
+    myCbShowDeclaredType = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.declared.type"));
+    myCbShowFQNames = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.fq.names"));
+    myCbShowObjectId = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.object.id"));
+    myCbHexValue = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.hex.value"));
+    myCbShowStringsType = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.strings.type"));
+    myCbPopulateThrowableStack = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.populate.throwable.stack"));
 
-    myCbEnableToString = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.enable.toString"));
-    myRbAllThatOverride = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.all.overriding"));
-    myRbFromList = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.classes.from.list"));
+    myCbEnableToString = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.enable.toString"));
+    myRbAllThatOverride = new JRadioButton(JavaDebuggerBundle.message("label.base.renderer.configurable.all.overriding"));
+    myRbFromList = new JRadioButton(JavaDebuggerBundle.message("label.base.renderer.configurable.classes.from.list"));
     ButtonGroup group = new ButtonGroup();
     group.add(myRbAllThatOverride);
     group.add(myRbFromList);
@@ -143,7 +145,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
 
     final JPanel showPanel = new JPanel(new GridBagLayout());
-    showPanel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("debugger.data.views.configurable.show.title")));
+    showPanel.setBorder(IdeBorderFactory.createTitledBorder(JavaDebuggerBundle.message("debugger.data.views.configurable.show.title")));
 
     showPanel.add(myCbShowDeclaredType, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
     showPanel.add(myCbShowObjectId, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));

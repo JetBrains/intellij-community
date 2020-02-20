@@ -10,7 +10,7 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -61,7 +61,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, contextElement);
     PsiCodeFragment codeFragment = factory.createCodeFragment(text, contextElement, project);
     if (codeFragment == null) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", text.getText()));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.expression", text.getText()));
     }
     DebuggerUtils.checkSyntax(codeFragment);
 
@@ -129,13 +129,13 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       final PsiExpression lExpression = expression.getLExpression();
       final PsiType lType = lExpression.getType();
       if(lType == null) {
-        throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", lExpression.getText()));
+        throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", lExpression.getText()));
       }
 
       IElementType assignmentType = expression.getOperationTokenType();
       PsiType rType = rExpression.getType();
       if(!TypeConversionUtil.areTypesAssignmentCompatible(lType, rExpression) && rType != null) {
-        throwEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", expression.getOperationSign().getText()));
+        throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", expression.getOperationSign().getText()));
       }
       lExpression.accept(this);
       Evaluator lEvaluator = myResult;
@@ -146,7 +146,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         IElementType opType = TypeConversionUtil.convertEQtoOperation(assignmentType);
         final PsiType typeForBinOp = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opType, true);
         if (typeForBinOp == null || rType == null) {
-          throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
+          throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
         }
         rEvaluator = createBinaryEvaluator(lEvaluator, lType, rEvaluator, rType, opType, typeForBinOp);
       }
@@ -246,8 +246,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitStatement(PsiStatement statement) {
-      LOG.error(DebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
-      throwEvaluateException(DebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
+      LOG.error(JavaDebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
+      throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
     }
 
     private CodeFragmentEvaluator setNewCodeFragmentEvaluator() {
@@ -467,11 +467,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         IElementType opType = wideExpression.getOperationTokenType();
         PsiType rType = expression.getType();
         if (rType == null) {
-          throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
+          throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
         }
         final PsiType typeForBinOp = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opType, true);
         if (typeForBinOp == null) {
-          throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", wideExpression.getText()));
+          throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", wideExpression.getText()));
         }
         myResult = createBinaryEvaluator(result, lType, rResult, rType, opType, typeForBinOp);
         lType = typeForBinOp;
@@ -654,7 +654,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
               try {
                 if (!TypeConversionUtil.areTypesAssignmentCompatible(lType, initializer)) {
                   throwEvaluateException(
-                    DebuggerBundle.message("evaluation.error.incompatible.variable.initializer.type", localVariable.getName()));
+                    JavaDebuggerBundle.message("evaluation.error.incompatible.variable.initializer.type", localVariable.getName()));
                 }
                 final PsiType rType = initializer.getType();
                 initializer.accept(this);
@@ -677,12 +677,12 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
           else {
             throw new EvaluateRuntimeException(new EvaluateException(
-              DebuggerBundle.message("evaluation.error.local.variable.declarations.not.supported"), null));
+              JavaDebuggerBundle.message("evaluation.error.local.variable.declarations.not.supported"), null));
           }
         }
         else {
           throw new EvaluateRuntimeException(new EvaluateException(
-            DebuggerBundle.message("evaluation.error.unsupported.declaration", declaredElement.getText()), null));
+            JavaDebuggerBundle.message("evaluation.error.unsupported.declaration", declaredElement.getText()), null));
         }
       }
 
@@ -779,13 +779,13 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
             new LocalVariableEvaluator(localName, true));
           return;
         }
-        throwEvaluateException(DebuggerBundle.message("evaluation.error.local.variable.missing.from.class.closure", localName));
+        throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.local.variable.missing.from.class.closure", localName));
       }
       else if (element instanceof PsiField) {
         final PsiField psiField = (PsiField)element;
         final PsiClass fieldClass = psiField.getContainingClass();
         if(fieldClass == null) {
-          throwEvaluateException(DebuggerBundle.message("evaluation.error.cannot.resolve.field.class", psiField.getName())); return;
+          throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.resolve.field.class", psiField.getName())); return;
         }
         Evaluator objectEvaluator;
         if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
@@ -802,7 +802,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         else {
           CaptureTraverser traverser = createTraverser(fieldClass, fieldClass.getName(), true);
           if (!traverser.isValid()) {
-            throwEvaluateException(DebuggerBundle.message("evaluation.error.cannot.sources.for.field.class", psiField.getName()));
+            throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.sources.for.field.class", psiField.getName()));
           }
           objectEvaluator = new ThisEvaluator(traverser);
         }
@@ -818,7 +818,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         else {
           //noinspection HardCodedStringLiteral
           final String elementDisplayString = nameElement != null ? nameElement.getText() : "(null)";
-          throwEvaluateException(DebuggerBundle.message("evaluation.error.identifier.expected", elementDisplayString));
+          throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.identifier.expected", elementDisplayString));
           return;
         }
 
@@ -834,7 +834,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           else {
             qualifier.accept(this);
             if (myResult == null) {
-              throwEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.qualifier", qualifier.getText()));
+              throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.qualifier", qualifier.getText()));
             }
 
             myResult = new FieldEvaluator(myResult, FieldEvaluator.createClassFilter(qualifier.getType()), name);
@@ -875,7 +875,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     private static void throwExpressionInvalid(PsiElement expression) {
-      throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText()));
+      throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.expression", expression.getText()));
     }
 
     private static void throwEvaluateException(String message) throws EvaluateRuntimeException {
@@ -908,7 +908,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     private CaptureTraverser createTraverser(PsiElement targetClass, String name, boolean checkInheritance) {
       PsiClass fromClass = getPositionClass();
       if (!(targetClass instanceof PsiClass) || fromClass == null) {
-        throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", name));
+        throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.expression", name));
       }
       try {
         CaptureTraverser traverser = CaptureTraverser.create((PsiClass)targetClass, fromClass, checkInheritance);
@@ -952,7 +952,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     @Override
     public void visitPostfixExpression(PsiPostfixExpression expression) {
       if(expression.getType() == null) {
-        throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
+        throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
       }
 
       final PsiExpression operandExpression = expression.getOperand();
@@ -980,12 +980,12 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     public void visitPrefixExpression(final PsiPrefixExpression expression) {
       final PsiType expressionType = expression.getType();
       if(expressionType == null) {
-        throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
+        throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
       }
 
       final PsiExpression operandExpression = expression.getOperand();
       if (operandExpression == null) {
-        throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.operand", expression.getText()));
+        throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.operand", expression.getText()));
       }
 
       operandExpression.accept(this);
@@ -1100,7 +1100,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
           //else {
           //  throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
-          //    DebuggerBundle.message("evaluation.error.method.not.found", methodExpr.getReferenceName()))
+          //    JavaDebuggerBundle.message("evaluation.error.method.not.found", methodExpr.getReferenceName()))
           //  );
           //}
         }
@@ -1112,7 +1112,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       if (psiMethod != null && !psiMethod.isConstructor()) {
         if (psiMethod.getReturnType() == null) {
-          throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.method.return.type", psiMethod.getText()));
+          throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.method.return.type", psiMethod.getText()));
         }
       }
 
@@ -1260,7 +1260,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitLambdaExpression(PsiLambdaExpression expression) {
-      throw new EvaluateRuntimeException(new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.lambda.evaluation.not.supported")));
+      throw new EvaluateRuntimeException(new UnsupportedExpressionException(
+        JavaDebuggerBundle.message("evaluation.error.lambda.evaluation.not.supported")));
     }
 
     @Override
@@ -1334,7 +1335,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
       }
       throw new EvaluateRuntimeException(
-        new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.method.reference.evaluation.not.supported")));
+        new UnsupportedExpressionException(JavaDebuggerBundle.message("evaluation.error.method.reference.evaluation.not.supported")));
     }
 
     private Evaluator buildFromJavaCode(String code, String imports, @NotNull PsiElement context) {
@@ -1357,11 +1358,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
           else {
             throwEvaluateException(
-              DebuggerBundle.message("evaluation.error.invalid.array.dimension.expression", dimensionExpression.getText()));
+              JavaDebuggerBundle.message("evaluation.error.invalid.array.dimension.expression", dimensionExpression.getText()));
           }
         }
         else if (dimensions.length > 1){
-          throwEvaluateException(DebuggerBundle.message("evaluation.error.multi.dimensional.arrays.creation.not.supported"));
+          throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.multi.dimensional.arrays.creation.not.supported"));
         }
 
         Evaluator initializerEvaluator = null;
@@ -1404,7 +1405,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       else if (expressionPsiType instanceof PsiClassType){ // must be a class ref
         PsiClass aClass = CompilingEvaluatorTypesUtil.getClass((PsiClassType)expressionPsiType);
         if(aClass instanceof PsiAnonymousClass) {
-          throw new EvaluateRuntimeException(new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.anonymous.class.evaluation.not.supported")));
+          throw new EvaluateRuntimeException(new UnsupportedExpressionException(
+            JavaDebuggerBundle.message("evaluation.error.anonymous.class.evaluation.not.supported")));
         }
         PsiExpressionList argumentList = expression.getArgumentList();
         if (argumentList == null) {
@@ -1415,7 +1417,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         PsiMethod constructor = CompilingEvaluatorTypesUtil.getReferencedConstructor((PsiMethod)constructorResolveResult.getElement());
         if (constructor == null && argExpressions.length > 0) {
           throw new EvaluateRuntimeException(new EvaluateException(
-            DebuggerBundle.message("evaluation.error.cannot.resolve.constructor", expression.getText()), null));
+            JavaDebuggerBundle.message("evaluation.error.cannot.resolve.constructor", expression.getText()), null));
         }
         Evaluator[] argumentEvaluators = new Evaluator[argExpressions.length];
         // evaluate arguments
@@ -1532,7 +1534,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
       if (myResult == null) {
         throw EvaluateExceptionUtil
-          .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", element.toString()));
+          .createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.expression", element.toString()));
       }
       return new ExpressionEvaluatorImpl(myResult);
     }

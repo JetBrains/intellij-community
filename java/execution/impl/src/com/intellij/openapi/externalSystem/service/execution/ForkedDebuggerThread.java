@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -264,7 +264,7 @@ class ForkedDebuggerThread extends Thread {
         String addressDisplayName = "";
         DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(handler);
         if (debugProcess instanceof DebugProcessImpl) {
-          addressDisplayName = "(" + DebuggerBundle.getAddressDisplayName(((DebugProcessImpl)debugProcess).getConnection()) + ")";
+          addressDisplayName = "(" + JavaDebuggerBundle.getAddressDisplayName(((DebugProcessImpl)debugProcess).getConnection()) + ")";
         }
         String linkText = ExternalSystemBundle.message("debugger.open.session.tab");
         String debuggerAttachedStatusMessage =

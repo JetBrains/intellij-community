@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.JavaValue;
@@ -84,7 +84,8 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
         if (array != null) {
           if (VirtualMachineProxyImpl.isCollected(array)) {
             // will only be the case if debugger does not use ObjectReference.disableCollection() because of Patches.IBM_JDK_DISABLE_COLLECTION_BUG
-            Messages.showWarningDialog(getProject(), DebuggerBundle.message("evaluation.error.array.collected") + "\n" + DebuggerBundle.message("warning.recalculate"), DebuggerBundle.message("title.set.value"));
+            Messages.showWarningDialog(getProject(), JavaDebuggerBundle.message("evaluation.error.array.collected") + "\n" + JavaDebuggerBundle
+              .message("warning.recalculate"), JavaDebuggerBundle.message("title.set.value"));
             //node.getParent().calcValue();
             return;
           }

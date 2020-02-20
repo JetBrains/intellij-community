@@ -2,7 +2,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.NameMapper;
 import com.intellij.debugger.engine.*;
@@ -218,7 +218,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
                 ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
                   ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
                   debugProcess.waitFor(10000);
-                }, DebuggerBundle.message("waiting.for.debugger.response"), false, debugProcess.getProject());
+                }, JavaDebuggerBundle.message("waiting.for.debugger.response"), false, debugProcess.getProject());
               }
               else {
                 debugProcess.waitFor(10000);

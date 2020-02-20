@@ -2,7 +2,7 @@
 package com.intellij.debugger.codeinsight;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
@@ -24,7 +24,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
 
   @Override
   public String getTemplateDescription() {
-    return DebuggerBundle.message("surround.with.runtime.type.template");
+    return JavaDebuggerBundle.message("surround.with.runtime.type.template");
   }
 
   @Override
@@ -46,7 +46,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
     if (debuggerSession != null) {
       final ProgressWindow progressWindow = new ProgressWindow(true, expr.getProject());
       SurroundWithCastWorker worker = new SurroundWithCastWorker(editor, expr, debuggerContext, progressWindow);
-      progressWindow.setTitle(DebuggerBundle.message("title.evaluating"));
+      progressWindow.setTitle(JavaDebuggerBundle.message("title.evaluating"));
       debuggerContext.getDebugProcess().getManagerThread().startProgress(worker, progressWindow);
     }
     return null;
@@ -69,7 +69,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
       hold();
       final Project project = myElement.getProject();
       DebuggerInvocationUtil.invokeLater(project, () -> WriteCommandAction.writeCommandAction(project).withName(
-        DebuggerBundle.message("command.name.surround.with.runtime.cast")).run(() -> {
+        JavaDebuggerBundle.message("command.name.surround.with.runtime.cast")).run(() -> {
         try {
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(myElement.getProject());
           PsiParenthesizedExpression parenth =

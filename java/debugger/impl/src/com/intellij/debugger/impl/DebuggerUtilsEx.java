@@ -7,7 +7,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
@@ -347,7 +347,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     final Content content = ui.createContent(id + " " + myThreadDumpsCount, panel, id, null, null);
     content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);
-    content.setDescription(DebuggerBundle.message("thread.dump"));
+    content.setDescription(JavaDebuggerBundle.message("thread.dump"));
     ui.addContent(content);
     ui.selectAndFocus(content, true, true);
     myThreadDumpsCount++;
@@ -714,21 +714,21 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static String getThreadStatusText(int statusId) {
     switch (statusId) {
       case ThreadReference.THREAD_STATUS_MONITOR:
-        return DebuggerBundle.message("status.thread.monitor");
+        return JavaDebuggerBundle.message("status.thread.monitor");
       case ThreadReference.THREAD_STATUS_NOT_STARTED:
-        return DebuggerBundle.message("status.thread.not.started");
+        return JavaDebuggerBundle.message("status.thread.not.started");
       case ThreadReference.THREAD_STATUS_RUNNING:
-        return DebuggerBundle.message("status.thread.running");
+        return JavaDebuggerBundle.message("status.thread.running");
       case ThreadReference.THREAD_STATUS_SLEEPING:
-        return DebuggerBundle.message("status.thread.sleeping");
+        return JavaDebuggerBundle.message("status.thread.sleeping");
       case ThreadReference.THREAD_STATUS_UNKNOWN:
-        return DebuggerBundle.message("status.thread.unknown");
+        return JavaDebuggerBundle.message("status.thread.unknown");
       case ThreadReference.THREAD_STATUS_WAIT:
-        return DebuggerBundle.message("status.thread.wait");
+        return JavaDebuggerBundle.message("status.thread.wait");
       case ThreadReference.THREAD_STATUS_ZOMBIE:
-        return DebuggerBundle.message("status.thread.zombie");
+        return JavaDebuggerBundle.message("status.thread.zombie");
       default:
-        return DebuggerBundle.message("status.thread.undefined");
+        return JavaDebuggerBundle.message("status.thread.undefined");
     }
   }
 
@@ -974,7 +974,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static boolean evaluateBoolean(ExpressionEvaluator evaluator, EvaluationContextImpl context) throws EvaluateException {
     Object value = UnBoxingEvaluator.unbox(evaluator.evaluate(context), context);
     if (!(value instanceof BooleanValue)) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.boolean.expected"));
     }
     return ((BooleanValue)value).booleanValue();
   }

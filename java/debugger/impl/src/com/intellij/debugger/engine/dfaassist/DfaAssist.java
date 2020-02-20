@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -299,8 +299,8 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
 
   private class TurnOffDfaProcessorAction extends AnAction {
     private TurnOffDfaProcessorAction() {
-      super(DebuggerBundle.message("action.TurnOffDfaAssist.text"),
-            DebuggerBundle.message("action.TurnOffDfaAssist.description"), AllIcons.Actions.Cancel);
+      super(JavaDebuggerBundle.message("action.TurnOffDfaAssist.text"),
+            JavaDebuggerBundle.message("action.TurnOffDfaAssist.description"), AllIcons.Actions.Cancel);
     }
     @Override
     public void actionPerformed(@NotNull AnActionEvent evt) {

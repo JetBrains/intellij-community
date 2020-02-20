@@ -197,12 +197,12 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
     if (isCountFilterEnabled()) {
       buf.append("&nbsp;<br>&nbsp;");
-      buf.append(DebuggerBundle.message("breakpoint.property.name.pass.count")).append(": ");
+      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.pass.count")).append(": ");
       buf.append(getCountFilter());
     }
     if (isClassFiltersEnabled()) {
       buf.append("&nbsp;<br>&nbsp;");
-      buf.append(DebuggerBundle.message("breakpoint.property.name.class.filters")).append(": ");
+      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.class.filters")).append(": ");
       ClassFilter[] classFilters = getClassFilters();
       for (ClassFilter classFilter : classFilters) {
         buf.append(classFilter.getPattern()).append(" ");
@@ -210,7 +210,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     }
     if (isInstanceFiltersEnabled()) {
       buf.append("&nbsp;<br>&nbsp;");
-      buf.append(DebuggerBundle.message("breakpoint.property.name.instance.filters"));
+      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.instance.filters"));
       InstanceFilter[] instanceFilters = getInstanceFilters();
       for (InstanceFilter instanceFilter : instanceFilters) {
         buf.append(instanceFilter.getId()).append(" ");
