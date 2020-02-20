@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -17,6 +18,7 @@ import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -32,10 +34,11 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 public final class MacrosDialog extends DialogWrapper {
-  private final DefaultListModel<MacroWrapper> myMacrosModel = new DefaultListModel<>();
-  private final JBList<MacroWrapper> myMacrosList = new JBList<>(myMacrosModel);
+  private final DefaultListModel<Item> myMacrosModel = new DefaultListModel<>();
+  private final JBList<Item> myMacrosList = new JBList<>(myMacrosModel);
   private final JTextArea myPreviewTextarea = new JTextArea();
 
   public MacrosDialog(Project project) {
@@ -44,56 +47,50 @@ public final class MacrosDialog extends DialogWrapper {
     init();
   }
 
-  public MacrosDialog(Component parent) {
+  public MacrosDialog(@NotNull Component parent,
+                      @Nullable Condition<? super Macro> filter,
+                      @Nullable Map<String, String> userMacros) {
     super(parent, true);
     MacroManager.getInstance().cacheMacrosPreview(DataManager.getInstance().getDataContext(parent));
-    init();
+    init(filter, userMacros);
   }
 
   public static void addTextFieldExtension(@NotNull ExtendableTextField textField) {
-    addTextFieldExtension(textField, null);
+    addTextFieldExtension(textField, null, null);
   }
 
-  public static void addTextFieldExtension(@NotNull ExtendableTextField textField, @Nullable Condition<? super Macro> macroFilter) {
+  public static void addTextFieldExtension(@NotNull ExtendableTextField textField,
+                                           @Nullable Condition<? super Macro> macroFilter,
+                                           @Nullable Map<String, String> userMacros) {
     textField.addExtension(ExtendableTextComponent.Extension.create(
       AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, ExecutionBundle.message("insert.macros"),
-      () -> show(textField, macroFilter)));
+      () -> show(textField, macroFilter, userMacros)));
   }
 
   public static void show(@NotNull JTextComponent textComponent) {
-    show(textComponent, null);
+    show(textComponent, null, null);
   }
 
-  public static void show(@NotNull JTextComponent textComponent, @Nullable Condition<? super Macro> filter) {
-    MacrosDialog dialog = new MacrosDialog(textComponent);
-    if (filter != null) {
-      for (int i = 0; i < dialog.myMacrosModel.size(); i++)  {
-         if (!filter.value(dialog.myMacrosModel.get(i).myMacro)) {
-           dialog.myMacrosModel.remove(i);
-           i--;
-         }
-      }
-      if (dialog.myMacrosModel.size() > 0){
-        dialog.myMacrosList.setSelectedIndex(0);
-      }
-      else{
-        dialog.setOKActionEnabled(false);
-      }
-
-    }
-    if (dialog.showAndGet() && dialog.getSelectedMacro() != null) {
-      String macro = dialog.getSelectedMacro().getName();
-      int position = textComponent.getCaretPosition();
-      int selectionStart = textComponent.getSelectionStart();
-      int selectionEnd = textComponent.getSelectionEnd();
-      try {
-        if (selectionStart < selectionEnd) {
-          textComponent.getDocument().remove(selectionStart, selectionEnd - selectionStart);
-          position = selectionStart;
+  public static void show(@NotNull JTextComponent textComponent,
+                          @Nullable Condition<? super Macro> filter,
+                          @Nullable Map<String, String> userMacros) {
+    MacrosDialog dialog = new MacrosDialog(textComponent, filter, userMacros);
+    if (dialog.showAndGet()) {
+      String macro = dialog.getSelectedMacroName();
+      if (macro != null) {
+        int position = textComponent.getCaretPosition();
+        int selectionStart = textComponent.getSelectionStart();
+        int selectionEnd = textComponent.getSelectionEnd();
+        try {
+          if (selectionStart < selectionEnd) {
+            textComponent.getDocument().remove(selectionStart, selectionEnd - selectionStart);
+            position = selectionStart;
+          }
+          textComponent.getDocument().insertString(position, "$" + macro + "$", null);
+          textComponent.setCaretPosition(position + macro.length() + 2);
         }
-        textComponent.getDocument().insertString(position, "$" + macro + "$", null);
-        textComponent.setCaretPosition(position + macro.length() + 2);
-      } catch (BadLocationException ignored) {
+        catch (BadLocationException ignored) {
+        }
       }
     }
     IdeFocusManager.findInstance().requestFocus(textComponent, true);
@@ -101,12 +98,17 @@ public final class MacrosDialog extends DialogWrapper {
 
   @Override
   protected void init() {
+    throw new UnsupportedOperationException("Call init(...) overload accepting parameters");
+  }
+
+  private void init(@Nullable Condition<? super Macro> filter, @Nullable Map<String, String> userMacros) {
     super.init();
 
     setTitle(IdeBundle.message("title.macros"));
     setOKButtonText(IdeBundle.message("button.insert"));
 
-    List<Macro> macros = ContainerUtil.filter(MacroManager.getInstance().getMacros(), macro -> MacroFilter.GLOBAL.accept(macro));
+    List<Macro> macros = ContainerUtil.filter(MacroManager.getInstance().getMacros(),
+                                              macro -> MacroFilter.GLOBAL.accept(macro) && (filter == null || filter.value(macro)));
     Collections.sort(macros, new Comparator<Macro>() {
       @Override
       public int compare(Macro macro1, Macro macro2) {
@@ -120,11 +122,36 @@ public final class MacrosDialog extends DialogWrapper {
         }
         return name1.compareToIgnoreCase(name2);
       }
-      private final String ZERO = new String(new char[] {0});
+
+      private final String ZERO = new String(new char[]{0});
     });
-    for (Macro macro : macros) {
-      myMacrosModel.addElement(new MacroWrapper(macro));
+
+    if (userMacros != null && !userMacros.isEmpty()) {
+      for (Map.Entry<String, String> macro : userMacros.entrySet()) {
+        myMacrosModel.addElement(new EntryWrapper(macro));
+      }
     }
+    Item firstMacro = null;
+    for (Macro macro : macros) {
+      final Item element = new MacroWrapper(macro);
+      if (firstMacro == null) {
+        firstMacro = element;
+      }
+      myMacrosModel.addElement(element);
+    }
+
+    final Item finalFirstMacro = firstMacro;
+    myMacrosList.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<Item>() {
+      @Override
+      public String getTextFor(Item value) {
+        return value.toString();
+      }
+
+      @Override
+      public boolean hasSeparatorAboveOf(Item value) {
+        return value == finalFirstMacro;
+      }
+    }));
 
     addListeners();
     if (myMacrosModel.size() > 0) {
@@ -197,15 +224,55 @@ public final class MacrosDialog extends DialogWrapper {
   /**
    * Macro info shown in list
    */
-  private static final class MacroWrapper {
+  private interface Item {
+    @NotNull String getName();
+
+    @NotNull String getPreview();
+
+    @NotNull String toString();
+  }
+
+  private static final class MacroWrapper implements Item {
     private final Macro myMacro;
 
     MacroWrapper(Macro macro) {
       myMacro = macro;
     }
 
-    public String toString() {
+    @Override
+    public @NotNull String getName() {
+      return myMacro.getName();
+    }
+
+    @Override
+    public @NotNull String getPreview() {
+      return StringUtil.notNullize(myMacro.preview());
+    }
+
+    public @NotNull String toString() {
       return myMacro.getName() + " - " + myMacro.getDescription();
+    }
+  }
+
+  private static final class EntryWrapper implements Item {
+    private final Map.Entry<String, String> myEntry;
+
+    EntryWrapper(Map.Entry<String, String> entry) {
+      myEntry = entry;
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return myEntry.getKey();
+    }
+
+    @Override
+    public @NotNull String getPreview() {
+      return StringUtil.notNullize(myEntry.getValue(), "$" + getName() + "$");
+    }
+
+    public @NotNull String toString() {
+      return myEntry.getKey();
     }
   }
 
@@ -214,13 +281,13 @@ public final class MacrosDialog extends DialogWrapper {
       new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent e) {
-          Macro macro = getSelectedMacro();
-          if (macro == null){
+          Item item = myMacrosList.getSelectedValue();
+          if (item == null) {
             myPreviewTextarea.setText("");
             setOKActionEnabled(false);
           }
-          else{
-            myPreviewTextarea.setText(macro.preview());
+          else {
+            myPreviewTextarea.setText(item.getPreview());
             setOKActionEnabled(true);
           }
         }
@@ -230,7 +297,7 @@ public final class MacrosDialog extends DialogWrapper {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        if (getSelectedMacro() != null){
+        if (getSelectedMacroName() != null) {
           close(OK_EXIT_CODE);
           return true;
         }
@@ -239,12 +306,23 @@ public final class MacrosDialog extends DialogWrapper {
     }.installOn(myMacrosList);
   }
 
+  /**
+   * @deprecated Doesn't support user-defined path macros, use {@link #getSelectedMacroName()} instead.
+   */
+  @Deprecated
   public Macro getSelectedMacro() {
-    MacroWrapper macroWrapper = myMacrosList.getSelectedValue();
-    if (macroWrapper != null){
-      return macroWrapper.myMacro;
+    final Item item = myMacrosList.getSelectedValue();
+    if (item instanceof MacroWrapper) {
+      return ((MacroWrapper)item).myMacro;
     }
     return null;
+  }
+
+
+  public @Nullable String getSelectedMacroName() {
+    final Item item = myMacrosList.getSelectedValue();
+    if (item == null) return null;
+    return item.getName();
   }
 
   @Override

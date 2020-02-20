@@ -2,15 +2,14 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.*;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -18,12 +17,12 @@ import com.intellij.openapi.module.WorkingDirectoryProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.fields.ExpandableTextField;
-import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -47,8 +46,7 @@ public class ProgramParametersConfigurator {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
 
-    final String parametersString = expandMacros(expandPath(configuration.getProgramParameters(), module, project),
-                                                 projectContext(project, module));
+    final String parametersString = expandPathAndMacros(configuration.getProgramParameters(), project, module);
     parameters.getProgramParametersList().addParametersString(parametersString);
 
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
@@ -63,6 +61,12 @@ public class ProgramParametersConfigurator {
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 
+  @Nullable
+  public String expandPathAndMacros(String s, Project project, Module module) {
+    return expandMacros(expandPath(s, module, project),
+                        projectContext(project, module));
+  }
+
   private static @NotNull DataContext projectContext(Project project, Module module) {
     return dataId -> {
       if (CommonDataKeys.PROJECT.is(dataId)) return project;
@@ -71,13 +75,11 @@ public class ProgramParametersConfigurator {
     };
   }
 
-  public static void addMacroSupport(@NotNull ExpandableTextField expandableTextField) {
+  public static void addMacroSupport(@NotNull ExtendableTextField textField) {
     if (Registry.is("allow.macros.for.run.configurations")) {
-      expandableTextField.addExtension(ExtendableTextComponent.Extension.create(AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover,
-                                                                                ExecutionBundle.message("insert.macros"), ()
-                                                                                  -> MacrosDialog.show(expandableTextField, macro -> {
-          return !(macro instanceof EditorMacro);
-        })));
+      MacrosDialog.addTextFieldExtension(textField, (Condition<? super Macro>)macro -> {
+        return !(macro instanceof EditorMacro);
+      }, PathMacros.getInstance().getUserMacros());
     }
   }
 
