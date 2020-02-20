@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.codeinsight;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -25,7 +24,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
 
   @Override
   public String getTemplateDescription() {
-    return CodeInsightBundle.message("surround.with.runtime.type.template");
+    return DebuggerBundle.message("surround.with.runtime.type.template");
   }
 
   @Override
@@ -70,7 +69,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
       hold();
       final Project project = myElement.getProject();
       DebuggerInvocationUtil.invokeLater(project, () -> WriteCommandAction.writeCommandAction(project).withName(
-        CodeInsightBundle.message("command.name.surround.with.runtime.cast")).run(() -> {
+        DebuggerBundle.message("command.name.surround.with.runtime.cast")).run(() -> {
         try {
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(myElement.getProject());
           PsiParenthesizedExpression parenth =
