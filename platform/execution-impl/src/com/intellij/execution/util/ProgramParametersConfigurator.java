@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
@@ -8,6 +8,9 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -44,7 +47,9 @@ public class ProgramParametersConfigurator {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
 
-    parameters.getProgramParametersList().addParametersString(expandMacros(expandPath(configuration.getProgramParameters(), module, project)));
+    final String parametersString = expandMacros(expandPath(configuration.getProgramParameters(), module, project),
+                                                 projectContext(project, module));
+    parameters.getProgramParametersList().addParametersString(parametersString);
 
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
 
@@ -58,18 +63,29 @@ public class ProgramParametersConfigurator {
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 
+  private static @NotNull DataContext projectContext(Project project, Module module) {
+    return dataId -> {
+      if (CommonDataKeys.PROJECT.is(dataId)) return project;
+      if (LangDataKeys.MODULE.is(dataId) || LangDataKeys.MODULE_CONTEXT.is(dataId)) return module;
+      return null;
+    };
+  }
+
   public static void addMacroSupport(@NotNull ExpandableTextField expandableTextField) {
     if (Registry.is("allow.macros.for.run.configurations")) {
       expandableTextField.addExtension(ExtendableTextComponent.Extension.create(AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover,
                                                                                 ExecutionBundle.message("insert.macros"), ()
-        -> MacrosDialog.show(expandableTextField, macro -> {
-        if (macro instanceof PromptMacro) return true;
-        return !(macro instanceof PromptingMacro) && !(macro instanceof EditorMacro);
-      })));
+                                                                                  -> MacrosDialog.show(expandableTextField, macro -> {
+          return !(macro instanceof EditorMacro);
+        })));
     }
   }
 
   public static String expandMacros(@Nullable String path) {
+    return expandMacros(path, DataContext.EMPTY_CONTEXT);
+  }
+
+  protected static String expandMacros(@Nullable String path, @NotNull DataContext dataContext) {
     if (path == null || !Registry.is("allow.macros.for.run.configurations")) {
       return path;
     }
@@ -79,8 +95,7 @@ public class ProgramParametersConfigurator {
       for (int index = path.indexOf(template);
            index != -1 && index < path.length() + template.length();
            index = path.indexOf(template, index)) {
-        String value = StringUtil.notNullize(macro instanceof PromptMacro ? ((PromptMacro)macro).promptUser() :
-                                             macro.preview());
+        String value = StringUtil.notNullize(previewOrExpandMacro(macro, dataContext));
         value = ParametersListUtil.escape(value);
         path = path.substring(0, index) + value + path.substring(index + template.length());
         //noinspection AssignmentToForLoopParameter
@@ -88,6 +103,18 @@ public class ProgramParametersConfigurator {
       }
     }
     return path;
+  }
+
+  private static @Nullable String previewOrExpandMacro(@NotNull Macro macro,
+                                                       @NotNull DataContext dataContext) {
+    try {
+      return macro instanceof PromptingMacro
+             ? ((PromptingMacro)macro).expand(dataContext)
+             : macro.preview();
+    }
+    catch (Macro.ExecutionCancelledException e) {
+      return null;
+    }
   }
 
   @Nullable
