@@ -1621,7 +1621,10 @@ public class PluginManagerConfigurable
 
   @Override
   public void disposeUIResources() {
-    myPluginModel.toBackground();
+    if (myPluginModel.toBackground()) {
+      InstallPluginInfo.showRestart();
+      myShutdownCallback = null;
+    }
 
     myMarketplaceTab.dispose();
     myInstalledTab.dispose();

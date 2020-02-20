@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Alexander Lobas
  */
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "FieldAccessedSynchronizedAndUnsynchronized"})
 public class InstallPluginInfo {
   public final BgProgressIndicator indicator = new BgProgressIndicator();
   private final IdeaPluginDescriptor myDescriptor;
@@ -21,6 +22,7 @@ public class InstallPluginInfo {
   public final IdeaPluginDescriptor updateDescriptor;
   private TaskInfo myStatusBarTaskInfo;
   private boolean myClosed;
+  private static boolean myShowRestart;
 
   /**
    * Descriptor that has been loaded synchronously.
@@ -48,7 +50,12 @@ public class InstallPluginInfo {
 
   public synchronized void fromBackground(@NotNull MyPluginModel pluginModel) {
     myPluginModel = pluginModel;
+    myShowRestart = false;
     closeStatusBarIndicator();
+  }
+
+  public static void showRestart() {
+    myShowRestart = true;
   }
 
   public synchronized void finish(boolean success, boolean cancel, boolean showErrors, boolean restartRequired) {
@@ -58,7 +65,11 @@ public class InstallPluginInfo {
     if (myPluginModel == null) {
       MyPluginModel.finishInstall(myDescriptor);
       closeStatusBarIndicator();
-      if (success && !cancel && restartRequired && MyPluginModel.myInstallingInfos.isEmpty()) {
+      if (success && !cancel && restartRequired) {
+        myShowRestart = true;
+      }
+      if (MyPluginModel.myInstallingInfos.isEmpty() && myShowRestart) {
+        myShowRestart = false;
         ApplicationManager.getApplication().invokeLater(() -> PluginManagerConfigurable.shutdownOrRestartApp());
       }
     }
