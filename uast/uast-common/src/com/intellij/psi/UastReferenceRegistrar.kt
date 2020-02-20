@@ -3,24 +3,18 @@
 
 package com.intellij.psi
 
-import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
-import com.intellij.model.search.SearchService
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.uast.UElementPattern
-import com.intellij.patterns.uast.injectionHostUExpression
-import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValueProvider.Result
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ProcessingContext
 import gnu.trove.THashMap
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.toUElement
 
 private val CONTRIBUTOR_CHUNKS_KEY: Key<MutableMap<ChunkTag, UastReferenceContributorChunk>> = Key.create(
   "uast.psiReferenceContributor.chunks")
@@ -78,11 +72,20 @@ internal val REQUESTED_PSI_ELEMENT = Key.create<PsiElement>("REQUESTED_PSI_ELEME
 internal val USAGE_PSI_ELEMENT = Key.create<PsiElement>("USAGE_PSI_ELEMENT")
 
 internal fun getOrCreateCachedElement(element: PsiElement,
-                                      context: ProcessingContext?,
-                                      supportedUElementTypes: List<Class<out UElement>>): UElement? =
-  element as? UElement ?: context?.get(cachedUElement) ?: supportedUElementTypes.asSequence().mapNotNull {
-    element.toUElement(it)
-  }.firstOrNull()?.also { context?.put(cachedUElement, it) }
+                                      context: ProcessingContext,
+                                      supportedUElementTypes: List<Class<out UElement>>): UElement? {
+  val existingElement = element as? UElement ?: context.get(cachedUElement)
+  if (existingElement != null) return existingElement
+
+  for (uElementType in supportedUElementTypes) {
+    val uElement = element.toUElement(uElementType)
+    if (uElement != null) {
+      context.put(cachedUElement, uElement)
+      return uElement
+    }
+  }
+  return null
+}
 
 internal fun uastTypePattern(supportedUElementTypes: List<Class<out UElement>>): ElementPattern<out PsiElement> {
   val uastTypePattern = UElementTypePatternAdapter(supportedUElementTypes)
@@ -138,84 +141,6 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
   this.registerUastReferenceProvider(usagePattern, provider, priority)
 
   if (Registry.`is`("uast.references.by.usage", true)) {
-    this.registerUastReferenceProvider(expressionPattern, object : UastReferenceProvider(UExpression::class.java) {
-      override fun acceptsTarget(target: PsiElement): Boolean {
-        return !target.project.isDefault && provider.acceptsTarget(target)
-      }
-
-      override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
-        val parentVariable = when (val uastParent = getOriginalUastParent(element)) {
-          is UVariable -> uastParent
-          is UPolyadicExpression -> uastParent.uastParent as? UVariable // support .withUastParentOrSelf() patterns
-          else -> null
-        }
-
-        if (parentVariable == null
-            || parentVariable.name.isNullOrEmpty()
-            || !parentVariable.type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-          return PsiReference.EMPTY_ARRAY
-        }
-
-        val usage = getDirectVariableUsages(parentVariable).find { usage ->
-          val refExpression = usage.toUElementOfType<UReferenceExpression>()
-          refExpression != null && usagePattern.accepts(refExpression, context)
-        } ?: return PsiReference.EMPTY_ARRAY
-
-        context.put(USAGE_PSI_ELEMENT, usage)
-
-        return provider.getReferencesByElement(element, context)
-      }
-
-      override fun toString(): String = "uastReferenceByUsageAdapter($provider)"
-    }, priority)
+    this.registerUastReferenceProvider(expressionPattern, UastReferenceByUsageAdapter(usagePattern, provider), priority)
   }
-}
-
-@ApiStatus.Experimental
-fun uInjectionHostInVariable() = injectionHostUExpression().filter {
-  val uastParent = it.uastParent ?: getOriginalUastParent(it)
-  uastParent is UVariable
-}
-
-@ApiStatus.Experimental
-fun uExpressionInVariable() = injectionHostUExpression().filter {
-  val uastParent = it.uastParent ?: getOriginalUastParent(it)
-  uastParent is UVariable || (uastParent is UPolyadicExpression && uastParent.uastParent is UVariable)
-}
-
-private fun getOriginalUastParent(element: UElement): UElement? {
-  // Kotlin sends non-original element on completion
-  val src = element.sourcePsi ?: return null
-  val original = CompletionUtilCoreImpl.getOriginalElement(src) ?: src
-  return original.toUElement()?.uastParent
-}
-
-private fun getDirectVariableUsages(uVar: UVariable): Collection<PsiElement> {
-  val variablePsi = uVar.sourcePsi ?: return emptyList()
-  return CachedValuesManager.getManager(variablePsi.project).getCachedValue(variablePsi, CachedValueProvider {
-    Result.createSingleDependency(findDirectVariableUsages(variablePsi), PsiModificationTracker.MODIFICATION_COUNT)
-  })
-}
-
-private fun findDirectVariableUsages(variablePsi: PsiElement): Collection<PsiElement> {
-  val variableName = variablePsi.toUElementOfType<UVariable>()?.name
-  if (variableName.isNullOrEmpty()) return emptyList()
-  val file = variablePsi.containingFile ?: return emptyList()
-
-  return SearchService.getInstance()
-    .searchWord(variablePsi.project, variableName)
-    .inScope(LocalSearchScope(arrayOf(file), null, true))
-    .buildQuery { _, occurrencePsi, _ ->
-      // we get identifiers and need to process their parents, see IDEA-232166
-      val uRef = occurrencePsi.parent.findContaining(UReferenceExpression::class.java)
-      val expressionType = uRef?.getExpressionType()
-      if (expressionType != null && expressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        val occurrenceResolved = uRef.tryResolve().toUElement()?.sourcePsi
-        if (occurrenceResolved != null
-            && PsiManager.getInstance(occurrencePsi.project).areElementsEquivalent(occurrenceResolved, variablePsi)) {
-          return@buildQuery listOfNotNull(uRef.sourcePsi)
-        }
-      }
-      emptyList<PsiElement>()
-    }.findAll()
 }

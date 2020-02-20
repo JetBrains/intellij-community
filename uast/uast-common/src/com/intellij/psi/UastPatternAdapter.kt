@@ -22,8 +22,9 @@ internal class UastPatternAdapter(
     if (o !is PsiElement) return false
 
     return RecursionManager.doPreventingRecursion(this, false) {
-      val uElement = getOrCreateCachedElement(o, context, supportedUElementTypes) ?: return@doPreventingRecursion false
-      predicate.invoke(uElement, (context ?: ProcessingContext()))
+      val processingContext = context ?: ProcessingContext()
+      val uElement = getOrCreateCachedElement(o, processingContext, supportedUElementTypes) ?: return@doPreventingRecursion false
+      predicate.invoke(uElement, processingContext)
     } ?: false
   }
 
