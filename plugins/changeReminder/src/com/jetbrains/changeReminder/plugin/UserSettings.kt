@@ -30,5 +30,5 @@ internal class UserSettings : SimplePersistentStateComponent<UserSettingsState>(
 }
 
 internal class UserSettingsState : BaseState() {
-  var isPluginEnabled: Boolean by property(true)
+  var isPluginEnabled: Boolean by property(false)
 }
