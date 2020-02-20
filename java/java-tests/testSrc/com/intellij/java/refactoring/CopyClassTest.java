@@ -28,6 +28,10 @@ public class CopyClassTest extends LightMultiFileTestCase {
   public void testReplaceAllOccurrences() throws Exception {
     doTest("Foo", "Bar");
   }
+
+  public void testPrivateMethodsInInterfaces() throws Exception {
+    doTest("Foo", "Bar");
+  }
   
   public void testReplaceAllOccurrences1() throws Exception {
     doTest("Foo", "Bar");

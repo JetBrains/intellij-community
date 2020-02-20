@@ -803,6 +803,11 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
               String visibility = checkOuterClassAbstractMethod(signature);
               PsiMethod newOuterMethod = (PsiMethod)myClass.add(myMethod);
               PsiUtil.setModifierProperty(newOuterMethod, visibility, true);
+              if (containingClass.isInterface() &&
+                  !innerClass.isInterface() &&
+                  myMethod.getBody() == null) {
+                PsiUtil.setModifierProperty(newOuterMethod, PsiModifier.ABSTRACT, true);
+              }
               final PsiDocComment docComment = newOuterMethod.getDocComment();
               if (docComment != null) {
                 docComment.delete();
