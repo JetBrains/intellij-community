@@ -13,10 +13,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -145,7 +142,11 @@ public class GitRebaseProcess {
       if (!saveDirtyRootsInitially(repositoriesToRebase)) return;
 
       GitRepository latestRepository = null;
-      StepsProgressIndicator indicator = new StepsProgressIndicator(myProgressManager.getProgressIndicator(), repositoriesToRebase.size());
+      ProgressIndicator showingIndicator = myProgressManager.getProgressIndicator();
+      StepsProgressIndicator indicator = new StepsProgressIndicator(
+        showingIndicator != null ? showingIndicator : new EmptyProgressIndicator(),
+        repositoriesToRebase.size()
+      );
       for (GitRepository repository : repositoriesToRebase) {
         GitRebaseResumeMode customMode = null;
         if (repository == myRebaseSpec.getOngoingRebase()) {
