@@ -305,6 +305,7 @@
 
     <statusBarWidgetProvider implementation="git4idea.light.LightGitStatusBarWidgetProvider"/>
     <lightEditTabAttributesProvider implementation="git4idea.light.LightGitTabAttributesProvider"/>
+    <statusBarWidgetFactory implementation="git4idea.ui.branch.GitBranchWidget$Factory" order="after selectionModeWidget"/>
   </extensions>
 
   <extensionPoints>
@@ -312,4 +313,10 @@
     <extensionPoint qualifiedName="Git4Idea.gitRepositoryHostingService" interface="git4idea.remote.GitRepositoryHostingService"/>
     <extensionPoint qualifiedName="Git4Idea.GitCheckinExplicitMovementProvider" interface="git4idea.checkin.GitCheckinExplicitMovementProvider"/>
   </extensionPoints>
+
+  <projectListeners>
+    <listener class="git4idea.ui.branch.GitBranchWidget$Listener"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+  </projectListeners>
 </idea-plugin>

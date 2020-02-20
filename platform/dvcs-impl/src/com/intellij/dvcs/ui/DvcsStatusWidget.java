@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.repo.Repository;
@@ -59,7 +59,9 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @NotNull
   protected abstract ListPopup getPopup(@NotNull Project project, @NotNull T repository);
 
-  protected abstract void subscribeToRepoChangeEvents(@NotNull Project project);
+  protected void subscribeToRepoChangeEvents(@NotNull Project project) {
+
+  }
 
   protected abstract void rememberRecentRoot(@NotNull String path);
 
@@ -69,6 +71,12 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   public void deactivate() {
     removeWidgetFromStatusBar();
+  }
+
+  @Override
+  public void install(@NotNull StatusBar statusBar) {
+    super.install(statusBar);
+    updateLater();
   }
 
   @Override
@@ -204,7 +212,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     }, getProject().getDisposed());
   }
 
-  private void subscribeToMappingChanged(Project project) {
+  protected void subscribeToMappingChanged(Project project) {
     project.getMessageBus().connect().subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, new VcsRepositoryMappingListener() {
       @Override
       public void mappingChanged() {

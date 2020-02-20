@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -50,7 +49,6 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
 import git4idea.status.GitChangeProvider;
-import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.util.GitVcsConsoleWriter;
 import git4idea.vfs.GitVFSListener;
@@ -76,7 +74,6 @@ public final class GitVcs extends AbstractVcs {
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
-  private GitBranchWidget myBranchWidget;
 
   private GitRepositoryForAnnotationsListener myRepositoryForAnnotationsListener;
 
@@ -212,23 +209,11 @@ public final class GitVcs extends AbstractVcs {
     }
     ServiceManager.getService(myProject, VcsUserRegistry.class); // make sure to read the registry before opening commit dialog
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      installWidget();
-    }
     if (myRepositoryForAnnotationsListener == null) {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
     GitUserRegistry.getInstance(myProject).activate();
     GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
-  }
-
-  private void installWidget() {
-    Boolean newWidgetStyle = Registry.is("vcs.new.widget");
-
-    if (!newWidgetStyle) {
-      myBranchWidget = new GitBranchWidget(myProject);
-      myBranchWidget.activate();
-    }
   }
 
   @Override
@@ -237,13 +222,7 @@ public final class GitVcs extends AbstractVcs {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
-
-    if (myBranchWidget != null) {
-      myBranchWidget.deactivate();
-      myBranchWidget = null;
-    }
   }
-
 
   @Override
   public Configurable getConfigurable() {
