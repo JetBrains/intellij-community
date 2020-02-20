@@ -25,10 +25,15 @@ class DumpProjectIndexesStarter : IndexesStarterBase("dump-project-index") {
       println("       --$name=<home to project>    --- path to IntelliJ project")
     }
 
+    val projectIdKey = CommandLineKey("project-id") {
+      println("      -$name=<projectId>    --- project ID used in the indexes")
+    }
+
     println("")
     println("  [idea] ${commandName} ... (see keys below)")
     projectHome.usage()
     revisionHash.usage()
+    projectIdKey.usage()
     tempKey.usage()
     outputKey.usage()
     println("")
@@ -39,6 +44,7 @@ class DumpProjectIndexesStarter : IndexesStarterBase("dump-project-index") {
     val tempDir = args.argFile(tempKey).recreateDir()
     val outputDir = args.argFile(outputKey).apply { mkdirs() }
     val projectDir = args.argFile(projectHome)
+    val projectId = args.args(projectIdKey).singleOrNull()
     val vcsCommitId = args.arg(revisionHash)
 
     LOG.info("Opening project from $projectDir")
@@ -60,7 +66,7 @@ class DumpProjectIndexesStarter : IndexesStarterBase("dump-project-index") {
     LOG.info("size          = ${StringUtil.formatFileSize(indexZip.totalSize())}")
     LOG.info("commitId      = ${vcsCommitId}")
 
-    packIndexes(indexKind, chunkName, indexZip, infraVersion, outputDir, SharedIndexMetadataInfo(vcsCommitId = vcsCommitId))
+    packIndexes(indexKind, chunkName, indexZip, infraVersion, outputDir, SharedIndexMetadataInfo(projectId = projectId, vcsCommitId = vcsCommitId))
     exitProcess(0)
   }
 }

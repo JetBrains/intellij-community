@@ -13,6 +13,7 @@ import kotlin.collections.HashMap
 data class SharedIndexMetadataInfo(
   val aliases: List<String> = listOf(),
   val sourcesHash: String? = null,
+  val projectId: String? = null,
   val vcsCommitId: String? = null
   //TODO: possibly a commits map?
 )
@@ -56,6 +57,10 @@ object SharedIndexMetadata {
 
         addon.sourcesHash?.let {
           sources.put("hash", it)
+        }
+
+        addon.projectId?.let {
+          sources.put("project_id", it)
         }
 
         addon.vcsCommitId?.let {

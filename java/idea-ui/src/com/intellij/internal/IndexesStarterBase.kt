@@ -139,6 +139,7 @@ abstract class IndexesStarterBase(
     return values.first()
   }
 
+  protected fun Array<out String>.args(arg: CommandLineKey): List<String>  = args(arg.name)
   protected fun Array<out String>.args(arg: String): List<String> {
     val key = "--$arg="
     return filter { it.startsWith(key) }.map { it.removePrefix(key) }
