@@ -187,6 +187,7 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
     SdkLookup.newLookupBuilder()
       .withProgressIndicator(indicator)
       .withSdkType(JavaSdk.getInstance())
+      .withVersionFilter { true }
       .withProject(project)
       .onDownloadableSdkSuggested { SdkLookupDecision.STOP }
       .onSdkResolved {
