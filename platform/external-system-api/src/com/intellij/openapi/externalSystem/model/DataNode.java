@@ -208,13 +208,12 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
 
     DataNode node = (DataNode)o;
 
+    if (!Objects.equals(key, node.key)) return false;
+    if (!Objects.equals(getData(), node.getData())) return false;
     if (!Objects.equals(ObjectUtils.notNull(children, Collections.emptyList()),
                         ObjectUtils.notNull(node.children, Collections.emptyList()))) {
       return false;
     }
-    if (!getData().equals(node.getData())) return false;
-    if (!key.equals(node.key)) return false;
-
     return true;
   }
 
