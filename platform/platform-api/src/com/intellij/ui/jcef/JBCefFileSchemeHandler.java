@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.google.common.base.CharMatcher;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import org.cef.browser.CefBrowser;
+import org.cef.browser.CefFrame;
 import org.cef.callback.CefCallback;
 import org.cef.handler.CefLoadHandler;
 import org.cef.handler.CefResourceHandlerAdapter;
@@ -17,36 +19,24 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.*;
-import java.util.function.Function;
 
 /**
- * A custom scheme handler for reading resource files.
- * <p>
- * A handler is installed to {@link JBCefApp} via adding a factory:
- * {@link JBCefApp#addCefSchemeHandlerFactory(JBCefApp.JBCefSchemeHandlerFactory)}.
+ * A "file:" scheme handler for reading resource files.
  *
  * @author tav
  */
-public class JBCefFileSchemeHandler extends CefResourceHandlerAdapter {
+class JBCefFileSchemeHandler extends CefResourceHandlerAdapter {
   private static final Logger LOG = Logger.getInstance(JBCefFileSchemeHandler.class);
 
-  @NotNull private final String mySchemeName;
-  @NotNull private final Function<String, Boolean> myPathValidator;
-  @Nullable private String myPath;
+  @NotNull private final CefBrowser myBrowser;
+  @NotNull private final CefFrame myFrame;
+
+  @Nullable private Path myPath;
   @Nullable private InputStream myInputStream;
 
-  private JBCefFileSchemeHandler(@NotNull String customSchemeName, @NotNull Function<String, Boolean> pathValidator) {
-    mySchemeName = customSchemeName;
-    myPathValidator = pathValidator;
-  }
-
-  /**
-   * @param customSchemeName the scheme name
-   * @param pathValidator a validator that assures the file path addresses a valid and safe resource file
-   */
-  public static JBCefFileSchemeHandler create(@NotNull String customSchemeName, @NotNull Function<String, Boolean> pathValidator) {
-    // [tav] todo: think if we should restrict file access to the caller
-    return new JBCefFileSchemeHandler(customSchemeName, pathValidator);
+  JBCefFileSchemeHandler(@NotNull CefBrowser browser, @NotNull CefFrame frame) {
+    myBrowser = browser;
+    myFrame = frame;
   }
 
   @Override
@@ -54,14 +44,13 @@ public class JBCefFileSchemeHandler extends CefResourceHandlerAdapter {
     String url = request.getURL();
     if (url != null) {
       try {
-        URI uri = new URI(url);
-        myPath = (SystemInfoRt.isWindows ? uri.getHost() + ":" : "/" + uri.getHost()) + uri.getPath();
-        if (!myPathValidator.apply(myPath)) {
-          LOG.info("The addressed resource file hasn't passed validation: " + myPath);
+        myPath = Paths.get(new URI(MyUriUtil.trimParameters(url)));
+        if (!checkAccessAllowed(myPath)) {
+          LOG.info("Access denied: " + myPath);
           return false;
         }
       }
-      catch (URISyntaxException e) {
+      catch (IllegalArgumentException | FileSystemNotFoundException | URISyntaxException e) {
         LOG.error(e);
       }
     }
@@ -76,11 +65,10 @@ public class JBCefFileSchemeHandler extends CefResourceHandlerAdapter {
   public void getResponseHeaders(@NotNull CefResponse response, IntRef response_length, StringRef redirectUrl) {
     if (myPath != null) {
       try {
-        File file = new File(myPath);
-        response.setMimeType(Files.probeContentType(file.toPath()));
-        myInputStream = new BufferedInputStream(new FileInputStream(file));
+        response.setMimeType(Files.probeContentType(myPath));
+        myInputStream = new BufferedInputStream(new FileInputStream(myPath.toFile()));
       }
-      catch (IOException | InvalidPathException e) {
+      catch (IOException | UnsupportedOperationException e) {
         response.setError(CefLoadHandler.ErrorCode.ERR_FILE_NOT_FOUND);
         response.setStatusText(e.getLocalizedMessage());
         LOG.error(e);
@@ -90,7 +78,7 @@ public class JBCefFileSchemeHandler extends CefResourceHandlerAdapter {
   }
 
   @Override
-  public boolean readResponse(@NotNull byte[] data_out, int bytes_to_read, IntRef bytes_read, CefCallback callback) {
+  public boolean readResponse(byte@NotNull[] data_out, int bytes_to_read, IntRef bytes_read, CefCallback callback) {
     try {
       int availableSize = myInputStream != null ? myInputStream.available() : 0;
       if (availableSize > 0) {
@@ -99,21 +87,36 @@ public class JBCefFileSchemeHandler extends CefResourceHandlerAdapter {
         bytes_read.set(bytesToRead);
         return true;
       }
-      myPath = null;
-      bytes_read.set(0);
-      if (myInputStream != null) {
-        myInputStream.close();
-        myInputStream = null;
-      }
     }
     catch (IOException e) {
       LOG.error(e);
     }
+    bytes_read.set(0);
+    myPath = null;
+    if (myInputStream != null) {
+      try {
+        myInputStream.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+      myInputStream = null;
+    }
     return false;
   }
 
-  @Override
-  public String toString() {
-    return JBCefFileSchemeHandler.class.getName() + "[scheme:" + mySchemeName + "]@" + hashCode();
+  private static boolean checkAccessAllowed(Path path) {
+    // tav: todo Ask the user or query the settings for JCEF FS access.
+    return true;
+  }
+
+  // from com.intellij.util.UriUtil
+  private static class MyUriUtil {
+    public static final CharMatcher PARAM_CHAR_MATCHER = CharMatcher.anyOf("?#;");
+
+    public static String trimParameters(@NotNull String url) {
+      int end = PARAM_CHAR_MATCHER.indexIn(url);
+      return end != -1 ? url.substring(0, end) : url;
+    }
   }
 }

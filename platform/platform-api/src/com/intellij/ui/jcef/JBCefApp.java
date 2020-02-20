@@ -11,9 +11,13 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import org.cef.CefApp;
 import org.cef.CefSettings;
+import org.cef.browser.CefBrowser;
+import org.cef.browser.CefFrame;
 import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
+import org.cef.handler.CefResourceHandler;
+import org.cef.network.CefRequest;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -221,6 +225,13 @@ public abstract class JBCefApp {
         getInstance().myCefApp.registerSchemeHandlerFactory(f.getSchemeName(), f.getDomainName(), f);
       }
       ourSchemeHandlerFactoryList.clear(); // no longer needed
+
+      getInstance().myCefApp.registerSchemeHandlerFactory("file", "", new CefSchemeHandlerFactory() {
+        @Override
+        public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
+          return "file".equals(schemeName) ? new JBCefFileSchemeHandler(browser, frame) : null;
+        }
+      });
     }
   }
 }
