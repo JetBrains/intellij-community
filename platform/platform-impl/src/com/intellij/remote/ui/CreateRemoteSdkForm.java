@@ -169,7 +169,9 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
   }
 
   private void installExtendedTypes(@Nullable Project project) {
-    for (final CredentialsType type : CredentialsManager.getInstance().getAllTypes()) {
+    List<CredentialsType<?>> types = CredentialsManager.getInstance().getAllTypes();
+    types.sort(Comparator.comparing(CredentialsType::getWeight));
+    for (final CredentialsType<?> type : types) {
       CredentialsEditorProvider editorProvider = ObjectUtils.tryCast(type, CredentialsEditorProvider.class);
       if (editorProvider != null) {
         final List<CredentialsLanguageContribution> contributions = getContributions();

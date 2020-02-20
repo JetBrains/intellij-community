@@ -63,6 +63,10 @@ public abstract class CredentialsType<T> {
 
   public abstract T createCredentials();
 
+  public int getWeight() {
+    return Integer.MAX_VALUE;
+  }
+
   public void saveCredentials(RemoteSdkAdditionalData data, CredentialsCase... cases) {
     for (CredentialsCase credentialsCase : cases) {
       if (credentialsCase.getType() == this) {
