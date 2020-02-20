@@ -4,14 +4,12 @@ package com.intellij.sh.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 
-public interface ShFunctionDefinition extends ShCommand {
+public interface ShFunctionDefinition extends ShCommand, PsiNameIdentifierOwner {
 
   @Nullable
   ShBlock getBlock();
-
-  @Nullable
-  ShFunctionName getFunctionName();
 
   @Nullable
   PsiElement getLeftParen();
@@ -21,5 +19,8 @@ public interface ShFunctionDefinition extends ShCommand {
 
   @Nullable
   PsiElement getFunction();
+
+  @Nullable
+  PsiElement getWord();
 
 }

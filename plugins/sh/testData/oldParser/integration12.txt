@@ -3,8 +3,7 @@ SHELL_SCRIPT
     FUNCTION_DEFINITION
       PsiElement(function)('function')
       PsiWhiteSpace(' ')
-      FUNCTION_NAME
-        PsiElement(word)('a')
+      PsiElement(word)('a')
       PsiElement(()('(')
       PsiElement())(')')
       PsiWhiteSpace(' ')
@@ -43,8 +42,7 @@ SHELL_SCRIPT
     FUNCTION_DEFINITION
       PsiElement(function)('function')
       PsiWhiteSpace(' ')
-      FUNCTION_NAME
-        PsiElement(word)('a')
+      PsiElement(word)('a')
       PsiWhiteSpace(' ')
       BLOCK
         PsiElement({)('{')
@@ -79,8 +77,7 @@ SHELL_SCRIPT
   PsiElement(\n)('\n')
   COMMANDS_LIST
     FUNCTION_DEFINITION
-      FUNCTION_NAME
-        PsiElement(word)('f')
+      PsiElement(word)('f')
       PsiElement(()('(')
       PsiElement())(')')
       PsiWhiteSpace(' ')

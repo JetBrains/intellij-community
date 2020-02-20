@@ -3,8 +3,7 @@ SHELL_SCRIPT
     FUNCTION_DEFINITION
       PsiElement(function)('function')
       PsiWhiteSpace(' ')
-      FUNCTION_NAME
-        PsiElement(word)('foo')
+      PsiElement(word)('foo')
       PsiWhiteSpace(' ')
       BLOCK
         PsiElement({)('{')

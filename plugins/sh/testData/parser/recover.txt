@@ -231,8 +231,7 @@ SHELL_SCRIPT
     FUNCTION_DEFINITION
       PsiElement(function)('function')
       PsiWhiteSpace(' ')
-      FUNCTION_NAME
-        PsiElement(word)('foo')
+      PsiElement(word)('foo')
       PsiElement(()('(')
       PsiErrorElement:')' expected, got 'f'
         <empty list>

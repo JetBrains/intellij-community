@@ -45,7 +45,7 @@ public class ShAnnotator implements Annotator {
       if (parent instanceof ShSimpleCommandElement) {
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION).enforcedTextAttributes(TextAttributes.ERASE_MARKER).create();
       }
-      if (parent instanceof ShFunctionName) {
+      if (parent instanceof ShFunctionDefinition) {
         mark(o, holder, FUNCTION_DECLARATION);
       }
     }

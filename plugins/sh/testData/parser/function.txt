@@ -1,8 +1,7 @@
 SHELL_SCRIPT
   COMMANDS_LIST
     FUNCTION_DEFINITION
-      FUNCTION_NAME
-        PsiElement(word)('wait_file')
+      PsiElement(word)('wait_file')
       PsiElement(()('(')
       PsiElement())(')')
       PsiWhiteSpace(' ')
@@ -89,8 +88,7 @@ SHELL_SCRIPT
     FUNCTION_DEFINITION
       PsiElement(function)('function')
       PsiWhiteSpace(' ')
-      FUNCTION_NAME
-        PsiElement(word)('wait_file')
+      PsiElement(word)('wait_file')
       PsiElement(()('(')
       PsiElement())(')')
       PsiWhiteSpace(' ')
@@ -177,8 +175,7 @@ SHELL_SCRIPT
     FUNCTION_DEFINITION
       PsiElement(function)('function')
       PsiWhiteSpace(' ')
-      FUNCTION_NAME
-        PsiElement(word)('wait_file')
+      PsiElement(word)('wait_file')
       PsiWhiteSpace(' ')
       BLOCK
         PsiElement({)('{')
@@ -261,8 +258,7 @@ SHELL_SCRIPT
   PsiElement(\n)('\n')
   COMMANDS_LIST
     FUNCTION_DEFINITION
-      FUNCTION_NAME
-        PsiElement(word)('varr')
+      PsiElement(word)('varr')
       PsiElement(()('(')
       PsiWhiteSpace('     ')
       PsiElement())(')')

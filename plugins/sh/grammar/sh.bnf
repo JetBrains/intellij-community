@@ -215,14 +215,14 @@ private pipeline_command_list ::= pipeline_command (pipeline_command_list_separa
 } // todo with pin
 private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '\n') newlines
 
-function_definition ::= &(function | word '(') function_definition_inner {extends=command}
-private function_definition_inner ::=           function_name argument_list  newlines block
-                                     | function (function_name | <<functionNameKeywordsRemapped>>) argument_list? newlines block {pin(".*")="function|argument_list"}
-function_name ::=  word {
-//  methods=[getIcon]
-  implements="com.intellij.sh.psi.ShFunctionNamedElement"
-  mixin="com.intellij.sh.psi.impl.ShFunctionNamedElementImpl"
+function_definition ::= &(function | word '(') function_definition_inner {
+  extends="command"
+  implements="com.intellij.psi.PsiNameIdentifierOwner"
+  mixin="com.intellij.sh.psi.impl.ShFunctionDefinitionMixin"
 }
+private function_definition_inner ::= word argument_list  newlines block
+                                     | function (word | <<functionNameKeywordsRemapped>>) argument_list? newlines block
+                                     { pin(".*")="function|argument_list" }
 
 private argument_list ::= '(' ')' {recoverWhile = argument_list_recover}
 private argument_list_recover ::= !('\n'| '{')
@@ -237,7 +237,7 @@ do_block ::= do  block_compound_list done {
   extends="com.intellij.sh.psi.impl.ShLazyDoBlockImpl"
   elementTypeClass="com.intellij.sh.lexer.ShLazyDoBlockElementType"
 }
-block    ::= '{' block_compound_list '}'  {
+block ::= '{' block_compound_list '}'  {
   pin(".*")=1
   implements="com.intellij.sh.psi.ShLazyBlock"
   extends="com.intellij.sh.psi.impl.ShLazyBlockImpl"

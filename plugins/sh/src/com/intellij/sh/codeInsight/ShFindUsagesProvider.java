@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.sh.lexer.ShLexer;
-import com.intellij.sh.psi.ShFunctionName;
+import com.intellij.sh.psi.ShFunctionDefinition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +25,7 @@ public class ShFindUsagesProvider implements FindUsagesProvider {
 
   @Override
   public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
-    return psiElement instanceof ShFunctionName;
+    return psiElement instanceof ShFunctionDefinition;
   }
 
   @Nullable

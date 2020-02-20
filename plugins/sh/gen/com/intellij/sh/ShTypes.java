@@ -49,7 +49,6 @@ public interface ShTypes {
   IElementType FOR_CLAUSE = new ShCompositeElementType("FOR_CLAUSE");
   IElementType FOR_COMMAND = new ShCompositeElementType("FOR_COMMAND");
   IElementType FUNCTION_DEFINITION = new ShCompositeElementType("FUNCTION_DEFINITION");
-  IElementType FUNCTION_NAME = new ShCompositeElementType("FUNCTION_NAME");
   IElementType GENERIC_COMMAND_DIRECTIVE = new ShCompositeElementType("GENERIC_COMMAND_DIRECTIVE");
   IElementType HEREDOC = new ShCompositeElementType("HEREDOC");
   IElementType IF_COMMAND = new ShCompositeElementType("IF_COMMAND");
@@ -304,9 +303,6 @@ public interface ShTypes {
       }
       else if (type == FUNCTION_DEFINITION) {
         return new ShFunctionDefinitionImpl(node);
-      }
-      else if (type == FUNCTION_NAME) {
-        return new ShFunctionNameImpl(node);
       }
       else if (type == GENERIC_COMMAND_DIRECTIVE) {
         return new ShGenericCommandDirectiveImpl(node);

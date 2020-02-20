@@ -77,10 +77,8 @@ public class ShParserUtil extends GeneratedParserUtilBase {
   static boolean functionNameKeywordsRemapped(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
     IElementType type = b.getTokenType();
     if (ShTokenTypes.identifierKeywords.contains(type)) {
-      PsiBuilder.Marker mark = b.mark();
       b.remapCurrentToken(ShTypes.WORD);
       b.advanceLexer();
-      mark.done(ShTypes.FUNCTION_NAME);
       return true;
     }
     return false;

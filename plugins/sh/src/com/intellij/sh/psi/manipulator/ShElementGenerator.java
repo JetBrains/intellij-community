@@ -2,11 +2,12 @@
 package com.intellij.sh.psi.manipulator;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.sh.ShFileType;
-import com.intellij.sh.psi.ShFunctionName;
+import com.intellij.sh.psi.ShFunctionDefinition;
 import com.intellij.sh.psi.ShLiteral;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,11 +21,13 @@ public class ShElementGenerator {
   }
 
   @NotNull
-  public static ShFunctionName createFunctionName(@NotNull Project project, @NotNull String functionName) {
+  public static PsiElement createFunctionIdentifier(@NotNull Project project, @NotNull String functionName) {
     PsiFile file = createTempFile(project, functionName + "() {  }");
-    ShFunctionName functionNameElement = PsiTreeUtil.findChildOfType(file, ShFunctionName.class);
-    assert functionNameElement != null;
-    return functionNameElement;
+    ShFunctionDefinition functionDefinition = PsiTreeUtil.findChildOfType(file, ShFunctionDefinition.class);
+    assert functionDefinition != null;
+    PsiElement word = functionDefinition.getWord();
+    assert word != null;
+    return word;
   }
 
   @NotNull

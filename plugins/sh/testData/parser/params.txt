@@ -934,8 +934,7 @@ SHELL_SCRIPT
     FUNCTION_DEFINITION
       PsiElement(function)('function')
       PsiWhiteSpace(' ')
-      FUNCTION_NAME
-        PsiElement(word)('addConf')
+      PsiElement(word)('addConf')
       PsiWhiteSpace(' ')
       BLOCK
         PsiElement({)('{')

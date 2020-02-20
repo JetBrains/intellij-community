@@ -3,8 +3,7 @@ SHELL_SCRIPT
     FUNCTION_DEFINITION
       PsiElement(function)('function')
       PsiWhiteSpace(' ')
-      FUNCTION_NAME
-        PsiElement(word)('разработка')
+      PsiElement(word)('разработка')
       PsiElement(()('(')
       PsiElement())(')')
       PsiWhiteSpace(' ')

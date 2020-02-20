@@ -13,6 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
+  private final CachedValueProvider<PsiElement> provider = () -> CachedValueProvider.Result.create(resolveInner(),
+                                                                                                   myElement.getContainingFile());
+
   public ShFunctionReference(@NotNull PsiElement element) {
     super(element, TextRange.create(0, element.getTextLength()));
   }
@@ -20,27 +23,13 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
   @Nullable
   @Override
   public PsiElement resolve() {
-    return CachedValuesManager.getCachedValue(myElement, () -> CachedValueProvider.Result.create(resolveFunction(), myElement.getContainingFile()));
+    return CachedValuesManager.getCachedValue(myElement, provider);
   }
 
   @Nullable
-  private PsiElement resolveFunction() {
+  private PsiElement resolveInner() {
     ShFunctionDeclarationProcessor functionProcessor = new ShFunctionDeclarationProcessor(myElement.getText());
     PsiTreeUtil.treeWalkUp(functionProcessor, myElement , myElement.getContainingFile(), ResolveState.initial());
     return functionProcessor.getFunction();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    ShFunctionReference that = (ShFunctionReference)o;
-    if (!myElement.equals(that.getElement())) return false;
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return myElement.hashCode();
   }
 }

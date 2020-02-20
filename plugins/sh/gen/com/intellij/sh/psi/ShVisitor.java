@@ -3,6 +3,7 @@ package com.intellij.sh.psi;
 
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiNameIdentifierOwner;
 
 public class ShVisitor extends PsiElementVisitor {
 
@@ -156,10 +157,7 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitFunctionDefinition(@NotNull ShFunctionDefinition o) {
     visitCommand(o);
-  }
-
-  public void visitFunctionName(@NotNull ShFunctionName o) {
-    visitFunctionNamedElement(o);
+    // visitPsiNameIdentifierOwner(o);
   }
 
   public void visitGenericCommandDirective(@NotNull ShGenericCommandDirective o) {
@@ -324,10 +322,6 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitWhileCommand(@NotNull ShWhileCommand o) {
     visitCommand(o);
-  }
-
-  public void visitFunctionNamedElement(@NotNull ShFunctionNamedElement o) {
-    visitCompositeElement(o);
   }
 
   public void visitLazyBlock(@NotNull ShLazyBlock o) {

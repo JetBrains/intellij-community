@@ -226,8 +226,7 @@ SHELL_SCRIPT
     FUNCTION_DEFINITION
       PsiElement(function)('function')
       PsiWhiteSpace(' ')
-      FUNCTION_NAME
-        PsiElement(word)('installJDK')
+      PsiElement(word)('installJDK')
       PsiWhiteSpace(' ')
       BLOCK
         PsiElement({)('{')

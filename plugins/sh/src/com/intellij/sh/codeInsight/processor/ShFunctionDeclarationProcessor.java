@@ -5,13 +5,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.sh.psi.ShFunctionDefinition;
-import com.intellij.sh.psi.ShFunctionName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShFunctionDeclarationProcessor implements PsiScopeProcessor {
   private final String myFunctionName;
-  private ShFunctionName myResult;
+  private ShFunctionDefinition myResult;
 
   public ShFunctionDeclarationProcessor(@NotNull String name) {
     myFunctionName = name;
@@ -21,15 +20,15 @@ public class ShFunctionDeclarationProcessor implements PsiScopeProcessor {
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (!(element instanceof ShFunctionDefinition)) return true;
     ShFunctionDefinition functionDefinition = (ShFunctionDefinition)element;
-    ShFunctionName functionName = functionDefinition.getFunctionName();
-    assert functionName != null : "Function name can't ne null";
-    if (!functionName.getText().equals(myFunctionName)) return true;
-    myResult = functionName;
+    PsiElement identifier = functionDefinition.getWord();
+    if (identifier == null) return true;
+    if (!identifier.getText().equals(myFunctionName)) return true;
+    myResult = functionDefinition;
     return false;
   }
 
   @Nullable
-  public ShFunctionName getFunction() {
+  public ShFunctionDefinition getFunction() {
     return myResult;
   }
 }

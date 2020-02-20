@@ -16,8 +16,7 @@ SHELL_SCRIPT
         PsiWhiteSpace('    ')
         COMPOUND_LIST
           FUNCTION_DEFINITION
-            FUNCTION_NAME
-              PsiElement(word)('startup')
+            PsiElement(word)('startup')
             PsiElement(()('(')
             PsiElement())(')')
             PsiWhiteSpace(' ')

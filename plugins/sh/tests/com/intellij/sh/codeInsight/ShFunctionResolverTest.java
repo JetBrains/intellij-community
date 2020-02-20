@@ -5,7 +5,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.sh.psi.ShFunctionName;
+import com.intellij.sh.psi.ShFunctionDefinition;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -16,10 +16,10 @@ import java.util.function.Supplier;
 
 public class ShFunctionResolverTest extends BasePlatformTestCase {
   private final Supplier<PsiElement> getLastFunction = () -> {
-    Collection<ShFunctionName> functionNames = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), ShFunctionName.class);
-    return ContainerUtil.getLastItem(new ArrayList<>(functionNames));
+    Collection<ShFunctionDefinition> functionDefinitions = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), ShFunctionDefinition.class);
+    return ContainerUtil.getLastItem(new ArrayList<>(functionDefinitions));
   };
-  private final Supplier<PsiElement> getFirstFunction = () -> PsiTreeUtil.findChildOfType(myFixture.getFile(), ShFunctionName.class);
+  private final Supplier<PsiElement> getFirstFunction = () -> PsiTreeUtil.findChildOfType(myFixture.getFile(), ShFunctionDefinition.class);
 
   @NotNull
   @Override
@@ -137,7 +137,7 @@ public class ShFunctionResolverTest extends BasePlatformTestCase {
     PsiElement expectedTarget = supplier.get();
     assertNotNull(expectedTarget);
 
-    assertEquals(expectedTarget.getText(), reference.getElement().getText());
+    assertEquals(expectedTarget.getText(), reference.resolve().getText());
 
     PsiElement targetElement = reference.resolve();
     assertSame(expectedTarget, targetElement);

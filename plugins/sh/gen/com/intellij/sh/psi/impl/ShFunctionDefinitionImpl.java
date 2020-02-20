@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
 
-public class ShFunctionDefinitionImpl extends ShCommandImpl implements ShFunctionDefinition {
+public class ShFunctionDefinitionImpl extends ShFunctionDefinitionMixin implements ShFunctionDefinition {
 
   public ShFunctionDefinitionImpl(ASTNode node) {
     super(node);
@@ -33,12 +33,6 @@ public class ShFunctionDefinitionImpl extends ShCommandImpl implements ShFunctio
 
   @Override
   @Nullable
-  public ShFunctionName getFunctionName() {
-    return findChildByClass(ShFunctionName.class);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getLeftParen() {
     return findChildByType(LEFT_PAREN);
   }
@@ -53,6 +47,12 @@ public class ShFunctionDefinitionImpl extends ShCommandImpl implements ShFunctio
   @Nullable
   public PsiElement getFunction() {
     return findChildByType(FUNCTION);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getWord() {
+    return findChildByType(WORD);
   }
 
 }

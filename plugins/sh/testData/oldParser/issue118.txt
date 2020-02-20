@@ -2,8 +2,7 @@ SHELL_SCRIPT
   PsiComment(shebang)('#!/bin/bash\n')
   COMMANDS_LIST
     FUNCTION_DEFINITION
-      FUNCTION_NAME
-        PsiElement(word)('find_decompressor')
+      PsiElement(word)('find_decompressor')
       PsiElement(()('(')
       PsiElement())(')')
       PsiWhiteSpace(' ')

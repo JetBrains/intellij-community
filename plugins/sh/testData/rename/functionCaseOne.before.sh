@@ -1,4 +1,4 @@
-decho() {
+function decho() {
   echo "Sample text"
 }
 
