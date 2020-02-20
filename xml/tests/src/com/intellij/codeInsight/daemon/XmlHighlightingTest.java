@@ -1110,6 +1110,14 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTestWithUnboundNSQuickFix(BASE_PATH + testName + "5");
   }
 
+  public void testDoctypeSystemConfigured() {
+    ExternalResourceManagerExImpl.registerResourceTemporarily("sample.dtd",
+                                                              getTestDataPath() + BASE_PATH + "sample.dtd",
+                                                              getTestRootDisposable());
+    configureByFiles(null, BASE_PATH + "sample.xml", BASE_PATH + "sample.dtd");
+    doDoTest(true, false);
+  }
+
   public void testUnboundNsHighlighting6() throws Exception {
     configureByFile(BASE_PATH + "web-app_2_4.xsd");
     doTestWithQuickFix(BASE_PATH + getTestName(false), CREATE_NAMESPACE_DECLARATION_INTENTION_NAME, true);

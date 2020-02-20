@@ -106,8 +106,11 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
 
       final String url = ExternalResourceManager.getInstance().getResourceLocation(canonicalText, myElement.getProject());
       if (!url.equals(canonicalText)) {
-        myIncorrectResourceMapped = true;
-        return null;
+        PsiFile file = XmlUtil.findRelativeFile(canonicalText, myElement.getContainingFile());
+        if (file == null) {
+          myIncorrectResourceMapped = true;
+        }
+        return file;
       }
 
       if (tag == rootTag && (tag.getNamespace().equals(XmlUtil.XML_SCHEMA_URI) || tag.getNamespace().equals(XmlUtil.WSDL_SCHEMA_URI))) {
