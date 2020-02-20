@@ -88,7 +88,7 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
 
         holder
           .registerProblem(expression.getMethodExpression(),
-                           "Assert expression <code>#ref</code> can be replaced with 'assertThat' call #loc",
+                           TypeMigrationBundle.message("inspection.migrate.assert.to.matcher.description", "assertThat"),
                            new MyQuickFix(matchersClass != null ? MATCHERS_CLASS_NAME : CORE_MATCHERS_CLASS_NAME));
       }
     };
