@@ -89,21 +89,6 @@ def do_pyvenv(args):
         error("Standard Python 'venv' module not found", ERROR_EXCEPTION)
 
 
-def do_untar(name):
-    import tempfile
-
-    directory_name = tempfile.mkdtemp("pycharm-management")
-
-    import tarfile
-
-    tar = tarfile.open(name)
-    for item in tar:
-        tar.extract(item, directory_name)
-
-    sys.stdout.write(directory_name+chr(10))
-    sys.stdout.flush()
-
-
 def mkdtemp_ifneeded():
     try:
         ind = sys.argv.index('--build-dir')
@@ -149,11 +134,6 @@ def main():
                     import shutil
                     shutil.rmtree(rmdir)
 
-        elif cmd == 'untar':
-            if len(sys.argv) < 2:
-                usage()
-            name = sys.argv[2]
-            do_untar(name)
         elif cmd == 'uninstall':
             if len(sys.argv) < 2:
                 usage()
