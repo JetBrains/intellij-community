@@ -1252,6 +1252,10 @@
                         serviceImplementation="com.intellij.util.indexing.hash.SharedIndexChunkConfigurationImpl"/>
     <sharedIndexChunkLocator implementation="com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator"/>
     <sharedIndexLoader implementation="com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator"/>
+
+    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.General.Warning" doNotActivateOnStart="true" canCloseContents="false"
+                factoryClass="com.intellij.analysis.problemsView.inspection.ProblemsViewToolWindowFactory"/>
+    <projectService serviceImplementation="com.intellij.analysis.problemsView.inspection.InspectionProblemsView"/>
   </extensions>
 </idea-plugin>
 
