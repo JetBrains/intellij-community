@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.ide.util.ClassFilter;
@@ -61,13 +61,8 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
   private final JCheckBox myIntroduceEnumConstants = new JCheckBox(JavaRefactoringBundle.message("move.enum.constant.cb"), true);
 
   @Override
-  protected String getMovePropertySuffix() {
-    return "Member";
-  }
-
-  @Override
-  protected String getCbTitle() {
-    return "Open moved members in editor";
+  protected @NotNull String getRefactoringId() {
+    return "MoveMember";
   }
 
   public MoveMembersDialog(Project project,
@@ -75,7 +70,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
                            final PsiClass initialTargetClass,
                            Set<PsiMember> preselectMembers,
                            MoveCallback moveCallback) {
-    super(project, true);
+    super(project, true, true);
     myProject = project;
     mySourceClass = sourceClass;
     myMoveCallback = moveCallback;
@@ -195,7 +190,6 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     myVisibilityPanel = new JavaVisibilityPanel(true, true);
     myVisibilityPanel.setVisibility(null);
     panel.add(myVisibilityPanel, BorderLayout.EAST);
-    panel.add(initOpenInEditorCb(), BorderLayout.SOUTH);
 
     return panel;
   }
@@ -256,8 +250,6 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
         return MoveMembersDialog.this.getTargetClassName();
       }
     }, isOpenInEditor()));
-
-    saveOpenInEditorOption();
   }
 
   @Override

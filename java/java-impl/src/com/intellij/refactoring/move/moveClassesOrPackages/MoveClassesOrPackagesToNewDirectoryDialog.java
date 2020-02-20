@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryUtil;
@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashSet;
@@ -56,7 +55,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
   public MoveClassesOrPackagesToNewDirectoryDialog(@NotNull final PsiDirectory directory, PsiElement[] elementsToMove,
                                                    boolean canShowPreserveSourceRoots,
                                                    final MoveCallback moveCallback) {
-    super(directory.getProject(), false);
+    super(directory.getProject(), false, MoveClassesOrPackagesDialog.canBeOpenedInEditor(elementsToMove));
     setTitle(MoveHandler.getRefactoringName());
     myDirectory = directory;
     myElementsToMove = elementsToMove;
@@ -116,12 +115,6 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
       myPreserveSourceRoot.setSelected(sameModule);
     }
     init();
-    for (PsiElement element : elementsToMove) {
-      if (element.getContainingFile() != null) {
-        myOpenInEditor.add(initOpenInEditorCb(), BorderLayout.WEST);
-        break;
-      }
-    }
   }
 
   private TextFieldWithBrowseButton myDestDirectoryField;
@@ -177,7 +170,6 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
     final boolean searchForTextOccurences = isSearchInNonJavaFiles();
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
     refactoringSettings.MOVE_SEARCH_FOR_TEXT = searchForTextOccurences;
-    saveOpenInEditorOption();
     final BaseRefactoringProcessor refactoringProcessor =
       createRefactoringProcessor(project, directory, aPackage, searchInComments, searchForTextOccurences);
     if (refactoringProcessor != null) {
@@ -238,13 +230,8 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
   }
 
   @Override
-  protected String getMovePropertySuffix() {
-    return "ClassWithTarget";
-  }
-
-  @Override
-  protected String getCbTitle() {
-    return "Open moved classes in editor";
+  protected @NotNull String getRefactoringId() {
+    return "MoveClassWithTarget";
   }
 }
 

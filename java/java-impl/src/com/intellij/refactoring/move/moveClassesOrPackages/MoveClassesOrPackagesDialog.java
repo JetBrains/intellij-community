@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -72,7 +72,6 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
   private ComboboxWithBrowseButton myDestinationFolderCB;
   private JPanel myTargetPanel;
   private JLabel myTargetDestinationLabel;
-  private JPanel myOpenInEditorPanel;
   private boolean myHavePackages;
 
   public MoveClassesOrPackagesDialog(@NotNull Project project,
@@ -84,7 +83,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
                                      PsiDirectory initialTargetDirectory,
                                      boolean searchInComments,
                                      boolean searchForTextOccurrences) {
-    super(project, true);
+    super(project, true, canBeOpenedInEditor(elementsToMove));
 
     myElementsToMove = elementsToMove;
     myMoveCallback = moveCallback;
@@ -121,13 +120,6 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
       updateControlsEnabled();
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myInnerClassChooser, true));
     });
-
-    for (PsiElement element : elementsToMove) {
-      if (element.getContainingFile() != null) {
-        myOpenInEditorPanel.add(initOpenInEditorCb(), BorderLayout.EAST);
-        break;
-      }
-    }
 
     myTargetDirectoryFixed = initialTargetDirectory == null;
     mySuggestToMoveToAnotherRoot = initialTargetElement == null;
@@ -182,6 +174,15 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     validateButtons();
 
     myHelpID = HelpID.getMoveHelpID(elementsToMove[0]);
+  }
+
+  static boolean canBeOpenedInEditor(PsiElement @NotNull [] elementsToMove) {
+    for (PsiElement element : elementsToMove) {
+      if (element.getContainingFile() != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void updateControlsEnabled() {
@@ -351,7 +352,6 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
   @Override
   protected void doAction() {
-    saveOpenInEditorOption();
     if (isMoveToPackage()) {
       invokeMoveToPackage();
     }
@@ -484,17 +484,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
   }
 
   @Override
-  protected String getMovePropertySuffix() {
-    return "Class";
-  }
-
-  @Override
-  protected String getCbTitle() {
-    return "Open moved in editor";
-  }
-
-  @Override
-  protected boolean isEnabledByDefault() {
-    return false;
+  protected @NotNull String getRefactoringId() {
+    return "MoveClass";
   }
 }
