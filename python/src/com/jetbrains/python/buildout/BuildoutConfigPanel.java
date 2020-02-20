@@ -94,7 +94,7 @@ public class BuildoutConfigPanel extends JPanel {
 
   private static ValidationResult validateScriptName(String scriptName) {
     if (StringUtil.isEmpty(scriptName)) {
-      return new ValidationResult("Please specify buildout script");
+      return new ValidationResult(PyBundle.message("buildout.config.script.name.validation.error.message"));
     }
     try {
       getScriptFile(scriptName);
@@ -136,11 +136,11 @@ public class BuildoutConfigPanel extends JPanel {
   }
 
   @NotNull
-  public static VirtualFile getScriptFile(String script_name) throws ConfigurationException {
-    VirtualFile script_file = LocalFileSystem.getInstance().findFileByPath(script_name);
-    if (script_file == null || script_file.isDirectory()) {
-      throw new ConfigurationException("Invalid script file '" + script_name + "'");
+  public static VirtualFile getScriptFile(String scriptName) throws ConfigurationException {
+    VirtualFile scriptFile = LocalFileSystem.getInstance().findFileByPath(scriptName);
+    if (scriptFile == null || scriptFile.isDirectory()) {
+      throw new ConfigurationException(PyBundle.message("buildout.config.script.file.invalid.message", scriptName));
     }
-    return script_file;
+    return scriptFile;
   }
 }
