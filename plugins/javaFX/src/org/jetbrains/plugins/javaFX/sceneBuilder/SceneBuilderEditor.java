@@ -107,7 +107,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
     if (JavaVersion.current().feature == 11 &&
         e instanceof NoClassDefFoundError &&
-        "com/oracle/javafx/scenebuilder/kit/library/Library".equals(e.getMessage())) {
+        !SceneBuilderUtil.getSceneBuilder11Path().toFile().isFile()) {
       myErrorLabel.addHyperlinkListener(e1 -> {
         DownloadableFileService service = DownloadableFileService.getInstance();
         DownloadableFileDescription
