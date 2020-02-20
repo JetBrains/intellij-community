@@ -427,8 +427,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     ProgressResult<?> result = progressRunner.submitAndGet();
 
     Throwable exception = result.getThrowable();
-    if (!(exception instanceof ProcessCanceledException) && exception instanceof RuntimeException) {
-      throw ((RuntimeException)exception);
+    if (!(exception instanceof ProcessCanceledException)) {
+      ExceptionUtil.rethrowUnchecked(exception);
     }
     return !result.isCanceled();
   }

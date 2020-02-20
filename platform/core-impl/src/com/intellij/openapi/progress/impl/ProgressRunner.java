@@ -299,6 +299,9 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
           Logger.getInstance(ProgressRunner.class).warn("Can't go modal without BlockingProgressIndicator");
           modalityEntered.up();
         }
+      }).exceptionally(throwable -> {
+        resultFuture.completeExceptionally(throwable);
+        return null;
       });
     }
 
