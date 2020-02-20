@@ -2,6 +2,9 @@
 package com.intellij.vcs.commit
 
 import com.intellij.application.subscribe
+import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.openapi.application.ConfigImportHelper.isConfigImported
+import com.intellij.openapi.application.ConfigImportHelper.isFirstSession
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
@@ -20,8 +23,16 @@ import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.util.messages.Topic
 import java.util.*
 
-private val isForceNonModalCommit = Registry.get("vcs.force.non.modal.commit")
-private val appSettings = VcsApplicationSettings.getInstance()
+private val isForceNonModalCommit get() = Registry.get("vcs.force.non.modal.commit")
+private val appSettings get() = VcsApplicationSettings.getInstance()
+
+private class NonModalCommitCustomization : ApplicationInitializedListener {
+  override fun componentsInitialized() {
+    if (!isFirstSession() || isConfigImported()) return
+
+    appSettings.COMMIT_FROM_LOCAL_CHANGES = true
+  }
+}
 
 class CommitWorkflowManager(private val project: Project) : ProjectComponent {
 
