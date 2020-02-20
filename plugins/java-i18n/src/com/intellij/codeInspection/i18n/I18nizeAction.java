@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.java.i18n.JavaI18nBundle;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -137,7 +137,7 @@ public class I18nizeAction extends AnAction {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-    }, CodeInsightBundle.message("quickfix.i18n.command.name"), project));
+    }, PropertiesBundle.message("quickfix.i18n.command.name"), project));
   }
 
   @Override

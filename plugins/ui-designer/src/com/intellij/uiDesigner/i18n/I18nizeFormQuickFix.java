@@ -15,9 +15,9 @@
  */
 package com.intellij.uiDesigner.i18n;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.i18n.JavaI18nizeQuickFixDialog;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -88,7 +88,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-    }), CodeInsightBundle.message("quickfix.i18n.command.name"), project);
+    }), PropertiesBundle.message("quickfix.i18n.command.name"), project);
 
     // saving files is necessary to ensure correct reload of properties files by UI Designer
     for (PropertiesFile file : propertiesFiles) {

@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.properties.references;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -165,7 +164,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-    }, CodeInsightBundle.message("quickfix.i18n.command.name"), project));
+    }, PropertiesBundle.message("quickfix.i18n.command.name"), project));
   }
 
   @Override

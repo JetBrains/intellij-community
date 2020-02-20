@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.references;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -131,7 +130,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
         TreeFileChooserFactory chooserFactory = TreeFileChooserFactory.getInstance(myProject);
         final PropertiesFile propertiesFile = getPropertiesFile();
         TreeFileChooser fileChooser = chooserFactory.createFileChooser(
-          CodeInsightBundle.message("i18nize.dialog.property.file.chooser.title"), propertiesFile != null ? propertiesFile.getContainingFile() : null, StdFileTypes.PROPERTIES, null);
+          PropertiesBundle.message("i18nize.dialog.property.file.chooser.title"), propertiesFile != null ? propertiesFile.getContainingFile() : null, StdFileTypes.PROPERTIES, null);
         fileChooser.showDialog();
         PsiFile selectedFile = fileChooser.getSelectedFile();
         if (selectedFile == null) return;
@@ -365,16 +364,16 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     if (getPropertiesFile() != null) return true;
     final String path = FileUtil.toSystemIndependentName(myPropertiesFile.getText());
     if (StringUtil.isEmptyOrSpaces(path)) {
-      String message = CodeInsightBundle.message("i18nize.empty.file.path", myPropertiesFile.getText());
-      Messages.showErrorDialog(myProject, message, CodeInsightBundle.message("i18nize.error.creating.properties.file"));
+      String message = PropertiesBundle.message("i18nize.empty.file.path", myPropertiesFile.getText());
+      Messages.showErrorDialog(myProject, message, PropertiesBundle.message("i18nize.error.creating.properties.file"));
       myPropertiesFile.requestFocusInWindow();
       return false;
     }
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(path);
     if (fileType != StdFileTypes.PROPERTIES && fileType != StdFileTypes.XML) {
-      String message = CodeInsightBundle.message("i18nize.cant.create.properties.file.because.its.name.is.associated",
+      String message = PropertiesBundle.message("i18nize.cant.create.properties.file.because.its.name.is.associated",
                                                  myPropertiesFile.getText(), fileType.getDescription());
-      Messages.showErrorDialog(myProject, message, CodeInsightBundle.message("i18nize.error.creating.properties.file"));
+      Messages.showErrorDialog(myProject, message, PropertiesBundle.message("i18nize.error.creating.properties.file"));
       myPropertiesFile.requestFocusInWindow();
       return false;
     }
@@ -402,7 +401,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       });
     }
     catch (Exception e) {
-      Messages.showErrorDialog(myProject, e.getLocalizedMessage(), CodeInsightBundle.message("i18nize.error.creating.properties.file"));
+      Messages.showErrorDialog(myProject, e.getLocalizedMessage(), PropertiesBundle.message("i18nize.error.creating.properties.file"));
       return false;
     }
     return true;
@@ -432,10 +431,10 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       IProperty existingProperty = propertiesFile.findPropertyByKey(getKey());
       final String propValue = myValue.getText();
       if (existingProperty != null && !Comparing.strEqual(existingProperty.getValue(), propValue)) {
-        final String messageText = CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.message", getKey(), propertiesFile.getName());
+        final String messageText = PropertiesBundle.message("i18nize.dialog.error.property.already.defined.message", getKey(), propertiesFile.getName());
         final int code = Messages.showOkCancelDialog(myProject,
                                                      messageText,
-                                                     CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.title"),
+                                                     PropertiesBundle.message("i18nize.dialog.error.property.already.defined.title"),
                                                      null);
         if (code == Messages.CANCEL) {
           return;
