@@ -2,8 +2,8 @@ package com.intellij.jps.cache.loader;
 
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.jps.cache.JpsCacheBundle;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
@@ -111,7 +111,7 @@ public class JpsOutputLoaderManager {
         Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compiler caches available", notificationContent,
                                                                                  NotificationType.INFORMATION, null);
         notification
-          .addAction(NotificationAction.createSimple(IdeBundle.lazyMessage(
+          .addAction(NotificationAction.createSimple(JpsCacheBundle.lazyMessage(
             "action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> {
           notification.expire();
           load(false);

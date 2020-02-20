@@ -2,7 +2,6 @@ package com.intellij.jps.cache;
 
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -33,13 +32,13 @@ public class JpsCachesDummyProjectComponent implements ProjectComponent {
                                                                                "Make project automatically enabled, it can affect portable caches",
                                                                                NotificationType.WARNING, null);
       notification.addAction(
-        NotificationAction.createSimple(IdeBundle.lazyMessage(
+        NotificationAction.createSimple(JpsCacheBundle.lazyMessage(
           "action.NotificationAction.JpsCachesDummyProjectComponent.text.disable.property"), () -> {
         myWorkspaceConfiguration.MAKE_PROJECT_ON_SAVE = false;
         BuildManager.getInstance().clearState(myProject);
         notification.expire();
       }));
-      notification.addAction(NotificationAction.createSimple(IdeBundle.lazyMessage(
+      notification.addAction(NotificationAction.createSimple(JpsCacheBundle.lazyMessage(
         "action.NotificationAction.JpsCachesDummyProjectComponent.text.dont.ask"), () -> {
         myPropertiesComponent.setValue(NOT_ASK_AGAIN, true);
         notification.expire();

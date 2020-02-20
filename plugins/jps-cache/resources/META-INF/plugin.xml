@@ -33,4 +33,5 @@
       <implementation-class>com.intellij.jps.cache.JpsCachesDummyProjectComponent</implementation-class>
     </component>
   </project-components>
+  <resource-bundle>messages.JpsCacheBundle</resource-bundle>
 </idea-plugin>
