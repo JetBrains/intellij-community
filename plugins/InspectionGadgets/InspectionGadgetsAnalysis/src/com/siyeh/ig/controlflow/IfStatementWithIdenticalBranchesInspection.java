@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
@@ -528,22 +529,26 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     EXTRACT_SIDE_EFFECTS("inspection.common.if.parts.message.complete.duplicate.side.effect",
                          "inspection.common.if.parts.description.complete.duplicate.side.effect");
 
-    private @PropertyKey(resourceBundle = InspectionsBundle.BUNDLE) @NotNull final String myBundleFixKey;
-    private @PropertyKey(resourceBundle = InspectionsBundle.BUNDLE) @NotNull final String myBundleDescriptionKey;
+    private @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) @NotNull final String myBundleFixKey;
+    private @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) @NotNull final String myBundleDescriptionKey;
 
     @NotNull
     private String getFixMessage(boolean mayChangeSemantics) {
-      String mayChangeSemanticsText = mayChangeSemantics ? " (may change semantics)" : "";
-      return InspectionsBundle.message(myBundleFixKey, mayChangeSemanticsText);
-    }
-    @NotNull
-    private String getDescriptionMessage(boolean mayChangeSemantics) {
-      String mayChangeSemanticsText = mayChangeSemantics ? " (may change semantics)" : "";
-      return InspectionsBundle.message(myBundleDescriptionKey, mayChangeSemanticsText);
+      return InspectionGadgetsBundle.message(myBundleFixKey, getMayChangeSemanticsText(mayChangeSemantics));
     }
 
-    CommonPartType(@PropertyKey(resourceBundle = InspectionsBundle.BUNDLE) @NotNull String key,
-                   @PropertyKey(resourceBundle = InspectionsBundle.BUNDLE) @NotNull String bundleDescriptionKey) {
+    @NotNull
+    private static String getMayChangeSemanticsText(boolean mayChangeSemantics) {
+      return mayChangeSemantics ? " (" + InspectionGadgetsBundle.message("inspection.note.may.change.semantics") + ")" : "";
+    }
+
+    @NotNull
+    private String getDescriptionMessage(boolean mayChangeSemantics) {
+      return InspectionGadgetsBundle.message(myBundleDescriptionKey, getMayChangeSemanticsText(mayChangeSemantics));
+    }
+
+    CommonPartType(@PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) @NotNull String key,
+                   @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) @NotNull String bundleDescriptionKey) {
       myBundleFixKey = key;
       myBundleDescriptionKey = bundleDescriptionKey;
     }
