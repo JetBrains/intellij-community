@@ -237,7 +237,7 @@ public class GitMergeUtil {
         });
       }
       catch (IOException e) {
-        LOG.error(e);
+        LOG.warn(e);
         return ArrayUtilRt.EMPTY_BYTE_ARRAY;
       }
     }

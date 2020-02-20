@@ -131,7 +131,7 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
             file.setBinaryContent(applyContent);
           }
           catch (IOException e) {
-            LOG.error(e);
+            LOG.warn(e);
             Messages.showErrorDialog(myProject, DiffBundle.message("can.t.apply.result"), CommonBundle.getErrorTitle());
           }
         });
