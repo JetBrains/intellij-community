@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij.grazie">
+        <grammar.strategy language="XML" implementationClass="com.intellij.grazie.ide.language.xml.XmlGrammarCheckingStrategy"/>
+    </extensions>
+</idea-plugin>

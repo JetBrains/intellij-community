@@ -1,0 +1,69 @@
+<idea-plugin>
+  <id>tanvd.grazi</id>
+  <name>Grazie</name>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+    <p>Provides intelligent spelling and grammar checks for text that you write in the IDE.</p>
+
+    <ul>
+        <li>Supports over 15 languages, including English, German, Russian, Chinese, and others.</li>
+        <li>Recognizes natural language constructs in programming languages (Kotlin, Python, Java and others),
+            markup languages (Latex, Markdown, XML, HTML), comments, commits messages, and more.</li>
+        <li>Uses LanguageTool as its proofreading engine.</li>
+    </ul>
+
+    <p>English is enabled by default when you install the plugin. To enable other languages, open Settings/Preferences
+       and select <strong>Tools</strong> > <strong>Grazie</strong>.</p>
+
+    <p><strong>NOTE:</strong> All verification is performed locally, inside your IDE.</p>
+    ]]></description>
+
+  <depends optional="true" config-file="java.xml">com.intellij.modules.java</depends>
+  <depends optional="true" config-file="javascript.xml">JavaScript</depends>
+  <depends optional="true" config-file="json.xml">com.intellij.modules.json</depends>
+  <depends optional="true" config-file="markdown.xml">org.intellij.plugins.markdown</depends>
+  <depends optional="true" config-file="properties.xml">com.intellij.properties</depends>
+  <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
+  <depends optional="true" config-file="xml.xml">com.intellij.modules.xml</depends>
+  <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.grazie.GrazieConfig"/>
+
+    <backgroundPostStartupActivity implementation="com.intellij.grazie.ide.notification.GrazieNotificationComponent"/>
+    <preloadingActivity implementation="com.intellij.grazie.ide.init.GrazieIDEInit"/>
+
+    <!-- getDisplayName is overridden in GrazieInspection itself! Placeholder is required to suppress validation. -->
+    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspection"
+                     implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection"
+                     level="TYPO" displayName="Grammar"/>
+
+    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="LanguageDetectionInspection"
+                     implementationClass="com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection"
+                     level="WARNING" displayName="Natural language detection"/>
+
+    <applicationConfigurable parentId="proofread" instance="com.intellij.grazie.ide.ui.GrazieConfigurable"
+                             id="reference.settingsdialog.project.grazie"/>
+
+    <search.optionContributor implementation="com.intellij.grazie.ide.ui.GrazieSearchableOptionContributor"/>
+
+    <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieFUStateCollector"/>
+    <statistics.validation.customWhiteListRule implementation="com.intellij.grazie.ide.fus.GrazieWhiteListRule"/>
+    <statistics.counterUsagesCollector groupId="grazi.count" version="1"/>
+
+    <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.grazie">
+    <grammar.strategy language="TEXT" implementationClass="com.intellij.grazie.ide.language.plain.PlainTextGrammarCheckingStrategy"/>
+    <grammar.strategy language="" implementationClass="com.intellij.grazie.ide.language.comment.CommentGrammarCheckingStrategy"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.grazie.grammar.strategy" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy"/>
+    </extensionPoint>
+  </extensionPoints>
+</idea-plugin>
