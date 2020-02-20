@@ -383,10 +383,14 @@ public class ComponentValidator {
       if (info != null) {
         updateInfo(info);
       } else if (disableValidation) {
-        disableValidation = false;
+        enableValidation();
         revalidate();
       }
     }
+  }
+
+  public void enableValidation() {
+    disableValidation = false;
   }
 
   private class ValidationMouseListener extends MouseAdapter {
