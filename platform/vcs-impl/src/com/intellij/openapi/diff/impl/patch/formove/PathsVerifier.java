@@ -618,7 +618,7 @@ public class PathsVerifier {
           List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
           Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
             files, title, VcsBundle.message("patch.apply.overwrite.existing.files.prompt"), title,
-            VcsBundle.message("patch.apply.overwrite.existing.file.prompt"),
+            VcsBundle.getString("patch.apply.overwrite.existing.file.prompt"),
             VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
             CommonBundle.message("button.overwrite"), IdeBundle.message("button.cancel"));
           if (selected != null) {
