@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
-import com.intellij.ide.plugins.PluginUtilImpl
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.Application

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,7 +37,6 @@ public final class ServiceDescriptor {
    * Cannot be specified as part of {@link State} because to get annotation, class must be loaded, but it cannot be done for performance reasons.
    */
   @Attribute
-  @ApiStatus.Experimental
   @Nullable
   public String configurationSchemaKey;
 
