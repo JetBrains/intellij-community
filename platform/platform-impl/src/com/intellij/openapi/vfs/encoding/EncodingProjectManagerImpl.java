@@ -263,7 +263,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     return myMapping.entrySet().stream()
       .map(e -> Pair.create(e.getKey().getFile(), e.getValue()))
       .filter(e -> e.getFirst() != null)
-      .collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond()));
+      .collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond(), (c1, c2) -> c1));
   }
 
   public void setMapping(@NotNull Map<? extends VirtualFile, ? extends Charset> mapping) {
