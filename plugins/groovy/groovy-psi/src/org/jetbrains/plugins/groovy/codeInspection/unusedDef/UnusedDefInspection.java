@@ -92,6 +92,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       }
     }
 
+   if (true) {}
     final Set<PsiElement> checked = new HashSet<>();
 
     unusedDefs.forEach(num -> {
