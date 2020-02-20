@@ -263,7 +263,6 @@ public abstract class DumbService {
    *
    * @param dumbAwareContent - a component to wrap
    * @param updateRunnable - an action to execute when dumb mode state changed or user explicitly request reload panel
-   * @param parentDisposable
    *
    * @return Wrapped component.
    */
@@ -324,7 +323,9 @@ public abstract class DumbService {
    * <p>
    * A typical usage would involve {@code try-finally}, where the alternative resolution is first enabled, then an action is performed,
    * and then alternative resolution is turned off in the {@code finally} block.
+   * @deprecated Use {@link #runWithAlternativeResolveEnabled(ThrowableRunnable)} or {@link #computeWithAlternativeResolveEnabled(ThrowableComputable)} or {@link #withAlternativeResolveEnabled(Runnable)} instead
    */
+  @Deprecated
   public abstract void setAlternativeResolveEnabled(boolean enabled);
 
   /**
@@ -382,7 +383,6 @@ public abstract class DumbService {
    * @see #completeJustSubmittedTasks()
    * @deprecated Obsolete, does nothing, just executes the passed runnable.
    */
-  @SuppressWarnings({"unused"})
   @Deprecated
   public static void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
     runnable.run();

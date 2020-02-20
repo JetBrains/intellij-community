@@ -218,20 +218,10 @@ public final class ActionUtil {
                                          @NotNull Computable<T> computable) throws ProcessCanceledException {
     DumbService dumbService = DumbService.getInstance(project);
     boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      if (useAlternativeResolve) {
-        dumbService.setAlternativeResolveEnabled(true);
-      }
-      try {
-        ThrowableComputable<T, RuntimeException> inReadAction = () -> ApplicationManager.getApplication().runReadAction(computable);
-        return ProgressManager.getInstance().computePrioritized(inReadAction);
-      }
-      finally {
-        if (useAlternativeResolve) {
-          dumbService.setAlternativeResolveEnabled(false);
-        }
-      }
-    }, progressTitle, true, project);
+    ThrowableComputable<T, RuntimeException> inReadAction = () -> ApplicationManager.getApplication().runReadAction(computable);
+    ThrowableComputable<T, RuntimeException> prioritizedRunnable = () -> ProgressManager.getInstance().computePrioritized(inReadAction);
+    ThrowableComputable<T, RuntimeException> process = useAlternativeResolve ? () -> dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable) : prioritizedRunnable;
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project);
   }
 
   public static class ActionPauses {

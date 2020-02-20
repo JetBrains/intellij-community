@@ -381,13 +381,8 @@ public class CreateTestDialog extends DialogWrapper {
         final Object selectedItem = myLibrariesCombo.getSelectedItem();
         if (selectedItem != null) {
           final DumbService dumbService = DumbService.getInstance(myProject);
-          dumbService.setAlternativeResolveEnabled(true);
-          try {
-            onLibrarySelected((TestFramework)selectedItem);
-          }
-          finally {
-            dumbService.setAlternativeResolveEnabled(false);
-          }
+          dumbService.runWithAlternativeResolveEnabled(() ->
+            onLibrarySelected((TestFramework)selectedItem));
         }
       }
     });

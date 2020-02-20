@@ -177,15 +177,11 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
           notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
           return;
         }
-        DumbService.getInstance(project).setAlternativeResolveEnabled(true);
-        try {
+        DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
           if (!setupRootAndAnnotateExternally(entry, project, annotation)) {
             throw new CanceledConfigurationException();
           }
-        }
-        finally {
-          DumbService.getInstance(project).setAlternativeResolveEnabled(false);
-        }
+        });
       }
       break;
     }

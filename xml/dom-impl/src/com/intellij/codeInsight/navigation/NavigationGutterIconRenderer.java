@@ -107,14 +107,13 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
     final List<PsiElement> list;
 
     DumbService dumbService = elt != null ? DumbService.getInstance(elt.getProject()) : null;
-    if (dumbService != null) dumbService.setAlternativeResolveEnabled(true);
-    try {
+    if (dumbService != null) {
+      list = dumbService.computeWithAlternativeResolveEnabled(() -> getTargetElements());
+    }
+    else {
       list = getTargetElements();
     }
-    finally {
-      if (dumbService != null) dumbService.setAlternativeResolveEnabled(false);
-    }
-    
+
     if (list.isEmpty()) {
       if (myEmptyText != null) {
         if (event != null) {
