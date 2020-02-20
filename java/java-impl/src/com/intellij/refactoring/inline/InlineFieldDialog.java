@@ -47,7 +47,9 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getInlineAllText() {
-    return JavaRefactoringBundle.message(myField.isWritable() ?"all.references.and.remove.the.field" : "all.invocations.in.project");
+    return myField.isWritable()
+           ? JavaRefactoringBundle.message("all.references.and.remove.the.field")
+           : RefactoringBundle.message("all.invocations.in.project");
   }
 
   @Override
