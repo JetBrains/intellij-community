@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -196,6 +197,11 @@ public class IOUtil {
     catch (NoSuchFieldException | IllegalAccessException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, ? extends IOException> factoryComputable,
+                                             @NotNull final Path file) throws IOException {
+    return openCleanOrResetBroken(factoryComputable, file.toFile());
   }
 
   public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, ? extends IOException> factoryComputable,

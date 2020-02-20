@@ -44,10 +44,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.EnumeratorLongDescriptor;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PagedFileStorage;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -56,10 +53,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.nio.file.Path;
 import java.util.*;
 
 @State(name = "IdeDocumentHistory", storages = {
@@ -169,26 +166,20 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @NotNull
   private PersistentHashMap<String, Long> initRecentFilesTimestampMap(@NotNull Project project) {
-    File file = ProjectUtil.getProjectCachePath(project, "recentFilesTimeStamps.dat").toFile();
+    Path file = ProjectUtil.getProjectCachePath(project, "recentFilesTimeStamps.dat");
+
     PersistentHashMap<String, Long> map;
     try {
-      map = createMap(file);
+      map = IOUtil.openCleanOrResetBroken(() -> createMap(file), file);
     }
     catch (IOException e) {
-      LOG.info("Cannot create PersistentHashMap in "+file, e);
-      PersistentHashMap.deleteFilesStartingWith(file);
-      try {
-        map = createMap(file);
-      }
-      catch (IOException e1) {
-        LOG.error("Cannot create PersistentHashMap in " + file + " even after deleting old files", e1);
-        throw new RuntimeException(e);
-      }
+      LOG.error("Cannot create PersistentHashMap in " + file, e);
+      throw new RuntimeException(e);
     }
-    PersistentHashMap<String, Long> finalMap = map;
+
     Disposer.register(this, () -> {
       try {
-        finalMap.close();
+        map.close();
       }
       catch (IOException e) {
         LOG.info("Cannot close persistent viewed files timestamps hash map", e);
@@ -198,8 +189,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   @NotNull
-  private static PersistentHashMap<String, Long> createMap(File file) throws IOException {
-    return new PersistentHashMap<>(file.toPath(),
+  private static PersistentHashMap<String, Long> createMap(Path file) throws IOException {
+    return new PersistentHashMap<>(file,
                                    EnumeratorStringDescriptor.INSTANCE,
                                    EnumeratorLongDescriptor.INSTANCE,
                                    256,
