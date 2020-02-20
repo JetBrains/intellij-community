@@ -38,6 +38,10 @@ public class IssueLinkConfigurationDialog extends DialogWrapper {
     myIssueIDTextField.getDocument().addDocumentListener(documentChangeListener);
     myIssueLinkTextField.getDocument().addDocumentListener(documentChangeListener);
     myExampleIssueIDTextField.getDocument().addDocumentListener(documentChangeListener);
+
+    myIssueIDTextField.setText("Task_([A-Za-z]+)_(\\d+)");
+    myIssueLinkTextField.setText("https://example.com/issue/$1/$2");
+    myExampleIssueIDTextField.setText("Task_DA_113");
   }
 
   private void updateFeedback() {
