@@ -176,7 +176,8 @@ public class EditorPainter implements TextDrawingCallback {
 
       paintBackground();
       paintRightMargin();
-      paintCustomRenderers();
+      paintCustomRenderers(myDocMarkup);
+      paintCustomRenderers(myEditorMarkup);
       paintLineMarkersSeparators(myDocMarkup);
       paintLineMarkersSeparators(myEditorMarkup);
       paintTextWithEffects();
@@ -550,9 +551,9 @@ public class EditorPainter implements TextDrawingCallback {
       myGraphics.fill(new Rectangle2D.Float(x, y, width, height));
     }
 
-    private void paintCustomRenderers() {
+    private void paintCustomRenderers(MarkupModelEx markupModel) {
       myGraphics.translate(0, myYShift);
-      myEditorMarkup.processRangeHighlightersOverlappingWith(myStartOffset, myEndOffset, highlighter -> {
+      markupModel.processRangeHighlightersOverlappingWith(myStartOffset, myEndOffset, highlighter -> {
         CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
         if (customRenderer != null) {
           int highlighterStart = highlighter.getStartOffset();
