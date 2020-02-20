@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -53,10 +52,10 @@ public class ToggleLaggingModeAction extends AnAction implements DumbAware {
   public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myLagging) {
-      presentation.setText(IdeBundle.lazyMessage("action.presentation.ToggleLaggingModeAction.text.exit.lagging.mode"));
+      presentation.setText(InternalActionsBundle.lazyMessage("action.presentation.ToggleLaggingModeAction.text.exit.lagging.mode"));
     }
     else {
-      presentation.setText(IdeBundle.lazyMessage("action.presentation.ToggleLaggingModeAction.text.enter.lagging.mode"));
+      presentation.setText(InternalActionsBundle.lazyMessage("action.presentation.ToggleLaggingModeAction.text.enter.lagging.mode"));
     }
   }
 }

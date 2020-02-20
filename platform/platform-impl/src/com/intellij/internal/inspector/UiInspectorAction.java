@@ -13,6 +13,7 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
+import com.intellij.internal.InternalActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -179,7 +180,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       actions.addSeparator();
 
-      actions.add(new MyTextAction(IdeBundle.lazyMessage("action.Anonymous.text.refresh")) {
+      actions.add(new MyTextAction(InternalActionsBundle.lazyMessage("action.Anonymous.text.refresh")) {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {

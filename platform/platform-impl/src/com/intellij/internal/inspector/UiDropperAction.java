@@ -2,6 +2,7 @@
 package com.intellij.internal.inspector;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.internal.InternalActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -142,7 +143,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
 
       actions.addSeparator();
 
-      actions.add(new IconWithTextAction(IdeBundle.lazyMessage("action.Anonymous.text.refresh")) {
+      actions.add(new IconWithTextAction(InternalActionsBundle.lazyMessage("action.Anonymous.text.refresh")) {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {

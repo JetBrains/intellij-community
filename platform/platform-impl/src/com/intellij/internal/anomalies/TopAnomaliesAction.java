@@ -15,7 +15,7 @@
  */
 package com.intellij.internal.anomalies;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.internal.InternalActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -45,7 +45,7 @@ public class TopAnomaliesAction extends ActionGroup {
       return Integer.compare(o1.hashCode(), o2.hashCode());
     };
 
-    private static final ResettableAction TOP_PARENTS = new ResettableAction(IdeBundle.lazyMessage("action.Anonymous.text.parents")) {
+    private static final ResettableAction TOP_PARENTS = new ResettableAction(InternalActionsBundle.lazyMessage("action.Anonymous.text.parents")) {
       final TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
       TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
@@ -93,7 +93,7 @@ public class TopAnomaliesAction extends ActionGroup {
       }
     };
 
-    private static final ResettableAction TOP_UI_PROPERTIES = new ResettableAction(IdeBundle.lazyMessage("action.Anonymous.text.clientproperties")) {
+    private static final ResettableAction TOP_UI_PROPERTIES = new ResettableAction(InternalActionsBundle.lazyMessage("action.Anonymous.text.clientproperties")) {
       final TreeSet<Pair<JComponent, Integer>> top = new TreeSet<>(COMPARATOR);
       TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
@@ -153,7 +153,7 @@ public class TopAnomaliesAction extends ActionGroup {
     };
 
 
-    private static final ResettableAction RESET_THEM_ALL = new ResettableAction(() -> IdeBundle
+    private static final ResettableAction RESET_THEM_ALL = new ResettableAction(() -> InternalActionsBundle
       .message("action.Anonymous.text.reset.statistics")) {
       @Override
       void reset() {
