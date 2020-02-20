@@ -143,11 +143,10 @@ public class ResizeableMappedFile implements Forceable {
             return new DataOutputStream(Files.newOutputStream(lengthFile));
           }
           catch (NoSuchFileException ex) {
-            final File parentFile = lengthFile.getParent().toFile();
-            
-            if (!parentFile.exists()) {
+            Path parent = lengthFile.getParent();
+            if (!Files.exists(parent)) {
               if (!parentWasCreated) {
-                parentFile.mkdirs();
+                Files.createDirectories(parent);
                 parentWasCreated = true;
               }
               else {
