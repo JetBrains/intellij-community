@@ -26,21 +26,16 @@ import java.util.function.Consumer;
 public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapter implements ConfigurableTreeRenderer, Consumer<Integer> {
   private final CountComponent myCountLabel = new CountComponent();
   private final JLabel myExtraLabel = new JLabel();
-  private final JPanel myPanel = new NonOpaquePanel() {
-    @Override
-    public int getBaseline(int width, int height) {
-      return myCountLabel.getBaseline(width, height);
-    }
-  };
+  private final JPanel myPanel = new NonOpaquePanel();
 
   private PluginUpdatesService myService;
   private SimpleTree myTree;
   private String myCountValue;
 
   public PluginManagerConfigurableTreeRenderer() {
-    myPanel.setLayout(new BorderLayout());
-    myPanel.add(myExtraLabel, BorderLayout.WEST);
-    myPanel.add(myCountLabel, BorderLayout.EAST);
+    myPanel.setLayout(new BorderLayout(getHGap(), 0));
+    myPanel.add(myCountLabel, BorderLayout.WEST);
+    myPanel.add(myExtraLabel, BorderLayout.EAST);
   }
 
   @Nullable
@@ -62,28 +57,31 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
       return null;
     }
 
-    myExtraLabel.setIcon(icon);
-    myExtraLabel.setVisible(icon != null);
-
-    myCountLabel.setText(myCountValue);
+    myCountLabel.setText(StringUtil.defaultIfEmpty(myCountValue, "0")); // for correct calculate baseline
     myCountLabel.setSelected(selected);
-    myCountLabel.setVisible(myCountValue != null);
-
+    myExtraLabel.setIcon(icon);
     myExtraLabel.setBackground(myCountLabel.getBackground());
 
-    return Pair.create(myPanel, (renderer, bounds, text, right, textBaseline) -> {
-      myPanel.doLayout();
-      myPanel.revalidate();
+    Component component;
+    if (icon != null && myCountValue != null) {
+      component = myPanel;
+    }
+    else if (icon == null) {
+      component = myCountLabel;
+    }
+    else {
+      component = myExtraLabel;
+    }
+
+    return Pair.create(component, (renderer, bounds, text, right, textBaseline) -> {
       Dimension size = renderer.getPreferredSize();
       int x = right.x - JBUIScale.scale(2) + (right.width - size.width) / 2;
       if (icon != null && myCountValue != null) {
-        x -= myCountLabel.getPreferredSize().width / 2;
+        x -= getHGap() + myExtraLabel.getPreferredSize().width / 2;
       }
-      int y = bounds.y + textBaseline - renderer.getBaseline(size.width, size.height);
-      if (myCountValue == null) {
-        y = bounds.y + (bounds.height - size.height) / 2;
-      }
+      int y = bounds.y + textBaseline - myCountLabel.getBaseline(size.width, size.height);
       renderer.setBounds(x, y, size.width, size.height);
+      renderer.doLayout();
     });
   }
 
@@ -99,5 +97,9 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
     if (myTree != null && !StringUtil.equals(oldCountValue, myCountValue)) {
       myTree.repaint();
     }
+  }
+
+  private static int getHGap() {
+    return JBUIScale.scale(3);
   }
 }
