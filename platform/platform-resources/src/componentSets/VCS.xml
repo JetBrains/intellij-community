@@ -1,9 +1,6 @@
 <idea-plugin>
   <project-components>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.annotate.AnnotationsPreloader</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage</implementation-class>
     </component>
     <component>
@@ -78,4 +75,9 @@
         key="ignore.codeInspection.duplicateEntry"
         level="WARNING"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.openapi.vcs.annotate.AnnotationsPreloader$AnnotationsPreloaderFileEditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
 </idea-plugin>

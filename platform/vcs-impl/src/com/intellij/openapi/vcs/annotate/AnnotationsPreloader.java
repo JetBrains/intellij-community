@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -21,7 +22,8 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.CacheableAnnotationProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class AnnotationsPreloader {
+@Service
+public final class AnnotationsPreloader {
   private static final Logger LOG = Logger.getInstance(AnnotationsPreloader.class);
 
   private final MergingUpdateQueue myUpdateQueue;
@@ -30,17 +32,6 @@ public class AnnotationsPreloader {
   public AnnotationsPreloader(@NotNull Project project) {
     myProject = project;
     myUpdateQueue = new MergingUpdateQueue("Annotations preloader queue", 1000, true, null, project, null, false);
-
-    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        if (!isEnabled()) return;
-        VirtualFile file = event.getNewFile();
-        if (file != null) {
-          schedulePreloading(file);
-        }
-      }
-    });
   }
 
   private static boolean isEnabled() {
@@ -85,5 +76,22 @@ public class AnnotationsPreloader {
         });
       }
     });
+  }
+
+  public static class AnnotationsPreloaderFileEditorManagerListener implements FileEditorManagerListener {
+    private final Project myProject;
+
+    public AnnotationsPreloaderFileEditorManagerListener(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+      if (!isEnabled()) return;
+      VirtualFile file = event.getNewFile();
+      if (file != null) {
+        myProject.getService(AnnotationsPreloader.class).schedulePreloading(file);
+      }
+    }
   }
 }
