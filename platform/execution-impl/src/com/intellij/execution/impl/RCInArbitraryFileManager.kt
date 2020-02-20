@@ -2,6 +2,7 @@
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.digest
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -10,6 +11,8 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.GuiUtils
 import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
@@ -26,11 +29,12 @@ internal class RCInArbitraryFileManager(private val project: Project) {
   internal class DeletedAndAddedRunConfigs(val deletedRunConfigs: Collection<RunnerAndConfigurationSettingsImpl>,
                                            val addedRunConfigs: Collection<RunnerAndConfigurationSettingsImpl>)
 
+  private var saving = false
   private val filePathToRunConfigs = mutableMapOf<String, MutableList<RunnerAndConfigurationSettingsImpl>>()
   // Remember digest in order not to overwrite file with an equivalent content (e.g. different line endings or smth non-meaningful)
   private val filePathToDigests = mutableMapOf<String, MutableList<ByteArray>>()
 
-  fun addRunConfiguration(runConfig: RunnerAndConfigurationSettingsImpl) {
+  internal fun addRunConfiguration(runConfig: RunnerAndConfigurationSettingsImpl) {
     val filePath = runConfig.pathIfStoredInArbitraryFileInProject
     if (!runConfig.isStoredInArbitraryFileInProject || filePath == null) {
       LOG.error("Unexpected run configuration, path: $filePath")
@@ -48,15 +52,20 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     }
   }
 
-  fun removeRunConfiguration(runConfig: RunnerAndConfigurationSettingsImpl) {
-    val entryIterator = filePathToRunConfigs.iterator()
-    for (entry in entryIterator) {
-      val runConfigIterator = entry.value.iterator()
+  internal fun removeRunConfiguration(runConfig: RunnerAndConfigurationSettingsImpl, removeOnlyIfFileNameChanged: Boolean = false) {
+    val fileEntryIterator = filePathToRunConfigs.iterator()
+    for (fileEntry in fileEntryIterator) {
+      val filePath = fileEntry.key
+      val runConfigIterator = fileEntry.value.iterator()
       for (rc in runConfigIterator) {
         if (rc == runConfig) {
-          runConfigIterator.remove()
-          if (entry.value.isEmpty()) {
-            entryIterator.remove()
+          if (filePath != runConfig.pathIfStoredInArbitraryFileInProject || !removeOnlyIfFileNameChanged) {
+            runConfigIterator.remove()
+            if (fileEntry.value.isEmpty()) {
+              fileEntryIterator.remove()
+              filePathToDigests.remove(filePath)
+              LocalFileSystem.getInstance().findFileByPath(filePath)?.let { deleteFile(it) }
+            }
           }
           return
         }
@@ -64,10 +73,16 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     }
   }
 
+  private fun deleteFile(file: VirtualFile) {
+    GuiUtils.invokeLaterIfNeeded(Runnable { runWriteAction { file.delete(this@RCInArbitraryFileManager) } }, ModalityState.NON_MODAL)
+  }
+
   /**
    * This function doesn't change the model, caller should iterate through the returned list and remove/add run configurations as needed
    */
   internal fun loadChangedRunConfigsFromFile(runManager: RunManagerImpl, filePath: String): DeletedAndAddedRunConfigs {
+    if (saving) return DeletedAndAddedRunConfigs(emptyList(), emptyList())
+
     // shadow mutable map to ensure unchanged model
     val filePathToRunConfigs: Map<String, List<RunnerAndConfigurationSettingsImpl>> = filePathToRunConfigs
 
@@ -134,6 +149,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
       return DeletedAndAddedRunConfigs(emptyList(), emptyList())
     }
     else {
+      filePathToDigests[filePath] = loadedDigests
       return DeletedAndAddedRunConfigs(previouslyLoadedRunConfigs, loadedRunConfigs)
     }
   }
@@ -181,6 +197,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
       val filePath = entry.key
       val runConfigs = entry.value
 
+      saving = true
       try {
         val rootElement = Element("component").setAttribute("name", "ProjectRunConfigurationManager")
         val newDigests = mutableListOf<ByteArray>()
@@ -198,6 +215,9 @@ internal class RCInArbitraryFileManager(private val project: Project) {
       }
       catch (e: Exception) {
         errors.add(RuntimeException("Cannot save run configuration in $filePath", e))
+      }
+      finally {
+        saving = false
       }
     }
 
@@ -224,10 +244,10 @@ internal class RCInArbitraryFileManager(private val project: Project) {
           return@runWriteAction
         }
 
-        file = dir.createChildData(this, PathUtil.getFileName(filePath))
+        file = dir.createChildData(this@RCInArbitraryFileManager, PathUtil.getFileName(filePath))
       }
 
-      file.getOutputStream(this).use { byteOut.writeTo(it) }
+      file.getOutputStream(this@RCInArbitraryFileManager).use { byteOut.writeTo(it) }
     }
   }
 }

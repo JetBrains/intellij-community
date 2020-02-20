@@ -152,7 +152,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         return !original.isStoredInDotIdeaFolder();
       case ArbitraryFileInProject:
         return !original.isStoredInArbitraryFileInProject() ||
-               PathUtil.getParentPath(StringUtil.notNullize(original.getPathIfStoredInArbitraryFileInProject()))
+               !PathUtil.getParentPath(StringUtil.notNullize(original.getPathIfStoredInArbitraryFileInProject()))
                  .equals(myFolderPathIfStoredInArbitraryFile);
     }
     return false;

@@ -378,12 +378,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         refreshUsagesList(settings)
       }
       else {
+        // storage changed, need to remove from old storages
         when {
           settings.isStoredInDotIdeaFolder -> {
             rcInArbitraryFileManager.removeRunConfiguration(settings)
             workspaceSchemeManager.removeScheme(settings)
           }
           settings.isStoredInArbitraryFileInProject -> {
+            rcInArbitraryFileManager.removeRunConfiguration(settings, true) // path could change: need to remove and add again
             projectSchemeManager.removeScheme(settings)
             workspaceSchemeManager.removeScheme(settings)
           }
