@@ -60,7 +60,7 @@ open class IdeStarter : ApplicationStarter {
 
   override fun getCommandName(): String? = null
 
-  override fun getModalityState() = ApplicationStarter.NOT_IN_EDT
+  override fun getRequiredModality() = ApplicationStarter.NOT_IN_EDT
 
   override fun main(args: List<String>) {
     if (Main.isLightEdit() && !Main.isHeadless()) {

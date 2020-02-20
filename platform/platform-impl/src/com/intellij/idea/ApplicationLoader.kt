@@ -26,7 +26,6 @@ import com.intellij.ui.AppIcon
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.touchbar.TouchBarsManager
-import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.write
@@ -216,7 +215,7 @@ private fun startApp(app: ApplicationImpl,
       // if `loadComponentInEdtFuture` is completed after `preloadSyncServiceFuture`, then this task will be executed in EDT, so force execution out of EDT
       nonEdtExecutor)
     .thenRun {
-      if (starter.modalityState == ApplicationStarter.NOT_IN_EDT) {
+      if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
         starter.main(args)
       }
       else {
@@ -318,7 +317,7 @@ private fun addActivateAndWindowsCliListeners() {
 
     val app = ApplicationManager.getApplication()
     val anyState = ApplicationStarter.EP_NAME.iterable.any {
-      it.canProcessExternalCommandLine() && args[0] == it.commandName && it.modalityState != ApplicationStarter.NON_MODAL
+      it.canProcessExternalCommandLine() && args[0] == it.commandName && it.requiredModality != ApplicationStarter.NON_MODAL
     }
     val state = if (anyState) app.anyModalityState else app.defaultModalityState
 

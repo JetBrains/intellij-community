@@ -85,8 +85,17 @@ public interface ApplicationStarter {
    * Such activities should be performed inside write-safe contexts (see {@link TransactionGuard}).
    */
   @MagicConstant(intValues = {NON_MODAL, ANY_MODALITY, NOT_IN_EDT})
-  default int getModalityState() {
-    return NON_MODAL;
+  default int getRequiredModality() {
+    return allowAnyModalityState() ? ANY_MODALITY : NON_MODAL;
+  }
+
+  /**
+   * @deprecated Use {@link #getRequiredModality()}.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  default boolean allowAnyModalityState() {
+    return false;
   }
 
   /** @see #canProcessExternalCommandLine */

@@ -27,7 +27,7 @@ final class BundledPluginsLister implements ApplicationStarter {
   }
 
   @Override
-  public int getModalityState() {
+  public int getRequiredModality() {
     return NOT_IN_EDT;
   }
 
