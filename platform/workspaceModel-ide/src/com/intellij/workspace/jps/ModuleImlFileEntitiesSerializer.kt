@@ -87,17 +87,17 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
       builder.addContentRootEntity(contentRootUrl, excludeRootsUrls, excludePatterns, moduleEntity, entitySource)
 
       // Save the order in which sourceRoots appear in the module
-      val orderingEntity = builder.entities(ModuleSerializersFactory.SourceRootOrderEntry::class.java)
+      val orderingEntity = builder.entities(ModuleSerializersFactory.SourceRootOrderEntity::class.java)
         .find { it.moduleName == moduleEntity.name && it.contentUrl == contentRootUrl }
       if (orderingEntity == null) {
-        builder.addEntity(ModuleSerializersFactory.SourceRootOrderEntry::class.java, entitySource) {
+        builder.addEntity(ModuleSerializersFactory.SourceRootOrderEntity::class.java, entitySource) {
           moduleName = moduleEntity.name
           contentUrl = contentRootUrl
           orderOfSourceRoots = orderOfItems
         }
       }
       else {
-        builder.modifyEntity(ModuleSerializersFactory.SourceRootOrderEntry::class.java, orderingEntity) {
+        builder.modifyEntity(ModuleSerializersFactory.SourceRootOrderEntity::class.java, orderingEntity) {
           orderOfSourceRoots = orderOfItems
         }
       }
@@ -219,8 +219,8 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
     }.mapValues { (_, value) -> value.groupByTo(HashMap()) { it.url } }
 
     // Get ordering in which source roots appear in file
-    val sourceRootOrderingByContentUrl = entities[ModuleSerializersFactory.SourceRootOrderEntry::class.java]
-      ?.filterIsInstance<ModuleSerializersFactory.SourceRootOrderEntry>()
+    val sourceRootOrderingByContentUrl = entities[ModuleSerializersFactory.SourceRootOrderEntity::class.java]
+      ?.filterIsInstance<ModuleSerializersFactory.SourceRootOrderEntity>()
       ?.filter { it.moduleName == module.name }
       ?.associateBy { it.contentUrl }
 
@@ -445,7 +445,7 @@ internal class ModuleSerializersFactory(override val fileUrl: String, private va
    * This entity stores order of artifacts in file. This is needed to ensure that source roots are saved in the same order to avoid
    * unnecessary modifications of file.
    */
-  internal interface SourceRootOrderEntry : ModifiableTypedEntity<SourceRootOrderEntry> {
+  internal interface SourceRootOrderEntity : ModifiableTypedEntity<SourceRootOrderEntity> {
     var moduleName: String
     var contentUrl: VirtualFileUrl
     var orderOfSourceRoots: List<VirtualFileUrl>
