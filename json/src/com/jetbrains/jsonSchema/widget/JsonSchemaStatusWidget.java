@@ -108,7 +108,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       return false;
     }
     List<JsonSchemaEnabler> enablers = JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensionList();
-    if (enablers.stream().noneMatch(e -> e.isEnabledForFile(file) && e.shouldShowSwitcherWidget(file))) {
+    if (enablers.stream().noneMatch(e -> e.isEnabledForFile(file, project) && e.shouldShowSwitcherWidget(file))) {
       return false;
     }
     if (DumbService.getInstance(project).isDumb()) {

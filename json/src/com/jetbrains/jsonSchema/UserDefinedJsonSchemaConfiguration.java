@@ -128,7 +128,7 @@ public class UserDefinedJsonSchemaConfiguration {
     for (final Item patternText : patterns) {
       switch (patternText.mappingKind) {
         case File:
-          result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(patternText.getPath()));
+          result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(Item.neutralizePath(patternText.getPath())));
           break;
         case Pattern:
           String pathText = patternText.getPath().replace(File.separatorChar, '/').replace('\\', '/');
@@ -236,7 +236,7 @@ public class UserDefinedJsonSchemaConfiguration {
     }
 
     @NotNull
-    private static String neutralizePath(@NotNull String path) {
+    public static String neutralizePath(@NotNull String path) {
       if (preserveSlashes(path)) return path;
       return StringUtil.trimEnd(FileUtilRt.toSystemIndependentName(path), '/');
     }

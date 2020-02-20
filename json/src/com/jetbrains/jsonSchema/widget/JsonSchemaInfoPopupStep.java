@@ -158,7 +158,7 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
     if (mappingForFile != null) {
       for (UserDefinedJsonSchemaConfiguration.Item pattern : mappingForFile.patterns) {
         if (Objects.equals(VfsUtil.findRelativeFile(projectBaseDir, pattern.getPathParts()), virtualFile)
-              || virtualFile.getUrl().equals(pattern.getPath())) {
+              || virtualFile.getUrl().equals(UserDefinedJsonSchemaConfiguration.Item.neutralizePath(pattern.getPath()))) {
           mappingForFile.patterns.remove(pattern);
           if (mappingForFile.patterns.size() == 0 && mappingForFile.isApplicationDefined()) {
             configuration.removeConfiguration(mappingForFile);

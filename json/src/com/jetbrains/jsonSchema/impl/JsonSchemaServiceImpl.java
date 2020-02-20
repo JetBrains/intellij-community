@@ -456,7 +456,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   public boolean isApplicableToFile(@Nullable VirtualFile file) {
     if (file == null) return false;
     for (JsonSchemaEnabler e : JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensionList()) {
-      if (e.isEnabledForFile(file)) {
+      if (e.isEnabledForFile(file, myProject)) {
         return true;
       }
     }

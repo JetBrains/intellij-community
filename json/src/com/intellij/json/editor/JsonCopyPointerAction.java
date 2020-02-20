@@ -30,7 +30,7 @@ public class JsonCopyPointerAction extends CopyReferenceAction {
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     VirtualFile file = editor == null ? null : FileDocumentManager.getInstance().getFile(editor.getDocument());
-    e.getPresentation().setVisible(file != null && JsonUtil.isJsonFile(file));
+    e.getPresentation().setVisible(file != null && JsonUtil.isJsonFile(file, editor.getProject()));
   }
 
   @Override
