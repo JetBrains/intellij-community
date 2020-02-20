@@ -60,6 +60,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.util.ObjectUtils.notNull;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
@@ -627,20 +628,31 @@ public class AboutPopup {
 
   @NotNull
   private static String getExtraInfo() {
-    return SystemInfo.getOsNameAndVersion() + "\n" +
+    String extraInfo = SystemInfo.getOsNameAndVersion() + "\n";
 
-           "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
-             .map(GarbageCollectorMXBean::getName).collect(StringUtil.joining()) + "\n" +
+    extraInfo += "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
+             .map(GarbageCollectorMXBean::getName).collect(StringUtil.joining()) + "\n";
 
-           "Memory: " + (Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE) + "M" + "\n" +
+    extraInfo += "Memory: " + (Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE) + "M" + "\n";
 
-           "Cores: " + Runtime.getRuntime().availableProcessors() + "\n" +
+    extraInfo += "Cores: " + Runtime.getRuntime().availableProcessors() + "\n";
 
-           "Registry: " + Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)
-             .map(v -> v.getKey() + "=" + v.asString()).collect(StringUtil.joining()) + "\n" +
+    String registryKeys = Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)
+      .map(v -> v.getKey() + "=" + v.asString()).collect(StringUtil.joining());
+    if (!StringUtil.isEmpty(registryKeys)) {
+      extraInfo += "Registry: " + registryKeys + "\n";
+    }
 
-           "Non-Bundled Plugins: " + Arrays.stream(PluginManagerCore.getPlugins()).filter(p -> !p.isBundled() && p.isEnabled())
-             .map(p -> p.getPluginId().getIdString()).collect(StringUtil.joining());
+    String nonBundledPlugins = Arrays.stream(PluginManagerCore.getPlugins()).filter(p -> !p.isBundled() && p.isEnabled())
+      .map(p -> p.getPluginId().getIdString()).collect(StringUtil.joining());
+    if (!StringUtil.isEmpty(nonBundledPlugins)) {
+      extraInfo += "Non-Bundled Plugins: " + nonBundledPlugins;
+    }
+
+    if (SystemInfo.isUnix && !SystemInfo.isMac) {
+      extraInfo += "Current Desktop: " + notNull(System.getenv("XDG_CURRENT_DESKTOP"), "Undefined");
+    }
+    return extraInfo;
   }
 
   public static class PopupPanel extends JPanel {
