@@ -68,6 +68,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends BaseRCSettingsConfigurable {
+  private static final LayeredIcon GEAR_WITH_DROPDOWN_ICON = new LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown);
+  private static final LayeredIcon GEAR_WITH_DROPDOWN_ERROR_ICON = new LayeredIcon(AllIcons.General.Error, AllIcons.General.Dropdown);
 
   private enum RCStorageType {Workspace, DotIdeaFolder, ArbitraryFileInProject}
 
@@ -699,8 +701,18 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         }
       };
       Presentation presentation = new Presentation(ExecutionBundle.message("run.configuration.manage.file.location"));
-      presentation.setIcon(new LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown));
-      return new ActionButton(showStoragePathAction, presentation, ActionPlaces.TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      presentation.setIcon(GEAR_WITH_DROPDOWN_ICON);
+      return new ActionButton(showStoragePathAction, presentation, ActionPlaces.TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+        @Override
+        public Icon getIcon() {
+          if (myStoreAsFileCheckBox.isSelected() &&
+              myRCStorageType == RCStorageType.ArbitraryFileInProject &&
+              getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
+            return GEAR_WITH_DROPDOWN_ERROR_ICON;
+          }
+          return super.getIcon();
+        }
+      };
     }
 
     private void manageStorageFileLocation() {
