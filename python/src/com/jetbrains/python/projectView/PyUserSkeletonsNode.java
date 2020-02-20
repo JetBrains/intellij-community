@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public class PyUserSkeletonsNode extends PsiDirectoryNode {
 
   @Override
   protected void updateImpl(@NotNull PresentationData data) {
-    data.setPresentableText("Extended Definitions");
+    data.setPresentableText(PyBundle.message("python.project.view.user.skeletons.node"));
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
