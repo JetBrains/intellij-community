@@ -79,7 +79,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     }
     else {
       anchor.append("<font style=\"font-family:verdana; font-weight:bold; color:#FF0000\";>");
-      anchor.append(InspectionsBundle.message("inspection.export.results.invalidated.item"));
+      anchor.append(PropertiesBundle.message("inspection.export.results.invalidated.item"));
       anchor.append("</font>");
     }
   }
@@ -178,7 +178,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
                                                    final ProgressIndicator progress) {
     for (final String value : valueToFiles.keySet()) {
       if (progress != null){
-        progress.setText2(InspectionsBundle.message("duplicate.property.value.progress.indicator.text", value));
+        progress.setText2(PropertiesBundle.message("duplicate.property.value.progress.indicator.text", value));
         progress.checkCanceled();
       }
       if (value.length() == 0) continue;
@@ -194,7 +194,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
             final Property property = (Property)element.getParent();
             if (Comparing.equal(property.getValue(), value) && element.getStartOffsetInParent() != 0) {
               if (duplicatesCount[0] == 0){
-                message.append(InspectionsBundle.message("duplicate.property.value.problem.descriptor", property.getValue()));
+                message.append(PropertiesBundle.message("duplicate.property.value.problem.descriptor", property.getValue()));
               }
               surroundWithHref(message, element, true);
               duplicatesCount[0]++;
@@ -219,7 +219,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
                                           final ProgressIndicator progress) {
     for (String key : keyToFiles.keySet()) {
       if (progress!= null){
-        progress.setText2(InspectionsBundle.message("duplicate.property.key.progress.indicator.text", key));
+        progress.setText2(PropertiesBundle.message("duplicate.property.key.progress.indicator.text", key));
         ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
       }
       StringBuilder message = new StringBuilder();
@@ -231,7 +231,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         final List<IProperty> propertiesByKey = propertiesFile.findPropertiesByKey(key);
         for (IProperty property : propertiesByKey) {
           if (duplicatesCount == 0){
-            message.append(InspectionsBundle.message("duplicate.property.key.problem.descriptor", key));
+            message.append(PropertiesBundle.message("duplicate.property.key.problem.descriptor", key));
           }
           surroundWithHref(message, property.getPsiElement().getFirstChild(), false);
           duplicatesCount ++;
@@ -260,7 +260,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
                                                               final ProgressIndicator progress) {
     for (String key : keyToDifferentValues.keySet()) {
       if (progress != null) {
-        progress.setText2(InspectionsBundle.message("duplicate.property.diff.key.progress.indicator.text", key));
+        progress.setText2(PropertiesBundle.message("duplicate.property.diff.key.progress.indicator.text", key));
         ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
       }
       final Set<String> values = keyToDifferentValues.get(key);
@@ -276,7 +276,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
           final List<IProperty> propertiesByKey = propertiesFile.findPropertiesByKey(key);
           for (IProperty property : propertiesByKey) {
             if (firstUsage){
-              message.append(InspectionsBundle.message("duplicate.property.diff.key.problem.descriptor", key));
+              message.append(PropertiesBundle.message("duplicate.property.diff.key.problem.descriptor", key));
               firstUsage = false;
             }
             surroundWithHref(message, property.getPsiElement().getFirstChild(), false);
