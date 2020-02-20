@@ -18,7 +18,7 @@ import org.jdom.Element
 import java.io.ByteArrayInputStream
 
 /**
- * Manages run configurations that are stored in arbitrary `*.run.xml` files in project (not in .idea/runConfigurations).
+ * Manages run configurations that are stored in arbitrary `*.run.xml` files in project (not in .idea/runConfigurations or project.ipr file).
  */
 internal class RCInArbitraryFileManager(private val project: Project) {
   private val LOG = logger<RCInArbitraryFileManager>()
@@ -31,7 +31,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
   private val filePathToDigests = mutableMapOf<String, MutableList<ByteArray>>()
 
   fun addRunConfiguration(runConfig: RunnerAndConfigurationSettingsImpl) {
-    val filePath = runConfig.pathIfStoredInArbitraryFile
+    val filePath = runConfig.pathIfStoredInArbitraryFileInProject
     if (!runConfig.isStoredInArbitraryFileInProject || filePath == null) {
       LOG.error("Unexpected run configuration, path: $filePath")
       return

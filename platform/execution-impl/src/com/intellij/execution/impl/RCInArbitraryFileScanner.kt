@@ -10,7 +10,7 @@ import com.intellij.util.PathUtil
 
 /**
  * This class doesn't push any file properties, it is used for scanning the project for `*.run.xml` files - files with run configurations.
- * This is to handle run configurations stored in arbitrary files within project content (not in .idea/runConfigurations/).
+ * This is to handle run configurations stored in arbitrary files within project content (not in .idea/runConfigurations or project.ipr file).
  */
 class RCInArbitraryFileScanner : FilePropertyPusher<Nothing> {
 

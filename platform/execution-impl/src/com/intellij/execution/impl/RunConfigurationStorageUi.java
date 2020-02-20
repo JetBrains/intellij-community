@@ -4,10 +4,15 @@ package com.intellij.execution.impl;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.ui.BrowseFolderRunnable;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.FormBuilder;
@@ -23,44 +28,24 @@ import java.awt.*;
 
 public class RunConfigurationStorageUi {
   private final JPanel myMainPanel;
-  private final ComboBox<Object> myPathComboBox;
+  private final ComboBox<String> myPathComboBox;
 
-  @NonNls @SystemIndependent private final String myOldStoragePath;
+  @NonNls @SystemIndependent private final String myDotIdeaStoragePath;
 
   private Runnable myClosePopupAction;
 
-  public RunConfigurationStorageUi(@NotNull Project project, @NotNull Disposable uiDisposable) {
-    myPathComboBox = new ComboBox<>(JBUI.scale(450));
-    myPathComboBox.setEditable(true);
-    //myPathComboBox.addActionListener(event -> updateWarningsAndErrors()); // TODO how?
-
-    Runnable selectFolderAction = () -> {
-      // TODO
-    };
-    myPathComboBox.initBrowsableEditor(selectFolderAction, uiDisposable);
-
-    // notNullize is to make inspections happy. Paths can't be null for non-default project
-    String projectFilePath = StringUtil.notNullize(project.getProjectFilePath());
-    String basePath = StringUtil.notNullize(project.getBasePath());
-    myOldStoragePath = ProjectKt.isDirectoryBased(project) ? basePath + "/.idea/runConfigurations" : projectFilePath;
-
-    @NonNls String oldStorage = ProjectKt.isDirectoryBased(project) ? ".idea/runConfigurations"
-                                                                    : PathUtil.getFileName(projectFilePath);
-    String compatibilityHint = ExecutionBundle.message("run.configuration.storage.compatibility.hint",
-                                                       ApplicationNamesInfo.getInstance().getProductName(),
-                                                       oldStorage);
-    // All spaces should be &nbsp; - otherwise the comment may get wrapped in the middle of the sentence and it looks not great
-    // Other way to solve wrapping problem is to create comment component using ComponentPanelBuilder.createCommentComponent(compatibilityHint, true, false, 1000);
-    // but it doesn't allow to add custom HyperlinkListener
-    @NonNls String nbsp = "&nbsp;";
-    compatibilityHint = StringUtil.replace(compatibilityHint, " ", nbsp);
+  public RunConfigurationStorageUi(@NotNull Project project,
+                                   @NotNull String dotIdeaStoragePath,
+                                   @NotNull Disposable uiDisposable) {
+    myDotIdeaStoragePath = dotIdeaStoragePath;
+    myPathComboBox = createPathComboBox(project, uiDisposable);
 
     JPanel comboBoxPanel = UI.PanelFactory.panel(myPathComboBox)
       .withLabel(ExecutionBundle.message("run.configuration.store.in")).moveLabelOnTop()
-      .withComment(compatibilityHint)
+      .withComment(getCompatibilityHintText(project))
       .withCommentHyperlinkListener(e -> {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          myPathComboBox.getEditor().setItem(FileUtil.toSystemDependentName(myOldStoragePath));
+          myPathComboBox.getEditor().setItem(FileUtil.toSystemDependentName(myDotIdeaStoragePath));
         }
       })
       .createPanel();
@@ -76,6 +61,57 @@ public class RunConfigurationStorageUi {
       .getPanel();
   }
 
+  @NotNull
+  private ComboBox<String> createPathComboBox(@NotNull Project project, @NotNull Disposable uiDisposable) {
+    ComboBox<String> comboBox = new ComboBox<>(JBUI.scale(450));
+    comboBox.setEditable(true);
+    comboBox.addActionListener(event -> updateWarningsAndErrors());
+
+    // choosefiles is set to true to be able to select project.ipr file in IPR-based projects. Other files are not visible/selectable in the chooser
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        // dotIdeaStoragePath may be a path to the project.ipr file in IPR-based projects
+        if (file.getPath().equals(myDotIdeaStoragePath)) return true;
+        return file.isDirectory() && super.isFileVisible(file, showHiddenFiles);
+      }
+
+      @Override
+      public boolean isFileSelectable(VirtualFile file) {
+        if (file.getPath().equals(myDotIdeaStoragePath)) return true;
+        //noinspection HardCodedStringLiteral
+        return file.isDirectory() &&
+               super.isFileSelectable(file) &&
+               ProjectFileIndex.getInstance(project).isInContent(file) &&
+               !file.getPath().endsWith("/.idea") &&
+               !file.getPath().contains("/.idea/");
+      }
+    };
+
+    Runnable selectFolderAction = new BrowseFolderRunnable<ComboBox<String>>(null, null, project, descriptor, comboBox,
+                                                                             TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT) {
+    };
+
+    comboBox.initBrowsableEditor(selectFolderAction, uiDisposable);
+    return comboBox;
+  }
+
+  @NotNull
+  private String getCompatibilityHintText(@NotNull Project project) {
+    String oldStorage = ProjectKt.isDirectoryBased(project)
+                        ? FileUtil.toSystemDependentName(".idea/runConfigurations")
+                        : PathUtil.getFileName(StringUtil.notNullize(project.getProjectFilePath()));
+    String compatibilityHint = ExecutionBundle.message("run.configuration.storage.compatibility.hint",
+                                                       ApplicationNamesInfo.getInstance().getProductName(),
+                                                       oldStorage);
+    // All spaces should be &nbsp; - otherwise the comment may get wrapped in the middle of the sentence and it looks not great
+    // Other way to solve wrapping problem is to create comment component using ComponentPanelBuilder.createCommentComponent(compatibilityHint, true, false, 1000);
+    // but it doesn't allow to add custom HyperlinkListener
+    @NonNls String nbsp = "&nbsp;";
+    compatibilityHint = StringUtil.replace(compatibilityHint, " ", nbsp);
+    return compatibilityHint;
+  }
+
   public JPanel getMainPanel() {
     return myMainPanel;
   }
@@ -86,11 +122,8 @@ public class RunConfigurationStorageUi {
   }
 
   public void reset(@NotNull @SystemIndependent String folderPath, @NotNull Runnable closePopupAction) {
+    myPathComboBox.addItem(FileUtil.toSystemDependentName(myDotIdeaStoragePath));
     myPathComboBox.setSelectedItem(FileUtil.toSystemDependentName(folderPath));
-
-    if (!folderPath.equals(myOldStoragePath)) {
-      myPathComboBox.addItem(FileUtil.toSystemDependentName(myOldStoragePath));
-    }
 
     myClosePopupAction = closePopupAction;
 
@@ -98,7 +131,11 @@ public class RunConfigurationStorageUi {
   }
 
   private void updateWarningsAndErrors() {
-    String path = FileUtil.toSystemIndependentName(myPathComboBox.getEditor().getItem().toString());
+    String path = getPath();
     // TODO
+  }
+
+  @NotNull String getPath() {
+    return StringUtil.trimTrailing(FileUtil.toSystemIndependentName(myPathComboBox.getEditor().getItem().toString().trim()), '/');
   }
 }

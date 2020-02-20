@@ -88,9 +88,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     override fun createSettings(runner: ProgramRunner<*>) = configuration.createRunnerSettings(InfoProvider(runner))
   }
 
-  internal var pathIfStoredInArbitraryFile: String? = null
-    private set
-
+  private var pathIfStoredInArbitraryFile: String? = null
   private var isEditBeforeRun = false
   private var isActivateToolWindowBeforeRun = true
   private var wasSingletonSpecifiedExplicitly = false
@@ -130,6 +128,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   }
 
   override fun isStoredInArbitraryFileInProject() = level == RunConfigurationLevel.PROJECT && pathIfStoredInArbitraryFile != null
+
+  override fun getPathIfStoredInArbitraryFileInProject(): String? = pathIfStoredInArbitraryFile
 
   override fun getConfiguration() = _configuration ?: UnknownConfigurationType.getInstance().createTemplateConfiguration(manager.project)
 

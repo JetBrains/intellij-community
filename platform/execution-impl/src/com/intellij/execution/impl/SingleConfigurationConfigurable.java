@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
+import com.intellij.configurationStore.Scheme_implKt;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunOnTargetComboBox;
@@ -34,6 +35,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.project.ProjectKt;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
@@ -43,12 +45,11 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -60,6 +61,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends BaseRCSettingsConfigurable {
+
+  private enum RCStorageType {Workspace, DotIdeaFolder, ArbitraryFileInProject}
+
   public static final DataKey<String> RUN_ON_TARGET_NAME_KEY = DataKey.create("RunOnTargetName");
 
   private static final Logger LOG = Logger.getInstance(SingleConfigurationConfigurable.class);
@@ -75,7 +79,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final String myDisplayName;
   private final String myHelpTopic;
   private final boolean myBrokenConfiguration;
-  private boolean myStoreProjectConfiguration;
+  private RCStorageType myRCStorageType;
+  @Nullable @SystemIndependent private String myFolderPathIfStoredInArbitraryFile;
   private boolean myIsAllowRunningInParallel = false;
   private String myDefaultTargetName;
   private String myFolderName;
@@ -125,9 +130,23 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   @Override
-  boolean isSnapshotSpecificallyModified(@NotNull RunnerAndConfigurationSettings original,
-                                         @NotNull RunnerAndConfigurationSettings snapshot) {
-    return original.isShared() != myStoreProjectConfiguration;
+  boolean isSpecificallyModified() {
+    return isStorageModified();
+  }
+
+  private boolean isStorageModified() {
+    RunnerAndConfigurationSettings original = getSettings();
+    switch (myRCStorageType) {
+      case Workspace:
+        return !original.isStoredInLocalWorkspace();
+      case DotIdeaFolder:
+        return !original.isStoredInDotIdeaFolder();
+      case ArbitraryFileInProject:
+        return !original.isStoredInArbitraryFileInProject() ||
+               PathUtil.getParentPath(StringUtil.notNullize(original.getPathIfStoredInArbitraryFileInProject()))
+                 .equals(myFolderPathIfStoredInArbitraryFile);
+    }
+    return false;
   }
 
   @Override
@@ -141,7 +160,29 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       ((TargetEnvironmentAwareRunProfile)runConfiguration).setDefaultTargetName(myDefaultTargetName);
     }
     settings.setFolderName(myFolderName);
-    settings.setShared(myStoreProjectConfiguration);
+
+    if (isStorageModified()) {
+      switch (myRCStorageType) {
+        case Workspace:
+          settings.storeInLocalWorkspace();
+          break;
+        case DotIdeaFolder:
+          settings.storeInDotIdeaFolder();
+          break;
+        case ArbitraryFileInProject:
+          if (getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
+            // don't apply incorrect UI to the model
+          }
+          else {
+            String fileName = getFileNameByRCName(settings.getName());
+            settings.storeInArbitraryFileInProject(myFolderPathIfStoredInArbitraryFile + "/" + fileName);
+          }
+          break;
+        default:
+          throw new IllegalStateException("Unexpected value: " + myRCStorageType);
+      }
+    }
+
     super.apply();
     RunManagerImpl.getInstanceImpl(myProject).addConfiguration(settings);
   }
@@ -158,6 +199,19 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myComponent = new MyValidatableComponent();
     }
     myComponent.doReset(configuration);
+  }
+
+  @NonNls
+  @NotNull
+  private static String getFileNameByRCName(@NotNull String rcName) {
+    return Scheme_implKt.getMODERN_NAME_CONVERTER().invoke(rcName) + ".run.xml";
+  }
+
+  @Nullable
+  @Contract("_,null -> !null")
+  private static String getErrorIfBadFolderPathForStoringInArbitraryFile(@NotNull Project project, @Nullable String path) {
+    if (StringUtil.isEmpty(path)) return ExecutionBundle.message("run.configuration.storage.folder.path.not.specified");
+    return null;
   }
 
   void updateWarning() {
@@ -190,8 +244,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myComponent.myValidationPanel;
   }
 
-  public boolean isStoreProjectConfiguration() {
-    return myStoreProjectConfiguration;
+  public boolean isStoredInFile() {
+    return myRCStorageType == RCStorageType.DotIdeaFolder || myRCStorageType == RCStorageType.ArbitraryFileInProject;
   }
 
   @Nullable
@@ -348,6 +402,42 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myFolderName;
   }
 
+  /**
+   * @return full path to .idea/runConfigurations folder (for directory-based projects) or full path to the project.ipr file (for file-based projects)
+   */
+  @NonNls
+  @NotNull
+  private String getDotIdeaStoragePath() {
+    // notNullize is to make inspections happy. Paths can't be null for non-default project
+    return ProjectKt.isDirectoryBased(myProject)
+           ? StringUtil.notNullize(myProject.getBasePath()) + "/.idea/runConfigurations"
+           : StringUtil.notNullize(myProject.getProjectFilePath());
+  }
+
+  private void setStorageTypeAndPathToTheBestPossibleState() {
+    // all that tricky logic, see the scheme attached to https://youtrack.jetbrains.com/issue/UX-1126
+
+    // 1. If this RC had been shared before Run Configurations dialog was opened - use the state that was used before.
+    // This handles the case when user opens shared RC for editing and clicks the 'Save to file' check box two times.
+    RunnerAndConfigurationSettings settings = getSettings();
+    if (settings.isStoredInDotIdeaFolder()) {
+      myRCStorageType = RCStorageType.DotIdeaFolder;
+      myFolderPathIfStoredInArbitraryFile = null;
+      return;
+    }
+
+    if (settings.isStoredInArbitraryFileInProject()) {
+      myRCStorageType = RCStorageType.ArbitraryFileInProject;
+      myFolderPathIfStoredInArbitraryFile =
+        PathUtil.getParentPath(StringUtil.notNullize(settings.getPathIfStoredInArbitraryFileInProject()));
+      return;
+    }
+
+    // TODO implement other steps according to the scheme
+    myRCStorageType = RCStorageType.DotIdeaFolder;
+    myFolderPathIfStoredInArbitraryFile = null;
+  }
+
   private class MyValidatableComponent {
     private JLabel myNameLabel;
     private JTextField myNameText;
@@ -405,7 +495,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       });
 
       myStoreAsFileCheckBox.addActionListener(e -> {
-        myStoreProjectConfiguration = myStoreAsFileCheckBox.isSelected();
+        if (myStoreAsFileCheckBox.isSelected()) {
+          setStorageTypeAndPathToTheBestPossibleState();
+        }
+        else {
+          myRCStorageType = RCStorageType.Workspace;
+          myFolderPathIfStoredInArbitraryFile = null;
+        }
+
         setModified(true);
 
         myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
@@ -446,11 +543,18 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private void doReset(RunnerAndConfigurationSettings settings) {
       RunConfiguration configuration = settings.getConfiguration();
       boolean isManagedRunConfiguration = configuration.getType().isManaged();
-      myStoreProjectConfiguration = settings.isShared();
+      myRCStorageType = settings.isStoredInArbitraryFileInProject()
+                        ? RCStorageType.ArbitraryFileInProject
+                        : settings.isStoredInDotIdeaFolder()
+                          ? RCStorageType.DotIdeaFolder
+                          : RCStorageType.Workspace;
+      myFolderPathIfStoredInArbitraryFile =
+        PathUtil.getParentPath(StringUtil.notNullize(settings.getPathIfStoredInArbitraryFileInProject()));
 
       myStoreAsFileCheckBox.setVisible(!settings.isTemplate());
       myStoreAsFileCheckBox.setEnabled(isManagedRunConfiguration);
-      myStoreAsFileCheckBox.setSelected(myStoreProjectConfiguration);
+      myStoreAsFileCheckBox.setSelected(myRCStorageType == RCStorageType.DotIdeaFolder ||
+                                        myRCStorageType == RCStorageType.ArbitraryFileInProject);
       myStoreAsFileGearButton.setVisible(!settings.isTemplate() && isManagedRunConfiguration);
       myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
 
@@ -567,7 +671,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     private void manageStorageFileLocation() {
       @NotNull Disposable balloonDisposable = Disposer.newDisposable();
-      RunConfigurationStorageUi storageUi = new RunConfigurationStorageUi(myProject, balloonDisposable);
+      RunConfigurationStorageUi storageUi = new RunConfigurationStorageUi(myProject, getDotIdeaStoragePath(), balloonDisposable);
       Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(storageUi.getMainPanel())
         .setDialogMode(true)
         .setBorderInsets(JBUI.insets(20, 15, 10, 15))
@@ -578,18 +682,37 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         .createBalloon();
       balloon.setAnimationEnabled(false);
 
-      String path = ""; // TODO
+      String path = myRCStorageType == RCStorageType.DotIdeaFolder
+                    ? getDotIdeaStoragePath()
+                    : StringUtil.notNullize(myFolderPathIfStoredInArbitraryFile);
       storageUi.reset(path, () -> balloon.hide());
 
       balloon.addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           Disposer.dispose(balloonDisposable);
+
+          String newPath = storageUi.getPath();
+          if (!newPath.equals(path)) {
+            applyChangedStoragePath(newPath);
+            setModified(true);
+          }
         }
       });
 
       balloon.show(RelativePoint.getSouthOf(myStoreAsFileCheckBox), Balloon.Position.below);
       IdeFocusManager.getInstance(myProject).requestFocus(storageUi.getPreferredFocusedComponent(), true);
+    }
+
+    private void applyChangedStoragePath(String newPath) {
+      if (newPath.equals(getDotIdeaStoragePath())) {
+        myRCStorageType = RCStorageType.DotIdeaFolder;
+        myFolderPathIfStoredInArbitraryFile = null;
+      }
+      else {
+        myRCStorageType = RCStorageType.ArbitraryFileInProject;
+        myFolderPathIfStoredInArbitraryFile = newPath;
+      }
     }
   }
 }

@@ -11,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * This class provides 'smart' isModified() behavior: it compares original settings with current snapshot by their XML 'externalized' presentations
  */
 abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<RunnerAndConfigurationSettings> {
-  BaseRCSettingsConfigurable(@NotNull SettingsEditor<RunnerAndConfigurationSettings> editor, @NotNull RunnerAndConfigurationSettings settings) {
+  BaseRCSettingsConfigurable(@NotNull SettingsEditor<RunnerAndConfigurationSettings> editor,
+                             @NotNull RunnerAndConfigurationSettings settings) {
     super(editor, settings);
   }
 
@@ -29,7 +30,9 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
       }
 
       RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
-      if (isSnapshotSpecificallyModified(original, snapshot) || !RunManagerImplKt.doGetBeforeRunTasks(original.getConfiguration()).equals(RunManagerImplKt.doGetBeforeRunTasks(snapshot.getConfiguration()))) {
+      if (isSpecificallyModified() ||
+          !RunManagerImplKt.doGetBeforeRunTasks(original.getConfiguration())
+            .equals(RunManagerImplKt.doGetBeforeRunTasks(snapshot.getConfiguration()))) {
         return true;
       }
     }
@@ -39,7 +42,7 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
     return super.isModified();
   }
 
-  boolean isSnapshotSpecificallyModified(@NotNull RunnerAndConfigurationSettings original, @NotNull RunnerAndConfigurationSettings snapshot) {
+  boolean isSpecificallyModified() {
     return false;
   }
 }
