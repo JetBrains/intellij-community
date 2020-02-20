@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -36,16 +35,16 @@ public class DebuggerColorsPage implements ColorSettingsPage, DisplayPrioritySor
   @Override
   public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return new AttributesDescriptor[] {
-      new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.breakpoint.line"), DebuggerColors.BREAKPOINT_ATTRIBUTES),
-      new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.execution.point"), DebuggerColors.EXECUTIONPOINT_ATTRIBUTES),
-      new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.not.top.frame"), DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES),
-      new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.evaluated.expression"), DebuggerColors.EVALUATED_EXPRESSION_ATTRIBUTES),
-      new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.evaluated.expression.execution.line"), DebuggerColors.EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES),
-      new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.inlined.values"), DebuggerColors.INLINED_VALUES),
-      new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.inlined.values.modified"), DebuggerColors.INLINED_VALUES_MODIFIED),
-      new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.inlined.values.execution.line"), DebuggerColors.INLINED_VALUES_EXECUTION_LINE),
-      new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.smart.step.into.target"), DebuggerColors.SMART_STEP_INTO_TARGET),
-      new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.smart.step.into.selection"), DebuggerColors.SMART_STEP_INTO_SELECTION),
+      new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.breakpoint.line"), DebuggerColors.BREAKPOINT_ATTRIBUTES),
+      new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.execution.point"), DebuggerColors.EXECUTIONPOINT_ATTRIBUTES),
+      new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.not.top.frame"), DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES),
+      new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.evaluated.expression"), DebuggerColors.EVALUATED_EXPRESSION_ATTRIBUTES),
+      new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.evaluated.expression.execution.line"), DebuggerColors.EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES),
+      new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.inlined.values"), DebuggerColors.INLINED_VALUES),
+      new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.inlined.values.modified"), DebuggerColors.INLINED_VALUES_MODIFIED),
+      new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.inlined.values.execution.line"), DebuggerColors.INLINED_VALUES_EXECUTION_LINE),
+      new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.smart.step.into.target"), DebuggerColors.SMART_STEP_INTO_TARGET),
+      new AttributesDescriptor(XDebuggerBundle.message("options.java.attribute.descriptor.smart.step.into.selection"), DebuggerColors.SMART_STEP_INTO_SELECTION),
     };
   }
 
