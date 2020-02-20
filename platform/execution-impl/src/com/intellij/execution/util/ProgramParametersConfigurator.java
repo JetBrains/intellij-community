@@ -23,6 +23,7 @@ import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -80,9 +81,7 @@ public class ProgramParametersConfigurator {
            index = path.indexOf(template, index)) {
         String value = StringUtil.notNullize(macro instanceof PromptMacro ? ((PromptMacro)macro).promptUser() :
                                              macro.preview());
-        if (StringUtil.containsWhitespaces(value)) {
-          value = "\"" + value + "\"";
-        }
+        value = ParametersListUtil.escape(value);
         path = path.substring(0, index) + value + path.substring(index + template.length());
         //noinspection AssignmentToForLoopParameter
         index += value.length();
