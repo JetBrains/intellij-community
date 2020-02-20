@@ -35,7 +35,7 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
                                             internal open val entitiesByPersistentIdHash: Map<Int, Set<EntityData>>,
                                             internal open val entityById: Map<Long, EntityData>,
                                             internal open val referrers: Map<Long, List<Long>>,
-                                            internal open val persistentIdReferrers: Map<Int, Set<Long>>,
+                                            internal open val persistentIdReferrers: Map<Int, List<Long>>,
                                             internal val metaDataRegistry: EntityMetaDataRegistry) : TypedEntityStorage {
   companion object {
     private val proxyClassConstructors = ConcurrentFactoryMap.createMap<Class<out TypedEntity>, Constructor<out ProxyBasedEntity>> {
@@ -155,7 +155,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
                                              override val entitiesByPersistentIdHash: MutableMap<Int, MutableSet<EntityData>>,
                                              override val entityById: MutableMap<Long, EntityData>,
                                              override val referrers: MutableMap<Long, MutableList<Long>>,
-                                             override val persistentIdReferrers: MutableMap<Int, MutableSet<Long>>,
+                                             override val persistentIdReferrers: MutableMap<Int, MutableList<Long>>,
                                              metaDataRegistry: EntityMetaDataRegistry)
   : ProxyBasedEntityStorage(entitiesByType, entitiesBySource, entitiesByPersistentIdHash, entityById, referrers, persistentIdReferrers, metaDataRegistry),
     TypedEntityStorageBuilder, TypedEntityStorageDiffBuilder {
@@ -166,7 +166,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
            storage.entitiesByPersistentIdHash.mapValuesTo(HashMap()) { it.value.toMutableSet() },
            storage.entityById.toMutableMap(),
            storage.referrers.mapValuesTo(HashMap()) { it.value.toMutableList() },
-           storage.persistentIdReferrers.mapValuesTo(HashMap()) { it.value.toMutableSet() },
+           storage.persistentIdReferrers.mapValuesTo(HashMap()) { it.value.toMutableList() },
            storage.metaDataRegistry)
 
   private val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
@@ -311,8 +311,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
 
   private fun addPersistentIdReferrers(data: EntityData) {
     data.collectPersistentIdReferences { persistentIdReference ->
-      val refs = persistentIdReferrers.getOrPut(persistentIdReference.hashCode()) { mutableSetOf() }
-      if (!refs.contains(data.id)) refs.add(data.id)
+      val refs = persistentIdReferrers.getOrPut(persistentIdReference.hashCode()) { mutableListOf() }
+      refs.add(data.id)
     }
   }
 
@@ -344,7 +344,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     if (updatePersistentIdReference) {
       val oldRefs = persistentIdReferrers[oldPersistentId.hashCode()] ?: return
       persistentIdReferrers.remove(oldPersistentId.hashCode())
-      val newRefs = persistentIdReferrers.getOrPut(newPersistentId.hashCode()) { mutableSetOf() }
+      val newRefs = persistentIdReferrers.getOrPut(newPersistentId.hashCode()) { mutableListOf() }
       newRefs.addAll(oldRefs)
     }
   }
@@ -843,7 +843,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
                                                                          entitiesByPersistentIdHash.mapValues { it.value.toSet() },
                                                                          entityById.toMap(),
                                                                          referrers.mapValues { it.value.toList() },
-                                                                         persistentIdReferrers.mapValues { it.value.toSet() },
+                                                                         persistentIdReferrers.mapValues { it.value.toList() },
                                                                          metaDataRegistry)
 
   sealed class ChangeEntry {

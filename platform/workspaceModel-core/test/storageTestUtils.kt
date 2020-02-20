@@ -83,7 +83,7 @@ fun TypedEntityStorage.checkConsistency() {
     }
   }
 
-  fun assertPersistentIdReferrersEqual(expected: Map<Int, List<Long>>, actual: Map<Int, Set<Long>>) {
+  fun assertPersistentIdReferrersEqual(expected: Map<Int, List<Long>>, actual: Map<Int, List<Long>>) {
     assertEquals(expected.keys, actual.keys)
     for (key in expected.keys) {
       assertEquals(expected.getValue(key).toSet(), actual.getValue(key).toSet())
