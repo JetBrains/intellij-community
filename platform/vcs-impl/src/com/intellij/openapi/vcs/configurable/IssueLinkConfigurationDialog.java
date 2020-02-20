@@ -29,18 +29,15 @@ public class IssueLinkConfigurationDialog extends DialogWrapper {
   protected IssueLinkConfigurationDialog(Project project) {
     super(project, false);
     init();
-    myIssueIDTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    DocumentAdapter documentChangeListener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         updateFeedback();
       }
-    });
-    myExampleIssueIDTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
-        updateFeedback();
-      }
-    });
+    };
+    myIssueIDTextField.getDocument().addDocumentListener(documentChangeListener);
+    myIssueLinkTextField.getDocument().addDocumentListener(documentChangeListener);
+    myExampleIssueIDTextField.getDocument().addDocumentListener(documentChangeListener);
   }
 
   private void updateFeedback() {
