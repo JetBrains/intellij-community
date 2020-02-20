@@ -36,7 +36,7 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
 
   protected ProgressWrapper(@NotNull ProgressIndicator original, boolean checkCanceledForMe) {
     if (!(original instanceof StandardProgressIndicator)) {
-      throw new IllegalArgumentException("Original indicator " + original + " must be StandardProcessIndicator but got: " + original.getClass());
+      throw new IllegalArgumentException("Original indicator " + original + " must be StandardProgressIndicator but got: " + original.getClass());
     }
     myOriginal = original;
     myCheckCanceledForMe = checkCanceledForMe;
