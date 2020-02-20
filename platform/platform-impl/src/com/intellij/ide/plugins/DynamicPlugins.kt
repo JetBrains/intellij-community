@@ -9,6 +9,9 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UIThemeProvider
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.lang.Language
 import com.intellij.model.psi.impl.ReferenceProviders
 import com.intellij.notification.NotificationDisplayType
@@ -369,6 +372,10 @@ object DynamicPlugins {
         LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded")
       }
 
+      val fuData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(loadedPluginDescriptor))
+      FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic",
+                                                  if (classLoaderUnloaded) "unload.success" else "unload.fail",
+                                                  fuData)
       return classLoaderUnloaded
     }
   }
@@ -485,6 +492,8 @@ object DynamicPlugins {
         else {
           PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
         }
+        val fuData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(pluginDescriptor))
+        FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", "load", fuData)
       }
       finally {
         application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(pluginDescriptor)
