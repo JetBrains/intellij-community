@@ -506,6 +506,9 @@
   <item name="javax.swing.UIManager javax.swing.Icon getIcon(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name="javax.swing.UIDefaults java.lang.Object put(java.lang.Object, java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
   <item name="javax.swing.UIManager javax.swing.border.Border getBorder(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
