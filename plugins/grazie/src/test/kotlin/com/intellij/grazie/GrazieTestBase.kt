@@ -16,7 +16,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN)
   }
 
-  override fun getBasePath() = "contrib/grazie/src/test/testData"
+  override fun getBasePath() = "community/plugins/grazie/src/test/testData"
 
   override fun setUp() {
     super.setUp()
