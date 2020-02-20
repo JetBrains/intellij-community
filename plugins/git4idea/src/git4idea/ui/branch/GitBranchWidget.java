@@ -4,7 +4,6 @@ package git4idea.ui.branch;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.icons.AllIcons;
@@ -47,7 +46,6 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     super(project, GitVcs.NAME);
     mySettings = GitVcsSettings.getInstance(project);
 
-    project.getMessageBus().connect(this).subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, this::updateLater);
     project.getMessageBus().connect(this).subscribe(GitRepository.GIT_REPO_CHANGE, r -> updateLater());
     project.getMessageBus().connect(this).subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, this::updateLater);
   }

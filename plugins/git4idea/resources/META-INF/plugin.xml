@@ -305,7 +305,7 @@
 
     <statusBarWidgetProvider implementation="git4idea.light.LightGitStatusBarWidgetProvider"/>
     <lightEditTabAttributesProvider implementation="git4idea.light.LightGitTabAttributesProvider"/>
-    <statusBarWidgetFactory implementation="git4idea.ui.branch.GitBranchWidget$Factory" order="after selectionModeWidget"/>
+    <statusBarWidgetFactory implementation="git4idea.ui.branch.GitBranchWidget$Factory" order="after selectionModeWidget,before notificationsWidget"/>
   </extensions>
 
   <extensionPoints>

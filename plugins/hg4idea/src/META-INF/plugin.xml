@@ -51,7 +51,14 @@
     <lang.commenter language="HgIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
     <!--END HG ignore lang-->
     <vcs.actions.ScheduleForAdditionActionExtension implementation="org.zmlx.hg4idea.action.HgAdd"/>
+
+    <statusBarWidgetFactory implementation="org.zmlx.hg4idea.status.ui.HgStatusWidget$Factory" order="after selectionModeWidget,before notificationsWidget"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.zmlx.hg4idea.status.ui.HgStatusWidget$Listener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+  </projectListeners>
 
   <actions>
     <action id="Hg.Init" class="org.zmlx.hg4idea.action.HgInit">

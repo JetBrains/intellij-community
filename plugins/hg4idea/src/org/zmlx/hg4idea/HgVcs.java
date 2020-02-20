@@ -54,7 +54,6 @@ import org.zmlx.hg4idea.roots.HgIntegrationEnabler;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
 import org.zmlx.hg4idea.status.ui.HgHideableWidget;
 import org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget;
-import org.zmlx.hg4idea.status.ui.HgStatusWidget;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
@@ -106,7 +105,6 @@ public class HgVcs extends AbstractVcs {
   private final HgCloseBranchExecutor myCloseBranchExecutor;
 
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
-  private HgStatusWidget myStatusWidget;
   private HgIncomingOutgoingWidget myIncomingWidget;
   private HgIncomingOutgoingWidget myOutgoingWidget;
   @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
@@ -249,10 +247,6 @@ public class HgVcs extends AbstractVcs {
     // validate hg executable on start and update hg version
     checkExecutableAndVersion();
 
-    // status bar
-    myStatusWidget = new HgStatusWidget(this, getProject(), projectSettings);
-    myStatusWidget.activate();
-
     myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);
     myOutgoingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, false);
 
@@ -289,10 +283,6 @@ public class HgVcs extends AbstractVcs {
     if (myHgRemoteStatusUpdater != null) {
       myHgRemoteStatusUpdater.deactivate();
       myHgRemoteStatusUpdater = null;
-    }
-    if (myStatusWidget != null) {
-      myStatusWidget.deactivate();
-      myStatusWidget = null;
     }
     if (myIncomingWidget != null) {
       myIncomingWidget.deactivate();
