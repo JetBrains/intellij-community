@@ -204,7 +204,13 @@ open class IdeStarter : ApplicationStarter {
 private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
   val currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
   Logger.getInstance("#com.intellij.idea.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
-  return CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory).first
+  val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)
+  if (result.hasError) {
+    ApplicationManager.getApplication().invokeLater {
+      result.showErrorIfFailed()
+    }
+  }
+  return result.project
 }
 
 private fun postOpenUiTasks(app: Application) {

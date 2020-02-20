@@ -6,6 +6,7 @@ import com.apple.eawt.Application;
 import com.apple.eawt.OpenURIHandler;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.CommandLineProcessor;
+import com.intellij.ide.CommandLineProcessorResult;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.ShowSettingsAction;
@@ -30,6 +31,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Callback;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,6 +40,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MacOSApplicationProvider {
@@ -56,7 +59,7 @@ public final class MacOSApplicationProvider {
     }
   }
 
-  private static class Worker {
+  private static final class Worker {
     private static final AtomicBoolean ENABLED = new AtomicBoolean(true);
     @SuppressWarnings({"FieldCanBeLocal", "unused"}) private static Object UPDATE_CALLBACK_REF;
 
@@ -71,7 +74,7 @@ public final class MacOSApplicationProvider {
 
       application.setPreferencesHandler(event -> {
         if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-          Project project = getProject(true);
+          Project project = Objects.requireNonNull(getProject(true));
           submit("Preferences", () -> ShowSettingsAction.perform(project));
         }
       });
@@ -118,9 +121,9 @@ public final class MacOSApplicationProvider {
         public void callback(ID self, String selector) {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
-            ActionManager am = ActionManager.getInstance();
-            MouseEvent me = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
-            am.tryToExecute(am.getAction("CheckForUpdate"), me, null, null, false);
+            ActionManager actionManager = ActionManager.getInstance();
+            MouseEvent mouseEvent = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
+            actionManager.tryToExecute(actionManager.getAction("CheckForUpdate"), mouseEvent, null, null, false);
           });
         }
       };
@@ -139,7 +142,7 @@ public final class MacOSApplicationProvider {
       Foundation.invoke(pool, Foundation.createSelector("release"));
     }
 
-    private static Project getProject(boolean useDefault) {
+    private static @Nullable Project getProject(boolean useDefault) {
       @SuppressWarnings("deprecation") Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
       if (project == null) {
         LOG.debug("MacMenu: no project in data context");
@@ -183,45 +186,48 @@ public final class MacOSApplicationProvider {
     private static void installProtocolHandler() {
       ID mainBundle = Foundation.invoke("NSBundle", "mainBundle");
       ID urlTypes = Foundation.invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"));
-      if (!urlTypes.equals(ID.NIL)) {
-        Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
-          @Override
-          public void openURI(AppEvent.OpenURIEvent event) {
-            Map<String, List<String>> parameters = new QueryStringDecoder(event.getURI()).parameters();
-            String file = ContainerUtil.getFirstItem(parameters.get("file"));
-            if (file != null) {
-              if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-                String line = ContainerUtil.getFirstItem(parameters.get("line"));
-                String column = ContainerUtil.getFirstItem(parameters.get("column"));
-                List<String> args = new SmartList<>();
-                if (line != null) {
-                  args.add("--line");
-                  args.add(line);
-                }
-                if (column != null) {
-                  args.add("--column");
-                  args.add(column);
-                }
-                args.add(file);
-                ApplicationManager.getApplication().invokeLater(
-                  () -> CommandLineProcessor.processExternalCommandLine(args, null),
-                  ModalityState.NON_MODAL);
-              }
-              else {
-                IdeStarter.openFilesOnLoading(Collections.singletonList(new File(file)));
-              }
-            }
-          }
-        });
-      }
-      else {
+      if (urlTypes.equals(ID.NIL)) {
         BuildNumber build = ApplicationInfoImpl.getShadowInstance().getBuild();
         if (!(build == null || build.isSnapshot())) {
           LOG.warn("No URL bundle (CFBundleURLTypes) is defined in the main bundle.\n" +
                    "To be able to open external links, specify protocols in the app layout section of the build file.\n" +
                    "Example: args.urlSchemes = [\"your-protocol\"] will handle following links: your-protocol://open?file=file&line=line");
         }
+        return;
       }
+
+      Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
+        @Override
+        public void openURI(AppEvent.OpenURIEvent event) {
+          Map<String, List<String>> parameters = new QueryStringDecoder(event.getURI()).parameters();
+          String file = ContainerUtil.getFirstItem(parameters.get("file"));
+          if (file == null) {
+            return;
+          }
+
+          if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+            IdeStarter.openFilesOnLoading(Collections.singletonList(new File(file)));
+            return;
+          }
+
+          String line = ContainerUtil.getFirstItem(parameters.get("line"));
+          String column = ContainerUtil.getFirstItem(parameters.get("column"));
+          List<String> args = new SmartList<>();
+          if (line != null) {
+            args.add("--line");
+            args.add(line);
+          }
+          if (column != null) {
+            args.add("--column");
+            args.add(column);
+          }
+          args.add(file);
+          ApplicationManager.getApplication().invokeLater(() -> {
+            CommandLineProcessorResult result = CommandLineProcessor.processExternalCommandLine(args, null);
+            result.showErrorIfFailed();
+          }, ModalityState.NON_MODAL);
+        }
+      });
     }
   }
 }

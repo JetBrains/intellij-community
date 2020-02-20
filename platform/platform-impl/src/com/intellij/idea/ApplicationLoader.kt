@@ -15,7 +15,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.DialogEarthquakeShaker
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.WeakFocusStackManager
@@ -291,16 +293,20 @@ private fun addActivateAndWindowsCliListeners() {
     val ref = AtomicReference<Future<CliResult>>()
 
     ApplicationManager.getApplication().invokeAndWait {
-      val (project, future) = CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
-      ref.set(future)
+      val result = CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
+      ref.set(result.future)
 
-      if (project == null) {
+      if (result.showErrorIfFailed()) {
+        return@invokeAndWait
+      }
+
+      if (result.project == null) {
         val frame = WindowManager.getInstance().findVisibleFrame()
         frame.toFront()
         DialogEarthquakeShaker.shake(frame)
       }
       else {
-        WindowManager.getInstance().getFrame(project)?.let {
+        WindowManager.getInstance().getFrame(result.project)?.let {
           AppIcon.getInstance().requestFocus()
         }
       }
@@ -322,7 +328,11 @@ private fun addActivateAndWindowsCliListeners() {
     val state = if (anyState) app.anyModalityState else app.defaultModalityState
 
     val ref = AtomicReference<Future<CliResult>>()
-    app.invokeAndWait({ ref.set(CommandLineProcessor.processExternalCommandLine(args.toList(), currentDirectory).second) }, state)
+    app.invokeAndWait({
+      val result = CommandLineProcessor.processExternalCommandLine(args.toList(), currentDirectory)
+      ref.set(result.future)
+      result.showErrorIfFailed()
+    }, state)
     CliResult.unmap(ref.get(), Main.ACTIVATE_ERROR).exitCode
   }
 

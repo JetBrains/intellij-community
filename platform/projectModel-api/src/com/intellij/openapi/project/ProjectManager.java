@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
@@ -28,8 +28,7 @@ public abstract class ProjectManager {
     return ApplicationManager.getApplication().getService(ProjectManager.class);
   }
 
-  @Nullable
-  public static ProjectManager getInstanceIfCreated() {
+  public static @Nullable ProjectManager getInstanceIfCreated() {
     return ApplicationManager.getApplication().getServiceIfCreated(ProjectManager.class);
   }
 
@@ -75,7 +74,7 @@ public abstract class ProjectManager {
    * Returns the list of currently opened projects.
    * {@link Project#isDisposed()} must be checked for each project before use (if the whole operation is not under read action).
    */
-  public abstract Project @NotNull [] getOpenProjects();
+  public abstract @NotNull Project @NotNull [] getOpenProjects();
 
   /**
    * Returns the project which is used as a template for new projects. The template project
@@ -86,8 +85,7 @@ public abstract class ProjectManager {
    *
    * @return the template project instance.
    */
-  @NotNull
-  public abstract Project getDefaultProject();
+  public abstract @NotNull Project getDefaultProject();
 
   /**
    * Loads and opens a project with the specified path. If the project file is from an older IDEA
@@ -100,19 +98,16 @@ public abstract class ProjectManager {
    * @throws IOException          if the project file was not found or failed to read
    * @throws JDOMException        if the project file contained invalid XML
    */
-  @Nullable
-  public abstract Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException;
+  public abstract @Nullable Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException;
 
-  @Nullable
   @ApiStatus.Experimental
   @TestOnly
-  public Project loadAndOpenProject(@NotNull File file) throws IOException, JDOMException {
+  public @Nullable Project loadAndOpenProject(@NotNull File file) throws IOException, JDOMException {
     return loadAndOpenProject(file.toPath());
   }
 
-  @Nullable
   @ApiStatus.Experimental
-  public abstract Project loadAndOpenProject(@NotNull Path file) throws IOException, JDOMException;
+  public abstract @Nullable Project loadAndOpenProject(@NotNull Path file) throws IOException, JDOMException;
 
   /**
    * Closes the specified project, but does not dispose it.
@@ -138,6 +133,5 @@ public abstract class ProjectManager {
    *
    * @return newly crated project
    */
-  @Nullable
-  public abstract Project createProject(@Nullable String name, @NotNull String path);
+  public abstract @Nullable Project createProject(@Nullable String name, @NotNull String path);
 }

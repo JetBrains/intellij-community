@@ -13,8 +13,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -31,18 +29,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Future;
 
-/**
- * @author yole
- */
 public final class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance(CommandLineProcessor.class);
   private static final String OPTION_WAIT = "--wait";
 
   private CommandLineProcessor() { }
 
-  private static @NotNull Pair<Project, Future<CliResult>> doOpenFileOrProject(Path file, boolean shouldWait) {
+  private static @NotNull CommandLineProcessorResult doOpenFileOrProject(Path file, boolean shouldWait) {
     OpenProjectTask openProjectOptions = new OpenProjectTask();
     // do not check for .ipr files in specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
     openProjectOptions.checkDirectoryForFileBasedProjects = false;
@@ -51,11 +45,11 @@ public final class CommandLineProcessor {
       return doOpenFile(file, -1, -1, false, shouldWait);
     }
     else {
-      return new Pair<>(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project) : CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project) : CliResult.OK_FUTURE);
     }
   }
 
-  private static @NotNull Pair<Project, Future<CliResult>> doOpenFile(Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
+  private static @NotNull CommandLineProcessorResult doOpenFile(Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
     assert file != null;
 
@@ -63,12 +57,10 @@ public final class CommandLineProcessor {
     if (projects.length == 0) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, column, tempProject);
       if (project == null) {
-        final String message = "No project found to open file in";
-        Messages.showErrorDialog(message, "Cannot Open File");
-        return new Pair<>(null, CliResult.error(1, message));
+        return CommandLineProcessorResult.createError("No project found to open file in");
       }
 
-      return new Pair<>(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : CliResult.OK_FUTURE);
     }
     else {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
@@ -83,7 +75,7 @@ public final class CommandLineProcessor {
         navigatable.navigate(true);
       }
 
-      return new Pair<>(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : CliResult.OK_FUTURE);
     }
   }
 
@@ -110,7 +102,7 @@ public final class CommandLineProcessor {
     }
   }
 
-  public static @NotNull Pair<Project, Future<CliResult>> processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
+  public static @NotNull CommandLineProcessorResult processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
     StringBuilder logMessage = new StringBuilder();
     logMessage.append("External command line:").append('\n');
     logMessage.append("Dir: ").append(currentDirectory).append('\n');
@@ -120,24 +112,21 @@ public final class CommandLineProcessor {
     logMessage.append("-----");
     LOG.info(logMessage.toString());
     if (args.isEmpty()) {
-      return new Pair<>(null, CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(null, CliResult.OK_FUTURE);
     }
 
     String command = args.get(0);
-    Pair<Project, Future<CliResult>> result = ApplicationStarter.EP_NAME.computeSafeIfAny(starter -> {
+    CommandLineProcessorResult result = ApplicationStarter.EP_NAME.computeSafeIfAny(starter -> {
       if (!command.equals(starter.getCommandName())) {
         return null;
       }
 
       if (starter.canProcessExternalCommandLine()) {
         LOG.info("Processing command with " + starter);
-        return new Pair<>(null, starter.processExternalCommandLineAsync(args, currentDirectory));
+        return new CommandLineProcessorResult(null, starter.processExternalCommandLineAsync(args, currentDirectory));
       }
       else {
-        String title = "Cannot execute command '" + command + "'";
-        String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
-        Messages.showErrorDialog(message, title);
-        return new Pair<>(null, CliResult.error(1, message));
+        return CommandLineProcessorResult.createError("Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.");
       }
     });
     if (result != null) {
@@ -147,10 +136,10 @@ public final class CommandLineProcessor {
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       JetBrainsProtocolHandler.processJetBrainsLauncherParameters(command);
       ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
-      return new Pair<>(null, CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(null, CliResult.OK_FUTURE);
     }
 
-    Pair<Project, Future<CliResult>> projectAndCallback = null;
+    CommandLineProcessorResult projectAndCallback = null;
     int line = -1;
     int column = -1;
     boolean tempProject = false;
@@ -193,9 +182,7 @@ public final class CommandLineProcessor {
       }
 
       if (!Files.exists(file)) {
-        String message = "Cannot find file '" + file + "'";
-        Messages.showErrorDialog(message, "Cannot Find File");
-        return new Pair<>(null, CliResult.error(1, message));
+        return CommandLineProcessorResult.createError("Cannot find file '" + file + "'");
       }
 
       if (line != -1 || tempProject) {
@@ -214,9 +201,9 @@ public final class CommandLineProcessor {
     }
 
     if (shouldWait && projectAndCallback == null) {
-      return new Pair<>(null, CliResult.error(1, "--wait must be supplied with file or project to wait for"));
+      return new CommandLineProcessorResult(null, CliResult.error(1, "--wait must be supplied with file or project to wait for"));
     }
 
-    return projectAndCallback == null ? new Pair<>(null, CliResult.OK_FUTURE) : projectAndCallback;
+    return projectAndCallback == null ? new CommandLineProcessorResult(null, CliResult.OK_FUTURE) : projectAndCallback;
   }
 }
