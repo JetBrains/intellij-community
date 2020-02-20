@@ -98,6 +98,14 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
             stack.setActive(session)
         }
 
+        myThreadsList.addMouseListener(object : PopupHandler() {
+            override fun invokePopup(comp: Component, x: Int, y: Int) {
+                val actionManager = ActionManager.getInstance()
+                val group = actionManager.getAction(XDebuggerActions.THREADS_TREE_POPUP_GROUP) as? ActionGroup ?: return
+                actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).component.show(comp, x, y)
+            }
+        })
+
         myFramesList.addListSelectionListener {
             if (it.valueIsAdjusting || !myListenersEnabled) return@addListSelectionListener
 
