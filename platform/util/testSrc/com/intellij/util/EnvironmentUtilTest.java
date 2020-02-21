@@ -13,9 +13,6 @@ import java.util.Map;
 import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
 import static org.junit.Assert.*;
 
-/**
- * @author mike
- */
 public class EnvironmentUtilTest {
   @Test(timeout = 30000)
   public void map() {

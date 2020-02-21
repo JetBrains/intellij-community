@@ -27,9 +27,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author mike
- */
 public class IdeaPluginConverter extends IdeaPluginConverterBase {
 
   private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = plugin -> !PluginManagerCore.CORE_PLUGIN_ID.equals(plugin.getPluginId());

@@ -8,9 +8,6 @@ import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Mike
- */
 public interface XmlAttributeValue extends XmlElement, PsiLiteralValue, XmlNamedReferenceHost {
   /**
    * @return text inside XML attribute with quotes stripped off

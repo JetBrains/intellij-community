@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.idea.Main;
@@ -20,9 +20,6 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author Mike
- */
 public class DialogAppender extends AppenderSkeleton {
   private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;

@@ -27,9 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Mike
- */
 public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
   private static final Logger LOG = Logger.getInstance(CreateParameterFromUsageFix.class);
 

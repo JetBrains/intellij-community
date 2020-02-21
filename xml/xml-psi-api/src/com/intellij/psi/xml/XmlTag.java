@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author Mike
- */
 public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTagChild, XmlNamedReferenceHost {
   XmlTag[] EMPTY = new XmlTag[0];
 
@@ -46,7 +43,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    *
    * @param qname qualified attribute name, like "ns:name" or "name".
    * @return null if the attribute not exist.
-   * @see #getAttributeValue(String, String)  
+   * @see #getAttributeValue(String, String)
    */
   @Nullable String getAttributeValue(@NonNls String qname);
 

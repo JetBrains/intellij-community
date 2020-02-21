@@ -45,9 +45,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
-/**
- * @author mike
- */
 public class RangeMarkerTest extends LightPlatformTestCase {
   private PsiDocumentManagerImpl documentManager;
   private PsiToDocumentSynchronizer synchronizer;

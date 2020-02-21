@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.parsing.xml;
 
 import com.intellij.codeInsight.daemon.XmlErrorBundle;
@@ -23,9 +23,6 @@ import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Mike
- */
 public class DtdParsing extends XmlParsing implements XmlElementType {
   private static final Logger LOG = Logger.getInstance(XmlParser.class);
 
@@ -75,7 +72,7 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
     if (myRootType == DTD_FILE) {
       document = myBuilder.mark();
       parseProlog();
-    } 
+    }
 
     switch (myContextType) {
       case GENERIC_XML:
@@ -265,7 +262,7 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
     if (myBuilder.getTokenType() != XML_CONDITIONAL_SECTION_START) {
       return false;
     }
-    
+
     PsiBuilder.Marker conditionalSection = myBuilder.mark();
 
     addToken();
@@ -413,7 +410,7 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
 
     while (true) {
       tokenType = myBuilder.getTokenType();
-      
+
       if (tokenType == XML_ELEMENT_DECL_START) {
         parseElementDecl();
       }
@@ -525,7 +522,7 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
     }
 
     PsiBuilder.Marker spec = myBuilder.mark();
-    
+
     parseElementContentSpecInner(topLevel);
 
     spec.done(XML_ELEMENT_CONTENT_SPEC);
@@ -781,7 +778,7 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
 
       if (myBuilder.getTokenType() == XML_ATTRIBUTE_VALUE_TOKEN) {
         addToken();
-        
+
         if (myBuilder.getTokenType() == XML_ATTRIBUTE_VALUE_END_DELIMITER) {
           lastPosition = myBuilder.getCurrentOffset();
           addToken();

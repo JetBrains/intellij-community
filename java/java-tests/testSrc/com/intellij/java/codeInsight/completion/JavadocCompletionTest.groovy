@@ -21,9 +21,6 @@ import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.NotNull
-/**
- * @author mike
- */
 class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   private JavaCodeStyleSettings javaSettings
 
