@@ -118,7 +118,7 @@ interface ImmediateConfigurable {
     get() = emptyList()
 
   class Case(
-    val name: String,
+    @Nls val name: String,
     val id: String,
     private val loadFromSettings: () -> Boolean,
     private val onUserChanged: (Boolean) -> Unit,
