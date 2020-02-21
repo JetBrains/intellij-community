@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.execution.process.OSProcessUtil;
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +15,7 @@ import sun.tools.attach.HotSpotVirtualMachine;
 import java.io.File;
 
 // NOTE: compile with --add-exports jdk.attach/sun.tools.attach=ALL-UNNAMED in module-aware jdk
-public class JitSuppressor implements PowerSaveMode.Listener {
+final class JitSuppressor implements ApplicationInitializedListener {
   private static final Logger LOG = Logger.getInstance(JitSuppressor.class);
   private static final String SELF_ATTACH_PROP = "jdk.attach.allowAttachSelf";
   private static final String EXCLUDE_ALL_FROM_C2_CLAUSE = "{ match : [\"*.*\"], c2 : { Exclude : true }}";
@@ -53,13 +54,16 @@ public class JitSuppressor implements PowerSaveMode.Listener {
   };
   private static final boolean ourBlacklistMode = true;
 
-  public JitSuppressor() {
+  @Override
+  public void componentsInitialized() {
     if (!SystemProperties.getBooleanProperty("enable.jit.suppressor", false)) {
       return;
     }
 
     // java.specification.version has values "1.8", "1.7" e.t.c. for jdk <= 8 and "9", "10", "11", 12" for others
-    if (System.getProperty("java.specification.version").contains(".")) return;
+    if (System.getProperty("java.specification.version").contains(".")) {
+      return;
+    }
 
     String javaSpecVendor = System.getProperty("java.vm.specification.vendor");
     if (!"Oracle Corporation".equals(javaSpecVendor)) {
@@ -77,23 +81,28 @@ public class JitSuppressor implements PowerSaveMode.Listener {
       }
       return;
     }
-    
+
     LOG.info("JitSuppressor is active");
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, this);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+      @Override
+      public void powerSaveStateChanged() {
+        JitSuppressor.powerSaveStateChanged();
+      }
+    });
 
     // call the handler to make initial setup
     powerSaveStateChanged();
   }
 
-  @Override
-  public void powerSaveStateChanged() {
+  private static void powerSaveStateChanged() {
     String directives = "[" + generateDirectives() + "]";
 
     Runnable runnable = () -> setDirectives(directives);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
-    } else {
+    }
+    else {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
   }
