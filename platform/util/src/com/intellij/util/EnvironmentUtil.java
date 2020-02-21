@@ -38,7 +38,7 @@ public final class EnvironmentUtil {
   /**
    * The time-out to read the environment, in milliseconds.
    */
-  private static final long SHELL_ENV_READING_TIMEOUT = 40_000L;
+  private static final long SHELL_ENV_READING_TIMEOUT_MILLIS = 40_000L;
 
   private static final String LANG = "LANG";
   private static final String LC_ALL = "LC_ALL";
@@ -360,7 +360,7 @@ public final class EnvironmentUtil {
   }
 
   private static int waitAndTerminateAfter(@NotNull Process process) {
-    Integer exitCode = waitFor(process, SHELL_ENV_READING_TIMEOUT);
+    Integer exitCode = waitFor(process, SHELL_ENV_READING_TIMEOUT_MILLIS);
     if (exitCode != null) {
       return exitCode;
     }
