@@ -130,6 +130,16 @@ interface ContentRootEntity : TypedEntity {
   val module: ModuleEntity
 }
 
+/**
+ * This entity stores order of artifacts in file. This is needed to ensure that source roots are saved in the same order to avoid
+ * unnecessary modifications of file.
+ */
+interface SourceRootOrderEntity : ModifiableTypedEntity<SourceRootOrderEntity> {
+  var orderOfSourceRoots: List<VirtualFileUrl>
+
+  var contentRootEntity: ContentRootEntity
+}
+
 fun ModuleEntity.getModuleLibraries(storage: TypedEntityStorage): Sequence<LibraryEntity> {
   return storage.entities(LibraryEntity::class.java).filter { (it.persistentId().tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId?.name == name }
 }

@@ -43,6 +43,9 @@ interface JpsFileEntitiesSerializer<E : TypedEntity> {
   val mainEntityClass: Class<E>
   fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader)
   fun saveEntities(mainEntities: Collection<E>, entities: Map<Class<out TypedEntity>, List<TypedEntity>>, writer: JpsFileContentWriter): List<TypedEntity>
+
+  val additionalEntityTypes: List<Class<out TypedEntity>>
+    get() = emptyList()
 }
 
 /**
@@ -51,9 +54,6 @@ interface JpsFileEntitiesSerializer<E : TypedEntity> {
 interface JpsFileEntityTypeSerializer<E : TypedEntity> : JpsFileEntitiesSerializer<E> {
   val entityFilter: (E) -> Boolean
     get() = { true }
-
-  val additionalEntityTypes: List<Class<out TypedEntity>>
-    get() = emptyList()
 }
 
 /**

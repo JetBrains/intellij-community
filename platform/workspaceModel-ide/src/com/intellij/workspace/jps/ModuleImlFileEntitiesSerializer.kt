@@ -84,20 +84,19 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
         .map { it.getAttributeValue(EXCLUDE_PATTERN_ATTRIBUTE) }
       val contentRootUrl = contentElement.getAttributeValueStrict(URL_ATTRIBUTE)
         .let { VirtualFileUrlManager.fromUrl(it) }
-      builder.addContentRootEntity(contentRootUrl, excludeRootsUrls, excludePatterns, moduleEntity, entitySource)
+      val contentRootEntity = builder.addContentRootEntity(contentRootUrl, excludeRootsUrls, excludePatterns, moduleEntity, entitySource)
 
       // Save the order in which sourceRoots appear in the module
-      val orderingEntity = builder.entities(ModuleSerializersFactory.SourceRootOrderEntity::class.java)
-        .find { it.moduleName == moduleEntity.name && it.contentUrl == contentRootUrl }
+      val orderingEntity = builder.entities(SourceRootOrderEntity::class.java)
+        .find { it.contentRootEntity == contentRootEntity }
       if (orderingEntity == null) {
-        builder.addEntity(ModuleSerializersFactory.SourceRootOrderEntity::class.java, entitySource) {
-          moduleName = moduleEntity.name
-          contentUrl = contentRootUrl
-          orderOfSourceRoots = orderOfItems
+        builder.addEntity(SourceRootOrderEntity::class.java, entitySource) {
+          this.contentRootEntity = contentRootEntity
+          this.orderOfSourceRoots = orderOfItems
         }
       }
       else {
-        builder.modifyEntity(ModuleSerializersFactory.SourceRootOrderEntity::class.java, orderingEntity) {
+        builder.modifyEntity(SourceRootOrderEntity::class.java, orderingEntity) {
           orderOfSourceRoots = orderOfItems
         }
       }
@@ -219,10 +218,10 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
     }.mapValues { (_, value) -> value.groupByTo(HashMap()) { it.url } }
 
     // Get ordering in which source roots appear in file
-    val sourceRootOrderingByContentUrl = entities[ModuleSerializersFactory.SourceRootOrderEntity::class.java]
-      ?.filterIsInstance<ModuleSerializersFactory.SourceRootOrderEntity>()
-      ?.filter { it.moduleName == module.name }
-      ?.associateBy { it.contentUrl }
+    val sourceRootOrderingByContentUrl = entities[SourceRootOrderEntity::class.java]
+      ?.filterIsInstance<SourceRootOrderEntity>()
+      ?.filter { it.contentRootEntity.module.name == module.name }
+      ?.associateBy { it.contentRootEntity.url }
 
     contentEntities.forEach { contentEntry ->
       savedEntities.add(contentEntry)
@@ -386,6 +385,9 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
     }
     return sourceRootTag
   }
+
+  override val additionalEntityTypes: List<Class<out TypedEntity>>
+    get() = listOf(SourceRootOrderEntity::class.java)
 }
 
 private const val MODULE_MANAGER_COMPONENT_NAME = "ProjectModuleManager"
@@ -440,14 +442,4 @@ internal class ModuleSerializersFactory(override val fileUrl: String, private va
 
   private fun getModuleFileUrl(source: JpsFileEntitySource.FileInDirectory,
                                module: ModuleEntity) = source.directory.url + "/" + module.name + ".iml"
-
-  /**
-   * This entity stores order of artifacts in file. This is needed to ensure that source roots are saved in the same order to avoid
-   * unnecessary modifications of file.
-   */
-  internal interface SourceRootOrderEntity : ModifiableTypedEntity<SourceRootOrderEntity> {
-    var moduleName: String
-    var contentUrl: VirtualFileUrl
-    var orderOfSourceRoots: List<VirtualFileUrl>
-  }
 }
