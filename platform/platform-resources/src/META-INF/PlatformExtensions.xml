@@ -940,6 +940,8 @@
     <applicationInitializedListener implementation="com.intellij.internal.DebugAttachDetector"/>
 
     <applicationService serviceInterface="org.jetbrains.ide.BuiltInServerManager" serviceImplementation="org.jetbrains.ide.BuiltInServerManagerImpl" preload="true"/>
+
+    <projectService serviceInterface="com.intellij.ui.EditorNotifications" serviceImplementation="com.intellij.ui.EditorNotificationsImpl" preload="true"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
