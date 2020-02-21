@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 public final class MacrosDialog extends DialogWrapper {
   private final DefaultListModel<Item> myMacrosModel = new DefaultListModel<>();
@@ -48,7 +50,7 @@ public final class MacrosDialog extends DialogWrapper {
   }
 
   public MacrosDialog(@NotNull Component parent,
-                      @Nullable Predicate<? super Macro> filter,
+                      @NotNull Predicate<? super Macro> filter,
                       @Nullable Map<String, String> userMacros) {
     super(parent, true);
     MacroManager.getInstance().cacheMacrosPreview(DataManager.getInstance().getDataContext(parent));
@@ -56,11 +58,11 @@ public final class MacrosDialog extends DialogWrapper {
   }
 
   public static void addTextFieldExtension(@NotNull ExtendableTextField textField) {
-    addTextFieldExtension(textField, null, null);
+    addTextFieldExtension(textField, Filters.ALL, null);
   }
 
   public static void addTextFieldExtension(@NotNull ExtendableTextField textField,
-                                           @Nullable Predicate<? super Macro> macroFilter,
+                                           @NotNull Predicate<? super Macro> macroFilter,
                                            @Nullable Map<String, String> userMacros) {
     textField.addExtension(ExtendableTextComponent.Extension.create(
       AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, ExecutionBundle.message("insert.macros"),
@@ -68,11 +70,11 @@ public final class MacrosDialog extends DialogWrapper {
   }
 
   public static void show(@NotNull JTextComponent textComponent) {
-    show(textComponent, null, null);
+    show(textComponent, Filters.ALL, null);
   }
 
   public static void show(@NotNull JTextComponent textComponent,
-                          @Nullable Predicate<? super Macro> filter,
+                          @NotNull Predicate<? super Macro> filter,
                           @Nullable Map<String, String> userMacros) {
     MacrosDialog dialog = new MacrosDialog(textComponent, filter, userMacros);
     if (dialog.showAndGet()) {
@@ -102,14 +104,14 @@ public final class MacrosDialog extends DialogWrapper {
     throw new UnsupportedOperationException("Call init(...) overload accepting parameters");
   }
 
-  private void init(@Nullable Predicate<? super Macro> filter, @Nullable Map<String, String> userMacros) {
+  private void init(@NotNull Predicate<? super Macro> filter, @Nullable Map<String, String> userMacros) {
     super.init();
 
     setTitle(IdeBundle.message("title.macros"));
     setOKButtonText(IdeBundle.message("button.insert"));
 
     List<Macro> macros = ContainerUtil.filter(MacroManager.getInstance().getMacros(),
-                                              macro -> MacroFilter.GLOBAL.accept(macro) && (filter == null || filter.test(macro)));
+                                              macro -> MacroFilter.GLOBAL.accept(macro) && filter.test(macro));
     Collections.sort(macros, new Comparator<Macro>() {
       @Override
       public int compare(Macro macro1, Macro macro2) {
@@ -329,5 +331,34 @@ public final class MacrosDialog extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myMacrosList;
+  }
+
+  public static final class Filters {
+    private Filters() { }
+
+    private static final Pattern CAMEL_HUMP_START_PATTERN = Pattern.compile("(?<=[\\p{Lower}\\p{Digit}])(?![\\p{Lower}\\p{Digit}])");
+
+    public static final @NotNull Predicate<? super Macro> ALL = m -> true;
+    public static final @NotNull Predicate<? super Macro> NONE = m -> false;
+
+    public static final @NotNull Predicate<? super Macro> ANY_PATH =
+      m -> nameContains(m, "File") ||
+           nameContains(m, "Dir") ||
+           m instanceof ContentRootMacro ||
+           m instanceof FilePromptMacro;
+
+    public static final @NotNull Predicate<? super Macro> DIRECTORY_PATH =
+      m -> nameContains(m, "Dir") ||
+           m instanceof ContentRootMacro ||
+           m instanceof FilePromptMacro;
+
+    public static final @NotNull Predicate<? super Macro> FILE_PATH =
+      m -> nameContains(m, "File") && !nameContains(m, "Dir") ||
+           m instanceof FilePromptMacro;
+
+    private static boolean nameContains(@NotNull Macro m, @NotNull String part) {
+      final String[] nameParts = CAMEL_HUMP_START_PATTERN.split(m.getName());
+      return ArrayUtil.contains(part, nameParts);
+    }
   }
 }

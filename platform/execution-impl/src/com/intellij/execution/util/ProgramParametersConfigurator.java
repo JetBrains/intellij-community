@@ -75,21 +75,19 @@ public class ProgramParametersConfigurator {
   }
 
   public static void addMacroSupport(@NotNull ExtendableTextField textField) {
-    addMacroSupport(textField, macro -> {
-      return !(macro instanceof EditorMacro);
-    });
+    addMacroSupport(textField, MacrosDialog.Filters.ALL);
   }
 
   public static void addMacroSupport(@NotNull ExtendableTextField textField,
-                                     @Nullable Predicate<? super Macro> macroFilter) {
+                                     @NotNull Predicate<? super Macro> macroFilter) {
     addMacroSupport(textField, macroFilter, null);
   }
 
   public static void addMacroSupport(@NotNull ExtendableTextField textField,
-                                     @Nullable Predicate<? super Macro> macroFilter,
+                                     @NotNull Predicate<? super Macro> macroFilter,
                                      @Nullable Map<String, String> userMacros) {
     if (Registry.is("allow.macros.for.run.configurations")) {
-      MacrosDialog.addTextFieldExtension(textField, macroFilter, userMacros);
+      MacrosDialog.addTextFieldExtension(textField, macroFilter.and(macro -> !(macro instanceof EditorMacro)), userMacros);
     }
   }
 
