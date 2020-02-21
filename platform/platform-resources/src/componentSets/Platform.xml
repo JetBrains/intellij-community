@@ -22,10 +22,5 @@
       <interface-class>com.intellij.ui.EditorNotifications</interface-class>
       <implementation-class>com.intellij.ui.EditorNotificationsImpl</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
   </project-components>
 </idea-plugin>
