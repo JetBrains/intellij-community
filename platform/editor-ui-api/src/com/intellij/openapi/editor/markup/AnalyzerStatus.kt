@@ -29,12 +29,27 @@ interface AnalyzerController {
 }
 
 // Status
-class AnalyzerStatus(val icon: Icon?, statusText: String, val controller: () -> AnalyzerController) {
+class AnalyzerStatus(val icon: Icon, statusText: String, val controller: () -> AnalyzerController) {
   val statusText = XmlStringUtil.wrapInHtml(statusText)
   var showNavigation = false
+  var expandedIcon: Icon = icon
 
   fun withNavigation() : AnalyzerStatus {
     showNavigation = true
     return this
+  }
+
+  fun withExpandedIcon(eIcon: Icon): AnalyzerStatus {
+    expandedIcon = eIcon
+    return this
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other !is AnalyzerStatus) return false
+
+    return icon == other.icon &&
+           expandedIcon == other.expandedIcon &&
+           statusText == other.statusText &&
+           showNavigation == other.showNavigation
   }
 }

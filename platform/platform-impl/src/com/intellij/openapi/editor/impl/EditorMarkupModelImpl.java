@@ -26,10 +26,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.markup.*;
@@ -52,6 +49,7 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,7 +75,8 @@ import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMarkupModel, CaretListener, DocumentListener {
+public class EditorMarkupModelImpl extends MarkupModelImpl
+      implements EditorMarkupModel, CaretListener, DocumentListener, VisibleAreaListener {
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
   private static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
 
@@ -132,6 +131,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private boolean myKeepHint;
 
   private final ActionToolbar statusToolbar;
+  private final ComponentListener toolbarComponentListener;
+  private Rectangle cachedToolbarBounds = new Rectangle();
+  private final JLabel statusIcon;
   private AnalyzerStatus analyzerStatus;
   private InspectionPopupManager myPopupManager = new InspectionPopupManager();
   private final Disposable resourcesDisposable = Disposer.newDisposable();
@@ -187,7 +189,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           public void updateIcon() {
             super.updateIcon();
             revalidate();
-            repaint();
           }
 
           @Override
@@ -210,7 +211,34 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     };
 
     statusToolbar.setMiniMode(true);
-    ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusToolbar.getComponent());
+    toolbarComponentListener = new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent event) {
+        Component toolbar = event.getComponent();
+        if (toolbar.getWidth() >0 && toolbar.getHeight() > 0) {
+          updateToolbarVisibility();
+        }
+      }
+    };
+    statusToolbar.getComponent().addComponentListener(toolbarComponentListener);
+
+    statusIcon = new JLabel();
+    statusIcon.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent event) {
+        myPopupManager.showPopup(event);
+      }
+    });
+    statusIcon.setOpaque(true);
+    statusIcon.setBackground(new JBColor(() -> myEditor.getColorsScheme().getDefaultBackground()));
+    statusIcon.setVisible(false);
+
+    JPanel statusPanel = new NonOpaquePanel();
+    statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
+    statusPanel.add(statusToolbar.getComponent());
+    statusPanel.add(statusIcon);
+
+    ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusPanel);
 
     ApplicationManager.getApplication().getMessageBus().
       connect(resourcesDisposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
@@ -224,18 +252,39 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   @Override
   public void caretPositionChanged(@NotNull CaretEvent event) {
-    VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
-    Point point = myEditor.visualPositionToXY(pos);
-    point = SwingUtilities.convertPoint(myEditor.getContentComponent(), point, myEditor.getScrollPane());
-
-    if (statusToolbar.getComponent().getBounds().contains(point)) {
-      System.out.println(System.identityHashCode(event) + ": hide toolbar");
-    }
+    updateToolbarVisibility();
   }
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
     myPopupManager.hidePopup();
+    updateToolbarVisibility();
+  }
+
+  @Override
+  public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
+    updateToolbarVisibility();
+  }
+
+  private void updateToolbarVisibility() {
+    VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
+    Point point = myEditor.visualPositionToXY(pos);
+    point = SwingUtilities.convertPoint(myEditor.getContentComponent(), point, myEditor.getScrollPane());
+
+    JComponent stComponent = statusToolbar.getComponent();
+    if (stComponent.isVisible()) {
+      Rectangle bounds = SwingUtilities.convertRectangle(stComponent, stComponent.getBounds(), myEditor.getScrollPane());
+
+      if (!bounds.isEmpty() && bounds.contains(point)) {
+        cachedToolbarBounds = bounds;
+        stComponent.setVisible(false);
+        statusIcon.setVisible(true);
+      }
+    }
+    else if (!cachedToolbarBounds.contains(point)) {
+      stComponent.setVisible(true);
+      statusIcon.setVisible(false);
+    }
   }
 
   private static AnAction findAction(@NotNull String id, @NotNull Icon icon) {
@@ -285,11 +334,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   public void repaintTrafficLightIcon() {
     if (myErrorStripeRenderer != null) {
       AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus(myEditor);
-      if (newStatus != analyzerStatus) {
+      if (!Objects.equals(newStatus, analyzerStatus)) {
         analyzerStatus = newStatus;
-
-        statusToolbar.getComponent().revalidate();
-        statusToolbar.getComponent().repaint();
+        statusIcon.setIcon(analyzerStatus.getIcon());
       }
     }
 
@@ -583,6 +630,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       Disposer.dispose((Disposable)myErrorStripeRenderer);
     }
 
+    statusToolbar.getComponent().removeComponentListener(toolbarComponentListener);
     ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(null);
 
     myErrorStripeRenderer = null;
@@ -1536,12 +1584,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private class StatusAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myPopupManager.showPopup(e);
+      myPopupManager.showPopup(e.getInputEvent());
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      Icon newIcon = analyzerStatus != null ? analyzerStatus.getIcon() : null;
+      Icon newIcon = analyzerStatus != null ? analyzerStatus.getExpandedIcon() : null;
       if (!Objects.equals(e.getPresentation().getIcon(), newIcon)) {
         e.getPresentation().setIcon(newIcon);
       }
@@ -1588,7 +1636,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private JBPopup myPopup;
     private JComponent myContent;
 
-    private void showPopup(AnActionEvent event) {
+    private void showPopup(InputEvent event) {
       hidePopup();
 
       if (myCurrentStatus != analyzerStatus) {
@@ -1605,7 +1653,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       myPopup = myPopupBuilder.createPopup();
 
-      JComponent owner = (JComponent)event.getInputEvent().getComponent();
+      JComponent owner = (JComponent)event.getComponent();
       Dimension size = myContent.getPreferredSize();
       size.width = Math.max(size.width, JBUIScale.scale(296));
 
