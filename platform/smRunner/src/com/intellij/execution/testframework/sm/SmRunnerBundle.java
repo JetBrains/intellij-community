@@ -22,11 +22,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class SMTestsRunnerBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.SMTestsRunnerBundle";
-  private static final SMTestsRunnerBundle INSTANCE = new SMTestsRunnerBundle();
+public class SmRunnerBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.SmRunnerBundle";
+  private static final SmRunnerBundle INSTANCE = new SmRunnerBundle();
 
-  private SMTestsRunnerBundle() { super(BUNDLE); }
+  private SmRunnerBundle() { super(BUNDLE); }
 
   @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
