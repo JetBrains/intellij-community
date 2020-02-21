@@ -13,12 +13,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
-import com.intellij.openapi.wm.StatusBarWidgetProvider
+import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
-import com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidget
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonIdeLanguageCustomization
 import com.jetbrains.python.sdk.PySdkPopupFactory
@@ -27,11 +27,21 @@ import com.jetbrains.python.sdk.PySdkPopupFactory.Companion.shortenNameInPopup
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.noInterpreterMarker
 
-class PySdkStatusBarWidgetProvider : StatusBarWidgetProvider {
-  override fun getWidget(project: Project): StatusBarWidget? =
-    if (PythonIdeLanguageCustomization.isMainlyPythonIde()) PySdkStatusBar(project) else null
+private const val pySdkWidgetId: String = "pythonInterpreterWidget"
 
-  override fun getAnchor(): String = StatusBar.Anchors.after(CodeStyleStatusBarWidget.WIDGET_ID)
+class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
+
+  override fun getId(): String = pySdkWidgetId
+
+  override fun getDisplayName(): String = PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name")
+
+  override fun isAvailable(project: Project): Boolean = PythonIdeLanguageCustomization.isMainlyPythonIde()
+
+  override fun createWidget(project: Project): StatusBarWidget = PySdkStatusBar(project)
+
+  override fun disposeWidget(widget: StatusBarWidget) = Disposer.dispose(widget)
+
+  override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 }
 
 class PySwitchSdkAction : DumbAwareAction("Switch Project Interpreter", null, null) {
@@ -82,7 +92,7 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
 
   override fun createPopup(context: DataContext): ListPopup? = module?.let { PySdkPopupFactory(project, it).createPopup(context) }
 
-  override fun ID(): String = "PythonInterpreter"
+  override fun ID(): String = pySdkWidgetId
 
   override fun createInstance(project: Project): StatusBarWidget = PySdkStatusBar(project)
 

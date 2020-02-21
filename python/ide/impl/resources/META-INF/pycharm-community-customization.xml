@@ -30,7 +30,7 @@
 
     <filetype.prebuiltStubsProvider filetype="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider"/>
 
-    <statusBarWidgetProvider implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetProvider"/>
+    <statusBarWidgetFactory implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"/>
 
     <projectConfigurable groupId="build"
                          id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
