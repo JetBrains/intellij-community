@@ -15,11 +15,11 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
-import com.intellij.find.FindBundle;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBUI;
 import org.intellij.plugins.xpathView.Config;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,10 +47,10 @@ public class ConfigUI extends JPanel {
         setLayout(new BorderLayout());
         JPanel c = this;
 
-        scrollToFirst = new JCheckBox(FindBundle.message("settings.scroll.first.hit.into.visible.area"));
+        scrollToFirst = new JCheckBox(XPathBundle.message("settings.scroll.first.hit.into.visible.area"));
         scrollToFirst.setMnemonic('S');
 
-        useContextAtCursor = new JCheckBox(FindBundle.message("settings.use.node.at.cursor.as.context.node"));
+        useContextAtCursor = new JCheckBox(XPathBundle.message("settings.use.node.at.cursor.as.context.node"));
         useContextAtCursor.setMnemonic('N');
         useContextAtCursor.addActionListener(new ActionListener() {
             @Override
@@ -59,21 +59,21 @@ public class ConfigUI extends JPanel {
             }
         });
 
-        highlightStartTagOnly = new JCheckBox(FindBundle.message("settings.highlight.only.start.tag.instead.of.whole.tag.content"));
+        highlightStartTagOnly = new JCheckBox(XPathBundle.message("settings.highlight.only.start.tag.instead.of.whole.tag.content"));
         highlightStartTagOnly.setMnemonic('H');
 
-        addErrorStripe = new JCheckBox(FindBundle.message("settings.add.error.stripe.markers.for.each.result"));
+        addErrorStripe = new JCheckBox(XPathBundle.message("settings.add.error.stripe.markers.for.each.result"));
         addErrorStripe.setMnemonic('A');
 
-        showInToolbar = new JCheckBox(FindBundle.message("settings.show.actions.in.toolbar"));
+        showInToolbar = new JCheckBox(XPathBundle.message("settings.show.actions.in.toolbar"));
         showInToolbar.setMnemonic('T');
-        showInToolbar.setToolTipText(FindBundle.message("settings.uncheck.to.remove.xpath-related.actions.from.the.toolbar"));
-        showInMainMenu = new JCheckBox(FindBundle.message("settings.show.actions.in.main.menu"));
+        showInToolbar.setToolTipText(XPathBundle.message("settings.uncheck.to.remove.xpath-related.actions.from.the.toolbar"));
+        showInMainMenu = new JCheckBox(XPathBundle.message("settings.show.actions.in.main.menu"));
         showInMainMenu.setMnemonic('M');
-        showInMainMenu.setToolTipText(FindBundle.message("settings.uncheck.to.remove.xpath.related.actions.from.the.main.menubar"));
+        showInMainMenu.setToolTipText(XPathBundle.message("settings.uncheck.to.remove.xpath.related.actions.from.the.main.menubar"));
 
         JPanel settings = new JPanel(new BorderLayout());
-        settings.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("settings.settings")));
+        settings.setBorder(IdeBorderFactory.createTitledBorder(XPathBundle.message("settings.settings")));
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.NORTH);
         c.add(settings, BorderLayout.NORTH);
 
@@ -91,7 +91,7 @@ public class ConfigUI extends JPanel {
         settings.add(/*settings = */new JPanel(new BorderLayout()), BorderLayout.SOUTH);
 
         JPanel colors = new JPanel(new GridBagLayout());
-        colors.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("settings.colors")));
+        colors.setBorder(IdeBorderFactory.createTitledBorder(XPathBundle.message("settings.colors")));
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.SOUTH);
         c.add(colors, BorderLayout.NORTH);
 
@@ -100,7 +100,7 @@ public class ConfigUI extends JPanel {
 
         GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, emptyInsets, 0, 0);
 
-        colors.add(new JLabel(FindBundle.message("settings.highlight.color")), constraints);
+        colors.add(new JLabel(XPathBundle.message("settings.highlight.color")), constraints);
         constraints.gridx = 1;
         constraints.weightx = 1;
 
@@ -112,7 +112,7 @@ public class ConfigUI extends JPanel {
         constraints.gridy = 1;
         constraints.weightx = 0;
         constraints.insets = emptyInsets;
-        colors.add(new JLabel(FindBundle.message("settings.context.node.color")), constraints);
+        colors.add(new JLabel(XPathBundle.message("settings.context.node.color")), constraints);
 
         constraints.gridx = 1;
         constraints.gridy = 1;

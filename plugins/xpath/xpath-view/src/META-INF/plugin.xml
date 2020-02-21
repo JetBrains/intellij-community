@@ -20,6 +20,7 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.xml</depends>
+  <resource-bundle>messages.XPathBundle</resource-bundle>
 
   <!-- wasn't sure if the plugin manager correctly handles dependent plugins -->
   <!--<depends>XPathLanguage</depends>-->
@@ -51,7 +52,7 @@
         serviceImplementation="org.intellij.lang.xpath.xslt.psi.impl.XsltElementFactoryImpl" />
 
     <projectConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" id="xslt.associations"
-                         bundle="messages.IdeBundle"
+                         bundle="messages.XPathBundle"
                          key="configurable.FileAssociationsConfigurable.display.name"
                          nonDefaultProject="true" />
 
@@ -133,10 +134,10 @@
     </intentionAction>
 
     <applicationConfigurable groupId="tools" instance="org.intellij.plugins.xpathView.XPathConfigurable" id="xpath.settings"
-                             bundle="messages.IdeBundle"
+                             bundle="messages.XPathBundle"
                              key="configurable.XPathConfigurable.display.name"/>
     <applicationConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" id="settings.xslt"
-                             bundle="messages.IdeBundle"
+                             bundle="messages.XPathBundle"
                              key="configurable.UIImpl.display.name"/>
 
     <fileIconPatcher implementation="org.intellij.lang.xpath.xslt.impl.XsltIconProvider"/>
