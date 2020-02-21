@@ -5,34 +5,19 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 
-internal class DirtBuilder() {
+internal class DirtBuilder {
   private val fileTypeManager = FileTypeManager.getInstance()
 
-  val filesForVcs = VcsDirtyScopeMap()
-  val dirsForVcs = VcsDirtyScopeMap()
+  private val scopesByVcs: MutableMap<AbstractVcs, VcsDirtyScopeImpl> = mutableMapOf()
   var isEverythingDirty: Boolean = false
 
-  constructor(builder: DirtBuilder) : this() {
-    filesForVcs.addAll(builder.filesForVcs)
-    dirsForVcs.addAll(builder.dirsForVcs)
-    isEverythingDirty = builder.isEverythingDirty
-  }
+  fun getScopes(): List<VcsDirtyScopeImpl> = scopesByVcs.values.toList()
+  fun isEmpty(): Boolean = scopesByVcs.isEmpty()
+  fun isFileDirty(filePath: FilePath): Boolean = isEverythingDirty || scopesByVcs.values.any { it.belongsTo(filePath) }
 
-  fun isEmpty(): Boolean = filesForVcs.isEmpty() && dirsForVcs.isEmpty()
-
-  fun reset() {
-    filesForVcs.clear()
-    dirsForVcs.clear()
-    isEverythingDirty = false
-  }
-
-  fun addDirtyFile(vcs: AbstractVcs, file: FilePath) {
-    if (fileTypeManager.isFileIgnored(file.name)) return
-    filesForVcs.add(vcs, file)
-  }
-
-  fun addDirtyDirRecursively(vcs: AbstractVcs, dir: FilePath) {
-    if (fileTypeManager.isFileIgnored(dir.name)) return
-    dirsForVcs.add(vcs, dir)
+  fun addDirtyFile(vcs: AbstractVcs, filePath: FilePath, recursively: Boolean) {
+    if (fileTypeManager.isFileIgnored(filePath.name)) return
+    val scope = scopesByVcs.computeIfAbsent(vcs) { VcsDirtyScopeImpl(it) }
+    scope.addDirtyPathFast(filePath, recursively)
   }
 }

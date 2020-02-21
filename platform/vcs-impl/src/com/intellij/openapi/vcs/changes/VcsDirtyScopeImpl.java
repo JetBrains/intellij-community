@@ -110,39 +110,44 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     return result;
   }
 
-  public void addDirtyData(@NotNull Collection<? extends FilePath> dirs, @NotNull Collection<? extends FilePath> files) {
-    Map<VirtualFile, RecursiveFilePathSet> perRootDirs = new HashMap<>(); // recursive
-    Map<VirtualFile, THashSet<FilePath>> perRootFiles = new HashMap<>(); // non-recursive
+  /**
+   * Add file path into the sets, without removing potential duplicates.
+   * See {@link #pack()}, that will be called later to perform this optimization.
+   * <p>
+   * Use {@link #addDirtyFile} / {@link #addDirtyDirRecursively} to add file path and remove duplicates.
+   */
+  public void addDirtyPathFast(@NotNull FilePath filePath, boolean recursively) {
+    final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(filePath);
+    if (vcsRoot == null) return;
+    myAffectedContentRoots.add(vcsRoot);
 
-    for (Map.Entry<VirtualFile, RecursiveFilePathSet> entry : myDirtyDirectoriesRecursively.entrySet()) {
-      perRootDirs.put(entry.getKey(), entry.getValue());
-    }
-    for (Map.Entry<VirtualFile, THashSet<FilePath>> entry : myDirtyFiles.entrySet()) {
-      perRootFiles.put(entry.getKey(), entry.getValue());
-    }
+    RecursiveFilePathSet dirsByRoot = myDirtyDirectoriesRecursively.get(vcsRoot);
+    if (dirsByRoot != null && dirsByRoot.hasAncestor(filePath)) return;
 
-    for (FilePath dir : dirs) {
-      VirtualFile vcsRoot = myVcsManager.getVcsRootFor(dir);
-      if (vcsRoot != null) {
-        RecursiveFilePathSet pathsSet = perRootDirs.computeIfAbsent(vcsRoot, key -> newRecursiveFilePathSet());
-        pathsSet.add(dir);
+    if (recursively) {
+      if (dirsByRoot == null) {
+        dirsByRoot = newRecursiveFilePathSet();
+        myDirtyDirectoriesRecursively.put(vcsRoot, dirsByRoot);
       }
+      dirsByRoot.add(filePath);
     }
-    for (FilePath dir : files) {
-      VirtualFile vcsRoot = myVcsManager.getVcsRootFor(dir);
-      if (vcsRoot != null) {
-        THashSet<FilePath> pathsSet = perRootFiles.computeIfAbsent(vcsRoot, key -> newFilePathsSet());
-        pathsSet.add(dir);
+    else {
+      THashSet<FilePath> dirtyFiles = myDirtyFiles.get(vcsRoot);
+      if (dirtyFiles == null) {
+        dirtyFiles = newFilePathsSet();
+        myDirtyFiles.put(vcsRoot, dirtyFiles);
       }
+      dirtyFiles.add(filePath);
     }
+  }
 
-    myAffectedContentRoots.addAll(perRootDirs.keySet());
-    myAffectedContentRoots.addAll(perRootFiles.keySet());
-
-
+  /**
+   * Remove potential duplicates from the sets.
+   */
+  public void pack() {
     for (VirtualFile root : myAffectedContentRoots) {
-      RecursiveFilePathSet rootDirs = perRootDirs.get(root);
-      Set<FilePath> rootFiles = notNullize(perRootFiles.get(root));
+      RecursiveFilePathSet rootDirs = myDirtyDirectoriesRecursively.get(root);
+      Set<FilePath> rootFiles = notNullize(myDirtyFiles.get(root));
 
       RecursiveFilePathSet filteredDirs = removeAncestorsRecursive(rootDirs);
       THashSet<FilePath> filteredFiles = removeAncestorsNonRecursive(filteredDirs, rootFiles);

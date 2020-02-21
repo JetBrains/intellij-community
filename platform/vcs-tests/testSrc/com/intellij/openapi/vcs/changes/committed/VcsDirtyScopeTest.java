@@ -21,7 +21,10 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author irengrig
@@ -84,8 +87,10 @@ public class VcsDirtyScopeTest extends FileBasedTest {
 
     final VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(new MockAbstractVcs(myProject));
 
-    scope.addDirtyData(Arrays.asList(VcsUtil.getFilePath(data.dir1), VcsUtil.getFilePath(data.dir2)),
-                       Collections.singletonList(VcsUtil.getFilePath(data.baseDir)));
+    scope.addDirtyPathFast(VcsUtil.getFilePath(data.dir1), true);
+    scope.addDirtyPathFast(VcsUtil.getFilePath(data.dir2), true);
+    scope.addDirtyPathFast(VcsUtil.getFilePath(data.baseDir), false);
+    scope.pack();
     final Set<FilePath> dirtyDirs = scope.getRecursivelyDirtyDirectories();
     final Set<FilePath> dirtyFiles = scope.getDirtyFilesNoExpand();
 
