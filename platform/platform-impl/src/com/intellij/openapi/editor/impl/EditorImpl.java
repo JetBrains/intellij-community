@@ -148,7 +148,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final FocusModeModel myFocusModeModel;
   private volatile long myLastTypedActionTimestamp = -1;
   private String myLastTypedAction;
-  private final LatencyListener myLatencyPublisher;
+  private LatencyListener myLatencyPublisher;
 
   private static final Cursor EMPTY_CURSOR;
   private final Map<Object, Cursor> myCustomCursors = new LinkedHashMap<>();
@@ -542,8 +542,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
-
-    myLatencyPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(LatencyListener.TOPIC);
   }
 
   public void applyFocusMode() {
@@ -3408,10 +3406,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void measureTypingLatency() {
-    if (myLastTypedActionTimestamp != -1) {
-      myLatencyPublisher.recordTypingLatency(this, myLastTypedAction, System.currentTimeMillis() - myLastTypedActionTimestamp);
-      myLastTypedActionTimestamp = -1;
+    if (myLastTypedActionTimestamp == -1) {
+      return;
     }
+
+    LatencyListener latencyPublisher = myLatencyPublisher;
+    if (latencyPublisher == null) {
+      latencyPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(LatencyListener.TOPIC);
+      myLatencyPublisher = latencyPublisher;
+    }
+
+    latencyPublisher.recordTypingLatency(this, myLastTypedAction, System.currentTimeMillis() - myLastTypedActionTimestamp);
+    myLastTypedActionTimestamp = -1;
   }
 
   public boolean isProcessingTypedAction() {

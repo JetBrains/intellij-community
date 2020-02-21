@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.performance
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.LatencyListener
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
@@ -9,11 +8,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import gnu.trove.TIntArrayList
 
-/**
- * @author yole
- */
-
-class LatencyRecorderImpl : LatencyRecorder {
+private class LatencyRecorderImpl : LatencyRecorder {
   override fun recordLatencyAwareAction(editor: Editor, actionId: String, timestampMs: Long) {
     (editor as? EditorImpl)?.recordLatencyAwareAction(actionId, timestampMs)
   }
@@ -34,7 +29,8 @@ class LatencyRecord {
     }
   }
 
-  val averageLatency: Long get() = totalLatency / samples.size()
+  val averageLatency: Long
+    get() = totalLatency / samples.size()
 
   fun percentile(n: Int): Int {
     if (!samplesSorted) {
@@ -66,12 +62,7 @@ var currentLatencyRecordKey: LatencyDistributionRecordKey? = null
 
 val latencyRecorderProperties: MutableMap<String, String> = mutableMapOf()
 
-class LatenciometerListener : LatencyListener {
-
-  init {
-    ApplicationManager.getApplication().messageBus.connect().subscribe(LatencyListener.TOPIC, this)
-  }
-
+private class LatenciometerListener : LatencyListener {
   override fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
     val key = currentLatencyRecordKey ?: run {
       val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
@@ -84,8 +75,8 @@ class LatenciometerListener : LatencyListener {
   }
 }
 
-fun getActionKey(action: String): String =
-  if (action.length == 1) {
+private fun getActionKey(action: String): String {
+  return if (action.length == 1) {
     when(action[0]) {
       in 'A'..'Z', in 'a'..'z', in '0'..'9' -> "Letter"
       ' ' -> "Space"
@@ -94,4 +85,5 @@ fun getActionKey(action: String): String =
     }
   }
   else action
+}
 

@@ -10,9 +10,6 @@
       <implementation-class>com.intellij.ide.ui.laf.LafManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.ide.ui.laf.HeadlessLafManagerImpl</headless-implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.internal.performance.LatenciometerListener</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
