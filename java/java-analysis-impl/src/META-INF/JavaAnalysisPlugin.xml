@@ -145,7 +145,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="InstanceGuardedByStatic" displayName="Instance member guarded by static field"
                      groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.concurrencyAnnotations.InstanceGuardedByStaticInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="FieldAccessNotGuarded" displayName="Unguarded field access" groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="FieldAccessNotGuarded" displayName="Unguarded field access or method call" groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.concurrencyAnnotations.FieldAccessNotGuardedInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="DuplicateThrows" bundle="messages.JavaAnalysisBundle" key="inspection.duplicate.throws.display.name"
