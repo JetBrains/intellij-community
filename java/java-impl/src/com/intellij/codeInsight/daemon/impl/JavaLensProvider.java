@@ -6,10 +6,7 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaLensSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaTelescope;
 import com.intellij.codeInsight.hints.*;
-import com.intellij.codeInsight.hints.presentation.InlayPresentation;
-import com.intellij.codeInsight.hints.presentation.PresentationFactory;
-import com.intellij.codeInsight.hints.presentation.SequencePresentation;
-import com.intellij.codeInsight.hints.presentation.SpacePresentation;
+import com.intellij.codeInsight.hints.presentation.*;
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.lang.Language;
@@ -18,7 +15,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.SmartList;
@@ -26,7 +22,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
@@ -36,7 +31,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
   private static final SettingsKey<JavaLensSettings> KEY = new SettingsKey<>("JavaLens");
 
   public interface InlResult {
-    void onClick(@NotNull Editor editor, @NotNull PsiElement element);
+    void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event);
 
     @NotNull
     String getRegularText();
@@ -61,7 +56,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
           if (usagesHint != null) {
             hints.add(new InlResult() {
               @Override
-              public void onClick(@NotNull Editor editor, @NotNull PsiElement element) {
+              public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
                 GotoDeclarationAction.startFindUsages(editor, file.getProject(), element);
               }
 
@@ -79,9 +74,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
             if (inheritors != 0) {
               hints.add(new InlResult() {
                 @Override
-                public void onClick(@NotNull Editor editor, @NotNull PsiElement element) {
-                  Point point = JBPopupFactory.getInstance().guessBestPopupLocation(editor).getScreenPoint();
-                  MouseEvent event = new MouseEvent(new JLabel(), 0, 0, 0, point.x, point.y, 0, false);
+                public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.SUBCLASSED_CLASS.getNavigationHandler();
                   navigationHandler.navigate(event, ((PsiClass)element).getNameIdentifier());
                 }
@@ -100,9 +93,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
             if (overridings != 0) {
               hints.add(new InlResult() {
                 @Override
-                public void onClick(@NotNull Editor editor, @NotNull PsiElement element) {
-                  Point point = JBPopupFactory.getInstance().guessBestPopupLocation(editor).getScreenPoint();
-                  MouseEvent event = new MouseEvent(new JLabel(), 0, 0, 0, point.x, point.y, 0, false);
+                public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.OVERRIDDEN_METHOD.getNavigationHandler();
                   navigationHandler.navigate(event, ((PsiMethod)element).getNameIdentifier());
                 }
@@ -133,14 +124,47 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
             presentations.add(new SpacePresentation(columnWidth, 0));
           }
           SequencePresentation shiftedPresentation = new SequencePresentation(presentations);
-          InlayPresentation withSettingsAppearing = factory.changeOnHover(shiftedPresentation, () -> {
-            return factory.seq(shiftedPresentation, settings(factory, element, editor));
-          }, e -> true);
+          SpacePresentation placeholder = new SpacePresentation(columnWidth * 5, 0);
+          InlayPresentation withSettingsAppearing = createTopLevelPresentation(factory,
+                                                                               shiftedPresentation,
+                                                                               settings(factory, element, editor),
+                                                                               placeholder);
           sink.addBlockElement(startOffset, true, true, BlockInlayPriority.CODE_VISION, withSettingsAppearing);
         }
         return true;
       }
     };
+  }
+
+  private static InlayPresentation createTopLevelPresentation(@NotNull PresentationFactory factory,
+                                                              @NotNull InlayPresentation shifted,
+                                                              @NotNull InlayPresentation settings,
+                                                              @NotNull InlayPresentation settingsPlaceholder) {
+    BiStatePresentation settingsOrPlaceholder = new BiStatePresentation(() -> settings, () -> settingsPlaceholder, false) {
+      @Override
+      public int getWidth() {
+        return Math.max(settings.getWidth(), settingsPlaceholder.getWidth());
+      }
+
+      @Override
+      public int getHeight() {
+        return Math.max(settings.getHeight(), settingsPlaceholder.getHeight());
+      }
+    };
+
+    InlayPresentation withoutHover = factory.seq(shifted, settingsOrPlaceholder);
+
+    return factory.onHover(withoutHover, new InlayPresentationFactory.HoverListener() {
+      @Override
+      public void onHover(@NotNull MouseEvent event, @NotNull Point translated) {
+        settingsOrPlaceholder.setFirst();
+      }
+
+      @Override
+      public void onHoverFinished() {
+        settingsOrPlaceholder.setSecond();
+      }
+    });
   }
 
   private static int getAnchorOffset(PsiElement element) {
@@ -162,8 +186,8 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
 
     InlayPresentation text = factory.smallText(result.getRegularText());
 
-    return factory.referenceOnHover(text, () -> {
-      result.onClick(editor, element);
+    return factory.referenceOnHover(text, (event, translated) -> {
+      result.onClick(editor, element, event);
     });
   }
 
@@ -173,7 +197,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
                                             @NotNull Editor editor) {
     return createPresentation(factory, element, editor, new InlResult() {
       @Override
-      public void onClick(@NotNull Editor editor, @NotNull PsiElement element) {
+      public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
         Project project = element.getProject();
         InlayHintsConfigurable.showSettingsDialogForLanguage(project, element.getLanguage());
       }
