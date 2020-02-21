@@ -46,6 +46,7 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * This class hides internal structure of UI component which represent
@@ -106,22 +107,22 @@ public class EditorComposite implements Disposable {
     myProviders = providers;
     if (ArrayUtil.contains(null, editors)) throw new IllegalArgumentException("Must not pass null editors in " + Arrays.asList(editors));
     myFileEditorManager = fileEditorManager;
-    myInitialFileTimeStamp     = myFile.getTimeStamp();
+    myInitialFileTimeStamp = myFile.getTimeStamp();
 
     Project project = fileEditorManager.getProject();
     Disposer.register(project, this);
 
-    if(editors.length > 1){
+    if (editors.length > 1) {
       myTabbedPaneWrapper = createTabbedPaneWrapper(editors);
       JComponent component = myTabbedPaneWrapper.getComponent();
-      myComponent = new MyComponent(component, component);
+      myComponent = new MyComponent(component, () -> component);
     }
-    else if(editors.length==1){
-      myTabbedPaneWrapper=null;
+    else if (editors.length == 1) {
+      myTabbedPaneWrapper = null;
       FileEditor editor = editors[0];
-      myComponent = new MyComponent(createEditorComponent(editor), editor.getPreferredFocusedComponent());
+      myComponent = new MyComponent(createEditorComponent(editor), editor::getPreferredFocusedComponent);
     }
-    else{
+    else {
       throw new IllegalArgumentException("editors array cannot be empty");
     }
 
@@ -453,10 +454,10 @@ public class EditorComposite implements Disposable {
   }
 
   private class MyComponent extends JPanel implements DataProvider{
-    @Nullable
-    private JComponent myFocusComponent;
+    @NotNull
+    private Supplier<JComponent> myFocusComponent;
 
-    MyComponent(@NotNull JComponent realComponent, @Nullable JComponent focusComponent){
+    MyComponent(@NotNull JComponent realComponent, @NotNull Supplier<JComponent> focusComponent) {
       super(new BorderLayout());
       myFocusComponent = focusComponent;
       add(realComponent, BorderLayout.CENTER);
@@ -464,24 +465,28 @@ public class EditorComposite implements Disposable {
 
     void setComponent(JComponent newComponent) {
       add(newComponent, BorderLayout.CENTER);
-      myFocusComponent = newComponent;
+      myFocusComponent = () -> newComponent;
     }
 
     @Override
     public boolean requestFocusInWindow() {
-      return myFocusComponent != null && myFocusComponent.requestFocusInWindow();
+      JComponent focusComponent = myFocusComponent.get();
+      return focusComponent != null && focusComponent.requestFocusInWindow();
     }
 
     @Override
     public void requestFocus() {
-      if (myFocusComponent != null) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myFocusComponent, true));
+      JComponent focusComponent = myFocusComponent.get();
+      if (focusComponent != null) {
+        IdeFocusManager.getGlobalInstance()
+          .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(focusComponent, true));
       }
     }
 
     @Override
     public boolean requestDefaultFocus() {
-      return myFocusComponent != null && myFocusComponent.requestDefaultFocus();
+      JComponent focusComponent = myFocusComponent.get();
+      return focusComponent != null && focusComponent.requestDefaultFocus();
     }
 
     @Override
