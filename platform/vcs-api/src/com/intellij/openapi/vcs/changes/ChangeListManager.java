@@ -30,7 +30,9 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @deprecated use {@link #scheduleUpdate()}
    */
   @Deprecated
-  public abstract void scheduleUpdate(boolean updateUnversionedFiles);
+  public void scheduleUpdate(boolean updateUnversionedFiles) {
+    scheduleUpdate();
+  }
 
 
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,

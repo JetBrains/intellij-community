@@ -433,11 +433,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     myUpdater.schedule();
   }
 
-  @Override
-  public void scheduleUpdate(boolean updateUnversionedFiles) {
-    myUpdater.schedule();
-  }
-
   private void updateImmediately() {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (!vcsManager.hasActiveVcss()) return;
