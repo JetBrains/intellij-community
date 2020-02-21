@@ -38,10 +38,7 @@ class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<
     })
     EditorUtil.disposeWithEditor(editor, listenerDisposable)
 
-    for (range in commentableRanges.value) {
-      markCommentableLines(range)
-    }
-    commentableRanges.addValueChangedListener {
+    commentableRanges.addAndInvokeValueChangedListener {
       for (range in commentableRanges.value) {
         markCommentableLines(range)
       }
