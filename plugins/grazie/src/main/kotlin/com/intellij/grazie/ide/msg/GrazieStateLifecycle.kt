@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.msg
 
-import com.intellij.application.subscribe
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection
@@ -15,15 +14,18 @@ import com.intellij.util.messages.Topic
 interface GrazieStateLifecycle {
   companion object {
     val topic = Topic.create("grazie_state_lifecycle_topic", GrazieStateLifecycle::class.java)
-    val publisher by lazy { ApplicationManager.getApplication().messageBus.syncPublisher(topic) }
+    val publisher by lazy {
+      ApplicationManager.getApplication().messageBus.syncPublisher(topic)
+    }
 
     init {
-      topic.subscribe(ApplicationManager.getApplication(), LangTool)
-      topic.subscribe(ApplicationManager.getApplication(), LangDetector)
-      topic.subscribe(ApplicationManager.getApplication(), GrazieSpellchecker)
-      topic.subscribe(ApplicationManager.getApplication(), GrazieCommitInspection)
-      topic.subscribe(ApplicationManager.getApplication(), GrazieInspection)
-      topic.subscribe(ApplicationManager.getApplication(), LanguageDetectionInspection)
+      val connection = ApplicationManager.getApplication().messageBus.connect()
+      connection.subscribe(topic, LangTool)
+      connection.subscribe(topic, LangDetector)
+      connection.subscribe(topic, GrazieSpellchecker)
+      connection.subscribe(topic, GrazieCommitInspection)
+      connection.subscribe(topic, GrazieInspection)
+      connection.subscribe(topic, LanguageDetectionInspection)
     }
   }
 

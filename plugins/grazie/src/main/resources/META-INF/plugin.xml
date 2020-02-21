@@ -19,14 +19,14 @@
     <p><strong>NOTE:</strong> All verification is performed locally, inside your IDE.</p>
     ]]></description>
 
-  <depends optional="true" config-file="java.xml">com.intellij.modules.java</depends>
+  <depends optional="true" config-file="grazie-java.xml">com.intellij.modules.java</depends>
   <depends optional="true" config-file="javascript.xml">JavaScript</depends>
-  <depends optional="true" config-file="json.xml">com.intellij.modules.json</depends>
-  <depends optional="true" config-file="markdown.xml">org.intellij.plugins.markdown</depends>
+  <depends optional="true" config-file="grazie-json.xml">com.intellij.modules.json</depends>
+  <depends optional="true" config-file="grazie-markdown.xml">org.intellij.plugins.markdown</depends>
   <depends optional="true" config-file="properties.xml">com.intellij.properties</depends>
-  <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
-  <depends optional="true" config-file="xml.xml">com.intellij.modules.xml</depends>
-  <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
+  <depends optional="true" config-file="grazie-python.xml">com.intellij.modules.python</depends>
+  <depends optional="true" config-file="grazie-xml.xml">com.intellij.modules.xml</depends>
+  <depends optional="true" config-file="grazie-yaml.xml">org.jetbrains.plugins.yaml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.grazie.GrazieConfig"/>

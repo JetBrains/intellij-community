@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.Activity;
@@ -15,7 +15,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 
 import java.util.concurrent.Executor;
@@ -38,7 +38,7 @@ final class Preloader implements ApplicationInitializedListener {
 
     myIndicator = new ProgressIndicatorBase();
     Disposer.register(app, () -> myIndicator.cancel());
-    myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Preloader Pool");
+    myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Preloader Pool", 1);
     myWrappingIndicator = new AbstractProgressIndicatorBase() {
       @Override
       public void checkCanceled() {
@@ -61,7 +61,6 @@ final class Preloader implements ApplicationInitializedListener {
 
   @Override
   public void componentsInitialized() {
-    ProgressManager progressManager = ProgressManager.getInstance();
     PreloadingActivity.EP_NAME.processWithPluginDescriptor((activity, descriptor) -> {
       myExecutor.execute(() -> {
         if (myIndicator.isCanceled()) {
@@ -73,7 +72,7 @@ final class Preloader implements ApplicationInitializedListener {
           return;
         }
 
-        progressManager.runProcess(() -> {
+        ProgressManager.getInstance().runProcess(() -> {
           Activity measureActivity = StartUpMeasurer.startActivity(activity.getClass().getName(), ActivityCategory.PRELOAD_ACTIVITY,
                                                                    descriptor.getPluginId().getIdString());
           try {
@@ -82,7 +81,10 @@ final class Preloader implements ApplicationInitializedListener {
           catch (ProcessCanceledException ignore) {
             return;
           }
-          measureActivity.end();
+          finally {
+            measureActivity.end();
+          }
+
           if (LOG.isDebugEnabled()) {
             LOG.debug(activity.getClass().getName() + " finished");
           }

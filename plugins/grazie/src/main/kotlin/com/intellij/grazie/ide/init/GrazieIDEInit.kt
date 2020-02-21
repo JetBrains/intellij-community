@@ -6,7 +6,7 @@ import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.progress.ProgressIndicator
 
-open class GrazieIDEInit : PreloadingActivity() {
+private class GrazieIDEInit : PreloadingActivity() {
   override fun preload(indicator: ProgressIndicator) {
     GrazieStateLifecycle.publisher.init(GrazieConfig.get())
   }

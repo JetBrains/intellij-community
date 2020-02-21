@@ -10,12 +10,11 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.vcs.commit.message.BaseCommitMessageInspection
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile
 
 class GrazieCommitInspection : BaseCommitMessageInspection() {
-  companion object : GrazieStateLifecycle, StartupActivity.Background {
+  companion object : GrazieStateLifecycle {
     private const val TOOL_SHORT_NAME = "GrazieCommit"
     private val grazie: LocalInspectionTool by lazy { GrazieInspection() }
 
@@ -27,7 +26,7 @@ class GrazieCommitInspection : BaseCommitMessageInspection() {
       }
     }
 
-    override fun runActivity(project: Project) = updateInspectionState(project)
+    //override fun runActivity(project: Project) = updateInspectionState(project)
 
     private fun updateInspectionState(project: Project, state: GrazieConfig.State = GrazieConfig.get()) {
       with(CommitMessageInspectionProfile.getInstance(project)) {

@@ -19,7 +19,7 @@ import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 
-class LanguageDetectionInspection : LocalInspectionTool() {
+internal class LanguageDetectionInspection : LocalInspectionTool() {
   companion object : GrazieStateLifecycle {
     private val key = KeyWithDefaultValue.create("language-detection-inspection-key", DetectionContext.Local())
 
