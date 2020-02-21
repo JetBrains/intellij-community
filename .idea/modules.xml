@@ -446,6 +446,8 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/compose-ide-plugin/intellij.android.compose-ide-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/compose-ide-plugin/intellij.android.compose-ide-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/intellij.android.core.iml" filepath="$PROJECT_DIR$/../adt/idea/android/intellij.android.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/intellij.android.core.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android/intellij.android.core.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/dagger/intellij.android.dagger.iml" filepath="$PROJECT_DIR$/../adt/idea/dagger/intellij.android.dagger.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/dagger/intellij.android.dagger.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/dagger/intellij.android.dagger.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/databinding/intellij.android.databinding.iml" filepath="$PROJECT_DIR$/../adt/idea/databinding/intellij.android.databinding.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/databinding/intellij.android.databinding.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/databinding/intellij.android.databinding.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-debuggers/intellij.android.debuggers.iml" filepath="$PROJECT_DIR$/../adt/idea/android-debuggers/intellij.android.debuggers.iml" />

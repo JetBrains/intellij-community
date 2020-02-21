@@ -120,6 +120,8 @@ iml_project(
         "//tools/adt/idea/compose-ide-plugin:intellij.android.compose-ide-plugin",
         "//tools/adt/idea/connection-assistant",
         "//tools/adt/idea/connection-assistant:connection-assistant-test",
+        "//tools/adt/idea/dagger:intellij.android.dagger",
+        "//tools/adt/idea/dagger:intellij.android.dagger.tests",
         "//tools/adt/idea/databinding:intellij.android.databinding",
         "//tools/adt/idea/databinding:intellij.android.databinding.tests",
         "//tools/adt/idea/deploy:intellij.android.deploy",
