@@ -17,6 +17,7 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.JBFont
@@ -30,6 +31,8 @@ import java.beans.PropertyChangeListener
 import java.util.*
 import javax.swing.*
 import javax.swing.border.Border
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.roundToInt
 
 abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
@@ -75,6 +78,13 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         private fun createFrameHeader(frame: JFrame): DefaultFrameHeader = DefaultFrameHeader(frame)
         @JvmStatic
         fun createMainFrameHeader(frame: JFrame, delegatingMenuBar: IdeMenuBar?): MainFrameHeader = MainFrameHeader(frame, delegatingMenuBar)
+
+        private val borderThicknessInPhysicalPx: Int = run {
+            // Windows 10 (tested on 1809) determines the window border size by the main display scaling, rounded down. This value is
+            // calculated once on desktop session start, so it should be okay to store once per IDE session.
+            val scale = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration.defaultTransform.scaleY
+            floor(scale).toInt()
+        }
     }
 
     private var windowListener: WindowAdapter
@@ -261,11 +271,12 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     }
 
     inner class CustomFrameTopBorder(val isTopNeeded: ()-> Boolean = {true}, val isBottomNeeded: ()-> Boolean = {false}) : Border {
-        val thickness = 1
 
-        // In reality, Windows uses alpha-blending with alpha=0.34 by default, but we have no (easy) way of doing the same, so let's just
-        // use the value without alpha. Unfortunately, DWM doesn't offer an API to determine this value.
-        private val defaultActiveBorder = Color(0x262626)
+        // In reality, Windows uses #262626 with alpha-blending with alpha=0.34, but we have no (easy) way of doing the same, so let's just
+        // use the value on white background (since it is most noticeable on white).
+        //
+        // Unfortunately, DWM doesn't offer an API to determine this value, so it has to be hardcoded here.
+        private val defaultActiveBorder = Color(0x707070)
         private val inactiveColor = Color(0xaaaaaa)
 
         private val menuBarBorderColor: Color = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
@@ -315,6 +326,10 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
         }
 
+        private fun calculateBorderThicknessInLogicalPx(): Double {
+            return borderThicknessInPhysicalPx.toDouble() / JBUIScale.sysScale(window)
+        }
+
         private val listeners = mutableListOf<Pair<String, PropertyChangeListener>>()
         private inline fun listenForPropertyChanges(vararg propertyNames: String, crossinline action: () -> Unit) {
             val toolkit = Toolkit.getDefaultToolkit()
@@ -348,7 +363,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         fun repaintBorder() {
             val borderInsets = getBorderInsets(this@CustomHeader)
 
-            repaint(0, 0, width, thickness)
+            val thickness = calculateBorderThicknessInLogicalPx()
+            repaint(0, 0, width, ceil(thickness).toInt())
             repaint(0, height - borderInsets.bottom, width, borderInsets.bottom)
         }
 
@@ -360,22 +376,24 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
 
         override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+            val thickness = calculateBorderThicknessInLogicalPx()
             if (isTopNeeded() && shouldDrawTopBorder) {
                 g.color = if (myActive) activeColor else inactiveColor
-                LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble())
+                LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble(), LinePainter2D.StrokeType.CENTERED, thickness)
             }
 
             if (isBottomNeeded()) {
                 g.color = menuBarBorderColor
-                val y1 = y + height - JBUI.scale(thickness)
-                LinePainter2D.paint(g as Graphics2D, x.toDouble(), y1.toDouble(), width.toDouble(), y1.toDouble())
+                val y1 = y + height - thickness
+                LinePainter2D.paint(g as Graphics2D, x.toDouble(), y1, width.toDouble(), y1, LinePainter2D.StrokeType.CENTERED, thickness)
             }
         }
 
         override fun getBorderInsets(c: Component): Insets {
-            val scale = JBUI.scale(thickness)
-            val top = if (isTopNeeded() && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF())) thickness else 0
-            return Insets(top, 0, if (isBottomNeeded()) scale else 0, 0)
+            val thickness = calculateBorderThicknessInLogicalPx()
+            val top = if (isTopNeeded() && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF())) ceil(thickness).toInt() else 0
+            val bottom = if (isBottomNeeded()) ceil(thickness).toInt() else 0
+            return Insets(top, 0, bottom, 0)
         }
 
         override fun isBorderOpaque(): Boolean {
