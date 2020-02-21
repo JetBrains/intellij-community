@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
             hints.add(new InlResult() {
               @Override
               public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
-                GotoDeclarationAction.startFindUsages(editor, file.getProject(), element);
+                GotoDeclarationAction.startFindUsages(editor, file.getProject(), element, new RelativePoint(event));
               }
 
               @NotNull
