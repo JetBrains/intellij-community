@@ -61,6 +61,10 @@ interface InlayPresentationFactory {
     fun onHoverFinished()
   }
 
+  interface ClickListener {
+    fun onClick(event: MouseEvent, translated: Point)
+  }
+
 
   data class Padding(
     val left: Int,
