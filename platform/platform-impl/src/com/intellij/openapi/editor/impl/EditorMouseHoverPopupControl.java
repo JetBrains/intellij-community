@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -18,10 +19,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * and quick documentation on mouse hover are impacted). If several requests to disable popups have been performed, corresponding number of
  * enabling requests must be performed to turn on hover popups again.
  */
-public class EditorMouseHoverPopupControl {
+@Service
+public final class EditorMouseHoverPopupControl {
   private static final Logger LOG = Logger.getInstance(EditorMouseHoverPopupControl.class);
   private static final Key<Integer> MOUSE_TRACKING_DISABLED_COUNT = Key.create("MOUSE_TRACKING_DISABLED_COUNT");
-  private final Collection<Runnable> ourListeners = new CopyOnWriteArrayList<>();
+
+  private final Collection<Runnable> listeners = new CopyOnWriteArrayList<>();
+
+  public static EditorMouseHoverPopupControl getInstance() {
+    return ApplicationManager.getApplication().getService(EditorMouseHoverPopupControl.class);
+  }
 
   public static void disablePopups(@NotNull Editor editor) {
     setTrackingDisabled(editor, true);
@@ -59,7 +66,7 @@ public class EditorMouseHoverPopupControl {
     if ((userData == null) != (count == 0)) {
       EditorMouseHoverPopupControl instance = getInstance();
       if (instance != null) {
-        instance.ourListeners.forEach(Runnable::run);
+        instance.listeners.forEach(Runnable::run);
       }
     }
   }
@@ -72,11 +79,7 @@ public class EditorMouseHoverPopupControl {
            project != null && project.getUserData(MOUSE_TRACKING_DISABLED_COUNT) != null;
   }
 
-  public static EditorMouseHoverPopupControl getInstance() {
-    return ApplicationManager.getApplication().getComponent(EditorMouseHoverPopupControl.class);
-  }
-
   public void addListener(@NotNull Runnable listener) {
-    ourListeners.add(listener);
+    listeners.add(listener);
   }
 }
