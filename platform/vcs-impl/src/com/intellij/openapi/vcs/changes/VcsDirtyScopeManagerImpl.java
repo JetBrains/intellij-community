@@ -41,6 +41,11 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   private boolean myReady;
   private final Object LOCK = new Object();
 
+  @NotNull
+  public static VcsDirtyScopeManagerImpl getInstanceImpl(@NotNull Project project) {
+    return ((VcsDirtyScopeManagerImpl)getInstance(project));
+  }
+
   public VcsDirtyScopeManagerImpl(@NotNull Project project) {
     myProject = project;
 
@@ -203,17 +208,28 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     filePathsDirty(null, Collections.singleton(path));
   }
 
-  @Override
+  /**
+   * Take current dirty scope into processing.
+   * Should call {@link #changesProcessed} when done to notify {@link #whatFilesDirty} that scope is no longer dirty.
+   */
   @Nullable
   public VcsInvalidated retrieveScopes() {
     DirtBuilder dirtBuilder;
     synchronized (LOCK) {
       if (!myReady) return null;
+      LOG.assertTrue(myDirtInProgress == null);
+
       dirtBuilder = myDirtBuilder;
       myDirtInProgress = dirtBuilder;
       myDirtBuilder = new DirtBuilder();
     }
     return calculateInvalidated(dirtBuilder);
+  }
+
+  public void changesProcessed() {
+    synchronized (LOCK) {
+      myDirtInProgress = null;
+    }
   }
 
   @NotNull
@@ -237,13 +253,6 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     }
 
     return new VcsInvalidated(scopes, isEverythingDirty);
-  }
-
-  @Override
-  public void changesProcessed() {
-    synchronized (LOCK) {
-      myDirtInProgress = null;
-    }
   }
 
   @NotNull
@@ -289,7 +298,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   static final class MyStartupActivity implements VcsStartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      ((VcsDirtyScopeManagerImpl)getInstance(project)).startListenForChanges();
+      getInstanceImpl(project).startListenForChanges();
     }
 
     @Override
