@@ -39,7 +39,7 @@ public class CacheUpdateRunner {
   public static final int DEFAULT_MAX_INDEXER_THREADS = 4;
 
   public static void processFiles(@NotNull ProgressIndicator indicator,
-                                  @NotNull Collection<VirtualFile> files,
+                                  @NotNull Collection<? extends VirtualFile> files,
                                   @NotNull Project project,
                                   @NotNull Consumer<? super FileContent> processor) {
     ProgressIndicator updaterProgressIndicator = PoweredProgressIndicator.apply(indicator);

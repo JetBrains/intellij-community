@@ -65,7 +65,7 @@ public abstract class FileBasedIndex {
   }
 
   /**
-   * @deprecated see {@link ManagingFS#findFileById(int)}
+   * @deprecated see {@link com.intellij.openapi.vfs.newvfs.ManagingFS#findFileById(int)}
    */ // note: upsource implementation requires access to Project here, please don't remove (not anymore)
   @Deprecated
   public abstract VirtualFile findFileById(Project project, int id);
@@ -172,7 +172,7 @@ public abstract class FileBasedIndex {
                                         @Nullable final ProgressIndicator indicator,
                                         @Nullable final Set<? super VirtualFile> visitedRoots,
                                         @Nullable final ProjectFileIndex projectFileIndex) {
-    VirtualFileFilter acceptFilter = (file) -> {
+    VirtualFileFilter acceptFilter = file -> {
       if (indicator != null) {
         indicator.checkCanceled();
       }
@@ -182,7 +182,7 @@ public abstract class FileBasedIndex {
       return projectFileIndex == null || !ReadAction.compute(() -> projectFileIndex.isExcluded(file));
     };
 
-    VirtualFileFilter symlinkFilter = (file) -> {
+    VirtualFileFilter symlinkFilter = file -> {
       if (acceptFilter.accept(file)) {
         if (file.is(VFileProperty.SYMLINK)) {
           if (!Registry.is("indexer.follows.symlinks")) {
