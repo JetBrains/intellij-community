@@ -9,6 +9,7 @@ import com.intellij.ide.lightEdit.statusBar.LightEditLineSeparatorWidgetWrapper;
 import com.intellij.ide.lightEdit.statusBar.LightEditPositionWidget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
@@ -73,8 +74,10 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
               StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID));
 
     StatusBarWidgetsManager widgetsManager = project.getService(StatusBarWidgetsManager.class);
-    widgetsManager.updateAllWidgets();
     PopupHandler.installPopupHandler(statusBar, new StatusBarPopupActionGroup(widgetsManager), ActionPlaces.STATUS_BAR_PLACE);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      widgetsManager.updateAllWidgets();
+    });
   }
 
   @Override
