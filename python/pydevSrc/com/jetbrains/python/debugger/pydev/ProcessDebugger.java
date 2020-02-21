@@ -31,6 +31,8 @@ public interface ProcessDebugger {
 
   XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException;
 
+  List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine) throws PyDebuggerException;
+
   // todo: don't generate temp variables for qualified expressions - just split 'em
   XValueChildrenList loadVariable(String threadId, String frameId, PyDebugValue var) throws PyDebuggerException;
 
@@ -80,7 +82,7 @@ public interface ProcessDebugger {
 
   void run() throws PyDebuggerException;
 
-  void smartStepInto(String threadId, String functionName);
+  void smartStepInto(String threadId, String frameId, String functionName, int callOrder, int contextStartLine, int contextEndLine);
 
   void resumeOrStep(String threadId, ResumeOrStepCommand.Mode mode);
 

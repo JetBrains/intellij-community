@@ -7,7 +7,7 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 24
+version = 25
 
 if not hasattr(sys, '_current_frames'):
 
@@ -70,7 +70,6 @@ class PyDBAdditionalThreadInfo(object):
         'pydev_step_stop',
         'pydev_step_cmd',
         'pydev_notify_kill',
-        'pydev_smart_step_stop',
         'pydev_django_resolve_frame',
         'pydev_call_from_jinja2',
         'pydev_call_inside_jinja2',
@@ -82,6 +81,7 @@ class PyDBAdditionalThreadInfo(object):
         'pydev_func_name',
         'suspended_at_unhandled',
         'trace_suspend_type',
+        'pydev_smart_step_context'
     ]
     # ENDIF
 
@@ -90,7 +90,6 @@ class PyDBAdditionalThreadInfo(object):
         self.pydev_step_stop = None
         self.pydev_step_cmd = -1  # Something as CMD_STEP_INTO, CMD_STEP_OVER, etc.
         self.pydev_notify_kill = False
-        self.pydev_smart_step_stop = None
         self.pydev_django_resolve_frame = False
         self.pydev_call_from_jinja2 = None
         self.pydev_call_inside_jinja2 = None
@@ -102,6 +101,7 @@ class PyDBAdditionalThreadInfo(object):
         self.pydev_func_name = '.invalid.'  # Must match the type in cython
         self.suspended_at_unhandled = False
         self.trace_suspend_type = 'trace'  # 'trace' or 'frame_eval'
+        self.pydev_smart_step_context = PydevSmartStepContext()
 
     def get_topmost_frame(self, thread):
         '''
@@ -116,6 +116,34 @@ class PyDBAdditionalThreadInfo(object):
     def __str__(self):
         return 'State:%s Stop:%s Cmd: %s Kill:%s' % (
             self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill)
+
+
+# IFDEF CYTHON
+# cdef class PydevSmartStepContext:
+# ELSE
+class PydevSmartStepContext:
+    # ENDIF
+
+    # Note: the params in cython are declared in pydevd_cython.pxd.
+    # IFDEF CYTHON
+    # ELSE
+    __slots__ = [
+        'smart_step_stop',
+        'call_order',
+        'filename',
+        'start_line',
+        'end_line',
+    ]
+    # ENDIF
+
+    def __init__(self):
+        self.smart_step_stop = None
+        self.call_order = -1
+        self.filename = None
+        self.start_line = -1
+        self.end_line = -1
+
+    reset = __init__
 
 
 from _pydev_imps._pydev_saved_modules import threading

@@ -833,6 +833,7 @@ static const char *__pyx_f[] = {
 
 /*--- Type declarations ---*/
 struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo;
+struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PydevSmartStepContext;
 struct __pyx_obj_18_pydevd_frame_eval_22pydevd_frame_evaluator_ThreadInfo;
 struct __pyx_obj_18_pydevd_frame_eval_22pydevd_frame_evaluator_FuncCodeInfo;
 
@@ -847,7 +848,6 @@ struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo {
   PyObject *pydev_step_stop;
   int pydev_step_cmd;
   int pydev_notify_kill;
-  PyObject *pydev_smart_step_stop;
   int pydev_django_resolve_frame;
   PyObject *pydev_call_from_jinja2;
   PyObject *pydev_call_inside_jinja2;
@@ -859,6 +859,25 @@ struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo {
   PyObject *pydev_func_name;
   int suspended_at_unhandled;
   PyObject *trace_suspend_type;
+  struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PydevSmartStepContext *pydev_smart_step_context;
+};
+
+
+/* "_pydevd_bundle/pydevd_cython.pxd":20
+ * 
+ * 
+ * cdef class PydevSmartStepContext:             # <<<<<<<<<<<<<<
+ *     cdef public object smart_step_stop; # Actually, it's a frame or None
+ *     cdef public int call_order;
+ */
+struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PydevSmartStepContext {
+  PyObject_HEAD
+  PyObject *smart_step_stop;
+  int call_order;
+  PyObject *filename;
+  int line;
+  int start_line;
+  int end_line;
 };
 
 
@@ -1395,6 +1414,7 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
 /* Module declarations from '_pydevd_bundle.pydevd_cython' */
 static PyTypeObject *__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo = 0;
+static PyTypeObject *__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PydevSmartStepContext = 0;
 
 /* Module declarations from '_pydevd_frame_eval.pydevd_frame_evaluator' */
 static PyTypeObject *__pyx_ptype_18_pydevd_frame_eval_22pydevd_frame_evaluator_ThreadInfo = 0;
@@ -9375,6 +9395,8 @@ static int __Pyx_modinit_type_import_code(void) {
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo = __Pyx_ImportType(__pyx_t_1, "_pydevd_bundle.pydevd_cython", "PyDBAdditionalThreadInfo", sizeof(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo), __Pyx_ImportType_CheckSize_Warn);
    if (!__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PyDBAdditionalThreadInfo) __PYX_ERR(2, 1, __pyx_L1_error)
+  __pyx_ptype_14_pydevd_bundle_13pydevd_cython_PydevSmartStepContext = __Pyx_ImportType(__pyx_t_1, "_pydevd_bundle.pydevd_cython", "PydevSmartStepContext", sizeof(struct __pyx_obj_14_pydevd_bundle_13pydevd_cython_PydevSmartStepContext), __Pyx_ImportType_CheckSize_Warn);
+   if (!__pyx_ptype_14_pydevd_bundle_13pydevd_cython_PydevSmartStepContext) __PYX_ERR(2, 20, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_RefNannyFinishContext();
   return 0;

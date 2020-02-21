@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -27,6 +28,7 @@ import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
+import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,13 +122,20 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     debugProcess.startStepIntoMyCode(currentSession.getSuspendContext());
   }
 
-  protected void smartStepInto(String funcName) {
+  protected void smartStepInto(String funcName, int callOrder) {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 
     Assert.assertTrue(currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
-    myDebugProcess.startSmartStepInto(funcName);
+    ReadAction.run(() -> {
+      List<?> smartStepIntoVariants = getSmartStepIntoVariants();
+      for (Object o : smartStepIntoVariants) {
+        PySmartStepIntoVariant variant = (PySmartStepIntoVariant) o;
+        if (variant.getFunctionName().equals(funcName) && variant.getCallOrder() == callOrder)
+          myDebugProcess.startSmartStepInto(variant);
+      }
+    });
   }
 
   protected Pair<Boolean, String> setNextStatement(int line) throws PyDebuggerException {
@@ -526,6 +535,11 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   public boolean hasChildWithValue(XValueChildrenList children, int value) {
     return hasChildWithValue(children, Integer.toString(value));
+  }
+
+  public List<?> getSmartStepIntoVariants() {
+      XSourcePosition position = XDebuggerManager.getInstance(getProject()).getCurrentSession().getCurrentPosition();
+      return myDebugProcess.getSmartStepIntoHandler().computeSmartStepVariants(position);
   }
 
   @Override

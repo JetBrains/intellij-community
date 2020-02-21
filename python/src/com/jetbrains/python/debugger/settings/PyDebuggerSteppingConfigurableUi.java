@@ -40,6 +40,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
   private JPanel mySteppingPanel;
   private JBCheckBox myLibrariesFilterCheckBox;
   private JBCheckBox myStepFilterEnabledCheckBox;
+  private JBCheckBox myAlwaysDoSmartStepIntoCheckBox;
   private TableModelEditor<PySteppingFilter> myPySteppingFilterEditor;
 
   public PyDebuggerSteppingConfigurableUi() {
@@ -62,6 +63,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
   public void reset(@NotNull PyDebuggerSettings settings) {
     myLibrariesFilterCheckBox.setSelected(settings.isLibrariesFilterEnabled());
     myStepFilterEnabledCheckBox.setSelected(settings.isSteppingFiltersEnabled());
+    myAlwaysDoSmartStepIntoCheckBox.setSelected(settings.isAlwaysDoSmartStepInto());
     myPySteppingFilterEditor.reset(settings.getSteppingFilters());
     myPySteppingFilterEditor.enabled(myStepFilterEnabledCheckBox.isSelected());
   }
@@ -70,6 +72,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
   public boolean isModified(@NotNull PyDebuggerSettings settings) {
     return myLibrariesFilterCheckBox.isSelected() != settings.isLibrariesFilterEnabled()
            || myStepFilterEnabledCheckBox.isSelected() != settings.isSteppingFiltersEnabled()
+           || myAlwaysDoSmartStepIntoCheckBox.isSelected() != settings.isAlwaysDoSmartStepInto()
            || myPySteppingFilterEditor.isModified();
   }
 
@@ -77,6 +80,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
   public void apply(@NotNull PyDebuggerSettings settings) throws ConfigurationException {
     settings.setLibrariesFilterEnabled(myLibrariesFilterCheckBox.isSelected());
     settings.setSteppingFiltersEnabled(myStepFilterEnabledCheckBox.isSelected());
+    settings.setAlwaysDoSmartStepIntoEnabled(myAlwaysDoSmartStepIntoCheckBox.isSelected());
     if (myPySteppingFilterEditor.isModified()) {
       settings.setSteppingFilters(myPySteppingFilterEditor.apply());
     }

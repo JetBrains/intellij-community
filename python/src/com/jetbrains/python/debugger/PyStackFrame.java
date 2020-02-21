@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +23,7 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import icons.PythonIcons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,14 +39,15 @@ public class PyStackFrame extends XStackFrame {
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
   public static final String DOUBLE_UNDERSCORE = "__";
-  public static final String RETURN_VALUES_GROUP_NAME = "Return Values";
-  public static final String SPECIAL_VARIABLES_GROUP_NAME = "Special Variables";
-  public static final Set<String> HIDE_TYPES = ContainerUtil.set("function", "type", "classobj", "module");
+  @NotNull @NonNls public static final String RETURN_VALUES_GROUP_NAME = "Return Values";
+  @NotNull @NonNls public static final String SPECIAL_VARIABLES_GROUP_NAME = "Special Variables";
+  @NotNull @NonNls public static final Set<String> HIDE_TYPES = ContainerUtil.set("function", "type", "classobj", "module");
   public static final int DUNDER_VALUES_IND = 0;
   public static final int SPECIAL_TYPES_IND = DUNDER_VALUES_IND + 1;
   public static final int IPYTHON_VALUES_IND = SPECIAL_TYPES_IND + 1;
   public static final int NUMBER_OF_GROUPS = IPYTHON_VALUES_IND + 1;
-
+  @NotNull @NonNls public static final Set<String> COMPREHENSION_NAMES = ImmutableSet.of("<genexpr>", "<listcomp>", "<dictcomp>",
+                                                                                         "<setcomp>");
   private final Project myProject;
   private final PyFrameAccessor myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
@@ -215,6 +218,15 @@ public class PyStackFrame extends XStackFrame {
 
   protected XSourcePosition getPosition() {
     return myPosition;
+  }
+
+  @NotNull
+  public String getName() {
+    return myFrameInfo.getName();
+  }
+
+  public boolean isComprehension() {
+    return COMPREHENSION_NAMES.contains(getName());
   }
 
   public void setChildrenDescriptors(@Nullable Map<String, PyDebugValueDescriptor> childrenDescriptors) {

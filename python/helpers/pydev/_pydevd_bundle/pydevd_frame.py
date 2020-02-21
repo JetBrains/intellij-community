@@ -15,9 +15,10 @@ from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm_constants import (CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE)
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_current_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
-    dict_keys, RETURN_VALUES_DICT, NO_FTRACE
+    dict_keys, RETURN_VALUES_DICT, NO_FTRACE, IS_CPYTHON
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame, ignore_exception_trace
+from _pydevd_bundle.pydevd_bytecode_utils import find_last_call_name, find_last_func_call_order
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, is_real_file
 
@@ -78,7 +79,7 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
             except:
                 traceback.print_exc()
             return True
-        
+
         return False
 
     finally:
@@ -626,12 +627,19 @@ class PyDBFrame:
                 exist_result = False
                 stop = False
                 bp_type = None
+                smart_stop_frame = info.pydev_smart_step_context.smart_step_stop
+                context_start_line = info.pydev_smart_step_context.start_line
+                context_end_line = info.pydev_smart_step_context.end_line
+                is_within_context = context_start_line <= line <= context_end_line
+
                 if not is_return and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None and line in breakpoints_for_file:
                     breakpoint = breakpoints_for_file[line]
                     new_frame = frame
                     stop = True
                     if step_cmd == CMD_STEP_OVER and stop_frame is frame and (is_line or is_return):
                         stop = False  # we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
+                    elif step_cmd == CMD_SMART_STEP_INTO and (frame.f_back is smart_stop_frame and is_within_context):
+                        stop = False
                 elif plugin_manager is not None and main_debugger.has_plugin_line_breaks:
                     result = plugin_manager.get_breakpoint(main_debugger, self, frame, event, self._args)
                     if result:
@@ -686,11 +694,11 @@ class PyDBFrame:
 
                 if stop:
                     self.set_suspend(
-                        thread, 
-                        CMD_SET_BREAK, 
+                        thread,
+                        CMD_SET_BREAK,
                         suspend_other_threads=breakpoint and breakpoint.suspend_policy == "ALL",
                     )
-                        
+
                 elif flag and plugin_manager is not None:
                     result = plugin_manager.suspend(main_debugger, thread, frame, bp_type)
                     if result:
@@ -715,6 +723,7 @@ class PyDBFrame:
             # step handling. We stop when we hit the right frame
             try:
                 should_skip = 0
+
                 if pydevd_dont_trace.should_trace_hook is not None:
                     if self.should_skip == -1:
                         # I.e.: cache the result on self.should_skip (no need to evaluate the same frame multiple times).
@@ -731,6 +740,44 @@ class PyDBFrame:
                 plugin_stop = False
                 if should_skip:
                     stop = False
+
+                elif step_cmd == CMD_SMART_STEP_INTO:
+                    stop = False
+                    if smart_stop_frame is frame:
+                        if not is_within_context or not IS_CPYTHON:
+                            # We don't stop on jumps in multiline statements, which the Python interpreter does in some cases,
+                            # if we they happen in smart step into context.
+                            info.pydev_func_name = '.invalid.'  # Must match the type in cython
+                            stop = True  # act as if we did a step into
+
+                    if is_line or is_exception_event:
+                        curr_func_name = frame.f_code.co_name
+
+                        # global context is set with an empty name
+                        if curr_func_name in ('?', '<module>') or curr_func_name is None:
+                            curr_func_name = ''
+
+                        if smart_stop_frame and smart_stop_frame is frame.f_back:
+                            if curr_func_name == info.pydev_func_name and not IS_CPYTHON:
+                                # for implementations other than CPython we don't perform any additional checks
+                                stop = True
+                            else:
+                                try:
+                                    if curr_func_name != info.pydev_func_name and frame.f_back:
+                                        # try to find function call name using bytecode analysis
+                                        curr_func_name = find_last_call_name(frame.f_back)
+                                    if curr_func_name == info.pydev_func_name:
+                                        stop = find_last_func_call_order(frame.f_back, context_start_line) \
+                                               == info.pydev_smart_step_context.call_order
+                                except:
+                                    pydev_log.debug("Exception while handling smart step into in frame tracer, step into will be performed instead.")
+                                    info.pydev_smart_step_context.reset()
+                                    stop = True  # act as if we did a step into
+
+                    # we have to check this case for situations when a user has tried to step into a native function or method,
+                    # e.g. `len()`, `list.append()`, etc and this was the only call in a return statement
+                    if smart_stop_frame is frame and is_return:
+                        stop = True
 
                 elif step_cmd == CMD_STEP_INTO:
                     stop = is_line or is_return
@@ -755,25 +802,8 @@ class PyDBFrame:
                         if result:
                             stop, plugin_stop = result
 
-                elif step_cmd == CMD_SMART_STEP_INTO:
-                    stop = False
-                    if info.pydev_smart_step_stop is frame:
-                        info.pydev_func_name = '.invalid.'  # Must match the type in cython
-                        info.pydev_smart_step_stop = None
-
-                    if is_line or is_exception_event:
-                        curr_func_name = frame.f_code.co_name
-
-                        # global context is set with an empty name
-                        if curr_func_name in ('?', '<module>') or curr_func_name is None:
-                            curr_func_name = ''
-
-                        if curr_func_name == info.pydev_func_name:
-                            stop = True
-
                 elif step_cmd == CMD_STEP_RETURN:
                     stop = is_return and stop_frame is frame
-
                 else:
                     stop = False
 

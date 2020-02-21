@@ -93,10 +93,12 @@ from _pydevd_bundle import pydevd_vars
 import pydevd_tracing
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_vm_type
+from _pydevd_bundle import pydevd_bytecode_utils
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, norm_file_to_client, is_real_file
 import pydevd_file_utils
 import os
 import sys
+import inspect
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string, \
     get_non_pydevd_threads
@@ -139,7 +141,7 @@ from _pydevd_bundle.pydevd_comm_constants import (
     CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_PYDEVD_JSON_CONFIG,
     CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, CMD_THREAD_RESUME_SINGLE_NOTIFICATION,
     CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, CMD_SET_PROJECT_ROOTS, CMD_VERSION,
-    CMD_RETURN, CMD_SET_PROTOCOL, CMD_ERROR,)
+    CMD_RETURN, CMD_SET_PROTOCOL, CMD_ERROR, CMD_GET_SMART_STEP_INTO_VARIANTS,)
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
 #this number can be changed if there's need to do so
 
@@ -1175,6 +1177,36 @@ class InternalSetNextStatementThread(InternalThreadCommand):
             t.additional_info.pydev_message = str(self.seq)
 
 
+class InternalSmartStepInto(InternalThreadCommand):
+    def __init__(self, thread_id, frame_id, cmd_id, func_name, line, call_order, start_line, end_line, seq=0):
+        self.thread_id = thread_id
+        self.cmd_id = cmd_id
+        self.line = line
+        self.start_line = start_line
+        self.end_line = end_line
+        self.seq = seq
+        self.call_order = call_order
+
+        if IS_PY2:
+            if isinstance(func_name, unicode):
+                # On cython with python 2.X it requires an str, not unicode (but on python 3.3 it should be a str, not bytes).
+                func_name = func_name.encode('utf-8')
+
+        self.func_name = func_name
+
+    def do_it(self, dbg):
+        t = pydevd_find_thread_by_id(self.thread_id)
+        if t:
+            t.additional_info.pydev_step_cmd = self.cmd_id
+            t.additional_info.pydev_next_line = int(self.line)
+            t.additional_info.pydev_func_name = self.func_name
+            t.additional_info.pydev_state = STATE_RUN
+            t.additional_info.pydev_message = str(self.seq)
+            t.additional_info.pydev_smart_step_context.call_order = int(self.call_order)
+            t.additional_info.pydev_smart_step_context.start_line = int(self.start_line)
+            t.additional_info.pydev_smart_step_context.end_line = int(self.end_line)
+
+
 #=======================================================================================================================
 # InternalGetVariable
 #=======================================================================================================================
@@ -1302,6 +1334,43 @@ class InternalGetFrame(InternalThreadCommand):
         except:
             cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error resolving frame: %s from thread: %s" % (self.frame_id, self.thread_id))
             dbg.writer.add_command(cmd)
+
+
+class InternalGetSmartStepIntoVariants(InternalThreadCommand):
+    def __init__(self, seq, thread_id, frame_id, start_line, end_line):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.start_line = int(start_line)
+        self.end_line = int(end_line)
+
+    def do_it(self, dbg):
+        try:
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
+            variants = pydevd_bytecode_utils.calculate_smart_step_into_variants(frame, self.start_line, self.end_line)
+            xml = "<xml>"
+
+            for name, is_visited in variants:
+                xml += '<variant name="%s" isVisited="%s"></variant>' % (quote(name), str(is_visited).lower())
+
+            xml += "</xml>"
+            cmd = NetCommand(CMD_GET_SMART_STEP_INTO_VARIANTS, self.sequence, xml)
+            dbg.writer.add_command(cmd)
+        except:
+            traceback.print_exc()
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error getting smart step into veriants for frame: %s from thread: %s"
+                                                     % (self.frame_id, self.thread_id))
+            self._reset_smart_step_context()
+            dbg.writer.add_command(cmd)
+
+    def _reset_smart_step_context(self):
+        t = pydevd_find_thread_by_id(self.thread_id)
+        if t:
+            try:
+                t.additional_info.pydev_smart_step_context.reset()
+            except:
+                pydevd_log(1, "Error while resetting smart step into context for thread %s" % self.thread_id)
+
 
 #=======================================================================================================================
 # InternalGetNextStatementTargets
