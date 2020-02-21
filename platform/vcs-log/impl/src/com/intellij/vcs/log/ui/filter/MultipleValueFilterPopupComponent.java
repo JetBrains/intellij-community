@@ -86,21 +86,15 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   }
 
   @NotNull
-  static String displayableText(@NotNull Collection<String> values, int maxLength) {
-    String text;
-    if (values.size() == 1) {
-      text = Objects.requireNonNull(ContainerUtil.getFirstItem(values));
-    }
-    else {
-      text = StringUtil.join(values, "|");
-    }
-    return StringUtil.shortenTextWithEllipsis(text, maxLength, 0, true);
-  }
-
-  @NotNull
   static String tooltip(@NotNull Collection<String> values) {
     return StringUtil.join(values, ", ");
   }
+
+  @NotNull
+  protected abstract List<String> parseLocalizedValues(@NotNull Collection<String> values);
+
+  @NotNull
+  protected abstract List<String> getLocalizedValues(@NotNull Collection<String> values);
 
   @NotNull
   protected AnAction createSelectMultipleValuesAction() {
@@ -121,6 +115,18 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   protected static String getActionName(@NotNull List<String> values) {
     if (values.size() == 1) return Objects.requireNonNull(ContainerUtil.getFirstItem(values));
     return displayableText(values, 2 * MAX_FILTER_VALUE_LENGTH);
+  }
+
+  @NotNull
+  static String displayableText(@NotNull Collection<String> values, int maxLength) {
+    String text;
+    if (values.size() == 1) {
+      text = Objects.requireNonNull(ContainerUtil.getFirstItem(values));
+    }
+    else {
+      text = StringUtil.join(values, "|");
+    }
+    return StringUtil.shortenTextWithEllipsis(text, maxLength, 0, true);
   }
 
   protected class PredefinedValueAction extends DumbAwareAction {
@@ -198,10 +204,4 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
       return selectedValues == null || selectedValues.isEmpty() ? "" : StringUtil.join(selectedValues, "\n");
     }
   }
-
-  @NotNull
-  protected abstract List<String> parseLocalizedValues(@NotNull Collection<String> values);
-
-  @NotNull
-  protected abstract List<String> getLocalizedValues(@NotNull Collection<String> values);
 }

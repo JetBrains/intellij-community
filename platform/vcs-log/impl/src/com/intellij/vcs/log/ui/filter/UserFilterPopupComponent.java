@@ -85,40 +85,6 @@ public class UserFilterPopupComponent
     return myFilterModel.getFilterValues(filter);
   }
 
-  @NotNull
-  private static List<String> collectUsers(@NotNull VcsLogData logData) {
-    List<String> users = ContainerUtil.map(logData.getAllUsers(), user -> {
-      String shortPresentation = VcsUserUtil.getShortPresentation(user);
-      Couple<String> firstAndLastName = VcsUserUtil.getFirstAndLastName(shortPresentation);
-      if (firstAndLastName == null) return shortPresentation;
-      return VcsUserUtil.capitalizeName(firstAndLastName.first) + " " + VcsUserUtil.capitalizeName(firstAndLastName.second);
-    });
-    TreeSet<String> sortedUniqueUsers = new TreeSet<>(users);
-    return new ArrayList<>(sortedUniqueUsers);
-  }
-
-  private static class UserLogSpeedSearchPopup extends FlatSpeedSearchPopup {
-    UserLogSpeedSearchPopup(@NotNull DefaultActionGroup actionGroup, @NotNull DataContext dataContext) {
-      super(null, actionGroup, dataContext, null, false);
-      setMinimumSize(new JBDimension(200, 0));
-    }
-
-    @Override
-    public boolean shouldBeShowing(@NotNull AnAction action) {
-      if (!super.shouldBeShowing(action)) return false;
-      if (getSpeedSearch().isHoldingFilter()) {
-        if (action instanceof MultipleValueFilterPopupComponent.PredefinedValueAction) {
-          return action instanceof SpeedsearchAction ||
-                 ((MultipleValueFilterPopupComponent.PredefinedValueAction)action).myValues.size() > 1;
-        }
-        return true;
-      }
-      else {
-        return !isSpeedsearchAction(action);
-      }
-    }
-  }
-
   @Override
   @NotNull
   protected ActionGroup createRecentItemsActionGroup() {
@@ -159,6 +125,40 @@ public class UserFilterPopupComponent
   @NotNull
   private static String me() {
     return VcsLogBundle.message("vcs.log.user.filter.me");
+  }
+
+  @NotNull
+  private static List<String> collectUsers(@NotNull VcsLogData logData) {
+    List<String> users = ContainerUtil.map(logData.getAllUsers(), user -> {
+      String shortPresentation = VcsUserUtil.getShortPresentation(user);
+      Couple<String> firstAndLastName = VcsUserUtil.getFirstAndLastName(shortPresentation);
+      if (firstAndLastName == null) return shortPresentation;
+      return VcsUserUtil.capitalizeName(firstAndLastName.first) + " " + VcsUserUtil.capitalizeName(firstAndLastName.second);
+    });
+    TreeSet<String> sortedUniqueUsers = new TreeSet<>(users);
+    return new ArrayList<>(sortedUniqueUsers);
+  }
+
+  private static class UserLogSpeedSearchPopup extends FlatSpeedSearchPopup {
+    UserLogSpeedSearchPopup(@NotNull DefaultActionGroup actionGroup, @NotNull DataContext dataContext) {
+      super(null, actionGroup, dataContext, null, false);
+      setMinimumSize(new JBDimension(200, 0));
+    }
+
+    @Override
+    public boolean shouldBeShowing(@NotNull AnAction action) {
+      if (!super.shouldBeShowing(action)) return false;
+      if (getSpeedSearch().isHoldingFilter()) {
+        if (action instanceof MultipleValueFilterPopupComponent.PredefinedValueAction) {
+          return action instanceof SpeedsearchAction ||
+                 ((MultipleValueFilterPopupComponent.PredefinedValueAction)action).myValues.size() > 1;
+        }
+        return true;
+      }
+      else {
+        return !isSpeedsearchAction(action);
+      }
+    }
   }
 
   private class SpeedsearchPredefinedValueAction extends PredefinedValueAction implements FlatSpeedSearchPopup.SpeedsearchAction {
