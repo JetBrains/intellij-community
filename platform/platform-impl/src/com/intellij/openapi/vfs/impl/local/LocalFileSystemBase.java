@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -290,21 +291,21 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     if (!parent.exists() || !parent.isDirectory()) {
-      throw new IOException(VfsBundle.message("vfs.target.not.directory.error", parent.getPath()));
+      throw new IOException(IdeBundle.message("vfs.target.not.directory.error", parent.getPath()));
     }
     if (parent.findChild(dir) != null) {
-      throw new IOException(VfsBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + dir));
+      throw new IOException(IdeBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + dir));
     }
 
     File ioParent = convertToIOFile(parent);
     if (!ioParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("target.not.directory.error", ioParent.getPath()));
+      throw new IOException(IdeBundle.message("target.not.directory.error", ioParent.getPath()));
     }
 
     if (!auxCreateDirectory(parent, dir)) {
       File ioDir = new File(ioParent, dir);
       if (!(ioDir.mkdirs() || ioDir.isDirectory())) {
-        throw new IOException(VfsBundle.message("new.directory.failed.error", ioDir.getPath()));
+        throw new IOException(IdeBundle.message("new.directory.failed.error", ioDir.getPath()));
       }
     }
 
@@ -321,21 +322,21 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     if (!parent.exists() || !parent.isDirectory()) {
-      throw new IOException(VfsBundle.message("vfs.target.not.directory.error", parent.getPath()));
+      throw new IOException(IdeBundle.message("vfs.target.not.directory.error", parent.getPath()));
     }
     if (parent.findChild(file) != null) {
-      throw new IOException(VfsBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + file));
+      throw new IOException(IdeBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + file));
     }
 
     File ioParent = convertToIOFile(parent);
     if (!ioParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("target.not.directory.error", ioParent.getPath()));
+      throw new IOException(IdeBundle.message("target.not.directory.error", ioParent.getPath()));
     }
 
     if (!auxCreateFile(parent, file)) {
       File ioFile = new File(ioParent, file);
       if (!FileUtil.createIfDoesntExist(ioFile)) {
-        throw new IOException(VfsBundle.message("new.file.failed.error", ioFile.getPath()));
+        throw new IOException(IdeBundle.message("new.file.failed.error", ioFile.getPath()));
       }
     }
 
@@ -347,13 +348,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException {
     if (file.getParent() == null) {
-      throw new IOException(VfsBundle.message("cannot.delete.root.directory", file.getPath()));
+      throw new IOException(IdeBundle.message("cannot.delete.root.directory", file.getPath()));
     }
 
     if (!auxDelete(file)) {
       File ioFile = convertToIOFile(file);
       if (!FileUtil.delete(ioFile)) {
-        throw new IOException(VfsBundle.message("delete.failed.error", ioFile.getPath()));
+        throw new IOException(IdeBundle.message("delete.failed.error", ioFile.getPath()));
       }
     }
 
@@ -429,34 +430,34 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     String name = file.getName();
 
     if (!file.exists()) {
-      throw new IOException(VfsBundle.message("vfs.file.not.exist.error", file.getPath()));
+      throw new IOException(IdeBundle.message("vfs.file.not.exist.error", file.getPath()));
     }
     if (file.getParent() == null) {
       throw new IOException(CoreBundle.message("cannot.rename.root.directory", file.getPath()));
     }
     if (!newParent.exists() || !newParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("vfs.target.not.directory.error", newParent.getPath()));
+      throw new IOException(IdeBundle.message("vfs.target.not.directory.error", newParent.getPath()));
     }
     if (newParent.findChild(name) != null) {
-      throw new IOException(VfsBundle.message("vfs.target.already.exists.error", newParent.getPath() + "/" + name));
+      throw new IOException(IdeBundle.message("vfs.target.already.exists.error", newParent.getPath() + "/" + name));
     }
 
     File ioFile = convertToIOFile(file);
     if (FileSystemUtil.getAttributes(ioFile) == null) {
-      throw new FileNotFoundException(VfsBundle.message("file.not.exist.error", ioFile.getPath()));
+      throw new FileNotFoundException(IdeBundle.message("file.not.exist.error", ioFile.getPath()));
     }
     File ioParent = convertToIOFile(newParent);
     if (!ioParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("target.not.directory.error", ioParent.getPath()));
+      throw new IOException(IdeBundle.message("target.not.directory.error", ioParent.getPath()));
     }
     File ioTarget = new File(ioParent, name);
     if (ioTarget.exists()) {
-      throw new IOException(VfsBundle.message("target.already.exists.error", ioTarget.getPath()));
+      throw new IOException(IdeBundle.message("target.already.exists.error", ioTarget.getPath()));
     }
 
     if (!auxMove(file, newParent)) {
       if (!ioFile.renameTo(ioTarget)) {
-        throw new IOException(VfsBundle.message("move.failed.error", ioFile.getPath(), ioParent.getPath()));
+        throw new IOException(IdeBundle.message("move.failed.error", ioFile.getPath(), ioParent.getPath()));
       }
     }
 
@@ -472,28 +473,28 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     boolean sameName = !isCaseSensitive() && newName.equalsIgnoreCase(file.getName());
 
     if (!file.exists()) {
-      throw new IOException(VfsBundle.message("vfs.file.not.exist.error", file.getPath()));
+      throw new IOException(IdeBundle.message("vfs.file.not.exist.error", file.getPath()));
     }
     VirtualFile parent = file.getParent();
     if (parent == null) {
       throw new IOException(CoreBundle.message("cannot.rename.root.directory", file.getPath()));
     }
     if (!sameName && parent.findChild(newName) != null) {
-      throw new IOException(VfsBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + newName));
+      throw new IOException(IdeBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + newName));
     }
 
     File ioFile = convertToIOFile(file);
     if (!ioFile.exists()) {
-      throw new FileNotFoundException(VfsBundle.message("file.not.exist.error", ioFile.getPath()));
+      throw new FileNotFoundException(IdeBundle.message("file.not.exist.error", ioFile.getPath()));
     }
     File ioTarget = new File(convertToIOFile(parent), newName);
     if (!sameName && ioTarget.exists()) {
-      throw new IOException(VfsBundle.message("target.already.exists.error", ioTarget.getPath()));
+      throw new IOException(IdeBundle.message("target.already.exists.error", ioTarget.getPath()));
     }
 
     if (!auxRename(file, newName)) {
       if (!FileUtil.rename(ioFile, newName)) {
-        throw new IOException(VfsBundle.message("rename.failed.error", ioFile.getPath(), newName));
+        throw new IOException(IdeBundle.message("rename.failed.error", ioFile.getPath(), newName));
       }
     }
 
@@ -511,29 +512,29 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     if (!file.exists()) {
-      throw new IOException(VfsBundle.message("vfs.file.not.exist.error", file.getPath()));
+      throw new IOException(IdeBundle.message("vfs.file.not.exist.error", file.getPath()));
     }
     if (!newParent.exists() || !newParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("vfs.target.not.directory.error", newParent.getPath()));
+      throw new IOException(IdeBundle.message("vfs.target.not.directory.error", newParent.getPath()));
     }
     if (newParent.findChild(copyName) != null) {
-      throw new IOException(VfsBundle.message("vfs.target.already.exists.error", newParent.getPath() + "/" + copyName));
+      throw new IOException(IdeBundle.message("vfs.target.already.exists.error", newParent.getPath() + "/" + copyName));
     }
 
     FileAttributes attributes = getAttributes(file);
     if (attributes == null) {
-      throw new FileNotFoundException(VfsBundle.message("file.not.exist.error", file.getPath()));
+      throw new FileNotFoundException(IdeBundle.message("file.not.exist.error", file.getPath()));
     }
     if (attributes.isSpecial()) {
       throw new FileNotFoundException("Not a file: " + file);
     }
     File ioParent = convertToIOFile(newParent);
     if (!ioParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("target.not.directory.error", ioParent.getPath()));
+      throw new IOException(IdeBundle.message("target.not.directory.error", ioParent.getPath()));
     }
     File ioTarget = new File(ioParent, copyName);
     if (ioTarget.exists()) {
-      throw new IOException(VfsBundle.message("target.already.exists.error", ioTarget.getPath()));
+      throw new IOException(IdeBundle.message("target.already.exists.error", ioTarget.getPath()));
     }
 
     if (!auxCopy(file, newParent, copyName)) {

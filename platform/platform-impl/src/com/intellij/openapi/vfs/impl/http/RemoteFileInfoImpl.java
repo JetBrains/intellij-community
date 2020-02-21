@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.http;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Url;
@@ -83,7 +83,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
       }
       catch (IOException e) {
         LOG.info(e);
-        errorOccurred(VfsBundle.message("cannot.create.local.file", e.getMessage()), false);
+        errorOccurred(IdeBundle.message("cannot.create.local.file", e.getMessage()), false);
         return;
       }
       myCancelled.set(false);
