@@ -30,7 +30,6 @@ internal fun JButton.adjustForToolbar() {
     }
   }
   isFocusable = false
-  displayedMnemonicIndex = 0
 }
 
 internal fun JButton.withLeftToolbarBorder() = BorderLayoutPanel().addToCenter(this).apply {
@@ -46,6 +45,7 @@ internal class AnActionOptionButton(
     isOkToProcessDefaultMnemonics = false
     setOptions(this@AnActionOptionButton.options)
     adjustForToolbar()
+    mnemonic = this@AnActionOptionButton.action.templatePresentation.text.first().toInt()
   }
 
   private val optionButtonPanel = optionButton.withLeftToolbarBorder()

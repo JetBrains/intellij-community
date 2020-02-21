@@ -31,7 +31,7 @@ internal open class ChangeEntryStateSimpleAction(
 
   init {
     val keyStroke = KeyStroke.getKeyStroke(
-      KeyEvent.getExtendedKeyCodeForChar(action.mnemonic.toInt()),
+      KeyEvent.getExtendedKeyCodeForChar(action.mnemonic),
       InputEvent.ALT_MASK
     )
     shortcutSet = CustomShortcutSet(KeyboardShortcut(keyStroke, null))
@@ -71,6 +71,7 @@ internal open class ChangeEntryStateButtonAction(
           AnActionEvent.createFromAnAction(this@ChangeEntryStateButtonAction, null, GitInteractiveRebaseDialog.PLACE, dataContext)
         )
       }
+      mnemonic = action.mnemonic
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -9,15 +9,17 @@ internal open class GitRebaseEntry(var action: Action, val commit: String, val s
 
   override fun toString() = "$action $commit $subject"
 
-  sealed class Action(val name: String, val mnemonic: Char) {
-    object PICK : Action("pick", 'p')
-    object EDIT : Action("edit", 'e')
-    object DROP : Action("drop", 'd')
-    object SQUASH : Action("squash", 's')
-    object REWORD : Action("reword", 'r')
-    object FIXUP : Action("fixup", 'f')
+  sealed class Action(val name: String) {
+    object PICK : Action("pick")
+    object EDIT : Action("edit")
+    object DROP : Action("drop")
+    object SQUASH : Action("squash")
+    object REWORD : Action("reword")
+    object FIXUP : Action("fixup")
 
-    class Other(name: String) : Action(name, '?')
+    class Other(name: String) : Action(name)
+
+    val mnemonic = name.first().toInt()
 
     override fun toString(): String {
       return name
