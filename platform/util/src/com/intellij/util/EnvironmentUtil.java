@@ -390,6 +390,9 @@ public final class EnvironmentUtil {
     return -1;
   }
 
+  /**
+   * @return the exit code of the process, or {@code null} if the time-out expires or {@code timeoutMillis} is zero or negative.
+   */
   @Nullable
   private static Integer waitFor(@NotNull Process process, final long timeoutMillis) {
     long stop = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis);
