@@ -4,8 +4,9 @@ package com.intellij.sh.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 
-public interface ShAssignmentExpression extends ShBinaryExpression {
+public interface ShAssignmentExpression extends ShBinaryExpression, PsiNameIdentifierOwner {
 
   @Nullable
   PsiElement getAssign();

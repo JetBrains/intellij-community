@@ -25,6 +25,7 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitAssignmentCommand(@NotNull ShAssignmentCommand o) {
     visitCommand(o);
+    // visitPsiNameIdentifierOwner(o);
   }
 
   public void visitAssignmentCondition(@NotNull ShAssignmentCondition o) {
@@ -33,6 +34,7 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitAssignmentExpression(@NotNull ShAssignmentExpression o) {
     visitBinaryExpression(o);
+    // visitPsiNameIdentifierOwner(o);
   }
 
   public void visitAssignmentList(@NotNull ShAssignmentList o) {

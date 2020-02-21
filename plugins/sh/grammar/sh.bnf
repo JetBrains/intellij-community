@@ -114,7 +114,9 @@
 
   pin('.*list(?:_\d.*)?')=1
   pin('.*_(command|clause)')=1
-  extends(".*command")=command
+  extends(".*command|function_definition")=command
+
+  implements("function_definition|assignment_command|assignment_expression")="com.intellij.psi.PsiNameIdentifierOwner"
 
   extends("(comma|assignment|conditional|logical_or|logical_and|bitwise_or|bitwise_exclusive_or|bitwise_and|equality|comparison|bitwise_shift|add|mul|exp)_expression")=binary_expression
   extends(".*expression")=expression
@@ -145,8 +147,6 @@ test_command ::= test simple_command_element*
 
 private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|'(('|
                                var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}')
-
-//pipeline ::=  {pin(".*")=1}
 
 command ::= shell_command [heredoc | redirection+]
           | include_command
@@ -216,8 +216,6 @@ private pipeline_command_list ::= pipeline_command (pipeline_command_list_separa
 private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '\n') newlines
 
 function_definition ::= &(function | word '(') function_definition_inner {
-  extends="command"
-  implements="com.intellij.psi.PsiNameIdentifierOwner"
   mixin="com.intellij.sh.psi.impl.ShFunctionDefinitionMixin"
 }
 private function_definition_inner ::= word argument_list  newlines block
@@ -292,7 +290,10 @@ private end_of_list ::= '\n' | ';' | '&'
 shell_parameter_expansion ::= '{' parameter_expansion_body (composed_var parameter_expansion_body?)* '}' {pin=1}
 
 left assignment_command ::= array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
-                            {'=' <<parseUntilSpace literal >>}* {pin=0}
+                            {'=' <<parseUntilSpace literal >>}* {
+  pin=0
+  mixin="com.intellij.sh.psi.impl.ShAssignmentCommandMixin"
+}
 assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines
 
@@ -337,7 +338,9 @@ expression ::=
   | parentheses_expression
 
 comma_expression ::= expression ',' expression
-assignment_expression ::= expression ('=' |'*=' |'/=' |'%=' |'+=' |'-=' |'<<=' |'>>=' |'&=' |'^=' |'|=') expression
+assignment_expression ::= expression ('=' |'*=' |'/=' |'%=' |'+=' |'-=' |'<<=' |'>>=' |'&=' |'^=' |'|=') expression {
+  mixin="com.intellij.sh.psi.impl.ShAssignmentExpressionMixin"
+}
 conditional_expression ::= expression '?' expression ':' expression
 logical_or_expression ::= expression '||' expression
 logical_and_expression ::= expression '&&' expression
@@ -360,7 +363,7 @@ index_expression ::= expression '[' expression ']'
 array_expression ::= '[' expression ']'
 parentheses_expression ::= '(' expression ')' {pin=1}
 
-literal_expression ::= w+
+literal_expression ::= w+ { methods=[getReferences] }
 
 condition ::=
     assignment_condition

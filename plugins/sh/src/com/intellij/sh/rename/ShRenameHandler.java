@@ -16,6 +16,7 @@ import com.intellij.sh.ShSupport;
 import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
 import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.sh.psi.ShFunctionDefinition;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +50,7 @@ public class ShRenameHandler implements RenameHandler {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (element instanceof PsiNamedElement) {
+    if (element instanceof ShFunctionDefinition) {
       PsiElementRenameHandler.invoke(element, project, file, editor);
     } else {
       ShRenameAllOccurrencesHandler.INSTANCE.execute(editor, editor.getCaretModel().getPrimaryCaret(), null);
