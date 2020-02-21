@@ -10,6 +10,7 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Map;
 
 public class FilePathMapping<T> {
@@ -27,6 +28,17 @@ public class FilePathMapping<T> {
     String path = StringUtil.trimTrailing(filePath, '/');
     myPathMap.put(path, value);
     myPathHashSet.add(pathHashCode(myCaseSensitive, path));
+  }
+
+  public void remove(@NotNull String filePath) {
+    String path = StringUtil.trimTrailing(filePath, '/');
+    myPathMap.remove(path);
+    // We do not update myPathHashSet, so hash collisions might become worse over time.
+  }
+
+  @NotNull
+  public Collection<T> values() {
+    return myPathMap.values();
   }
 
   @Nullable
