@@ -36,8 +36,8 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
         runBlocking { ApplicationManager.getApplication().stateStore.save(forceSavingAllSettings = true) }
 
         assertThat(PathManager.getConfigDir())
-          .isNotEmptyDirectory
-          .satisfies(Condition(Predicate { ConfigImportHelper.isConfigDirectory(it) }, "A valid config directory"))
+          .isNotEmptyDirectory()
+          .satisfies(Condition(Predicate<Path> { ConfigImportHelper.isConfigDirectory(it) }, "A valid config directory"))
       }
     }
     finally {
