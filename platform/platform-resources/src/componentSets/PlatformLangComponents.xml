@@ -2,7 +2,34 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="http://www.w3.org/2001/XInclude
    http://www.w3.org/2001/XInclude.xsd">
-  <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <!--suppress PluginXmlDynamicPlugin -->
+  <application-components>
+    <component>
+      <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
+      <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.ide.ui.LafManager</interface-class>
+      <implementation-class>com.intellij.ide.ui.laf.LafManagerImpl</implementation-class>
+      <headless-implementation-class>com.intellij.ide.ui.laf.HeadlessLafManagerImpl</headless-implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent</implementation-class>
+      <headless-implementation-class/>
+    </component>
+  </application-components>
+
+  <!--suppress PluginXmlDynamicPlugin -->
+  <project-components>
+    <component>
+      <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
+      <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
+    </component>
+  </project-components>
+
   <xi:include href="/componentSets/UICore.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/Editor.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/idea-plugin/*)"/>
