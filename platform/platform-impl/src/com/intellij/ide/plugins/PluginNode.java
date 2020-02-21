@@ -25,6 +25,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String productCode;
   private Date releaseDate;
   private int releaseVersion;
+  private boolean licenseOptional;
   private String version;
   private String vendor;
   private String description;
@@ -109,6 +110,15 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setReleaseVersion(int releaseVersion) {
     this.releaseVersion = releaseVersion;
+  }
+
+  @Override
+  public boolean isLicenseOptional() {
+    return licenseOptional;
+  }
+
+  public void setLicenseOptional(boolean optional) {
+    this.licenseOptional = optional;
   }
 
   @Override

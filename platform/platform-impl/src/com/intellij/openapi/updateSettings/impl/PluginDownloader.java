@@ -44,6 +44,7 @@ public final class PluginDownloader {
   private final @Nullable String myProductCode;
   private final Date myReleaseDate;
   private final int myReleaseVersion;
+  private final boolean myLicenseOptional;
   private final String myDescription;
   private final List<PluginId> myDepends;
 
@@ -63,6 +64,7 @@ public final class PluginDownloader {
     myProductCode = descriptor.getProductCode();
     myReleaseDate = descriptor.getReleaseDate();
     myReleaseVersion = descriptor.getReleaseVersion();
+    myLicenseOptional = descriptor.isLicenseOptional();
     myDescription = descriptor.getDescription();
     myDepends = descriptor instanceof PluginNode ? ((PluginNode)descriptor).getDepends() : Arrays.asList(descriptor.getDependentPluginIds());
 
@@ -107,6 +109,10 @@ public final class PluginDownloader {
 
   public int getReleaseVersion() {
     return myReleaseVersion;
+  }
+
+  public boolean isLicenseOptional() {
+    return myLicenseOptional;
   }
 
   @Nullable
@@ -378,6 +384,7 @@ public final class PluginDownloader {
     node.setProductCode(downloader.getProductCode());
     node.setReleaseDate(downloader.getReleaseDate());
     node.setReleaseVersion(downloader.getReleaseVersion());
+    node.setLicenseOptional(downloader.isLicenseOptional());
     node.setVersion(downloader.getPluginVersion());
     node.setRepositoryName(host);
     node.setDownloadUrl(downloader.myPluginUrl);

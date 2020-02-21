@@ -142,12 +142,13 @@ class PluginDescriptorTest {
 <idea-plugin>
   <id>bar</id>
   <vendor>JetBrains</vendor>
-  <product-descriptor code="IJ" release-date="20190811" release-version="42"/>
+  <product-descriptor code="IJ" release-date="20190811" release-version="42" optional="true"/>
 </idea-plugin>""")
     val descriptor = loadDescriptorInTest(pluginFile.parent.parent)
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.vendor).isEqualTo("JetBrains")
     assertThat(SimpleDateFormat("yyyyMMdd", Locale.US).format(descriptor.releaseDate)).isEqualTo("20190811")
+    assertThat(descriptor.isLicenseOptional).isTrue()
   }
 
   @Suppress("PluginXmlValidity")

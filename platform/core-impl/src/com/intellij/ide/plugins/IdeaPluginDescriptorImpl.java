@@ -70,6 +70,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   private @Nullable String myProductCode;
   private @Nullable Date myReleaseDate;
   private int myReleaseVersion;
+  private boolean myIsLicenseOptional;
   private String myResourceBundleBaseName;
   private String myChangeNotes;
   private String myVersion;
@@ -306,6 +307,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           myProductCode = StringUtil.nullize(child.getAttributeValue("code"));
           myReleaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context.parentContext);
           myReleaseVersion = StringUtil.parseInt(child.getAttributeValue("release-version"), 0);
+          myIsLicenseOptional = Boolean.valueOf(child.getAttributeValue("optional", "false"));
           break;
 
         case "vendor":
@@ -723,6 +725,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   @Override
   public int getReleaseVersion() {
     return myReleaseVersion;
+  }
+
+  public boolean isLicenseOptional() {
+    return myIsLicenseOptional;
   }
 
   @Override

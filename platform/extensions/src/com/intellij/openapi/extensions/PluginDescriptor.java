@@ -43,6 +43,8 @@ public interface PluginDescriptor {
 
   int getReleaseVersion();
 
+  boolean isLicenseOptional();
+
   PluginId @NotNull [] getDependentPluginIds();
 
   PluginId @NotNull [] getOptionalDependentPluginIds();

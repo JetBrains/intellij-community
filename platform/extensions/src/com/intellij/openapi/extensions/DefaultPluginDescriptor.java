@@ -81,6 +81,11 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
   }
 
   @Override
+  public boolean isLicenseOptional() {
+    return false;
+  }
+
+  @Override
   public int getReleaseVersion() {
     return 0;
   }

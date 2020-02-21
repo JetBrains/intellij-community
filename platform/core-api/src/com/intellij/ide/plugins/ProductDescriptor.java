@@ -14,4 +14,7 @@ public class ProductDescriptor {
 
   @Attribute("release-version")
   public int releaseVersion;
+
+  @Attribute("optional")
+  public boolean optional;
 }
