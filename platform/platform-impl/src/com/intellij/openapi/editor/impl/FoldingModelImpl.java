@@ -234,8 +234,13 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   @Override
   @Nullable
   public FoldRegion getFoldingPlaceholderAt(@NotNull Point p) {
-    assertReadAccess();
-    LogicalPosition pos = myEditor.xyToLogicalPosition(p);
+    VisualPosition visualPosition = myEditor.xyToVisualPosition(p);
+    int visualLineStartY = myEditor.visualLineToY(visualPosition.line);
+    if (p.y < visualLineStartY || p.y >= visualLineStartY + myEditor.getLineHeight()) {
+      // block inlay area
+      return null;
+    }
+    LogicalPosition pos = myEditor.visualToLogicalPosition(visualPosition);
     int line = pos.line;
 
     if (line >= myEditor.getDocument().getLineCount()) return null;
