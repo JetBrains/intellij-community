@@ -599,4 +599,19 @@ public class EditorImplTest extends AbstractEditorTest {
     EditorTestUtil.configureSoftWrapsAndViewport(getEditor(), 10, 1);
     assertEquals(0, getEditor().getScrollingModel().getVerticalScrollOffset());
   }
+
+  public void testClickOnBlockInlayDoesNotMoveCaret() {
+    initText("text");
+    addBlockInlay(0, true, 10 * TEST_CHAR_WIDTH);
+    mouse().clickAtXY(2 * TEST_CHAR_WIDTH, 0);
+    checkResultByText("<caret>text");
+  }
+
+  public void testDragInBlockInlayDoesNotCreateSelection() {
+    initText("text");
+    addBlockInlay(0, true, 10 * TEST_CHAR_WIDTH);
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
+    mouse().pressAtXY(2 * TEST_CHAR_WIDTH, 0).dragToXY(4 * TEST_CHAR_WIDTH, 0).release();
+    checkResultByText("<caret>text");
+  }
 }

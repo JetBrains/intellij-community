@@ -2458,6 +2458,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!columnSelectionDragEvent && toggleCaretEvent && !myLastPressCreatedCaret) {
       return; // ignoring drag after removing a caret
     }
+    if (eventArea == EditorMouseEventArea.EDITING_AREA && hasBlockInlay(e.getPoint())) {
+      return; // ignoring drag over block inlay
+    }
 
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
 
@@ -3446,6 +3449,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myHighlightingFilter == null || myHighlightingFilter.value(highlighter);
   }
 
+  private boolean hasBlockInlay(@NotNull Point point) {
+    Inlay inlay = myInlayModel.getElementAt(point);
+    return inlay != null && (inlay.getPlacement() == Inlay.Placement.ABOVE_LINE || inlay.getPlacement() == Inlay.Placement.BELOW_LINE);
+  }
+
+
   private static class MyInputMethodHandleSwingThreadWrapper implements InputMethodRequests {
     private final InputMethodRequests myDelegate;
 
@@ -3877,11 +3886,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           return;
         }
       }
-    }
-
-    private boolean hasBlockInlay(@NotNull Point point) {
-      Inlay inlay = myInlayModel.getElementAt(point);
-      return inlay != null && (inlay.getPlacement() == Inlay.Placement.ABOVE_LINE || inlay.getPlacement() == Inlay.Placement.BELOW_LINE);
     }
 
     private boolean processMousePressed(@NotNull final MouseEvent e) {
