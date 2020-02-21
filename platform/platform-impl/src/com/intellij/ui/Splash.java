@@ -54,14 +54,16 @@ public final class Splash extends Window {
     setLocationInTheCenterOfScreen();
   }
 
-  public void initAndShow() {
+  public void initAndShow(Boolean visible) {
     myProgressSlidePainter.startPreloading();
     StartUpMeasurer.addInstantEvent("splash shown");
     Activity activity = StartUpMeasurer.startActivity("splash set visible");
-    setVisible(true);
+    setVisible(visible);
     activity.end();
-    paint(getGraphics());
-    toFront();
+    if (visible) {
+      paint(getGraphics());
+      toFront();
+    }
   }
 
   @Override

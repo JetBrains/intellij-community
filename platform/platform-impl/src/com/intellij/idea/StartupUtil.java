@@ -295,7 +295,7 @@ public final class StartupUtil {
           if (!Main.isLightEdit() && !Boolean.getBoolean(SplashManager.NO_SPLASH)) {
             Activity prepareSplashActivity = activity.endAndStart("splash preparation");
             EventQueue.invokeLater(() -> {
-              SplashManager.show(args);
+              SplashManager.show(args, EndUserAgreement.getLatestDocument().isAccepted());
               prepareSplashActivity.end();
             });
             return;

@@ -35,7 +35,7 @@ public final class SplashManager {
   private static JFrame PROJECT_FRAME;
   private static Splash SPLASH_WINDOW;
 
-  public static void show(String @NotNull [] args) {
+  public static void show(String @NotNull [] args, Boolean visible) {
     for (String arg : args) {
       if (NO_SPLASH.equals(arg)) {
         System.setProperty(NO_SPLASH, "true");
@@ -66,7 +66,7 @@ public final class SplashManager {
       Splash splash = SPLASH_WINDOW;
       // can be cancelled if app was started very fast
       if (splash != null) {
-        splash.initAndShow();
+        splash.initAndShow(visible);
       }
       activity.end();
     });
