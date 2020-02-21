@@ -536,8 +536,7 @@ public class FSRecords {
     }
   }
 
-  private FSRecords() {
-  }
+  private FSRecords() { }
 
   @ApiStatus.Internal
   public static int getVersion() {

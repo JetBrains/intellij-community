@@ -81,8 +81,7 @@ class VfsEventGenerationHelper {
         LOG.warn("Invalid child name: '" + childName + "'", e);
       }
     }
-    VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children);
-    myEvents.add(event);
+    myEvents.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children));
   }
 
   private static boolean shouldScanDirectory(@NotNull VirtualFile parent, @NotNull Path child, @NotNull String childName) {
@@ -113,7 +112,10 @@ class VfsEventGenerationHelper {
 
   // scan all children of "root" (except excluded dirs) recursively and return them in the ChildInfo[] array
   // null means error during scan
-  private static ChildInfo @Nullable [] scanChildren(@NotNull Path root, Path @NotNull [] excluded, @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled) throws RefreshWorker.RefreshCancelledException {
+  private static ChildInfo @Nullable [] scanChildren(@NotNull Path root,
+                                                     Path @NotNull [] excluded,
+                                                     @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled)
+  throws RefreshWorker.RefreshCancelledException {
     // top of the stack contains list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
     ChildInfo fakeRoot = new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, "", null, null, null);
@@ -143,10 +145,8 @@ class VfsEventGenerationHelper {
         String name = file.getFileName().toString();
         boolean isSymLink = false;
         if (attrs.isSymbolicLink()) {
-          // under windows the isDirectory attribute for symlink is incorrect - reread it again
           isSymLink = true;
-          attrs = Files.readAttributes(file, BasicFileAttributes.class);
-
+          attrs = Files.readAttributes(file, BasicFileAttributes.class); // under Windows, the isDirectory attribute for symlink is incorrect, re-read
         }
         FileAttributes attributes = LocalFileSystemRefreshWorker.toFileAttributes(file, attrs, isSymLink);
         String symLinkTarget = isSymLink ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;

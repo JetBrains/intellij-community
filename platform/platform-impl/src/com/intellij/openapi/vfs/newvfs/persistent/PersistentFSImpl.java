@@ -36,7 +36,6 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -47,6 +46,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFS.class);
@@ -1053,13 +1054,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       VirtualFile createdDir = createEvent.getFile();
       if (createdDir instanceof VirtualDirectoryImpl) {
         Queue<Pair<VirtualDirectoryImpl, ChildInfo[]>> queue = new ArrayDeque<>();
-        queue.add(Pair.create((VirtualDirectoryImpl)createdDir, children));
+        queue.add(pair((VirtualDirectoryImpl)createdDir, children));
         while (!queue.isEmpty()) {
           Pair<VirtualDirectoryImpl, ChildInfo[]> queued = queue.remove();
           VirtualDirectoryImpl directory = queued.first;
           TIntHashSet childIds = new TIntHashSet();
           List<ChildInfo> scannedChildren = Arrays.asList(queued.second);
-          List<ChildInfo> added = getOrCreateChildInfos(directory, scannedChildren, childInfo -> childInfo.getName(), childIds, delegate,
+          List<ChildInfo> added = getOrCreateChildInfos(directory, scannedChildren, ChildInfo::getName, childIds, delegate,
                                                         (childInfo, childId) -> {
             // passed children have no ChildInfo.id, have to create new ones
             if (childId < 0) {
@@ -1078,7 +1079,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           directory.createAndAddChildren(added, true, (childCreated, childInfo) -> {
             // enqueue recursive children
             if (childCreated instanceof VirtualDirectoryImpl && childInfo.getChildren() != null) {
-              queue.add(Pair.create((VirtualDirectoryImpl)childCreated, childInfo.getChildren()));
+              queue.add(pair((VirtualDirectoryImpl)childCreated, childInfo.getChildren()));
             }
           });
         }
@@ -1325,8 +1326,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  @NotNull
-  @NonNls
   public String toString() {
     return "PersistentFS";
   }
@@ -1377,7 +1376,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       attributes = fs.getAttributes(virtualFile);
       symlinkTarget = attributes != null && attributes.isSymLink() ? fs.resolveSymLink(virtualFile) : null;
     }
-    return attributes == null ? null : Pair.create(attributes, symlinkTarget);
+    return attributes == null ? null : pair(attributes, symlinkTarget);
   }
 
   private static void appendIdToParentList(int parentId, int childId) {
