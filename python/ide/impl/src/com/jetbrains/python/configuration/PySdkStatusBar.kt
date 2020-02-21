@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -54,9 +55,7 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
   private var module: Module? = null
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
-    if (file == null) return WidgetState.HIDDEN
-
-    module = ModuleUtil.findModuleForFile(file, project) ?: return WidgetState.HIDDEN
+    module = findModule(file) ?: return WidgetState.HIDDEN
 
     val sdk = PythonSdkUtil.findPythonSdk(module)
     return if (sdk == null) {
@@ -66,6 +65,8 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
       WidgetState(PyBundle.message("current.interpreter", descriptionInPopup(sdk)), shortenNameInPopup(sdk, 50), true)
     }
   }
+
+  override fun isEnabledForFile(file: VirtualFile?): Boolean = true
 
   override fun registerCustomListeners() {
     project
@@ -84,4 +85,13 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
   override fun ID(): String = "PythonInterpreter"
 
   override fun createInstance(project: Project): StatusBarWidget = PySdkStatusBar(project)
+
+  private fun findModule(file: VirtualFile?): Module? {
+    if (file != null) {
+      val module = ModuleUtil.findModuleForFile(file, project)
+      if (module != null) return module
+    }
+
+    return ModuleManager.getInstance(project).modules.singleOrNull()
+  }
 }
