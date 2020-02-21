@@ -16,7 +16,7 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyReturnFromInitInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
@@ -25,19 +25,19 @@ import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 public class PyRemoveStatementQuickFixTest extends PyQuickFixTestCase {
 
   public void testOnly() {
-    doQuickFixTest(PyReturnFromInitInspection.class, PyBundle.message("QFIX.NAME.remove.statement"));
+    doQuickFixTest(PyReturnFromInitInspection.class, PyPsiBundle.message("QFIX.NAME.remove.statement"));
   }
 
   public void testLastStatement() {
-    doQuickFixTest(PyReturnFromInitInspection.class, PyBundle.message("QFIX.NAME.remove.statement"));
+    doQuickFixTest(PyReturnFromInitInspection.class, PyPsiBundle.message("QFIX.NAME.remove.statement"));
   }
 
   public void testFunction() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.statement"));
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.statement"));
   }
 
   public void testVariable() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.statement"));
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.statement"));
   }
 
 }
