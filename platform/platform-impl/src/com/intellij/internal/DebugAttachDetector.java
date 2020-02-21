@@ -2,6 +2,7 @@
 package com.intellij.internal;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -9,6 +10,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +21,7 @@ import java.util.Properties;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class DebugAttachDetector {
+public final class DebugAttachDetector implements ApplicationInitializedListener {
   private static final Logger LOG = Logger.getInstance(DebugAttachDetector.class);
   private Properties myAgentProperties = null;
 
@@ -28,6 +30,13 @@ public class DebugAttachDetector {
   private boolean myReady;
 
   public DebugAttachDetector() {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+  }
+
+  @Override
+  public void componentsInitialized() {
     Class<?> vmSupportClass;
     try {
       vmSupportClass = Class.forName("jdk.internal.vm.VMSupport");
