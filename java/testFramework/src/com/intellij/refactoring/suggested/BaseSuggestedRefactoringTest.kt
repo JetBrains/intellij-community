@@ -93,7 +93,7 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
       intention.invoke(project, editor, file)
 
       runWriteAction {
-        project.getComponent(PostprocessReformattingAspect::class.java).doPostponedFormatting()
+        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       }
     }
 
