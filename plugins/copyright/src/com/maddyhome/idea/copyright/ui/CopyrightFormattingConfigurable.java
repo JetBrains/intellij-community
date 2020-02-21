@@ -5,22 +5,16 @@ package com.maddyhome.idea.copyright.ui;
 import com.intellij.copyright.CopyrightBundle;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
-import com.intellij.openapi.fileTypes.FileTypeFactory;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
 import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -103,9 +97,6 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
   @NotNull
   @Override
   public Collection<BaseExtensionPointName<?>> getDependencies() {
-    ArrayList<BaseExtensionPointName<?>> extensions = new ArrayList<>();
-    Collections.addAll(extensions, FileTypeManagerImpl.getFileTypeEPs());
-    extensions.add(CopyrightUpdaters.EP_NAME);
-    return extensions;
+    return Collections.singletonList(CopyrightUpdaters.EP_NAME);
   }
 }
