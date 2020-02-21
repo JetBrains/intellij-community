@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.project;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.util.indexing;
 
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.Disposable;
@@ -16,10 +16,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
@@ -35,8 +35,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CacheUpdateRunner {
   private static final Logger LOG = Logger.getInstance(CacheUpdateRunner.class);
   private static final Key<Boolean> FAILED_TO_INDEX = Key.create("FAILED_TO_INDEX");
-  private static final int PROC_COUNT = Runtime.getRuntime().availableProcessors();
-  public static final int DEFAULT_MAX_INDEXER_THREADS = 4;
 
   public static void processFiles(@NotNull ProgressIndicator indicator,
                                   @NotNull Collection<? extends VirtualFile> files,
@@ -131,7 +129,7 @@ public class CacheUpdateRunner {
 
     final AtomicBoolean isFinished = new AtomicBoolean();
     try {
-      int threadsCount = indexingThreadCount();
+      int threadsCount = UnindexedFilesUpdater.getIndexingThreadsNumber();
       if (threadsCount == 1 || application.isWriteAccessAllowed()) {
         Runnable process = createRunnable(project, queue, progressUpdater, suspendableIndicator, innerIndicator, isFinished, fileProcessor);
         ProgressManager.getInstance().runProcess(process, innerIndicator);
@@ -156,15 +154,6 @@ public class CacheUpdateRunner {
     }
 
     return isFinished.get();
-  }
-
-  public static int indexingThreadCount() {
-    int threadsCount = Registry.intValue("caches.indexerThreadsCount");
-    if (threadsCount <= 0) {
-      int coresToLeaveForOtherActivity = ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
-      threadsCount = Math.max(1, Math.min(PROC_COUNT - coresToLeaveForOtherActivity, DEFAULT_MAX_INDEXER_THREADS));
-    }
-    return threadsCount;
   }
 
   private static boolean waitForAll(AtomicBoolean @NotNull [] finishedRefs, Future<?> @NotNull [] futures) {
