@@ -3,14 +3,11 @@ package com.intellij.grazie
 
 import com.intellij.grazie.detection.DetectionContext
 import com.intellij.grazie.grammar.suppress.SuppressionContext
-import com.intellij.grazie.ide.msg.GrazieStateLifecycle
+import com.intellij.grazie.ide.msg.GrazieInitializerManager
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.orTrue
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.annotations.Property
 
 @State(name = "GraziConfig", storages = [
@@ -95,7 +92,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     myState = state
 
     if (prevState != myState || prevState.availableLanguages != myState.availableLanguages) {
-      GrazieStateLifecycle.publisher.update(prevState, myState)
+      service<GrazieInitializerManager>().publisher.update(prevState, myState)
     }
   }
 }

@@ -9,29 +9,40 @@ import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.spellcheck.GrazieSpellchecker
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PreloadingActivity
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.messages.Topic
 
+private val topic = Topic(GrazieStateLifecycle::class.java)
+
 interface GrazieStateLifecycle {
-  companion object {
-    val topic = Topic.create("grazie_state_lifecycle_topic", GrazieStateLifecycle::class.java)
-    val publisher by lazy {
-      ApplicationManager.getApplication().messageBus.syncPublisher(topic)
-    }
-
-    init {
-      val connection = ApplicationManager.getApplication().messageBus.connect()
-      connection.subscribe(topic, LangTool)
-      connection.subscribe(topic, LangDetector)
-      connection.subscribe(topic, GrazieSpellchecker)
-      connection.subscribe(topic, GrazieCommitInspection)
-      connection.subscribe(topic, GrazieInspection)
-      connection.subscribe(topic, LanguageDetectionInspection)
-    }
-  }
-
   /** Initialize Grazie with passed state */
   fun init(state: GrazieConfig.State) {}
 
   /** Update Grazie state */
   fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {}
+}
+
+@Service
+internal class GrazieInitializerManager {
+  val publisher: GrazieStateLifecycle
+    get() = ApplicationManager.getApplication().messageBus.syncPublisher(topic)
+
+  init {
+    val connection = ApplicationManager.getApplication().messageBus.connect()
+    connection.subscribe(topic, LangTool)
+    connection.subscribe(topic, LangDetector)
+    connection.subscribe(topic, GrazieSpellchecker)
+    connection.subscribe(topic, GrazieCommitInspection)
+    connection.subscribe(topic, GrazieInspection)
+    connection.subscribe(topic, LanguageDetectionInspection)
+  }
+}
+
+private class GrazieIDEInit : PreloadingActivity() {
+  override fun preload(indicator: ProgressIndicator) {
+    service<GrazieInitializerManager>().publisher.init(GrazieConfig.get())
+  }
 }
