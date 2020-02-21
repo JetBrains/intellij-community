@@ -38,7 +38,7 @@ public final class EnvironmentUtil {
   /**
    * The time-out to read the environment, in milliseconds.
    */
-  private static final int SHELL_ENV_READING_TIMEOUT = 40_000;
+  private static final long SHELL_ENV_READING_TIMEOUT = 40_000L;
 
   private static final String LANG = "LANG";
   private static final String LC_ALL = "LC_ALL";
@@ -369,7 +369,7 @@ public final class EnvironmentUtil {
     // First, try to interrupt 'softly' (we know how to do it only on *nix)
     if (!SystemInfo.isWindows) {
       UnixProcessManager.sendSigIntToProcessTree(process);
-      exitCode = waitFor(process, 1000);
+      exitCode = waitFor(process, 1000L);
       if (exitCode != null) {
         return exitCode;
       }
@@ -382,7 +382,7 @@ public final class EnvironmentUtil {
     else {
       UnixProcessManager.sendSigKillToProcessTree(process);
     }
-    exitCode = waitFor(process, 1000);
+    exitCode = waitFor(process, 1000L);
     if (exitCode != null) {
       return exitCode;
     }
@@ -391,7 +391,7 @@ public final class EnvironmentUtil {
   }
 
   @Nullable
-  private static Integer waitFor(@NotNull Process process, int timeoutMillis) {
+  private static Integer waitFor(@NotNull Process process, final long timeoutMillis) {
     long stop = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis);
     while (System.nanoTime() < stop) {
       TimeoutUtil.sleep(100);
