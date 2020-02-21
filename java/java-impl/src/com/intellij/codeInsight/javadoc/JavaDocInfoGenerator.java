@@ -333,16 +333,16 @@ public class JavaDocInfoGenerator {
 
   public boolean generateDocInfoCore(StringBuilder buffer, boolean generatePrologue) {
     if (myElement instanceof PsiClass) {
-      generateClassJavaDoc(buffer, (PsiClass)myElement, generatePrologue);
+      generateClassJavaDoc(buffer, (PsiClass)myElement, generatePrologue, false);
     }
     else if (myElement instanceof PsiMethod) {
-      generateMethodJavaDoc(buffer, (PsiMethod)myElement, generatePrologue);
+      generateMethodJavaDoc(buffer, (PsiMethod)myElement, generatePrologue, false);
     }
     else if (myElement instanceof PsiParameter) {
       generateMethodParameterJavaDoc(buffer, (PsiParameter)myElement, generatePrologue);
     }
     else if (myElement instanceof PsiField) {
-      generateFieldJavaDoc(buffer, (PsiField)myElement, generatePrologue);
+      generateFieldJavaDoc(buffer, (PsiField)myElement, generatePrologue, false);
     }
     else if (myElement instanceof PsiVariable) {
       generateVariableJavaDoc(buffer, (PsiVariable)myElement, generatePrologue);
@@ -407,6 +407,25 @@ public class JavaDocInfoGenerator {
     return sanitizeHtml(buffer);
   }
 
+  public @Nullable String generateRenderedDocInfo() {
+    StringBuilder buffer = new StringBuilder();
+
+    if (myElement instanceof PsiClass) {
+      generateClassJavaDoc(buffer, (PsiClass)myElement, true, true);
+    }
+    else if (myElement instanceof PsiMethod) {
+      generateMethodJavaDoc(buffer, (PsiMethod)myElement, true, true);
+    }
+    else if (myElement instanceof PsiField) {
+      generateFieldJavaDoc(buffer, (PsiField)myElement, true, true);
+    }
+    else {
+      return null;
+    }
+
+    return sanitizeHtml(buffer);
+  }
+
   private boolean elementHasSourceCode() {
     PsiFileSystemItem[] items;
     if (myElement instanceof PsiDirectory) {
@@ -430,34 +449,41 @@ public class JavaDocInfoGenerator {
     return false;
   }
 
-  private void generateClassJavaDoc(StringBuilder buffer, PsiClass aClass, boolean generatePrologue) {
+  private void generateClassJavaDoc(StringBuilder buffer, PsiClass aClass, boolean generatePrologue, boolean rendered) {
     if (aClass instanceof PsiAnonymousClass) return;
 
     if (generatePrologue) generatePrologue(buffer);
 
-    buffer.append(DocumentationMarkup.DEFINITION_START);
-    PsiFile file = aClass.getContainingFile();
-    if (file instanceof PsiJavaFile) {
-      String packageName = ((PsiJavaFile)file).getPackageName();
-      if (!packageName.isEmpty()) {
-        buffer.append(packageName);
-        buffer.append(BR_TAG);
+    if (!rendered) {
+      buffer.append(DocumentationMarkup.DEFINITION_START);
+      PsiFile file = aClass.getContainingFile();
+      if (file instanceof PsiJavaFile) {
+        String packageName = ((PsiJavaFile)file).getPackageName();
+        if (!packageName.isEmpty()) {
+          buffer.append(packageName);
+          buffer.append(BR_TAG);
+        }
       }
-    }
 
-    if (generateClassSignature(buffer, aClass, SignaturePlace.Javadoc)) return;
-    buffer.append(DocumentationMarkup.DEFINITION_END);
+      if (generateClassSignature(buffer, aClass, SignaturePlace.Javadoc)) return;
+      buffer.append(DocumentationMarkup.DEFINITION_END);
+    }
 
     PsiDocComment comment = getDocComment(aClass);
     if (comment != null) {
       generateCommonSection(buffer, comment);
+      if (rendered) {
+        generateAuthorAndVersionSections(buffer, comment);
+      }
       generateTypeParametersSection(buffer, aClass);
     }
     else {
       buffer.append(DocumentationMarkup.SECTIONS_START);
     }
 
-    new NonCodeAnnotationGenerator(aClass, buffer).explainAnnotations();
+    if (!rendered) {
+      new NonCodeAnnotationGenerator(aClass, buffer).explainAnnotations();
+    }
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }
 
@@ -588,24 +614,31 @@ public class JavaDocInfoGenerator {
     return comment;
   }
 
-  private void generateFieldJavaDoc(StringBuilder buffer, PsiField field, boolean generatePrologue) {
+  private void generateFieldJavaDoc(StringBuilder buffer, PsiField field, boolean generatePrologue, boolean rendered) {
     if (generatePrologue) generatePrologue(buffer);
 
-    buffer.append(DocumentationMarkup.DEFINITION_START);
-    generateLinkToParentIfNeeded(buffer, field);
-    generateFieldSignature(buffer, field, SignaturePlace.Javadoc);
-    buffer.append(DocumentationMarkup.DEFINITION_END);
+    if (!rendered) {
+      buffer.append(DocumentationMarkup.DEFINITION_START);
+      generateLinkToParentIfNeeded(buffer, field);
+      generateFieldSignature(buffer, field, SignaturePlace.Javadoc);
+      buffer.append(DocumentationMarkup.DEFINITION_END);
+    }
 
     PsiDocComment comment = getDocComment(field);
     if (comment != null) {
       generateCommonSection(buffer, comment);
+      if (rendered) {
+        generateAuthorAndVersionSections(buffer, comment);
+      }
     }
     else {
       buffer.append(DocumentationMarkup.SECTIONS_START);
     }
 
     ColorUtil.appendColorPreview(field, buffer);
-    new NonCodeAnnotationGenerator(field, buffer).explainAnnotations();
+    if (!rendered) {
+      new NonCodeAnnotationGenerator(field, buffer).explainAnnotations();
+    }
 
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }
@@ -704,6 +737,11 @@ public class JavaDocInfoGenerator {
     generateDeprecatedSection(buffer, docComment);
     generateSinceSection(buffer, docComment);
     generateSeeAlsoSection(buffer, docComment);
+  }
+
+  private void generateAuthorAndVersionSections(StringBuilder buffer, PsiDocComment docComment) {
+    generateSingleTagSection(buffer, docComment, "author", JavaBundle.lazyMessage("javadoc.author"));
+    generateSingleTagSection(buffer, docComment, "version", JavaBundle.lazyMessage("javadoc.version"));
   }
 
   private void generateApiSection(StringBuilder buffer, PsiDocComment comment) {
@@ -921,14 +959,16 @@ public class JavaDocInfoGenerator {
     return findDocTag(localTags, parameter.getName(), method, parameterLocator(parameterIndex));
   }
 
-  private void generateMethodJavaDoc(StringBuilder buffer, PsiMethod method, boolean generatePrologue) {
+  private void generateMethodJavaDoc(StringBuilder buffer, PsiMethod method, boolean generatePrologue, boolean rendered) {
     if (generatePrologue) generatePrologue(buffer);
 
-    buffer.append(DocumentationMarkup.DEFINITION_START);
-    generateLinkToParentIfNeeded(buffer, method);
+    if (!rendered) {
+      buffer.append(DocumentationMarkup.DEFINITION_START);
+      generateLinkToParentIfNeeded(buffer, method);
 
-    generateMethodSignature(buffer, method, SignaturePlace.Javadoc);
-    buffer.append(DocumentationMarkup.DEFINITION_END);
+      generateMethodSignature(buffer, method, SignaturePlace.Javadoc);
+      buffer.append(DocumentationMarkup.DEFINITION_END);
+    }
 
     DocTagLocator<PsiElement[]> descriptionLocator =
       (owner, comment) -> comment != null && !isEmptyDescription(comment) ? comment.getDescriptionElements() : null;
@@ -1006,9 +1046,14 @@ public class JavaDocInfoGenerator {
       generateApiSection(buffer, comment);
       generateSinceSection(buffer, comment);
       generateSeeAlsoSection(buffer, comment);
+      if (rendered) {
+        generateAuthorAndVersionSections(buffer, comment);
+      }
     }
 
-    new NonCodeAnnotationGenerator(method, buffer).explainAnnotations();
+    if (!rendered) {
+      new NonCodeAnnotationGenerator(method, buffer).explainAnnotations();
+    }
 
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }

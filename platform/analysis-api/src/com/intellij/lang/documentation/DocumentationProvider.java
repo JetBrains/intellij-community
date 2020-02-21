@@ -6,9 +6,11 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,6 +101,16 @@ public interface DocumentationProvider {
   @Nullable
   default String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
     return generateDoc(element, originalElement);
+  }
+
+  /**
+   * This is used to display rendered documentation in editor, in place of corresponding documentation comment's text.
+   * Documentation comment PSI elements should implement {@link PsiDocCommentBase} for this functionality to work.
+   * Value returned by {@link PsiDocCommentBase#getOwner()} will be passed as {@code element} parameter to this method.
+   */
+  @ApiStatus.Experimental
+  default @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
+    return null;
   }
 
   @Nullable

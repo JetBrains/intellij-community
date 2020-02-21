@@ -572,6 +572,12 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return generateExternalJavadoc(element);
   }
 
+  @Override
+  public @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
+    JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.create(element.getProject(), element);
+    return JavaDocExternalFilter.filterInternalDocInfo(generator.generateRenderedDocInfo());
+  }
+
   @Nullable
   public static String generateExternalJavadoc(@NotNull final PsiElement element) {
     List<String> docURLs = getExternalJavaDocUrl(element);
