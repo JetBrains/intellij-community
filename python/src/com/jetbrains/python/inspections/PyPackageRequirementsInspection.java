@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.core.CoreBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -351,11 +352,20 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
   private static int askToConfigureInterpreter(@NotNull Project project, @NotNull Sdk sdk) {
     final String sdkName = StringUtil.shortenTextWithEllipsis(sdk.getName(), 25, 0);
-    final String text = "Installing packages into '" + sdkName + "' requires administrator privileges.\n\n" +
-                        "Configure a per-project virtual environment as your project interpreter\n" +
-                        "to avoid installing packages to a protected area of the file system.";
-    final String[] options = {"Configure", "Install Anyway", "Cancel"};
-    return Messages.showIdeaMessageDialog(project, text, PyBundle.message("INSP.package.requirements.administrator.privileges.required"), options, 0, Messages.getWarningIcon(), null);
+    final String text = PyBundle.message("INSP.package.requirements.administrator.privileges.required.description", sdkName);
+    final String[] options = {
+      PyBundle.message("INSP.package.requirements.administrator.privileges.required.button.configure"),
+      PyBundle.message("INSP.package.requirements.administrator.privileges.required.button.install.anyway"),
+      CoreBundle.message("button.cancel")
+    };
+    return Messages.showIdeaMessageDialog(
+      project,
+      text,
+      PyBundle.message("INSP.package.requirements.administrator.privileges.required"),
+      options,
+      0,
+      Messages.getWarningIcon(),
+      null);
   }
 
   public static class PyInstallRequirementsFix implements LocalQuickFix {
