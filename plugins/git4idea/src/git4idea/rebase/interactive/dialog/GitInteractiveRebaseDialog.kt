@@ -88,8 +88,8 @@ internal class GitInteractiveRebaseDialog(
     ChangeEntryStateSimpleAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, commitsTable),
     ChangeEntryStateSimpleAction(
       GitRebaseEntry.Action.EDIT,
-      GitBundle.getString("rebase.interactive.dialog.stop.to.edit.text"),
-      GitBundle.getString("rebase.interactive.dialog.stop.to.edit.text"),
+      GitBundle.lazyMessage("rebase.interactive.dialog.stop.to.edit.text"),
+      GitBundle.lazyMessage("rebase.interactive.dialog.stop.to.edit.text"),
       AllIcons.Actions.Pause,
       commitsTable
     )

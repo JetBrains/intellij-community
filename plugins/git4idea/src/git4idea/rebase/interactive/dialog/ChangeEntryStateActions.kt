@@ -14,20 +14,21 @@ import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.KeyStroke
 
 internal open class ChangeEntryStateSimpleAction(
   protected val action: GitRebaseEntry.Action,
-  title: String,
-  description: String,
+  title: Supplier<String>,
+  description: Supplier<String>,
   icon: Icon?,
   protected val table: GitRebaseCommitsTableView
 ) : AnActionButton(title, description, icon), DumbAware {
 
   constructor(action: GitRebaseEntry.Action, icon: Icon?, table: GitRebaseCommitsTableView) :
-    this(action, action.name.capitalize(), action.name.capitalize(), icon, table)
+    this(action, action.visibleName, action.visibleName, icon, table)
 
   init {
     val keyStroke = KeyStroke.getKeyStroke(
