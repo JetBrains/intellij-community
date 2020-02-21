@@ -44,7 +44,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
                             newProjectPath: String?,
                             context: UserDataHolder) : PyAddNewEnvPanel() {
   override val envName: String = "Conda"
-  override val panelName: String = "New environment"
+  override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.new.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
 
   private val languageLevelsField: JComboBox<String>

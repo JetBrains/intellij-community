@@ -36,7 +36,7 @@ class PyAddExistingSdkPanel(project: Project?,
                             newProjectPath: String?,
                             preferredSdk: Sdk?) : PyAddSdkPanel() {
 
-  override val panelName: String = "Existing interpreter"
+  override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.interpreter")
 
   /**
    * Path mappings of current synchronizer.

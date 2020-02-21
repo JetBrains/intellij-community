@@ -36,7 +36,7 @@ class PyAddExistingVirtualEnvPanel(private val project: Project?,
                                    private val existingSdks: List<Sdk>,
                                    override var newProjectPath: String?,
                                    context:UserDataHolder ) : PyAddSdkPanel() {
-  override val panelName: String = "Existing environment"
+  override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.environment")
   override val icon: Icon = PythonIcons.Python.Virtualenv
   private val sdkComboBox = PySdkPathChoosingComboBox()
   private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))

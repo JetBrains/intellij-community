@@ -19,6 +19,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
@@ -292,7 +293,8 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     myInterpretersDecorator.setContentComponent(container);
 
     final List<PyAddSdkPanel> panels = Arrays.asList(newEnvironmentPanel, existingSdkPanel);
-    myInterpreterPanel = new PyAddSdkGroupPanel("New project interpreter", getIcon(), panels, defaultPanel);
+    myInterpreterPanel = new PyAddSdkGroupPanel(PyBundle.lazyMessage("python.add.sdk.panel.name.new.project.interpreter"),
+                                                getIcon(), panels, defaultPanel);
     myInterpreterPanel.addChangeListener(() -> {
       myInterpretersDecorator.setTitle(getProjectInterpreterTitle(myInterpreterPanel.getSelectedPanel()));
       final boolean useNewEnvironment = myInterpreterPanel.getSelectedPanel() instanceof PyAddNewEnvironmentPanel;

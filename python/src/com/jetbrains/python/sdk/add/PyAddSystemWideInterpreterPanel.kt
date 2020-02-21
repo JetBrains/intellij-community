@@ -31,7 +31,7 @@ import java.awt.BorderLayout
 class PyAddSystemWideInterpreterPanel(private val module: Module?,
                                       private val existingSdks: List<Sdk>,
                                       private val context: UserDataHolderBase) : PyAddSdkPanel() {
-  override val panelName: String = "System interpreter"
+  override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.system.interpreter")
   private val sdkComboBox = PySdkPathChoosingComboBox()
 
   init {

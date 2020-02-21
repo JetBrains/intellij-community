@@ -24,7 +24,7 @@ import javax.swing.JComboBox
  * @author vlan
  */
 class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?, preferredType: String?) : PyAddSdkPanel() {
-  override val panelName: String = "New environment using"
+  override val panelName: String get() = com.jetbrains.python.PyBundle.message("python.add.sdk.panel.name.new.environment.using")
   override val nameExtensionComponent: JComboBox<PyAddNewEnvPanel>
 
   override var newProjectPath: String? = newProjectPath

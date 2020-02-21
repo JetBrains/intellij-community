@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.Icon
 
@@ -12,6 +13,7 @@ import javax.swing.Icon
  */
 interface PyAddSdkView {
   val panelName: String
+    @Nls(capitalization = Nls.Capitalization.Title) get
 
   val icon: Icon
 

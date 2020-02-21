@@ -43,7 +43,7 @@ class PyAddPipEnvPanel(private val project: Project?,
                        override var newProjectPath: String?,
                        context: UserDataHolder) : PyAddNewEnvPanel() {
   override val envName = "Pipenv"
-  override val panelName = "Pipenv Environment"
+  override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.pipenv.environment")
   override val icon: Icon = PIPENV_ICON
 
   private val moduleField: JComboBox<Module>
