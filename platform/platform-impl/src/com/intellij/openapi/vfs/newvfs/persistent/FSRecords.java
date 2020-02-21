@@ -53,7 +53,8 @@ public class FSRecords {
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  //TODO[anyone] when bumping the version, please delete `ourSymlinkTargetAttr_old` and use it's value for `ourSymlinkTargetAttr`
+  //TODO[anyone] when bumping the version, please delete `ourSymlinkTargetAttr_old`, use it's value for `ourSymlinkTargetAttr`,
+  //             and drop path conversion from `readSymlinkTarget`
   private static final int VERSION = 53 +
                                      (WE_HAVE_CONTENT_HASHES ? 0x10 : 0) +
                                      (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER ? 0x37 : 0) +
@@ -1009,9 +1010,8 @@ public class FSRecords {
     });
   }
 
-  @Nullable
-  static String readSymlinkTarget(int id) {
-    return readAndHandleErrors(() -> {
+  static @Nullable String readSymlinkTarget(int id) {
+    String result = readAndHandleErrors(() -> {
       try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
         if (stream != null) return StringUtil.nullize(IOUtil.readUTF(stream));
       }
@@ -1020,6 +1020,7 @@ public class FSRecords {
       }
       return null;
     });
+    return result != null ? FileUtil.toSystemIndependentName(result) : null;
   }
 
   static void storeSymlinkTarget(int id, @Nullable String symlinkTarget) {
