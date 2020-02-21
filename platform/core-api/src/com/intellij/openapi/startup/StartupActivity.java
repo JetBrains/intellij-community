@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.startup;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
  * under 'Loading Project' dialog, otherwise it will be started in the dispatch thread after the initialization.</p>
  *
  * See https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity.
- * @author Dmitry Avdeev
  */
 public interface StartupActivity {
   ExtensionPointName<StartupActivity> POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.postStartupActivity");
@@ -27,5 +26,5 @@ public interface StartupActivity {
   interface DumbAware extends StartupActivity, com.intellij.openapi.project.DumbAware {
   }
 
-  interface Background extends StartupActivity {}
+  interface Background extends StartupActivity, com.intellij.openapi.project.DumbAware {}
 }

@@ -15,11 +15,6 @@
       <implementation-class>com.intellij.ide.ui.laf.LafManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.ide.ui.laf.HeadlessLafManagerImpl</headless-implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent</implementation-class>
-      <headless-implementation-class/>
-    </component>
   </application-components>
 
   <!--suppress PluginXmlDynamicPlugin -->
