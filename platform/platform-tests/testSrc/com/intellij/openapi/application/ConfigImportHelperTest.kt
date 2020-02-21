@@ -73,9 +73,9 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `sort if no anchor files`() {
-    val cfg201 = createConfigDir("2020.1")
-    val cfg211 = createConfigDir("2021.1")
-    val cfg221 = createConfigDir("2022.1")
+    val cfg201 = createConfigDir("2020.1", storageTS = 0)
+    val cfg211 = createConfigDir("2021.1", storageTS = 0)
+    val cfg221 = createConfigDir("2022.1", storageTS = 0)
 
     val newConfigPath = createConfigDir("2022.3")
     assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(cfg221, cfg211, cfg201)
@@ -166,7 +166,9 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
       else -> "${SystemProperties.getUserHome()}/.${product}${version}/config"
     }
     val dir = Files.createDirectories(memoryFs.fs.getPath(path).normalize())
-    writeStorageFile(dir, storageTS)
+    if (storageTS > 0) {
+      writeStorageFile(dir, storageTS)
+    }
     return dir
   }
 
