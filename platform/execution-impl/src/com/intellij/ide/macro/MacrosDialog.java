@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
@@ -35,6 +34,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public final class MacrosDialog extends DialogWrapper {
   private final DefaultListModel<Item> myMacrosModel = new DefaultListModel<>();
@@ -48,7 +48,7 @@ public final class MacrosDialog extends DialogWrapper {
   }
 
   public MacrosDialog(@NotNull Component parent,
-                      @Nullable Condition<? super Macro> filter,
+                      @Nullable Predicate<? super Macro> filter,
                       @Nullable Map<String, String> userMacros) {
     super(parent, true);
     MacroManager.getInstance().cacheMacrosPreview(DataManager.getInstance().getDataContext(parent));
@@ -60,7 +60,7 @@ public final class MacrosDialog extends DialogWrapper {
   }
 
   public static void addTextFieldExtension(@NotNull ExtendableTextField textField,
-                                           @Nullable Condition<? super Macro> macroFilter,
+                                           @Nullable Predicate<? super Macro> macroFilter,
                                            @Nullable Map<String, String> userMacros) {
     textField.addExtension(ExtendableTextComponent.Extension.create(
       AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, ExecutionBundle.message("insert.macros"),
@@ -72,7 +72,7 @@ public final class MacrosDialog extends DialogWrapper {
   }
 
   public static void show(@NotNull JTextComponent textComponent,
-                          @Nullable Condition<? super Macro> filter,
+                          @Nullable Predicate<? super Macro> filter,
                           @Nullable Map<String, String> userMacros) {
     MacrosDialog dialog = new MacrosDialog(textComponent, filter, userMacros);
     if (dialog.showAndGet()) {
@@ -101,14 +101,14 @@ public final class MacrosDialog extends DialogWrapper {
     throw new UnsupportedOperationException("Call init(...) overload accepting parameters");
   }
 
-  private void init(@Nullable Condition<? super Macro> filter, @Nullable Map<String, String> userMacros) {
+  private void init(@Nullable Predicate<? super Macro> filter, @Nullable Map<String, String> userMacros) {
     super.init();
 
     setTitle(IdeBundle.message("title.macros"));
     setOKButtonText(IdeBundle.message("button.insert"));
 
     List<Macro> macros = ContainerUtil.filter(MacroManager.getInstance().getMacros(),
-                                              macro -> MacroFilter.GLOBAL.accept(macro) && (filter == null || filter.value(macro)));
+                                              macro -> MacroFilter.GLOBAL.accept(macro) && (filter == null || filter.test(macro)));
     Collections.sort(macros, new Comparator<Macro>() {
       @Override
       public int compare(Macro macro1, Macro macro2) {

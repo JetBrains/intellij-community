@@ -17,7 +17,6 @@ import com.intellij.openapi.module.WorkingDirectoryProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -77,7 +76,7 @@ public class ProgramParametersConfigurator {
 
   public static void addMacroSupport(@NotNull ExtendableTextField textField) {
     if (Registry.is("allow.macros.for.run.configurations")) {
-      MacrosDialog.addTextFieldExtension(textField, (Condition<? super Macro>)macro -> {
+      MacrosDialog.addTextFieldExtension(textField, macro -> {
         return !(macro instanceof EditorMacro);
       }, PathMacros.getInstance().getUserMacros());
     }
