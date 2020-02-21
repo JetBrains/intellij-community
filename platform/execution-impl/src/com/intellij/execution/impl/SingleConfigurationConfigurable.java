@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -69,6 +70,8 @@ import java.util.Set;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends BaseRCSettingsConfigurable {
   private static final LayeredIcon GEAR_WITH_DROPDOWN_ICON = new LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown);
+  private static final LayeredIcon GEAR_WITH_DROPDOWN_DISABLED_ICON =
+    new LayeredIcon(IconLoader.getDisabledIcon(AllIcons.General.GearPlain), IconLoader.getDisabledIcon(AllIcons.General.Dropdown));
   private static final LayeredIcon GEAR_WITH_DROPDOWN_ERROR_ICON = new LayeredIcon(AllIcons.General.Error, AllIcons.General.Dropdown);
 
   private enum RCStorageType {Workspace, DotIdeaFolder, ArbitraryFileInProject}
@@ -702,6 +705,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       };
       Presentation presentation = new Presentation(ExecutionBundle.message("run.configuration.manage.file.location"));
       presentation.setIcon(GEAR_WITH_DROPDOWN_ICON);
+      presentation.setDisabledIcon(GEAR_WITH_DROPDOWN_DISABLED_ICON);
       return new ActionButton(showStoragePathAction, presentation, ActionPlaces.TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
         @Override
         public Icon getIcon() {
