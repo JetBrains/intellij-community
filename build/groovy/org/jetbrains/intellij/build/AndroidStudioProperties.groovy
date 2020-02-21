@@ -522,6 +522,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         }
         extraExecutables.add("plugins/android/resources/simpleperf/linux-x86_64/simpleperf")
 
+        context.ant.copy(todir: "$targetDirectory/plugins/android/resources/trace_processor_daemon") {
+          fileset(dir: "$root/prebuilts/tools/common/trace-processor-daemon/linux")
+        }
+
         context.ant.copy(todir: "$targetDirectory/plugins/android/lib/layoutlib/data") {
           fileset(dir: "$root/prebuilts/studio/layoutlib/data") {
             include(name: "icu/*")
@@ -582,6 +586,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         fileset(dir: "$root/prebuilts/tools/darwin-x86_64/simpleperf")
       }
       extraExecutables.add("plugins/android/resources/simpleperf/darwin-x86_64/simpleperf")
+
+      context.ant.copy(todir: "$targetDirectory/plugins/android/resources/trace_processor_daemon") {
+        fileset(dir: "$root/prebuilts/tools/common/trace-processor-daemon/darwin")
+      }
 
       context.ant.copy(todir: "$targetDirectory/plugins/android/lib/layoutlib/data") {
         fileset(dir: "$root/prebuilts/studio/layoutlib/data") {

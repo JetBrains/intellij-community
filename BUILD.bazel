@@ -21,6 +21,7 @@ iml_project(
         "//prebuilts/tools/common/app-inspection/androidx/sqlite:sqlite-inspection",
         "//prebuilts/tools/common/perfetto",
         "//prebuilts/tools/common/simpleperf",
+        "//prebuilts/tools/common/trace-processor-daemon",
         "//prebuilts/tools:lldb",
         "//prebuilts/tools:offline-sdk",
         "//prebuilts/tools:simpleperf",

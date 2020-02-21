@@ -23,6 +23,15 @@ class StudioTests(unittest.TestCase):
     else:
       return "android-studio-"
 
+  def filenames_from_archive(self, distribution_path):
+    """Returns the file list from a Studio archive/distribution."""
+    if distribution_path.endswith(".tar.gz"):
+      return tarfile.open(distribution_path, "r:gz").getnames()
+    elif distribution_path.endswith(".zip"):
+      return zipfile.ZipFile(distribution_path).namelist()
+    else:
+      return []
+
   def test_artifacts_are_present(self):
     name = self.artifact_prefix() + build
     for suffix in [ ".mac.zip", ".tar.gz", ".win.zip", ".win32.zip"]:
@@ -87,12 +96,12 @@ class StudioTests(unittest.TestCase):
               "Unexpected BUILD file in zip " + file_name + ": " + f.filename)
 
   def test_profiler_artifacts_are_present(self):
-    required = [
+    all_required = [
         "plugins/android/resources/perfa.jar",
         "plugins/android/resources/profilers-transform.jar",
       ];
     for abi in ["x86", "arm64-v8a", "armeabi-v7a"]:
-      required += [
+      all_required += [
           "plugins/android/resources/perfetto/%s/libperfetto.so" % abi,
           "plugins/android/resources/perfetto/%s/perfetto" % abi,
           "plugins/android/resources/perfetto/%s/traced" % abi,
@@ -102,11 +111,25 @@ class StudioTests(unittest.TestCase):
           "plugins/android/resources/transport/native/agent/%s/libjvmtiagent.so" % abi,
       ]
 
-    name = os.path.join(dist_dir, self.artifact_prefix() + build + ".win.zip")
-    files = zipfile.ZipFile(name).namelist()
-    for req in required:
-      if "android-studio/" + req not in files:
-        self.fail("Required file not found in distribution: " + req)
+    archive_files_required = {
+      # Linux
+      ".tar.gz": [
+        "plugins/android/resources/trace_processor_daemon/trace_processor_daemon"
+      ],
+      # Mac:
+      ".mac.zip": [
+        "plugins/android/resources/trace_processor_daemon/trace_processor_daemon"
+      ],
+      # Windows
+      ".win.zip": [],
+    }
+
+    for target in archive_files_required.keys():
+      name = os.path.join(dist_dir, self.artifact_prefix() + build + target)
+      files = self.filenames_from_archive(name)
+      for req in all_required + archive_files_required[target]:
+        if not any(file_name.endswith(req) for file_name in files):
+          self.fail("Required file " + req + "not found in " + target  + " distribution.")
 
   def test_trace_agent_jar_present(self):
     """Tests that trace_agent.jar is included in distribution"""
