@@ -1118,17 +1118,17 @@ class PyDB(object):
         # process any stepping instructions
         if info.pydev_step_cmd == CMD_STEP_INTO or info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE:
             info.pydev_step_stop = None
-            info.pydev_smart_step_stop = None
+            info.pydev_smart_step_context.smart_step_stop = None
 
         elif info.pydev_step_cmd == CMD_STEP_OVER:
             info.pydev_step_stop = frame
-            info.pydev_smart_step_stop = None
+            info.pydev_smart_step_context.smart_step_stop = None
             self.set_trace_for_frame_and_parents(frame)
 
         elif info.pydev_step_cmd == CMD_SMART_STEP_INTO:
             self.set_trace_for_frame_and_parents(frame)
             info.pydev_step_stop = None
-            info.pydev_smart_step_stop = frame
+            info.pydev_smart_step_context.smart_step_stop = frame
 
         elif info.pydev_step_cmd == CMD_RUN_TO_LINE or info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT:
             self.set_trace_for_frame_and_parents(frame)
