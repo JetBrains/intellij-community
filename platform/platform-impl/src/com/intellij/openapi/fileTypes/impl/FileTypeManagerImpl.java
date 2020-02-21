@@ -14,10 +14,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
@@ -61,10 +58,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.ide.PooledThreadExecutor;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
@@ -81,7 +75,7 @@ import java.util.stream.StreamSupport;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportFile = FileTypeManagerImpl.FILE_SPEC )
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
-  private static final ExtensionPointName<FileTypeBean> EP_NAME = ExtensionPointName.create("com.intellij.fileType");
+  public static final ExtensionPointName<FileTypeBean> EP_NAME = ExtensionPointName.create("com.intellij.fileType");
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
@@ -1795,6 +1789,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     myPendingFileTypes.clear();
     mySchemeManager.setSchemes(Collections.emptyList());
+  }
+
+  @ApiStatus.Internal
+  public static BaseExtensionPointName<?>[] getFileTypeEPs() {
+    return new BaseExtensionPointName[] {
+      FileTypeFactory.FILE_TYPE_FACTORY_EP, EP_NAME
+    };
   }
 
   @Override
