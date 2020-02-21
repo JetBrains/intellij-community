@@ -15,38 +15,31 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiNameIdentifierOwner;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Warns about shadowing built-in names.
  *
  * @author vlan
  */
-public class PyShadowingBuiltinsInspection extends PyInspection {
-  // Persistent settings
-  public List<String> ignoredNames = new ArrayList<>();
+public class PyShadowingBuiltinsInspection extends PyPsiShadowingBuiltinsInspection {
+
+  @NotNull
+  @Override
+  protected LocalQuickFix[] createQuickFixes(String name, PsiElement problemElement) {
+    return new LocalQuickFix[]{new PyRenameElementQuickFix(problemElement), new PyIgnoreBuiltinQuickFix(name)};
+  }
 
   @Override
   public JComponent createOptionsPanel() {
@@ -54,100 +47,43 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
     return form.getContentPanel();
   }
 
-  @NotNull
-  @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session, ignoredNames);
-  }
+  private static class PyIgnoreBuiltinQuickFix implements LocalQuickFix, LowPriorityAction {
+    @NotNull private final String myName;
 
-  private static class Visitor extends PyInspectionVisitor {
-    private final Set<String> myIgnoredNames;
+    private PyIgnoreBuiltinQuickFix(@NotNull String name) {
+      myName = name;
+    }
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, @NotNull Collection<String> ignoredNames) {
-      super(holder, session);
-      myIgnoredNames = ImmutableSet.copyOf(ignoredNames);
+    @NotNull
+    @Override
+    public String getName() {
+      return getFamilyName() + " \"" + myName + "\"";
     }
 
     @Override
-    public void visitPyClass(@NotNull PyClass node) {
-      processElement(node);
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return PyBundle.message("INSP.shadowing.builtins.ignore.shadowed.built.in.name");
     }
 
     @Override
-    public void visitPyFunction(@NotNull PyFunction node) {
-      processElement(node);
-    }
-
-    @Override
-    public void visitPyNamedParameter(@NotNull PyNamedParameter node) {
-      processElement(node);
-    }
-
-    @Override
-    public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
-      if (!node.isQualified()) {
-        processElement(node);
-      }
-    }
-
-    private void processElement(@NotNull PsiNameIdentifierOwner element) {
-      final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
-      if (owner instanceof PyClass) {
-        return;
-      }
-      final String name = element.getName();
-      if (name != null && !myIgnoredNames.contains(name)) {
-        final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
-        final PsiElement builtin = builtinCache.getByName(name);
-        if (builtin != null && !PyUtil.inSameFile(builtin, element)) {
-          final PsiElement identifier = element.getNameIdentifier();
-          final PsiElement problemElement = identifier != null ? identifier : element;
-          registerProblem(problemElement, String.format("Shadows built-in name '%s'", name),
-                          ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix(problemElement), new PyIgnoreBuiltinQuickFix(name));
-        }
-      }
-    }
-
-    private static class PyIgnoreBuiltinQuickFix implements LocalQuickFix, LowPriorityAction {
-      @NotNull private final String myName;
-
-      private PyIgnoreBuiltinQuickFix(@NotNull String name) {
-        myName = name;
-      }
-
-      @NotNull
-      @Override
-      public String getName() {
-        return getFamilyName() + " \"" + myName + "\"";
-      }
-
-      @Override
-      public boolean startInWriteAction() {
-        return false;
-      }
-
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return PyBundle.message("INSP.shadowing.builtins.ignore.shadowed.built.in.name");
-      }
-
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement element = descriptor.getPsiElement();
-        if (element != null) {
-          InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
-            final String toolName = PyShadowingBuiltinsInspection.class.getSimpleName();
-            final PyShadowingBuiltinsInspection inspection = (PyShadowingBuiltinsInspection)it.getUnwrappedTool(toolName, element);
-            if (inspection != null) {
-              if (!inspection.ignoredNames.contains(myName)) {
-                inspection.ignoredNames.add(myName);
-              }
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (element != null) {
+        InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
+          final String toolName = PyShadowingBuiltinsInspection.class.getSimpleName();
+          final PyShadowingBuiltinsInspection inspection = (PyShadowingBuiltinsInspection)it.getUnwrappedTool(toolName, element);
+          if (inspection != null) {
+            if (!inspection.ignoredNames.contains(myName)) {
+              inspection.ignoredNames.add(myName);
             }
-          });
-        }
+          }
+        });
       }
     }
   }
