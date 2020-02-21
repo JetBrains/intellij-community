@@ -147,6 +147,7 @@ public class GitRebaseProcess {
         showingIndicator != null ? showingIndicator : new EmptyProgressIndicator(),
         repositoriesToRebase.size()
       );
+      indicator.setIndeterminate(false);
       for (GitRepository repository : repositoriesToRebase) {
         GitRebaseResumeMode customMode = null;
         if (repository == myRebaseSpec.getOngoingRebase()) {
