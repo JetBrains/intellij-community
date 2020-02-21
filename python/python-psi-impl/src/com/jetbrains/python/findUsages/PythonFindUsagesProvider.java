@@ -6,7 +6,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.*;
@@ -49,24 +49,24 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
       return literalString;
     }
 
-    if (element instanceof PyNamedParameter) return PyBundle.message("find.usages.parameter");
+    if (element instanceof PyNamedParameter) return PyPsiBundle.message("find.usages.parameter");
     if (element instanceof PyFunction) {
       if (((PyFunction)element).getContainingClass() != null) {
-        return PyBundle.message("find.usages.method");
+        return PyPsiBundle.message("find.usages.method");
       }
-      return PyBundle.message("find.usages.function");
+      return PyPsiBundle.message("find.usages.function");
     }
-    if (element instanceof PyClass) return PyBundle.message("find.usages.class");
-    if (element instanceof PyReferenceExpression) return PyBundle.message("find.usages.variable");
+    if (element instanceof PyClass) return PyPsiBundle.message("find.usages.class");
+    if (element instanceof PyReferenceExpression) return PyPsiBundle.message("find.usages.variable");
     if (element instanceof PyTargetExpression) {
       final PyImportElement importElement = PsiTreeUtil.getParentOfType(element, PyImportElement.class);
       if (importElement != null && importElement.getAsNameElement() == element) {
-        return PyBundle.message("find.usages.imported.module.alias");
+        return PyPsiBundle.message("find.usages.imported.module.alias");
       }
-      return PyBundle.message("find.usages.variable");
+      return PyPsiBundle.message("find.usages.variable");
     }
     if (element instanceof PyKeywordArgument) {
-      return PyBundle.message("find.usages.keyword.argument");
+      return PyPsiBundle.message("find.usages.keyword.argument");
     }
     return "";
   }
@@ -81,12 +81,12 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
 
     if (element instanceof PsiNamedElement) {
       final String name = ((PsiNamedElement)element).getName();
-      return name == null ? PyBundle.message("find.usages.unnamed") : name;
+      return name == null ? PyPsiBundle.message("find.usages.unnamed") : name;
     }
     if (element instanceof PyReferenceExpression) {
       String referencedName = ((PyReferenceExpression)element).getReferencedName();
       if (referencedName == null) {
-        return PyBundle.message("find.usages.unnamed");
+        return PyPsiBundle.message("find.usages.unnamed");
       }
       return referencedName;
     }

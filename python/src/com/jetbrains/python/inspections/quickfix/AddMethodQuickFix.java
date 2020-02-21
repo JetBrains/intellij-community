@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -127,7 +127,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
         method.addBefore(decoratorList, method.getFirstChild()); // in the very beginning
       }
 
-      method = (PyFunction)PyRefactoringUtil.addElementToStatementList(method, clsStmtList, PyNames.INIT.equals(method.getName()));
+      method = (PyFunction)PyPsiRefactoringUtil.addElementToStatementList(method, clsStmtList, PyNames.INIT.equals(method.getName()));
       if (myReplaceUsage) {
         showTemplateBuilder(method);
       }

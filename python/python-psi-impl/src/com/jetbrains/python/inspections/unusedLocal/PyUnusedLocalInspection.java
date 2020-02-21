@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.inspections;
+package com.jetbrains.python.inspections.unusedLocal;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.inspections.PyInspection;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,10 +49,10 @@ public class PyUnusedLocalInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(PyBundle.message("INSP.unused.locals.ignore.variables.used.in.tuple.unpacking"), "ignoreTupleUnpacking");
-    panel.addCheckbox(PyBundle.message("INSP.unused.locals.ignore.lambda.parameters"), "ignoreLambdaParameters");
-    panel.addCheckbox(PyBundle.message("INSP.unused.locals.ignore.range.iteration.variables"), "ignoreLoopIterationVariables");
-    panel.addCheckbox(PyBundle.message("INSP.unused.locals.ignore.variables.starting.with"), "ignoreVariablesStartingWithUnderscore");
+    panel.addCheckbox(PyPsiBundle.message("INSP.unused.locals.ignore.variables.used.in.tuple.unpacking"), "ignoreTupleUnpacking");
+    panel.addCheckbox(PyPsiBundle.message("INSP.unused.locals.ignore.lambda.parameters"), "ignoreLambdaParameters");
+    panel.addCheckbox(PyPsiBundle.message("INSP.unused.locals.ignore.range.iteration.variables"), "ignoreLoopIterationVariables");
+    panel.addCheckbox(PyPsiBundle.message("INSP.unused.locals.ignore.variables.starting.with"), "ignoreVariablesStartingWithUnderscore");
     return panel;
   }
 }

@@ -43,7 +43,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +92,7 @@ public final class PyClassRefactoringUtil {
 
       }
 
-      declarations.add(PyRefactoringUtil.addElementToStatementList(newDeclaration, superClassStatement));
+      declarations.add(PyPsiRefactoringUtil.addElementToStatementList(newDeclaration, superClassStatement));
       PyPsiUtils.removeRedundantPass(superClassStatement);
     }
     return declarations;
@@ -625,7 +625,7 @@ public final class PyClassRefactoringUtil {
 
     final PyAssignmentStatement assignmentStatement = generator.createFromText(level, PyAssignmentStatement.class, text);
     //TODO: Add metaclass to the top. Add others between last attributeName and first method
-    return PyRefactoringUtil.addElementToStatementList(assignmentStatement, aClass.getStatementList(), true);
+    return PyPsiRefactoringUtil.addElementToStatementList(assignmentStatement, aClass.getStatementList(), true);
   }
 
   public static boolean addMetaClassIfNotExist(@NotNull PyClass cls, @NotNull PyClass metaClass, @NotNull TypeEvalContext context) {

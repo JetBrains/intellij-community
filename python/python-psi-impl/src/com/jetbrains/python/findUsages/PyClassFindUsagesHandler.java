@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.codeInsight.template;
+package com.jetbrains.python.findUsages;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.openapi.editor.Document;
+import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.NotNull;
 
-public interface Result {
-  boolean equalsToText (String text, PsiElement context);
+/**
+ * @author yole
+ */
+public class PyClassFindUsagesHandler extends PyFindUsagesHandler {
 
-  String toString();
+  public PyClassFindUsagesHandler(@NotNull PyClass psiElement) {
+    super(psiElement);
+  }
 
-  void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd);
+  @Override
+  public boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+    return true;
+  }
+
 }
-

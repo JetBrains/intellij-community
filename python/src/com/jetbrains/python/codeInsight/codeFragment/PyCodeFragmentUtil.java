@@ -6,21 +6,19 @@ import com.intellij.codeInsight.codeFragment.CodeFragmentUtil;
 import com.intellij.codeInsight.codeFragment.Position;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -161,25 +159,6 @@ public class PyCodeFragmentUtil {
       }
     }
     return instructions;
-  }
-
-  @NotNull
-  public static List<UsageInfo> findUsages(@NotNull PsiNamedElement element, boolean forHighlightUsages) {
-    final List<UsageInfo> usages = new ArrayList<>();
-    final FindUsagesHandler handler = new PyFindUsagesHandlerFactory().createFindUsagesHandler(element, forHighlightUsages);
-    assert handler != null;
-    final List<PsiElement> elementsToProcess = new ArrayList<>();
-    Collections.addAll(elementsToProcess, handler.getPrimaryElements());
-    Collections.addAll(elementsToProcess, handler.getSecondaryElements());
-    for (PsiElement e : elementsToProcess) {
-      handler.processElementUsages(e, usageInfo -> {
-        if (!usageInfo.isNonCodeUsage) {
-          usages.add(usageInfo);
-        }
-        return true;
-      }, FindUsagesHandler.createFindUsagesOptions(element.getProject(), null));
-    }
-    return usages;
   }
 
   private static class AnalysisResult {
@@ -380,7 +359,7 @@ public class PyCodeFragmentUtil {
 
   private static boolean isUsedOutside(@NotNull PsiNamedElement element, @NotNull List<Instruction> subGraph) {
     final Set<PsiElement> subGraphElements = getSubGraphElements(subGraph);
-    return ContainerUtil.exists(findUsages(element, false),
+    return ContainerUtil.exists(PyPsiIndexUtil.findUsages(element, false),
                                 usageInfo -> !subGraphElements.contains(usageInfo.getElement()));
   }
 

@@ -29,8 +29,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
@@ -83,7 +86,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     return StreamEx.of(myElements)
       .map(SmartPsiElementPointer::getElement)
       .nonNull()
-      .flatMap(e -> StreamEx.of(PyCodeFragmentUtil.findUsages(e, false))
+      .flatMap(e -> StreamEx.of(PyPsiIndexUtil.findUsages(e, false))
         .map(info -> new MyUsageInfo(info, e)))
       .toArray(UsageInfo[]::new);
   }

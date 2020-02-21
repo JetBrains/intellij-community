@@ -19,7 +19,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyStatement;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ public class PyRemoveStatementQuickFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyBundle.message("QFIX.NAME.remove.statement");
+    return PyPsiBundle.message("QFIX.NAME.remove.statement");
   }
 
   @Override

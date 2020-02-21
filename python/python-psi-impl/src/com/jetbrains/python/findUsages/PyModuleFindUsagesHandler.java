@@ -15,16 +15,11 @@
  */
 package com.jetbrains.python.findUsages;
 
-import com.intellij.find.findUsages.AbstractFindUsagesDialog;
-import com.intellij.find.findUsages.CommonFindUsagesDialog;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
@@ -39,7 +34,7 @@ import java.util.List;
  * @author yole
  */
 public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
-  private final PsiFileSystemItem myElement;
+  final PsiFileSystemItem myElement;
 
   protected PyModuleFindUsagesHandler(@NotNull PsiFileSystemItem file) {
     super(file);
@@ -50,24 +45,6 @@ public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
   @Override
   public PsiElement @NotNull [] getPrimaryElements() {
     return new PsiElement[] {myElement};
-  }
-
-  @NotNull
-  @Override
-  public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
-    return new CommonFindUsagesDialog(myElement,
-                                      getProject(),
-                                      getFindUsagesOptions(),
-                                      toShowInNewTab,
-                                      mustOpenInNewTab,
-                                      isSingleFile,
-                                      this) {
-      @Override
-      public void configureLabelComponent(@NotNull final SimpleColoredComponent coloredComponent) {
-        coloredComponent.append(myElement instanceof PsiDirectory ? "Package " : "Module ");
-        coloredComponent.append(myElement.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-      }
-    };
   }
 
   @NotNull

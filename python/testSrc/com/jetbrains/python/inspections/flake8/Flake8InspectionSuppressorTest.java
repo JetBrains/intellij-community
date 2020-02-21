@@ -7,8 +7,8 @@ import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyComparisonWithNoneInspection;
-import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class Flake8InspectionSuppressorTest extends PyTestCase {

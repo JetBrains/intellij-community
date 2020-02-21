@@ -19,7 +19,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyReturnFromInitInspection;
-import com.jetbrains.python.inspections.PyUnusedLocalInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/PyRemoveStatementQuickFixTest/")
 public class PyRemoveStatementQuickFixTest extends PyQuickFixTestCase {

@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.findUsages;
 
-import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesHandlerBase;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiElement;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Yuli Fiterman
  */
-public abstract class PyFindUsagesHandler extends FindUsagesHandler {
+public abstract class PyFindUsagesHandler extends FindUsagesHandlerBase {
   protected PyFindUsagesHandler(@NotNull PsiElement psiElement) {
     super(psiElement);
   }
@@ -35,5 +35,10 @@ public abstract class PyFindUsagesHandler extends FindUsagesHandler {
   public FindUsagesOptions getFindUsagesOptions(@Nullable DataContext dataContext) {
     PyFindUsagesOptions sharedOpts = PyFindUsagesOptions.getInstance(getProject());
     return !isSearchForTextOccurrencesAvailable(getPsiElement(), false) ? (PyFindUsagesOptions)sharedOpts.clone() : sharedOpts;
+  }
+
+  @Override
+  public boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+    return super.isSearchForTextOccurrencesAvailable(psiElement, isSingleFile);
   }
 }

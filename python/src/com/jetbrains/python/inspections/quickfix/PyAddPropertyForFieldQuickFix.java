@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -45,7 +45,7 @@ public class PyAddPropertyForFieldQuickFix implements LocalQuickFix {
           final PyElementGenerator generator = PyElementGenerator.getInstance(project);
           if (!properties.containsKey(propertyName)) {
             final PyFunction property = generator.createProperty(LanguageLevel.forElement(containingClass), propertyName, name, AccessDirection.READ);
-            PyRefactoringUtil.addElementToStatementList(property, containingClass.getStatementList(), false);
+            PyPsiRefactoringUtil.addElementToStatementList(property, containingClass.getStatementList(), false);
           }
           final PyExpression qualifier = ((PyReferenceExpression)element).getQualifier();
           if (qualifier != null) {

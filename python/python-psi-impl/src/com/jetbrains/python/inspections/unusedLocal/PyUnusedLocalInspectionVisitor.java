@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.inspections;
+package com.jetbrains.python.inspections.unusedLocal;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
@@ -13,14 +13,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.doctest.PyDocReference;
+import com.jetbrains.python.inspections.PyInspectionExtension;
+import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveParameterQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveStatementQuickFix;
@@ -293,7 +295,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
-  void registerProblems() {
+  public void registerProblems() {
     final List<PyInspectionExtension> filters = PyInspectionExtension.EP_NAME.getExtensionList();
     // Register problems
 
@@ -313,7 +315,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         // Local function
         final PsiElement nameIdentifier = ((PyFunction)element).getNameIdentifier();
         registerWarning(nameIdentifier == null ? element : nameIdentifier,
-                        PyBundle.message("INSP.unused.locals.local.function.isnot.used",
+                        PyPsiBundle.message("INSP.unused.locals.local.function.isnot.used",
                                             ((PyFunction)element).getName()), new PyRemoveStatementQuickFix());
       }
       else if (element instanceof PyClass) {
@@ -321,7 +323,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         final PyClass cls = (PyClass)element;
         final PsiElement name = cls.getNameIdentifier();
         registerWarning(name != null ? name : element,
-                        PyBundle.message("INSP.unused.locals.local.class.isnot.used", cls.getName()), new PyRemoveStatementQuickFix());
+                        PyPsiBundle.message("INSP.unused.locals.local.class.isnot.used", cls.getName()), new PyRemoveStatementQuickFix());
       }
       else {
         // Local variable or parameter
@@ -374,7 +376,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (canRemove) {
             fixes.add(new PyRemoveParameterQuickFix());
           }
-          registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          registerWarning(element, PyPsiBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
         else {
           if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) {
@@ -383,12 +385,12 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           final PyForStatement forStatement = PyForStatementNavigator.getPyForStatementByIterable(element);
           if (forStatement != null) {
             if (!myIgnoreRangeIterationVariables || !isRangeIteration(forStatement)) {
-              registerProblem(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name),
+              registerProblem(element, PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name),
                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new ReplaceWithWildCard());
             }
           }
           else if (!myIgnoreVariablesStartingWithUnderscore || !name.startsWith(PyNames.UNDERSCORE)) {
-            registerWarning(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveStatementQuickFix());
+            registerWarning(element, PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveStatementQuickFix());
           }
         }
       }
@@ -456,7 +458,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     @Override
     @NotNull
     public String getFamilyName() {
-      return PyBundle.message("INSP.unused.locals.replace.with.wildcard");
+      return PyPsiBundle.message("INSP.unused.locals.replace.with.wildcard");
     }
 
     @Override
