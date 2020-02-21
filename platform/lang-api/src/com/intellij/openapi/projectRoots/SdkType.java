@@ -4,6 +4,7 @@ package com.intellij.openapi.projectRoots;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
@@ -51,6 +52,16 @@ public abstract class SdkType implements SdkTypeId {
   public Collection<String> suggestHomePaths() {
     String home = suggestHomePath();
     return home != null ? Collections.singletonList(home) : Collections.emptyList();
+  }
+
+  /**
+   * This method is used to decide if a given {@link VirtualFile} has something in common
+   * with this {@link SdkType}.
+   *
+   * For example, it can be used by the IDE to decide showing SDK related editor notifications or quick fixes
+   */
+  public boolean isRelevantForFile(@NotNull Project project, @NotNull VirtualFile file) {
+    return true;
   }
 
   /**

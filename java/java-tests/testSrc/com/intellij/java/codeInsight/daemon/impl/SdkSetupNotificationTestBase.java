@@ -60,6 +60,14 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
   public static EditorNotificationPanel runOnText(@NotNull JavaCodeInsightTestFixture fixture,
                                                   @NotNull String fileName,
                                                   @NotNull String fileText) {
+    FileEditor editor = openTextInEditor(fixture, fileName, fileText);
+    return editor.getUserData(SdkSetupNotificationProvider.KEY);
+  }
+
+  @NotNull
+  public static FileEditor openTextInEditor(@NotNull JavaCodeInsightTestFixture fixture,
+                                            @NotNull String fileName,
+                                            @NotNull String fileText) {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     UIUtil.dispatchAllInvocationEvents();
 
@@ -74,9 +82,11 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
       }
     });
     assertThat(editors).hasSize(1);
+
+    UIUtil.dispatchAllInvocationEvents();
     EditorNotificationsImpl.completeAsyncTasks();
 
-    return editors[0].getUserData(SdkSetupNotificationProvider.KEY);
+    return editors[0];
   }
 
   protected void setProjectSdk(@Nullable Sdk sdk) {

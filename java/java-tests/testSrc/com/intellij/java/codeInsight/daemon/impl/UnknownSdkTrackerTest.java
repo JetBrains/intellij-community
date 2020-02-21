@@ -4,11 +4,11 @@ package com.intellij.java.codeInsight.daemon.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification;
-import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification.SdkFixInfo;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.java.codeInsight.daemon.impl.SdkSetupNotificationTestBase.openTextInEditor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
@@ -50,6 +51,9 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
       .withFailMessage(String.valueOf(fixes))
       .hasSize(1)
       .first().asString().startsWith("SdkFixInfo:");
+
+    assertThat(unknownSdkNotificationsFor("Sample.java", "class Sample { java.lang.String foo; }")).hasSize(1);
+    assertThat(unknownSdkNotificationsFor("jonnyzzz.js", "(function() { })();")).isEmpty();
   }
 
   public void testMissingProjectUnknownJdk() {
@@ -127,6 +131,16 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     setProjectSdk2(IdeaTestUtil.getMockJdk17());
   }
 
+  @Nullable
+  private List<EditorNotificationPanel> unknownSdkNotificationsFor(@NotNull String fileName, @NotNull String text) {
+    FileEditor editor = openTextInEditor(myFixture, fileName, text);
+
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    UIUtil.dispatchAllInvocationEvents();
+
+    return editor.getUserData(UnknownSdkEditorNotification.NOTIFICATIONS);
+  }
+
   @NotNull
   private List<String> detectMissingSdks() {
     UnknownSdkTracker.getInstance(getProject()).updateUnknownSdks();
@@ -135,7 +149,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     UIUtil.dispatchAllInvocationEvents();
 
     ArrayList<String> infos = new ArrayList<>();
-    for (SdkFixInfo notification : UnknownSdkEditorNotification.getInstance(getProject()).getNotifications()) {
+    for (UnknownSdkEditorNotification.SimpleSdkFixInfo notification : UnknownSdkEditorNotification.getInstance(getProject()).getNotifications()) {
       infos.add("SdkFixInfo:" + notification.toString());
     }
 
