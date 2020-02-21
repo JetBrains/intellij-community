@@ -20,8 +20,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,7 @@ public class PyDefaultArgumentQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("QFIX.default.argument");
+    return PyPsiBundle.message("QFIX.default.argument");
   }
 
   @Override
