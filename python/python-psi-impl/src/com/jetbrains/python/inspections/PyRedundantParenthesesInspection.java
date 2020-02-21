@@ -24,7 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SmartSerializer;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.RedundantParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
@@ -109,16 +109,16 @@ public class PyRedundantParenthesesInspection extends PyInspection {
         if (parent instanceof PyPrintStatement) {
           return;
         }
-        registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
+        registerProblem(node, PyPsiBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
       else if (parent instanceof PyIfPart ||
                parent instanceof PyWhilePart) {
-        registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
+        registerProblem(node, PyPsiBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
       else if (parent instanceof PyReturnStatement || parent instanceof PyYieldExpression) {
         if (!isTupleWithUnpacking(expression) && !oneElementTuple(expression) ||
             languageLevel.isAtLeast(LanguageLevel.PYTHON38) && !isYieldFrom(parent)) {
-          registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
+          registerProblem(node, PyPsiBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
         }
       }
       else if (expression instanceof PyBinaryExpression) {
@@ -134,12 +134,12 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           if (leftExpression instanceof PyParenthesizedExpression && rightExpression instanceof PyParenthesizedExpression &&
               !(((PyParenthesizedExpression)leftExpression).getContainedExpression() instanceof PyBinaryExpression) &&
               !(((PyParenthesizedExpression)rightExpression).getContainedExpression() instanceof PyBinaryExpression)) {
-            registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
+            registerProblem(node, PyPsiBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
           }
         }
       }
       else if (expression instanceof PyParenthesizedExpression) {
-        registerProblem(expression, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
+        registerProblem(expression, PyPsiBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
     }
 
@@ -149,7 +149,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
         return;
       }
       if (!myIgnoreEmptyBaseClasses && node.getArguments().length == 0) {
-        registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
+        registerProblem(node, PyPsiBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
     }
   }
@@ -157,9 +157,9 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(PyBundle.message("INSP.redundant.parens.ignore.argument.of.operator"), "myIgnorePercOperator");
-    panel.addCheckbox(PyBundle.message("INSP.redundant.parens.ignore.tuples"), "myIgnoreTupleInReturn");
-    panel.addCheckbox(PyBundle.message("INSP.redundant.parens.ignore.empty.lists.of.base.classes"), "myIgnoreEmptyBaseClasses");
+    panel.addCheckbox(PyPsiBundle.message("INSP.redundant.parens.ignore.argument.of.operator"), "myIgnorePercOperator");
+    panel.addCheckbox(PyPsiBundle.message("INSP.redundant.parens.ignore.tuples"), "myIgnoreTupleInReturn");
+    panel.addCheckbox(PyPsiBundle.message("INSP.redundant.parens.ignore.empty.lists.of.base.classes"), "myIgnoreEmptyBaseClasses");
     return panel;
   }
 }
