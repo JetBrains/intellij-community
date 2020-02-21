@@ -20,14 +20,13 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.SimplifyBooleanCheckQuickFix;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +54,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(PyBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero"), "ignoreComparisonToZero");
+    panel.addCheckbox(PyPsiBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero"), "ignoreComparisonToZero");
     return panel;
   }
 
@@ -117,7 +116,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
     }
 
     private void registerProblem(PyBinaryExpression binaryExpression) {
-      registerProblem(binaryExpression, PyBundle.message("INSP.expression.can.be.simplified"), new SimplifyBooleanCheckQuickFix(binaryExpression));
+      registerProblem(binaryExpression, PyPsiBundle.message("INSP.expression.can.be.simplified"), new SimplifyBooleanCheckQuickFix(binaryExpression));
     }
   }
 }
