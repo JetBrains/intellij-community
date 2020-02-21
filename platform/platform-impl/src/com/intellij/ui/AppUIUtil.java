@@ -1,14 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.ConsentSettingsUi;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.idea.Main;
-import com.intellij.idea.SplashManager;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -26,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleContextSupport;
@@ -34,8 +29,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -44,21 +37,14 @@ import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
-
-import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
-import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 public final class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
@@ -331,6 +317,11 @@ public final class AppUIUtil {
     });
   }
 
+  public static boolean needToShowConsentsAgreement() {
+    final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
+    return consentsToShow.second;
+  }
+
   public static boolean showConsentsAgreementIfNeeded(@NotNull Executor edtExecutor) {
     final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
@@ -343,114 +334,6 @@ public final class AppUIUtil {
   public static void updateForDarcula(boolean isDarcula) {
     JBColor.setDark(isDarcula);
     IconLoader.setUseDarkIcons(isDarcula);
-  }
-
-  /**
-   * todo: update to support GDPR requirements
-   *
-   * @param htmlText Updated version of Privacy Policy or EULA text if any.
-   *                 If it's {@code null}, the standard text from bundled resources would be used.
-   * @param isPrivacyPolicy  true if this document is a privacy policy
-   */
-  public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
-    DialogWrapper dialog = new DialogWrapper(true) {
-      private JEditorPane myViewer;
-
-      @Override
-      protected JComponent createCenterPanel() {
-        JPanel centerPanel = new JPanel(new BorderLayout(0, JBUIScale.scale(8)));
-        myViewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
-        myViewer.setFocusable(true);
-        myViewer.addHyperlinkListener(new HyperlinkAdapter() {
-          @Override
-          protected void hyperlinkActivated(HyperlinkEvent e) {
-            URL url = e.getURL();
-            if (url != null) {
-              BrowserUtil.browse(url);
-            }
-            else {
-              SwingHelper.scrollToReference(myViewer, e.getDescription());
-            }
-          }
-        });
-        myViewer.setText(htmlText);
-        StyleSheet styleSheet = ((HTMLDocument)myViewer.getDocument()).getStyleSheet();
-        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
-        styleSheet.addRule("body {margin-top:0;padding-top:0;}");
-        styleSheet.addRule("body {font-size:" + JBUIScale.scaleFontSize((float)13) + "pt;}");
-        styleSheet.addRule("h2, em {margin-top:" + JBUIScale.scaleFontSize((float)20) + "pt;}");
-        styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
-        styleSheet.addRule("p, h1 {margin-top:0;padding-top:" + JBUIScale.scaleFontSize((float)6) + "pt;}");
-        styleSheet.addRule("li {margin-bottom:" + JBUIScale.scaleFontSize((float)6) + "pt;}");
-        styleSheet.addRule("h2 {margin-top:0;padding-top:" + JBUIScale.scaleFontSize((float)13) + "pt;}");
-        myViewer.setCaretPosition(0);
-        myViewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
-        centerPanel.add(JBUI.Borders.emptyTop(8).wrap(
-          new JLabel("Please read and accept these terms and conditions. Scroll down for full text:")), BorderLayout.NORTH);
-        JBScrollPane scrollPane = new JBScrollPane(myViewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
-        centerPanel.add(scrollPane, BorderLayout.CENTER);
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
-          JPanel eapPanel = new JPanel(new BorderLayout(8, 8));
-          eapPanel.setBorder(JBUI.Borders.empty(8));
-          //noinspection UseJBColor
-          eapPanel.setBackground(new Color(0xDCE4E8));
-          JLabel label = new JLabel(AllIcons.General.BalloonInformation);
-          label.setVerticalAlignment(SwingConstants.TOP);
-          eapPanel.add(label, BorderLayout.WEST);
-          JEditorPane html = SwingHelper.createHtmlLabel(
-            "EAP builds report usage statistics by default per "+
-            (isPrivacyPolicy? "this Privacy Policy." : "the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>.") +
-            "<br/>No personal or sensitive data are sent. You may disable this in the settings.", null, null
-          );
-          eapPanel.add(html, BorderLayout.CENTER);
-          bottomPanel.add(eapPanel, BorderLayout.NORTH);
-        }
-        JCheckBox checkBox = new JCheckBox("I confirm that I have read and accept the terms of this User Agreement");
-        bottomPanel.add(JBUI.Borders.empty(24, 0, 16, 0).wrap(checkBox), BorderLayout.CENTER);
-        centerPanel.add(JBUI.Borders.emptyTop(8).wrap(bottomPanel), BorderLayout.SOUTH);
-        checkBox.addActionListener(e -> setOKActionEnabled(checkBox.isSelected()));
-        centerPanel.setPreferredSize(JBUI.size(520, 450));
-        return centerPanel;
-      }
-
-      @Nullable
-      @Override
-      public JComponent getPreferredFocusedComponent() {
-        return myViewer;
-      }
-
-      @Override
-      protected void createDefaultActions() {
-        super.createDefaultActions();
-        init();
-        setOKButtonText("Continue");
-        setOKActionEnabled(false);
-        setCancelButtonText("Reject and Exit");
-        setAutoAdjustable(false);
-      }
-
-      @Override
-      public void doCancelAction() {
-        super.doCancelAction();
-        Application application = ApplicationManager.getApplication();
-        if (application == null) {
-          System.exit(Main.PRIVACY_POLICY_REJECTION);
-        }
-        else {
-          application.exit(true, true, false);
-        }
-      }
-    };
-    dialog.setModal(true);
-    dialog.setTitle(
-      isPrivacyPolicy
-      ? ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy"
-      : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement"
-    );
-    dialog.pack();
-
-    SplashManager.executeWithHiddenSplash(dialog.getWindow(), () -> dialog.show());
   }
 
   public static boolean confirmConsentOptions(@NotNull List<Consent> consents) {

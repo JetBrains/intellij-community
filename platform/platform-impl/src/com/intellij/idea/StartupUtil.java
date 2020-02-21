@@ -13,6 +13,7 @@ import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
+import com.intellij.ide.gdpr.Agreements;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -694,12 +695,12 @@ public final class StartupUtil {
     EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
     if (!agreement.isAccepted()) {
       // todo: does not seem to request focus when shown
-      runInEdtAndWait(log, () -> AppUIUtil.showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()), initUiTask);
+      runInEdtAndWait(log, () -> Agreements.INSTANCE.showEndUserAndDataSharingAgreements(agreement), initUiTask);
       dialogWasShown = true;
-      EndUserAgreement.setAccepted(agreement);
     }
-
-    AppUIUtil.showConsentsAgreementIfNeeded(command -> runInEdtAndWait(log, command, initUiTask));
+    if (AppUIUtil.needToShowConsentsAgreement()) {
+      runInEdtAndWait(log, () -> Agreements.INSTANCE.showDataSharingAgreement(), initUiTask);
+    }
     return dialogWasShown;
   }
 

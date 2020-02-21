@@ -80,5 +80,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="library" name="jsoup" level="project" />
   </component>
 </module>
