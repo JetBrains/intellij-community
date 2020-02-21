@@ -310,7 +310,6 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     override fun hasFocus(): Boolean = optionButton.hasFocus()
     override fun isDefaultButton(): Boolean = optionButton.isDefaultButton
     override fun getBackground(): Color? = optionButton.background
-    override fun getDisplayedMnemonicIndex(): Int = optionButton.displayedMnemonicIndex
 
     override fun paint(g: Graphics): Unit = if (isSimpleButton) super.paint(g) else cloneAndPaint(g) { paintNotSimple(it) }
     open fun paintNotSimple(g: Graphics2D): Unit = super.paint(g)
