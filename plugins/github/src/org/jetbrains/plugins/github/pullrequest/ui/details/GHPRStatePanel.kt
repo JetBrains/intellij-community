@@ -283,6 +283,8 @@ internal class GHPRStatePanel(private val project: Project,
                                       private val notLoadedContentFactory: () -> JComponent,
                                       private val loadedContentFactory: (mergeabilityModel: SingleValueModel<GHPRMergeabilityState>) -> JComponent) {
 
+        private var loadedMergeabilityModel: SingleValueModel<GHPRMergeabilityState>? = null
+
         init {
           loadingMergeabilityModel.addAndInvokeValueChangedListener(this::update)
         }
@@ -290,15 +292,20 @@ internal class GHPRStatePanel(private val project: Project,
         private fun update() {
           val mergeability = loadingMergeabilityModel.value
           if (mergeability == null) {
+            loadedMergeabilityModel = null
             panel.setContent(notLoadedContentFactory())
           }
           else {
-            val mergeabilityModel = SingleValueModel(mergeability)
-            loadingMergeabilityModel.addAndInvokeValueChangedListener {
-              mergeabilityModel.value = loadingMergeabilityModel.value ?: return@addAndInvokeValueChangedListener
+            var mergeabilityModel = loadedMergeabilityModel
+            if (mergeabilityModel == null) {
+              mergeabilityModel = SingleValueModel(mergeability)
+              panel.setContent(loadedContentFactory(mergeabilityModel))
+              panel.revalidate()
+              loadedMergeabilityModel = mergeabilityModel
             }
-            panel.setContent(loadedContentFactory(mergeabilityModel))
-            panel.revalidate()
+            else {
+              mergeabilityModel.value = mergeability
+            }
           }
         }
       }
