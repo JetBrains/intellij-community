@@ -114,6 +114,7 @@
 
   pin('.*list(?:_\d.*)?')=1
   pin('.*_(command|clause)')=1
+  extends("variable|string|number")=literal
   extends(".*command|function_definition")=command
 
   implements("function_definition|assignment_command|assignment_expression")="com.intellij.psi.PsiNameIdentifierOwner"
@@ -303,13 +304,10 @@ literal ::= word | string | number | variable {
 }
 private not_lvalue ::= '!' | vars | '$' | brace_expansion | 'file descriptor'
 brace_expansion ::= '{' (word | brace_expansion)* '}'
-variable ::= var {
-  methods=[getReferences]
-  extends=literal
-}
+variable ::= var { methods=[getReferences] }
 
-number ::= int | hex | octal {extends=literal}
-string ::= OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE | RAW_STRING {pin(".*")=1 extends=literal}
+number ::= int | hex | octal
+string ::= OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE | RAW_STRING {pin(".*")=1}
 private w ::= word | string | number | not_lvalue
 private newlines ::= '\n'*
 
