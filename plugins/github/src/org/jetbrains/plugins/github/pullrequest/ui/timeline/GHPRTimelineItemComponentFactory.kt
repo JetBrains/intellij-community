@@ -87,7 +87,8 @@ class GHPRTimelineItemComponentFactory(private val reviewService: GHPRReviewServ
     val actionText = when (review.state) {
       APPROVED -> "approved these changes"
       CHANGES_REQUESTED -> "rejected these changes"
-      COMMENTED, DISMISSED, PENDING -> "reviewed"
+      PENDING -> "started a review"
+      COMMENTED, DISMISSED -> "reviewed"
     }
 
     return Item(icon, actionTitle(avatarIconsProvider, review.author, actionText, review.createdAt), reviewPanel)
