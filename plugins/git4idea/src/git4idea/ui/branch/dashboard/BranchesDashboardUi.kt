@@ -75,9 +75,8 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   private lateinit var branchesPanelExpandableController: ExpandablePanelController
 
-  private val treeSelectionListener = TreeSelectionListener { e ->
+  private val treeSelectionListener = TreeSelectionListener {
     if (!branchesPanelExpandableController.isExpanded()) return@TreeSelectionListener
-    if (e.paths.none(e::isAddedPath)) return@TreeSelectionListener
 
     val ui = logUi
     val branchNames = tree.getSelectedBranchNames()
