@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 class GitBrancherImpl implements GitBrancher {
 
@@ -117,21 +118,21 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void deleteBranch(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
-    deleteBranches(Collections.singletonList(branchName), repositories, null);
+    deleteBranches(Collections.singletonMap(branchName, repositories), null);
   }
 
   @Override
-  public void deleteBranches(@NotNull List<String> branchNames,
-                             @NotNull List<? extends GitRepository> repositories,
+  public void deleteBranches(@NotNull Map<String, List<? extends GitRepository>> branchesToContainingRepositories,
                              @Nullable Runnable callInAwtAfterExecution) {
-    if (branchNames.isEmpty()) return;
+    if (branchesToContainingRepositories.isEmpty()) return;
+    Set<String> branchNames = branchesToContainingRepositories.keySet();
     String branchMsg = branchNames.size() == 1 ? branchNames.iterator().next() : StringUtil.join(branchNames, ", ");
     new CommonBackgroundTask(myProject, "Deleting " + branchMsg, callInAwtAfterExecution) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         GitBranchWorker worker = newWorker(indicator);
         for (String branchName : branchNames) {
-          worker.deleteBranch(branchName, repositories);
+          worker.deleteBranch(branchName, branchesToContainingRepositories.getOrDefault(branchName, Collections.emptyList()));
         }
       }
     }.runInBackground();

@@ -177,13 +177,13 @@ internal object BranchesDashboardActions {
       val gitBrancher = GitBrancher.getInstance(project)
       val (localBranches, remoteBranches) = branches.partition { it.isLocal && !it.isCurrent }
       with(gitBrancher) {
-        val localBranchNames = localBranches.map(BranchInfo::branchName)
-        val repositories = localBranches.flatMap(BranchInfo::repositories).distinct()
+        val branchesToContainingRepositories: Map<String, List<GitRepository>> = localBranches.associate { it.branchName to it.repositories }
+        val localBranchNames = branchesToContainingRepositories.keys
         val deleteRemoteBranches = {
           deleteRemoteBranches(remoteBranches.map(BranchInfo::branchName), remoteBranches.flatMap(BranchInfo::repositories).distinct())
         }
         if (localBranchNames.isNotEmpty()) { //delete local (possible tracked) branches first if any
-          deleteBranches(localBranchNames, repositories, deleteRemoteBranches)
+          deleteBranches(branchesToContainingRepositories, deleteRemoteBranches)
         }
         else {
           deleteRemoteBranches()

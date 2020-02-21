@@ -137,7 +137,7 @@ public interface GitBrancher {
    */
   void deleteBranch(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories);
 
-  void deleteBranches(@NotNull List<String> branchNames, @NotNull List<? extends GitRepository> repositories, @Nullable Runnable callInAwtAfterExecution);
+  void deleteBranches(@NotNull Map<String, List<? extends GitRepository>> branchesToContainingRepositories, @Nullable Runnable callInAwtAfterExecution);
 
   /**
    * <p>Deletes the remote branch:</p>
