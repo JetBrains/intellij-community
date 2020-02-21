@@ -38,10 +38,8 @@ import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
-import com.intellij.vcs.log.ui.frame.FrameDiffPreview
-import com.intellij.vcs.log.ui.frame.MainFrame
-import com.intellij.vcs.log.ui.frame.ProgressStripe
-import com.intellij.vcs.log.ui.frame.VcsLogChangeProcessor
+import com.intellij.vcs.log.ui.frame.*
+import com.intellij.vcs.log.util.VcsLogUiUtil.isDiffPreviewInEditor
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
@@ -95,8 +93,14 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     uiController.registerLogUiPropertiesListener(logUi.properties)
     branchesSearchField.setVerticalSizeReferent(logUi.toolbar)
     branchViewSplitter.secondComponent = logUi.mainFrame
-    val diffPreview = logUi.createDiffPreview()
-    mainPanel.add(DiffPreviewSplitter(diffPreview, logUi.properties, branchesTreeWithLogPanel).mainComponent)
+    val isDiffPreviewInEditor = isDiffPreviewInEditor()
+    val diffPreview = logUi.createDiffPreview(isDiffPreviewInEditor)
+    if (isDiffPreviewInEditor) {
+      mainPanel.add(branchesTreeWithLogPanel)
+    }
+    else {
+      mainPanel.add(DiffPreviewSplitter(diffPreview, logUi.properties, branchesTreeWithLogPanel).mainComponent)
+    }
     tree.component.addTreeSelectionListener(treeSelectionListener)
   }
 
@@ -259,12 +263,15 @@ internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: V
       .apply {
         isFocusCycleRoot = false
         focusTraversalPolicy = null //new focus traversal policy will be configured include branches tree
+        if (isDiffPreviewInEditor()) {
+          VcsLogEditorDiffPreview(myProject, uiProperties, this)
+        }
       }
 
   override fun getMainComponent() = branchesUi.getMainComponent()
 
-  fun createDiffPreview(): VcsLogChangeProcessor {
-    return mainFrame.createDiffPreview(false, mainFrame.changesBrowser)
+  fun createDiffPreview(isInEditor: Boolean): VcsLogChangeProcessor {
+    return mainFrame.createDiffPreview(isInEditor, mainFrame.changesBrowser)
   }
 }
 
