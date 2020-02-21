@@ -21,6 +21,7 @@ import java.awt.event.ActionListener;
 
 public class ProgramInputRedirectPanel extends JPanel implements PanelWithAnchor {
   private final JBCheckBox myCheckBox = new JBCheckBox(ExecutionBundle.message("redirect.input.from"));
+
   private final TextFieldWithBrowseButton myInputFile = new TextFieldWithBrowseButton();
 
   public ProgramInputRedirectPanel() {
@@ -38,6 +39,10 @@ public class ProgramInputRedirectPanel extends JPanel implements PanelWithAnchor
         myInputFile.setEnabled(myCheckBox.isSelected());
       }
     });
+  }
+
+  public @NotNull TextFieldWithBrowseButton getComponent() {
+    return myInputFile;
   }
 
   @Override

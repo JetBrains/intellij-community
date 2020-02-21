@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.execution.ui.CommonProgramParametersPanel;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -30,10 +30,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.PySymbolFieldWithBrowseButton;
 import com.jetbrains.PySymbolFieldWithBrowseButtonKt;
-import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.extensions.ContextAnchor;
 import com.jetbrains.extensions.ModuleBasedContextAnchor;
 import com.jetbrains.extensions.ProjectSdkContextAnchor;
+import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
@@ -146,7 +146,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     group.add(myRedirectInputCheckBox);
     group.add(myShowCommandLineCheckbox);
 
-    ProgramParametersConfigurator.addMacroSupport(myScriptParametersTextField.getEditorField());
+    CommonProgramParametersPanel.addMacroSupport(myScriptParametersTextField.getEditorField());
   }
 
   private void updateRunModuleMode() {

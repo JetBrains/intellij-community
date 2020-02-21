@@ -5,7 +5,10 @@ import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.macro.EditorMacro;
+import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -13,6 +16,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.TextAccessor;
@@ -31,6 +35,7 @@ import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public class CommonProgramParametersPanel extends JPanel implements PanelWithAnchor {
   protected LabeledComponent<RawCommandLineEditor> myProgramParametersComponent;
@@ -93,6 +98,9 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     myWorkingDirectoryComponent.setLabelLocation(BorderLayout.WEST);
 
     addComponents();
+    if (isMacroSupportEnabled()) {
+      initMacroSupport();
+    }
 
     setPreferredSize(new Dimension(10, 10));
 
@@ -126,7 +134,40 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     return panel;
   }
 
-  private @NotNull Map<String, String> getPathMacros() {
+  protected void addComponents() {
+    add(myProgramParametersComponent);
+    add(myWorkingDirectoryComponent);
+    add(myEnvVariablesComponent);
+  }
+
+  /**
+   * Macro support for run configuration fields is opt-in.
+   * Run configurations that can handle macros (basically any using {@link ProgramParametersConfigurator} or {@link ProgramParametersUtil})
+   * are encouraged to enable "add macro" inline button for program parameters and working directory fields by overriding this method,
+   * and optionally overriding {@link #initMacroSupport()} to enable macros for other fields.
+   */
+  protected boolean isMacroSupportEnabled() {
+    return false;
+  }
+
+  protected void initMacroSupport() {
+    addMacroSupport(myProgramParametersComponent.getComponent().getEditorField(), MacrosDialog.Filters.ALL, getPathMacros());
+    addMacroSupport((ExtendableTextField)myWorkingDirectoryField.getTextField(), MacrosDialog.Filters.DIRECTORY_PATH, getPathMacros());
+  }
+
+  public static void addMacroSupport(@NotNull ExtendableTextField textField) {
+    addMacroSupport(textField, MacrosDialog.Filters.ALL, null);
+  }
+
+  protected static void addMacroSupport(@NotNull ExtendableTextField textField,
+                                        @NotNull Predicate<? super Macro> macroFilter,
+                                        @Nullable Map<String, String> userMacros) {
+    if (Registry.is("allow.macros.for.run.configurations")) {
+      MacrosDialog.addTextFieldExtension(textField, macroFilter.and(macro -> !(macro instanceof EditorMacro)), userMacros);
+    }
+  }
+
+  protected @NotNull Map<String, String> getPathMacros() {
     final HashMap<String, String> macros = new HashMap<>(PathMacros.getInstance().getUserMacros());
     if (myModuleContext != null || myHasModuleMacro) {
       macros.put(PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacros.getInstance().getValue(PathMacroUtil.MODULE_DIR_MACRO_NAME));
@@ -134,15 +175,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
                  PathMacros.getInstance().getValue(PathMacroUtil.MODULE_WORKING_DIR_NAME));
     }
     return macros;
-  }
-
-  protected void addComponents() {
-    add(myProgramParametersComponent);
-    add(myWorkingDirectoryComponent);
-    add(myEnvVariablesComponent);
-
-    ProgramParametersConfigurator.addMacroSupport((ExtendableTextField)myWorkingDirectoryField.getTextField(),
-                                                  MacrosDialog.Filters.DIRECTORY_PATH, getPathMacros());
   }
 
   protected void copyDialogCaption(final LabeledComponent<RawCommandLineEditor> component) {

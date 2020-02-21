@@ -5,7 +5,9 @@ import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.ide.macro.*;
+import com.intellij.ide.macro.Macro;
+import com.intellij.ide.macro.MacroManager;
+import com.intellij.ide.macro.PromptingMacro;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -20,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -32,7 +33,6 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Predicate;
 
 public class ProgramParametersConfigurator {
   private static final ExtensionPointName<WorkingDirectoryProvider> WORKING_DIRECTORY_PROVIDER_EP_NAME= ExtensionPointName
@@ -72,23 +72,6 @@ public class ProgramParametersConfigurator {
       if (LangDataKeys.MODULE.is(dataId) || LangDataKeys.MODULE_CONTEXT.is(dataId)) return module;
       return null;
     };
-  }
-
-  public static void addMacroSupport(@NotNull ExtendableTextField textField) {
-    addMacroSupport(textField, MacrosDialog.Filters.ALL);
-  }
-
-  public static void addMacroSupport(@NotNull ExtendableTextField textField,
-                                     @NotNull Predicate<? super Macro> macroFilter) {
-    addMacroSupport(textField, macroFilter, null);
-  }
-
-  public static void addMacroSupport(@NotNull ExtendableTextField textField,
-                                     @NotNull Predicate<? super Macro> macroFilter,
-                                     @Nullable Map<String, String> userMacros) {
-    if (Registry.is("allow.macros.for.run.configurations")) {
-      MacrosDialog.addTextFieldExtension(textField, macroFilter.and(macro -> !(macro instanceof EditorMacro)), userMacros);
-    }
   }
 
   public static String expandMacros(@Nullable String path) {

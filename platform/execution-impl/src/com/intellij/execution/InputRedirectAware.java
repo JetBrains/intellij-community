@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +38,9 @@ public interface InputRedirectAware extends RunConfiguration {
 
     String filePath = inputRedirectOptions.getRedirectInputPath();
     if (!StringUtil.isEmpty(filePath)) {
-      filePath = FileUtil.toSystemDependentName(filePath);
+      Module module = configuration instanceof CommonProgramRunConfigurationParameters
+                      ? ProgramParametersUtil.getModule((CommonProgramRunConfigurationParameters)configuration) : null;
+      filePath = FileUtil.toSystemDependentName(ProgramParametersUtil.expandPathAndMacros(filePath, module, configuration.getProject()));
       File file = new File(filePath);
       if (configuration instanceof CommonProgramRunConfigurationParameters && !FileUtil.isAbsolute(filePath)) {
         String directory = ((CommonProgramRunConfigurationParameters)configuration).getWorkingDirectory();

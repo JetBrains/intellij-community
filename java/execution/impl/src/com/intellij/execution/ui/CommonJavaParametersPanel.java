@@ -5,9 +5,10 @@ import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.InputRedirectAware;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -25,8 +26,6 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
   protected void addComponents() {
     myVMParametersComponent = LabeledComponent.create(new RawCommandLineEditor(),
                                              ExecutionBundle.message("run.configuration.java.vm.parameters.label"));
-    ProgramParametersConfigurator.addMacroSupport(myVMParametersComponent.getComponent().getEditorField());
-
     copyDialogCaption(myVMParametersComponent);
 
     myVMParametersComponent.setLabelLocation(BorderLayout.WEST);
@@ -36,6 +35,19 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
 
     myInputRedirectPanel = new ProgramInputRedirectPanel();
     add(myInputRedirectPanel);
+  }
+
+  @Override
+  protected final boolean isMacroSupportEnabled() {
+    return true;
+  }
+
+  @Override
+  protected void initMacroSupport() {
+    super.initMacroSupport();
+    addMacroSupport(myVMParametersComponent.getComponent().getEditorField(), MacrosDialog.Filters.ALL, getPathMacros());
+    addMacroSupport((ExtendableTextField)myInputRedirectPanel.getComponent().getTextField(), MacrosDialog.Filters.FILE_PATH,
+                    getPathMacros());
   }
 
   public void setVMParameters(String text) {
