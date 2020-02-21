@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -141,7 +142,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     add(myEnvVariablesComponent);
 
     ProgramParametersConfigurator.addMacroSupport((ExtendableTextField)myWorkingDirectoryField.getTextField(),
-                                                  macro -> false, getPathMacros());
+                                                  MacrosDialog.Filters.DIRECTORY_PATH, getPathMacros());
   }
 
   protected void copyDialogCaption(final LabeledComponent<RawCommandLineEditor> component) {
