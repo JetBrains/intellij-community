@@ -85,6 +85,9 @@ public class RecentProjectPanel extends JPanel {
       }
     }
 
+    myList = createList(recentProjectActions.toArray(AnAction.EMPTY_ARRAY), getPreferredScrollableViewportSize());
+    myList.setCellRenderer(createRenderer(myPathShortener));
+
     if (Registry.is("autocheck.availability.welcome.screen.projects")) {
       myChecker = new FilePathChecker(new Runnable() {
         @Override
@@ -97,9 +100,6 @@ public class RecentProjectPanel extends JPanel {
       }, pathsToCheck);
       Disposer.register(parentDisposable, myChecker);
     }
-
-    myList = createList(recentProjectActions.toArray(AnAction.EMPTY_ARRAY), getPreferredScrollableViewportSize());
-    myList.setCellRenderer(createRenderer(myPathShortener));
 
     new ClickListener(){
       @Override
