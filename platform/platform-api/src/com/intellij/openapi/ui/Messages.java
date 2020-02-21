@@ -265,7 +265,9 @@ public class Messages {
   }
 
   public static boolean isMacSheetEmulation() {
-    return SystemInfo.isMac && Registry.is("ide.mac.message.dialogs.as.sheets") && Registry.is("ide.mac.message.sheets.java.emulation");
+    return SystemInfo.isMac
+           && Registry.is("ide.mac.message.dialogs.as.sheets", true)
+           && Registry.is("ide.mac.message.sheets.java.emulation", false);
   }
 
   /**

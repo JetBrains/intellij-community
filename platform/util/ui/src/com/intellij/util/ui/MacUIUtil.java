@@ -26,7 +26,7 @@ public class MacUIUtil {
   private MacUIUtil() {}
 
   public static void hideCursor() {
-    if (SystemInfo.isMac && Registry.is("ide.mac.hide.cursor.when.typing")) {
+    if (SystemInfo.isMac && Registry.is("ide.mac.hide.cursor.when.typing", true)) {
       Foundation.executeOnMainThread(false, false, () -> {
         Foundation.invoke("NSCursor", "setHiddenUntilMouseMoves:", true);
       });
