@@ -12,6 +12,7 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
 
   override val id: String = thread.id
   override val createdAt = thread.createdAt
+  override val state = thread.state
   override val filePath = thread.path
   override val diffHunk = thread.diffHunk
   override val firstCommentDatabaseId = thread.firstCommentDatabaseId

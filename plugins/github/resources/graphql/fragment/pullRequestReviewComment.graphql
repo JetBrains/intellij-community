@@ -2,6 +2,7 @@ fragment pullRequestReviewComment on PullRequestReviewComment {
     ...comment
     databaseId
     url
+    state
     path
     commit {
         ...commitHash

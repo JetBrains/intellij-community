@@ -8,6 +8,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
@@ -42,7 +43,7 @@ object GHPRReviewThreadComponent {
 
     panel.add(GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(thread, reviewService, avatarIconsProvider)))
 
-    if (reviewService.canComment()) {
+    if (reviewService.canComment() && thread.state != GHPullRequestReviewCommentState.PENDING) {
       panel.add(createThreadActionsPanel(avatarIconsProvider, currentUser) { text ->
         reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
           thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl,
