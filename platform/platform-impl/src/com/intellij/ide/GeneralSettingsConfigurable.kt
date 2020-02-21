@@ -17,7 +17,7 @@ import com.intellij.util.PlatformUtils
 
 // @formatter:off
 private val model = GeneralSettings.getInstance()
-private val myChkReopenLastProject                get() = CheckboxDescriptor(IdeBundle.message("checkbox.reopen.last.project.on.startup", IdeUICustomization.getInstance().projectConceptName), PropertyBinding(model::isReopenLastProject, model::setReopenLastProject))
+private val myChkReopenLastProject                get() = CheckboxDescriptor(IdeUICustomization.getInstance().projectMessage("checkbox.reopen.last.project.on.startup"), PropertyBinding(model::isReopenLastProject, model::setReopenLastProject))
 private val myConfirmExit                         get() = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"), PropertyBinding(model::isConfirmExit, model::setConfirmExit))
 private val myShowWelcomeScreen                   get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.welcome.screen"), PropertyBinding(model::isShowWelcomeScreen, model::setShowWelcomeScreen))
 private val myChkSyncOnFrameActivation            get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"), PropertyBinding(model::isSyncOnFrameActivation, model::setSyncOnFrameActivation))
@@ -51,8 +51,6 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
   private val model = GeneralSettings.getInstance()
 
   override fun createPanel(): DialogPanel {
-    val projectConceptName = IdeUICustomization.getInstance().projectConceptName
-
     return panel {
       titledRow("Startup/Shutdown") {
         row {
@@ -68,7 +66,7 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
           }
         }
       }
-      titledRow(IdeBundle.message("border.title.project.opening", projectConceptName.capitalize())) {
+      titledRow(IdeUICustomization.getInstance().projectMessage("border.title.project.opening")) {
         row(IdeBundle.message("settings.general.default.directory")) {
           textFieldWithBrowseButton(model::getDefaultProjectDirectory, model::setDefaultProjectDirectory,
                                     fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
@@ -78,13 +76,13 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
         }
         buttonGroup(model::getConfirmOpenNewProject, model::setConfirmOpenNewProject) {
           row {
-            radioButton(IdeBundle.message("radio.button.open.project.in.the.new.window", projectConceptName), GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
+            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.new.window"), GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
           }
           row {
-            radioButton(IdeBundle.message("radio.button.open.project.in.the.same.window", projectConceptName), GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
+            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.same.window"), GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
           }
           row {
-            radioButton(IdeBundle.message("radio.button.confirm.window.to.open.project.in", projectConceptName), GeneralSettings.OPEN_PROJECT_ASK)
+            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"), GeneralSettings.OPEN_PROJECT_ASK)
           }
         }
       }

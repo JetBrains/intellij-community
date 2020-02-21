@@ -522,7 +522,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     else {
       project = doCreateProject(null, file);
       ConversionResult finalConversionResult = conversionResult;
-      ProgressManager.getInstance().run(new Task.Modal(project, IdeUICustomization.getInstance().projectMessage("project.load.progress"), true) {
+      ProgressManager.getInstance().run(new Task.Modal(project, IdeUICustomization.getInstance().projectMessage("progress.title.loading.project"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -904,7 +904,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         count++;
       }
     }
-    return Messages.showYesNoDialog(project, message.toString(), IdeUICustomization.getInstance().projectMessage("project.unsaved"), Messages.getWarningIcon()) == Messages.YES;
+    return Messages.showYesNoDialog(project, message.toString(), IdeUICustomization.getInstance().projectMessage("dialog.title.unsaved.project"), Messages.getWarningIcon()) == Messages.YES;
   }
 
   public static class UnableToSaveProjectNotification extends Notification {
@@ -917,7 +917,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     public UnableToSaveProjectNotification(@NotNull Project project, @NotNull List<VirtualFile> readOnlyFiles) {
-      super("Project Settings", IdeUICustomization.getInstance().projectMessage("project.cannot.save"),
+      super("Project Settings", IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"),
             "Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
             " <a href=\"\">Try to save project again</a>.", NotificationType.ERROR,
             (notification, event) -> {

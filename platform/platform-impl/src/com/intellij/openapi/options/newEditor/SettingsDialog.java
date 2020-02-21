@@ -11,11 +11,9 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
 import com.intellij.util.ui.JBDimension;
@@ -84,8 +82,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     String name = configurable == null ? null : configurable.getDisplayName();
     String title = CommonBundle.settingsTitle();
     if (project != null && project.isDefault()) {
-      title = OptionsBundle.message("title.for.new.projects",
-                                    title, StringUtil.capitalize(IdeUICustomization.getInstance().getProjectConceptName()));
+      title = IdeUICustomization.getInstance().projectMessage("title.for.new.projects", title);
     }
     setTitle(name == null ? title : name.replace('\n', ' '));
 

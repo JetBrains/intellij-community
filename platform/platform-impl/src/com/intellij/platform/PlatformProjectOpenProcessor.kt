@@ -304,7 +304,7 @@ private fun prepareProject(file: Path, options: OpenProjectTask, baseDir: Path):
   }
   else {
     val indicator = ProgressManager.getInstance().progressIndicator
-    indicator?.text = IdeUICustomization.getInstance().projectMessage("project.checking.configuration")
+    indicator?.text = IdeUICustomization.getInstance().projectMessage("progress.text.project.checking.configuration")
     project = convertAndLoadProject(baseDir, options)
     indicator?.text = ""
   }

@@ -2,7 +2,6 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.RelativeFont;
@@ -109,10 +108,9 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
   public void forProject(Project project) {
     if (project != null) {
       myProjectIcon.setVisible(true);
-      String projectConceptName = IdeUICustomization.getInstance().getProjectConceptName();
       myProjectIcon.setText(project.isDefault()
-                            ? OptionsBundle.message("configurable.default.project.tooltip", projectConceptName)
-                            : OptionsBundle.message("configurable.current.project.tooltip", projectConceptName));
+                            ? IdeUICustomization.getInstance().projectMessage("configurable.default.project.tooltip")
+                            : IdeUICustomization.getInstance().projectMessage("configurable.current.project.tooltip"));
     } else {
       myProjectIcon.setVisible(false);
     }

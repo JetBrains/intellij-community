@@ -64,7 +64,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
 
   override fun run(task: () -> Unit): Boolean {
     var completed = false
-    val progressTitle = IdeUICustomization.getInstance().projectMessage("project.loading.name", options.projectName ?: projectFile.fileName)
+    val progressTitle = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", options.projectName ?: projectFile.fileName)
     ApplicationManager.getApplication().invokeAndWait {
       val frame = createFrameIfNeeded()
       val progressTask = createModalTask(progressTitle) {
