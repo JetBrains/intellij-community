@@ -15,10 +15,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
@@ -34,10 +31,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
+
+import static java.awt.event.InputEvent.ALT_DOWN_MASK;
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 
 public final class ActionUtil {
   private static final Logger LOG = Logger.getInstance(ActionUtil.class);
@@ -457,6 +458,27 @@ public final class ActionUtil {
       }
       invokeAction(action, component, place, null, null);
     };
+  }
+
+  @Nullable
+  public static ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
+    int mnemonic = KeyEvent.getExtendedKeyCodeForChar(action.getTemplatePresentation().getMnemonic());
+    if (mnemonic != KeyEvent.VK_UNDEFINED) {
+      KeyboardShortcut ctrlAltShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK | CTRL_DOWN_MASK), null);
+      KeyboardShortcut altShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK), null);
+      CustomShortcutSet shortcutSet;
+      if (SystemInfo.isMac) {
+        if (Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+          shortcutSet = new CustomShortcutSet(ctrlAltShortcut, altShortcut);
+        } else {
+          shortcutSet = new CustomShortcutSet(ctrlAltShortcut);
+        }
+      } else {
+        shortcutSet = new CustomShortcutSet(altShortcut);
+      }
+      return shortcutSet;
+    }
+    return null;
   }
 
   private static class ActionUpdateData {

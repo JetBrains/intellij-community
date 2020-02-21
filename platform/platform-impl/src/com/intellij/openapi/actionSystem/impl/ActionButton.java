@@ -14,10 +14,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -114,12 +110,15 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   @Override
   public int getPopState() {
-    if (myAction instanceof Toggleable) {
-      return getPopState(Toggleable.isSelected(myPresentation));
-    }
-    else {
-      return getPopState(false);
-    }
+    return getPopState(isSelected());
+  }
+
+  protected final boolean isRollover() {
+    return myRollover;
+  }
+
+  protected final boolean isSelected() {
+    return myAction instanceof Toggleable && Toggleable.isSelected(myPresentation);
   }
 
   @Override
@@ -234,6 +233,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myPresentationListener == null) {
       myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanged);
     }
+    update();
+  }
+
+  public void update() {
     AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
     ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), myAction, e, false);
     updateToolTipText();

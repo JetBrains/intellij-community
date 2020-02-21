@@ -76,6 +76,9 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Lightning = load("/actions/lightning.svg");
     /** 16x16 */ public static final Icon ListChanges = load("/actions/listChanges.svg");
     /** 16x16 */ public static final Icon ListFiles = load("/actions/listFiles.svg");
+    /** 16x16 */ public static final Icon MatchCase = load("/actions/matchCase.svg");
+    /** 16x16 */ public static final Icon MatchCaseHovered = load("/actions/matchCaseHovered.svg");
+    /** 16x16 */ public static final Icon MatchCaseSelected = load("/actions/matchCaseSelected.svg");
     /** 16x16 */ public static final Icon Menu_cut = load("/actions/menu-cut.svg");
     /** 16x16 */ public static final Icon Menu_open = load("/actions/menu-open.svg");
     /** 16x16 */ public static final Icon Menu_paste = load("/actions/menu-paste.svg");
@@ -106,6 +109,9 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Play_forward = load("/actions/play_forward.svg");
     /** 16x16 */ public static final Icon Play_last = load("/actions/play_last.svg");
     /** 16x16 */ public static final Icon PopFrame = load("/actions/popFrame.svg");
+    /** 16x16 */ public static final Icon PreserveCase = load("/actions/preserveCase.svg");
+    /** 16x16 */ public static final Icon PreserveCaseHover = load("/actions/preserveCaseHover.svg");
+    /** 16x16 */ public static final Icon PreserveCaseSelected = load("/actions/preserveCaseSelected.svg");
     /** 16x16 */ public static final Icon Preview = load("/actions/preview.svg");
     /** 16x16 */ public static final Icon PreviewDetails = load("/actions/previewDetails.svg");
     /** 16x16 */ public static final Icon PreviewDetailsVertically = load("/actions/previewDetailsVertically.svg");
@@ -124,6 +130,9 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Redo = load("/actions/redo.svg");
     /** 16x16 */ public static final Icon RefactoringBulb = load("/actions/refactoringBulb.svg");
     /** 16x16 */ public static final Icon Refresh = load("/actions/refresh.svg");
+    /** 16x16 */ public static final Icon Regex = load("/actions/regex.svg");
+    /** 16x16 */ public static final Icon RegexHovered = load("/actions/regexHovered.svg");
+    /** 16x16 */ public static final Icon RegexSelected = load("/actions/regexSelected.svg");
     /** 16x16 */ public static final Icon RemoveMulticaret = load("/actions/RemoveMulticaret.svg");
     /** 16x16 */ public static final Icon Replace = load("/actions/replace.svg");
     /** 16x16 */ public static final Icon Rerun = load("/actions/rerun.svg");
@@ -171,6 +180,9 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Unselectall = load("/actions/unselectall.svg");
     /** 14x14 */ public static final Icon Unshare = load("/actions/unshare.png");
     /** 16x16 */ public static final Icon Upload = load("/actions/upload.svg");
+    /** 16x16 */ public static final Icon Words = load("/actions/words.svg");
+    /** 16x16 */ public static final Icon WordsHovered = load("/actions/wordsHovered.svg");
+    /** 16x16 */ public static final Icon WordsSelected = load("/actions/wordsSelected.svg");
 
     /** @deprecated to be removed in IDEA 2021.1 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
     @SuppressWarnings("unused")

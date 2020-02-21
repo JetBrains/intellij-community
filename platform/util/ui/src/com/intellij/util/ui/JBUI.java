@@ -395,6 +395,11 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color focusedBorder() {
+        return JBColor.namedColor("ActionButton.focusedBorderColor", new JBColor(0x62b8de, 0x5eacd0));
+      }
+
+      @NotNull
       public static Color hoverBackground() {
         return JBColor.namedColor("ActionButton.hoverBackground", Gray.xDF);
       }
