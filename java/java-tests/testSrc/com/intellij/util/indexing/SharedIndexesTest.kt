@@ -209,7 +209,7 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
       ApplicationManager.getApplication().runWriteAction {
         IndexingStamp.flushCaches()
         if (project != null) {
-          FileBasedIndex.getInstance().iterateIndexableFilesConcurrently({
+          FileBasedIndex.getInstance().iterateIndexableFiles({
                                                                            dropIndexingStampsRecursively(it)
                                                                            true
                                                                          }, project, EmptyProgressIndicator())

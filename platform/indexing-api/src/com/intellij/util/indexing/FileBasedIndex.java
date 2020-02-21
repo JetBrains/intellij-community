@@ -32,10 +32,6 @@ import java.util.Set;
 public abstract class FileBasedIndex {
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
 
-  public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, @NotNull ProgressIndicator indicator) {
-    iterateIndexableFiles(processor, project, indicator);
-  }
-
   /**
    * @return the file which the current thread is indexing right now, or {@code null} if current thread isn't indexing.
    */
