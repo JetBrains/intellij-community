@@ -13,6 +13,8 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.IconLoader
@@ -457,22 +459,24 @@ private fun createLocatorFile() {
 }
 
 @ApiStatus.Internal
-fun callAppInitialized(app: ApplicationImpl, executor: Executor): CompletableFuture<Void?> {
+fun callAppInitialized(app: Application, executor: Executor): CompletableFuture<Void?> {
   NonUrgentExecutor.getInstance().execute {
     createLocatorFile()
   }
 
   val result = mutableListOf<CompletableFuture<Void>>()
-  for (listener in app.extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")) {
-    if (listener == null) {
-      break
-    }
-
+  val extensionPoint = (app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
+  extensionPoint.processImplementations { supplier, _ ->
     CompletableFuture.runAsync(Runnable {
       LOG.runAndLogException {
-        listener.componentsInitialized()
+        try {
+          supplier.get().componentsInitialized()
+        }
+        catch (ignore: ExtensionNotApplicableException) {
+        }
       }
     }, executor)
   }
+  extensionPoint.reset()
   return CompletableFuture.allOf(*result.toTypedArray())
 }

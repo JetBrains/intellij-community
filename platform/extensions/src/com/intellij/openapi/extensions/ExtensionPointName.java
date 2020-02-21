@@ -152,7 +152,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   @ApiStatus.Experimental
   @ApiStatus.Internal
   public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
-    getPointImpl(null).processWithPluginDescriptor(consumer);
+    getPointImpl(null).processWithPluginDescriptor(/* shouldBeSorted = */ true, consumer);
   }
 
   public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener,
