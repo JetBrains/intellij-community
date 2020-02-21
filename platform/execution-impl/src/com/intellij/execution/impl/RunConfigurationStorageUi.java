@@ -3,8 +3,10 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.*;
@@ -25,6 +27,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.util.Collection;
 
 class RunConfigurationStorageUi {
@@ -69,6 +72,19 @@ class RunConfigurationStorageUi {
       .addComponent(comboBoxPanel)
       .addComponent(doneButtonPanel)
       .getPanel();
+
+    // need to handle Enter keypress, otherwise Enter closes the main Run Configurations dialog.
+    DumbAwareAction.create(e -> {
+      if (myPathComboBox.isPopupVisible()) {
+        myPathComboBox.setPopupVisible(false);
+      }
+      else {
+        myClosePopupAction.run();
+      }
+    }).registerCustomShortcutSet(CommonShortcuts.ENTER, myMainPanel, uiDisposable);
+
+    myMainPanel.addMouseListener(new MouseAdapter() {
+    });
   }
 
   @NotNull
