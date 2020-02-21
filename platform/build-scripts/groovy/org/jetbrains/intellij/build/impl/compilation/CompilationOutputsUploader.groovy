@@ -2,17 +2,10 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.common.io.Files
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Compressor
 import groovy.transform.CompileStatic
-import org.apache.http.client.methods.CloseableHttpResponse
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.entity.ContentType
-import org.apache.http.util.EntityUtils
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
@@ -20,25 +13,22 @@ import org.jetbrains.intellij.build.impl.compilation.cache.BuildTargetState
 import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 
-import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
 class CompilationOutputsUploader {
-  private final String commitHistoryFile = "commit_history.json"
   private final String agentPersistentStorage
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
-  private final Map<String, String> remotePerCommitHash
+  private final String commitHash
   private final SourcesStateProcessor sourcesStateProcessor
 
-  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash,
-                             String agentPersistentStorage) {
+  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, String commitHash, String agentPersistentStorage) {
     this.agentPersistentStorage = agentPersistentStorage
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
-    this.remotePerCommitHash = remotePerCommitHash
+    this.commitHash = commitHash
     this.context = context
 
     sourcesStateProcessor = new SourcesStateProcessor(context)
@@ -61,7 +51,6 @@ class CompilationOutputsUploader {
         return
       }
       Map<String, Map<String, BuildTargetState>> currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
-      def commitHash = getCommitHash()
 
       executor.submit {
         // Upload jps caches started first because of the significant size of the output
@@ -89,9 +78,8 @@ class CompilationOutputsUploader {
       def metadataFile = new File("$agentPersistentStorage/metadata.json")
       Files.copy(sourceStateFile, metadataFile)
       messages.artifactBuilt(metadataFile.absolutePath)
+      // Dirty hack to have fresh state of sources on each build. For now there are a couple of bugs in this area IDEA-228483, IDEA-227783
       FileUtil.delete(sourceStateFile)
-
-      updateCommitHistory(uploader)
     }
     finally {
       executor.close()
@@ -129,48 +117,6 @@ class CompilationOutputsUploader {
     }
   }
 
-  private void updateCommitHistory(JpsCompilationPartsUploader uploader) {
-    if (remotePerCommitHash.size() == 1) return
-    Map<String, List<String>> commitHistory = new HashMap<>()
-    if (uploader.isExist(commitHistoryFile)) {
-      def content = uploader.getAsString(commitHistoryFile)
-      if (!content.isEmpty()) {
-        Type type = new TypeToken<Map<String, List<String>>>(){}.getType();
-        commitHistory = new Gson().fromJson(content, type)
-      }
-    }
-
-    remotePerCommitHash.each { key, value ->
-      def listOfCommits = commitHistory.get(key)
-      if (listOfCommits == null) {
-        def newList = new ArrayList()
-        newList.add(value)
-        commitHistory.put(key, newList)
-      }
-      else {
-        listOfCommits.add(value)
-      }
-    }
-
-    // Upload and publish file with commits history
-    def jsonAsString = new Gson().toJson(commitHistory)
-    def file = new File("$agentPersistentStorage/$commitHistoryFile")
-    file.write(jsonAsString)
-    messages.artifactBuilt(file.absolutePath)
-    uploader.upload(commitHistoryFile, file)
-    FileUtil.delete(file)
-  }
-
-  private String getCommitHash() {
-    if (remotePerCommitHash.size() == 1) return remotePerCommitHash.values().first()
-    StringBuilder commitHashBuilder = new StringBuilder()
-    int hashLength = (remotePerCommitHash.values().first().length() / remotePerCommitHash.size()) as int
-    remotePerCommitHash.each { key, value ->
-      commitHashBuilder.append(value.substring(0, hashLength))
-    }
-    return commitHashBuilder.toString()
-  }
-
   @CompileStatic
   private static class JpsCompilationPartsUploader extends CompilationPartsUploader {
     private JpsCompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
@@ -187,25 +133,6 @@ class CompilationOutputsUploader {
         error("HEAD $path responded with unexpected $code")
       }
       return false
-    }
-
-    String getAsString(@NotNull final String path) throws UploadException {
-      CloseableHttpResponse response = null
-      try {
-        String url = myServerUrl + StringUtil.trimStart(path, '/')
-        debug("GET " + url)
-
-        def request = new HttpGet(url)
-        response = myHttpClient.execute(request)
-
-        return EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_OCTET_STREAM.charset)
-      }
-      catch (Exception e) {
-        throw new UploadException("Failed to GET $path: " + e.getMessage(), e)
-      }
-      finally {
-        StreamUtil.closeStream(response)
-      }
     }
 
     boolean upload(@NotNull final String path, @NotNull final File file) {
