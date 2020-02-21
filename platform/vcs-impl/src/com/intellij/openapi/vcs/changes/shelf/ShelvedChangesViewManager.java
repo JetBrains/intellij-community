@@ -715,7 +715,7 @@ public class ShelvedChangesViewManager implements Disposable {
     private void setDiffPreview() {
       boolean isEditorPreview = isCommitToolWindow(myProject) || isEditorDiffPreview.asBoolean();
       if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
-      if (!isEditorPreview && myDiffPreview instanceof PreviewDiffSplitterComponent) return;
+      if (!isEditorPreview && isSplitterPreview()) return;
 
       if (myChangeProcessor != null) Disposer.dispose(myChangeProcessor);
 
@@ -780,6 +780,10 @@ public class ShelvedChangesViewManager implements Disposable {
       return previewSplitter;
     }
 
+    private boolean isSplitterPreview() {
+      return myDiffPreview instanceof PreviewDiffSplitterComponent;
+    }
+
     @Nullable
     private DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
       if (info.isMove()) {
@@ -797,6 +801,12 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private class MyToggleDetailsAction extends ShowDiffPreviewAction {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabledAndVisible(isSplitterPreview());
+      }
+
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myDiffPreview.setPreviewVisible(state);
