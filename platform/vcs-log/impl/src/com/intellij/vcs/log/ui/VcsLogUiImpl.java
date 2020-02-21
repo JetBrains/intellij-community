@@ -5,7 +5,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.Consumer;
@@ -74,7 +73,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @NotNull
   protected MainFrame createMainFrame(@NotNull VcsLogData logData,
                                       @NotNull MainVcsLogUiProperties uiProperties, @NotNull VcsLogFilterUiEx filterUi) {
-    boolean isDiffPreviewAsEditor = Registry.is("vcs.log.show.diff.preview.as.editor.tab");
+    boolean isDiffPreviewAsEditor = VcsLogUiUtil.isDiffPreviewInEditor();
     MainFrame mainFrame = new MainFrame(logData, this, uiProperties, filterUi, !isDiffPreviewAsEditor);
     if (isDiffPreviewAsEditor) {
       new VcsLogEditorDiffPreview(myProject, myUiProperties, mainFrame);

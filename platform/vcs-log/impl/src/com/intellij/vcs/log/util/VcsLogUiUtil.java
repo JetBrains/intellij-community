@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
@@ -171,6 +172,10 @@ public class VcsLogUiUtil {
 
   public static void appendResetFiltersActionToEmptyText(@NotNull VcsLogFilterUiEx filterUi, @Nls @NotNull StatusText emptyText) {
     appendActionToEmptyText(emptyText, VcsLogBundle.message("vcs.log.action.reset.filters"), () -> filterUi.setFilter(null));
+  }
+
+  public static boolean isDiffPreviewInEditor() {
+    return Registry.is("vcs.log.show.diff.preview.as.editor.tab");
   }
 
   private static class VcsLogPlaceNavigator implements Place.Navigator {

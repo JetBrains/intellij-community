@@ -5,7 +5,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -80,12 +79,10 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       }
     };
 
-    boolean isDiffPreviewAsEditor = Registry.is("vcs.log.show.diff.preview.as.editor.tab");
-
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
-    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, !isDiffPreviewAsEditor);
+    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, !VcsLogUiUtil.isDiffPreviewInEditor());
 
-    if (isDiffPreviewAsEditor) {
+    if (VcsLogUiUtil.isDiffPreviewInEditor()) {
       new FileHistoryEditorDiffPreview(logData.getProject(), myUiProperties, myFileHistoryPanel);
     }
 
