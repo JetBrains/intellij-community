@@ -310,7 +310,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
                              @NotNull IdeaPluginDescriptor descriptor,
                              @Nullable IdeaPluginDescriptor updateDescriptor,
                              @NotNull ModalityState modalityState) {
-    if (!PluginManagerMain.checkThirdPartyPluginsAllowed(Collections.singletonList(descriptor))) {
+    IdeaPluginDescriptor actionDescriptor = updateDescriptor == null ? descriptor : updateDescriptor;
+
+    if (!PluginManagerMain.checkThirdPartyPluginsAllowed(Collections.singletonList(actionDescriptor))) {
       return;
     }
 
@@ -334,7 +336,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
 
-    IdeaPluginDescriptor actionDescriptor = updateDescriptor == null ? descriptor : updateDescriptor;
     PluginNode pluginNode;
     if (actionDescriptor instanceof PluginNode) {
       pluginNode = (PluginNode)actionDescriptor;
