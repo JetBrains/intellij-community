@@ -45,7 +45,7 @@ public class ProgramParametersConfigurator {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
 
-    final String parametersString = expandPathAndMacros(configuration.getProgramParameters(), project, module);
+    final String parametersString = expandPathAndMacros(configuration.getProgramParameters(), module, project);
     parameters.getProgramParametersList().addParametersString(parametersString);
 
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
@@ -61,7 +61,7 @@ public class ProgramParametersConfigurator {
   }
 
   @Nullable
-  public String expandPathAndMacros(String s, Project project, Module module) {
+  public String expandPathAndMacros(String s, Module module, Project project) {
     return expandMacros(expandPath(s, module, project),
                         projectContext(project, module));
   }
@@ -137,7 +137,7 @@ public class ProgramParametersConfigurator {
         return null;
       }
     }
-    workingDirectory = expandPath(workingDirectory, module, project);
+    workingDirectory = expandPathAndMacros(workingDirectory, module, project);
     if (!FileUtil.isAbsolutePlatformIndependent(workingDirectory) && defaultWorkingDir != null) {
       if (PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory)) {
         return defaultWorkingDir;
