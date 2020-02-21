@@ -22,6 +22,10 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
+/**
+ * @deprecated use other bundles ({@link AnalysisBundle}, {@link com.intellij.codeInsight.CodeInsightBundle}) instead
+ */
+@Deprecated
 public class AnalysisScopeBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.AnalysisScopeBundle";
   private static final AnalysisScopeBundle INSTANCE = new AnalysisScopeBundle();

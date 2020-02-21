@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.java.JavaBundle;
@@ -237,7 +237,7 @@ public class TreeModelBuilder {
     };
 
     if (showProgress) {
-      final String title = AnalysisScopeBundle.message("package.dependencies.build.process.title");
+      final String title = CodeInsightBundle.message("package.dependencies.build.process.title");
       ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, title, false, myProject);
     }
     else {
@@ -447,7 +447,7 @@ public class TreeModelBuilder {
   }
 
   public static String getScanningPackagesMessage() {
-    return AnalysisScopeBundle.message("package.dependencies.build.progress.text");
+    return CodeInsightBundle.message("package.dependencies.build.progress.text");
   }
 
   public static String getProductionName() {
@@ -459,6 +459,6 @@ public class TreeModelBuilder {
   }
 
   public static String getLibraryName() {
-    return AnalysisScopeBundle.message("package.dependencies.library.node.text");
+    return CodeInsightBundle.message("package.dependencies.library.node.text");
   }
 }

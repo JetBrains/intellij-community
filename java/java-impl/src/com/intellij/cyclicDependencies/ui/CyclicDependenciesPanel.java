@@ -2,7 +2,7 @@
 package com.intellij.cyclicDependencies.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.actions.CyclicDependenciesHandler;
 import com.intellij.icons.AllIcons;
@@ -393,7 +393,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class CloseAction extends AnAction implements DumbAware {
     CloseAction() {
-      super(CommonBundle.lazyMessage("action.close"), AnalysisScopeBundle.lazyMessage("action.close.dependency.description"),
+      super(CommonBundle.lazyMessage("action.close"), CodeInsightBundle.lazyMessage("action.close.dependency.description"),
             AllIcons.Actions.Cancel);
     }
 
@@ -407,7 +407,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class ShowFilesAction extends ToggleAction {
     ShowFilesAction() {
-      super(AnalysisScopeBundle.lazyMessage("action.show.files"), AnalysisScopeBundle.lazyMessage("action.show.files.description"),
+      super(CodeInsightBundle.lazyMessage("action.show.files"), CodeInsightBundle.lazyMessage("action.show.files.description"),
             AllIcons.FileTypes.Java);
     }
 
@@ -446,7 +446,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
-      super(AnalysisScopeBundle.lazyMessage("action.group.by.scope.type"), AnalysisScopeBundle.lazyMessage("action.group.by.scope.type.description"),
+      super(CodeInsightBundle.lazyMessage("action.group.by.scope.type"), CodeInsightBundle.lazyMessage("action.group.by.scope.type.description"),
             AllIcons.Actions.GroupByTestProduction);
     }
 
@@ -465,7 +465,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private class RerunAction extends AnAction {
     RerunAction(JComponent comp) {
-      super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
+      super(CommonBundle.message("action.rerun"), CodeInsightBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
 

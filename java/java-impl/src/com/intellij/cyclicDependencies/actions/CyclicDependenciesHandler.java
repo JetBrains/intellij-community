@@ -16,8 +16,8 @@
 package com.intellij.cyclicDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.ui.CyclicDependenciesPanel;
 import com.intellij.java.JavaBundle;
@@ -51,7 +51,7 @@ public class CyclicDependenciesHandler {
       DependenciesToolWindow.getInstance(myProject).addContent(content);
     });
     ProgressManager.getInstance()
-      .runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"),
+      .runProcessWithProgressAsynchronously(myProject, CodeInsightBundle.message("package.dependencies.progress.title"),
                                             () -> builder.analyze(), successRunnable, null, new PerformAnalysisInBackgroundOption(myProject));
   }
 }

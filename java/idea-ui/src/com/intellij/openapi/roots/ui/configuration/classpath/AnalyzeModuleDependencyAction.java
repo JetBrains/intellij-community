@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -118,7 +118,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
 
   private String generateSkipImportsWarning() {
     if (DependencyVisitorFactory.VisitorOptions.fromSettings(myPanel.getProject()).skipImports()) {
-      return " " + AnalysisScopeBundle.message("dependencies.in.imports.message");
+      return " " + CodeInsightBundle.message("dependencies.in.imports.message");
     }
     return "";
   }

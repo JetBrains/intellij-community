@@ -16,8 +16,8 @@
 package com.intellij.cyclicDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.JavaAnalysisScope;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -42,8 +42,8 @@ public class CyclicDependenciesAction extends AnAction{
   private final String myTitle;
 
   public CyclicDependenciesAction() {
-    myAnalysisVerb = AnalysisScopeBundle.message("action.analyze.verb");
-    myAnalysisNoun = AnalysisScopeBundle.message("action.analysis.noun");
+    myAnalysisVerb = CodeInsightBundle.message("action.analyze.verb");
+    myAnalysisNoun = CodeInsightBundle.message("action.analysis.noun");
     myTitle = JavaBundle.message("action.cyclic.dependency.title");
   }
 
@@ -180,7 +180,7 @@ public class CyclicDependenciesAction extends AnAction{
     @Override
     protected JComponent createCenterPanel() {
       myScopePanel.setBorder(IdeBorderFactory.createTitledBorder(
-        AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoun)));
+        CodeInsightBundle.message("analysis.scope.title", myAnalysisNoun)));
       myProjectButton.setText(JavaBundle.message("cyclic.dependencies.scope.dialog.project.button", myAnalysisVerb));
       ButtonGroup group = new ButtonGroup();
       group.add(myProjectButton);
