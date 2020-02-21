@@ -74,7 +74,7 @@ public class UserScaleContext {
   /**
    * Permanently overrides the provided scale (the scale won't be changed on subsequent {@link #update()}).
    * Can be used to make a UI object user scale independent:
-   * <p>
+   * <p></p>
    * <code>
    * ((ScaleContextAware)uiObject).getScaleContext().overrideScale(USR_SCALE.of(1.0));
    * </code>

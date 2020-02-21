@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.scale;
 
+import com.intellij.util.ui.JBUI;
+
 import java.awt.*;
 
 /**
@@ -22,17 +24,16 @@ public enum DerivedScaleType {
   /**
    * The pixel scale factor "combines" all the other scale factors (user, system and object) and defines the
    * effective scale of a particular UI object.
-   *
+   * <p></p>
    * For instance, on Mac Retina monitor (JRE-managed HiDPI) in the Presentation mode (which, say,
    * doubles the UI scale) the pixel scale would equal 4.0 (provided the object scale is 1.0). The value
    * is the product of the user scale 2.0 and the system scale 2.0. In the IDE-managed HiDPI mode,
    * the pixel scale equals {@link #EFF_USR_SCALE}.
    *
-   * @see JBUIScale#pixScale()
-   * @see JBUIScale#pixScale(GraphicsConfiguration)
-   * @see JBUIScale#pixScale(Graphics2D)
-   * @see JBUIScale#pixScale(Component)
-   * @see JBUIScale#pixScale(float)
+   * @see JBUI#pixScale()
+   * @see JBUI#pixScale(GraphicsConfiguration)
+   * @see JBUI#pixScale(Component)
+   * @see JBUI#pixScale(float)
    */
   PIX_SCALE
 }
