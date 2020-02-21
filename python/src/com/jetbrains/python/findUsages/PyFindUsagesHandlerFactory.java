@@ -70,7 +70,7 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
 
   @Override
   public @NotNull PyModuleFindUsagesHandler createModuleFindUsagesHandler(@NotNull PsiFileSystemItem element) {
-    return new PyModuleFindUsagesHandlerUi(element.getContainingFile());
+    return new PyModuleFindUsagesHandlerUi(element);
   }
 
   static class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
