@@ -17,9 +17,13 @@ package com.intellij.execution.filters;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +74,7 @@ public interface Filter {
     }
 
     public Result(@NotNull List<? extends ResultItem> resultItems) {
-      super(-1, -1, null, null, null);
+      super(0, 0, null, null, null);
       myResultItems = resultItems;
     }
 
@@ -203,6 +207,7 @@ public interface Filter {
                       @Nullable final TextAttributes followedHyperlinkAttributes) {
       this.highlightStartOffset = highlightStartOffset;
       this.highlightEndOffset = highlightEndOffset;
+      TextRange.assertProperRange(highlightStartOffset, highlightEndOffset, "");
       this.hyperlinkInfo = hyperlinkInfo;
       this.highlightAttributes = highlightAttributes;
       myFollowedHyperlinkAttributes = followedHyperlinkAttributes;
