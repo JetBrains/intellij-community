@@ -3,13 +3,20 @@ package git4idea.light
 
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.util.Consumer
 import git4idea.i18n.GitBundle
 import git4idea.index.getPresentation
 import java.awt.Component
 import java.awt.event.MouseEvent
+
+private const val ID = "light.edit.git"
+private val LOG = Logger.getInstance("#git4idea.light.LightGitStatusBarWidget")
 
 private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTracker) : StatusBarWidget, StatusBarWidget.TextPresentation {
   private var statusBar: StatusBar? = null
@@ -22,7 +29,7 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
     }, this)
   }
 
-  override fun ID(): String = "light.edit.git"
+  override fun ID(): String = ID
 
   override fun install(statusBar: StatusBar) {
     this.statusBar = statusBar
@@ -53,11 +60,19 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
   override fun dispose() = Unit
 }
 
-class LightGitStatusBarWidgetProvider : StatusBarWidgetProvider {
-  override fun getWidget(project: Project): StatusBarWidget? {
-    if (!LightEdit.owns(project)) return null
+class LightGitStatusBarWidgetFactory: StatusBarWidgetFactory {
+  override fun getId(): String = ID
+
+  override fun getDisplayName(): String = GitBundle.message("git.light.status.bar.display.name")
+
+  override fun isAvailable(project: Project): Boolean = LightEdit.owns(project)
+
+  override fun createWidget(project: Project): StatusBarWidget {
+    LOG.assertTrue(LightEdit.owns(project))
     return LightGitStatusBarWidget(LightGitTracker.getInstance())
   }
 
-  override fun isCompatibleWith(frame: IdeFrame): Boolean = frame is LightEditFrame
+  override fun disposeWidget(widget: StatusBarWidget) = Disposer.dispose(widget)
+
+  override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 }
