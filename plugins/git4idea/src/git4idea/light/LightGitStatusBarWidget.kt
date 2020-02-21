@@ -2,6 +2,7 @@
 package git4idea.light
 
 import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -60,7 +61,7 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
   override fun dispose() = Unit
 }
 
-class LightGitStatusBarWidgetFactory: StatusBarWidgetFactory {
+class LightGitStatusBarWidgetFactory: StatusBarWidgetFactory, LightEditCompatible {
   override fun getId(): String = ID
 
   override fun getDisplayName(): String = GitBundle.message("git.light.status.bar.display.name")
