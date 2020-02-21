@@ -2,6 +2,7 @@
 package com.intellij.remote.ext;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.remote.CredentialsType;
 import com.intellij.remote.OutdatedCredentialsType;
 import com.intellij.remote.RemoteSdkAdditionalData;
@@ -24,13 +25,13 @@ public abstract class CredentialsManager {
                                        @Nullable Element element,
                                        RemoteSdkAdditionalData data);
 
-  public static void updateOutdatedSdk(@NotNull RemoteSdkAdditionalData<?> data) {
+  public static void updateOutdatedSdk(@NotNull RemoteSdkAdditionalData<?> data, @Nullable Project project) {
     if (!(data.getRemoteConnectionType() instanceof OutdatedCredentialsType)) {
       return;
     }
     //noinspection unchecked
     Pair<CredentialsType<Object>, Object> pair = ((OutdatedCredentialsType)data.getRemoteConnectionType())
-      .transformToNewerType(data.connectionCredentials().getCredentials(), null);
+      .transformToNewerType(data.connectionCredentials().getCredentials(), project);
     data.setCredentials(pair.getFirst().getCredentialsKey(), pair.getSecond());
   }
 }
