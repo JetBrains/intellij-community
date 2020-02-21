@@ -35,7 +35,10 @@ import static java.util.Collections.unmodifiableMap;
 public final class EnvironmentUtil {
   private static final Logger LOG = Logger.getInstance(EnvironmentUtil.class);
 
-  private static final int SHELL_ENV_READING_TIMEOUT = 20000;
+  /**
+   * The time-out to read the environment, in milliseconds.
+   */
+  private static final int SHELL_ENV_READING_TIMEOUT = 40_000;
 
   private static final String LANG = "LANG";
   private static final String LC_ALL = "LC_ALL";
