@@ -87,7 +87,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   }
 
   @Override
-  public void setText(@Nullable String text){
+  public void setText(@Nls @Nullable String text){
     getTextField().setText(text);
   }
 
