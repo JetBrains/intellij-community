@@ -73,7 +73,7 @@ class RunConfigurationStorageUi {
 
   @NotNull
   private ComboBox<String> createPathComboBox(@NotNull Project project, @NotNull Disposable uiDisposable) {
-    ComboBox<String> comboBox = new ComboBox<>(JBUI.scale(450));
+    ComboBox<String> comboBox = new ComboBox<>(JBUI.scale(480));
     comboBox.setEditable(true);
 
     // choosefiles is set to true to be able to select project.ipr file in IPR-based projects. Other files are not visible/selectable in the chooser
