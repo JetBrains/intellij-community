@@ -147,7 +147,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     group.add(expandAllAction)
     group.add(collapseAllAction)
 
-    val toolbar = ActionManager.getInstance().createActionToolbar("Git.Cleanup.Branches", group, false)
+    val toolbar = ActionManager.getInstance().createActionToolbar("Git.Log.Branches", group, false)
     toolbar.setTargetComponent(branchesTreePanel)
 
     val branchesButton = ExpandStripeButton(lazyMessage("action.Git.Log.Show.Branches.text"), AllIcons.Actions.ArrowExpand)
