@@ -441,7 +441,7 @@ public class ChangesViewManager implements ChangesViewEx,
     private void setDiffPreview() {
       boolean isEditorPreview = isCommitToolWindow(myProject) || isEditorDiffPreview.asBoolean();
       if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
-      if (!isEditorPreview && myDiffPreview instanceof PreviewDiffSplitterComponent) return;
+      if (!isEditorPreview && isSplitterPreview()) return;
 
       if (myChangeProcessor != null) Disposer.dispose(myChangeProcessor);
 
@@ -518,6 +518,10 @@ public class ChangesViewManager implements ChangesViewEx,
       return previewSplitter;
     }
 
+    private boolean isSplitterPreview() {
+      return myDiffPreview instanceof PreviewDiffSplitterComponent;
+    }
+
     @Nullable
     public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
       return myCommitWorkflowHandler;
@@ -560,8 +564,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void setCommitSplitOrientation() {
-      boolean hasPreviewPanel =
-        myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN && myDiffPreview instanceof PreviewDiffSplitterComponent;
+      boolean hasPreviewPanel = myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN && isSplitterPreview();
       myCommitPanelSplitter.setOrientation(hasPreviewPanel || !isCommitSplitHorizontal.asBoolean());
     }
 
@@ -791,6 +794,12 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private class ToggleDetailsAction extends ShowDiffPreviewAction {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabledAndVisible(isSplitterPreview());
+      }
+
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
