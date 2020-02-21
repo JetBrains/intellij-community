@@ -650,7 +650,7 @@ public class AboutPopup {
     }
 
     if (SystemInfo.isUnix && !SystemInfo.isMac) {
-      extraInfo += "Current Desktop: " + notNull(System.getenv("XDG_CURRENT_DESKTOP"), "Undefined");
+      extraInfo += "\nCurrent Desktop: " + notNull(System.getenv("XDG_CURRENT_DESKTOP"), "Undefined");
     }
     return extraInfo;
   }
