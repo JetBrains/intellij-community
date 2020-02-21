@@ -86,8 +86,9 @@ public final class MacrosDialog extends DialogWrapper {
             textComponent.getDocument().remove(selectionStart, selectionEnd - selectionStart);
             position = selectionStart;
           }
-          textComponent.getDocument().insertString(position, "$" + macro + "$", null);
-          textComponent.setCaretPosition(position + macro.length() + 2);
+          final String nameToInsert = (macro.startsWith("$") || macro.startsWith("%")) ? macro : "$" + macro + "$";
+          textComponent.getDocument().insertString(position, nameToInsert, null);
+          textComponent.setCaretPosition(position + nameToInsert.length());
         }
         catch (BadLocationException ignored) {
         }

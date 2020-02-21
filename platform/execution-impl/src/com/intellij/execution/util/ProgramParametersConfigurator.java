@@ -9,7 +9,6 @@ import com.intellij.ide.macro.*;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -33,6 +32,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public class ProgramParametersConfigurator {
   private static final ExtensionPointName<WorkingDirectoryProvider> WORKING_DIRECTORY_PROVIDER_EP_NAME= ExtensionPointName
@@ -75,10 +75,21 @@ public class ProgramParametersConfigurator {
   }
 
   public static void addMacroSupport(@NotNull ExtendableTextField textField) {
+    addMacroSupport(textField, macro -> {
+      return !(macro instanceof EditorMacro);
+    });
+  }
+
+  public static void addMacroSupport(@NotNull ExtendableTextField textField,
+                                     @Nullable Predicate<? super Macro> macroFilter) {
+    addMacroSupport(textField, macroFilter, null);
+  }
+
+  public static void addMacroSupport(@NotNull ExtendableTextField textField,
+                                     @Nullable Predicate<? super Macro> macroFilter,
+                                     @Nullable Map<String, String> userMacros) {
     if (Registry.is("allow.macros.for.run.configurations")) {
-      MacrosDialog.addTextFieldExtension(textField, macro -> {
-        return !(macro instanceof EditorMacro);
-      }, PathMacros.getInstance().getUserMacros());
+      MacrosDialog.addTextFieldExtension(textField, macroFilter, userMacros);
     }
   }
 
