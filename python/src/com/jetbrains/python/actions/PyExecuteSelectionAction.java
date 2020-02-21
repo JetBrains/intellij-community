@@ -27,6 +27,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.*;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonRunConfiguration;
@@ -38,11 +39,8 @@ import java.util.List;
 
 public class PyExecuteSelectionAction extends DumbAwareAction {
 
-  public static final String EXECUTE_SELECTION_IN_CONSOLE = "Execute Selection in Python Console";
-  public static final String EXECUTE_LINE_IN_CONSOLE = "Execute Line in Python Console";
-
   public PyExecuteSelectionAction() {
-    super(EXECUTE_SELECTION_IN_CONSOLE);
+    super(PyBundle.lazyMessage("python.execute.selection.action.execute.selection.in.console"));
   }
 
   @Override
@@ -155,12 +153,12 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
     if (isPython(editor)) {
       String text = getSelectionText(editor);
       if (text != null) {
-        presentation.setText(EXECUTE_SELECTION_IN_CONSOLE);
+        presentation.setText(PyBundle.message("python.execute.selection.action.execute.selection.in.console"));
       }
       else {
         text = getLineUnderCaret(editor);
         if (text != null) {
-          presentation.setText(EXECUTE_LINE_IN_CONSOLE);
+          presentation.setText(PyBundle.message("python.execute.selection.action.execute.line.in.console"));
         }
       }
 
