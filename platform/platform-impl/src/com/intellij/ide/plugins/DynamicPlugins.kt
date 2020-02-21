@@ -541,12 +541,12 @@ object DynamicPlugins {
   }
 
   @JvmStatic
-  fun pluginDisposableWrapper(clazz: Class<*>, defaultValue: Disposable): Disposable {
+  fun pluginDisposable(clazz: Class<*>, defaultValue: Disposable): Disposable {
     val pluginDisposable = pluginDisposable(clazz)
     if (pluginDisposable != null) {
       val result = Disposer.newDisposable()
       Disposer.register(pluginDisposable, result)
-      Disposer.register(defaultValue, result)
+      Disposer.register(defaultValue, Disposable { Disposer.dispose(result) })
       return result
     }
     return defaultValue
