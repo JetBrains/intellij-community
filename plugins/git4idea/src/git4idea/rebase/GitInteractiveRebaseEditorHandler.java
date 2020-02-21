@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -17,6 +16,8 @@ import git4idea.GitVcs;
 import git4idea.commands.GitImplBase;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitLogUtil;
+import git4idea.rebase.interactive.GitRewordedCommitMessageProvider;
+import git4idea.rebase.interactive.RewordedCommitMessageMapping;
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog;
 import git4idea.rebase.interactive.dialog.GitRebaseEntryWithEditedMessage;
 import org.jetbrains.annotations.NotNull;
@@ -25,10 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 
 import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.CommonBundle.getOkButtonText;
@@ -54,11 +53,12 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
 
   private boolean myCommitListCancelled;
   private boolean myUnstructuredEditorCancelled;
-  private final Queue<Pair<String, String>> myMessagesMapping = new ArrayDeque<>();
+  private final @NotNull GitRewordedCommitMessageProvider myRewordedCommitMessageProvider;
 
   public GitInteractiveRebaseEditorHandler(@NotNull Project project, @NotNull VirtualFile root) {
     myProject = project;
     myRoot = root;
+    myRewordedCommitMessageProvider = GitRewordedCommitMessageProvider.getInstance(project);
   }
 
   @Override
@@ -67,12 +67,12 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
       if (myRebaseEditorShown) {
         String encoding = GitConfigUtil.getCommitEncoding(myProject, myRoot);
         String originalMessage = FileUtil.loadFile(new File(path), encoding);
-        Pair<String, String> messageMapping = myMessagesMapping.poll();
-        if (messageMapping == null || !originalMessage.startsWith(messageMapping.first)) {
+        String newMessage = myRewordedCommitMessageProvider.getRewordedCommitMessage(myProject, myRoot, originalMessage);
+        if (newMessage == null) {
           myUnstructuredEditorCancelled = !handleUnstructuredEditor(path);
           return myUnstructuredEditorCancelled ? ERROR_EXIT_CODE : 0;
         }
-        FileUtil.writeToFile(new File(path), messageMapping.second.getBytes(Charset.forName(encoding)));
+        FileUtil.writeToFile(new File(path), newMessage.getBytes(Charset.forName(encoding)));
         return 0;
       }
       else {
@@ -144,11 +144,17 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
   }
 
   protected void processNewEntries(@NotNull List<GitRebaseEntryWithEditedMessage> newEntries) {
-    for (GitRebaseEntryWithEditedMessage newEntry : newEntries) {
-      if (newEntry.getEntry().getAction() instanceof GitRebaseEntry.Action.REWORD) {
-        myMessagesMapping.add(new Pair<>(newEntry.getEntry().getCommitDetails().getFullMessage(), newEntry.getNewMessage()));
+    List<RewordedCommitMessageMapping> messages = new ArrayList<>();
+    for (GitRebaseEntryWithEditedMessage newEntryWithMessage : newEntries) {
+      GitRebaseEntryWithDetails newEntry = newEntryWithMessage.getEntry();
+      if (newEntry.getAction() instanceof GitRebaseEntry.Action.REWORD) {
+        messages.add(RewordedCommitMessageMapping.fromMapping(
+          newEntry.getCommitDetails().getFullMessage(),
+          newEntryWithMessage.getNewMessage()
+        ));
       }
     }
+    myRewordedCommitMessageProvider.save(myProject, myRoot, messages);
   }
 
   @NotNull

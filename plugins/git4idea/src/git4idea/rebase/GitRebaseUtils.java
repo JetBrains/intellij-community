@@ -266,11 +266,26 @@ public class GitRebaseUtils {
 
   @NotNull
   private static Hash getRebasingBranchHash(@NotNull GitRepository repository) throws VcsException {
+    return readHashFromFile(repository.getProject(), repository.getRoot(), "orig-head");
+  }
+
+  @Nullable
+  public static Hash getOntoHash(@NotNull Project project, @NotNull VirtualFile root) {
     try {
-      return HashImpl.build(FileUtil.loadFile(new File(getRebaseDir(repository.getProject(), repository.getRoot()), "orig-head")).trim());
+      return readHashFromFile(project, root, "onto");
+    }
+    catch (VcsException e) {
+      return null;
+    }
+  }
+
+  @NotNull
+  private static Hash readHashFromFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull String fileName) throws VcsException {
+    try {
+      return HashImpl.build(FileUtil.loadFile(new File(getRebaseDir(project, root), fileName)).trim());
     }
     catch (IOException e) {
-      throw new VcsException("Couldn't resolve orig-head", e);
+      throw new VcsException("Couldn't resolve " + fileName, e);
     }
   }
 
