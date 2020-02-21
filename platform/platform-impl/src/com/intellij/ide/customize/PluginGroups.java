@@ -161,7 +161,6 @@ public class PluginGroups {
       "com.intellij.quarkus",
       "com.intellij.helidon",
 
-      "com.intellij.appengine",
       "com.intellij.gwt",
       "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
       "JBoss jBPM:JBPM",
@@ -221,9 +220,6 @@ public class PluginGroups {
       "WebSphere",
       "com.intellij.dmserver",
       "JSR45Plugin"
-    )));
-    groups.add(new Group("Clouds", PlatformImplIcons.Clouds, null, Collections.singletonList(
-      "CloudFoundry"
     )));
     //myTree.put("Groovy", Arrays.asList("org.intellij.grails"));
     //TODO Scala -> Play 2.x (Play 2.0 Support)
