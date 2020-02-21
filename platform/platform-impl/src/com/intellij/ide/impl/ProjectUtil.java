@@ -331,10 +331,17 @@ public final class ProjectUtil {
    */
   public static int confirmOpenOrAttachProject() {
     final String mode = PropertiesComponent.getInstance().getValue(MODE_PROPERTY);
-    int exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.or.attach"), "Open Project",
-                                       new String[]{"&This Window", "New &Window", "&Attach", CommonBundle.getCancelButtonText()},
-                                       MODE_NEW.equals(mode) ? 1 : MODE_REPLACE.equals(mode) ? 0 : MODE_ATTACH.equals(mode) ? 2 : 0,
-                                       Messages.getQuestionIcon());
+    int exitCode = Messages.showDialog(
+      IdeBundle.message("prompt.open.project.or.attach"),
+      IdeBundle.message("prompt.open.project.or.attach.title"),
+      new String[]{
+        IdeBundle.message("prompt.open.project.or.attach.button.this.window"),
+        IdeBundle.message("prompt.open.project.or.attach.button.new.window"),
+        IdeBundle.message("prompt.open.project.or.attach.button.attach"),
+        CommonBundle.getCancelButtonText()
+      },
+      MODE_NEW.equals(mode) ? 1 : MODE_REPLACE.equals(mode) ? 0 : MODE_ATTACH.equals(mode) ? 2 : 0,
+      Messages.getQuestionIcon());
     return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
            exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
            exitCode == 2 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH :
