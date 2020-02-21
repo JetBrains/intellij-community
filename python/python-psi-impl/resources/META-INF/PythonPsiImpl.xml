@@ -78,6 +78,8 @@
 
     <applicationService serviceImplementation="com.jetbrains.python.PythonCodeStyleService"/>
 
+    <applicationService serviceImplementation="com.jetbrains.python.PythonUiService"/>
+
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PySuperMethodCompletionContributor"/>
     <completion.contributor language="Python"

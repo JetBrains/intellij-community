@@ -606,9 +606,9 @@
     <!-- Code-insight IDE bridge -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService" serviceImplementation="com.jetbrains.python.PythonRuntimeServiceImpl" overrides="true"/>
     <applicationService serviceInterface="com.jetbrains.python.PythonCodeStyleService" serviceImplementation="com.jetbrains.python.PythonCodeStyleServiceImpl" overrides="true"/>
+    <applicationService serviceInterface="com.jetbrains.python.PythonUiService" serviceImplementation="com.jetbrains.python.PythonUiServiceImpl" overrides="true"/>
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.PyImportCollectorFactory" serviceImplementation="com.jetbrains.python.codeInsight.imports.CodeStylePyImportCollectorFactory"/>
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser" serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
-    <applicationService serviceInterface="com.jetbrains.python.PythonUiService" serviceImplementation="com.jetbrains.python.PythonUiServiceImpl" overrides="true"/>
 
     <registryKey key="python.relative.import.depth" defaultValue="3" description="Specifies default acceptable number of dots in a relative import statement"/>
 
