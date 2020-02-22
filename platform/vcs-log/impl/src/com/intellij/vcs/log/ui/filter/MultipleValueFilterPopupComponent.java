@@ -112,9 +112,10 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   }
 
   @NotNull
-  protected static String getActionName(@NotNull List<String> values) {
-    if (values.size() == 1) return Objects.requireNonNull(ContainerUtil.getFirstItem(values));
-    return displayableText(values, 2 * MAX_FILTER_VALUE_LENGTH);
+  protected String getActionName(@NotNull List<String> values) {
+    List<String> localizedValues = getLocalizedValues(values);
+    if (localizedValues.size() == 1) return Objects.requireNonNull(ContainerUtil.getFirstItem(localizedValues));
+    return displayableText(localizedValues, 2 * MAX_FILTER_VALUE_LENGTH);
   }
 
   @NotNull

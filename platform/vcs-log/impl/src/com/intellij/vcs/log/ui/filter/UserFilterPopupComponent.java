@@ -94,7 +94,7 @@ public class UserFilterPopupComponent
       group.addSeparator("Recent");
       for (List<String> recentGroup : recentlyFiltered) {
         if (!recentGroup.isEmpty()) {
-          group.add(new PredefinedValueAction(recentGroup, () -> getActionName(getLocalizedValues(recentGroup))));
+          group.add(new PredefinedValueAction(recentGroup, () -> getActionName(recentGroup)));
         }
       }
       group.addSeparator();
@@ -104,7 +104,7 @@ public class UserFilterPopupComponent
 
   @Override
   protected @NotNull String getText(@NotNull VcsLogUserFilter filter) {
-    return getActionName(getLocalizedValues(getFilterValues(filter)));
+    return getActionName(getFilterValues(filter));
   }
 
   @Override
