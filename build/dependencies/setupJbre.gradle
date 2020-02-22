@@ -43,16 +43,7 @@ def jbrTasks(String defaultBuild, int version, String targetOs, String prefix = 
       def jbrBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : defaultBuild
       def (update, buildNumber) = splitJbrBuild(jbrBuild.toString(), version.toString())
       def jbrArtifactName = "$prefix$update-$platform-$arch-$buildNumber"
-      def download = downloadJbrTask(jbrArtifactName, jbrBuild.toString())
-      if (platform == 'osx') {
-        def untarTask = untarJbrTask(download, jbrArtifactName.capitalize())
-        def patchTask = patchMacOS(jbrArtifactName.capitalize(), file("${download.absolutePath - '.tar.gz'}"))
-        patchTask.dependsOn(untarTask)
-        def tarTask = tarJbrTask("tar${jbrArtifactName.capitalize()}", untarTask, jbrArtifactName)
-        tarTask.dependsOn(patchTask)
-        setupJbre.dependsOn(tarTask)
-        cleanSetupJbre.dependsOn("cleanTar${jbrArtifactName.capitalize()}")
-      }
+      downloadJbrTask(jbrArtifactName, jbrBuild.toString())
     }
   }
 }
@@ -141,21 +132,4 @@ static def platformsToDownload(targetOs) {
 
 static def archToDownload(platform) {
   platform != 'osx' ? ['x86', 'x64'] : ['x64']
-}
-
-/**
- * Required to pass Apple Notarization,
- * cannot be done on JBR side without breaking JBR as standalone application,
- * see IDEA-231466
- */
-Task patchMacOS(String jbrArtifactName, File jbrDir) {
-  task("patch$jbrArtifactName") {
-    doFirst {
-      def contents = jbrDir.toPath().resolve('jbr/Contents')
-      def origin = contents.resolve('MacOS/libjli.dylib')
-      Files.deleteIfExists(origin)
-      def target = contents.resolve('Home/lib/jli/libjli.dylib')
-      Files.createSymbolicLink(origin, origin.parent.relativize(target))
-    }
-  }
 }
