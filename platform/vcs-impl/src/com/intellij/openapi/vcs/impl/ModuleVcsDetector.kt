@@ -21,21 +21,6 @@ internal class ModuleVcsDetector(private val project: Project) {
     (ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl)
   }
 
-  internal class MyStartUpActivity : StartupActivity {
-    init {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        throw ExtensionNotApplicableException.INSTANCE
-      }
-    }
-
-    override fun runActivity(project: Project) {
-      val vcsDetector = project.service<ModuleVcsDetector>()
-      if (vcsDetector.vcsManager.needAutodetectMappings()) {
-        vcsDetector.autoDetectVcsMappings(true)
-      }
-    }
-  }
-
   internal class MyPostStartUpActivity : StartupActivity.DumbAware {
     init {
       if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -44,10 +29,16 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
 
     override fun runActivity(project: Project) {
-      val listener = project.service<ModuleVcsDetector>().MyModulesListener()
+      val vcsDetector = project.service<ModuleVcsDetector>()
+
+      val listener = vcsDetector.MyModulesListener()
       project.messageBus.connect().apply {
         subscribe(ProjectTopics.MODULES, listener)
         subscribe(ProjectTopics.PROJECT_ROOTS, listener)
+      }
+
+      if (vcsDetector.vcsManager.needAutodetectMappings()) {
+        vcsDetector.autoDetectVcsMappings(true)
       }
     }
   }
