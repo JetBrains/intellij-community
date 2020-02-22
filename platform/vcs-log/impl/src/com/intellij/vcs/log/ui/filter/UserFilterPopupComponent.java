@@ -86,23 +86,6 @@ public class UserFilterPopupComponent
   }
 
   @Override
-  @NotNull
-  protected ActionGroup createRecentItemsActionGroup() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    List<List<String>> recentlyFiltered = getRecentValuesFromSettings();
-    if (!recentlyFiltered.isEmpty()) {
-      group.addSeparator("Recent");
-      for (List<String> recentGroup : recentlyFiltered) {
-        if (!recentGroup.isEmpty()) {
-          group.add(new PredefinedValueAction(recentGroup, () -> getActionName(recentGroup)));
-        }
-      }
-      group.addSeparator();
-    }
-    return group;
-  }
-
-  @Override
   protected @NotNull String getText(@NotNull VcsLogUserFilter filter) {
     return getActionName(getFilterValues(filter));
   }
