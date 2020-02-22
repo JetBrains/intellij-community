@@ -10,7 +10,7 @@ import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExtensionPointUtil {
+public final class ExtensionPointUtil {
   @NotNull
   public static <V extends ClearableLazyValue<?>> V dropLazyValueOnChange(@NotNull V lazyValue,
                                                                           @NotNull ExtensionPointName<?> extensionPointName,

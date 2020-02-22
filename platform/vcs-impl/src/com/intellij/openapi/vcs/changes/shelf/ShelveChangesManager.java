@@ -80,22 +80,11 @@ import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Objects.requireNonNull;
 
 @State(name = "ShelveChangesManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class ShelveChangesManager implements PersistentStateComponent<Element>, ProjectComponent {
+public final class ShelveChangesManager implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance(ShelveChangesManager.class);
   @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
   @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
   @NonNls private static final String DEFAULT_PATCH_NAME = "shelved";
-
-  @NotNull private final PathMacroManager myPathMacroSubstitutor;
-  @NotNull private SchemeManager<ShelvedChangeList> mySchemeManager;
-
-  private ScheduledFuture<?> myCleaningFuture;
-  private final ReentrantReadWriteLock SHELVED_FILES_LOCK = new ReentrantReadWriteLock(true);
-  @Nullable private Set<VirtualFile> myShelvingFiles;
-
-  public static ShelveChangesManager getInstance(Project project) {
-    return project.getComponent(ShelveChangesManager.class);
-  }
 
   private static final String SHELVE_MANAGER_DIR_PATH = "shelf"; //NON-NLS
   public static final String DEFAULT_PROJECT_PRESENTATION_PATH = "<Project>/shelf"; //NON-NLS
@@ -104,7 +93,18 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   private State myState = new State();
 
-  public static class State {
+  @NotNull private final PathMacroManager myPathMacroSubstitutor;
+  @NotNull private SchemeManager<ShelvedChangeList> mySchemeManager;
+
+  private ScheduledFuture<?> myCleaningFuture;
+  private final ReentrantReadWriteLock SHELVED_FILES_LOCK = new ReentrantReadWriteLock(true);
+  @Nullable private Set<VirtualFile> myShelvingFiles;
+
+  public static ShelveChangesManager getInstance(@NotNull Project project) {
+    return project.getComponent(ShelveChangesManager.class);
+  }
+
+  public static final class State {
     @OptionTag("remove_strategy")
     public boolean myRemoveFilesFromShelf;
     @Attribute("show_recycled")
@@ -113,9 +113,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     public Set<String> groupingKeys = new HashSet<>();
   }
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     //provide new element if all State fields have their default values  - > to delete existing settings in xml,
     return ObjectUtils.chooseNotNull(XmlSerializer.serialize(myState), EMPTY_ELEMENT);
   }
