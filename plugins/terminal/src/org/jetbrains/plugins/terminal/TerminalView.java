@@ -63,6 +63,7 @@ import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;

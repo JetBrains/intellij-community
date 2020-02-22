@@ -40,7 +40,7 @@ public class TerminalSessionEditor extends UserDataHolderBase implements FileEdi
       @Override
       public List<TerminalAction> getActions() {
         return Lists.newArrayList(
-          new TerminalAction("Close Session", settings.getCloseSessionKeyStrokes(), input -> {
+          new TerminalAction(settings.getCloseSessionActionPresentation(), input -> {
             handleCloseSession();
             return true;
           }).withMnemonicKey(KeyEvent.VK_S)

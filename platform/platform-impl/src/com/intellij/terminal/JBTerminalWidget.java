@@ -4,7 +4,6 @@ package com.intellij.terminal;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.DisposableWrapper;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -164,31 +163,31 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   public List<TerminalAction> getActions() {
     List<TerminalAction> actions = super.getActions();
     if (isInTerminalToolWindow()) {
-      actions.add(new TerminalAction(IdeBundle.message("terminal.action.NewSession.text"), mySettingsProvider.getNewSessionKeyStrokes(), input -> {
+      actions.add(new TerminalAction(mySettingsProvider.getNewSessionActionPresentation(), input -> {
         myListener.onNewSession();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(IdeBundle.message("terminal.action.SelectPreviousTab.text"), mySettingsProvider.getPreviousTabKeyStrokes(), input -> {
+      actions.add(new TerminalAction(mySettingsProvider.getPreviousTabActionPresentation(), input -> {
         myListener.onPreviousTabSelected();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(IdeBundle.message("terminal.action.SelectNextTab.text"), mySettingsProvider.getNextTabKeyStrokes(), input -> {
+      actions.add(new TerminalAction(mySettingsProvider.getNextTabActionPresentation(), input -> {
         myListener.onNextTabSelected();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(IdeBundle.message("terminal.action.MoveRight.text"), mySettingsProvider.getMoveTabRightKeyStrokes(), input -> {
+      actions.add(new TerminalAction(mySettingsProvider.getMoveTabRightActionPresentation(), input -> {
         myListener.moveTabRight();
         return true;
       }).withMnemonicKey(KeyEvent.VK_R).withEnabledSupplier(() -> myListener != null && myListener.canMoveTabRight()));
-      actions.add(new TerminalAction(IdeBundle.message("terminal.action.MoveLeft.text"), mySettingsProvider.getMoveTabLeftKeyStrokes(), input -> {
+      actions.add(new TerminalAction(mySettingsProvider.getMoveTabLeftActionPresentation(), input -> {
         myListener.moveTabLeft();
         return true;
       }).withMnemonicKey(KeyEvent.VK_L).withEnabledSupplier(() -> myListener != null && myListener.canMoveTabLeft()));
-      actions.add(new TerminalAction(IdeBundle.message("terminal.action.ShowTabs.text"), mySettingsProvider.getShowTabsKeyStrokes(), input -> {
+      actions.add(new TerminalAction(mySettingsProvider.getShowTabsActionPresentation(), input -> {
         myListener.showTabs();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(IdeBundle.message("terminal.action.CloseSession.text"), mySettingsProvider.getCloseSessionKeyStrokes(), input -> {
+      actions.add(new TerminalAction(mySettingsProvider.getCloseSessionActionPresentation(), input -> {
         myListener.onSessionClosed();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
@@ -202,7 +201,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   static boolean isInTerminalToolWindow(@NotNull DataContext dataContext) {
     ToolWindow toolWindow = dataContext.getData(PlatformDataKeys.TOOL_WINDOW);
-    return "Terminal".equals(toolWindow.getId());
+    return toolWindow != null && "Terminal".equals(toolWindow.getId());
   }
 
   @Override
