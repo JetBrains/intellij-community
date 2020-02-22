@@ -28,7 +28,7 @@ try:
 except:
     from mercurial.httprepo import passwordmgr
 
-PY3 = sys.version_info.major == 3
+PY3 = sys.version_info[0] == 3
 
 def sendInt(client, number):
     length = struct.pack('>L', number)
