@@ -95,11 +95,6 @@ public class UserFilterPopupComponent
     return ContainerUtil.map(values, user -> user.equals(VcsLogFilterObject.ME) ? me() : user);
   }
 
-  @Override
-  protected void rememberValuesInSettings(@NotNull Collection<String> values) {
-    super.rememberValuesInSettings(parseLocalizedValues(values));
-  }
-
   @NotNull
   private static String me() {
     return VcsLogBundle.message("vcs.log.user.filter.me");

@@ -45,7 +45,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   }
 
   protected void rememberValuesInSettings(@NotNull Collection<String> values) {
-    myUiProperties.addRecentlyFilteredGroup(myName, values);
+    myUiProperties.addRecentlyFilteredGroup(myName, parseLocalizedValues(values));
   }
 
   @NotNull
