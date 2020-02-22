@@ -2,7 +2,6 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -129,7 +128,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     return e;
   }
 
-  private static class ModuleGroupInterner {
+  private static final class ModuleGroupInterner {
     private final Interner<String> groups = new StringInterner();
     private final Map<String[], String[]> paths = new THashMap<>(new TObjectHashingStrategy<String[]>() {
       @Override
@@ -275,10 +274,9 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     progressIndicator.setText2("");
 
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());
-    ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
     boolean isParallel = Registry.is("parallel.modules.loading") && !ApplicationManager.getApplication().isDispatchThread();
-    ExecutorService service = isParallel ? AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
+    ExecutorService service = isParallel ? AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", Math.min(2, Runtime.getRuntime().availableProcessors()))
                                          : ConcurrencyUtil.newSameThreadExecutorService();
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
     Set<String> paths = new THashSet<>();
@@ -286,8 +284,12 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       if (progressIndicator.isCanceled()) {
         break;
       }
+
       String path = modulePath.getPath();
-      if (!paths.add(path)) continue;
+      if (!paths.add(path)) {
+        continue;
+      }
+
       tasks.add(Pair.create(service.submit(() -> {
         progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
         return ProgressManager.getInstance().runProcess(() -> {
@@ -307,19 +309,24 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       }), modulePath));
     }
 
+    ModuleGroupInterner groupInterner = new ModuleGroupInterner();
     List<Module> modulesWithUnknownTypes = new SmartList<>();
     for (Pair<Future<Module>, ModulePath> task : tasks) {
       if (progressIndicator.isCanceled()) {
         break;
       }
+
       try {
         Module module = task.first.get();
-        if (module == null) continue;
+        if (module == null) {
+          continue;
+        }
+
         if (isUnknownModuleType(module)) {
           modulesWithUnknownTypes.add(module);
         }
         ModulePath modulePath = task.second;
-        final String groupPathString = modulePath.getGroup();
+        String groupPathString = modulePath.getGroup();
         if (groupPathString != null) {
           // model should be updated too
           groupInterner.setModuleGroupPath(moduleModel, module, groupPathString.split(MODULE_GROUP_SEPARATOR));

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.jps
 
 import com.intellij.configurationStore.*
@@ -38,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashSet
 
-class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
+internal class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private val incomingChanges = Collections.synchronizedList(ArrayList<JpsConfigurationFilesChange>())
   private lateinit var fileContentReader: StorageJpsConfigurationReader
   private val serializationData = AtomicReference<JpsEntitiesSerializationData?>()

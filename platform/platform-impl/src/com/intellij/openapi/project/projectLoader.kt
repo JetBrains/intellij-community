@@ -43,7 +43,7 @@ internal class ProjectLoadHelper {
       app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(project)
 
       activity = activity?.endAndStart("projectComponentCreated")
-      runHandler((app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")) {
+      runHandler(getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")) {
         it.serviceCreated(project)
       }
       activity?.end()
@@ -75,6 +75,10 @@ private inline fun <T : Any> runHandler(ep: ExtensionPointImpl<T>, crossinline e
   }
 }
 
+private fun <T : Any> getExtensionPoint(name: String): ExtensionPointImpl<T> {
+  return (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl).getExtensionPoint(name)
+}
+
 /**
  * Usage requires IJ Platform team approval (including plugin into white-list).
  */
@@ -82,10 +86,7 @@ private inline fun <T : Any> runHandler(ep: ExtensionPointImpl<T>, crossinline e
 interface ProjectServiceContainerCustomizer {
   companion object {
     @JvmStatic
-    fun getEp(): ExtensionPointImpl<ProjectServiceContainerCustomizer> {
-      return (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
-        .getExtensionPoint("com.intellij.projectServiceContainerCustomizer")
-    }
+    fun getEp() = getExtensionPoint<ProjectServiceContainerCustomizer>("com.intellij.projectServiceContainerCustomizer")
   }
 
   /**
