@@ -97,7 +97,7 @@
 
     <projectService serviceInterface="com.intellij.refactoring.suggested.SuggestedRefactoringProvider"
                     serviceImplementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl"/>
-    <startupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
+    <postStartupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
   </extensions>
 
   <applicationListeners>

@@ -305,7 +305,7 @@
     <applicationService serviceImplementation="com.intellij.openapi.module.WebModuleTypeRegistrar" preload="true"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector" preload="notHeadless"/>
-    <startupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$MyStartUpActivity"/>
+    <startupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$MyStartUpActivity" order="last"/>
     <postStartupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$MyPostStartUpActivity"/>
 
     <postStartupActivity implementation="com.intellij.execution.testDiscovery.TestDiscoveryIndex$MyPostStartUpActivity"/>
@@ -729,7 +729,7 @@
     <java.elementFinder implementation="com.intellij.debugger.impl.AlternativeJreClassFinder" order="last"/>
     <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
     <unknownSdkContributor implementation="com.intellij.execution.RunConfigurationsUnknownJdkContributor"/>
-    <startupActivity implementation="com.intellij.execution.RunConfigurationsUnknownJdkContributorRefresher" />
+    <postStartupActivity implementation="com.intellij.execution.RunConfigurationsUnknownJdkContributorRefresher" />
     <registryKey key="jdk.auto.runConfigurations" defaultValue="true" restartRequired="true"
                  description="Check missing JDK references in shared run configurations"/>
     <debugger.asyncStackTraceProvider

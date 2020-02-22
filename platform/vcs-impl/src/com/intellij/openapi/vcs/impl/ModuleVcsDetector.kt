@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
@@ -21,11 +22,13 @@ internal class ModuleVcsDetector(private val project: Project) {
   }
 
   internal class MyStartUpActivity : StartupActivity {
-    override fun runActivity(project: Project) {
+    init {
       if (ApplicationManager.getApplication().isUnitTestMode) {
-        return
+        throw ExtensionNotApplicableException.INSTANCE
       }
+    }
 
+    override fun runActivity(project: Project) {
       val vcsDetector = project.service<ModuleVcsDetector>()
       if (vcsDetector.vcsManager.needAutodetectMappings()) {
         vcsDetector.autoDetectVcsMappings(true)
@@ -34,11 +37,13 @@ internal class ModuleVcsDetector(private val project: Project) {
   }
 
   internal class MyPostStartUpActivity : StartupActivity.DumbAware {
-    override fun runActivity(project: Project) {
+    init {
       if (ApplicationManager.getApplication().isUnitTestMode) {
-        return
+        throw ExtensionNotApplicableException.INSTANCE
       }
+    }
 
+    override fun runActivity(project: Project) {
       val listener = project.service<ModuleVcsDetector>().MyModulesListener()
       project.messageBus.connect().apply {
         subscribe(ProjectTopics.MODULES, listener)

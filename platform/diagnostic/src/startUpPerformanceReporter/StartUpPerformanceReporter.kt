@@ -55,11 +55,11 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
       })
     }
 
-    class StartUpPerformanceReporterValues(val pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
-                                           val lastReport: ByteBuffer,
-                                           val lastMetrics: ObjectIntHashMap<String>)
+    fun logStats(projectName: String) {
+      doLogStats(projectName)
+    }
 
-    fun logStats(projectName: String): StartUpPerformanceReporterValues? {
+    private fun doLogStats(projectName: String): StartUpPerformanceReporterValues? {
       val items = mutableListOf<ActivityImpl>()
       val instantEvents = mutableListOf<ActivityImpl>()
       val activities = THashMap<String, MutableList<ActivityImpl>>()
@@ -220,17 +220,16 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
   @Synchronized
   private fun logStats(projectName: String) {
-    val params = StartUpPerformanceReporter.logStats(projectName)
-    if (params != null) {
-      this.pluginCostMap = params.pluginCostMap
-      lastReport = params.lastReport
-      lastMetrics = params.lastMetrics
-    }
-    else {
-      return
-    }
+    val params = doLogStats(projectName) ?: return
+    pluginCostMap = params.pluginCostMap
+    lastReport = params.lastReport
+    lastMetrics = params.lastMetrics
   }
 }
+
+private class StartUpPerformanceReporterValues(val pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
+                                               val lastReport: ByteBuffer,
+                                               val lastMetrics: ObjectIntHashMap<String>)
 
 private fun computePluginCostMap(): MutableMap<String, ObjectLongHashMap<String>> {
   var result: MutableMap<String, ObjectLongHashMap<String>>

@@ -3,7 +3,7 @@
     <listener class="com.intellij.tasks.context.BranchContextTracker" topic="com.intellij.openapi.vcs.BranchChangeListener"/>
   </projectListeners>
   <extensions defaultExtensionNs="com.intellij">
-    <!-- must be first - adds activity listener (to tack, when reporing should be stoi) -->
+    <!-- must be first - adds activity listener (to track, when reporting should be stopped) -->
     <startupActivity id="performanceReporter" implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter" order="first"/>
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>

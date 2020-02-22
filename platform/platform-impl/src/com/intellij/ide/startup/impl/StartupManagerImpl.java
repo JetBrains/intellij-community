@@ -15,9 +15,12 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -45,8 +48,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Internal
 public class StartupManagerImpl extends StartupManagerEx {
-  private static final ExtensionPointName<StartupActivity> STARTUP_ACTIVITY = new ExtensionPointName<>("com.intellij.startupActivity");
-
   private static final Logger LOG = Logger.getInstance(StartupManagerImpl.class);
   private static final long EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100);
 
@@ -158,19 +159,22 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     Activity activity = StartUpMeasurer.startMainActivity(Activities.PROJECT_STARTUP);
     runActivities(myStartupActivities, indicator, null);
-    executeActivitiesFromExtensionPoint(indicator, STARTUP_ACTIVITY);
+    ExtensionsAreaImpl area = (ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea();
+    executeActivitiesFromExtensionPoint(indicator, area.getExtensionPoint("com.intellij.startupActivity"));
     myStartupActivitiesPassed = true;
     activity.end();
   }
 
   private void executeActivitiesFromExtensionPoint(@Nullable ProgressIndicator indicator,
-                                                   @SuppressWarnings("SameParameterValue") @NotNull ExtensionPointName<StartupActivity> extensionPoint) {
-    extensionPoint.processWithPluginDescriptor((extension, pluginDescriptor) -> {
+                                                   @SuppressWarnings("SameParameterValue") @NotNull ExtensionPointImpl<StartupActivity> extensionPoint) {
+    // use processImplementations to not even create extension if not white-listed
+    extensionPoint.processImplementations(/* shouldBeSorted = */ true, (supplier, pluginDescriptor) -> {
       if (myProject.isDisposed()) {
         return;
       }
 
-      if (!pluginDescriptor.isBundled() && pluginDescriptor.getPluginId() != PluginManagerCore.JAVA_PLUGIN_ID) {
+      PluginId id = pluginDescriptor.getPluginId();
+      if (!(id == PluginManagerCore.CORE_ID || id == PluginManagerCore.JAVA_PLUGIN_ID || id.getIdString().equals("com.jetbrains.performancePlugin"))) {
         LOG.error("Only bundled plugin can define " + extensionPoint.getName() + ": " + pluginDescriptor);
         return;
       }
@@ -179,7 +183,11 @@ public class StartupManagerImpl extends StartupManagerEx {
         indicator.checkCanceled();
       }
 
-      runActivity(null, extension, pluginDescriptor, indicator);
+      try {
+        runActivity(null, supplier.get(), pluginDescriptor, indicator);
+      }
+      catch (ExtensionNotApplicableException ignore) {
+      }
     });
   }
 

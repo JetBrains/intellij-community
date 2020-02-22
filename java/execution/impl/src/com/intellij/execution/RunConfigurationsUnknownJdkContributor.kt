@@ -14,9 +14,11 @@ import com.intellij.openapi.util.registry.Registry
 private fun RunnerAndConfigurationSettings.isWatched() = !isTemplate && !isTemporary && isShared
 private fun isRunConfigurationsWatchEnabled() = Registry.`is`("jdk.auto.runConfigurations")
 
-class RunConfigurationsUnknownJdkContributorRefresher : StartupActivity {
+private class RunConfigurationsUnknownJdkContributorRefresher : StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
-    if (!isRunConfigurationsWatchEnabled()) return
+    if (!isRunConfigurationsWatchEnabled()) {
+      return
+    }
 
     project.messageBus.connect().subscribe(RunManagerListener.TOPIC, object: RunManagerListener {
       override fun runConfigurationAdded(settings: RunnerAndConfigurationSettings) {
@@ -32,15 +34,17 @@ class RunConfigurationsUnknownJdkContributorRefresher : StartupActivity {
       }
 
       private fun scheduleReload(settings: RunnerAndConfigurationSettings) {
-        if (!isRunConfigurationsWatchEnabled()) return
-        if (!settings.isWatched()) return
+        if (!isRunConfigurationsWatchEnabled() || !settings.isWatched()) {
+          return
+        }
+
         UnknownSdkTracker.getInstance(project).updateUnknownSdks()
       }
     })
   }
 }
 
-class RunConfigurationsUnknownJdkContributor : UnknownSdkContributor {
+private class RunConfigurationsUnknownJdkContributor : UnknownSdkContributor {
   override fun contributeUnknownSdks(project: Project): List<UnknownSdk> {
     if (!isRunConfigurationsWatchEnabled()) return listOf()
     val sdk = JavaSdk.getInstance()
