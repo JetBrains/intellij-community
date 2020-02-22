@@ -40,7 +40,7 @@ import java.util.*;
 
 public class StructureFilterPopupComponent
   extends FilterPopupComponent<FilterPair<VcsLogStructureFilter, VcsLogRootFilter>, VcsLogClassicFilterUi.FileFilterModel> {
-
+  private static final String PATHS = "Paths";
   private static final int FILTER_LABEL_LENGTH = 30;
   private static final int CHECKBOX_ICON_SIZE = 15;
   private static final FileByNameComparator FILE_BY_NAME_COMPARATOR = new FileByNameComparator();
@@ -54,7 +54,7 @@ public class StructureFilterPopupComponent
   public StructureFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                                        @NotNull VcsLogClassicFilterUi.FileFilterModel filterModel,
                                        @NotNull VcsLogColorManager colorManager) {
-    super(VcsLogBundle.message("vcs.log.filter.popup.paths"), filterModel);
+    super(VcsLogBundle.lazyMessage("vcs.log.filter.popup.paths"), filterModel);
     myUiProperties = uiProperties;
     myColorManager = colorManager;
   }
@@ -211,7 +211,7 @@ public class StructureFilterPopupComponent
 
   @NotNull
   private List<VcsLogStructureFilter> getRecentFilters() {
-    List<List<String>> filterValues = myUiProperties.getRecentlyFilteredGroups(myName);
+    List<List<String>> filterValues = myUiProperties.getRecentlyFilteredGroups(PATHS);
     return ContainerUtil.map2List(filterValues, values -> VcsLogClassicFilterUi.FileFilterModel.createStructureFilter(values));
   }
 
@@ -380,7 +380,7 @@ public class StructureFilterPopupComponent
       if (chooser.showAndGet()) {
         VcsLogStructureFilter newFilter = VcsLogFilterObject.fromVirtualFiles(chooser.getSelectedFiles());
         myFilterModel.setFilter(new FilterPair<>(newFilter, null));
-        myUiProperties.addRecentlyFilteredGroup(myName, VcsLogClassicFilterUi.FileFilterModel.getFilterValues(newFilter));
+        myUiProperties.addRecentlyFilteredGroup(PATHS, VcsLogClassicFilterUi.FileFilterModel.getFilterValues(newFilter));
       }
     }
 

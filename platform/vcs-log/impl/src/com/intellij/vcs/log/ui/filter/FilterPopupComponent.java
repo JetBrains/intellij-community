@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 /**
  * Base class for components which allow to set up filter for the VCS Log, by displaying a popup with available choices.
  */
@@ -20,8 +22,8 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
   protected static final String ALL = VcsBundle.getString("vcs.log.filter.all");
   @NotNull protected final Model myFilterModel;
 
-  FilterPopupComponent(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String filterName, @NotNull Model filterModel) {
-    super(filterName);
+  FilterPopupComponent(@NotNull Supplier<String> displayName, @NotNull Model filterModel) {
+    super(displayName);
     myFilterModel = filterModel;
   }
 

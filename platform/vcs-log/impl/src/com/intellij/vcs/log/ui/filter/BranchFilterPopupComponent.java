@@ -36,7 +36,7 @@ public class BranchFilterPopupComponent
 
   public BranchFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                                     @NotNull VcsLogClassicFilterUi.BranchFilterModel filterModel) {
-    super(VcsLogBundle.message("vcs.log.branch.filter.label"), uiProperties, filterModel);
+    super("Branch", VcsLogBundle.lazyMessage("vcs.log.branch.filter.label"), uiProperties, filterModel);
     myBranchFilterModel = filterModel;
   }
 

@@ -16,6 +16,7 @@ import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,11 +32,14 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   private static final int MAX_FILTER_VALUE_LENGTH = 20;
 
   @NotNull protected final MainVcsLogUiProperties myUiProperties;
+  @NonNls @NotNull private final String myName;
 
-  MultipleValueFilterPopupComponent(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String filterName,
+  MultipleValueFilterPopupComponent(@NonNls @NotNull String filterName,
+                                    @NotNull Supplier<String> displayName,
                                     @NotNull MainVcsLogUiProperties uiProperties,
                                     @NotNull Model filterModel) {
-    super(filterName, filterModel);
+    super(displayName, filterModel);
+    myName = filterName;
     myUiProperties = uiProperties;
   }
 

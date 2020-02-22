@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, FilterModel<VcsLogDateFilter>> {
 
   DateFilterPopupComponent(FilterModel<VcsLogDateFilter> filterModel) {
-    super(VcsLogBundle.message("vcs.log.date.filter.label"), filterModel);
+    super(VcsLogBundle.lazyMessage("vcs.log.date.filter.label"), filterModel);
   }
 
   @NotNull
