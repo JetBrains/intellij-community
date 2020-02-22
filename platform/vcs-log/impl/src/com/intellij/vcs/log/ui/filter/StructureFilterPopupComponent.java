@@ -118,7 +118,7 @@ public class StructureFilterPopupComponent
                                     @NotNull NotNullFunction<? super F, String> getText,
                                     boolean full) {
     if (full) {
-      return ALL;
+      return ALL.get();
     }
     else if (files.isEmpty()) {
       return categoryText;
