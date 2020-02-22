@@ -24,8 +24,8 @@ internal fun CommitOptions.changeListChanged(changeList: LocalChangeList) = chan
 
 internal fun CommitOptions.saveChangeListSpecificOptions() = changeListSpecificOptions.forEach { it.saveState() }
 
-internal fun removeEllipsisSuffix(s: String) = s.removeSuffix("...").removeSuffix("\u2026")
-internal fun CommitExecutor.getPresentableText() = removeEllipsisSuffix(removeMnemonic(actionText))
+internal fun String.removeEllipsisSuffix() = removeSuffix("...").removeSuffix("\u2026")
+internal fun CommitExecutor.getPresentableText() = removeMnemonic(actionText).removeEllipsisSuffix()
 
 open class SingleChangeListCommitWorkflow(
   project: Project,

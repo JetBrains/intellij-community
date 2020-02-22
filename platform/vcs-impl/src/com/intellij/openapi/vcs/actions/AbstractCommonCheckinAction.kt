@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.configurationStore.StoreUtil
@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitWorkflowHandler
+import com.intellij.vcs.commit.removeEllipsisSuffix
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
@@ -57,8 +58,9 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     LOG.debug("actionPerformed. ")
 
     val project = context.project!!
-    val actionName = getActionName(context)?.let { removeMnemonic(it) } ?: templatePresentation.text
-    val isFreezedDialogTitle = actionName?.let { "Can not $it now" }
+    val actionName = getActionName(context) ?: templatePresentation.text
+    val cleanedActionName = removeMnemonic(actionName).removeEllipsisSuffix().toLowerCase()
+    val isFreezedDialogTitle = VcsBundle.message("commit.error.cant.commit.now", cleanedActionName)
 
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(isFreezedDialogTitle)) {
       LOG.debug("ChangeListManager is freezed. returning.")
@@ -79,7 +81,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
   ) {
     ChangeListManager.getInstance(project).invokeAfterUpdate(
       { performCheckIn(context, project, roots) }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
-      message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current()
+      VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current()
     )
   }
 
