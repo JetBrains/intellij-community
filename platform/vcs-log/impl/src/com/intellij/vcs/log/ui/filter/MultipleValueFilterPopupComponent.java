@@ -82,12 +82,12 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   @Nls
   @Override
   protected String getToolTip(@NotNull Filter filter) {
-    return tooltip(getFilterValues(filter));
+    return getTooltip(getFilterValues(filter));
   }
 
   @NotNull
-  static String tooltip(@NotNull Collection<String> values) {
-    return StringUtil.join(values, ", ");
+  protected String getTooltip(@NotNull Collection<String> values) {
+    return StringUtil.join(getLocalizedValues(values), ", ");
   }
 
   @NotNull
@@ -142,7 +142,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
     public PredefinedValueAction(@NotNull List<String> values,
                                  @Nullable Supplier<String> displayName,
                                  boolean addToRecent) {
-      super(null, tooltip(values), null);
+      super(null, getTooltip(values), null);
       getTemplatePresentation().setText(displayName != null ? displayName : () -> getActionName(values), false);
       myValues = values;
       myAddToRecent = addToRecent;
