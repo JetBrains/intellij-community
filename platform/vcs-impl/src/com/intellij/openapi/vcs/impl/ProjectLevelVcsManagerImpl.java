@@ -675,6 +675,14 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     }
   }
 
+  /**
+   * Returns 'true' during initial project setup, ie:
+   * <ul>
+   * <li> There are no explicitly configured mappings ({@link #setDirectoryMapping} vs {@link #setAutoDirectoryMappings})
+   * <li> There are no mappings inherited from "Default Project" configuration (excluding &lt;Project&gt; mappings) ({@link #myMappingsLoaded}
+   * <li> Project was not reopened a second time ({@link #ATTRIBUTE_DEFAULT_PROJECT})
+   * </ul>
+   */
   public boolean needAutodetectMappings() {
     return !myHaveLegacyVcsConfiguration && !myMappingsLoaded;
   }
