@@ -76,7 +76,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   @NotNull
   @Override
   protected String getText(@NotNull Filter filter) {
-    return displayableText(getFilterValues(filter), MAX_FILTER_VALUE_LENGTH);
+    return displayableText(getLocalizedValues(getFilterValues(filter)), MAX_FILTER_VALUE_LENGTH);
   }
 
   @Nls

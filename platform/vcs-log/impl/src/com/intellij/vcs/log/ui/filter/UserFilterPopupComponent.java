@@ -86,11 +86,6 @@ public class UserFilterPopupComponent
   }
 
   @Override
-  protected @NotNull String getText(@NotNull VcsLogUserFilter filter) {
-    return getActionName(getFilterValues(filter));
-  }
-
-  @Override
   protected @NotNull List<String> parseLocalizedValues(@NotNull Collection<String> values) {
     return ContainerUtil.map(values, user -> user.equals(me()) ? VcsLogFilterObject.ME : user);
   }
