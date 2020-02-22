@@ -12,69 +12,32 @@
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module-library" scope="TEST">
-      <library name="tanvd.grazi.languagetool:grazi-language-tool-ru:4.7.9" type="repository">
-        <properties maven-id="tanvd.grazi.languagetool:grazi-language-tool-ru:4.7.9">
+      <library name="tanvd.grazi.languagetool:grazi-language-tool-ru:4.7.10" type="repository">
+        <properties maven-id="tanvd.grazi.languagetool:grazi-language-tool-ru:4.7.10">
           <exclude>
-            <dependency maven-id="com.carrotsearch:hppc" />
-            <dependency maven-id="com.google.guava:guava" />
-            <dependency maven-id="commons-logging:commons-logging" />
-            <dependency maven-id="javax.measure:unit-api" />
-            <dependency maven-id="net.java.dev.jna:jna" />
-            <dependency maven-id="net.loomchild:segment" />
-            <dependency maven-id="org.apache.commons:commons-lang3" />
-            <dependency maven-id="org.carrot2:morfologik-fsa-builders" />
-            <dependency maven-id="org.carrot2:morfologik-fsa" />
-            <dependency maven-id="org.carrot2:morfologik-speller" />
-            <dependency maven-id="org.carrot2:morfologik-stemming" />
-            <dependency maven-id="org.jetbrains:annotations" />
-            <dependency maven-id="org.slf4j:slf4j-api" />
             <dependency maven-id="tanvd.grazi.languagetool:grazi-language-tool" />
-            <dependency maven-id="tech.units:indriya" />
-            <dependency maven-id="tech.uom.lib:uom-lib-common" />
-            <dependency maven-id="com.google.code.findbugs:jsr305" />
-            <dependency maven-id="com.google.errorprone:error_prone_annotations" />
-            <dependency maven-id="com.google.j2objc:j2objc-annotations" />
-            <dependency maven-id="org.checkerframework:checker-qual" />
-            <dependency maven-id="org.codehaus.mojo:animal-sniffer-annotations" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/tanvd/grazi/languagetool/grazi-language-tool-ru/4.7.9/grazi-language-tool-ru-4.7.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tanvd/grazi/languagetool/grazi-language-tool-ru/4.7.10/grazi-language-tool-ru-4.7.10.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="tanvd.grazi.languagetool:grazi-language-tool-de:4.7.9" type="repository">
-        <properties maven-id="tanvd.grazi.languagetool:grazi-language-tool-de:4.7.9">
+      <library name="tanvd.grazi.languagetool:grazi-language-tool-de:4.7.10" type="repository">
+        <properties maven-id="tanvd.grazi.languagetool:grazi-language-tool-de:4.7.10">
           <exclude>
-            <dependency maven-id="com.carrotsearch:hppc" />
-            <dependency maven-id="com.google.errorprone:error_prone_annotations" />
-            <dependency maven-id="commons-logging:commons-logging" />
-            <dependency maven-id="com.google.guava:guava" />
-            <dependency maven-id="javax.measure:unit-api" />
-            <dependency maven-id="net.java.dev.jna:jna" />
-            <dependency maven-id="net.loomchild:segment" />
-            <dependency maven-id="org.apache.commons:commons-lang3" />
-            <dependency maven-id="org.carrot2:morfologik-fsa-builders" />
-            <dependency maven-id="org.carrot2:morfologik-fsa" />
-            <dependency maven-id="org.jetbrains:annotations" />
-            <dependency maven-id="org.slf4j:slf4j-api" />
             <dependency maven-id="tanvd.grazi.languagetool:grazi-language-tool" />
-            <dependency maven-id="tech.units:indriya" />
-            <dependency maven-id="org.carrot2:morfologik-speller" />
-            <dependency maven-id="org.carrot2:morfologik-stemming" />
-            <dependency maven-id="tech.uom.lib:uom-lib-common" />
-            <dependency maven-id="org.checkerframework:checker-qual" />
-            <dependency maven-id="org.codehaus.mojo:animal-sniffer-annotations" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
             <dependency maven-id="com.google.code.findbugs:jsr305" />
-            <dependency maven-id="com.google.j2objc:j2objc-annotations" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/tanvd/grazi/languagetool/grazi-language-tool-de/4.7.9/grazi-language-tool-de-4.7.9.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/tanvd/grazi/languagetool/hunspell-native-libs/4.7.9/hunspell-native-libs-4.7.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tanvd/grazi/languagetool/grazi-language-tool-de/4.7.10/grazi-language-tool-de-4.7.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tanvd/grazi/languagetool/hunspell-native-libs/4.7.10/hunspell-native-libs-4.7.10.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.1/german-pos-dict-1.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.4/jwordsplitter-4.4.jar!/" />

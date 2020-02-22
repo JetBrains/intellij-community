@@ -44,7 +44,8 @@ class GrazieSettingsPanel : ConfigurableUi<GrazieConfig>, Disposable {
     .or(settings.state.enabledCommitIntegration != vcs.isCommitIntegrationEnabled)
     .or(settings.state.nativeLanguage != native.language)
     .or(settings.state.enabledLanguages != languages.values)
-    .or(settings.state.enabledProgrammingLanguages != strategies.enabledProgrammingLanguagesIDs)
+    .or(settings.state.enabledGrammarStrategies != strategies.enabledStrategiesIDs)
+    .or(settings.state.disabledGrammarStrategies != strategies.disabledStrategiesIDs)
 
   override fun apply(settings: GrazieConfig) {
     GrazieConfig.update { state ->
@@ -76,7 +77,8 @@ class GrazieSettingsPanel : ConfigurableUi<GrazieConfig>, Disposable {
 
       state.copy(
         enabledLanguages = enabledLanguages,
-        enabledProgrammingLanguages = strategies.enabledProgrammingLanguagesIDs,
+        enabledGrammarStrategies = strategies.enabledStrategiesIDs,
+        disabledGrammarStrategies = strategies.disabledStrategiesIDs,
         userEnabledRules = userEnabledRules,
         userDisabledRules = userDisabledRules,
         nativeLanguage = native.language,
@@ -91,7 +93,7 @@ class GrazieSettingsPanel : ConfigurableUi<GrazieConfig>, Disposable {
     native.language = settings.state.nativeLanguage
     vcs.isCommitIntegrationEnabled = settings.state.enabledCommitIntegration
     languages.reset(settings.state.enabledLanguages.sortedWith(Comparator.comparing(Lang::displayName)))
-    strategies.reset(settings.state.enabledProgrammingLanguages)
+    strategies.reset(settings.state.enabledGrammarStrategies, settings.state.disabledGrammarStrategies)
     rules.reset()
 
     update()
@@ -104,12 +106,12 @@ class GrazieSettingsPanel : ConfigurableUi<GrazieConfig>, Disposable {
 
         add(strategies.component, CC().grow().maxHeight("").width("45%").minWidth("250px").alignY("top"))
 
-        panel(MigLayout(createLayoutConstraints(), AC().grow(), AC().grow()), CC().grow().width("55%").minWidth("250px").alignY("top")) {
+        panel(MigLayout(createLayoutConstraints(), AC().grow(), AC().grow()), CC().grow().width("55%").minWidth("350px").alignY("top")) {
           border = padding(JBUI.insetsLeft(20))
 
-          add(languages.component, CC().grow().maxWidth("350px").minHeight("80px").maxHeight("80px").wrap())
-          add(native.component, CC().wrap().maxWidth("350px"))
-          add(vcs.component)
+          add(languages.component, CC().grow().maxWidth("330px").minHeight("80px").maxHeight("80px").wrap())
+          add(native.component, CC().wrap().maxWidth("330px"))
+          add(vcs.component, CC().wrap().maxWidth("330px"))
         }
 
         update()

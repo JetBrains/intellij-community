@@ -20,7 +20,6 @@
     ]]></description>
 
   <depends optional="true" config-file="grazie-java.xml">com.intellij.modules.java</depends>
-  <depends optional="true" config-file="javascript.xml">JavaScript</depends>
   <depends optional="true" config-file="grazie-json.xml">com.intellij.modules.json</depends>
   <depends optional="true" config-file="grazie-markdown.xml">org.intellij.plugins.markdown</depends>
   <depends optional="true" config-file="properties.xml">com.intellij.properties</depends>
@@ -56,7 +55,6 @@
 
   <extensions defaultExtensionNs="com.intellij.grazie">
     <grammar.strategy language="TEXT" implementationClass="com.intellij.grazie.ide.language.plain.PlainTextGrammarCheckingStrategy"/>
-    <grammar.strategy language="" implementationClass="com.intellij.grazie.ide.language.comment.CommentGrammarCheckingStrategy"/>
   </extensions>
 
   <extensionPoints>

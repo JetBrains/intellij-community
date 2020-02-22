@@ -4,7 +4,14 @@ package com.intellij.grazie.ide.language
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.LanguageExtensionPoint
+import com.intellij.openapi.extensions.ExtensionPointName
 
 class LanguageGrammarChecking : LanguageExtensionPoint<GrammarCheckingStrategy>() {
-  companion object : LanguageExtension<GrammarCheckingStrategy>("com.intellij.grazie.grammar.strategy")
+  companion object : LanguageExtension<GrammarCheckingStrategy>("com.intellij.grazie.grammar.strategy") {
+    private val EP_NAME: ExtensionPointName<LanguageExtensionPoint<GrammarCheckingStrategy>> = ExtensionPointName.create("com.intellij.grazie.grammar.strategy")
+
+    fun getLanguageExtensionPoints(): List<LanguageExtensionPoint<GrammarCheckingStrategy>> = EP_NAME.extensionList
+
+    fun getExtensionPointByStrategy(strategy: GrammarCheckingStrategy) = EP_NAME.extensions.firstOrNull { it.instance == strategy }
+  }
 }

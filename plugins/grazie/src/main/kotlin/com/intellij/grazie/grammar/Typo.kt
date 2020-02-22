@@ -4,6 +4,7 @@ package com.intellij.grazie.grammar
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.*
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.languagetool.rules.IncorrectExample
 import org.languagetool.rules.Rule
 import org.languagetool.rules.RuleMatch
@@ -55,6 +56,8 @@ data class Typo(val location: Location, val info: Info, val fixes: LinkedSet<Str
   )
 
   val category: Category?
+    @Deprecated("Use RuleGroup instead")
+    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
     get() {
       val category = info.rule.category.getCategoryId().id
       return Category.values().find { it.name == category }
@@ -65,6 +68,8 @@ data class Typo(val location: Location, val info: Info, val fixes: LinkedSet<Str
    *
    * All typos have categories that can be found in the Grazie plugin UI tree in settings/preferences.
    */
+  @Deprecated("Use RuleGroup instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   enum class Category {
     /** General categories  */
 

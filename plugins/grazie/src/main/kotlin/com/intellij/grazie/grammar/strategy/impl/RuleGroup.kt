@@ -18,6 +18,9 @@ data class RuleGroup(val rules: LinkedSet<String>) {
     @Deprecated("Use getStealthyRanges() in GrammarCheckingStrategy and StrategyUtils.indentIndexes()")
     val WHITESPACES = RuleGroup("WHITESPACE_RULE")
 
+    /** Rules for checking casing errors */
+    val CASING = RuleGroup("UPPERCASE_SENTENCE_START")
+
     /** Rules that are usually disabled for literal strings */
     val LITERALS = RuleGroup("UPPERCASE_SENTENCE_START", "PUNCTUATION_PARAGRAPH_END", "UNLIKELY_OPENING_PUNCTUATION")
   }

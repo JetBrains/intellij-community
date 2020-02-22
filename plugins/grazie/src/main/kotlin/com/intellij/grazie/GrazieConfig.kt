@@ -3,6 +3,7 @@ package com.intellij.grazie
 
 import com.intellij.grazie.detection.DetectionContext
 import com.intellij.grazie.grammar.suppress.SuppressionContext
+import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.ide.msg.GrazieInitializerManager
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.orTrue
@@ -21,16 +22,17 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
    * Note, that all serialized values should be MUTABLE.
    * Immutable values (like emptySet()) as default may lead to deserialization failure
    */
-  data class State(
-    @Property val enabledLanguages: Set<Lang> = hashSetOf(Lang.AMERICAN_ENGLISH),
-    @Property val nativeLanguage: Lang = enabledLanguages.first(),
-    @Property val enabledProgrammingLanguages: Set<String> = defaultEnabledProgrammingLanguages,
-    @Property val enabledCommitIntegration: Boolean = false,
-    @Property val userDisabledRules: Set<String> = HashSet(),
-    @Property val userEnabledRules: Set<String> = HashSet(),
-    @Property val suppressionContext: SuppressionContext = SuppressionContext(),
-    @Property val detectionContext: DetectionContext.State = DetectionContext.State()
-  ) {
+  data class State(@Property val enabledLanguages: Set<Lang> = hashSetOf(Lang.AMERICAN_ENGLISH),
+                   @Property val nativeLanguage: Lang = enabledLanguages.first(),
+                   @Property val enabledProgrammingLanguages: Set<String> = defaultEnabledProgrammingLanguages,
+                   @Property val enabledGrammarStrategies: Set<String> = HashSet(),
+                   @Property val disabledGrammarStrategies: Set<String> = HashSet(),
+                   @Property val enabledCommitIntegration: Boolean = false,
+                   @Property val userDisabledRules: Set<String> = HashSet(),
+                   @Property val userEnabledRules: Set<String> = HashSet(),
+                   @Property val suppressionContext: SuppressionContext = SuppressionContext(),
+                   @Property val detectionContext: DetectionContext.State = DetectionContext.State(),
+                   @Property val version: Int = 0) {
     /**
      * Available languages set depends on current loaded LanguageTool modules.
      *
@@ -71,6 +73,8 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
 
     private val instance: GrazieConfig by lazy { ServiceManager.getService(GrazieConfig::class.java) }
 
+    const val VERSION = 1
+
     /**
      * Get copy of Grazie config state
      *
@@ -88,11 +92,40 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
   override fun getState() = myState
 
   override fun loadState(state: State) {
-    val prevState = myState
-    myState = state
+    when (state.version) {
+      0 -> {
+        val enabledStrategies = HashSet<String>()
+        val disabledStrategies = HashSet<String>()
 
-    if (prevState != myState || prevState.availableLanguages != myState.availableLanguages) {
-      service<GrazieInitializerManager>().publisher.update(prevState, myState)
+        LanguageGrammarChecking.getLanguageExtensionPoints().forEach {
+          val instance = it.instance
+
+          if (it.language in defaultEnabledProgrammingLanguages) {
+            if (it.language !in state.enabledProgrammingLanguages) {
+              disabledStrategies.add(instance.getID())
+            }
+          }
+          else {
+            if (it.language in state.enabledProgrammingLanguages) {
+              enabledStrategies.add(instance.getID())
+            }
+          }
+        }
+
+        loadState(state.copy(enabledProgrammingLanguages = HashSet(),
+                             enabledGrammarStrategies = enabledStrategies,
+                             disabledGrammarStrategies = disabledStrategies,
+                             version = state.version + 1))
+      }
+      VERSION -> {
+        val prevState = myState
+        myState = state
+
+        if (prevState != myState || prevState.availableLanguages != myState.availableLanguages) {
+          service<GrazieInitializerManager>().publisher.update(prevState, myState)
+        }
+      }
+      else -> error("Unknown version of Grazie settings")
     }
   }
 }

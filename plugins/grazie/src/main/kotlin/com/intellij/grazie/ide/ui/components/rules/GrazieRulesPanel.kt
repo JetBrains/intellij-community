@@ -12,6 +12,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Component
+import javax.swing.ScrollPaneConstants
 import javax.swing.tree.DefaultMutableTreeNode
 
 class GrazieRulesPanel(onSelectionChanged: (meta: Any) -> Unit) : Disposable {
@@ -44,7 +45,8 @@ class GrazieRulesPanel(onSelectionChanged: (meta: Any) -> Unit) : Disposable {
       }
 
       panel(constraint = BorderLayout.CENTER) {
-        add(ScrollPaneFactory.createScrollPane(tree))
+        add(ScrollPaneFactory.createScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER))
       }
     }
   }

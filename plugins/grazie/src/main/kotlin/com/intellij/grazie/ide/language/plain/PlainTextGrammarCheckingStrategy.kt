@@ -7,4 +7,6 @@ import com.intellij.psi.PsiPlainText
 
 class PlainTextGrammarCheckingStrategy : GrammarCheckingStrategy {
   override fun isMyContextRoot(element: PsiElement) = element is PsiPlainText && element.containingFile.name.endsWith(".txt")
+
+  override fun getContextRootTextDomain(root: PsiElement) = GrammarCheckingStrategy.TextDomain.PLAIN_TEXT
 }

@@ -8,6 +8,7 @@ import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.grammar.GrammarChecker
 import com.intellij.grazie.grammar.Typo
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy
 import com.intellij.grazie.grammar.suppress.SuppressionContext
 import com.intellij.grazie.ide.inspection.grammar.problem.GrazieProblemDescriptor
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
@@ -20,17 +21,20 @@ import com.intellij.psi.PsiElementVisitor
 
 class GrazieInspection : LocalInspectionTool() {
   companion object : GrazieStateLifecycle {
-    private var enabledProgrammingLanguagesIDs: Set<String> by lazyConfig(this::init)
+    private var enabledStrategiesIDs: Set<String> by lazyConfig(this::init)
+    private var disabledStrategiesIDs: Set<String> by lazyConfig(this::init)
 
     private var suppression: SuppressionContext by lazyConfig(this::init)
 
     override fun init(state: GrazieConfig.State) {
-      enabledProgrammingLanguagesIDs = state.enabledProgrammingLanguages
+      enabledStrategiesIDs = state.enabledGrammarStrategies
+      disabledStrategiesIDs = state.disabledGrammarStrategies
       suppression = state.suppressionContext
     }
 
     override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-      enabledProgrammingLanguagesIDs = newState.enabledProgrammingLanguages
+      enabledStrategiesIDs = newState.enabledGrammarStrategies
+      disabledStrategiesIDs = newState.disabledGrammarStrategies
       suppression = newState.suppressionContext
 
       ProjectManager.getInstance().openProjects.forEach {
@@ -39,15 +43,22 @@ class GrazieInspection : LocalInspectionTool() {
     }
   }
 
+  override fun getDisplayName() = GrazieBundle.message("grazie.grammar.inspection.grammar.text")
+
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
         if (element.isInjectedFragment()) return
 
-        if (element.language.id !in enabledProgrammingLanguagesIDs) return
-
         val typos = HashSet<Typo>()
-        for (strategy in LanguageGrammarChecking.allForLanguageOrAny(element.language).filter { it.isMyContextRoot(element) }) {
+
+        val strategies = LanguageGrammarChecking.allForLanguage(element.language).filter {
+          it.isMyContextRoot(element) &&
+          it.getContextRootTextDomain(element) != GrammarCheckingStrategy.TextDomain.NON_TEXT &&
+          (it.getID() in enabledStrategiesIDs || (it.isEnabledByDefault() && it.getID() !in disabledStrategiesIDs))
+        }
+
+        for (strategy in strategies) {
           typos.addAll(GrammarChecker.check(element, strategy))
         }
 
@@ -59,6 +70,4 @@ class GrazieInspection : LocalInspectionTool() {
       }
     }
   }
-
-  override fun getDisplayName() = GrazieBundle.message("grazie.grammar.inspection.text")
 }

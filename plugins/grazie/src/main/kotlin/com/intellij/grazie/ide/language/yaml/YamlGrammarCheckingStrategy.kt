@@ -2,15 +2,22 @@
 package com.intellij.grazie.ide.language.yaml
 
 import com.intellij.grazie.grammar.strategy.BaseGrammarCheckingStrategy
-import com.intellij.grazie.grammar.strategy.impl.ReplaceCharRule
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
+import com.intellij.grazie.grammar.strategy.StrategyUtils
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.PsiCommentImpl
 import org.jetbrains.yaml.YAMLTokenTypes.*
-import org.jetbrains.yaml.psi.YAMLScalarList
-import org.jetbrains.yaml.psi.YAMLScalarText
 
 class YamlGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
-  override fun isMyContextRoot(element: PsiElement) = element is YAMLScalarText || element is YAMLScalarList ||
-                                                      element.node.elementType in setOf(SCALAR_KEY, TEXT, SCALAR_STRING, SCALAR_DSTRING)
+  private val YAML_LITERAL_TYPES = setOf(TEXT, SCALAR_STRING, SCALAR_DSTRING, SCALAR_LIST, SCALAR_TEXT)
+
+  override fun isMyContextRoot(element: PsiElement) = getContextRootTextDomain(element) != TextDomain.NON_TEXT
+
+  override fun getContextRootTextDomain(root: PsiElement) = when(root.node.elementType) {
+    COMMENT -> TextDomain.COMMENTS
+    in YAML_LITERAL_TYPES -> TextDomain.LITERALS
+    else -> TextDomain.NON_TEXT
+  }
 
   override fun isStealth(element: PsiElement) = when (element.node.elementType) {
     INDENT -> true
@@ -19,5 +26,8 @@ class YamlGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
     else -> false
   }
 
-  override fun getReplaceCharRules(root: PsiElement) = emptyList<ReplaceCharRule>()
+  override fun getStealthyRanges(root: PsiElement, text: CharSequence) = when (root) {
+    is PsiCommentImpl -> StrategyUtils.indentIndexes(text, setOf(' ', '\t', '#'))
+    else -> StrategyUtils.emptyLinkedSet()
+  }
 }
