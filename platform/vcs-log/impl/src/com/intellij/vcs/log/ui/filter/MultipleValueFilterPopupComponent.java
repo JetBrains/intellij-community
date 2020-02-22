@@ -139,10 +139,6 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
       this(values, null, true);
     }
 
-    public PredefinedValueAction(@NotNull List<String> values, @Nullable Supplier<String> displayName) {
-      this(values, displayName, true);
-    }
-
     public PredefinedValueAction(@NotNull List<String> values,
                                  @Nullable Supplier<String> displayName,
                                  boolean addToRecent) {
