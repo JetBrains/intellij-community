@@ -23,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -131,12 +133,31 @@ public abstract class JBCefApp {
     @NotNull
     @Override
     protected CefAppConfig getCefAppConfig() {
-      String JCEF_FRAMEWORKS_PATH = System.getProperty("java.home") + "/Frameworks";
+      String ALT_CEF_FRAMEWORK_DIR = System.getenv("ALT_CEF_FRAMEWORK_DIR");
+      String ALT_CEF_BROWSER_SUBPROCESS = System.getenv("ALT_CEF_BROWSER_SUBPROCESS");
+      if (ALT_CEF_FRAMEWORK_DIR == null || ALT_CEF_BROWSER_SUBPROCESS == null) {
+        String CONTENTS_PATH = System.getProperty("java.home") + "/..";
+        if (ALT_CEF_FRAMEWORK_DIR == null) {
+          ALT_CEF_FRAMEWORK_DIR = CONTENTS_PATH + "/Frameworks/Chromium Embedded Framework.framework";
+        }
+        if (ALT_CEF_BROWSER_SUBPROCESS == null) {
+          ALT_CEF_BROWSER_SUBPROCESS = CONTENTS_PATH + "/Helpers/jcef Helper.app/Contents/MacOS/jcef Helper";
+        }
+      }
       return new CefAppConfig(new CefSettings(), new String[] {
-        "--framework-dir-path=" + JCEF_FRAMEWORKS_PATH + "/Chromium Embedded Framework.framework",
-        "--browser-subprocess-path=" + JCEF_FRAMEWORKS_PATH + "/jcef Helper.app/Contents/MacOS/jcef Helper",
+        "--framework-dir-path=" + normalize(ALT_CEF_FRAMEWORK_DIR),
+        "--browser-subprocess-path=" + normalize(ALT_CEF_BROWSER_SUBPROCESS),
         "--disable-in-process-stack-traces"
       });
+    }
+
+    // CEF does not accept ".." in path
+    private static String normalize(String path) {
+      try {
+        return new File(path).getCanonicalPath();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
