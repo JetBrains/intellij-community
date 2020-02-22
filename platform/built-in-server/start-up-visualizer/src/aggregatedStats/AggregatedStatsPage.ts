@@ -9,12 +9,14 @@ import LineChartComponent from "@/aggregatedStats/LineChartComponent.vue"
 import ClusteredChartComponent from "@/aggregatedStats/ClusteredChartComponent.vue"
 
 export const projectNameToTitle = new Map<string, string>()
+
 projectNameToTitle.set("/q9N7EHxr8F1NHjbNQnpqb0Q0fs", "joda-time")
 projectNameToTitle.set("73YWaW9bytiPDGuKvwNIYMK5CKI", "simple for IJ")
+projectNameToTitle.set("1PbxeQ044EEghMOG9hNEFee05kM", "light edit (IJ)")
+
 projectNameToTitle.set("j1a8nhKJexyL/zyuOXJ5CFOHYzU", "simple for PS")
 projectNameToTitle.set("JeNLJFVa04IA+Wasc+Hjj3z64R0", "simple for WS")
 projectNameToTitle.set("nC4MRRFMVYUSQLNIvPgDt+B3JqA", "Idea")
-projectNameToTitle.set("1PbxeQ044EEghMOG9hNEFee05kM", "light edit (IJ)")
 Object.seal(projectNameToTitle)
 
 @Component({
@@ -97,8 +99,8 @@ export default class AggregatedStatsPage extends Vue {
       this.machines = info.productToMachine[product] || []
       const projects = info.productToProjects[product] || []
       projects.sort((a, b) => {
-        const t1 = projectNameToTitle.get(a)!!
-        const t2 = projectNameToTitle.get(b)!!
+        const t1 = projectNameToTitle.get(a) || a
+        const t2 = projectNameToTitle.get(b) || b
         if (t1.startsWith("simple ") && !t2.startsWith("simple ")) {
           return -1
         }
