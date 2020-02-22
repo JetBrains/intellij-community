@@ -495,6 +495,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         final boolean parentEnabled = myTools.get(toolWrapper.getShortName()).isEnabled();
         List<LocalInspectionToolWrapper> children = ((DynamicGroupTool)toolWrapper.getTool()).getChildren(parentEnabled);
         if (tools.stream().noneMatch(i -> children.stream().anyMatch(l -> i.getShortName().equals(l.getShortName())))) {
+          boolean isLocked = myLockedProfile;
+          myLockedProfile = false;
           for (LocalInspectionToolWrapper wrapper : children) {
             addTool(project, wrapper, dependencies);
             final String shortName = wrapper.getShortName();
@@ -519,6 +521,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
               }
             });
           }
+          myLockedProfile = isLocked;
         }
       }
     }
