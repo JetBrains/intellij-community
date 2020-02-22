@@ -61,9 +61,10 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManage
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -267,7 +268,9 @@ public final class TerminalView {
       public void showTabs() {
         ShowContentAction action = new ShowContentAction(toolWindow, toolWindow.getComponent(), toolWindow.getContentManager());
         DataContext dataContext = DataManager.getInstance().getDataContext(toolWindow.getComponent());
-        AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+        KeyEvent fakeKeyEvent = new KeyEvent(toolWindow.getComponent(), ActionEvent.ACTION_PERFORMED,
+                                             System.currentTimeMillis(), 0, 0, '\0');
+        AnActionEvent event = AnActionEvent.createFromInputEvent(fakeKeyEvent, ActionPlaces.UNKNOWN, null, dataContext);
         action.actionPerformed(event);
       }
 
