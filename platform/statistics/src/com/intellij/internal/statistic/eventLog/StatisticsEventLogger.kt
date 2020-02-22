@@ -9,7 +9,7 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 private val LOG = Logger.getInstance("#com.intellij.internal.statistic.eventLog.StatisticsEventLogger")
-private val EP_NAME = ExtensionPointName.create<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
+private val EP_NAME = ExtensionPointName<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
 
 interface StatisticsEventLogger {
   fun log(group: EventLogGroup, eventId: String, isState: Boolean)
