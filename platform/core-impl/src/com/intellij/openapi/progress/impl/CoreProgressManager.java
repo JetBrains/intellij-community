@@ -2,7 +2,6 @@
 package com.intellij.openapi.progress.impl;
 
 import com.google.common.collect.ConcurrentHashMultiset;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -74,7 +73,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // must be under threadsUnderIndicator lock
   private void startBackgroundNonStandardIndicatorsPing() {
     if (myCheckCancelledFuture == null) {
-      myCheckCancelledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
+      myCheckCancelledFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
         for (ProgressIndicator indicator : nonStandardIndicators) {
           try {
             indicator.checkCanceled();

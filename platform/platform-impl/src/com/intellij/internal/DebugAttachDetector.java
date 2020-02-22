@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.Notification;
@@ -11,6 +10,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +73,7 @@ public final class DebugAttachDetector implements ApplicationInitializedListener
       return;
     }
 
-    myTask = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
+    myTask = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
       boolean attached = isAttached(myAgentProperties);
       if (!myReady) {
         myAttached = attached;

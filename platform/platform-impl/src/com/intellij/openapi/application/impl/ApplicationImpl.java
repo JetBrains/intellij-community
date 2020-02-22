@@ -3,7 +3,6 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.*;
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -730,11 +729,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
               dialogRemover.run();
             }
             else {
-              JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
+              AppExecutorUtil.getAppScheduledExecutorService().schedule(this, 1, TimeUnit.SECONDS);
             }
           }
         };
-        JobScheduler.getScheduler().schedule(task, 1, TimeUnit.SECONDS);
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(task, 1, TimeUnit.SECONDS);
       }
       String name = ApplicationNamesInfo.getInstance().getFullProductName();
       String message = ApplicationBundle.message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt", name);
@@ -1165,7 +1164,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       if (!myLock.isWriteLocked()) {
         Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting <= 0 ? null :
-                                    JobScheduler.getScheduler()
+                                    AppExecutorUtil.getAppScheduledExecutorService()
                                       .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
                                                               ourDumpThreadsOnLongWriteActionWaiting,
                                                               ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS);

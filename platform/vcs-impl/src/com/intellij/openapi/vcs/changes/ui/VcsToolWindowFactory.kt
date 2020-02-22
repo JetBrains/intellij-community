@@ -30,17 +30,16 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     val project = (window as ToolWindowEx).project
 
     updateState(project, window)
-    with(project.messageBus.connect()) {
-      subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
-        runInEdt {
-          if (project.isDisposed) return@runInEdt
-          updateState(project, window)
-        }
-      })
-      subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
-        override fun toolWindowMappingChanged() = updateState(project, window)
-      })
-    }
+    val connection = project.messageBus.connect()
+    connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
+      runInEdt {
+        if (project.isDisposed) return@runInEdt
+        updateState(project, window)
+      }
+    })
+    connection.subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
+      override fun toolWindowMappingChanged() = updateState(project, window)
+    })
   }
 
   override fun shouldBeAvailable(project: Project): Boolean = project.vcsManager.hasAnyMappings()
@@ -67,7 +66,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       toolWindow.isShowStripeButton = true
     }
 
-    toolWindow.setAvailable(available)
+    toolWindow.isAvailable = available
   }
 
   private fun updateContent(project: Project, toolWindow: ToolWindow) {
@@ -86,8 +85,9 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     }
   }
 
-  private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> =
-    ChangesViewContentEP.EP_NAME.getExtensions(project).filter { getToolWindowIdFor(project, it.tabName) == toolWindow.id }
+  private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> {
+    return ChangesViewContentEP.EP_NAME.getExtensions(project).filter { getToolWindowIdFor(project, it.tabName) == toolWindow.id }
+  }
 
   private fun createExtensionContent(project: Project, extension: ChangesViewContentEP): Content {
     val displayName: String = extension.newDisplayNameSupplierInstance(project)?.get() ?: extension.tabName
@@ -103,6 +103,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   companion object {
-    internal val Project.vcsManager: ProjectLevelVcsManager get() = ProjectLevelVcsManager.getInstance(this)
+    internal val Project.vcsManager: ProjectLevelVcsManager
+      get() = ProjectLevelVcsManager.getInstance(this)
   }
 }

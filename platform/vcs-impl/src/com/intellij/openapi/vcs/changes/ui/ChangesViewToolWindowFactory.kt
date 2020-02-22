@@ -12,15 +12,17 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi.HIDE_ID_LABEL
 
-class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
+private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
   override fun updateState(project: Project, toolWindow: ToolWindow) {
     super.updateState(project, toolWindow)
     toolWindow.stripeTitle = project.vcsManager.allActiveVcss.singleOrNull()?.displayName ?: ToolWindowId.VCS
   }
 }
 
-class CommitToolWindowFactory : VcsToolWindowFactory() {
-  override fun shouldBeAvailable(project: Project): Boolean = super.shouldBeAvailable(project) && project.isCommitToolWindow
+private class CommitToolWindowFactory : VcsToolWindowFactory() {
+  override fun shouldBeAvailable(project: Project): Boolean {
+    return super.shouldBeAvailable(project) && project.isCommitToolWindow
+  }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.component.putClientProperty(HIDE_ID_LABEL, "true")
@@ -28,16 +30,18 @@ class CommitToolWindowFactory : VcsToolWindowFactory() {
   }
 }
 
-internal class ActivateVersionControlToolWindowAction : ActivateToolWindowAction(ToolWindowId.VCS) {
+private class ActivateVersionControlToolWindowAction : ActivateToolWindowAction(ToolWindowId.VCS) {
   init {
     templatePresentation.text = toolWindowId
   }
 
-  override fun useMnemonicFromShortcuts(project: Project): Boolean =
-    ToolWindowManager.getInstance(project).getToolWindow(COMMIT_TOOLWINDOW_ID)?.isAvailable != true ||
-    isShortcutCustomized(toolWindowId) ||
-    isShortcutCustomized(COMMIT_TOOLWINDOW_ID)
+  override fun useMnemonicFromShortcuts(project: Project): Boolean {
+    return ToolWindowManager.getInstance(project).getToolWindow(COMMIT_TOOLWINDOW_ID)?.isAvailable != true ||
+           isShortcutCustomized(toolWindowId) ||
+           isShortcutCustomized(COMMIT_TOOLWINDOW_ID)
+  }
 }
 
-private fun isShortcutCustomized(toolWindowId: String): Boolean =
-  isShortcutCustomized(getActionIdForToolWindow(toolWindowId), KeymapManager.getInstance().activeKeymap)
+private fun isShortcutCustomized(toolWindowId: String): Boolean {
+  return isShortcutCustomized(getActionIdForToolWindow(toolWindowId), KeymapManager.getInstance().activeKeymap)
+}

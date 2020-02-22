@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
@@ -20,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
@@ -170,7 +170,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
     final AtomicBoolean reported = new AtomicBoolean();
     final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<>();
 
-    JobScheduler.getScheduler().schedule(new Runnable() {
+    AppExecutorUtil.getAppScheduledExecutorService().schedule(new Runnable() {
       private static final long LOW_DISK_SPACE_THRESHOLD = 50 * 1024 * 1024;
       private static final long MAX_WRITE_SPEED_IN_BPS = 500 * 1024 * 1024;  // 500 MB/sec is near max SSD sequential write speed
 
@@ -239,7 +239,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       }
 
       private void restart(long timeout) {
-        JobScheduler.getScheduler().schedule(this, timeout, TimeUnit.SECONDS);
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(this, timeout, TimeUnit.SECONDS);
       }
     }, 1, TimeUnit.SECONDS);
   }
