@@ -133,13 +133,30 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
       // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete
       @Suppress("DEPRECATION")
-      if (state.recentPaths.isNotEmpty()) {
-        if (state.recentPaths.size != state.additionalInfo.size) {
-          convertToSystemIndependentPaths(state.recentPaths)
-          val existingPaths = state.recentPaths.toSet()
-          state.additionalInfo.keys.removeIf {
-            !existingPaths.contains(it)
+      val recentPaths = state.recentPaths
+      if (recentPaths.isNotEmpty()) {
+        convertToSystemIndependentPaths(recentPaths)
+
+        // replace system-dependent paths to system-independent
+        for (key in state.additionalInfo.keys.toList()) {
+          val normalizedKey = FileUtilRt.toSystemIndependentName(key)
+          if (normalizedKey != key) {
+            state.additionalInfo.remove(key)?.let {
+              state.additionalInfo.put(normalizedKey, it)
+            }
           }
+        }
+
+        // ensure that additionalInfo contains entries in a reversed order of recentPaths (IDEA <= 2019.2 order of additionalInfo maybe not correct)
+        val newAdditionalInfo = linkedMapOf<String, RecentProjectMetaInfo>()
+        for (recentPath in recentPaths.asReversed()) {
+          val value = state.additionalInfo.get(recentPath) ?: continue
+          newAdditionalInfo.put(recentPath, value)
+        }
+
+        if (newAdditionalInfo != state.additionalInfo) {
+          state.additionalInfo.clear()
+          state.additionalInfo.putAll(newAdditionalInfo)
         }
       }
     }
