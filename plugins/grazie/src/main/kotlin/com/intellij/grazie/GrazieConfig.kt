@@ -22,17 +22,19 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
    * Note, that all serialized values should be MUTABLE.
    * Immutable values (like emptySet()) as default may lead to deserialization failure
    */
-  data class State(@Property val enabledLanguages: Set<Lang> = hashSetOf(Lang.AMERICAN_ENGLISH),
-                   @Property val nativeLanguage: Lang = enabledLanguages.first(),
-                   @Property val enabledProgrammingLanguages: Set<String> = defaultEnabledProgrammingLanguages,
-                   @Property val enabledGrammarStrategies: Set<String> = HashSet(),
-                   @Property val disabledGrammarStrategies: Set<String> = HashSet(),
-                   @Property val enabledCommitIntegration: Boolean = false,
-                   @Property val userDisabledRules: Set<String> = HashSet(),
-                   @Property val userEnabledRules: Set<String> = HashSet(),
-                   @Property val suppressionContext: SuppressionContext = SuppressionContext(),
-                   @Property val detectionContext: DetectionContext.State = DetectionContext.State(),
-                   @Property val version: Int = 0) {
+  data class State(
+    @Property val enabledLanguages: Set<Lang> = hashSetOf(Lang.AMERICAN_ENGLISH),
+    @Property val nativeLanguage: Lang = enabledLanguages.first(),
+    @Property val enabledProgrammingLanguages: Set<String> = defaultEnabledProgrammingLanguages,
+    @Property val enabledGrammarStrategies: Set<String> = HashSet(),
+    @Property val disabledGrammarStrategies: Set<String> = HashSet(),
+    @Property val enabledCommitIntegration: Boolean = false,
+    @Property val userDisabledRules: Set<String> = HashSet(),
+    @Property val userEnabledRules: Set<String> = HashSet(),
+    @Property val suppressionContext: SuppressionContext = SuppressionContext(),
+    @Property val detectionContext: DetectionContext.State = DetectionContext.State(),
+    @Property val version: Int = 0
+  ) {
     /**
      * Available languages set depends on current loaded LanguageTool modules.
      *
@@ -49,16 +51,18 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
       get() = enabledLanguages.filter { it.jLanguage == null }.toSet() +
               setOf(nativeLanguage).takeIf { nativeLanguage.jLanguage == null }.orEmpty()
 
-    fun hasMissedLanguages(withNative: Boolean = true) = (withNative && nativeLanguage.jLanguage == null) || enabledLanguages.any { it.jLanguage == null }
+    fun hasMissedLanguages(withNative: Boolean = true): Boolean {
+      return (withNative && nativeLanguage.jLanguage == null) || enabledLanguages.any { it.jLanguage == null }
+    }
   }
 
   companion object {
     private val defaultEnabledProgrammingLanguages by lazy {
       when {
         GraziePlugin.isBundled && ApplicationManager.getApplication()?.isUnitTestMode?.not().orTrue() -> {
-          setOf("AsciiDoc", "Latex", "Markdown")
+          hashSetOf("AsciiDoc", "Latex", "Markdown")
         }
-        else -> setOf(
+        else -> hashSetOf(
           "AsciiDoc", "Latex", "Markdown",
           "JAVA",
           "JavaScript", "JavaScript 1.5", "JavaScript 1.8",
@@ -68,10 +72,10 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
           "Properties", "TEXT",
           "go", "Rust"
         )
-      }.toHashSet()
+      }
     }
 
-    private val instance: GrazieConfig by lazy { ServiceManager.getService(GrazieConfig::class.java) }
+    private val instance: GrazieConfig by lazy { service<GrazieConfig>() }
 
     const val VERSION = 1
 

@@ -24,8 +24,7 @@ object StrategyUtils {
    * @return extension point
    */
   internal fun getStrategyExtensionPoint(strategy: GrammarCheckingStrategy): LanguageExtensionPoint<GrammarCheckingStrategy> {
-    return LanguageGrammarChecking.getExtensionPointByStrategy(strategy)
-           ?: error("${strategy.getName()} strategy is not registered as ExtensionPoint")
+    return LanguageGrammarChecking.getExtensionPointByStrategy(strategy) ?: error("${strategy.getName()} strategy is not registered")
   }
 
   internal fun getTextDomainOrDefault(root: PsiElement, default: TextDomain): TextDomain {
@@ -43,7 +42,7 @@ object StrategyUtils {
    *
    * @return deleted leading offset
    */
-  fun trimLeadingQuotesAndSpaces(str: StringBuilder): Int = with(str) {
+  internal fun trimLeadingQuotesAndSpaces(str: StringBuilder): Int = with(str) {
     var offset = quotesOffset(this)
 
     setLength(length - offset) // remove closing quotes and whitespaces
@@ -61,7 +60,7 @@ object StrategyUtils {
    * @param position position in StringBuilder
    * @return true if deleted
    */
-  fun deleteRedundantSpace(str: StringBuilder, position: Int): Boolean = with(str) {
+  internal fun deleteRedundantSpace(str: StringBuilder, position: Int): Boolean = with(str) {
     if (position in 1 until length) {
       if (get(position - 1) == ' ' && (Text.isPunctuation(get(position)) || get(position) == ' ')) {
         deleteCharAt(position - 1)

@@ -3,8 +3,6 @@ package com.intellij.grazie
 
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote
-import com.intellij.grazie.utils.ifTrue
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.lang.UrlClassLoader
 import org.languagetool.language.Language
@@ -14,7 +12,7 @@ import java.io.InputStream
 import java.net.URL
 import java.util.*
 
-object GrazieDynamic {
+internal object GrazieDynamic {
   private val myDynClassLoaders by lazy {
     for (file in dynamicFolder.walk().filter { file -> file.isFile && Lang.values().all { it.remote.file != file } }) {
       file.delete()
@@ -53,18 +51,15 @@ object GrazieDynamic {
     }
   }
 
-  fun getResourceAsStream(path: String): InputStream? = forClassLoader { it.getResourceAsStream(path) } ?:
-        (path.startsWith("/") && ApplicationManager.getApplication().isUnitTestMode)
-          .ifTrue { forClassLoader { it.getResourceAsStream(path.drop(1)) } }
+  fun getResourceAsStream(path: String): InputStream? = forClassLoader { it.getResourceAsStream(path) }
 
-  fun getResource(path: String): URL? = forClassLoader { it.getResource(path) } ?:
-        (path.startsWith("/") && ApplicationManager.getApplication().isUnitTestMode)
-          .ifTrue { forClassLoader { it.getResource(path.drop(1)) } }
+  fun getResource(path: String): URL? = forClassLoader { it.getResource(path) }
 
   fun getResourceBundle(baseName: String, locale: Locale) = forClassLoader {
     try {
       ResourceBundle.getBundle(baseName, locale, it).takeIf { bundle -> bundle.locale.language == locale.language }
-    } catch (e: MissingResourceException) {
+    }
+    catch (e: MissingResourceException) {
       null
     }
   } ?: throw MissingResourceException("Missing resource bundle for $baseName with locale $locale", GrazieDynamic.javaClass.name, baseName)

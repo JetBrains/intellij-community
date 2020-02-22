@@ -23,19 +23,23 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
   companion object : GrazieStateLifecycle {
     private val key = KeyWithDefaultValue.create("language-detection-inspection-key", DetectionContext.Local())
 
-    private var enabledProgrammingLanguagesIDs: Set<String> by lazyConfig(this::init)
+    private var enabledStrategiesIDs: Set<String> by lazyConfig(this::init)
+    private var disabledStrategiesIDs: Set<String> by lazyConfig(this::init)
+
     private var available: Set<Lang> by lazyConfig(this::init)
     private var disabled: DetectionContext.State by lazyConfig(this::init)
 
     override fun init(state: GrazieConfig.State) {
       available = state.availableLanguages
       disabled = state.detectionContext
-      enabledProgrammingLanguagesIDs = state.enabledProgrammingLanguages
+      enabledStrategiesIDs = state.enabledGrammarStrategies
+      disabledStrategiesIDs = state.disabledGrammarStrategies
     }
 
     override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
       if (
-        prevState.enabledProgrammingLanguages != newState.enabledProgrammingLanguages
+        prevState.enabledGrammarStrategies != newState.enabledGrammarStrategies
+        || prevState.disabledGrammarStrategies != newState.disabledGrammarStrategies
         || prevState.availableLanguages != newState.availableLanguages
         || prevState.detectionContext != newState.detectionContext
       ) {
@@ -58,13 +62,15 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+    if (!isOnTheFly) return PsiElementVisitor.EMPTY_VISITOR
+
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
         if (element.isInjectedFragment()) return
 
-        if (element.language.id !in enabledProgrammingLanguagesIDs) return
+        val strategies = LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
 
-        for (strategy in LanguageGrammarChecking.allForLanguageOrAny(element.language).filter { it.isMyContextRoot(element) }) {
+        for (strategy in strategies) {
           val (_, _, text) = GraziePsiElementProcessor.processElements(element, strategy)
           LangDetector.updateContext(text, session.getUserData(key)!!)
           break

@@ -39,9 +39,8 @@ object DetectionContext {
     fun getToNotify(disabled: Set<Language>): Set<Language> {
       val total = counter.values.sum()
 
-      val filtered = counter.asSequence().filter { (_, myTotal) ->
-        val myProportion = myTotal.toDouble() / total
-        myTotal > NOTIFICATION_TOTAL_THRESHOLD && myProportion > NOTIFICATION_PROPORTION_THRESHOLD
+      val filtered = counter.filter { (_, myTotal) ->
+        myTotal > NOTIFICATION_TOTAL_THRESHOLD && (myTotal.toDouble() / total) > NOTIFICATION_PROPORTION_THRESHOLD
       }.map { it.key }
 
       val langs = filtered.filter { it != Language.UNKNOWN && it !in disabled }

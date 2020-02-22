@@ -8,7 +8,6 @@ import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.grammar.GrammarChecker
 import com.intellij.grazie.grammar.Typo
-import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy
 import com.intellij.grazie.grammar.suppress.SuppressionContext
 import com.intellij.grazie.ide.inspection.grammar.problem.GrazieProblemDescriptor
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
@@ -52,11 +51,7 @@ class GrazieInspection : LocalInspectionTool() {
 
         val typos = HashSet<Typo>()
 
-        val strategies = LanguageGrammarChecking.allForLanguage(element.language).filter {
-          it.isMyContextRoot(element) &&
-          it.getContextRootTextDomain(element) != GrammarCheckingStrategy.TextDomain.NON_TEXT &&
-          (it.getID() in enabledStrategiesIDs || (it.isEnabledByDefault() && it.getID() !in disabledStrategiesIDs))
-        }
+        val strategies = LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
 
         for (strategy in strategies) {
           typos.addAll(GrammarChecker.check(element, strategy))

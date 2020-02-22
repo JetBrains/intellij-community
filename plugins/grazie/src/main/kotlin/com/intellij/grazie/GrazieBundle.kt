@@ -14,7 +14,8 @@ object GrazieBundle {
   private val pluginBundle by lazy { ResourceBundle.getBundle(PLUGIN_BUNDLE_NAME) }
 
   fun message(@PropertyKey(resourceBundle = DEFAULT_BUNDLE_NAME) key: String, vararg params: String): String {
-    return AbstractBundle.message(if (!GraziePlugin.isBundled && pluginBundle.containsKey(key)) pluginBundle else defaultBundle, key, *params)
+    val bundle = if (!GraziePlugin.isBundled && pluginBundle.containsKey(key)) pluginBundle else defaultBundle
+    return AbstractBundle.message(bundle, key, *params)
   }
 
   @JvmStatic

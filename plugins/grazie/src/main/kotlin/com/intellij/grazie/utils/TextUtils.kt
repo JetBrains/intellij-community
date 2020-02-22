@@ -3,7 +3,7 @@ package com.intellij.grazie.utils
 
 import org.apache.commons.text.similarity.LevenshteinDistance
 
-object Text {
+internal object Text {
   fun isNewline(char: Char) = char == '\n'
 
   private val PUNCTUATIONS: Set<Byte> = setOf(Character.START_PUNCTUATION, Character.END_PUNCTUATION,
