@@ -109,6 +109,17 @@ public final class StartupUtil {
     return serverFuture == null ? CompletableFuture.completedFuture(null) : serverFuture;
   }
 
+  private static @Nullable Object loadEuaDocument() {
+    if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
+      return null;
+    }
+
+    Activity euaActivity = StartUpMeasurer.startActivity("eua getting");
+    EndUserAgreement.Document result = EndUserAgreement.getLatestDocument();
+    euaActivity.end();
+    return result;
+  }
+
   public interface AppStarter {
     /* called from IDE init thread */
     void start(@NotNull List<String> args, @NotNull CompletionStage<?> initUiTask);
@@ -166,7 +177,9 @@ public final class StartupUtil {
     configureLog4j();
 
     activity = activity.endAndStart("LaF init scheduling");
-    CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService);
+    // EndUserAgreement.Document type is not specified to avoid class loading
+    Future<Object> euaDocument = Main.isHeadless() ? null : executorService.submit(StartupUtil::loadEuaDocument);
+    CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService, euaDocument);
     activity.end();
 
     if (!checkJdkVersion()) {
@@ -216,19 +229,18 @@ public final class StartupUtil {
     Class<AppStarter> aClass = mainStartFuture.get();
     activity.end();
 
-    startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance());
+    startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance(), euaDocument);
   }
 
   private static void startApp(String @NotNull [] args,
                                @NotNull CompletableFuture<?> initUiTask,
                                @NotNull Logger log,
                                boolean configImportNeeded,
-                               @NotNull AppStarter appStarter) throws Exception {
+                               @NotNull AppStarter appStarter,
+                               @Nullable Future<Object> euaDocument) throws Exception {
     if (!Main.isHeadless()) {
       Activity activity = StartUpMeasurer.startMainActivity("config importing");
-
-      boolean agreementDialogWasShown = showUserAgreementAndConsentsIfNeeded(log, initUiTask);
-
+      boolean agreementDialogWasShown = euaDocument != null && showUserAgreementAndConsentsIfNeeded(log, initUiTask, euaDocument);
       if (configImportNeeded) {
         appStarter.beforeImportConfigs();
         Path newConfigDir = PathManager.getConfigDir();
@@ -253,7 +265,7 @@ public final class StartupUtil {
   }
 
   @NotNull
-  private static CompletableFuture<?> scheduleInitUi(String @NotNull [] args, @NotNull ExecutorService executor) {
+  private static CompletableFuture<?> scheduleInitUi(@NotNull String @NotNull [] args, @NotNull ExecutorService executor, @Nullable Future<Object> eulaDocument) {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
@@ -295,7 +307,17 @@ public final class StartupUtil {
           if (!Main.isLightEdit() && !Boolean.getBoolean(SplashManager.NO_SPLASH)) {
             Activity prepareSplashActivity = activity.endAndStart("splash preparation");
             EventQueue.invokeLater(() -> {
-              SplashManager.show(args, EndUserAgreement.getLatestDocument().isAccepted());
+              Activity eulaActivity = prepareSplashActivity.startChild("splash eula isAccepted");
+              boolean isEulaAccepted;
+              try {
+                isEulaAccepted = eulaDocument == null || ((EndUserAgreement.Document)eulaDocument.get()).isAccepted();
+              }
+              catch (InterruptedException | ExecutionException ignore) {
+                isEulaAccepted = true;
+              }
+              eulaActivity.end();
+
+              SplashManager.show(args, isEulaAccepted);
               prepareSplashActivity.end();
             });
             return;
@@ -685,14 +707,12 @@ public final class StartupUtil {
     IconManager.activate();
   }
 
-  private static boolean showUserAgreementAndConsentsIfNeeded(@NotNull Logger log, @NotNull CompletableFuture<?> initUiTask) {
-    if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
-      return false;
-    }
-
+  private static boolean showUserAgreementAndConsentsIfNeeded(@NotNull Logger log,
+                                                              @NotNull CompletableFuture<?> initUiTask,
+                                                              @NotNull Future<Object> euaDocument) throws ExecutionException, InterruptedException {
     boolean dialogWasShown = false;
     EndUserAgreement.updateCachedContentToLatestBundledVersion();
-    EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
+    EndUserAgreement.Document agreement = (EndUserAgreement.Document)euaDocument.get();
     if (!agreement.isAccepted()) {
       // todo: does not seem to request focus when shown
       runInEdtAndWait(log, () -> Agreements.INSTANCE.showEndUserAndDataSharingAgreements(agreement), initUiTask);
