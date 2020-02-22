@@ -949,7 +949,13 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val toolWindow = ToolWindowImpl(this, task.id, task.canCloseContent, task.canWorkInDumbMode, task.component, disposable,
       windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable, stripeTitle = getStripeTitle(task, bean?.pluginDescriptor))
 
-    contentFactory?.init(toolWindow)
+    toolWindow.windowInfoDuringInit = windowInfoSnapshot
+    try {
+      contentFactory?.init(toolWindow)
+    }
+    finally {
+      toolWindow.windowInfoDuringInit = null
+    }
 
     // contentFactory.init can set icon
     if (toolWindow.icon == null) {

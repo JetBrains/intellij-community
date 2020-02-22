@@ -57,6 +57,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                               private var contentFactory: ToolWindowFactory?,
                               private var isAvailable: Boolean = true,
                               private var stripeTitle: String? = null) : ToolWindowEx {
+  var windowInfoDuringInit: WindowInfoImpl? = null
+
   override fun getId() = id
 
   override fun getProject() = toolWindowManager.project
@@ -444,8 +446,14 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   fun isToHideOnEmptyContent() = hideOnEmptyContent
 
-  override fun setShowStripeButton(show: Boolean) {
-    toolWindowManager.setShowStripeButton(id, show)
+  override fun setShowStripeButton(value: Boolean) {
+    val windowInfoDuringInit = windowInfoDuringInit
+    if (windowInfoDuringInit == null) {
+      toolWindowManager.setShowStripeButton(id, value)
+    }
+    else {
+      windowInfoDuringInit.isShowStripeButton = value
+    }
   }
 
   override fun isShowStripeButton() = windowInfo.isShowStripeButton
@@ -657,7 +665,7 @@ private fun addSorted(main: DefaultActionGroup, group: ActionGroup) {
 private fun addContentNotInHierarchyComponents(contentUi: ToolWindowContentUi) {
   UIUtil.putClientProperty(contentUi.component, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, object : Iterable<JComponent> {
     override fun iterator(): Iterator<JComponent> {
-      val contentManager = contentUi.contentManager ?: return Collections.emptyIterator()
+      val contentManager = contentUi.contentManager
       if (contentManager.contentCount == 0) {
         return Collections.emptyIterator()
       }
