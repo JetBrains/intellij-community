@@ -198,6 +198,9 @@
     <openapi.vcs.changes.vcsPreservingExecutor implementation="com.intellij.openapi.vcs.changes.DefaultPreservingExecutor" order="last" />
 
     <postStartupActivity implementation="com.intellij.platform.PlatformVcsDetector"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.update.RestoreUpdateTree$MyStartUpActivity"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
   </extensions>
 
   <applicationListeners>
