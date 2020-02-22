@@ -172,11 +172,10 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
       }
 
       Filter filter = myFilterModel.getFilter();
-      List<String> values = filter == null ? Collections.emptyList() : getLocalizedValues(
-        MultipleValueFilterPopupComponent.this.getFilterValues(filter));
-      final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants,
-                                                                           getPopupText(values),
-                                                                           getCompletionPrefixProvider());
+      List<String> values = filter == null ? Collections.emptyList() :
+                            getLocalizedValues(MultipleValueFilterPopupComponent.this.getFilterValues(filter));
+      MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants, getPopupText(values),
+                                                                     getCompletionPrefixProvider());
       JBPopup popup = popupBuilder.createPopup();
       popup.addListener(new JBPopupListener() {
         @Override

@@ -40,8 +40,7 @@ public class UserFilterPopupComponent
     group.add(createAllAction());
     group.add(createSelectMultipleValuesAction());
     if (!myLogData.getCurrentUser().isEmpty()) {
-      group.add(
-        new PredefinedValueAction(Collections.singletonList(VcsLogFilterObject.ME), () -> me(), true));
+      group.add(new PredefinedValueAction(Collections.singletonList(VcsLogFilterObject.ME), () -> me(), true));
     }
     group.addAll(createRecentItemsActionGroup());
     return group;
