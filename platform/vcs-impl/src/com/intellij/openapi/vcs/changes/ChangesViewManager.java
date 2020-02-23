@@ -283,10 +283,6 @@ public class ChangesViewManager implements ChangesViewEx,
       return;
     }
 
-    if (!VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
-      return;
-    }
-
     ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       ((EditorTabPreview)diffPreview).openPreview(false);
@@ -470,14 +466,7 @@ public class ChangesViewManager implements ChangesViewEx,
           if (super.skipPreviewUpdate()) return true;
           if (!myView.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
 
-          return !myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN || myModelUpdateInProgress;
-        }
-
-        @Override
-        public void updatePreview(boolean fromModelRefresh) {
-          if (!myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return;
-
-          super.updatePreview(fromModelRefresh);
+          return myModelUpdateInProgress;
         }
       };
       editorPreview.setEscapeHandler(() -> {
