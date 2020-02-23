@@ -64,6 +64,10 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     doTest("@'Anno:[regex( Nullable|NotNull )] '_Type:[regex( .*(\\[\\])+ )] '_x;", "report annotation only once");
   }
 
+  public void testElementOutsideOfFile() {
+    doTest("class '_ { \n  '_ReturnType 'Method+:* ('_ParameterType '_Parameter*);\n}", "all methods of the class within hierarchy");
+  }
+
   private void doTest(final String searchPattern, final String patternName) {
     final SearchConfiguration configuration = new SearchConfiguration();
     //display name
