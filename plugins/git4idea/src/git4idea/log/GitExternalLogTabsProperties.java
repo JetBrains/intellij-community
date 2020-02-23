@@ -10,6 +10,7 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties.RecentGroup;
+import com.intellij.vcs.log.util.FilterConfigMigrationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,8 @@ import java.util.*;
     @Storage(value = "git.external.log.tabs.xml", roamingType = RoamingType.DISABLED)
   }
 )
-public final class GitExternalLogTabsProperties implements PersistentStateComponent<GitExternalLogTabsProperties.State>, VcsLogTabsProperties {
+public final class GitExternalLogTabsProperties
+  implements PersistentStateComponent<GitExternalLogTabsProperties.State>, VcsLogTabsProperties {
   private State myState = new State();
 
   @Nullable
@@ -33,6 +35,14 @@ public final class GitExternalLogTabsProperties implements PersistentStateCompon
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
+
+    if (!myState.oldMeFiltersMigrated) {
+      myState.TAB_STATES.values().forEach(tabState -> {
+        FilterConfigMigrationUtil.migrateRecentUserFilters(tabState.RECENT_FILTERS);
+        FilterConfigMigrationUtil.migrateTabUserFilters(tabState.FILTERS);
+      });
+      myState.oldMeFiltersMigrated = true;
+    }
   }
 
   @NotNull
@@ -47,6 +57,7 @@ public final class GitExternalLogTabsProperties implements PersistentStateCompon
   public static class State {
     @XMap
     public Map<String, TabState> TAB_STATES = new TreeMap<>();
+    public boolean oldMeFiltersMigrated = false;
   }
 
   public static class TabState extends VcsLogUiPropertiesImpl.State {
