@@ -214,8 +214,8 @@ public abstract class JBCefApp {
      * A callback to register the scheme handler via calling:
      * {@link CefSchemeRegistrar#addCustomScheme(String, boolean, boolean, boolean, boolean, boolean, boolean, boolean)}.
      */
-
     void registerCustomScheme(@NotNull CefSchemeRegistrar registrar);
+
     /**
      * Returns the custom scheme name.
      */
