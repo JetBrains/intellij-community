@@ -18,6 +18,7 @@ public final class LightEditMenuBar extends IdeMenuBar {
                         new LightEditNewFileAction(),
                         Separator.create(),
                         standardAction("OpenFile"),
+                        new RecentFileActionGroup(),
                         Separator.create(),
                         new LightEditSaveAsAction(),
                         standardAction("SaveAll"),
