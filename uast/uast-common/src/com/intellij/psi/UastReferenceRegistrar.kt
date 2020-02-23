@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfExpectedTypes
 
 private val CONTRIBUTOR_CHUNKS_KEY: Key<MutableMap<ChunkTag, UastReferenceContributorChunk>> = Key.create(
   "uast.psiReferenceContributor.chunks")
@@ -77,14 +77,9 @@ internal fun getOrCreateCachedElement(element: PsiElement,
   val existingElement = element as? UElement ?: context.get(cachedUElement)
   if (existingElement != null) return existingElement
 
-  for (uElementType in supportedUElementTypes) {
-    val uElement = element.toUElement(uElementType)
-    if (uElement != null) {
-      context.put(cachedUElement, uElement)
-      return uElement
-    }
-  }
-  return null
+  val uElement = element.toUElementOfExpectedTypes(*supportedUElementTypes.toTypedArray()) ?: return null
+  context.put(cachedUElement, uElement)
+  return uElement
 }
 
 internal fun uastTypePattern(supportedUElementTypes: List<Class<out UElement>>): ElementPattern<out PsiElement> {
