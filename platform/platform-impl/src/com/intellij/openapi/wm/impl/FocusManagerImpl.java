@@ -22,6 +22,7 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -444,7 +445,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   private static void assertDispatchThread() {
     if (Registry.is("actionSystem.assertFocusAccessFromEdt")) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      EDT.assertIsEdt();
     }
   }
 
