@@ -62,6 +62,7 @@
     <stacktrace.fold substring="at com.intellij.junit3."/>
     <stacktrace.fold substring="at com.intellij.junit4."/>
     <stacktrace.fold substring="at com.intellij.junit5."/>
+    <stacktrace.fold substring="at com.intellij.rt.junit."/>
     <stacktrace.fold substring="at junit.framework.TestSuite.run"/>
     <stacktrace.fold substring="at junit.framework.TestCase.run"/>
     <stacktrace.fold substring="at junit.framework.TestResult"/>
