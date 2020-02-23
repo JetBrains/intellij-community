@@ -15,11 +15,8 @@
  */
 package com.intellij.execution.filters;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -101,18 +98,7 @@ public class UrlFilter implements Filter, DumbAware {
         }
       }
       String filePath = url.substring(LocalFileSystem.PROTOCOL_PREFIX.length(), filePathEndIndex);
-      return new LazyFileHyperlinkInfo(myProject, filePath, documentLine, documentColumn) {
-        @Nullable
-        @Override
-        public OpenFileDescriptor getDescriptor() {
-          OpenFileDescriptor descriptor = super.getDescriptor();
-          if (descriptor == null) {
-            Messages.showErrorDialog(myProject, "Cannot find file " + StringUtil.trimMiddle(url, 150),
-                                     IdeBundle.message("title.cannot.open.file"));
-          }
-          return descriptor;
-        }
-      };
+      return new LazyAbsoluteFileHyperLinkInfo(myProject, url, filePath, documentLine, documentColumn);
     }
     return null;
   }

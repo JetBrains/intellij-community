@@ -15,7 +15,11 @@
  */
 package com.intellij.execution.filters
 
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -24,5 +28,21 @@ open class LazyFileHyperlinkInfo(project: Project, filePath: String, documentLin
 
   override val virtualFile: VirtualFile? by lazy {
     LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+  }
+}
+
+class LazyAbsoluteFileHyperLinkInfo(val project: Project,
+                                    private val locatorInErrorMsg: String,
+                                    absoluteFilePath: String,
+                                    documentLine: Int,
+                                    documentColumn: Int)
+  : LazyFileHyperlinkInfo(project, absoluteFilePath, documentLine, documentColumn) {
+  override fun getDescriptor(): OpenFileDescriptor? {
+    val descriptor = super.getDescriptor()
+    if (descriptor == null) {
+      Messages.showErrorDialog(project, "Cannot find file ${StringUtil.trimMiddle(locatorInErrorMsg, 150)}",
+                               IdeBundle.message("title.cannot.open.file"))
+    }
+    return descriptor
   }
 }

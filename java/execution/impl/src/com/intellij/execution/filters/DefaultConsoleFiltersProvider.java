@@ -32,6 +32,7 @@ public class DefaultConsoleFiltersProvider implements ConsoleFilterProviderEx {
   public Filter @NotNull [] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
     List<Filter> filters = ExceptionFilters.getFilters(scope);
     filters.add(new YourkitFilter(project));
+    filters.add(new ProjectAbsoluteFileLocationFilter(project));
     return filters.toArray(Filter.EMPTY_ARRAY);
   }
 }
