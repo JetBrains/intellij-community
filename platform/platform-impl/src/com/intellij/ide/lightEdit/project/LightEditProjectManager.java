@@ -21,16 +21,23 @@ public final class LightEditProjectManager {
   }
 
   public @NotNull Project getOrCreateProject() {
-    if (myProject == null) {
+    LightEditProjectImpl project = myProject;
+    if (project == null) {
       synchronized (LOCK) {
         if (myProject == null) {
-          long start = System.nanoTime();
-          myProject = new LightEditProjectImpl();
-          LOG.info(LightEditProjectImpl.class.getSimpleName() + " loaded in " + TimeoutUtil.getDurationMillis(start) + " ms");
+          myProject = createProject();
         }
+        project = myProject;
       }
     }
-    return myProject;
+    return project;
+  }
+
+  private static @NotNull LightEditProjectImpl createProject() {
+    long start = System.nanoTime();
+    LightEditProjectImpl project = new LightEditProjectImpl();
+    LOG.info(LightEditProjectImpl.class.getSimpleName() + " loaded in " + TimeoutUtil.getDurationMillis(start) + " ms");
+    return project;
   }
 
   public void close() {
@@ -39,7 +46,8 @@ public final class LightEditProjectManager {
       SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project);
       ProjectManagerEx.getInstanceEx().forceCloseProject(project);
     }
-    myProject = null;
+    synchronized (LOCK) {
+      myProject = null;
+    }
   }
-
 }
