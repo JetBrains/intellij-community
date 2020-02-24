@@ -1,13 +1,9 @@
 package de.plushnikov.intellij.plugin.activity;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.options.AnnotationProcessorsConfigurable;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -16,8 +12,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
+import com.intellij.ui.awt.RelativePoint;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.Version;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -79,29 +81,46 @@ public class LombokProjectValidatorActivity implements StartupActivity {
     if (hasLombokLibrary && !annotationProcessorsEnabled &&
       ProjectSettings.isEnabled(project, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true)) {
 
-      String annotationProcessorsConfigName = new AnnotationProcessorsConfigurable(project).getDisplayName();
-
-      Notification notification = group.createNotification(LombokBundle.message("config.warn.annotation-processing.disabled.title"),
-        LombokBundle.message("config.warn.annotation-processing.disabled.message", project.getName()),
-        NotificationType.ERROR,
-        new SettingsOpeningListener(project, annotationProcessorsConfigName));
-
-      Notifications.Bus.notify(notification, project);
+      suggestEnableAnnotations(project, group);
     }
   }
 
+  private void suggestEnableAnnotations(Project project, NotificationGroup group) {
+    Notification notification = group.createNotification(LombokBundle.message("config.warn.annotation-processing.disabled.title"),
+      LombokBundle.message("config.warn.annotation-processing.disabled.message", project.getName()),
+      NotificationType.ERROR,
+      (not, e) -> {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          enableAnnotations(project);
+          not.expire();
+        }
+      });
+
+    Notifications.Bus.notify(notification, project);
+  }
+
+  private void enableAnnotations(Project project) {
+    getCompilerConfiguration(project).getDefaultProcessorProfile().setEnabled(true);
+
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+    JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(
+        "Java annotation processing has been enabled",
+        MessageType.INFO,
+        null
+      )
+      .setFadeoutTime(3000)
+      .createBalloon()
+      .show(RelativePoint.getNorthEastOf(statusBar.getComponent()), Balloon.Position.atRight);
+  }
+
+  private CompilerConfigurationImpl getCompilerConfiguration(Project project) {
+    return (CompilerConfigurationImpl) CompilerConfiguration.getInstance(project);
+  }
+
   private boolean hasAnnotationProcessorsEnabled(Project project) {
-    final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
-    boolean enabled = true;
-
-    final ModuleManager moduleManager = ModuleManager.getInstance(project);
-    for (Module module : moduleManager.getModules()) {
-      if (ModuleRootManager.getInstance(module).getSourceRoots().length > 0) {
-        enabled &= config.getAnnotationProcessingConfiguration(module).isEnabled();
-      }
-    }
-
-    return enabled;
+    CompilerConfigurationImpl compilerConfiguration = getCompilerConfiguration(project);
+    return compilerConfiguration.getDefaultProcessorProfile().isEnabled();
   }
 
   private boolean hasLombokLibrary(Project project) {
