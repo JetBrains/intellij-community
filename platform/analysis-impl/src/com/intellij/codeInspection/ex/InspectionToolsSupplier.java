@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.DisposableWrapper;
 import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
