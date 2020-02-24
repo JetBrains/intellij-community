@@ -83,7 +83,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
           setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(),
                             VcsLogBundle.message("vcs.log.file.history.error.calculating.file.history.status"));
-          appendActionToEmptyText(VcsLogBundle.message("vcs.log.action.refresh"), () -> logUi.getRefresher().onRefresh());
+          appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"), () -> logUi.getRefresher().onRefresh());
         }
         else {
           getEmptyText().setText(VcsLogBundle.message("vcs.log.file.history.empty.status"));
