@@ -1030,7 +1030,6 @@ public class FSRecords {
       try (DataOutputStream stream = writeAttribute(id, ourSymlinkTargetAttr)) {
         IOUtil.writeUTF(stream, StringUtil.notNullize(symlinkTarget));
       }
-      SymlinkRegistry.INSTANCE.symlinkTargetStored(id);
     });
   }
 
