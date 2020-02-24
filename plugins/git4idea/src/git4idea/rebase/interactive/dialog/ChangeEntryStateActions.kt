@@ -27,6 +27,8 @@ internal open class ChangeEntryStateSimpleAction(
   protected val table: GitRebaseCommitsTableView
 ) : AnActionButton(title, description, icon), DumbAware {
 
+  protected open val disableIfAlreadySet = true
+
   constructor(action: GitRebaseEntry.Action, icon: Icon?, table: GitRebaseCommitsTableView) :
     this(action, action.visibleName, action.visibleName, icon, table)
 
@@ -50,6 +52,10 @@ internal open class ChangeEntryStateSimpleAction(
     actionIsEnabled(e, true)
     if (table.editingRow != -1 || table.selectedRowCount == 0) {
       actionIsEnabled(e, false)
+    }
+    if (disableIfAlreadySet) {
+      val selectedRows = table.selectedRows
+      actionIsEnabled(e, selectedRows.any { table.model.getEntryAction(it) != action })
     }
   }
 
@@ -133,6 +139,8 @@ internal class SquashAction(table: GitRebaseCommitsTableView) : UniteCommitsActi
 }
 
 internal class RewordAction(table: GitRebaseCommitsTableView) : ChangeEntryStateButtonAction(GitRebaseEntry.Action.REWORD, table) {
+  override val disableIfAlreadySet = false
+
   override fun updateButton(e: AnActionEvent) {
     super.updateButton(e)
     if (table.selectedRowCount != 1) {
