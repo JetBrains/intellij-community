@@ -119,8 +119,12 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
 
   @Override
   public void setIndeterminate(boolean indeterminate) {
-    super.setIndeterminate(indeterminate);
     myOriginal.setIndeterminate(indeterminate);
+  }
+
+  @Override
+  public boolean isIndeterminate() {
+    return myOriginal.isIndeterminate();
   }
 
   @NotNull
