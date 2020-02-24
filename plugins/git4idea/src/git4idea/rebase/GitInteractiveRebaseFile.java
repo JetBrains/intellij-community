@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.openapi.project.Project;
@@ -74,7 +74,7 @@ class GitInteractiveRebaseFile {
     try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(myFile), encoding))) {
       boolean knowsDropAction = GitVersionSpecialty.KNOWS_REBASE_DROP_ACTION.existsIn(myProject);
       for (GitRebaseEntry e : entries) {
-        if (e.getAction() != GitRebaseEntry.Action.DROP.INSTANCE || knowsDropAction) {
+        if (e.getAction() != GitRebaseEntry.Action.DROP || knowsDropAction) {
           out.println(e);
         }
       }

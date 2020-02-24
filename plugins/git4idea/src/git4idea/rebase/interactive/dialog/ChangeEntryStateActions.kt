@@ -62,7 +62,7 @@ internal open class ChangeEntryStateButtonAction(
   action: GitRebaseEntry.Action,
   table: GitRebaseCommitsTableView
 ) : ChangeEntryStateSimpleAction(action, null, table), CustomComponentAction, DumbAware {
-  protected val button = object : JButton(action.name.capitalize()) {
+  protected val button = object : JButton(action.visibleName.get()) {
     init {
       adjustForToolbar()
       addActionListener {
