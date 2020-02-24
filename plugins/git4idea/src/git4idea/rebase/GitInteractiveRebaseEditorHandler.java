@@ -105,6 +105,9 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     GitInteractiveRebaseFile rebaseFile = new GitInteractiveRebaseFile(myProject, myRoot, path);
     try {
       List<GitRebaseEntry> entries = rebaseFile.load();
+      if (ContainerUtil.findInstance(ContainerUtil.map(entries, it -> it.getAction()), GitRebaseEntry.Action.Other.class) != null) {
+        return handleUnstructuredEditor(path);
+      }
       List<? extends GitRebaseEntry> newEntries = collectNewEntries(entries);
       if (newEntries != null) {
         rebaseFile.save(newEntries);
