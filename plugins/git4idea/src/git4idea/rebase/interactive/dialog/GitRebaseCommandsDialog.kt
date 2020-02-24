@@ -68,7 +68,7 @@ private class GitRebaseCommandsTableModel(private val entries: List<GitRebaseEnt
   override fun getColumnCount() = 3
 
   override fun getValueAt(rowIndex: Int, columnIndex: Int) = when (columnIndex) {
-    ACTION_COLUMN -> entries[rowIndex].action.name
+    ACTION_COLUMN -> entries[rowIndex].action.toString()
     HASH_COLUMN -> entries[rowIndex].commit
     SUBJECT_COLUMN -> entries[rowIndex].subject
     else -> throw IllegalArgumentException("Unsupported column index: $columnIndex")

@@ -74,7 +74,7 @@ class GitInteractiveRebaseFile {
     try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(myFile), encoding))) {
       boolean knowsDropAction = GitVersionSpecialty.KNOWS_REBASE_DROP_ACTION.existsIn(myProject);
       for (GitRebaseEntry e : entries) {
-        if (e.getAction() != GitRebaseEntry.Action.DROP || knowsDropAction) {
+        if (e.getAction() != GitRebaseEntry.Action.DROP.INSTANCE || knowsDropAction) {
           out.println(e);
         }
       }

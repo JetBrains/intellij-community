@@ -147,7 +147,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     List<RewordedCommitMessageMapping> messages = new ArrayList<>();
     for (GitRebaseEntryWithEditedMessage newEntryWithMessage : newEntries) {
       GitRebaseEntryWithDetails newEntry = newEntryWithMessage.getEntry();
-      if (newEntry.getAction() == GitRebaseEntry.Action.REWORD) {
+      if (newEntry.getAction() instanceof GitRebaseEntry.Action.REWORD) {
         messages.add(RewordedCommitMessageMapping.fromMapping(
           newEntry.getCommitDetails().getFullMessage(),
           newEntryWithMessage.getNewMessage()
