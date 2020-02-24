@@ -21,6 +21,7 @@ import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitUntrackedFilesHolder;
 import git4idea.util.GitFileUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -35,6 +36,7 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
   }
 
   @Override
+  @Nls(capitalization = Nls.Capitalization.Title)
   @NotNull
   public String getRollbackOperationName() {
     return "&Rollback";
