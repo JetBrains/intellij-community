@@ -15,10 +15,9 @@
  */
 package git4idea.config;
 
-import org.jetbrains.annotations.Nls;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
-
-import static git4idea.i18n.GitBundle.message;
+import org.jetbrains.annotations.PropertyKey;
 
 /**
  * The type of update to perform
@@ -27,31 +26,35 @@ public enum UpdateMethod {
   /**
    * Use default specified in the config file for the branch
    */
-  BRANCH_DEFAULT(message("settings.git.update.method.branch.default"), message("settings.git.update.method.branch.default")),
+  BRANCH_DEFAULT("settings.git.update.method.branch.default",
+                 "settings.git.update.method.branch.default"),
   /**
    * Merge fetched commits with local branch
    */
-  MERGE(message("settings.git.update.method.merge"), message("settings.git.update.method.merge.description")),
+  MERGE("settings.git.update.method.merge",
+        "settings.git.update.method.merge.description"),
   /**
    * Rebase local commits upon the fetched branch
    */
-  REBASE(message("settings.git.update.method.rebase"), message("settings.git.update.method.rebase.description"));
+  REBASE("settings.git.update.method.rebase",
+         "settings.git.update.method.rebase.description");
 
   @NotNull private final String myName;
   @NotNull private final String myPresentation;
 
-  UpdateMethod(@NotNull @Nls String name, @NotNull @Nls String presentation) {
+  UpdateMethod(@NotNull @PropertyKey(resourceBundle = GitBundle.BUNDLE) String name,
+               @NotNull @PropertyKey(resourceBundle = GitBundle.BUNDLE) String presentation) {
     myName = name;
     myPresentation = presentation;
   }
 
   @NotNull
   public String getName() {
-    return myName;
+    return GitBundle.message(myName);
   }
 
   @NotNull
   public String getPresentation() {
-    return myPresentation;
+    return GitBundle.message(myPresentation);
   }
 }
