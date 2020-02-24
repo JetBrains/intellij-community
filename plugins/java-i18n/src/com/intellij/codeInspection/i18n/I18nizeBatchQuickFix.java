@@ -80,7 +80,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         if (concatenation == null) {
           Object val = literalExpression.getValue();
           if (distinct.add(psiElement) && val instanceof String) {
-            String value = ((String)val).replace("'", "''");
+            String value = (String)val;
             ReplacementBean bean = keyValuePairs.get(value);
             if (bean != null) {
               bean.getPsiElements().add(psiElement);

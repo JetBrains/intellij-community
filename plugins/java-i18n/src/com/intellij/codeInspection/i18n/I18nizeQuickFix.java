@@ -146,7 +146,6 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
       TextRange intersection = literalRange.intersection(mySelectionRange);
       value = literalExpression.getText().substring(intersection.getStartOffset() - literalRange.getStartOffset(), intersection.getEndOffset() - literalRange.getStartOffset());
     }
-    value = value.replace("'", "''");
     return new JavaI18nizeQuickFixDialog(project, context, literalExpression, value, null, true, true);
   }
 
