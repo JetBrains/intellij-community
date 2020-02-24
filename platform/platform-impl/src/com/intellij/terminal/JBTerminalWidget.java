@@ -167,6 +167,13 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
         myListener.onNewSession();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
+      actions.add(new TerminalAction(mySettingsProvider.getCloseSessionActionPresentation(), input -> {
+        myListener.onSessionClosed();
+        return true;
+      }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
+
+      actions.add(TerminalSplitAction.create(true, myListener).withMnemonicKey(KeyEvent.VK_V).separatorBefore(true));
+      actions.add(TerminalSplitAction.create(false, myListener).withMnemonicKey(KeyEvent.VK_H));
       actions.add(new TerminalAction(mySettingsProvider.getPreviousTabActionPresentation(), input -> {
         myListener.onPreviousTabSelected();
         return true;
@@ -185,10 +192,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       }).withMnemonicKey(KeyEvent.VK_L).withEnabledSupplier(() -> myListener != null && myListener.canMoveTabLeft()));
       actions.add(new TerminalAction(mySettingsProvider.getShowTabsActionPresentation(), input -> {
         myListener.showTabs();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(mySettingsProvider.getCloseSessionActionPresentation(), input -> {
-        myListener.onSessionClosed();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
     }

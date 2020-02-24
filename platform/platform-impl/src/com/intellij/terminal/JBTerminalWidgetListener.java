@@ -21,4 +21,10 @@ public interface JBTerminalWidgetListener {
   default boolean canMoveTabRight() {return false;}
 
   default boolean canMoveTabLeft() {return false;}
+
+  default boolean canSplit(boolean vertically) {
+    return false;
+  }
+
+  default void split(boolean vertically) {}
 }
