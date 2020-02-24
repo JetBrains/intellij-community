@@ -33,9 +33,6 @@ internal open class GitRebaseEntry(var action: Action, val commit: String, val s
         listOf(PICK, EDIT, DROP, SQUASH, REWORD, FIXUP)
       }
 
-      @JvmStatic
-      fun getKnownActionsArray(): Array<Action> = knownActions.toTypedArray()
-
       internal fun fromString(actionName: String): Action {
         return knownActions.find { it.name == actionName } ?: Other(actionName)
       }
