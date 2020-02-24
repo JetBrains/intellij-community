@@ -73,15 +73,11 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
       return;
     }
 
-    boolean disableOnlyTips = PlatformUtils.isPyCharmEducational() || PlatformUtils.isRubyMine();
-    if (disableOnlyTips || PlatformUtils.isWebStorm()) {
+    if (PlatformUtils.isPyCharmEducational() || PlatformUtils.isRubyMine() || PlatformUtils.isWebStorm()) {
       PropertiesComponent propertyManager = PropertiesComponent.getInstance();
       if (!propertyManager.isValueSet(CONFIGURED_PROPERTY)) {
         propertyManager.setValue(CONFIGURED_PROPERTY, true);
         setShowTipsOnStartup(false);
-        if (!disableOnlyTips) {
-          setUseSafeWrite(false);
-        }
       }
     }
   }
