@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.TextMateBundle;
 import org.jetbrains.plugins.textmate.TextMateService;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ public class TextMateFileType extends LanguageFileType implements PlainTextLikeF
   @NotNull
   @Override
   public String getDescription() {
-    return "Files supported via TextMate bundles";
+    return TextMateBundle.message("textmate.filetype.description");
   }
 
   @NotNull
