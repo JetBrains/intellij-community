@@ -151,6 +151,14 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     elg = EventLogGroup("my.simple.regexp.node.ref", 1)
     assertEventAccepted(validator, elg, "aaa/java.lang.String")
     assertEventRejected(validator, elg, "java.lang.String")
+
+    elg = EventLogGroup("my.simple.regexp.with.number.of.elements", 1)
+    assertEventAccepted(validator, elg, "0512345678ABCD023543")
+    assertEventAccepted(validator, elg, "1154265567ABCD-23-43")
+    assertEventAccepted(validator, elg, "0512345678QWER012-43")
+    assertEventAccepted(validator, elg, "9965430987ASDF-01003")
+    assertEventRejected(validator, elg, "aa65430987ASDF-01003")
+    assertEventRejected(validator, elg, "999965430987ASDF-01003")
   }
 
   @Test
