@@ -59,10 +59,7 @@ import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -1513,7 +1510,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   @Override
-  public boolean isFreezedWithNotification(@Nullable String modalTitle) {
+  public boolean isFreezedWithNotification(@Nls @Nullable String modalTitle) {
     final String freezeReason = isFreezed();
     if (freezeReason == null) return false;
 

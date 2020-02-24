@@ -2332,6 +2332,19 @@ public class StringUtil extends StringUtilRt {
     return parser.getText();
   }
 
+  @Contract(pure=true)
+  @NotNull
+  public static String removeEllipsisSuffix(@NotNull String s) {
+    String THREE_DOTS = "...";
+    if (s.endsWith(THREE_DOTS)) {
+      return s.substring(0, s.length() - THREE_DOTS.length());
+    }
+    if (s.endsWith(ELLIPSIS)) {
+      return s.substring(0, s.length() - 1);
+    }
+    return s;
+  }
+
   private static final List<String> MN_QUOTED = Arrays.asList("&&", "__");
   private static final List<String> MN_CHARS = Arrays.asList("&", "_");
 
