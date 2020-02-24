@@ -85,7 +85,7 @@ public class ImportFromExistingAction implements QuestionAction {
       doWriteAction(mySources.get(0));
     }
     else {
-      selectSourceAndDo(); //todo -> herein lies the problem....and the thing is, we need something like it !
+      selectSourceAndDo();
     }
     return true;
   }
