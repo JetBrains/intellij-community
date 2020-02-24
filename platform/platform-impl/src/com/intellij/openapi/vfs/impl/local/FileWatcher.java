@@ -16,11 +16,9 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemDependent;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -32,6 +30,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+/**
+ * Unless stated otherwise, all paths are {@link org.jetbrains.annotations.SystemDependent @SystemDependent}.
+ */
 public final class FileWatcher {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
 
@@ -162,19 +163,15 @@ public final class FileWatcher {
   /**
    * Clients should take care of not calling this method in parallel.
    */
-  void setWatchRoots(@NotNull NavigableSet<@SystemDependent String> optimizedRecursiveWatchRoots,
-                     @NotNull NavigableSet<@SystemDependent String> optimizedFlatWatchRoots,
-                     @NotNull MultiMap<@SystemDependent String, @SystemDependent String> initialMappings) {
+  void setWatchRoots(@NotNull CanonicalPathMap pathMap) {
     Future<?> prevTask = myLastTask.getAndSet(myFileWatcherExecutor.submit(() -> {
       try {
-        CanonicalPathMap pathMap =  new CanonicalPathMap(optimizedRecursiveWatchRoots,
-                                                         optimizedFlatWatchRoots,
-                                                         initialMappings);
         myPathMap = pathMap;
         myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
 
+        Pair<List<String>, List<String>> roots = pathMap.getCanonicalWatchRoots();
         for (PluggableFileWatcher watcher : myWatchers) {
-          watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
+          watcher.setWatchRoots(roots.first, roots.second);
         }
       }
       catch (RuntimeException | Error e) {

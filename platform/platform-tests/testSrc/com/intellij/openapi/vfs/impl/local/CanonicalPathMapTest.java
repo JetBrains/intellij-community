@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -13,6 +13,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.NavigableSet;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static java.util.Collections.emptyList;
@@ -148,8 +149,10 @@ public class CanonicalPathMapTest {
   }
 
   private static CanonicalPathMap createCanonicalPathMap(Collection<String> recursive, Collection<String> flat) {
-    return new CanonicalPathMap(StreamEx.of(recursive).map(CanonicalPathMap::ensureNormalized).into(WatchRootsUtil.createFileNavigableSet()),
-                                StreamEx.of(flat).map(CanonicalPathMap::ensureNormalized).into(WatchRootsUtil.createFileNavigableSet()),
-                                MultiMap.createConcurrentSet());
+    NavigableSet<String> recursiveSet = StreamEx.of(recursive).map(CanonicalPathMap::ensureNormalized).into(WatchRootsUtil.createFileNavigableSet());
+    NavigableSet<String> flatSet = StreamEx.of(flat).map(CanonicalPathMap::ensureNormalized).into(WatchRootsUtil.createFileNavigableSet());
+    CanonicalPathMap pathMap = new CanonicalPathMap(recursiveSet, flatSet, MultiMap.empty());
+    pathMap.getCanonicalWatchRoots();
+    return pathMap;
   }
 }

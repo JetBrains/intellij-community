@@ -85,7 +85,7 @@ public class WatchRootsManager {
   private void updateFileWatcher() {
     Iterable<@SystemDependent String> flatWatchRootsIterable;
     NavigableSet<@SystemDependent String> recursiveWatchRoots = WatchRootsUtil.createFileNavigableSet();
-    MultiMap<@SystemDependent String, @SystemDependent String> initialMappings = MultiMap.createConcurrentSet();
+    MultiMap<@SystemDependent String, @SystemDependent String> initialMappings = MultiMap.create();
 
     // Ensure paths are system dependent
     if (File.separatorChar == '/') {
@@ -101,7 +101,7 @@ public class WatchRootsManager {
       }
     }
     NavigableSet<@SystemDependent String> flatWatchRoots = WatchRootsUtil.optimizeFlatRoots(flatWatchRootsIterable, recursiveWatchRoots);
-    myFileWatcher.setWatchRoots(recursiveWatchRoots, flatWatchRoots, initialMappings);
+    myFileWatcher.setWatchRoots(new CanonicalPathMap(recursiveWatchRoots, flatWatchRoots, initialMappings));
   }
 
   private void updateWatchRoots(@NotNull Collection<String> rootsToAdd,
