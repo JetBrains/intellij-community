@@ -321,7 +321,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     }
     else {
       ProjectLevelVcsManagerImpl.getInstanceImpl(myProject)
-        .addInitializationRequest(VcsInitObject.CHANGE_LIST_MANAGER, (DumbAwareRunnable)() -> {
+        .addInitializationRequest(VcsInitObject.CHANGE_LIST_MANAGER, () -> {
           myUpdater.initialized();
           broadcastStateAfterLoad();
           myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
