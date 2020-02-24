@@ -16,7 +16,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.psi.PsiFile
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
@@ -29,6 +29,12 @@ import javax.swing.DefaultComboBoxModel
 
 
 fun syncWithImports(module: Module) {
+  val notificationGroup = NotificationGroup.balloonGroup(PyBundle.message("python.requirements.balloon"))
+  val sdk = PythonSdkUtil.findPythonSdk(module)
+  if (sdk == null) {
+    showNotification(notificationGroup, NotificationType.ERROR, PyBundle.message("python.requirements.error.no.interpreter"), module.project)
+    return
+  }
   val settings = PyPackageRequirementsSettings.getInstance(module)
 
   if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -37,7 +43,6 @@ fun syncWithImports(module: Module) {
   }
 
   var requirementsFile = PyPackageUtil.findRequirementsTxt(module)
-  val notificationGroup = NotificationGroup.balloonGroup(PyBundle.message("python.requirements.balloon"))
   val matchResult = try {
     prepareRequirementsText(module, settings)
   } catch (e: IllegalStateException) {
@@ -63,23 +68,28 @@ fun syncWithImports(module: Module) {
 
       requirementsFile = psiFile.virtualFile
     }
-    FileDocumentManager.getInstance().getDocument(requirementsFile!!)!!.setText(matchResult.lines.joinToString("\n"))
+    val documentManager = FileDocumentManager.getInstance()
+    documentManager.getDocument(requirementsFile!!)!!.setText(matchResult.currentFileOutput.joinToString("\n"))
+    matchResult.baseFilesOutput.forEach { (file, content) ->
+      documentManager.getDocument(file)!!.setText(content.joinToString("\n"))
+    }
   }
   psiManager.findFile(requirementsFile!!)?.navigate(true)
-  if (matchResult.unhandled.isNotEmpty()) {
-    val text = PyBundle.message("python.requirements.warning.unhandled.lines", matchResult.unhandled.joinToString(", "))
-    notificationGroup
-      .createNotification(PyBundle.message("python.requirements.balloon"), text, NotificationType.WARNING)
-      .notify(module.project)
+  if (matchResult.unhandledLines.isNotEmpty()) {
+    val text = PyBundle.message("python.requirements.warning.unhandled.lines", matchResult.unhandledLines.joinToString(", "))
+    showNotification(notificationGroup, NotificationType.WARNING, text, module.project)
   }
-  if (matchResult.fileReferenceDropped) {
-    val text = PyBundle.message("python.requirements.info.file.ref.dropped")
-    notificationGroup
-      .createNotification(PyBundle.message("python.requirements.balloon"), text, NotificationType.INFORMATION)
-      .notify(module.project)
+  if (matchResult.unchangedInBaseFiles.isNotEmpty()) {
+    val text = PyBundle.message("python.requirements.info.file.ref.dropped", matchResult.unchangedInBaseFiles.joinToString(", "))
+    showNotification(notificationGroup, NotificationType.INFORMATION, text, module.project)
   }
 }
 
+private fun showNotification(notificationGroup: NotificationGroup, type: NotificationType, text: String, project: Project) {
+  notificationGroup
+    .createNotification(PyBundle.message("python.requirements.balloon"), text, type)
+    .notify(project)
+}
 
 fun prepareRequirementsText(module: Module, settings: PyPackageRequirementsSettings): PyRequirementsAnalysisResult? {
   val sdk = PythonSdkUtil.findPythonSdk(module) ?: return PyRequirementsAnalysisResult.empty()
@@ -108,124 +118,26 @@ fun prepareRequirementsText(module: Module, settings: PyPackageRequirementsSetti
 
   val installedPackages = PyPackageManager.getInstance(sdk).packages ?: error(PyBundle.message("python.requirements.error.no.packages"))
   val importedPackages = imported.asSequence()
-    .map { PyPsiPackageUtil.PACKAGES_TOPLEVEL[it]?.first() ?: it }
-    .mapNotNull { name -> installedPackages.find { StringUtil.equalsIgnoreCase(it.name, name) } }
+    .flatMap { topLevelPackage ->
+      val aliases = PyPsiPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage]?.toTypedArray() ?: emptyArray()
+      sequenceOf(topLevelPackage, *aliases)
+        .mapNotNull { name -> installedPackages.find { StringUtil.equalsIgnoreCase(it.name, name) } }
+    }
     .map { it.name.toLowerCase() to it }
     .toMap(mutableMapOf())
 
-  // the user might have specified existing requirements file, so we have to check again
   val requirementsFile = PyPackageUtil.findRequirementsTxt(module)
 
   val analysisResult = when {
-    requirementsFile != null -> matchWithExistingRequirements(psiManager.findFile(requirementsFile)!!, importedPackages, settings)
+    requirementsFile != null -> PyRequirementsFileVisitor(importedPackages, settings).visitRequirementsFile(psiManager.findFile(requirementsFile)!!)
     else -> PyRequirementsAnalysisResult.empty()
   }
 
   importedPackages.values.asSequence()
     .map { if (settings.specifyVersion) "${it.name}${settings.versionSpecifier.separator}${it.version}" else it.name }
-    .forEach { analysisResult.lines.add(it) }
+    .forEach { analysisResult.currentFileOutput.add(it) }
 
   return analysisResult
-}
-
-private fun matchWithExistingRequirements(requirementsFile: PsiFile,
-                                          importedPackages: MutableMap<String, PyPackage>,
-                                          settings: PyPackageRequirementsSettings): PyRequirementsAnalysisResult {
-  val outputLines = mutableListOf<String>()
-  val errors = mutableListOf<String>()
-  var fileReferenceDropped = false
-
-  val resultList = splitByRequirementsEntries(requirementsFile.text)
-
-  for (lines in resultList) {
-    if (lines.size == 1) {
-      val firstLine = lines.first()
-      if (firstLine.isBlank()) continue
-      if (firstLine.startsWith("#")) {
-        outputLines.add(firstLine)
-        continue
-      }
-    }
-
-    val line = lines.asSequence()
-      .map { it.trim() }
-      .map { it.removeSuffix("\\") }
-      .joinToString(" ")
-
-    if (isSkipableInstallOption(line)) {
-      outputLines.addAll(lines)
-      continue
-    }
-
-    val parsed = PyRequirementParser.fromText(line, requirementsFile.virtualFile, mutableSetOf())
-    if (isFileReference(line)) {
-      if (parsed.isEmpty()) continue
-
-      val (inImports, notInImports) = parsed.partition { it.name.toLowerCase() in importedPackages }
-      if (notInImports.isNotEmpty()) {
-        // drop -r, add requirements to current file
-        fileReferenceDropped = true
-        inImports.asSequence()
-          .onEach { importedPackages.remove(it.name.toLowerCase()) }
-          .map { convertToRequirementsEntry(it, settings) }
-          .forEach { outputLines.add(it) }
-      }
-      else {
-        val (_, incompatible) = inImports.partition {
-          compatibleVersion(it, importedPackages[it.name.toLowerCase()]!!.version, settings.specifyVersion)
-        }
-        if (incompatible.isNotEmpty()) {
-          // drop -r, add requirements to current file
-          fileReferenceDropped = true
-          inImports.asSequence()
-            .map { it to importedPackages.remove(it.name.toLowerCase()) }
-            .map { convertToRequirementsEntry(it.first, settings, it.second?.version)  }
-            .forEach { outputLines.add(it) }
-        }
-        else {
-          inImports.forEach { importedPackages.remove(it.name.toLowerCase()) }
-          outputLines.addAll(lines)
-        }
-      }
-    }
-    else if (parsed.isEmpty()) {
-      errors.add(line)
-    }
-    else {
-      val requirement = parsed.first()
-      val name = requirement.name.toLowerCase()
-      // processing only requirements that are used in the project, discarding others
-      if (name in importedPackages) {
-        val pkg = importedPackages.remove(name)!!
-        if (compatibleVersion(requirement, pkg.version, settings.specifyVersion)) {
-          outputLines.addAll(lines)
-        }
-        else {
-          outputLines.add(convertToRequirementsEntry(requirement, settings, pkg.version))
-        }
-      }
-    }
-  }
-  return PyRequirementsAnalysisResult(outputLines, errors, fileReferenceDropped)
-}
-
-private fun splitByRequirementsEntries(requirementsText: String): MutableList<List<String>> {
-  var splitList = mutableListOf<String>()
-  val resultList = mutableListOf<List<String>>()
-  requirementsText.lines().forEach {
-    splitList.add(it)
-    if (!it.endsWith("\\")) {
-      resultList.add(splitList)
-      splitList = mutableListOf()
-    }
-  }
-  if (splitList.isNotEmpty()) error(PyBundle.message("python.requirements.error.ends.with.slash"))
-  return resultList
-}
-
-private fun compatibleVersion(requirement: PyRequirement, version: String, specifyVersion: Boolean): Boolean = when {
-  specifyVersion -> requirement.versionSpecs.isNotEmpty() && requirement.versionSpecs.all { it.matches(version) }
-  else -> requirement.versionSpecs.isEmpty()
 }
 
 private fun showSpecifyRequirementsFileDialog(project: Project, settings: PyPackageRequirementsSettings): Boolean {
@@ -241,8 +153,23 @@ private fun showSpecifyRequirementsFileDialog(project: Project, settings: PyPack
     row {
       label(PyBundle.message("python.requirements.version.label"))
       comboBox(DefaultComboBoxModel(PyRequirementsVersionSpecifierType.values()),
-               { settings.versionSpecifier },
-               { settings.versionSpecifier = it })
+                 { settings.versionSpecifier },
+                 { settings.versionSpecifier = it }).constraints(growX)
+    }
+    row {
+      checkBox(PyBundle.message("python.requirements.remove.unused"),
+               { settings.removeUnused },
+               { settings.removeUnused = it })
+    }
+    row {
+      checkBox(PyBundle.message("python.requirements.modify.base.files"),
+               { settings.modifyBaseFiles },
+               { settings.modifyBaseFiles = it })
+    }
+    row {
+      checkBox(PyBundle.message("python.requirements.keep.matching.specifier"),
+               { settings.keepMatchingSpecifier },
+               { settings.keepMatchingSpecifier = it })
     }
   }
   val dialog = dialog(title = PyBundle.message("python.requirements.requirements.file.dialog.header"),
@@ -257,41 +184,17 @@ private fun showSpecifyRequirementsFileDialog(project: Project, settings: PyPack
 }
 
 
-private fun convertToRequirementsEntry(requirement: PyRequirement, settings: PyPackageRequirementsSettings, version: String? = null): String {
-  val packageName = when {
-    requirement.isEditable -> "${requirement.installOptions[0]} ${requirement.installOptions[1]}${requirement.extras}"
-    settings.specifyVersion -> when {
-      version != null -> requirement.name + requirement.extras + settings.versionSpecifier.separator + version
-      else -> requirement.presentableText
-    }
-    else -> requirement.name + requirement.extras
-  }
-
-  val optionsToDrop = if (requirement.isEditable) 2 else 1
-
-  if (requirement.installOptions.size == optionsToDrop) return packageName
-  val offset = " ".repeat(packageName.length + 1)
-  val installOptions = requirement.installOptions.drop(optionsToDrop).joinToString(separator = "\\\n$offset")
-  return "$packageName $installOptions"
-}
-
-
 private fun addImports(file: PyFile, imported: MutableSet<String>) {
   (file.importTargets.asSequence().mapNotNull { it.importedQName?.firstComponent } +
   file.fromImports.asSequence().mapNotNull { it.importSourceQName?.firstComponent })
     .forEach { imported.add(it) }
 }
 
-private fun isSkipableInstallOption(line: String): Boolean =
-  isEditableSelf(line) || (line.startsWith("--") && !line.startsWith("--editable") && !isFileReference(line))
-
-private fun isFileReference(line: String): Boolean = line.startsWith("-r ") || line.startsWith("--requirement ")
-private fun isEditableSelf(line: String): Boolean = line.startsWith("--editable .") || line.startsWith("-e .")
-
-data class PyRequirementsAnalysisResult(val lines: MutableList<String>,
-                                        val unhandled: List<String>,
-                                        var fileReferenceDropped: Boolean) {
+data class PyRequirementsAnalysisResult(val currentFileOutput: MutableList<String>,
+                                        val baseFilesOutput: MutableMap<VirtualFile, MutableList<String>>,
+                                        val unhandledLines: MutableList<String>,
+                                        val unchangedInBaseFiles: MutableList<String>) {
   companion object {
-    fun empty() = PyRequirementsAnalysisResult(mutableListOf(), emptyList(), false)
+    fun empty() = PyRequirementsAnalysisResult(mutableListOf(), mutableMapOf(), mutableListOf(), mutableListOf())
   }
 }

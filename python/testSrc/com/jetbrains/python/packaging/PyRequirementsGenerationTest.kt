@@ -18,30 +18,25 @@ class PyRequirementsGenerationTest : PyTestCase() {
   fun testAddMissingVersion() = doTest()
   fun testStripVersion() = doTest(PyRequirementsVersionSpecifierType.NO_VERSION)
   fun testAddVersionWithSpecifier() = doTest(PyRequirementsVersionSpecifierType.COMPATIBLE)
-  fun testKeepComments() = doTest()
+  fun testKeepComments() = doTest(removeUnused = true)
   fun testKeepMatchingVersion() = doTest()
   fun testKeepFileInstallOptions() = doTest()
   fun testKeepPackageInstallOptions() = doTest()
   fun testKeepEditableFromVCS() = doTest()
   fun testKeepEditableForSelf() = doTest()
-  fun testRemoveUnused() = doTest()
+  fun testRemoveUnused() = doTest(removeUnused = true)
   fun testUpdateVersionKeepInstallOptions() = doTest()
   fun testCompatibleFileReference() = doTest()
-  fun testRedundantFileReference() = doTest()
-  fun testIncompatibleFileReference() = doTest()
-  fun testUnhandledLine() = doTest { (lines, unhandled, _) ->
-    assertSize(2, lines)
-    assertContainsElements(lines, "Django==3.0.0", "requests==2.22.0")
-    assertSize(1, unhandled)
-    assertContainsElements(unhandled, "-e /some/locations/we/dont/know")
-  }
-
 
   private fun doTest(versionSpecifier: PyRequirementsVersionSpecifierType = PyRequirementsVersionSpecifierType.STRONG_EQ,
+                     removeUnused: Boolean = false,
+                     modifyBaseFiles: Boolean = false,
                      block: ((PyRequirementsAnalysisResult) -> Unit)? = null) {
     val settings = PyPackageRequirementsSettings.getInstance(myFixture.module)
     val oldRequirementsPath = settings.requirementsPath
     val oldVersionSpecifier = settings.versionSpecifier
+    val oldRemoveUnused = settings.removeUnused
+    val oldModifyBaseFiles = settings.modifyBaseFiles
 
     try {
       overrideInstalledPackages(
@@ -56,6 +51,8 @@ class PyRequirementsGenerationTest : PyTestCase() {
 
       settings.requirementsPath = "requirements.txt"
       settings.versionSpecifier = versionSpecifier
+      settings.removeUnused = removeUnused
+      settings.modifyBaseFiles = modifyBaseFiles
 
       val testName = getTestName(true)
       myFixture.copyDirectoryToProject(testName, "")
@@ -71,6 +68,8 @@ class PyRequirementsGenerationTest : PyTestCase() {
     finally {
       settings.requirementsPath = oldRequirementsPath
       settings.versionSpecifier = oldVersionSpecifier
+      settings.removeUnused = oldRemoveUnused
+      settings.modifyBaseFiles = oldModifyBaseFiles
     }
   }
 

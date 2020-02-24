@@ -67,6 +67,30 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
     getState().myVersionSpecifier = versionSpecifier;
   }
 
+  public final boolean getRemoveUnused() {
+    return getState().myRemoveUnused;
+  }
+
+  public final boolean setRemoveUnused(boolean removeUnused) {
+    return getState().myRemoveUnused = removeUnused;
+  }
+
+  public final boolean getModifyBaseFiles() {
+    return getState().myModifyBaseFiles;
+  }
+
+  public final boolean setModifyBaseFiles(boolean modifyBaseFiles) {
+    return getState().myModifyBaseFiles = modifyBaseFiles;
+  }
+
+  public final boolean getKeepMatchingSpecifier() {
+    return getState().myKeepMatchingSpecifier;
+  }
+
+  public final void setKeepMatchingSpecifier(boolean forceUpdateVersionSpecifier) {
+    getState().myKeepMatchingSpecifier = forceUpdateVersionSpecifier;
+  }
+
   public final boolean isDefaultPath() {
     return getRequirementsPath().equals(DEFAULT_REQUIREMENTS_PATH);
   }
@@ -89,6 +113,15 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
     @NotNull
     @OptionTag("versionSpecifier")
     public PyRequirementsVersionSpecifierType myVersionSpecifier = PyRequirementsVersionSpecifierType.COMPATIBLE;
+
+    @OptionTag("removeUnused")
+    public boolean myRemoveUnused = false;
+
+    @OptionTag("modifyBaseFiles")
+    public boolean myModifyBaseFiles = false;
+
+    @OptionTag("keepMatchingSpecifier")
+    public boolean myKeepMatchingSpecifier = true;
   }
 
   @State(name = "AppPackageRequirementsSettings", storages = @Storage("PackageRequirementsSettings.xml"))

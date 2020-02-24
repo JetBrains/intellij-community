@@ -1,7 +1,0 @@
-# this does match the project imports
-requests==2.22.0
-Django>=3.0.0
-# but this doesn't
-pyplot
-toml==0.10.0
-pandas==1.0.1
