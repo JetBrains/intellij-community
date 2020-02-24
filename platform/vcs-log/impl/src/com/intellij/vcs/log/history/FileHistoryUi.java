@@ -145,7 +145,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       });
     }
     else {
-      String text = VcsLogBundle.message("vcs.log.file.history..commit.does.not.exist.in.history",
+      String text = VcsLogBundle.message("vcs.log.file.history.commit.does.not.exist.in.history",
                                          getCommitPresentation(commitId), myPath.getName());
       showWarningWithLink(text, VcsLogBundle.message("vcs.log.file.history.view.in.log.link"), () -> {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
