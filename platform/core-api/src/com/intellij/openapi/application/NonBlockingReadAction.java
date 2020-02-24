@@ -17,11 +17,11 @@ import java.util.function.Consumer;
 
 /**
  * A utility for running non-blocking read actions in background thread.
- * "Non-blocking" means to prevent UI freezes, when a write action is about to occur, a read action can be interrupted by a
+ * "Non-blocking" means that to prevent UI freezes, when a write action is about to occur, a read action can be interrupted by a
  * {@link com.intellij.openapi.progress.ProcessCanceledException} and then restarted.
  * Code blocks running inside should be prepared to get this exception at any moment,
  * and they should call {@link ProgressManager#checkCanceled()} or {@link ProgressIndicator#checkCanceled()} frequently enough.
- * They should also be side-effect-free or at least idempotent, to avoid consistency issues when restarted in the middle.
+ * They should also be side-effect-free or at least idempotent, to avoid consistency issues when interrupted in the middle and restarted.
  * <p></p>
  * The recommended usage is {@code ReadAction.nonBlocking(...).withXxx()....finishOnUiThread(...).submit(...)}.
  * It's the only way that allows to access the computation result safely. The alternatives
@@ -51,9 +51,16 @@ public interface NonBlockingReadAction<T> {
   NonBlockingReadAction<T> withDocumentsCommitted(@NotNull Project project);
 
   /**
-   * @return a copy of this builder that cancels submitted read actions after they become obsolete.
-   * An action is considered obsolete if any of the conditions provided using {@code expireWhen} returns true).
-   * The conditions are checked inside a read action, either on a background or on the UI thread.
+   * Returns a copy of this builder that cancels submitted read actions after they become obsolete.
+   * An action is considered obsolete if any of the conditions provided using {@code expireWhen} returns {@code true}).
+   * <p></p>
+   * The conditions are checked when read access is allowed, before the computation on a background thread
+   * and before {@link #finishOnUiThread} handler, if any.
+   * <p></p>
+   * Even if the expiration condition becomes {@code true} without a write action during the background computation,
+   * it won't be checked until the computation is complete.
+   * Hence if you want to cancel the computation immediately, you should handle that separately
+   * (e.g. by putting {@link CancellablePromise#cancel()} inside some listener).
    */
   @Contract(pure = true)
   NonBlockingReadAction<T> expireWhen(@NotNull BooleanSupplier expireCondition);
@@ -77,6 +84,9 @@ public interface NonBlockingReadAction<T> {
 
   /**
    * @return a copy of this builder that cancels submitted read actions once the specified disposable is disposed.
+   * In that case the corresponding {@link CancellablePromise} will be canceled immediately, its completion handlers will be called.
+   * Currently running background computations will throw a {@link ProcessCanceledException} on the next {@code checkCanceled} call,
+   * and if computations or {@link #finishOnUiThread} handlers are scheduled, they won't be executed.
    */
   @Contract(pure = true)
   NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable);
