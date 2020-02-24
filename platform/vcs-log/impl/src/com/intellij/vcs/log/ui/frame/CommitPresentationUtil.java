@@ -282,7 +282,7 @@ public class CommitPresentationUtil {
     }
     if (branches.isEmpty()) return VcsLogBundle.message("vcs.log.details.not.in.any.branch");
 
-    String head = VcsLogBundle.message("vcs.log.details.in.branches", branches.size());
+    String head = VcsLogBundle.message("vcs.log.details.in.branches", branches.size()) + " ";
 
     if (expanded) {
       String hide = VcsLogBundle.message("vcs.log.details.hide");
