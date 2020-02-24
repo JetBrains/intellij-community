@@ -85,7 +85,7 @@ public class GitNewResetDialog extends DialogWrapper {
       button.setMnemonic(mode.getName().charAt(0));
       myButtonGroup.add(button);
       panel.add(button, gb.nextLine().next());
-      panel.add(new JBLabel(XmlStringUtil.wrapInHtmlLines(mode.getDescription()), UIUtil.ComponentStyle.SMALL), gb.next());
+      panel.add(new JBLabel(XmlStringUtil.wrapInHtml(mode.getDescription()), UIUtil.ComponentStyle.SMALL), gb.next());
     }
 
     myEnumModel = RadioButtonEnumModel.bindEnum(GitResetMode.class, myButtonGroup);
