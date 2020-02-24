@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
 import com.intellij.openapi.project.Project
@@ -20,8 +6,10 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.layout.*
+import com.intellij.util.ui.UIUtil.BR
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.validators.checkRefName
 import git4idea.validators.conflictsWithLocalBranch
@@ -37,10 +25,12 @@ data class GitNewBranchOptions(val name: String,
                                @get:JvmName("shouldReset") val reset: Boolean = false)
 
 
-enum class GitBranchOperationType(val text: String, val description: String = "") {
-  CREATE("Create", "Create new branches in other repositories."),
-  CHECKOUT("Checkout", "Checkout existing branches, and create new branches in other repositories."),
-  RENAME("Rename")
+enum class GitBranchOperationType(@Nls val text: String, @Nls val description: String = "") {
+  CREATE(GitBundle.message("new.branch.dialog.operation.create.name"),
+         GitBundle.message("new.branch.dialog.operation.create.description")),
+  CHECKOUT(GitBundle.message("new.branch.dialog.operation.checkout.name"),
+           GitBundle.message("new.branch.dialog.operation.checkout.description")),
+  RENAME(GitBundle.message("new.branch.dialog.operation.rename.name"))
 }
 
 internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
@@ -68,7 +58,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
 
   override fun createCenterPanel() = panel {
     row {
-      label("New branch name:")
+      label(GitBundle.message("new.branch.dialog.branch.name"))
     }
     row {
       textField(::branchName, { branchName = it }).focused().withValidationOnApply(
@@ -76,12 +66,12 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
     }
     row {
       if (showCheckOutOption) {
-        checkBox("Checkout branch", ::checkout).component.apply {
+        checkBox(GitBundle.message("new.branch.dialog.checkout.branch.checkbox"), ::checkout).component.apply {
           mnemonic = KeyEvent.VK_C
         }
       }
       if (showResetOption) {
-        overwriteCheckbox = checkBox("Overwrite existing branch", ::reset).component.apply {
+        overwriteCheckbox = checkBox(GitBundle.message("new.branch.dialog.overwrite.existing.branch.checkbox"), ::reset).component.apply {
           mnemonic = KeyEvent.VK_R
           isEnabled = false
         }
@@ -97,8 +87,9 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
       overwriteCheckbox?.isEnabled = localBranchConflict != null
 
       if (localBranchConflict == null || overwriteCheckbox?.isSelected == true) null // no conflicts or ask to reset
-      else if (localBranchConflict.warning && localConflictsAllowed) warning("${localBranchConflict.message}.<br/>${operation.description}")
-      else error(localBranchConflict.message + if (showResetOption) ".<br/>Change the name or overwrite existing branch" else "")
+      else if (localBranchConflict.warning && localConflictsAllowed) warning("${localBranchConflict.message}.$BR${operation.description}")
+      else error(localBranchConflict.message +
+                 if (showResetOption) ".$BR" + GitBundle.message("new.branch.dialog.overwrite.existing.branch.warning") else "")
     }
   }
 
