@@ -25,16 +25,6 @@ class CompilationPartsUploader implements Closeable {
   protected final String myServerUrl
   protected final CloseableHttpClient myHttpClient
 
-  static class UploadException extends Exception {
-    UploadException(String message) {
-      super(message)
-    }
-
-    UploadException(String message, Throwable cause) {
-      super(message, cause)
-    }
-  }
-
   CompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
     myServerUrl = fixServerUrl(serverUrl)
     myMessages = messages
