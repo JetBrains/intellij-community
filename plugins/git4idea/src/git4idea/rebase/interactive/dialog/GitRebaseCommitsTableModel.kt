@@ -148,6 +148,26 @@ internal class GitRebaseCommitsTableModel(initialEntries: List<GitRebaseEntryWit
     getEntry(row).newMessage
   }
 
+  fun moveRowsToFirst(indicesToMove: List<Int>) {
+    if (indicesToMove.isEmpty()) {
+      return
+    }
+    val indicesToMoveSet = indicesToMove.toSet()
+    val sortedIndicesToMove = indicesToMove.sorted()
+    val minIndex = sortedIndicesToMove.first()
+    val maxIndex = sortedIndicesToMove.last()
+    val rowsToMoveBelow = (minIndex..maxIndex).filter { it !in indicesToMoveSet }.map {
+      rows[it]
+    }
+    val rowsToMove = sortedIndicesToMove.map {
+      rows[it]
+    }
+    (rowsToMove + rowsToMoveBelow).forEachIndexed { i, row ->
+      rows[minIndex + i] = row
+    }
+    fireTableRowsUpdated(minIndex, maxIndex)
+  }
+
   private class CommitTableModelRow(val initialIndex: Int, val entry: GitRebaseEntryWithEditedMessage) {
     val initialAction = entry.entry.action
     val details = entry.entry.commitDetails

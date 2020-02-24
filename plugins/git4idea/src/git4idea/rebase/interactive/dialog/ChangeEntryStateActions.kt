@@ -113,6 +113,8 @@ internal open class UniteCommitsAction(action: GitRebaseEntry.Action, table: Git
     commitRows.forEach { row ->
       table.setValueAt(GitRebaseEntry.Action.FIXUP, row, GitRebaseCommitsTableModel.COMMIT_ICON_COLUMN)
     }
+    table.model.moveRowsToFirst(listOf(fixupRootRow) + commitRows)
+    TableUtil.selectRows(table, (fixupRootRow..fixupRootRow + commitRows.size).toList().toIntArray())
   }
 }
 
@@ -122,8 +124,9 @@ internal class FixupAction(table: GitRebaseCommitsTableView) : UniteCommitsActio
 internal class SquashAction(table: GitRebaseCommitsTableView) : UniteCommitsAction(GitRebaseEntry.Action.SQUASH, table) {
   override fun fixupCommits(fixupRootRow: Int, commitRows: List<Int>) {
     super.fixupCommits(fixupRootRow, commitRows)
+    val selectedRows = table.selectedRows
     val model = table.model
-    model.setValueAt(model.uniteCommitMessages(listOf(fixupRootRow) + commitRows), fixupRootRow, GitRebaseCommitsTableModel.SUBJECT_COLUMN)
+    model.setValueAt(model.uniteCommitMessages(selectedRows.toList()), fixupRootRow, GitRebaseCommitsTableModel.SUBJECT_COLUMN)
     TableUtil.selectRows(table, intArrayOf(fixupRootRow))
     TableUtil.editCellAt(table, fixupRootRow, GitRebaseCommitsTableModel.SUBJECT_COLUMN)
   }
