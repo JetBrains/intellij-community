@@ -120,7 +120,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this);
     myStringCellRenderer = new StringCellRenderer();
 
-    getEmptyText().setText(VcsLogBundle.message("vcs.log.changes.log"));
+    getEmptyText().setText(VcsLogBundle.message("vcs.log.default.status"));
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), disposable);
 
     initColumns();
@@ -174,7 +174,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   protected void updateEmptyText() {
-    getEmptyText().setText(VcsLogBundle.message("vcs.log.changes.log"));
+    getEmptyText().setText(VcsLogBundle.message("vcs.log.default.status"));
   }
 
   protected void setErrorEmptyText(@NotNull Throwable error, @Nls @NotNull String defaultText) {
@@ -197,7 +197,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       highlighter.update(visiblePack, permGraphChanged);
     }
 
-    if (!getEmptyText().getText().equals(VcsLogBundle.message("vcs.log.loading.commits"))) {
+    if (!getEmptyText().getText().equals(VcsLogBundle.message("vcs.log.loading.status"))) {
       updateEmptyText();
     }
 
@@ -950,7 +950,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @Override
     public void progressChanged(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
       if (VcsLogUiUtil.isProgressVisible(keys, myId)) {
-        getEmptyText().setText(VcsLogBundle.message("vcs.log.loading.commits"));
+        getEmptyText().setText(VcsLogBundle.message("vcs.log.loading.status"));
       }
       else {
         updateEmptyText();

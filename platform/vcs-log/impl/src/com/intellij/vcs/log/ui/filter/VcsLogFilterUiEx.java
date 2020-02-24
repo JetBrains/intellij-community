@@ -44,7 +44,7 @@ public interface VcsLogFilterUiEx extends VcsLogFilterUi {
    * NB: In the case of error this method is not called, and the general logic is used to show the error in the empty space.
    */
   default void setCustomEmptyText(@NotNull StatusText text) {
-    text.setText(VcsLogBundle.message("vcs.log.filter.no.commits.matching.filters"));
+    text.setText(VcsLogBundle.message("vcs.log.no.commits.matching.status"));
     VcsLogUiUtil.appendResetFiltersActionToEmptyText(this, text);
   }
 }

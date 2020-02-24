@@ -206,7 +206,7 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
 
     @Override
     protected void onError(@NotNull Throwable error) {
-      setEmpty(VcsLogBundle.message("vcs.log.error.loading.commits"));
+      setEmpty(VcsLogBundle.message("vcs.log.error.loading.status"));
     }
 
     private void setEmpty(@Nls @NotNull String text) {

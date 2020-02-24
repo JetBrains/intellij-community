@@ -480,7 +480,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected void onError(@NotNull Throwable error) {
-      myChangesBrowser.showText(statusText -> statusText.setText(VcsLogBundle.message("vcs.log.error.loading.commits")));
+      myChangesBrowser.showText(statusText -> statusText.setText(VcsLogBundle.message("vcs.log.error.loading.status")));
     }
   }
 
@@ -514,11 +514,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       DataPackBase dataPack = visiblePack.getDataPack();
       if (dataPack instanceof DataPack.ErrorDataPack) {
         setErrorEmptyText(((DataPack.ErrorDataPack)dataPack).getError(),
-                          VcsLogBundle.message("vcs.log.error.loading.commits"));
+                          VcsLogBundle.message("vcs.log.error.loading.status"));
         appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"), () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
       }
       else if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
-        setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), VcsLogBundle.message("vcs.log.error.filtering.commits"));
+        setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), VcsLogBundle.message("vcs.log.error.filtering.status"));
         if (visiblePack.getFilters().isEmpty()) {
           appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"), myRefresh);
         }
@@ -528,8 +528,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }
       else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
         if (visiblePack.getFilters().isEmpty()) {
-          statusText.setText(VcsLogBundle.message("vcs.log.no.changes.committed.status")).
-            appendSecondaryText(VcsLogBundle.message("vcs.log.commit.local.changes.status.action"), VcsLogUiUtil.getLinkAttributes(),
+          statusText.setText(VcsLogBundle.message("vcs.log.no.commits.status")).
+            appendSecondaryText(VcsLogBundle.message("vcs.log.commit.status.action"), VcsLogUiUtil.getLinkAttributes(),
                                 ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this,
                                                                 ActionPlaces.UNKNOWN));
           String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION);
@@ -542,7 +542,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         }
       }
       else {
-        statusText.setText(VcsLogBundle.message("vcs.log.changes.log"));
+        statusText.setText(VcsLogBundle.message("vcs.log.default.status"));
       }
     }
   }
