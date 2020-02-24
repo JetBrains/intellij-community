@@ -8,6 +8,7 @@ import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,7 +28,7 @@ public class SymlinkRegistry {
 
   private final SymlinkEventsBatchProducer myBatchProducer = new SymlinkEventsBatchProducer();
 
-  void symlinkTargetStored(int fileId) {
+  void symlinkTargetStored(int fileId, @SystemIndependent String linkPath, @SystemIndependent String linkTarget) {
     SymlinkEventType eventType;
     synchronized (mySymlinks) {
       if (mySymlinks.add(fileId)) {
@@ -37,7 +38,7 @@ public class SymlinkRegistry {
         eventType = SymlinkEventType.UPDATED;
       }
     }
-    myBatchProducer.symlinkEvent(eventType, fileId);
+    myBatchProducer.symlinkEvent(new SymlinkEvent(eventType, fileId, linkPath, linkTarget));
   }
 
   void symlinkPossiblyRemoved(int fileId) {
@@ -46,7 +47,7 @@ public class SymlinkRegistry {
         return;
       }
     }
-    myBatchProducer.symlinkEvent(SymlinkEventType.DELETED, fileId);
+    myBatchProducer.symlinkEvent(new SymlinkEvent(SymlinkEventType.DELETED, fileId, null, null));  // path/target aren't needed for deletion
   }
 
   private void notifyListeners(List<SymlinkEvent> events) {
@@ -72,18 +73,19 @@ public class SymlinkRegistry {
   public static class SymlinkEvent {
     public final SymlinkEventType eventType;
     public final int fileId;
+    public final @SystemIndependent String linkPath;
+    public final @SystemIndependent String linkTarget;
 
-    SymlinkEvent(SymlinkEventType type, int fileId) {
-      eventType = type;
+    SymlinkEvent(SymlinkEventType type, int fileId, @SystemIndependent String linkPath, @Nullable @SystemIndependent String linkTarget) {
+      this.eventType = type;
       this.fileId = fileId;
+      this.linkPath = linkPath;
+      this.linkTarget = linkTarget;
     }
 
     @Override
     public String toString() {
-      return "SymlinkEvent{" +
-             "eventType=" + eventType +
-             ", fileId=" + fileId +
-             '}';
+      return "SymlinkEvent{" + eventType + ": " + fileId + ", " + linkTarget + " -> " + linkTarget + '}';
     }
   }
 
@@ -93,12 +95,9 @@ public class SymlinkRegistry {
     private final AtomicReference<Future<?>> myLastSymlinkEventsTask = new AtomicReference<>();
     private final List<SymlinkEvent> mySymlinkEventsQueue = new ArrayList<>();
 
-    private SymlinkEventsBatchProducer() {
-    }
-
-    private void symlinkEvent(SymlinkRegistry.SymlinkEventType eventType, int fileId) {
+    void symlinkEvent(SymlinkEvent event) {
       synchronized (mySymlinkEventsQueue) {
-        mySymlinkEventsQueue.add(new SymlinkEvent(eventType, fileId));
+        mySymlinkEventsQueue.add(event);
       }
       Future<?> lastTask = myLastSymlinkEventsTask.getAndSet(
         mySymlinkEventExecutor.submit(this::processSymlinkEvents));
@@ -119,11 +118,6 @@ public class SymlinkRegistry {
     public void addAndNotifyNewListener(@NotNull SymlinkListener listener, @Nullable Disposable parentDisposable) {
       mySymlinkEventExecutor.execute(() -> {
         processSymlinkEvents();
-        List<SymlinkEvent> events;
-        synchronized (mySymlinks) {
-          events = ContainerUtil.map(
-            mySymlinks, fileId -> new SymlinkEvent(SymlinkEventType.ADDED, fileId));
-        }
 
         if (!myListeners.contains(listener)) {
           myListeners.add(listener);
@@ -132,7 +126,11 @@ public class SymlinkRegistry {
               myListeners.remove(listener);
             });
           }
-          listener.symlinkEvents(events);
+          //List<SymlinkEvent> events;
+          //synchronized (mySymlinks) {
+          //  events = ContainerUtil.map(mySymlinks, fileId -> new SymlinkEvent(SymlinkEventType.ADDED, fileId));
+          //}
+          //listener.symlinkEvents(events);
         }
       });
     }

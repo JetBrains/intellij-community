@@ -282,8 +282,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     FSRecords.writeAttributesToRecord(id, parentId, attributes, name.toString());
+
     if (attributes.isSymLink()) {
       FSRecords.storeSymlinkTarget(id, symlinkTarget);
+      VirtualFile parent = getInstance().findFileById(parentId);
+      assert parent != null : parentId + '/' + id + ": " + name.toString() + " -> " + symlinkTarget;
+      SymlinkRegistry.INSTANCE.symlinkTargetStored(id, parent.getPath() + '/' + name.toString(), symlinkTarget);
     } else {
       SymlinkRegistry.INSTANCE.symlinkPossiblyRemoved(id);
     }
@@ -1459,7 +1463,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void executeSetTarget(@NotNull VirtualFile file, @Nullable String target) {
-    FSRecords.storeSymlinkTarget(getFileId(file), target);
+    int id = getFileId(file);
+    FSRecords.storeSymlinkTarget(id, target);
+    SymlinkRegistry.INSTANCE.symlinkTargetStored(id, file.getPath(), target);
   }
 
   private static void setFlag(@NotNull VirtualFile file, int mask, boolean value) {

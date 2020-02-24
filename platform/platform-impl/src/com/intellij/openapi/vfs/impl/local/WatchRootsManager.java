@@ -4,16 +4,14 @@ package com.intellij.openapi.vfs.impl.local;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.SymlinkRegistry;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
@@ -182,14 +180,14 @@ public class WatchRootsManager {
       for (SymlinkRegistry.SymlinkEvent event : events) {
         switch (event.eventType) {
           case ADDED:
-            addSymlink(event.fileId);
+            addSymlink(event);
             break;
           case DELETED:
             removeSymlink(event.fileId);
             break;
           case UPDATED:
             removeSymlink(event.fileId);
-            addSymlink(event.fileId);
+            addSymlink(event);
             break;
         }
       }
@@ -199,24 +197,23 @@ public class WatchRootsManager {
     }
   }
 
-  private void addSymlink(int fileId) {
-    SymlinkData data = new SymlinkData(fileId);
-    if (data.path != null) {
-      SymlinkData existing = mySymlinksByPath.get(data.path);
-      if (existing != null) {
-        if (existing.id == fileId) {
-          LOG.warn("Duplicated add symlink event on: " + existing);
-        }
-        else {
-          LOG.error("Path conflict. Existing symlink: " + existing + " vs. new symlink: " + data);
-        }
-        return;
+  private void addSymlink(SymlinkRegistry.SymlinkEvent event) {
+    SymlinkData existing = mySymlinksByPath.get(event.linkPath);
+    if (existing != null) {
+      if (existing.id == event.fileId) {
+        LOG.warn("Duplicated add symlink event on: " + existing);
       }
-      mySymlinksByPath.put(data.path, data);
-      mySymlinksById.put(fileId, data);
-      if (WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, data.path)) {
-        addWatchSymlinkRequest(data.getWatchRequest());
+      else {
+        LOG.error("Path conflict. Existing symlink: " + existing + " vs. new symlink: " + event);
       }
+      return;
+    }
+
+    SymlinkData data = new SymlinkData(event.fileId, event.linkPath, event.linkTarget);
+    mySymlinksByPath.put(data.path, data);
+    mySymlinksById.put(data.id, data);
+    if (WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, data.path)) {
+      addWatchSymlinkRequest(data.getWatchRequest());
     }
   }
 
@@ -228,15 +225,6 @@ public class WatchRootsManager {
   }
 
   private void addWatchSymlinkRequests(List<WatchSymlinkRequest> watchSymlinkRequestsToAdd) {
-    if (watchSymlinkRequestsToAdd.size() > 5) {
-      StreamEx.of(watchSymlinkRequestsToAdd)
-        .parallel()
-        .forEach(WatchSymlinkRequest::initialize);
-    }
-    else {
-      watchSymlinkRequestsToAdd.forEach(WatchSymlinkRequest::initialize);
-    }
-
     for (WatchSymlinkRequest request : watchSymlinkRequestsToAdd) {
       if (!request.getRootPath().isEmpty() && !request.isRegistered()) {
         addWatchSymlinkRequest(request);
@@ -326,29 +314,19 @@ public class WatchRootsManager {
 
   private static class WatchSymlinkRequest implements WatchRequest {
     private final SymlinkData mySymlinkData;
-    private String mySymlinkTarget;
     private final boolean myWatchRecursively;
     private boolean registered = false;
 
-    private WatchSymlinkRequest(SymlinkData data, boolean watchRecursively) {
+    WatchSymlinkRequest(SymlinkData data, boolean watchRecursively) {
       mySymlinkData = data;
       myWatchRecursively = watchRecursively;
     }
 
-    public void initialize() {
-      if (mySymlinkTarget == null) {
-        mySymlinkTarget = mySymlinkData.getSymlinkTarget();
-        if (mySymlinkTarget == null) {
-          mySymlinkTarget = "";
-        }
-      }
-    }
-
-    private boolean isRegistered() {
+    boolean isRegistered() {
       return registered;
     }
 
-    private boolean setRegistered(boolean registered) {
+    boolean setRegistered(boolean registered) {
       if (this.registered != registered) {
         this.registered = registered;
         return true;
@@ -356,10 +334,9 @@ public class WatchRootsManager {
       return false;
     }
 
-    @NotNull
     @Override
-    public @SystemIndependent String getRootPath() {
-      return mySymlinkTarget;
+    public @NotNull @SystemIndependent String getRootPath() {
+      return mySymlinkData.target;
     }
 
     @Override
@@ -367,61 +344,44 @@ public class WatchRootsManager {
       return myWatchRecursively;
     }
 
-    public String getOriginalPath() {
+    String getOriginalPath() {
       return mySymlinkData.path;
     }
   }
 
   private static class SymlinkData {
+    final int id;
+    final String path;
+    final String target;
+    private WatchSymlinkRequest myWatchRequest;
 
-    public final int id;
-    public final String path;
-
-    private WatchSymlinkRequest myRecursiveRequest;
-
-    private SymlinkData(int id) {
+    SymlinkData(int id, String path, @Nullable String target) {
       this.id = id;
-      VirtualFile vf = PersistentFS.getInstance().findFileById(id);
-      if (vf == null) {
-        // TODO figure out how to fix race condition resulting in null here
-        LOG.warn("SymlinkData: cannot find virtual file with id " + id);
+      this.path = WatchRootsUtil.normalizeFileName(path);
+      this.target = StringUtil.notNullize(WatchRootsUtil.normalizeFileName(target));
+    }
+
+    @NotNull WatchSymlinkRequest getWatchRequest() {
+      if (myWatchRequest == null) {
+        myWatchRequest = new WatchSymlinkRequest(this, true);
       }
-      this.path = vf != null ? WatchRootsUtil.normalizeFileName(vf.getPath())
-                             : null;
+      return myWatchRequest;
     }
 
-    @Nullable
-    public String getSymlinkTarget() {
-      VirtualFile vf = PersistentFS.getInstance().findFileById(id);
-      return vf != null ? WatchRootsUtil.normalizeFileName(PersistentFS.getInstance().resolveSymLink(vf))
-                        : null;
-    }
-
-    @NotNull
-    public WatchSymlinkRequest getWatchRequest() {
-      if (myRecursiveRequest == null) {
-        myRecursiveRequest = new WatchSymlinkRequest(this, true);
-      }
-      return myRecursiveRequest;
-    }
-
-    public void removeRequest(WatchRootsManager manager) {
-      if (myRecursiveRequest != null) {
-        manager.removeWatchSymlinkRequest(myRecursiveRequest);
-        myRecursiveRequest = null;
+    void removeRequest(WatchRootsManager manager) {
+      if (myWatchRequest != null) {
+        manager.removeWatchSymlinkRequest(myWatchRequest);
+        myWatchRequest = null;
       }
     }
 
-    private void clear() {
-      myRecursiveRequest = null;
+    void clear() {
+      myWatchRequest = null;
     }
 
     @Override
     public String toString() {
-      return "SymlinkData{" +
-             "id=" + id +
-             ", path='" + path + '"' +
-             '}';
+      return "SymlinkData{" + id + ", " + path + " -> " + target + '}';
     }
   }
 }
