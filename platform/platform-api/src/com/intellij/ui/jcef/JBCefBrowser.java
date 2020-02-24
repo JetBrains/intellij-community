@@ -23,7 +23,6 @@ import java.awt.*;
  */
 @ApiStatus.Experimental
 public class JBCefBrowser implements JBCefDisposable {
-  @SuppressWarnings("HardCodedStringLiteral")
   private static final String BLANK_URI = "about:blank";
 
   @NotNull private final JBCefClient myCefClient;

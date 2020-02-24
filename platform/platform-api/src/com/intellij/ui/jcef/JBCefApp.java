@@ -128,7 +128,6 @@ public abstract class JBCefApp {
   @NotNull
   protected abstract CefAppConfig getCefAppConfig();
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private static class JBCefAppMac extends JBCefApp {
     @NotNull
     @Override
@@ -161,7 +160,6 @@ public abstract class JBCefApp {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private static class JBCefAppWindows extends JBCefApp {
     @NotNull
     @Override
@@ -175,7 +173,6 @@ public abstract class JBCefApp {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private static class JBCefAppLinux extends JBCefApp {
     @NotNull
     @Override
