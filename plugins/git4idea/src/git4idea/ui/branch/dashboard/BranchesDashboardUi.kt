@@ -81,6 +81,12 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     ui.filterUi.setFilter(if (branchNames.isNotEmpty()) VcsLogFilterObject.fromBranches(branchNames) else null)
   }
 
+  private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
+    override fun getOrderedComponents(): List<Component> = listOf(tree.component, logUi.table,
+                                                                  logUi.mainFrame.changesBrowser.preferredFocusedComponent,
+                                                                  logUi.mainFrame.filterUi.textFilterComponent.textEditor)
+  }
+
   init {
     initMainUi()
     installLogUi()
@@ -201,12 +207,6 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
       }
       return null
     }
-  }
-
-  private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
-    override fun getOrderedComponents(): List<Component> = listOf(tree.component, logUi.table,
-                                                                  logUi.mainFrame.changesBrowser.preferredFocusedComponent,
-                                                                  logUi.mainFrame.filterUi.textFilterComponent.textEditor)
   }
 
   fun getMainComponent(): JComponent {
