@@ -683,7 +683,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void launchAction(@NotNull final IntentionAction action) {
-    EdtTestUtil.runInEdtAndWait(() -> invokeIntention(action, getHostFileAtCaret(), getHostEditor(), action.getText()));
+    EdtTestUtil.runInEdtAndWait(() -> invokeIntention(action, getHostFileAtCaret(), getHostEditor()));
   }
 
   @Override
@@ -1925,7 +1925,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  public static boolean invokeIntention(@NotNull IntentionAction action, PsiFile file, Editor editor, String actionText) {
+  public static boolean invokeIntention(@NotNull IntentionAction action, PsiFile file, Editor editor) {
     // Test that action will automatically clear the read-only attribute if modification is necessary.
     // If your test fails due to this, make sure that your quick-fix/intention
     // overrides "getElementToMakeWritable" or has the following line:
@@ -1938,7 +1938,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       try {
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
-            result.set(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, actionText));
+            result.set(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, action.getText()));
           }
           catch (StubTextInconsistencyException e) {
             PsiTestUtil.compareStubTexts(e);

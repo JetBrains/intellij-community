@@ -1286,7 +1286,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     List<HighlightInfo.IntentionActionDescriptor> actions =
       ShowIntentionsPass.getAvailableFixes(editor, getFile(), -1, ((EditorEx)editor).getExpectedCaretOffset());
     final HighlightInfo.IntentionActionDescriptor descriptor = assertOneElement(actions);
-    CodeInsightTestFixtureImpl.invokeIntention(descriptor.getAction(), getFile(), getEditor(), "");
+    CodeInsightTestFixtureImpl.invokeIntention(descriptor.getAction(), getFile(), getEditor());
 
     highlightErrors();
     assertEmpty(ShowIntentionsPass.getAvailableFixes(editor, getFile(), -1, ((EditorEx)editor).getExpectedCaretOffset()));
