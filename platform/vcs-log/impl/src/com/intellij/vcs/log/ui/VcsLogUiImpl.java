@@ -10,6 +10,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairFunction;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
@@ -109,7 +110,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     }
 
     List<NamedRunnable> runnables = new ArrayList<>();
-    runnables.add(new NamedRunnable("View and Reset Filters") {
+    runnables.add(new NamedRunnable(VcsLogBundle.message("vcs.log.action.view.and.reset")) {
       @Override
       public void run() {
         getFilterUi().setFilter(null);
@@ -119,7 +120,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     });
     VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
     if (projectLog.getDataManager() == myLogData) {
-      runnables.add(new NamedRunnable("View in New Tab") {
+      runnables.add(new NamedRunnable(VcsLogBundle.message("vcs.log.action.view.in.tab")) {
         @Override
         public void run() {
           MainVcsLogUi ui = projectLog.openLogTab(VcsLogFilterObject.collection());
