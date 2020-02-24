@@ -32,7 +32,6 @@ internal open class GitRebaseEntry(var action: Action, val commit: String, val s
         valueOf(action.toUpperCase())
       }
       catch (e: IllegalArgumentException) {
-        LOG.warn(e)
         PICK
       }
     }
