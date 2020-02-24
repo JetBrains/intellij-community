@@ -449,8 +449,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       if (maxSize > VcsLogUtil.getShownChangesLimit()) {
         String sizeText = VcsLogUtil.getSizeText(maxSize);
         myChangesBrowser.showText(statusText -> {
-          statusText.setText(VcsLogBundle.message("vcs.log.details.commit.changes", detailsList.size(), sizeText));
-          statusText.appendSecondaryText(VcsLogBundle.message("vcs.log.details.show.anyway.status.action"), VcsLogUiUtil.getLinkAttributes(),
+          statusText.setText(VcsLogBundle.message("vcs.log.changes.too.many.status", detailsList.size(), sizeText));
+          statusText.appendSecondaryText(VcsLogBundle.message("vcs.log.changes.too.many.show.anyway.status.action"), VcsLogUiUtil.getLinkAttributes(),
                                          e -> myChangesBrowser.setSelectedDetails(detailsList));
         });
       }
