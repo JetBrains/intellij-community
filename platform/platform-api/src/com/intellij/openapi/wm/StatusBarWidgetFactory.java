@@ -10,6 +10,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Extension point for adding user-configurable widgets to the status bar.
+ *
+ * By default, a widget would be available only in the main IDE, but not in Light Edit.
+ * In order to make the widget available in Light Edit, the factory should implement {@link com.intellij.ide.lightEdit.LightEditCompatible}.
+ * Prohibiting the widget for the main IDE could be done in the {@link StatusBarWidgetFactory#isAvailable(Project)} method.
  */
 @ApiStatus.Experimental
 public interface StatusBarWidgetFactory {

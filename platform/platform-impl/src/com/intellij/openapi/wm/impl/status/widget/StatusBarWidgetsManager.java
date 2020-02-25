@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status.widget;
 
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -161,6 +163,9 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   private void addWidgetFactory(@NotNull StatusBarWidgetFactory factory) {
+    if (LightEdit.owns(myProject) && !(factory instanceof LightEditCompatible)) {
+      return;
+    }
     if (myWidgetFactories.containsKey(factory)) {
       LOG.error("Factory has been added already: " + factory.getId());
       return;
