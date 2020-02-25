@@ -14,7 +14,7 @@
   </logger>
 
   <root>
-    <priority value="info"/>
+    <level value="OFF"/>
 
     <appender-ref ref="console"/>
   </root>

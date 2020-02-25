@@ -9,19 +9,14 @@ public class ValueTest extends AbstractLombokParsingTestCase {
     return false;
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-
-    //TODO disable assertions for the moment
-    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
-  }
-
   public void testValue$ValueIssue78() {
     doTest(true);
   }
 
   public void testValue$ValueIssue94() {
+    //TODO disable assertions for the moment
+    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
+
     doTest(true);
   }
 
@@ -58,6 +53,9 @@ public class ValueTest extends AbstractLombokParsingTestCase {
   }
 
   public void testValue$ValueWithPackagePrivate() {
+    //TODO disable assertions for the moment
+    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
+
     doTest(true);
   }
 }
