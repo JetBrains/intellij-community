@@ -1,12 +1,7 @@
 package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,30 +43,25 @@ public class PsiElementUtil {
       }
       final PsiParameter[] parameters = parameterList.getParameters();
       for (int i = 0; i < parameters.length; i++) {
-        final PsiParameter parameter = parameters[i];
-        final PsiType type = parameter.getType();
+        final PsiType type = parameters[i].getType();
         final PsiType parameterType = parameterTypes.get(i);
         if (PsiType.NULL.equals(parameterType)) {
           continue;
         }
-        if (parameterType != null &&
-          !typesAreEquivalent(type,
-            parameterType)) {
+        if (parameterType != null && !typesAreEquivalent(type, parameterType)) {
           return false;
         }
       }
     }
     if (returnType != null) {
       final PsiType methodReturnType = method.getReturnType();
-      if (!typesAreEquivalent(returnType,
-        methodReturnType)) {
+      if (!typesAreEquivalent(returnType, methodReturnType)) {
         return false;
       }
     }
     if (containingClassName != null) {
       final PsiClass containingClass = method.getContainingClass();
-      return InheritanceUtil.isInheritor(containingClass,
-        containingClassName);
+      return InheritanceUtil.isInheritor(containingClass, containingClassName);
     }
     return true;
   }

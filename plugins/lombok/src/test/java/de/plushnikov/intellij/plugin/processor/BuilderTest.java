@@ -66,6 +66,10 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testBuilder$BuilderMultipleConstructorException() {
+    doTest(true);
+  }
+
   public void testBuilder$BuilderAndAllArgsConstructor() {
     doTest(true);
   }

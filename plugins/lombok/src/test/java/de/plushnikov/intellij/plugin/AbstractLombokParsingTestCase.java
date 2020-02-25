@@ -4,12 +4,14 @@ import com.google.common.base.Objects;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -290,21 +292,18 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     for (PsiMethod afterConstructor : afterConstructors) {
       boolean compared = false;
       final PsiModifierList theirsFieldModifierList = afterConstructor.getModifierList();
-      for (PsiMethod beforeConstructor : beforeConstructors) {
-        if (afterConstructor.getName().equals(beforeConstructor.getName()) &&
-          afterConstructor.getParameterList().getParametersCount() == beforeConstructor.getParameterList().getParametersCount()) {
-          PsiModifierList intellijConstructorModifierList = beforeConstructor.getModifierList();
+      final List<PsiType> afterConstructorParameterTypes = Arrays.stream(afterConstructor.getParameterList().getParameters()).map(PsiParameter::getType).collect(Collectors.toList());
 
+      for (PsiMethod beforeConstructor : beforeConstructors) {
+        if (PsiElementUtil.methodMatches(beforeConstructor, null, null, afterConstructor.getName(), afterConstructorParameterTypes)) {
+          final PsiModifierList intellijConstructorModifierList = beforeConstructor.getModifierList();
           compareModifiers(intellijConstructorModifierList, theirsFieldModifierList);
-          compareType(beforeConstructor.getReturnType(), afterConstructor.getReturnType(), afterConstructor);
-          compareParams(beforeConstructor.getParameterList(), afterConstructor.getParameterList());
 
           compared = true;
           break;
         }
-
       }
-      assertTrue("Constructor names are not equal, Method: (" + afterConstructor.getName() + ") not found in class : " + beforeClass.getName(), compared);
+      assertTrue("Constructors are not equal, Constructor: '" + afterConstructor.getName() + "' (with same parameters) not found in class : " + beforeClass.getName(), compared);
     }
   }
 
