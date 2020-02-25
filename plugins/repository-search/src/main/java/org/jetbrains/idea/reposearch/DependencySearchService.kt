@@ -71,7 +71,7 @@ class DependencySearchService(private val myProject: Project) {
                             consumer: ResultConsumer,
                             searchMethod: (DependencySearchProvider, ResultConsumer) -> Unit): Promise<Int> {
 
-    if (parameters.useCache() && false) {
+    if (parameters.useCache()) {
       val cachedValue = foundInCache(cacheKey, parameters, consumer)
       if (cachedValue != null) {
         return cachedValue
