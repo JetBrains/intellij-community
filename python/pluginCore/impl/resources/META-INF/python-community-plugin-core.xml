@@ -8,10 +8,10 @@
   </extensions>
 
   <actions>
-    <action id="PyManagePackages" class="com.jetbrains.python.packaging.PyManagePackagesAction" text="Manage Python Packages...">
+    <action id="PyManagePackages" class="com.jetbrains.python.packaging.PyManagePackagesAction">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
-    <action id="RunPythonToolwindowAction" class="com.jetbrains.python.console.RunPythonToolwindowAction" text="Python Console">
+    <action id="RunPythonToolwindowAction" class="com.jetbrains.python.console.RunPythonToolwindowAction">
     </action>
   </actions>
 
