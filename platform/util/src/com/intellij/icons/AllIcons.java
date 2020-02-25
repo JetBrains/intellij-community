@@ -367,8 +367,8 @@ public class AllIcons {
     /** 16x16 */ public static final Icon BalloonWarning = load("/general/balloonWarning.svg");
     /** 12x12 */ public static final Icon BalloonWarning12 = load("/general/balloonWarning12.svg");
     /** 8x4 */ public static final Icon ButtonDropTriangle = load("/general/buttonDropTriangle.svg");
-    /** 12x12 */ public static final Icon CollapseComponent = load("/general/collapseComponent.svg");
-    /** 12x12 */ public static final Icon CollapseComponentHover = load("/general/collapseComponentHover.svg");
+    /** 16x16 */ public static final Icon CollapseComponent = load("/general/collapseComponent.svg");
+    /** 16x16 */ public static final Icon CollapseComponentHover = load("/general/collapseComponentHover.svg");
     /** 16x16 */ public static final Icon ContextHelp = load("/general/contextHelp.svg");
     /** 16x16 */ public static final Icon CopyHovered = load("/general/copyHovered.svg");
     /** 2x19 */ public static final Icon Divider = load("/general/divider.svg");
@@ -378,8 +378,8 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Error = load("/general/error.svg");
     /** 32x32 */ public static final Icon ErrorDialog = load("/general/errorDialog.svg");
     /** 16x16 */ public static final Icon ExclMark = load("/general/exclMark.svg");
-    /** 12x12 */ public static final Icon ExpandComponent = load("/general/expandComponent.svg");
-    /** 12x12 */ public static final Icon ExpandComponentHover = load("/general/expandComponentHover.svg");
+    /** 16x16 */ public static final Icon ExpandComponent = load("/general/expandComponent.svg");
+    /** 16x16 */ public static final Icon ExpandComponentHover = load("/general/expandComponentHover.svg");
     /** 16x16 */ public static final Icon ExternalTools = load("/general/externalTools.svg");
     /** 16x16 */ public static final Icon Filter = load("/general/filter.svg");
     /** 16x16 */ public static final Icon FitContent = load("/general/fitContent.svg");

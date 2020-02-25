@@ -1,6 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
-  <g fill="#7F8B91" fill-opacity=".9" fill-rule="evenodd">
-    <path d="M2.17131958,9.17131958 L4.67131958,6.67131958 L5.37842636,7.37842636 L2.87842636,9.87842636 L5,12 L0,12 L0,7 L2.17131958,9.17131958 Z"/>
-    <path d="M8.79289322,2.5 L11.2928932,-6.22044605e-16 L12,0.707106781 L9.5,3.20710678 L11.6715729,5.37867966 L6.67157288,5.37867966 L6.67157288,0.378679656 L8.79289322,2.5 Z" transform="rotate(180 9.336 2.69)"/>
-  </g>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="idea/community/platform/icons/src/general/expandComponentHover">
+<g id="Icons/expandHover">
+<g id="Icons/expandHover_2">
+<path id="Combined Shape" fill-rule="evenodd" clip-rule="evenodd" d="M7.37843 9.37843L6.67132 8.67133L4.17132 11.1713L2 9.00001V14H7L4.87843 11.8784L7.37843 9.37843Z" fill="#7F8B91" fill-opacity="0.9"/>
+<path id="Combined Shape_2" fill-rule="evenodd" clip-rule="evenodd" d="M8.67157 6.67159L9.37868 7.37869L11.8787 4.87869L14 7.00001V2.00001H9L11.1716 4.17159L8.67157 6.67159Z" fill="#7F8B91" fill-opacity="0.9"/>
+</g>
+</g>
+</g>
 </svg>
