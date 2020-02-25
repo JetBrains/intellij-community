@@ -66,28 +66,28 @@ public class DefaultActionGroup extends ActionGroup {
     this(Presentation.NULL_STRING, actions);
   }
 
-  public DefaultActionGroup(@NotNull Supplier<String> name, @NotNull List<? extends AnAction> actions) {
+  public DefaultActionGroup(@NotNull Supplier<@Nls String> name, @NotNull List<? extends AnAction> actions) {
     this(name, false);
     addActions(actions);
   }
 
-  public DefaultActionGroup(@Nullable String name, @NotNull List<? extends AnAction> actions) {
+  public DefaultActionGroup(@Nullable @Nls String name, @NotNull List<? extends AnAction> actions) {
     this(() -> name, actions);
   }
 
-  public DefaultActionGroup(@Nullable String shortName, boolean popup) {
+  public DefaultActionGroup(@Nullable @Nls String shortName, boolean popup) {
     this(() -> shortName, popup);
   }
 
-  protected DefaultActionGroup(@NotNull Supplier<String> shortName, boolean popup) {
+  protected DefaultActionGroup(@NotNull Supplier<@Nls String> shortName, boolean popup) {
     super(shortName, popup);
   }
 
-  public static DefaultActionGroup createPopupGroup(@NotNull Supplier<String> shortName) {
+  public static DefaultActionGroup createPopupGroup(@NotNull Supplier<@Nls String> shortName) {
     return new DefaultActionGroup(shortName, true);
   }
 
-  public static DefaultActionGroup createFlatGroup(@NotNull Supplier<String> shortName) {
+  public static DefaultActionGroup createFlatGroup(@NotNull Supplier<@Nls String> shortName) {
     return new DefaultActionGroup(shortName, false);
   }
 
