@@ -14,8 +14,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -56,16 +54,6 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     super(project, showCheckboxes, true);
 
     setDragEnabled(true);
-  }
-
-  @Override
-  protected void installEnterKeyHandler() {
-    EditSourceOnEnterKeyHandler.install(this);
-  }
-
-  @Override
-  protected void installDoubleClickHandler() {
-    EditSourceOnDoubleClickHandler.install(this);
   }
 
   @NotNull
