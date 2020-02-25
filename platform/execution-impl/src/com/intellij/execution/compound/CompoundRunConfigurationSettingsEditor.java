@@ -11,7 +11,6 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunManagerImplKt;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -127,6 +126,6 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
           selector.select(configuration);
         }
       }
-    }).setToolbarPosition(ActionToolbarPosition.TOP).createPanel();
+    }).setAsUsualTopToolbar().createPanel();
   }
 }
