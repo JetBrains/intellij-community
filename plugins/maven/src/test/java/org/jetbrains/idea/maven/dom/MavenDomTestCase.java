@@ -273,6 +273,11 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(actual, expected);
   }
 
+  protected void assertCompletionVariants(CodeInsightTestFixture f, Function<LookupElement, String> lookupElementStringFunction, String... expected) {
+    List<String> actual = getCompletionVariants(f, lookupElementStringFunction);
+    assertUnorderedElementsAreEqual(actual, expected);
+  }
+
   protected void assertCompletionVariantsInclude(VirtualFile f,
                                                  String... expected) {
     assertCompletionVariantsInclude(f, LOOKUP_STRING, expected);
@@ -295,6 +300,16 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   protected List<String> getCompletionVariants(VirtualFile f, Function<LookupElement, String> lookupElementStringFunction) {
     configTest(f);
     LookupElement[] variants = myFixture.completeBasic();
+
+    List<String> result = new ArrayList<>();
+    for (LookupElement each : variants) {
+      result.add(lookupElementStringFunction.apply(each));
+    }
+    return result;
+  }
+
+  protected List<String> getCompletionVariants(CodeInsightTestFixture fixture, Function<LookupElement, String> lookupElementStringFunction) {
+    LookupElement[] variants = fixture.getLookupElements();
 
     List<String> result = new ArrayList<>();
     for (LookupElement each : variants) {
