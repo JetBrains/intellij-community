@@ -106,7 +106,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, RENDERING_TEXT,
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT,
                              "project",
                              "maven-clean-plugin",
                              "maven-jar-plugin",
