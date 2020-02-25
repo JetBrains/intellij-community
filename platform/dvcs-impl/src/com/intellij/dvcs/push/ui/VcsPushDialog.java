@@ -26,10 +26,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -44,8 +41,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvider {
-  private static final String DIMENSION_KEY = "Vcs.Push.Dialog.v2";
-  private static final String HELP_ID = "Vcs.Push.Dialog";
+  @NonNls private static final String DIMENSION_KEY = "Vcs.Push.Dialog.v2";
+  @NonNls private static final String HELP_ID = "Vcs.Push.Dialog";
   private static final int CENTER_PANEL_HEIGHT = 450;
   private static final int CENTER_PANEL_WIDTH = 800;
 
@@ -120,7 +117,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @NotNull
   protected JPanel createOptionsPanel() {
-    JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowy")) {
+    JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowy")) { //NON-NLS NON-NLS
       @Override
       public Component add(Component comp) {
         JPanel wrapperPanel = new BorderLayoutPanel().addToCenter(comp);
@@ -138,7 +135,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @NotNull
   private JPanel createSouthOptionsPanel() {
-    JPanel optionsPanel = new JPanel(new MigLayout(String.format("ins 0 %spx 0 0, flowx, gapx %spx", JBUI.scale(20), JBUI.scale(16))));
+    JPanel optionsPanel = new JPanel(new MigLayout(String.format("ins 0 %spx 0 0, flowx, gapx %spx", JBUI.scale(20), JBUI.scale(16)))); //NON-NLS
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       if (panel.getPosition() == VcsPushOptionsPanel.OptionsPanelPosition.SOUTH) {
         optionsPanel.add(panel);

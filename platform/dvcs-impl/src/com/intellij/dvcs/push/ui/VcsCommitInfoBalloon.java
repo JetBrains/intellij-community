@@ -78,8 +78,8 @@ public class VcsCommitInfoBalloon {
         Object node = selectionPaths[0].getLastPathComponent();
         myEditorPane.setText(
           XmlStringUtil.wrapInHtml(node instanceof TooltipNode
-                                   ? ((TooltipNode)node).getTooltip().replaceAll("\n", "<br>")
-                                   : "<i style='color:gray;'>" + DvcsBundle.getString("push.no.commit.message.found") + "</i>"));
+                                   ? ((TooltipNode)node).getTooltip().replaceAll("\n", "<br>") //NON-NLS
+                                   : "<i style='color:gray;'>" + DvcsBundle.getString("push.no.commit.message.found") + "</i>")); //NON-NLS
         //workaround: fix initial size for JEditorPane
         RepaintManager rp = RepaintManager.currentManager(myEditorPane);
         rp.markCompletelyDirty(myEditorPane);

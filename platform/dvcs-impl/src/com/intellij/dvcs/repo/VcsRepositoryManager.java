@@ -325,7 +325,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
   @NotNull
   public String toString() {
-    return "RepositoryManager{myRepositories: " + myRepositories + '}';
+    return "RepositoryManager{myRepositories: " + myRepositories + '}'; // NON-NLS
   }
 
   @TestOnly
