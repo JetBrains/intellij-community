@@ -36,7 +36,7 @@ interface RowBuilder : BaseBuilder {
 
   fun checkBoxGroup(@Nls title: String?, body: () -> Unit)
 
-  fun row(@Nls label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
+  fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
     return createChildRow(label = label, isSeparated = separated).apply(init)
   }
 
