@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Collection;
 
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+
 public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFilePatch> {
 
   protected TextFilePatchInProgress(TextFilePatch patch,
@@ -42,11 +44,13 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
       if (FilePatchStatus.ADDED.equals(myStatus)) {
         final FilePath newFilePath = VcsUtil.getFilePath(myIoCurrentBase, false);
         final String content = myPatch.getSingleHunkPatchText();
-        myNewContentRevision = new SimpleContentRevision(content, newFilePath, myPatch.getAfterVersionId());
+        myNewContentRevision = new SimpleContentRevision(content, newFilePath, chooseNotNull(myPatch.getAfterVersionId(), VcsBundle
+          .message("patch.apply.conflict.patched.version")));
       }
       else {
         final FilePath newFilePath = detectNewFilePathForMovedOrModified();
-        myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, myPatch.getAfterVersionId(), myPatch);
+        myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, chooseNotNull(myPatch.getAfterVersionId(), VcsBundle
+          .message("patch.apply.conflict.patched.version")), myPatch);
       }
     }
     return myNewContentRevision;
