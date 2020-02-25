@@ -73,10 +73,12 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
 
   @Nullable
   private StatusBarWidget getWidget() {
-    if (widgetWasCreated) {
-      return myWidget;
+    if (!widgetWasCreated) {
+      myWidget = myProvider.getWidget(myProject);
+      widgetWasCreated = true;
     }
-    return myWidget = myProvider.getWidget(myProject);
+
+    return myWidget;
   }
 
   @Override
