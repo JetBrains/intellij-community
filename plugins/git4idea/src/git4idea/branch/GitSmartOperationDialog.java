@@ -16,6 +16,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.ChangesBrowserWithRollback;
 import git4idea.util.GitSimplePathsBrowser;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,8 +65,8 @@ public class GitSmartOperationDialog extends DialogWrapper {
   static Choice show(@NotNull Project project,
                      @NotNull List<? extends Change> changes,
                      @NotNull Collection<String> paths,
-                     @NotNull String operationTitle,
-                     @Nullable String forceButtonTitle) {
+                     @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operationTitle,
+                     @Nullable @Nls(capitalization = Nls.Capitalization.Title) String forceButtonTitle) {
     JComponent fileBrowser = !changes.isEmpty()
                              ? new ChangesBrowserWithRollback(project, changes)
                              : new GitSimplePathsBrowser(project, paths);
@@ -75,8 +76,10 @@ public class GitSmartOperationDialog extends DialogWrapper {
     return Choice.fromDialogExitCode(dialog.getExitCode());
   }
 
-  private GitSmartOperationDialog(@NotNull Project project, @NotNull JComponent fileBrowser, @NotNull String operationTitle,
-                                  @Nullable String forceButton) {
+  private GitSmartOperationDialog(@NotNull Project project,
+                                  @NotNull JComponent fileBrowser,
+                                  @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operationTitle,
+                                  @Nullable @Nls(capitalization = Nls.Capitalization.Title) String forceButton) {
     super(project);
     myFileBrowser = fileBrowser;
     myOperationTitle = operationTitle;
@@ -133,12 +136,13 @@ public class GitSmartOperationDialog extends DialogWrapper {
 
 
   private class ForceCheckoutAction extends AbstractAction {
-    
-    ForceCheckoutAction(@NotNull String buttonTitle, @NotNull String operationTitle) {
+
+    ForceCheckoutAction(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String buttonTitle,
+                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operationTitle) {
       super(buttonTitle);
       putValue(Action.SHORT_DESCRIPTION, capitalize(operationTitle) + " and overwrite local changes");
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
       close(FORCE_EXIT_CODE);
