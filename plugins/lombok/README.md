@@ -148,6 +148,7 @@ Developed By
 - [**@sluongng** Son Luong Ngoc](https://github.com/sluongng)
 - [**@tagae** Sebastián González](https://github.com/tagae)
 - [**@wyhasany** Michał Rowicki](https://github.com/wyhasany)
+- [**@ocadaruma** Haruki Okada](https://github.com/ocadaruma)
 
 Supporters
 --------

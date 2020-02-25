@@ -31,6 +31,7 @@ public class BuilderInfo {
   private PsiType fieldInBuilderType;
   private boolean deprecated;
   private String visibilityModifier;
+  private String setterPrefix;
 
   private String builderChainResult = "this";
 
@@ -100,6 +101,11 @@ public class BuilderInfo {
 
   public BuilderInfo withVisibilityModifier(String visibilityModifier) {
     this.visibilityModifier = visibilityModifier;
+    return this;
+  }
+
+  public BuilderInfo withSetterPrefix(String setterPrefix) {
+    this.setterPrefix = setterPrefix;
     return this;
   }
 
@@ -185,6 +191,10 @@ public class BuilderInfo {
   @PsiModifier.ModifierConstant
   public String getVisibilityModifier() {
     return visibilityModifier;
+  }
+
+  public String getSetterPrefix() {
+    return setterPrefix;
   }
 
   public PsiClass getBuilderClass() {

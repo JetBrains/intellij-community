@@ -7,6 +7,7 @@ import com.intellij.psi.PsiModifier;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,8 @@ class NonSingularHandler implements BuilderElementHandler {
   @Override
   public Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info) {
     final String blockText = getAllMethodBody(info.getFieldName(), info.getBuilderChainResult());
-    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(info.getManager(), info.getFieldName())
+    final String methodName = LombokUtils.buildAccessorName(info.getSetterPrefix(), info.getFieldName());
+    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(info.getManager(), methodName)
       .withContainingClass(info.getBuilderClass())
       .withMethodReturnType(info.getBuilderType())
       .withParameter(info.getFieldName(), info.getFieldType())

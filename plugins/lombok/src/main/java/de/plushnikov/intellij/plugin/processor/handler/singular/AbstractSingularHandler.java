@@ -13,6 +13,7 @@ import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
@@ -60,7 +61,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     final String singularName = createSingularName(info.getSingularAnnotation(), fieldName);
 
     final PsiClass builderClass = info.getBuilderClass();
-    final LombokLightMethodBuilder oneAddMethodBuilder = new LombokLightMethodBuilder(info.getManager(), singularName)
+    final LombokLightMethodBuilder oneAddMethodBuilder = new LombokLightMethodBuilder(
+      info.getManager(), LombokUtils.buildAccessorName(info.getSetterPrefix(), singularName))
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
@@ -74,7 +76,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
     methods.add(oneAddMethodBuilder);
 
-    final LombokLightMethodBuilder allAddMethodBuilder = new LombokLightMethodBuilder(info.getManager(), fieldName)
+    final LombokLightMethodBuilder allAddMethodBuilder = new LombokLightMethodBuilder(
+      info.getManager(), LombokUtils.buildAccessorName(info.getSetterPrefix(), fieldName))
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())

@@ -47,6 +47,7 @@ public class BuilderHandler {
   private final static String ANNOTATION_BUILDER_CLASS_NAME = "builderClassName";
   private static final String ANNOTATION_BUILD_METHOD_NAME = "buildMethodName";
   private static final String ANNOTATION_BUILDER_METHOD_NAME = "builderMethodName";
+  private static final String ANNOTATION_SETTER_PREFIX = "setterPrefix";
 
   private final static String BUILD_METHOD_NAME = "build";
   private final static String BUILDER_METHOD_NAME = "builder";
@@ -232,6 +233,12 @@ public class BuilderHandler {
   }
 
   @NotNull
+  private String getSetterPrefix(@NotNull PsiAnnotation psiAnnotation) {
+    final String setterPrefix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_SETTER_PREFIX);
+    return null == setterPrefix ? "" : setterPrefix;
+  }
+
+  @NotNull
   @PsiModifier.ModifierConstant
   private String getBuilderOuterAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String accessVisibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
@@ -361,11 +368,13 @@ public class BuilderHandler {
                                               @Nullable PsiMethod psiClassMethod, @NotNull PsiClass builderClass) {
     final PsiSubstitutor builderSubstitutor = getBuilderSubstitutor(psiClass, builderClass);
     final String accessVisibility = getBuilderInnerAccessVisibility(psiAnnotation);
+    final String setterPrefix = getSetterPrefix(psiAnnotation);
 
     return createBuilderInfos(psiClass, psiClassMethod)
       .map(info -> info.withSubstitutor(builderSubstitutor))
       .map(info -> info.withBuilderClass(builderClass))
       .map(info -> info.withVisibilityModifier(accessVisibility))
+      .map(info -> info.withSetterPrefix(setterPrefix))
       .collect(Collectors.toList());
   }
 
