@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.conflicts
 
 import com.intellij.ide.util.PropertiesComponent
@@ -69,7 +69,7 @@ class GitConflictsPanel(
       add(ScrollPaneFactory.createScrollPane(conflictsTree), BorderLayout.CENTER)
     }
 
-    conflictsTree.setDoubleClickHandler { showMergeWindowForSelection() }
+    conflictsTree.setDoubleClickAndEnterKeyHandler { showMergeWindowForSelection() }
 
     val connection = project.messageBus.connect(this)
     connection.subscribe(GitConflictsHolder.CONFLICTS_CHANGE, GitConflictsHolder.ConflictsListener { updateConflicts() })

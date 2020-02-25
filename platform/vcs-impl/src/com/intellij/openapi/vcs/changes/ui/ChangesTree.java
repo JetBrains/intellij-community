@@ -262,8 +262,16 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     if (parent != null) Disposer.register(parent, () -> removeTreeSelectionListener(listener));
   }
 
-  public void setDoubleClickHandler(@NotNull final Runnable doubleClickHandler) {
-    myDoubleClickHandler = doubleClickHandler;
+  /**
+   * @deprecated Use {@link #setDoubleClickAndEnterKeyHandler(Runnable)}
+   */
+  @Deprecated
+  public void setDoubleClickHandler(@NotNull Runnable doubleClickHandler) {
+    setDoubleClickAndEnterKeyHandler(doubleClickHandler);
+  }
+
+  public void setDoubleClickAndEnterKeyHandler(@NotNull Runnable handler) {
+    myDoubleClickHandler = handler;
   }
 
   public void installPopupHandler(ActionGroup group) {
