@@ -247,6 +247,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myHandlers.setDoubleClickHandler(handler);
   }
 
+  @Nullable
+  public Processor<KeyEvent> getEnterKeyHandler() {
+    return myHandlers.getEnterKeyHandler();
+  }
+
   public void setEnterKeyHandler(@Nullable Processor<KeyEvent> handler) {
     myHandlers.setEnterKeyHandler(handler);
   }
