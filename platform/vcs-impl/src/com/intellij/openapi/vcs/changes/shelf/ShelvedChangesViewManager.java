@@ -343,15 +343,8 @@ public class ShelvedChangesViewManager implements Disposable {
     private ShelfTree(@NotNull Project project) {
       super(project, false, false, true);
       setKeepTreeState(true);
-
-      new DoubleClickListener() {
-        @Override
-        protected boolean onDoubleClick(MouseEvent e) {
-          if (!hasExactlySelectedChanges()) return false;
-          DiffShelvedChangesActionProvider.showShelvedChangesDiff(DataManager.getInstance().getDataContext(ShelfTree.this));
-          return true;
-        }
-      }.installOn(this);
+      setDoubleClickHandler(e -> showShelvedChangesDiff());
+      setEnterKeyHandler(e -> showShelvedChangesDiff());
     }
 
     public void setLoadedLists(@NotNull List<ShelvedChangeList> lists) {
@@ -372,6 +365,12 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public int getToggleClickCount() {
       return 2;
+    }
+
+    private boolean showShelvedChangesDiff() {
+      if (!hasExactlySelectedChanges()) return false;
+      DiffShelvedChangesActionProvider.showShelvedChangesDiff(DataManager.getInstance().getDataContext(this));
+      return true;
     }
 
     private boolean hasExactlySelectedChanges() {
