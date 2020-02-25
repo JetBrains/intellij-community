@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
@@ -18,6 +19,7 @@ public class TypeNameEP extends AbstractExtensionPointBean {
   public static final ExtensionPointName<TypeNameEP> EP_NAME = ExtensionPointName.create("com.intellij.typeName");
 
   @Attribute("className")
+  @RequiredElement
   public String className;
 
   @Attribute("name")
