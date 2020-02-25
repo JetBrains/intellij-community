@@ -25,6 +25,7 @@ private val CONTRIBUTOR_CHUNKS_KEY: Key<MutableMap<ChunkTag, UastReferenceContri
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
+  // important: here we rely on the fact that all reference contributors run in a single-thread
   val registrar = this
   var chunks = registrar.getUserData(CONTRIBUTOR_CHUNKS_KEY)
   if (chunks == null) {
