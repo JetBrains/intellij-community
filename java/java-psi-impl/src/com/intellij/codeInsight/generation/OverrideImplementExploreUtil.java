@@ -157,9 +157,7 @@ public class OverrideImplementExploreUtil {
     if (explorersProvider != null) {
       for (final MemberImplementorExplorer implementor : explorersProvider.getExplorers()) {
         for (final PsiMethod method : implementor.getMethodsToImplement(aClass)) {
-          MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), method.getParameterList(),
-                                                                                method.getTypeParameterList(), PsiSubstitutor.EMPTY,
-                                                                                method.isConstructor());
+          MethodSignature signature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
           CandidateInfo info = new CandidateInfo(method, PsiSubstitutor.EMPTY);
           result.put(signature, info);
         }
