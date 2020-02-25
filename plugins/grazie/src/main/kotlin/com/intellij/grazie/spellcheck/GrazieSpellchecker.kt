@@ -66,10 +66,10 @@ object GrazieSpellchecker : GrazieStateLifecycle {
     init(newState)
   }
 
-  fun isCorrect(word: String): Boolean {
+  fun isCorrect(word: String): Boolean? {
     val myCheckers = filterCheckers(word)
 
-    if (myCheckers.isEmpty()) return true
+    if (myCheckers.isEmpty()) return null
 
     return myCheckers.any { speller ->
       try {
