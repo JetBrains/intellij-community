@@ -53,6 +53,13 @@ public class FieldDefaultsModifierTest extends AbstractLombokLightCodeInsightTes
     assertFalse("@FieldDefaults(makeFinal = true) should not make @NonFinal fields final", modifierList.hasModifierProperty(PsiModifier.FINAL));
   }
 
+  public void testFieldDefaultsWithUtilityClass() {
+
+    PsiModifierList modifierList = getFieldModifierListAtCaret();
+
+    assertFalse("@FieldDefaults(makeFinal = true) should not make @UtilityClass fields final", modifierList.hasModifierProperty(PsiModifier.FINAL));
+  }
+
   //</editor-fold>
 
   //<editor-fold desc="Handling of visibility modifiers">

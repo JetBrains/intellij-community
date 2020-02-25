@@ -20,8 +20,7 @@ import java.util.Set;
  */
 public class UtilityClassModifierProcessor implements ModifierProcessor {
 
-  @Override
-  public boolean isSupported(@NotNull PsiModifierList modifierList) {
+  public static boolean isModifierListSupported(@NotNull PsiModifierList modifierList) {
     PsiElement modifierListParent = modifierList.getParent();
 
     if (modifierListParent instanceof PsiClass) {
@@ -38,6 +37,11 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
     PsiClass searchableClass = PsiTreeUtil.getParentOfType(modifierListParent, PsiClass.class, true);
 
     return null != searchableClass && PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, UtilityClass.class) && UtilityClassProcessor.validateOnRightType(searchableClass, new ProblemNewBuilder());
+  }
+
+  @Override
+  public boolean isSupported(@NotNull PsiModifierList modifierList) {
+    return isModifierListSupported(modifierList);
   }
 
   @Override
@@ -58,7 +62,7 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
     }
   }
 
-  private boolean isElementFieldOrMethodOrInnerClass(PsiElement element) {
+  private static boolean isElementFieldOrMethodOrInnerClass(PsiElement element) {
     return element instanceof PsiField || element instanceof PsiMethod ||
       (element instanceof PsiClass && element.getParent() instanceof PsiClass && !((PsiClass) element.getParent()).isInterface());
   }
