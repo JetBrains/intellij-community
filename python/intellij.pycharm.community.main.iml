@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="intellij.terminal" />
     <orderEntry type="module" module-name="intellij.pycharm.community" />
     <orderEntry type="module" module-name="intellij.pycharm.community.customization" />
-    <orderEntry type="module" module-name="intellij.pycharm.community.resources" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" />
     <orderEntry type="module" module-name="intellij.python.community.plugin.modules" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.main" />
