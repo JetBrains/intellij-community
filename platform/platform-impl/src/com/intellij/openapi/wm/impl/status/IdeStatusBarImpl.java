@@ -199,13 +199,15 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   @Override
   public void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Disposable parentDisposable) {
     addWidget(widget);
-    Disposer.register(parentDisposable, () -> removeWidget(widget.ID()));
+    String id = widget.ID();
+    Disposer.register(parentDisposable, () -> removeWidget(id));
   }
 
   @Override
   public void addWidget(@NotNull final StatusBarWidget widget, @NotNull String anchor, @NotNull final Disposable parentDisposable) {
     addWidget(widget, anchor);
-    Disposer.register(parentDisposable, () -> removeWidget(widget.ID()));
+    String id = widget.ID();
+    Disposer.register(parentDisposable, () -> removeWidget(id));
   }
 
   @Override
@@ -271,11 +273,6 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
       removeWidget(id);
     }
     myCustomComponentIds.clear();
-  }
-
-  @ApiStatus.Internal
-  public void doAddWidget(@NotNull StatusBarWidget widget, @NotNull String anchor) {
-    addWidget(widget, Position.RIGHT, anchor);
   }
 
   private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position position, @NotNull String anchor) {

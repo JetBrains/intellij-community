@@ -3,7 +3,6 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Extension point for adding new widgets to status bar
  */
-@ApiStatus.Experimental
 public interface StatusBarWidgetFactory {
   ExtensionPointName<StatusBarWidgetFactory> EP_NAME = new ExtensionPointName<>("com.intellij.statusBarWidgetFactory");
 
