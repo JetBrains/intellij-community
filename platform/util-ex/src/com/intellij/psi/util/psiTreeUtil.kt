@@ -224,6 +224,7 @@ fun walkUp(start: PsiElement, offsetInStart: Int, stopAfter: PsiElement): Iterat
  *
  * @return returns pairs of (element, offset relative to element)
  * @see elementsAtOffsetUp
+ * @see leavesAroundOffset
  */
 @ApiStatus.Experimental
 fun PsiFile.elementsAroundOffsetUp(offsetInFile: Int): Iterator<ElementAndOffset> {
@@ -292,6 +293,10 @@ private suspend fun SequenceScope<ElementAndOffset>.elementsAtOffsetUp(element: 
   }
 }
 
+/**
+ * @return iterable of elements without children at a given [offsetInFile].
+ * Returned elements are the same bottom elements from which walk up is started in [elementsAroundOffsetUp]
+ */
 @ApiStatus.Experimental
 fun PsiFile.leavesAroundOffset(offsetInFile: Int): Iterable<ElementAndOffset> {
   val leaf = findElementAt(offsetInFile) ?: return emptyList()
