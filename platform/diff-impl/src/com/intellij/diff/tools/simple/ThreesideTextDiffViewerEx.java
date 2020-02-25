@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -426,15 +425,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
       if (myChangesCount == 0 && myConflictsCount == 0) {
         return DiffBundle.message("merge.dialog.all.conflicts.resolved.message.text");
       }
-      return makeCounterWord(myChangesCount, "change") + ". " + makeCounterWord(myConflictsCount, "conflict");
-    }
-
-    @NotNull
-    private String makeCounterWord(int number, @NotNull String word) {
-      if (number == 0) {
-        return "No " + StringUtil.pluralize(word);
-      }
-      return number + " " + StringUtil.pluralize(word, number);
+      return DiffBundle.message("merge.differences.status.text", myChangesCount, myConflictsCount);
     }
   }
 

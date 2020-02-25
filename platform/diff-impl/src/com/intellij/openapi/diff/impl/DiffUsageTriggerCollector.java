@@ -6,16 +6,17 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DiffUsageTriggerCollector {
 
-  private static void trigger(@NotNull String eventId, @NotNull FeatureUsageData data) {
+  private static void trigger(@NotNull @NonNls String eventId, @NotNull FeatureUsageData data) {
     FUCounterUsageLogger.getInstance().logEvent("vcs.diff.trigger", eventId, data);
   }
 
-  public static void trigger(@NotNull String feature, @NotNull Enum value, @Nullable String place) {
+  public static void trigger(@NotNull @NonNls String feature, @NotNull Enum value, @Nullable @NonNls String place) {
     FeatureUsageData data = new FeatureUsageData()
       .addData("value", value.name())
       .addData("diff_place", StringUtil.notNullize(place, "unknown"));
@@ -23,7 +24,7 @@ public class DiffUsageTriggerCollector {
     trigger(feature, data);
   }
 
-  public static void trigger(@NotNull String feature, @NotNull DiffTool diffTool, @Nullable String place) {
+  public static void trigger(@NotNull @NonNls String feature, @NotNull DiffTool diffTool, @Nullable @NonNls String place) {
     FeatureUsageData data = new FeatureUsageData()
       .addPluginInfo(PluginInfoDetectorKt.getPluginInfo(diffTool.getClass()))
       .addData("value", diffTool.getName())

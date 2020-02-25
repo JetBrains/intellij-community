@@ -142,7 +142,7 @@ public abstract class MergeRequestProcessor implements Disposable {
       catch (Throwable e) {
         LOG.warn(e);
         ApplicationManager.getApplication().invokeLater(
-          () -> swapViewer(new MessageMergeViewer(myContext, "Can't show merge: " + e.getMessage())),
+          () -> swapViewer(new MessageMergeViewer(myContext, DiffBundle.message("label.cant.show.merge.with.description", e.getMessage()))),
           modality);
       }
     });
@@ -273,7 +273,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   }
 
   private void setTitle(@Nullable String title) {
-    if (title == null) title = "Merge";
+    if (title == null) title = DiffBundle.message("merge.files.dialog.title");
     setWindowTitle(title);
   }
 
@@ -297,8 +297,8 @@ public abstract class MergeRequestProcessor implements Disposable {
       if (!myNotificationPanel.isNull()) return;
 
       EditorNotificationPanel notification = new EditorNotificationPanel(LightColors.RED);
-      notification.setText("Conflict is not valid and no longer can be resolved.");
-      notification.createActionLabel("Abort Resolve", () -> {
+      notification.setText(DiffBundle.message("error.conflict.is.not.valid.and.no.longer.can.be.resolved"));
+      notification.createActionLabel(DiffBundle.message("button.abort.resolve"), () -> {
         applyRequestResult(MergeResult.CANCEL);
         closeDialog();
       });

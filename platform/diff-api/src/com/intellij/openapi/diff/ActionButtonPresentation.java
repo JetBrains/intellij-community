@@ -37,7 +37,7 @@ public abstract class ActionButtonPresentation {
     }
   };
 
-  public static final ActionButtonPresentation CANCEL_WITH_PROMPT = new ActionButtonPresentation("Revert") {
+  public static final ActionButtonPresentation CANCEL_WITH_PROMPT = new ActionButtonPresentation(CommonBundle.message("button.revert")) {
     @Override
     public void run(DialogWrapper dialog) {
       if (Messages.showYesNoDialog(dialog.getRootPane(),

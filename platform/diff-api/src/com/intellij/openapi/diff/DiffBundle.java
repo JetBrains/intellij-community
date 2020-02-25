@@ -23,7 +23,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class DiffBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.DiffBundle";
+  @NonNls public static final String BUNDLE = "messages.DiffBundle";
 
   private static final DiffBundle INSTANCE = new DiffBundle();
 

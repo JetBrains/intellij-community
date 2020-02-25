@@ -138,7 +138,7 @@ class ExternalDiffSettingsPanel {
       ExternalDiffToolUtil.execute(null, ExternalDiffSettings.instance, contents, titles, null)
     }
     catch (e: Exception) {
-      Messages.showErrorDialog(e.message, DiffBundle.message("settings.external.diff.cannot.show.diff"))
+      Messages.showErrorDialog(e.message, DiffBundle.message("error.cannot.show.diff"))
     }
   }
 
@@ -154,7 +154,7 @@ class ExternalDiffSettingsPanel {
       ExternalDiffToolUtil.execute(null, ExternalDiffSettings.instance, contents, titles, null)
     }
     catch (e: Exception) {
-      Messages.showErrorDialog(e.message, DiffBundle.message("settings.external.diff.cannot.show.diff"))
+      Messages.showErrorDialog(e.message, DiffBundle.message("error.cannot.show.diff"))
     }
   }
 
@@ -182,7 +182,7 @@ class ExternalDiffSettingsPanel {
       ExternalDiffToolUtil.executeMerge(null, ExternalDiffSettings.instance, request as ThreesideMergeRequest)
     }
     catch (e: Exception) {
-      Messages.showErrorDialog(e.message, DiffBundle.message("settings.external.diff.cannot.show.merge"))
+      Messages.showErrorDialog(e.message, DiffBundle.message("error.cannot.show.merge"))
     }
   }
 }

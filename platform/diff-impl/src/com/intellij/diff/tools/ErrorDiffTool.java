@@ -88,7 +88,7 @@ public class ErrorDiffTool implements FrameDiffTool {
       if (request instanceof ErrorDiffRequest) {
         // TODO: explain some of ErrorDiffRequest exceptions ?
         String message = ((ErrorDiffRequest)request).getMessage();
-        return createReloadMessagePanel(myContext, message, "Reload", null);
+        return createReloadMessagePanel(myContext, message, DiffBundle.message("button.reload.diff.request"), null);
       }
       if (request instanceof MessageDiffRequest) {
         String message = ((MessageDiffRequest)request).getMessage();
@@ -115,7 +115,7 @@ public class ErrorDiffTool implements FrameDiffTool {
         }
       }
 
-      return DiffUtil.createMessagePanel("Can't show diff");
+      return DiffUtil.createMessagePanel(DiffBundle.message("error.message.cannot.show.diff"));
     }
 
     @NotNull

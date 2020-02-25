@@ -137,7 +137,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
             contentsEquals = false;
           }
           else if (FileUtilRt.isTooLarge(length1) || FileUtilRt.isTooLarge(length2)) {
-            return new ComparisonData(ThreeState.UNSURE, () -> "Files are too large to compare");
+            return new ComparisonData(ThreeState.UNSURE, () -> DiffBundle.message("error.files.too.large.to.compare.text"));
           }
           else {
             contentsEquals = DiffUtil.compareStreams(() -> DiffUtil.getFileInputStream(file1), () -> DiffUtil.getFileInputStream(file2));
@@ -213,10 +213,10 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     protected String getMessage() {
       if (myComparisonData.isContentsEqual == ThreeState.UNSURE) return null;
       if (myComparisonData.isContentsEqual == ThreeState.YES) {
-        return "Files contents are identical";
+        return DiffBundle.message("binary.diff.contents.are.identical.message.text");
       }
       else {
-        return "Files contents are different";
+        return DiffBundle.message("binary.diff.contents.are.not.identical.message.text");
       }
     }
   }
@@ -230,7 +230,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
     MyAcceptSideAction(@NotNull Side baseSide) {
       myBaseSide = baseSide;
-      getTemplatePresentation().setText(DiffBundle.message("copy.content.to.0", baseSide.select("Right", "Left")));
+      getTemplatePresentation().setText(DiffBundle.message("copy.content.to.side", baseSide.getIndex()));
       getTemplatePresentation().setIcon(baseSide.select(AllIcons.Vcs.Arrow_right, AllIcons.Vcs.Arrow_left));
       setShortcutSet(ActionManager.getInstance().getAction(baseSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
     }

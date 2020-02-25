@@ -10,6 +10,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -34,6 +35,7 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -385,7 +387,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                             @NotNull String text,
                                             @Nullable FileType fileType,
                                             @Nullable FilePath originalFilePath,
-                                            @Nullable String fileName,
+                                            @Nullable @NonNls String fileName,
                                             @Nullable VirtualFile highlightFile,
                                             @Nullable Charset charset,
                                             @Nullable Boolean bom,
@@ -428,7 +430,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                                  charset, isBOM, true, true);
 
     if (malformedContent) {
-      String notificationText = "Content was decoded with errors (using " + "'" + charset.name() + "' charset)";
+      String notificationText = DiffBundle.message("error.content.decoded.with.wrong.charset", charset.name());
       DiffUtil.addNotification(DiffNotifications.createNotification(notificationText, LightColors.RED), documentContent);
     }
 
@@ -438,8 +440,8 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
   @NotNull
   private static VirtualFile createTemporalFile(@Nullable Project project,
-                                                @NotNull String prefix,
-                                                @NotNull String suffix,
+                                                @NonNls @NotNull String prefix,
+                                                @NonNls @NotNull String suffix,
                                                 byte @NotNull [] content) throws IOException {
     File tempFile = FileUtil.createTempFile(PathUtil.suggestFileName(prefix + "_", true, false),
                                             PathUtil.suggestFileName("_" + suffix, true, false), true);
@@ -461,7 +463,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                          @NotNull String content,
                                          @Nullable FileType fileType,
                                          @Nullable FilePath originalFilePath,
-                                         @Nullable String fileName,
+                                         @Nullable @NonNls String fileName,
                                          boolean readOnly) {
     if (project != null && !project.isDefault() &&
         fileType != null && !fileType.isBinary() &&
@@ -484,7 +486,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                             @NotNull String content,
                                             @NotNull FileType fileType,
                                             @Nullable FilePath originalFilePath,
-                                            @NotNull String fileName,
+                                            @NonNls @NotNull String fileName,
                                             boolean readOnly) {
     return ReadAction.compute(() -> {
       LightVirtualFile file = new LightVirtualFile(fileName, fileType, content);

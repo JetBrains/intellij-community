@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -177,7 +178,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   }
 
   private abstract class EditorSettingToggleAction extends ToggleAction implements DumbAware, EditorSettingAction {
-    private EditorSettingToggleAction(@NotNull String actionId) {
+    private EditorSettingToggleAction(@NotNull @NonNls String actionId) {
       ActionUtil.copyFrom(this, actionId);
       getTemplatePresentation().setIcon(null);
     }

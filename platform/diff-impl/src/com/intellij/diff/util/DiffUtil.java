@@ -117,7 +117,7 @@ public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
-  @NotNull public static final String DIFF_CONFIG = "diff.xml";
+  @NotNull @NonNls public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUIScale.scale(2);
 
   public static class Lazy {
@@ -397,7 +397,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static JPanel createMessagePanel(@NotNull String message) {
+  public static JPanel createMessagePanel(@NotNull @Nls String message) {
     String text = StringUtil.replace(message, "\n", "<br>");
     JLabel label = new JBLabel(text) {
       @Override
@@ -457,7 +457,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static String createTooltipText(@NotNull String text, @Nullable String appendix) {
+  public static String createTooltipText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
     StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(text);
@@ -471,7 +471,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static String createNotificationText(@NotNull String text, @Nullable String appendix) {
+  public static String createNotificationText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
     StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(text);
@@ -569,7 +569,7 @@ public class DiffUtil {
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();
       if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
-        notifications.add(DiffNotifications.createNotification("File is too large. Only preview is loaded."));
+        notifications.add(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded")));
       }
     }
 
@@ -1480,7 +1480,7 @@ public class DiffUtil {
   @CalledInAwt
   public static boolean executeWriteCommand(@NotNull final Document document,
                                             @Nullable final Project project,
-                                            @Nullable final String commandName,
+                                            @Nullable @Nls final String commandName,
                                             @NotNull final Runnable task) {
     return executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false, task);
   }

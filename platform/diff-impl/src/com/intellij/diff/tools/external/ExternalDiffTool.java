@@ -86,7 +86,7 @@ public class ExternalDiffTool {
   private static List<DiffRequest> loadRequestsUnderProgress(@Nullable Project project,
                                                              @NotNull DiffRequestChain chain) throws Throwable {
     if (chain instanceof AsyncDiffRequestChain) {
-      return VcsUtil.computeWithModalProgress(project, "Loading Requests", true, indicator -> {
+      return VcsUtil.computeWithModalProgress(project, DiffBundle.message("progress.title.loading.requests"), true, indicator -> {
         ListSelection<? extends DiffRequestProducer> listSelection = ((AsyncDiffRequestChain)chain).loadRequestsInBackground();
         return collectRequests(project, listSelection.getList(), listSelection.getSelectedIndex(), indicator);
       });
@@ -95,7 +95,7 @@ public class ExternalDiffTool {
       List<? extends DiffRequestProducer> allProducers = chain.getRequests();
       int index = chain.getIndex();
 
-      return VcsUtil.computeWithModalProgress(project, "Loading Requests", true, indicator -> {
+      return VcsUtil.computeWithModalProgress(project, DiffBundle.message("progress.title.loading.requests"), true, indicator -> {
         return collectRequests(project, allProducers, index, indicator);
       });
     }
