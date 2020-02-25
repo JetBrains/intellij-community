@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
@@ -14,6 +14,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
 import com.intellij.ui.speedSearch.SpeedSearch
+import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.SmartHashSet
@@ -105,11 +106,10 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
         val selectionPath = selectionPath
         if (selectionPath == null || clickPath != selectionPath) return false
         val node = (selectionPath.lastPathComponent as? BranchTreeNode) ?: return false
-        if (model.isLeaf(node) || getToggleClickCount() != e.clickCount) {
-          doubleClickHandler(node)
-          return true
-        }
-        return false
+        if (isToggleEvent(this@BranchesTreeComponent, e)) return false
+
+        doubleClickHandler(node)
+        return true
       }
     }.installOn(this)
   }
