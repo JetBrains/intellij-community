@@ -1,6 +1,5 @@
 #!/usr/bin/env $PYTHON$
-# Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-# -*- coding: utf-8 -*-
+#  Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import os
 import socket
@@ -103,7 +102,7 @@ def try_activate_instance(args):
         return False
 
     paths = read_sequence_from_sock(s)
-    found = CONFIG_PATH in paths
+    found = CONFIG_PATH in paths or os.path.realpath(CONFIG_PATH) in paths
 
     if found:
         write_to_sock(s, 'activate ' + token + '\0' + os.getcwd() + '\0' + '\0'.join(args))
