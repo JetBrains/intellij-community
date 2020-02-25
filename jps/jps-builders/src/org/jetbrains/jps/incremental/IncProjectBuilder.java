@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.MappingFailedException;
@@ -897,9 +897,15 @@ public class IncProjectBuilder {
     private final BuildTargetChunk myChunk;
     private final Set<BuildChunkTask> myNotBuiltDependencies = new THashSet<>();
     private final List<BuildChunkTask> myTasksDependsOnThis = new ArrayList<>();
+    private int mySelfScore = 0;
+    private int myDepsScore = 0;
 
     private BuildChunkTask(BuildTargetChunk chunk) {
       myChunk = chunk;
+    }
+
+    private int getScore() {
+      return myDepsScore + mySelfScore;
     }
 
     public BuildTargetChunk getChunk() {
@@ -931,8 +937,12 @@ public class IncProjectBuilder {
   }
 
   private class BuildParallelizer {
-    private final ExecutorService myParallelBuildExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-      "IncProjectBuilder Executor Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
+    private final ExecutorService myParallelBuildExecutor = new BoundedTaskExecutor(
+      "IncProjectBuilder Executor Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS, true, (o1, o2) -> {
+      long p1 = o1 instanceof RunnableWithPriority ? ((RunnableWithPriority)o1).priority : 1;
+      long p2 = o1 instanceof RunnableWithPriority ? ((RunnableWithPriority)o2).priority : 1;
+      return Long.compare(p2, p1);
+    });
     private final CompileContext myContext;
     private final BuildProgress myBuildProgress;
     private final AtomicReference<Throwable> myException = new AtomicReference<>();
@@ -948,14 +958,17 @@ public class IncProjectBuilder {
 
       List<BuildTargetChunk> chunks = targetIndex.getSortedTargetChunks(myContext);
       myTasks = new ArrayList<>(chunks.size());
-      Map<BuildTarget<?>, BuildChunkTask> targetToTask = new THashMap<>();
+      Map<BuildTarget<?>, BuildChunkTask> targetToTask = new THashMap<>(chunks.size());
       for (BuildTargetChunk chunk : chunks) {
         BuildChunkTask task = new BuildChunkTask(chunk);
         myTasks.add(task);
         for (BuildTarget<?> target : chunk.getTargets()) {
           targetToTask.put(target, task);
+          task.mySelfScore += 1;
         }
       }
+
+      Map<BuildTarget<?>, Collection<BuildTarget<?>>> transitiveDependencyCache = new HashMap<>(myTasks.size());
 
       for (BuildChunkTask task : myTasks) {
         for (BuildTarget<?> target : task.getChunk().getTargets()) {
@@ -963,6 +976,12 @@ public class IncProjectBuilder {
             BuildChunkTask depTask = targetToTask.get(dependency);
             if (depTask != null && depTask != task) {
               task.addDependency(depTask);
+            }
+          }
+          for (BuildTarget<?> dependency : getTransitiveDeps(targetIndex, target, myContext, transitiveDependencyCache)) {
+            BuildChunkTask depTask = targetToTask.get(dependency);
+            if (depTask != null && depTask != task) {
+              depTask.myDepsScore += task.mySelfScore;
             }
           }
         }
@@ -997,9 +1016,13 @@ public class IncProjectBuilder {
     }
 
     private void queueTasks(List<? extends BuildChunkTask> tasks) {
-      if (LOG.isDebugEnabled() && !tasks.isEmpty()) {
+      if (tasks.isEmpty()) return;
+      ArrayList<? extends BuildChunkTask> sorted = new ArrayList<>(tasks);
+      sorted.sort(Comparator.comparingLong(BuildChunkTask::getScore).reversed());
+
+      if (LOG.isDebugEnabled()) {
         final List<BuildTargetChunk> chunksToLog = new ArrayList<>();
-        for (BuildChunkTask task : tasks) {
+        for (BuildChunkTask task : sorted) {
           chunksToLog.add(task.getChunk());
         }
         final StringBuilder logBuilder = new StringBuilder("Queuing " + chunksToLog.size() + " chunks in parallel: ");
@@ -1009,42 +1032,82 @@ public class IncProjectBuilder {
         }
         LOG.debug(logBuilder.toString());
       }
-      for (BuildChunkTask task : tasks) {
+      for (BuildChunkTask task : sorted) {
         queueTask(task);
+      }
+    }
+
+    private abstract class RunnableWithPriority implements Runnable {
+      public final int priority;
+
+      RunnableWithPriority(int priority) {
+        this.priority = priority;
       }
     }
 
     private void queueTask(final BuildChunkTask task) {
       final CompileContext chunkLocalContext = createContextWrapper(myContext);
-      myParallelBuildExecutor.execute(() -> {
-        try {
+      myParallelBuildExecutor.execute(new RunnableWithPriority(task.getScore()) {
+        @Override
+        public void run() {
           try {
-            if (myException.get() == null) {
-              buildChunkIfAffected(chunkLocalContext, myContext.getScope(), task.getChunk(), myBuildProgress);
+            try {
+              if (myException.get() == null) {
+                buildChunkIfAffected(chunkLocalContext, myContext.getScope(), task.getChunk(), myBuildProgress);
+              }
+            }
+            finally {
+              myProjectDescriptor.dataManager.closeSourceToOutputStorages(Collections.singletonList(task.getChunk()));
+              myProjectDescriptor.dataManager.flush(true);
             }
           }
+          catch (Throwable e) {
+            myException.compareAndSet(null, e);
+            LOG.info(e);
+          }
           finally {
-            myProjectDescriptor.dataManager.closeSourceToOutputStorages(Collections.singletonList(task.getChunk()));
-            myProjectDescriptor.dataManager.flush(true);
-          }
-        }
-        catch (Throwable e) {
-          myException.compareAndSet(null, e);
-          LOG.info(e);
-        }
-        finally {
-          LOG.debug("Finished compilation of " + task.getChunk().toString());
-          myTasksCountDown.countDown();
-          List<BuildChunkTask> nextTasks;
-          synchronized (myQueueLock) {
-            nextTasks = task.markAsFinishedAndGetNextReadyTasks();
-          }
-          if (!nextTasks.isEmpty()) {
-            queueTasks(nextTasks);
+            LOG.debug("Finished compilation of " + task.getChunk().toString());
+            myTasksCountDown.countDown();
+            List<BuildChunkTask> nextTasks;
+            synchronized (myQueueLock) {
+              nextTasks = task.markAsFinishedAndGetNextReadyTasks();
+            }
+            if (!nextTasks.isEmpty()) {
+              queueTasks(nextTasks);
+            }
           }
         }
       });
     }
+  }
+
+  private static Iterable<? extends BuildTarget<?>> getTransitiveDeps(BuildTargetIndex index,
+                                                                      BuildTarget<?> target,
+                                                                      CompileContext context,
+                                                                      Map<BuildTarget<?>, Collection<BuildTarget<?>>> cache) {
+    if (cache.containsKey(target)) {
+      return cache.get(target);
+    }
+    Set<BuildTarget<?>> result = new HashSet<>();
+    LinkedList<BuildTarget<?>> queue = new LinkedList<>();
+    queue.add(target);
+    result.add(target);
+    while (!queue.isEmpty()) {
+      BuildTarget next = queue.pop();
+      Collection<BuildTarget<?>> transitive = cache.get(next);
+      if (transitive != null) {
+        result.addAll(transitive);
+      }
+      else {
+        Collection<BuildTarget<?>> dependencies = index.getDependencies(next, context);
+        for (BuildTarget<?> dependency : dependencies) {
+          if (dependency != target && result.add(dependency)) queue.add(dependency);
+        }
+      }
+    }
+    result.remove(target);
+    cache.put(target, result);
+    return result;
   }
 
   private void buildChunkIfAffected(CompileContext context, CompileScope scope, BuildTargetChunk chunk,
