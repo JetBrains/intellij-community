@@ -192,8 +192,8 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private void handleClosureBlock(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
     GrClosableBlock element = Objects.requireNonNull((GrClosableBlock)instruction.getElement());
-    if (Arrays.stream(ControlFlowBuilderUtil.getReadsWithoutPriorWrites(element.getControlFlow(), true))
-      .noneMatch(it -> it.getDescriptor().equals(myDfaComputationState.getTargetDescriptor()))) {
+    if (Arrays.stream(element.getControlFlow()).filter(it -> it instanceof ReadWriteVariableInstruction)
+      .noneMatch(it -> ((ReadWriteVariableInstruction)it).getDescriptor().getName().equals(myDfaComputationState.getTargetDescriptor().getName()))) {
       return;
     }
     InvocationKind kind = ClosureFlowUtil.getInvocationKind(element);
