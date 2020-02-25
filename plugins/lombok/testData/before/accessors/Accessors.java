@@ -31,7 +31,7 @@ class AccessorsPrefix2 {
 @lombok.EqualsAndHashCode
 class AccessorsPrefix3 {
 	private String fName;
-	
+
 	private String getName() {
 		return fName;
 	}
@@ -56,4 +56,10 @@ class AccessorsFluentNoChaining {
 
 class AccessorsFluentStatic<T extends Number> {
 	@lombok.Setter @lombok.experimental.Accessors(fluent=true) private static String name;
+}
+
+@lombok.experimental.Accessors(prefix = "m")
+class AccessorNumericStartIssue724 {
+  @lombok.Getter
+  private float m3Titanic;
 }

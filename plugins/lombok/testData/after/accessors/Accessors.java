@@ -168,3 +168,11 @@ class AccessorsFluentStatic<T extends Number> {
 		AccessorsFluentStatic.name = name;
 	}
 }
+
+class AccessorNumericStartIssue724 {
+  private float m3Titanic;
+
+  public float get3Titanic() {
+    return this.m3Titanic;
+  }
+}
