@@ -15,6 +15,7 @@
  */
 package git4idea.reset;
 
+import com.intellij.CommonBundle;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -59,8 +60,7 @@ public class GitNewResetDialog extends DialogWrapper {
 
     init();
     setTitle("Git Reset");
-    setOKButtonText("Reset");
-    setOKButtonMnemonic('R');
+    setOKButtonText(CommonBundle.getResetButtonText());
     setResizable(false);
   }
 

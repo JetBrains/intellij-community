@@ -70,6 +70,11 @@ public final class CommonBundle extends DynamicBundle {
     return message("button.cancel");
   }
 
+  @NonNls
+  public static String getResetButtonText() {
+    return message("button.reset");
+  }
+
   public static String getHelpButtonText() {
     return message("button.help");
   }
