@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.util.UastExpressionUtils;
-import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -451,8 +450,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   }
 
   private ProblemDescriptor[] checkElement(@NotNull UElement element, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    PsiElement sourcePsi = element.getSourcePsi();
+    if (sourcePsi == null) return ProblemDescriptor.EMPTY_ARRAY;
     StringI18nVisitor visitor = new StringI18nVisitor(manager, isOnTheFly);
-    element.accept(visitor);
+    sourcePsi.accept(visitor);
     List<ProblemDescriptor> problems = visitor.getProblems();
     return problems.isEmpty() ? null : problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
@@ -482,7 +483,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     };
   }
 
-  private class StringI18nVisitor extends AbstractUastVisitor {
+  private class StringI18nVisitor extends PsiElementVisitor {
     private final List<ProblemDescriptor> myProblems = new ArrayList<>();
     private final InspectionManager myManager;
     private final boolean myOnTheFly;
@@ -493,41 +494,39 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
 
     @Override
-    public boolean visitObjectLiteralExpression(@NotNull UObjectLiteralExpression objectLiteralExpression) {
-      for (UExpression argument : objectLiteralExpression.getValueArguments()) {
-        argument.accept(this);
+    public void visitElement(@NotNull PsiElement element) {
+      super.visitElement(element);
+
+      if (element instanceof PsiMember && ((PsiMember)element).getName() != null || 
+          element instanceof PsiClassInitializer) {
+        return;
       }
 
-      return true;
+      UElement uElement =
+        UastContextKt.toUElementOfExpectedTypes(element, ULiteralExpression.class, UAnnotation.class);
+
+      if (uElement instanceof ULiteralExpression) {
+        visitLiteralExpression(element, (ULiteralExpression)uElement);
+        return;
+      }
+
+      if (uElement instanceof UAnnotation) {
+        //prevent from @SuppressWarnings
+        if (BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(((UAnnotation)uElement).getQualifiedName())) {
+          return;
+        }
+      }
+
+      element.acceptChildren(this);
     }
     
-    @Override
-    public boolean visitClass(@NotNull UClass node) {
-      return false;
-    }
-
-    @Override
-    public boolean visitField(@NotNull UField node) {
-      return false;
-    }
-
-    @Override
-    public boolean visitMethod(@NotNull UMethod node) {
-      return false;
-    }
-
-    @Override
-    public boolean visitInitializer(@NotNull UClassInitializer node) {
-      return false;
-    }
-
-    @Override
-    public boolean visitLiteralExpression(@NotNull ULiteralExpression expression) {
+    private void visitLiteralExpression(@NotNull PsiElement sourcePsi,
+                                        @NotNull ULiteralExpression expression) {
       Object value = expression.getValue();
-      if (!(value instanceof String)) return false;
+      if (!(value instanceof String)) return;
       String stringValue = (String)value;
       if (stringValue.trim().isEmpty()) {
-        return false;
+        return;
       }
 
       Set<PsiModifierListOwner> nonNlsTargets = new THashSet<>();
@@ -540,8 +539,6 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
         final String description = JavaI18nBundle.message("inspection.i18n.message.general.with.value", "#ref");
 
-        PsiElement sourcePsi = expression.getSourcePsi();
-        
         List<LocalQuickFix> fixes = new ArrayList<>();
 
         if (myOnTheFly) {
@@ -578,7 +575,6 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
                                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         myProblems.add(problem);
       }
-      return false;
     }
 
     private boolean isNotConstantFieldInitializer(final PsiExpression expression) {
@@ -586,15 +582,6 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return parentField != null && expression == parentField.getInitializer() &&
              parentField.hasModifierProperty(PsiModifier.FINAL) &&
              parentField.hasModifierProperty(PsiModifier.STATIC);
-    }
-
-    @Override
-    public boolean visitAnnotation(UAnnotation annotation) {
-      //prevent from @SuppressWarnings
-      if (BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(annotation.getQualifiedName())) {
-        return true;
-      }
-      return super.visitAnnotation(annotation);
     }
 
     private List<ProblemDescriptor> getProblems() {
@@ -870,7 +857,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     else {
       UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
       while (parent instanceof UCallExpression && 
-             ((UCallExpression)parent).getKind() == UastCallKind.NEW_ARRAY_WITH_INITIALIZER) {
+             (UastExpressionUtils.isArrayInitializer(parent) || UastExpressionUtils.isNewArrayWithInitializer(parent))) {
         parent = parent.getUastParent();
       }
       if (parent == null) return false;
