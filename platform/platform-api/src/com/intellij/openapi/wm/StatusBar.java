@@ -72,17 +72,19 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor);
 
   /**
-   * @deprecated Use {@link StatusBarWidgetFactory}
+   * Adds the given widget on the right.
+   * <p>
+   * For external usages use {@link StatusBarWidgetFactory}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.Internal
   void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable);
 
   /**
-   * @deprecated Use {@link StatusBarWidgetFactory}
+   * Adds the given widget positioned according to given anchor (see {@link Anchors}).
+   * <p>
+   * For external usages use {@link StatusBarWidgetFactory}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.Internal
   void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable);
 
   /**
@@ -100,10 +102,9 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   void removeCustomIndicationComponent(@NotNull JComponent c);
 
   /**
-   * @deprecated Use {@link StatusBarWidgetFactory}
+   * For external usages use {@link StatusBarWidgetFactory}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.Internal
   void removeWidget(@NotNull String id);
 
   void updateWidget(@NotNull String id);
