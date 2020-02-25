@@ -5,6 +5,7 @@ package com.intellij.xml.util;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,6 +130,11 @@ public class XmlStringUtil {
       sb.append("<nobr>").append(sequence).append("</nobr>");
     }
     return sb.append(HTML_END).toString();
+  }
+
+  @NotNull
+  public static String wrapInHtmlTag(@NotNull String text, @NonNls @NotNull String tagWord) {
+    return String.format("<%s>%s</%s>", tagWord, text, tagWord);
   }
 
   public static boolean isWrappedInHtml(@NotNull String tooltip) {
