@@ -16,6 +16,7 @@
 
 package com.intellij.util.containers;
 
+import com.intellij.util.ObjectUtils;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,6 +71,7 @@ class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValue
     if (valueReference instanceof WeakValue) {
       ((WeakValue<K, V>)valueReference).myKeyReference = keyReference;
     }
+    ObjectUtils.reachabilityFence(k);
     return keyReference;
   }
 
