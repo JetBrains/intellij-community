@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ public class StubElementTypeHolderEP extends AbstractExtensionPointBean {
   public static final ExtensionPointName<StubElementTypeHolderEP> EP_NAME = ExtensionPointName.create("com.intellij.stubElementTypeHolder");
 
   @Attribute("class")
+  @RequiredElement
   public String holderClass;
 
   /**
