@@ -22,10 +22,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
@@ -195,6 +192,10 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private void handleClosureBlock(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
     GrClosableBlock element = Objects.requireNonNull((GrClosableBlock)instruction.getElement());
+    if (Arrays.stream(ControlFlowBuilderUtil.getReadsWithoutPriorWrites(element.getControlFlow(), true))
+      .noneMatch(it -> it.getDescriptor().equals(myDfaComputationState.getTargetDescriptor()))) {
+      return;
+    }
     InvocationKind kind = ClosureFlowUtil.getInvocationKind(element);
     switch (kind) {
       case EXACTLY_ONCE:
