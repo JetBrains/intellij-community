@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.ide
 
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -24,8 +25,10 @@ class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
     if (initialContent != null) {
       projectEntities = TypedEntityStorageBuilder.from(initialContent)
     } else if (cache != null) {
+      val activity = StartUpMeasurer.startActivity("(wm) Loading cache")
       val previousStorage = cache.loadCache()
       projectEntities = if (previousStorage != null) TypedEntityStorageBuilder.from(previousStorage) else TypedEntityStorageBuilder.create()
+      activity.end()
     } else {
       projectEntities = TypedEntityStorageBuilder.create()
     }

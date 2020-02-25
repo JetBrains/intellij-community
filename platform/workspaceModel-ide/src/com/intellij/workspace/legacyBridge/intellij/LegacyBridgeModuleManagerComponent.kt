@@ -62,7 +62,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
   internal class MyProjectServiceContainerInitializedListener : ProjectServiceContainerInitializedListener {
     override fun serviceCreated(project: Project) {
-      val activity = StartUpMeasurer.startMainActivity("[WM] module loading")
+      val activity = StartUpMeasurer.startMainActivity("(wm) module loading")
       val manager = ModuleManagerComponent.getInstance(project) as? LegacyBridgeModuleManagerComponent ?: return
 
       val unloadedNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
@@ -70,9 +70,9 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
         .filter { !unloadedNames.contains(it.name) }
         .toList()
       manager.loadModules(entities)
-      WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
       activity.end()
-      activity.setDescription("[WM] module count: ${manager.modules.size}")
+      activity.setDescription("(wm) module count: ${manager.modules.size}")
+      WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
     }
   }
 
@@ -82,12 +82,14 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
       val busConnection = project.messageBus.connect(this)
       busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
         override fun projectOpened(eventProject: Project) {
+          val activity = StartUpMeasurer.startActivity("(wm) ProjectManagerListener.projectOpened")
           if (project == eventProject) {
             fireModulesAdded()
             for (module in idToModule.values) {
               (module as ModuleEx).projectOpened()
             }
           }
+          activity.end()
         }
 
         override fun projectClosed(eventProject: Project) {
