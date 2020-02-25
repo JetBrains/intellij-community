@@ -163,7 +163,7 @@ public class Messages {
   }
 
   @NotNull
-  public static JTextPane configureMessagePaneUi(JTextPane messageComponent, String message) {
+  public static JTextPane configureMessagePaneUi(JTextPane messageComponent, @Nls String message) {
     JTextPane pane = configureMessagePaneUi(messageComponent, message, null);
     if (UIUtil.HTML_MIME.equals(pane.getContentType())) {
       pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
@@ -173,7 +173,7 @@ public class Messages {
 
   @NotNull
   public static JTextPane configureMessagePaneUi(@NotNull JTextPane messageComponent,
-                                                 @Nullable String message,
+                                                 @Nullable @Nls String message,
                                                  @Nullable UIUtil.FontSize fontSize) {
     UIUtil.FontSize fixedFontSize = fontSize == null ? UIUtil.FontSize.NORMAL : fontSize;
     messageComponent.setFont(UIUtil.getLabelFont(fixedFontSize));
@@ -197,9 +197,9 @@ public class Messages {
    * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    */
   public static int showDialog(@Nullable Project project,
-                               String message,
+                               @Nls String message,
                                @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               String @NotNull [] options,
+                               @Nls String @NotNull [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
     return showDialog(project, message, title, options, defaultOptionIndex, icon, null);
@@ -236,9 +236,9 @@ public class Messages {
    * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    */
   public static int showDialog(@Nullable Project project,
-                               String message,
+                               @Nls String message,
                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               String @NotNull [] options,
+                               @Nls String @NotNull [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
@@ -250,9 +250,9 @@ public class Messages {
    * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    */
   public static int showIdeaMessageDialog(@Nullable Project project,
-                                          String message,
+                                          @Nls String message,
                                           @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                          String @NotNull [] options,
+                                          @Nls String @NotNull [] options,
                                           int defaultOptionIndex,
                                           @Nullable Icon icon,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
@@ -274,10 +274,10 @@ public class Messages {
    * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    */
   public static int showDialog(Project project,
-                               String message,
+                               @Nls String message,
                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                                @Nullable String moreInfo,
-                               String @NotNull [] options,
+                               @Nls String @NotNull [] options,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                Icon icon) {
@@ -290,9 +290,9 @@ public class Messages {
    * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    */
   public static int showDialog(@NotNull Component parent,
-                               String message,
+                               @Nls String message,
                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               String @NotNull [] options,
+                               @Nls String @NotNull [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
     return MessagesService.getInstance().showMessageDialog(null, parent, message, title, options, defaultOptionIndex, -1, icon, null, false);
@@ -307,7 +307,7 @@ public class Messages {
    */
   public static int showDialog(String message,
                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               String @NotNull [] options,
+                               @Nls String @NotNull [] options,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                @Nullable Icon icon,
@@ -325,7 +325,7 @@ public class Messages {
    */
   public static int showDialog(String message,
                                @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               String @NotNull [] options,
+                               @Nls String @NotNull [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
@@ -341,7 +341,7 @@ public class Messages {
    */
   public static int showDialog(String message,
                                @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               String @NotNull [] options,
+                               @Nls String @NotNull [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
     return showDialog(message, title, options, defaultOptionIndex, icon, null);
@@ -351,7 +351,7 @@ public class Messages {
    * @see DialogWrapper#DialogWrapper(Project, boolean)
    */
   public static void showMessageDialog(@Nullable Project project,
-                                       String message,
+                                       @Nls String message,
                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                                        @Nullable Icon icon) {
     try {
@@ -369,7 +369,7 @@ public class Messages {
   }
 
   public static void showMessageDialog(@NotNull Component parent,
-                                       String message,
+                                       @Nls String message,
                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                                        @Nullable Icon icon) {
     try {
@@ -392,7 +392,7 @@ public class Messages {
    * @see #showMessageDialog(Project, String, String, Icon)
    * @see #showMessageDialog(Component, String, String, Icon)
    */
-  public static void showMessageDialog(String message,
+  public static void showMessageDialog(@Nls String message,
                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                                        @Nullable Icon icon) {
     try {
@@ -415,14 +415,15 @@ public class Messages {
 
   /**
    * Shows confirmation dialog with specified confirmation options. In MacSheet the {@param message} is shown in the title field, and title is not shown at all.
+   *
    * @return {@link #YES} if user pressed button with {@param yesText} or {@link #NO} if user pressed button with {@param noText}.
    */
   @YesNoResult
   public static int showConfirmationDialog(@NotNull JComponent parent,
-                                           @NotNull String message,
-                                           @NotNull String title,
-                                           @NotNull String yesText,
-                                           @NotNull String noText) {
+                                           @NotNull @Nls String message,
+                                           @NotNull @Nls String title,
+                                           @NotNull @Nls String yesText,
+                                           @NotNull @Nls String noText) {
     try {
       if (canShowMacSheetPanel()) {
         return MacMessages.getInstance().showYesNoDialog(message, "", yesText, noText, SwingUtilities.getWindowAncestor(parent));
@@ -444,10 +445,10 @@ public class Messages {
    */
   @YesNoResult
   public static int showYesNoDialog(@Nullable Project project,
-                                    String message,
+                                    @Nls String message,
                                     @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                    @NotNull String yesText,
-                                    @NotNull String noText,
+                                    @NotNull @Nls String yesText,
+                                    @NotNull @Nls String noText,
                                     @Nullable Icon icon) {
     try {
       if (canShowMacSheetPanel()) {
@@ -471,7 +472,7 @@ public class Messages {
    */
   @YesNoResult
   public static int showYesNoDialog(@Nullable Project project,
-                                    String message,
+                                    @Nls String message,
                                     @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                                     @NotNull String yesText,
                                     @NotNull String noText,
@@ -499,7 +500,7 @@ public class Messages {
    */
   @YesNoResult
   public static int showYesNoDialog(@Nullable Project project,
-                                    String message,
+                                    @Nls String message,
                                     @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                                     @Nullable Icon icon) {
     try {
@@ -524,7 +525,7 @@ public class Messages {
    */
   @YesNoResult
   public static int showYesNoDialog(@Nullable Project project,
-                                    String message,
+                                    @Nls String message,
                                     @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                                     @Nullable Icon icon,
                                     @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
@@ -551,7 +552,7 @@ public class Messages {
    */
   @YesNoResult
   public static int showYesNoDialog(@NotNull Component parent,
-                                    String message,
+                                    @Nls String message,
                                     @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                                     @Nullable Icon icon) {
     try {
@@ -578,7 +579,7 @@ public class Messages {
    * @see #showYesNoCancelDialog(Component, String, String, Icon)
    */
   @YesNoResult
-  public static int showYesNoDialog(String message,
+  public static int showYesNoDialog(@Nls String message,
                                     @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                                     @Nls @NotNull String yesText,
                                     @Nls @NotNull String noText,
@@ -610,7 +611,7 @@ public class Messages {
    * @see #showYesNoDialog(Component, String, String, Icon)
    */
   @YesNoResult
-  public static int showYesNoDialog(String message,
+  public static int showYesNoDialog(@Nls String message,
                                     @Nls(capitalization = Nls.Capitalization.Title) String title,
                                     @Nls String yesText,
                                     @Nls String noText,
@@ -626,7 +627,7 @@ public class Messages {
    * @see #showYesNoDialog(Component, String, String, Icon)
    */
   @YesNoResult
-  public static int showYesNoDialog(String message,
+  public static int showYesNoDialog(@Nls String message,
                                     @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                                     @Nullable Icon icon) {
     try {
@@ -653,10 +654,10 @@ public class Messages {
    */
   @OkCancelResult
   public static int showOkCancelDialog(Project project,
-                                       String message,
+                                       @Nls String message,
                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                       @NotNull String okText,
-                                       @NotNull String cancelText,
+                                       @NotNull @Nls String okText,
+                                       @NotNull @Nls String cancelText,
                                        Icon icon,
                                        DialogWrapper.DoNotAskOption doNotAskOption) {
     try {
@@ -679,10 +680,10 @@ public class Messages {
    */
   @OkCancelResult
   public static int showOkCancelDialog(Project project,
-                                       String message,
+                                       @Nls String message,
                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                       @NotNull String okText,
-                                       @NotNull String cancelText,
+                                       @NotNull @Nls String okText,
+                                       @NotNull @Nls String cancelText,
                                        Icon icon) {
     return showOkCancelDialog(project, message, title, okText, cancelText, icon, null);
   }
@@ -694,7 +695,7 @@ public class Messages {
   @OkCancelResult
   @Deprecated
   public static int showOkCancelDialog(Project project,
-                                       String message,
+                                       @Nls String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
                                        Icon icon) {
     return showOkCancelDialog(project, message, title, getOkButton(), getCancelButton(), icon);
@@ -705,10 +706,10 @@ public class Messages {
    */
   @OkCancelResult
   public static int showOkCancelDialog(@NotNull Component parent,
-                                       String message,
+                                       @Nls String message,
                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                       @NotNull String okText,
-                                       @NotNull String cancelText,
+                                       @NotNull @Nls String okText,
+                                       @NotNull @Nls String cancelText,
                                        Icon icon) {
     try {
       if (canShowMacSheetPanel()) {
@@ -732,7 +733,7 @@ public class Messages {
   @OkCancelResult
   @Deprecated
   public static int showOkCancelDialog(@NotNull Component parent,
-                                       String message,
+                                       @Nls String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
                                        Icon icon) {
     return showOkCancelDialog(parent, message, title, getOkButton(), getCancelButton(), icon);
@@ -758,10 +759,10 @@ public class Messages {
    * @see #showOkCancelDialog(Component, String, String, String, String, Icon)
    */
   @OkCancelResult
-  public static int showOkCancelDialog(String message,
+  public static int showOkCancelDialog(@Nls String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                       String okText,
-                                       String cancelText,
+                                       @Nls String okText,
+                                       @Nls String cancelText,
                                        Icon icon) {
     return showOkCancelDialog(message, title, okText, cancelText, icon, null);
   }
@@ -774,10 +775,10 @@ public class Messages {
    * @see #showOkCancelDialog(Component, String, String, String, String, Icon)
    */
   @OkCancelResult
-  public static int showOkCancelDialog(String message,
+  public static int showOkCancelDialog(@Nls String message,
                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                       @NotNull String okText,
-                                       @NotNull String cancelText,
+                                       @NotNull @Nls String okText,
+                                       @NotNull @Nls String cancelText,
                                        Icon icon,
                                        @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     try {
@@ -794,9 +795,9 @@ public class Messages {
     return showDialog(message, title, new String[]{okText, cancelText}, 0, icon, doNotAskOption) == 0 ? OK : CANCEL;
   }
 
-  public static int showCheckboxOkCancelDialog(String message,
+  public static int showCheckboxOkCancelDialog(@Nls String message,
                                                @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                               String checkboxText,
+                                               @Nls String checkboxText,
                                                final boolean checked,
                                                final int defaultOptionIndex,
                                                final int focusedOptionIndex,
@@ -806,10 +807,10 @@ public class Messages {
                                      (exitCode, cb) -> exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0));
   }
 
-  public static int showCheckboxMessageDialog(String message,
+  public static int showCheckboxMessageDialog(@Nls String message,
                                               @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                              String @NotNull [] options,
-                                              String checkboxText,
+                                              @Nls String @NotNull [] options,
+                                              @Nls String checkboxText,
                                               final boolean checked,
                                               final int defaultOptionIndex,
                                               final int focusedOptionIndex,
@@ -821,9 +822,9 @@ public class Messages {
   }
 
 
-  public static int showTwoStepConfirmationDialog(String message,
+  public static int showTwoStepConfirmationDialog(@Nls String message,
                                                   @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                                  String checkboxText,
+                                                  @Nls String checkboxText,
                                                   Icon icon) {
     return showCheckboxMessageDialog(message, title, new String[]{getOkButton()}, checkboxText, true, -1, -1, icon, null);
   }
@@ -846,7 +847,7 @@ public class Messages {
   }
 
   public static void showErrorDialog(@Nullable Component component,
-                                     String message,
+                                     @Nls String message,
                                      @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     MessagesService.getInstance().showMessageDialog(null, component, message, title,
       /* options = */ new String[]{getOkButton()},
@@ -875,12 +876,12 @@ public class Messages {
    * @see #showErrorDialog(Project, String, String)
    * @see #showErrorDialog(Component, String, String)
    */
-  public static void showErrorDialog(String message, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
+  public static void showErrorDialog(@Nls String message, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     showErrorDialog((Component)null, message, title);
   }
 
   public static void showWarningDialog(@Nullable Project project,
-                                       String message,
+                                       @Nls String message,
                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     try {
       if (canShowMacSheetPanel()) {
@@ -897,7 +898,7 @@ public class Messages {
   }
 
   public static void showWarningDialog(@NotNull Component component,
-                                       String message,
+                                       @Nls String message,
                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     try {
       if (canShowMacSheetPanel()) {
@@ -919,7 +920,7 @@ public class Messages {
    * @see #showWarningDialog(Project, String, String)
    * @see #showWarningDialog(Component, String, String)
    */
-  public static void showWarningDialog(String message, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
+  public static void showWarningDialog(@Nls String message, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     try {
       if (canShowMacSheetPanel()) {
         MacMessages.getInstance().showErrorDialog(title, message, getOkButton(), null);
@@ -944,11 +945,11 @@ public class Messages {
    */
   @YesNoCancelResult
   public static int showYesNoCancelDialog(Project project,
-                                          String message,
+                                          @Nls String message,
                                           @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                          @NotNull String yes,
-                                          @NotNull String no,
-                                          @NotNull String cancel,
+                                          @NotNull @Nls String yes,
+                                          @NotNull @Nls String no,
+                                          @NotNull @Nls String cancel,
                                           @Nullable Icon icon) {
     try {
       if (canShowMacSheetPanel()) {
@@ -970,7 +971,7 @@ public class Messages {
    */
   @YesNoCancelResult
   public static int showYesNoCancelDialog(Project project,
-                                          String message,
+                                          @Nls String message,
                                           @Nls(capitalization = Nls.Capitalization.Title) String title,
                                           Icon icon) {
     return showYesNoCancelDialog(project, message, title, getYesButton(), getNoButton(), getCancelButton(), icon);
@@ -981,11 +982,11 @@ public class Messages {
    */
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@NotNull Component parent,
-                                          String message,
+                                          @Nls String message,
                                           @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                          @NotNull String yes,
-                                          @NotNull String no,
-                                          @NotNull String cancel,
+                                          @NotNull @Nls String yes,
+                                          @NotNull @Nls String no,
+                                          @NotNull @Nls String cancel,
                                           Icon icon) {
     try {
       if (canShowMacSheetPanel()) {
@@ -1007,7 +1008,7 @@ public class Messages {
    */
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@NotNull Component parent,
-                                          String message,
+                                          @Nls String message,
                                           @Nls(capitalization = Nls.Capitalization.Title) String title,
                                           Icon icon) {
     return showYesNoCancelDialog(parent, message, title, getYesButton(), getNoButton(), getCancelButton(), icon);
@@ -1022,11 +1023,11 @@ public class Messages {
    * @see #showYesNoCancelDialog(Component, String, String, String, String, String, Icon)
    */
   @YesNoCancelResult
-  public static int showYesNoCancelDialog(String message,
+  public static int showYesNoCancelDialog(@Nls String message,
                                           @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                          @NotNull String yes,
-                                          @NotNull String no,
-                                          @NotNull String cancel,
+                                          @NotNull @Nls String yes,
+                                          @NotNull @Nls String no,
+                                          @NotNull @Nls String cancel,
                                           Icon icon,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     try {
@@ -1051,11 +1052,11 @@ public class Messages {
    * @see #showYesNoCancelDialog(Component, String, String, String, String, String, Icon)
    */
   @YesNoCancelResult
-  public static int showYesNoCancelDialog(String message,
+  public static int showYesNoCancelDialog(@Nls String message,
                                           @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                          String yes,
-                                          String no,
-                                          String cancel,
+                                          @Nls String yes,
+                                          @Nls String no,
+                                          @Nls String cancel,
                                           Icon icon) {
     return showYesNoCancelDialog(message, title, yes, no, cancel, icon, null);
   }
@@ -1068,7 +1069,7 @@ public class Messages {
    * @see #showYesNoCancelDialog(Component, String, String, Icon)
    */
   @YesNoCancelResult
-  public static int showYesNoCancelDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, Icon icon) {
+  public static int showYesNoCancelDialog(@Nls String message, @Nls(capitalization = Nls.Capitalization.Title) String title, Icon icon) {
     return showYesNoCancelDialog(message, title, getYesButton(), getNoButton(), getCancelButton(), icon);
   }
 
@@ -1108,7 +1109,7 @@ public class Messages {
    */
   @Nullable
   public static String showInputDialog(@Nullable Project project,
-                                       String message,
+                                       @Nls String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
                                        @Nullable Icon icon) {
     return showInputDialog(project, message, title, icon, null, null);
@@ -1119,7 +1120,7 @@ public class Messages {
    */
   @Nullable
   public static String showInputDialog(@NotNull Component parent,
-                                       String message,
+                                       @Nls String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
                                        @Nullable Icon icon) {
     return showInputDialog(parent, message, title, icon, null, null);
@@ -1166,13 +1167,13 @@ public class Messages {
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection,
-                                       @Nullable String comment) {
+                                       @Nullable @Nls String comment) {
     return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, selection, comment);
   }
 
   @Nullable
   public static String showInputDialog(@NotNull Component parent,
-                                       String message,
+                                       @Nls String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
                                        @Nullable Icon icon,
                                        @Nullable String initialValue,
@@ -1197,7 +1198,7 @@ public class Messages {
 
   @Nullable
   public static String showMultilineInputDialog(Project project,
-                                                String message,
+                                                @Nls String message,
                                                 @Nls(capitalization = Nls.Capitalization.Title) String title,
                                                 @Nullable String initialValue,
                                                 @Nullable Icon icon,
@@ -1208,7 +1209,7 @@ public class Messages {
   @NotNull
   public static Pair<String, Boolean> showInputDialogWithCheckBox(String message,
                                                                   @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                                                  String checkboxText,
+                                                                  @Nls String checkboxText,
                                                                   boolean checked,
                                                                   boolean checkboxEnabled,
                                                                   @Nullable Icon icon,
@@ -1245,7 +1246,7 @@ public class Messages {
    */
   @Deprecated
   public static int showChooseDialog(@NotNull Component parent,
-                                     String message,
+                                     @Nls String message,
                                      @Nls(capitalization = Nls.Capitalization.Title) String title,
                                      String[] values,
                                      String initialValue,
@@ -1259,7 +1260,7 @@ public class Messages {
    */
   @Deprecated
   public static int showChooseDialog(Project project,
-                                     String message,
+                                     @Nls String message,
                                      @Nls(capitalization = Nls.Capitalization.Title) String title,
                                      Icon icon,
                                      String[] values,
@@ -1271,7 +1272,7 @@ public class Messages {
    * Shows dialog with given message and title, information icon {@link #getInformationIcon()} and OK button
    */
   public static void showInfoMessage(Component component,
-                                     String message,
+                                     @Nls String message,
                                      @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     try {
       if (canShowMacSheetPanel()) {
@@ -1354,12 +1355,12 @@ public class Messages {
     private final String myComment;
 
     public InputDialog(@Nullable Project project,
-                       String message,
+                       @Nls String message,
                        @Nls(capitalization = Nls.Capitalization.Title) String title,
                        @Nullable Icon icon,
                        @Nullable String initialValue,
                        @Nullable InputValidator validator,
-                       String @NotNull [] options,
+                       @Nls String @NotNull [] options,
                        int defaultOption,
                        @Nullable String comment) {
       super(project, true);
@@ -1371,18 +1372,18 @@ public class Messages {
     }
 
     public InputDialog(@Nullable Project project,
-                       String message,
+                       @Nls String message,
                        @Nls(capitalization = Nls.Capitalization.Title) String title,
                        @Nullable Icon icon,
                        @Nullable String initialValue,
                        @Nullable InputValidator validator,
-                       String @NotNull [] options,
+                       @Nls String @NotNull [] options,
                        int defaultOption) {
       this(project, message, title, icon, initialValue, validator, options, defaultOption, null);
     }
 
     public InputDialog(@Nullable Project project,
-                       String message,
+                       @Nls String message,
                        @Nls(capitalization = Nls.Capitalization.Title) String title,
                        @Nullable Icon icon,
                        @Nullable String initialValue,
@@ -1391,7 +1392,7 @@ public class Messages {
     }
 
     public InputDialog(@NotNull Component parent,
-                       String message,
+                       @Nls String message,
                        @Nls(capitalization = Nls.Capitalization.Title) String title,
                        @Nullable Icon icon,
                        @Nullable String initialValue,
@@ -1403,7 +1404,7 @@ public class Messages {
       enableOkAction();
     }
 
-    public InputDialog(String message,
+    public InputDialog(@Nls String message,
                        @Nls(capitalization = Nls.Capitalization.Title) String title,
                        @Nullable Icon icon,
                        @Nullable String initialValue,
@@ -1540,12 +1541,12 @@ public class Messages {
 
   public static class MultilineInputDialog extends InputDialog {
     public MultilineInputDialog(Project project,
-                                String message,
+                                @Nls String message,
                                 @Nls(capitalization = Nls.Capitalization.Title) String title,
                                 @Nullable Icon icon,
                                 @Nullable String initialValue,
                                 @Nullable InputValidator validator,
-                                String @NotNull [] options,
+                                @Nls String @NotNull [] options,
                                 int defaultOption) {
       super(project, message, title, icon, initialValue, validator, options, defaultOption);
     }

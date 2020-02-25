@@ -88,11 +88,11 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return UIUtil.getPanelBackground();
   }
 
-  public void setText(String text) {
+  public void setText(@Nls String text) {
     myLabel.setText(text);
   }
 
-  public EditorNotificationPanel text(@NotNull String text) {
+  public EditorNotificationPanel text(@NotNull @Nls String text) {
     myLabel.setText(text);
     return this;
   }
@@ -114,21 +114,21 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return color != null ? color : UIUtil.getToolTipBackground();
   }
 
-  public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {
+  public HyperlinkLabel createActionLabel(@Nls String text, @NonNls final String actionId) {
     return createActionLabel(text, actionId, true);
   }
 
-  public HyperlinkLabel createActionLabel(final String text,
+  public HyperlinkLabel createActionLabel(@Nls String text,
                                           @NonNls final String actionId,
                                           boolean showInIntentionMenu) {
     return createActionLabel(text, () -> executeAction(actionId), showInIntentionMenu);
   }
 
-  public HyperlinkLabel createActionLabel(final String text, final Runnable action) {
+  public HyperlinkLabel createActionLabel(@Nls String text, final Runnable action) {
     return createActionLabel(text, action, true);
   }
 
-  public HyperlinkLabel createActionLabel(final String text,
+  public HyperlinkLabel createActionLabel(@Nls String text,
                                           final Runnable action,
                                           boolean showInIntentionMenu) {
     ActionHyperlinkLabel label = new ActionHyperlinkLabel(text, getBackground(), showInIntentionMenu);
@@ -146,7 +146,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return label;
   }
 
-  protected void executeAction(final String actionId) {
+  protected void executeAction(@NonNls String actionId) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(),
                                                                  DataManager.getInstance().getDataContext(this));
