@@ -40,7 +40,9 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
 
   @Nullable
   @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file,
+                                                         @NotNull FileEditor fileEditor,
+                                                         @NotNull Project project) {
     if (!(file.getFileType() instanceof PlainTextLikeFileType)) {
       LOG.debug(String.format("File '%s' (type: '%s') is not a plain text like file", file.getName(), file.getFileType()));
       return null;
@@ -74,7 +76,10 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
            UnknownFeaturesCollector.getInstance(project).isIgnored(createExtensionFeature(extension));
   }
 
-  private EditorNotificationPanel createPanel(String extension, PluginsAdvertiser.KnownExtensions knownExtensions, @NotNull Project project) {
+  @Nullable
+  private EditorNotificationPanel createPanel(@NotNull String extension,
+                                              @NotNull PluginsAdvertiser.KnownExtensions knownExtensions,
+                                              @NotNull Project project) {
     final Set<PluginsAdvertiser.Plugin> plugins = knownExtensions.find(extension);
     if (plugins != null && !plugins.isEmpty()) {
       return createPanel(extension, plugins, project);
@@ -84,7 +89,9 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   }
 
   @Nullable
-  private EditorNotificationPanel createPanel(final String extension, final Set<? extends PluginsAdvertiser.Plugin> plugins, @NotNull Project project) {
+  private EditorNotificationPanel createPanel(@NotNull final String extension,
+                                              @NotNull final Set<? extends PluginsAdvertiser.Plugin> plugins,
+                                              @NotNull Project project) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
 
     panel.setText(IdeBundle.message("plugins.advertiser.plugins.found", extension));
