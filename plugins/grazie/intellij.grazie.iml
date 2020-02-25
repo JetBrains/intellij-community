@@ -50,7 +50,7 @@
     <orderEntry type="module" module-name="intellij.json" />
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="module" module-name="intellij.yaml" />
-    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module-library">
       <library name="tanvd.grazi:grazi-language-detector:0.1.11" type="repository">
@@ -66,7 +66,7 @@
     </orderEntry>
     <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library">
       <library name="tanvd.grazi.languagetool:grazi-language-tool-en:4.7.10" type="repository">
         <properties include-transitive-deps="false" maven-id="tanvd.grazi.languagetool:grazi-language-tool-en:4.7.10" />
@@ -201,5 +201,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.python.community" />
+    <orderEntry type="library" scope="RUNTIME" name="jetbrains-annotations" level="project" />
   </component>
 </module>
