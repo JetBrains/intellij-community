@@ -2,7 +2,7 @@
 package git4idea.ui.branch.dashboard
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
-import com.intellij.openapi.actionSystem.ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
@@ -10,8 +10,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.*
 import javax.swing.*
+import javax.swing.plaf.basic.BasicButtonUI
 import javax.swing.plaf.basic.BasicGraphicsUtils
-import javax.swing.plaf.metal.MetalToggleButtonUI
 
 class ExpandStripeButton(internal val text: () -> String? = { null }, icon: Icon? = null) : JButton(icon) {
   init {
@@ -21,24 +21,20 @@ class ExpandStripeButton(internal val text: () -> String? = { null }, icon: Icon
 
   override fun updateUI() {
     setUI(ExpandStripeButtonUI())
+    isOpaque = false
     font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL)
-    preferredSize = DEFAULT_MINIMUM_BUTTON_SIZE
   }
 }
 
-private class ExpandStripeButtonUI : MetalToggleButtonUI() {
+private class ExpandStripeButtonUI : BasicButtonUI() {
   private val myIconRect = Rectangle()
   private val myTextRect = Rectangle()
   private val myViewRect = Rectangle()
   private var ourViewInsets: Insets = JBUI.emptyInsets()
 
-  override fun getPreferredSize(c: JComponent): Dimension {
-    val dim = super.getPreferredSize(c)
-    dim.width = (JBUIScale.scale(4) + dim.width * 1.1f).toInt()
-    dim.height += JBUIScale.scale(2)
-
-    return Dimension(dim.height, dim.width)
-  }
+  override fun getMinimumSize(c: JComponent): Dimension = getPreferredSize(c)
+  override fun getMaximumSize(c: JComponent): Dimension = getPreferredSize(c)
+  override fun getPreferredSize(c: JComponent): Dimension = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
 
   override fun update(g: Graphics, c: JComponent) {
     val button = c as ExpandStripeButton
@@ -80,12 +76,11 @@ private class ExpandStripeButtonUI : MetalToggleButtonUI() {
       val model = button.model
       myIconRect.x -= JBUIScale.scale(2)
       myTextRect.x -= JBUIScale.scale(2)
-      if (model.isArmed && model.isPressed || model.isSelected || model.isRollover) {
-        g2.color = if (model.isSelected) SELECTED_BACKGROUND_COLOR else BACKGROUND_COLOR
-        g2.fillRect(0, 0, button.width, button.height)
-      }
 
-      icon?.paintIcon(c, g2, myIconRect.y, 2 * button.iconTextGap)
+      g2.color = if (model.isRollover || model.isPressed) HOVER_BACKGROUND_COLOR else c.background
+      g2.fillRect(0, 0, c.width, c.height)
+
+      icon?.paintIcon(c, g2, myIconRect.y, JBUIScale.scale(2 * button.iconTextGap))
       g2.rotate(-Math.PI / 2)
       g2.translate(-c.getHeight() - 2 * myIconRect.width, 0)
 
@@ -94,11 +89,11 @@ private class ExpandStripeButtonUI : MetalToggleButtonUI() {
       if (text != null) {
         if (model.isEnabled) {
           /* paint the text normally */
-          g2.color = if (model.isSelected) SELECTED_FOREGROUND_COLOR else c.getForeground()
+          g2.color = c.getForeground()
         }
         else {
           /* paint the text disabled ***/
-          g2.color = getDisabledTextColor()
+          g2.color = UIManager.getColor("Button.disabledText")
         }
         BasicGraphicsUtils.drawString(g2, clippedText, 0, myTextRect.x, myTextRect.y + fm.ascent)
       }
@@ -109,11 +104,7 @@ private class ExpandStripeButtonUI : MetalToggleButtonUI() {
   }
 
   companion object {
-    private val BACKGROUND_COLOR: Color =
+    private val HOVER_BACKGROUND_COLOR: Color =
       JBColor.namedColor("ToolWindow.Button.hoverBackground", JBColor(Gray.x55.withAlpha(40), Gray.x0F.withAlpha(40)))
-    private val SELECTED_BACKGROUND_COLOR: Color =
-      JBColor.namedColor("ToolWindow.Button.selectedBackground", JBColor(Gray.x55.withAlpha(85), Gray.x0F.withAlpha(85)))
-    private val SELECTED_FOREGROUND_COLOR: Color =
-      JBColor.namedColor("ToolWindow.Button.selectedForeground", JBColor(Gray.x00, Gray.xFF))
   }
 }
