@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.ide.DefaultTreeExpander
@@ -13,6 +13,8 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SideBorder
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
@@ -22,6 +24,8 @@ import kotlin.properties.Delegates.observable
 private class ChangesViewPanel(project: Project) : BorderLayoutPanel() {
   val changesView: ChangesListView = ChangesListView(project, false).apply {
     treeExpander = ChangesViewTreeExpander(this)
+    EditSourceOnDoubleClickHandler.install(this)
+    EditSourceOnEnterKeyHandler.install(this)
   }
 
   val toolbarActionGroup = DefaultActionGroup()
