@@ -30,11 +30,9 @@ class FacetManagerViaWorkspaceModel(module: Module) : FacetManagerBase() {
       val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
       if (facetConfigurationXml != facetEntity.configurationXmlTag) {
         runWriteAction {
-          WorkspaceModel.getInstance(module.project).updateProjectModel {
-            it.modifyEntity(ModifiableFacetEntity::class.java, facetEntity) {
-              this.configurationXmlTag = facetConfigurationXml
-            }
-          }
+          val change: ModifiableFacetEntity.() -> Unit = { this.configurationXmlTag = facetConfigurationXml }
+          module.diff?.modifyEntity(ModifiableFacetEntity::class.java, facetEntity, change) ?: WorkspaceModel.getInstance(module.project)
+            .updateProjectModel { it.modifyEntity(ModifiableFacetEntity::class.java, facetEntity, change) }
         }
       }
     }
