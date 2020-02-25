@@ -33,11 +33,14 @@ import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public class UsageViewManagerImpl extends UsageViewManager {
   private static final Logger LOG = Logger.getInstance(UsageViewManagerImpl.class);
@@ -271,10 +274,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return searchScope.contains(file);
   }
 
-  @NotNull
-  public static String outOfScopeMessage(int nUsages, @NotNull SearchScope searchScope) {
-    return (nUsages == 1 ? "One usage is" : nUsages + " usages are") +
-           " out of scope '"+ searchScope.getDisplayName()+"'";
+  public static @Nls(capitalization = Sentence) @NotNull String outOfScopeMessage(int nUsages, @NotNull SearchScope searchScope) {
+    return UsageViewBundle.message("0.usages.are.out.of.scope", nUsages, searchScope.getDisplayName());
   }
-
 }
