@@ -9,8 +9,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -195,15 +193,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   @Override
   public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor) {
-    Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      addWidget(widget, Position.RIGHT, anchor);
-    }
-    else {
-      app.invokeLater(() -> {
-        addWidget(widget, Position.RIGHT, anchor);
-      });
-    }
+    UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, Position.RIGHT, anchor));
   }
 
   @Override
