@@ -38,7 +38,7 @@ class JavaGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
 
   override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement) = when {
     root is PsiLiteralExpression -> RuleGroup.LITERALS
-    isTag(child) -> RuleGroup.CASING
+    isTag(child) -> RuleGroup.CASING + RuleGroup.PUNCTUATION
     else -> null
   }
 

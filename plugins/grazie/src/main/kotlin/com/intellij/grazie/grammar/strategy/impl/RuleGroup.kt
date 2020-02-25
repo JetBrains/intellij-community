@@ -21,8 +21,11 @@ data class RuleGroup(val rules: LinkedSet<String>) {
     /** Rules for checking casing errors */
     val CASING = RuleGroup("UPPERCASE_SENTENCE_START")
 
+    /** Rules for checking punctuation errors */
+    val PUNCTUATION = RuleGroup("PUNCTUATION_PARAGRAPH_END", "UNLIKELY_OPENING_PUNCTUATION")
+
     /** Rules that are usually disabled for literal strings */
-    val LITERALS = RuleGroup("UPPERCASE_SENTENCE_START", "PUNCTUATION_PARAGRAPH_END", "UNLIKELY_OPENING_PUNCTUATION")
+    val LITERALS = CASING + PUNCTUATION
   }
 
   operator fun plus(other: RuleGroup) = RuleGroup((rules + other.rules) as LinkedSet<String>)

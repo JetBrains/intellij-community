@@ -43,7 +43,7 @@ class ExampleClassWithTypos<T> {
     /**
      * Creates an empty group.
      *
-     * @param name the name which</warning> <warning descr="PUNCTUATION_PARAGRAPH_END">group</warning>
+     * @param name the name which group
      */
     public ExampleClassWithTypos(String name) {
         this.name = name;

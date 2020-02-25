@@ -7,6 +7,8 @@ import com.intellij.grazie.grammar.strategy.StrategyUtils
 import com.intellij.grazie.utils.isAtEnd
 import com.intellij.grazie.utils.isAtStart
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.elementType
+import com.intellij.psi.xml.XmlElementType
 import com.intellij.psi.xml.XmlText
 import com.intellij.psi.xml.XmlToken
 import com.intellij.psi.xml.XmlTokenType
@@ -17,11 +19,19 @@ class XmlGrammarCheckingStrategy : GrammarCheckingStrategy {
   override fun getContextRootTextDomain(root: PsiElement) = when (root) {
     is XmlText -> TextDomain.PLAIN_TEXT
     is XmlToken -> when (root.tokenType) {
+      XmlTokenType.XML_DATA_CHARACTERS -> {
+        if (root.parent?.elementType == XmlElementType.XML_CDATA) TextDomain.PLAIN_TEXT else TextDomain.NON_TEXT
+      }
       XmlTokenType.XML_COMMENT_CHARACTERS -> TextDomain.COMMENTS
       XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN -> TextDomain.LITERALS
       else -> TextDomain.NON_TEXT
     }
     else -> TextDomain.NON_TEXT
+  }
+
+  override fun getElementBehavior(root: PsiElement, child: PsiElement): GrammarCheckingStrategy.ElementBehavior {
+    if (root is XmlText && child.elementType == XmlElementType.XML_CDATA) return GrammarCheckingStrategy.ElementBehavior.STEALTH
+    return super.getElementBehavior(root, child)
   }
 
   override fun isTypoAccepted(root: PsiElement, typoRange: IntRange, ruleRange: IntRange): Boolean {
