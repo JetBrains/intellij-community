@@ -86,7 +86,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
 
   public ToolbarDecorator setAsUsualTopToolbar() {
     myAsUsualTopToolbar = true;
-    setToolbarPosition(ActionToolbarPosition.TOP);
+    setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.TOP);
     return this;
   }
 
@@ -349,7 +349,8 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     Border mainBorder = myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL);
     if (myAsUsualTopToolbar) {
       scrollPane.setBorder(mainBorder);
-    } else {
+    }
+    else {
       myActionsPanel.setBorder(myActionsPanelBorder);
       panel.setBorder(mainBorder);
     }
