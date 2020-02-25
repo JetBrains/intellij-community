@@ -265,7 +265,7 @@ public class PluginUpdateDialog extends DialogWrapper {
   @NotNull
   private ListPluginComponent createListComponent(IdeaPluginDescriptor updateDescriptor) {
     IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(updateDescriptor.getPluginId());
-    assert descriptor != null;
+    assert descriptor != null : updateDescriptor;
     ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, emptyListener(), false) {
       @Override
       public void updateErrors() {
