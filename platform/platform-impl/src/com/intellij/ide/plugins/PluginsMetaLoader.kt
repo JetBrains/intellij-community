@@ -112,6 +112,7 @@ object PluginsMetaLoader {
     val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
     return HttpRequests
       .post(url, HttpRequests.JSON_CONTENT_TYPE)
+      .productNameAsUserAgent()
       .connect {
         it.write(data)
         objectMapper
