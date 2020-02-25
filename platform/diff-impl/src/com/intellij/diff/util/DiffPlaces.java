@@ -15,13 +15,15 @@
  */
 package com.intellij.diff.util;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface DiffPlaces {
-  String DEFAULT = "Default";
-  String CHANGES_VIEW = "ChangesView";
-  String VCS_LOG_VIEW = "VcsLogView";
-  String COMMIT_DIALOG = "CommitDialog";
-  String TESTS_FAILED_ASSERTIONS = "TestsFiledAssertions";
-  String MERGE = "Merge";
-  String DIR_DIFF = "DirDiff";
-  String EXTERNAL = "External";
+  @NonNls String DEFAULT = "Default";
+  @NonNls String CHANGES_VIEW = "ChangesView";
+  @NonNls String VCS_LOG_VIEW = "VcsLogView";
+  @NonNls String COMMIT_DIALOG = "CommitDialog";
+  @NonNls String TESTS_FAILED_ASSERTIONS = "TestsFiledAssertions";
+  @NonNls String MERGE = "Merge";
+  @NonNls String DIR_DIFF = "DirDiff";
+  @NonNls String EXTERNAL = "External";
 }

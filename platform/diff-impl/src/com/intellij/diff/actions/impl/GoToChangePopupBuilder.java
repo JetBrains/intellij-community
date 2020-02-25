@@ -5,6 +5,7 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
@@ -100,7 +101,7 @@ public class GoToChangePopupBuilder {
 
     private class MyListPopupStep extends BaseListPopupStep<DiffRequestProducer> {
       MyListPopupStep() {
-        super("Go To Change", myChain.getRequests());
+        super(DiffBundle.message("action.presentation.go.to.change.text"), myChain.getRequests());
         setDefaultOptionIndex(myDefaultSelection);
       }
 

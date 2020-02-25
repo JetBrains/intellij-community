@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -433,7 +432,7 @@ public class TextDiffViewerUtil {
 
     protected void putEditorHint(@NotNull EditorEx editor, boolean readOnly) {
       if (readOnly) {
-        EditorModificationUtil.setReadOnlyHint(editor, EditorBundle.message("editing.viewer.hint") + ". <a href=\"\">Enable editing</a>",
+        EditorModificationUtil.setReadOnlyHint(editor, DiffBundle.message("editing.viewer.hint.enable.editing.text"),
                                                (e) -> {
                                                  if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                                                    setSelected(false);

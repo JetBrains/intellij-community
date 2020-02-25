@@ -4,6 +4,7 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -14,6 +15,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -165,10 +167,10 @@ public class SimpleDiffChangeUi {
     Icon icon = DiffUtil.getArrowIcon(side);
 
     if (side == Side.LEFT && myViewer.isDiffForLocalChanges()) {
-      text = "Revert";
+      text = DiffBundle.message("action.presentation.diff.revert.text");
     }
     else {
-      text = "Accept";
+      text = DiffBundle.message("action.presentation.diff.accept.text");
     }
 
     String actionId = side.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide");
@@ -180,11 +182,12 @@ public class SimpleDiffChangeUi {
   }
 
   private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), () -> myViewer.appendChange(myChange, side));
+    return createIconRenderer(side, DiffBundle.message("action.presentation.diff.append.text"), DiffUtil.getArrowDownIcon(side),
+                              () -> myViewer.appendChange(myChange, side));
   }
 
   private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide,
-                                                @NotNull final String tooltipText,
+                                                @NotNull @Nls final String tooltipText,
                                                 @NotNull final Icon icon,
                                                 @NotNull final Runnable perform) {
     return new DiffGutterRenderer(icon, tooltipText) {
@@ -193,7 +196,7 @@ public class SimpleDiffChangeUi {
         if (!myChange.isValid()) return;
         final Project project = myViewer.getProject();
         final Document document = myViewer.getEditor(sourceSide.other()).getDocument();
-        DiffUtil.executeWriteCommand(document, project, "Replace change", perform);
+        DiffUtil.executeWriteCommand(document, project, DiffBundle.message("message.replace.change.command"), perform);
       }
     };
   }

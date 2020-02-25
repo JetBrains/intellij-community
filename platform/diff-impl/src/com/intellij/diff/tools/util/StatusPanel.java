@@ -3,6 +3,7 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,6 +44,7 @@ public class StatusPanel extends JPanel {
     }
   }
 
+  @Nls
   @Nullable
   protected String getMessage() {
     return null;

@@ -599,7 +599,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     private void logDebugInfo(DocumentEvent e,
                               LineCol onesideStartPosition, LineCol onesideEndPosition,
                               int twosideStartLine, int twosideEndLine) {
-      StringBuilder info = new StringBuilder();
+      @NonNls StringBuilder info = new StringBuilder();
       Document document1 = getDocument(Side.LEFT);
       Document document2 = getDocument(Side.RIGHT);
       info.append("==== UnifiedDiffViewer Debug Info ====");
@@ -678,7 +678,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       if (!isEditable(myModifiedSide, true)) return;
       if (isStateIsOutOfDate()) return;
 
-      String title = e.getPresentation().getText() + " selected changes";
+      String title = DiffBundle.message("message.use.selected.changes.command", e.getPresentation().getText());
       DiffUtil.executeWriteCommand(getDocument(myModifiedSide), e.getProject(), title, () -> {
         // state is invalidated during apply(), but changes are in reverse order, so they should not conflict with each other
         apply(ContainerUtil.reverse(selectedChanges));
@@ -702,7 +702,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other());
 
       copyShortcutFrom(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")));
-      getTemplatePresentation().setText(focusedSide.select("Revert", "Accept"));
+      getTemplatePresentation().setText(focusedSide.select(DiffBundle.message("action.presentation.diff.revert.text"),
+                                                           DiffBundle.message("action.presentation.diff.accept.text")));
       getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.Remove, AllIcons.Actions.Checked));
     }
 
@@ -719,7 +720,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other());
 
       copyShortcutFrom(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")));
-      getTemplatePresentation().setText(DiffBundle.lazyMessage("action.presentation.UnifiedDiffViewer.text"));
+      getTemplatePresentation().setText(DiffBundle.lazyMessage("action.presentation.diff.append.text"));
       getTemplatePresentation().setIcon(DiffUtil.getArrowDownIcon(focusedSide));
     }
 

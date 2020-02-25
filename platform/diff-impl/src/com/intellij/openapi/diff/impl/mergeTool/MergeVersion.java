@@ -76,7 +76,8 @@ public interface MergeVersion {
 
     @Override
     public void applyText(@NotNull final String text, final Project project) {
-      ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> doApplyText(text, project), "Merge changes", null));
+      ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () ->
+        doApplyText(text, project), DiffBundle.message("message.finish.merge.content.command"), null));
     }
 
     protected void doApplyText(@NotNull String text, Project project) {

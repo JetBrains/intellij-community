@@ -31,6 +31,7 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -428,7 +429,7 @@ public class ExternalDiffToolUtil {
     @NotNull public final String prefix;
     @NotNull public final String name;
 
-    FileNameInfo(@NotNull String prefix, @NotNull String name) {
+    FileNameInfo(@NotNull @NonNls String prefix, @NotNull @NonNls String name) {
       this.prefix = prefix;
       this.name = name;
     }

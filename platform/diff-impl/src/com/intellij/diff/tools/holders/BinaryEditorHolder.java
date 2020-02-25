@@ -23,6 +23,7 @@ import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.FileEditorBase;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -106,7 +107,7 @@ public class BinaryEditorHolder extends EditorHolder {
         if (providers.length == 0) {
           JComponent component = FileTypeRegistry.getInstance().isFileOfType(file, UnknownFileType.INSTANCE)
                                  ? UnknownFileTypeDiffRequest.createComponent(file.getName(), context)
-                                 : DiffUtil.createMessagePanel("Can't show file");
+                                 : DiffUtil.createMessagePanel(DiffBundle.message("error.cant.show.file"));
           return new BinaryEditorHolder(new DumbFileEditor(file, component), null);
         }
 

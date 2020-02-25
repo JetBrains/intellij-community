@@ -15,6 +15,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -252,7 +253,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
       return createOperation(() -> {
         final boolean isExcludedFromCommit = getChange().isExcludedFromCommit();
         Icon icon = isExcludedFromCommit ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
-        return new DiffGutterRenderer(icon, "Include into commit") {
+        return new DiffGutterRenderer(icon, DiffBundle.message("action.presentation.diff.include.into.commit.text")) {
           @Override
           protected void handleMouseClick() {
             if (!getViewer().isContentGood()) return;

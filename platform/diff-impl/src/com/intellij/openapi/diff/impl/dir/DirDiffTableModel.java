@@ -37,6 +37,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,9 +60,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   public static final Key<JBLoadingPanel> DECORATOR_KEY = Key.create("DIFF_TABLE_DECORATOR");
   public static final String COLUMN_OPERATION = "*";
-  public static final String COLUMN_NAME = "Name";
-  public static final String COLUMN_SIZE = "Size";
-  public static final String COLUMN_DATE = "Date";
+  public static final @Nls String COLUMN_NAME = DiffBundle.message("column.dirdiff.name");
+  public static final @Nls String COLUMN_SIZE = DiffBundle.message("column.dirdiff.size");
+  public static final @Nls String COLUMN_DATE = DiffBundle.message("column.dirdiff.date");
   public static final String EMPTY_STRING = StringUtil.repeatSymbol(' ', 50);
 
   @Nullable private final Project myProject;
@@ -210,7 +211,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     else {
       right = "..." + text.substring(text.length() - LEN + 2);
     }
-    return "Loading... " + right;
+    return DiffBundle.message("label.dirdiff.loading.file", right);
   }
 
   void fireUpdateStarted() {
@@ -433,7 +434,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public String getTitle() {
-    if (myDisposed) return "Diff";
+    if (myDisposed) return DiffBundle.message("diff.files.dialog.title");
     if (mySource instanceof VirtualFileDiffElement &&
         myTarget instanceof VirtualFileDiffElement) {
       VirtualFile srcFile = ((VirtualFileDiffElement)mySource).getValue();
