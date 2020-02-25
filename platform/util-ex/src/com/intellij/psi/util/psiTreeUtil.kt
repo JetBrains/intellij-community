@@ -292,6 +292,19 @@ private suspend fun SequenceScope<ElementAndOffset>.elementsAtOffsetUp(element: 
   }
 }
 
+@ApiStatus.Experimental
+fun PsiFile.leavesAroundOffset(offsetInFile: Int): Iterable<ElementAndOffset> {
+  val leaf = findElementAt(offsetInFile) ?: return emptyList()
+  val offsetInLeaf = offsetInFile - leaf.textRange.startOffset
+  if (offsetInLeaf == 0) {
+    val prefLeaf = PsiTreeUtil.prevLeaf(leaf)
+    if (prefLeaf != null) {
+      return listOf(ElementAndOffset(leaf, 0), ElementAndOffset(prefLeaf, prefLeaf.textLength))
+    }
+  }
+  return listOf(ElementAndOffset(leaf, offsetInLeaf))
+}
+
 inline fun <reified T : PsiElement> PsiElement.contextOfType(): T? = contextOfType(T::class)
 
 fun <T : PsiElement> PsiElement.contextOfType(vararg classes: KClass<out T>): T? {
