@@ -9,9 +9,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Extension point to assist with adding new status bar widgets
  *
- * @deprecated use {@link StatusBarWidgetFactory} instead.
+ * @deprecated Use {@link StatusBarWidgetFactory} instead.
  * It provides configurable widgets that can be disabled or reordered.
  */
+@Deprecated
 public interface StatusBarWidgetProvider {
   ExtensionPointName<StatusBarWidgetProvider> EP_NAME = new ExtensionPointName<>("com.intellij.statusBarWidgetProvider");
 
