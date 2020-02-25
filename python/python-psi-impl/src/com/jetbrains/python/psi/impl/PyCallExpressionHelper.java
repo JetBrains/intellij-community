@@ -172,6 +172,7 @@ public class PyCallExpressionHelper {
                                                            @NotNull PyResolveContext resolveContext) {
     return PyTypeUtil.toStream(callableTypes)
       .select(PyClassLikeType.class)
+      .filter(type -> !type.isDefinition())
       .map(type -> type.resolveMember(PyNames.CALL, call, AccessDirection.READ, resolveContext, true))
       .nonNull()
       .flatMap(list -> StreamEx.of(list).map(RatedResolveResult::getElement).nonNull())
