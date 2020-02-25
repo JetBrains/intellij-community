@@ -42,6 +42,7 @@ private fun conflictsWithLocalOrRemote(repositories: Collection<GitRepository>,
 }
 
 private fun getAdditionalDescription(repositories: List<GitRepository>) =
+  " " +
   if (repositories.size > 1) GitBundle.message("common.suffix.in.several.repositories", repositories.size)
   else GitBundle.message("common.suffix.in.one.repository", getShortRepositoryName(repositories.first()))
 
