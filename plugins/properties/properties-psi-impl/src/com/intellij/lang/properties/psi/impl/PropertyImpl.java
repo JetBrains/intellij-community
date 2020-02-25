@@ -25,7 +25,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property, PsiLanguageInjectionHost {
+public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property, PsiLanguageInjectionHost, PsiNameIdentifierOwner {
   private static final Logger LOG = Logger.getInstance(PropertyImpl.class);
 
   public PropertyImpl(@NotNull ASTNode node) {
@@ -118,6 +118,11 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
   @Nullable
   public String getUnescapedValue() {
     return unescape(getValue());
+  }
+
+  @Override
+  public @Nullable PsiElement getNameIdentifier() {
+    return getKeyNode().getPsi();
   }
 
 
