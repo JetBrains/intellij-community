@@ -524,13 +524,14 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   @Override
   public void removeWidget(@NotNull String id) {
-    assert EventQueue.isDispatchThread() : "Must be EDT";
     myOrderedWidgets.remove(id);
     WidgetBean bean = myWidgetMap.remove(id);
     if (bean != null) {
-      JPanel targetPanel = getTargetPanel(bean.position);
-      targetPanel.remove(bean.component);
-      targetPanel.revalidate();
+      UIUtil.invokeLaterIfNeeded(() -> {
+        JPanel targetPanel = getTargetPanel(bean.position);
+        targetPanel.remove(bean.component);
+        targetPanel.revalidate();
+      });
       Disposer.dispose(bean.widget);
     }
     updateChildren(child -> child.removeWidget(id));
