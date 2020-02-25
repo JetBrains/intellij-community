@@ -85,7 +85,7 @@ In your `build.gradle`:
 ```groovy
 // 'compile' can be changed to 'compileOnly' for Gradle 2.12+
 // or 'provided' if using 'propdeps' plugin from SpringSource
-compile "org.projectlombok:lombok:1.18.10"
+compile "org.projectlombok:lombok:1.18.12"
 ```
 
 ##### Maven
@@ -95,7 +95,7 @@ In your `pom.xml`:
 	<dependency>
 		<groupId>org.projectlombok</groupId>
 		<artifactId>lombok</artifactId>
-		<version>1.18.10</version>
+		<version>1.18.12</version>
 		<scope>provided</scope>
 	</dependency>
 </dependencies>
@@ -104,7 +104,7 @@ In your `pom.xml`:
 ##### Ivy
 In your `ivy.xml`:
 ```xml
-<dependency org="org.projectlombok" name="lombok" rev="1.18.10" conf="build" />
+<dependency org="org.projectlombok" name="lombok" rev="1.18.12" conf="build" />
 ```
 
 IntelliJ and Eclipse compiler
@@ -160,7 +160,7 @@ YourKit, LLC is the creator of [YourKit Java Profiler](https://www.yourkit.com/j
 
 License
 -------
-Copyright (c) 2011-2019 Michail Plushnikov. See the [LICENSE](./LICENSE) file for license rights and limitations (BSD).
+Copyright (c) 2011-2020 Michail Plushnikov. See the [LICENSE](./LICENSE) file for license rights and limitations (BSD).
 
 [badge-gitter-img]:       https://badges.gitter.im/mplushnikov/lombok-intellij-plugin.svg
 [badge-gitter]:           https://gitter.im/mplushnikov/lombok-intellij-plugin
