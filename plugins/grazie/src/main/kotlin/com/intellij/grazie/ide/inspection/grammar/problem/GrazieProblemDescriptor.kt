@@ -96,7 +96,7 @@ class GrazieProblemDescriptor(id: String, fix: Typo, isOnTheFly: Boolean) : Prob
         }
 
         p {
-          style = "text-align: left; font-size: x-small; color: gray; padding-top: 15px; padding-left: 3px; padding-bottom: 0px;"
+          style = "text-align: left; font-size: x-small; color: gray; padding-top: 10px; padding-left: 3px; padding-bottom: 0px;"
           +"Powered by LanguageTool"
         }
       }
