@@ -5,7 +5,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -23,8 +22,7 @@ public class CreateAction extends PatchAction {
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
     patchOutput.putNextEntry(new ZipEntry(getPath()));
 
-    BasicFileAttributes attrs = Files.readAttributes(newerFile.toPath(), BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-    if (!attrs.isDirectory()) {
+    if (!Files.isDirectory(newerFile.toPath(), LinkOption.NOFOLLOW_LINKS)) {
       FileType type = getFileType(newerFile);
       writeFileType(patchOutput, type);
       if (type == FileType.SYMLINK) {
