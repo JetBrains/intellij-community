@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processors;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
@@ -185,6 +186,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       StringSearcher searcher = new StringSearcher(value, true, true);
       StringBuilder message = new StringBuilder();
       final int[] duplicatesCount = {0};
+      Property[] propertyInCurrentFile = new Property[1];
       Set<PsiFile> psiFilesWithDuplicates = valueToFiles.get(value);
       for (final PsiFile file : psiFilesWithDuplicates) {
         CharSequence text = file.getViewProvider().getContents();
@@ -198,13 +200,17 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
               }
               surroundWithHref(message, element, true);
               duplicatesCount[0]++;
+              if (propertyInCurrentFile[0] == null && psiFile == file) {
+                propertyInCurrentFile[0] = property;
+              }
             }
           }
           return true;
         });
       }
       if (duplicatesCount[0] > 1) {
-        problemDescriptors.add(manager.createProblemDescriptor(psiFile, message.toString(), false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        PsiElement elementToHighlight = ObjectUtils.notNull(propertyInCurrentFile[0], psiFile);
+        problemDescriptors.add(manager.createProblemDescriptor(elementToHighlight, message.toString(), false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
 
@@ -224,6 +230,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       }
       StringBuilder message = new StringBuilder();
       int duplicatesCount = 0;
+      PsiElement propertyInCurrentFile = null;
       Set<PsiFile> psiFilesWithDuplicates = keyToFiles.get(key);
       for (PsiFile file : psiFilesWithDuplicates) {
         if (!(file instanceof PropertiesFile)) continue;
@@ -242,10 +249,13 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
             keyToValues.put(key, values);
           }
           values.add(property.getValue());
+          if (propertyInCurrentFile == null && file == psiFile) {
+            propertyInCurrentFile = property.getPsiElement();
+          }
         }
       }
       if (duplicatesCount > 1 && CHECK_DUPLICATE_KEYS) {
-        problemDescriptors.add(manager.createProblemDescriptor(psiFile, message.toString(), false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        problemDescriptors.add(manager.createProblemDescriptor(ObjectUtils.notNull(propertyInCurrentFile, psiFile), message.toString(), false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
 
