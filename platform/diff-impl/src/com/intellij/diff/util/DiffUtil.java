@@ -625,19 +625,18 @@ public class DiffUtil {
       labelWithIcon.addToLeft(new JBLabel(AllIcons.Ide.Readonly));
     }
     panel.add(labelWithIcon, BorderLayout.CENTER);
-    if (charset != null && separator != null) {
+    if (charset != null || separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
-      panel2.add(createCharsetPanel(charset, bom));
-      panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
-      panel2.add(createSeparatorPanel(separator));
+      if (charset != null) {
+        panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
+        panel2.add(createCharsetPanel(charset, bom));
+      }
+      if (separator != null) {
+        panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
+        panel2.add(createSeparatorPanel(separator));
+      }
       panel.add(panel2, BorderLayout.EAST);
-    }
-    else if (charset != null) {
-      panel.add(createCharsetPanel(charset, bom), BorderLayout.EAST);
-    }
-    else if (separator != null) {
-      panel.add(createSeparatorPanel(separator), BorderLayout.EAST);
     }
     return panel;
   }
