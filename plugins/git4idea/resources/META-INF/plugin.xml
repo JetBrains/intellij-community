@@ -235,7 +235,6 @@
     <projectService serviceImplementation="git4idea.ui.branch.dashboard.BranchesTreeStateHolder"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
-    <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"/>
     <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService"/>
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
                         serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl" />
