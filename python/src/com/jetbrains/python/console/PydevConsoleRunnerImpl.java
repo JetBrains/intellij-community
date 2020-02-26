@@ -119,7 +119,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @SuppressWarnings("SpellCheckingInspection")
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
-  public static final String PYTON_INTERPRETER_NULL = "Python interpreter is not selected. Please setup Python interpreter first.";
+  public static final String PYTHON_INTERPRETER_NULL = "Python interpreter is not selected. Please setup Python interpreter first.";
   private final Project myProject;
   private final String myTitle;
   @Nullable private final String myWorkingDir;
@@ -190,7 +190,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     // Attach Debugger
     toolbarActions.add(new ConnectDebuggerAction());
     // Settings
-    DefaultActionGroup settings = DefaultActionGroup.createPopupGroup(() -> "Settings");
+    DefaultActionGroup settings = DefaultActionGroup.createPopupGroup(() -> PyBundle.message("pydev.console.runner.settings"));
     settings.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     settings.add(new PyVariableViewSettings.SimplifiedView(null));
     settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
@@ -239,7 +239,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public void runSync(boolean requestEditorFocus) {
     try {
       if (mySdk == null) {
-        throw new ExecutionException(PYTON_INTERPRETER_NULL);
+        throw new ExecutionException(PYTHON_INTERPRETER_NULL);
       }
       initAndRun(mySdk);
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("connecting.to.console.title"), false) {
@@ -271,7 +271,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           indicator.setText(PyBundle.message("connecting.to.console.progress"));
           try {
             if (mySdk == null) {
-              throw new ExecutionException(PYTON_INTERPRETER_NULL);
+              throw new ExecutionException(PYTHON_INTERPRETER_NULL);
             }
             initAndRun(mySdk);
             connect(myStatementsToExecute);
@@ -303,7 +303,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     String[] messages = StringUtil.isNotEmpty(e.getMessage()) ? StringUtil.splitByLines(e.getMessage()) : ArrayUtilRt.EMPTY_STRING_ARRAY;
     if (messages.length == 0) {
-      messages = new String[]{"Unknown error"};
+      messages = new String[]{PyBundle.message("pydev.console.runner.unknown.error")};
     }
 
     errorViewPanel.addMessage(MessageCategory.ERROR, messages, null, -1, -1, null);
@@ -311,7 +311,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
 
     final RunContentDescriptor contentDescriptor =
-      new RunContentDescriptor(null, myProcessHandler, panel, "Error running console");
+      new RunContentDescriptor(null, myProcessHandler, panel, PyBundle.message("pydev.console.runner.error.running.console"));
 
     showContentDescriptor(contentDescriptor);
   }
@@ -950,7 +950,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
 
     return XDebuggerManager.getInstance(myProject).
-      startSessionAndShowTab("Python Console Debugger", PythonIcons.Python.Python, null, true, new XDebugProcessStarter() {
+      startSessionAndShowTab(PyBundle.message("pydev.console.runner.python.console.debugger"), PythonIcons.Python.Python, null, true, new XDebugProcessStarter() {
         @Override
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
