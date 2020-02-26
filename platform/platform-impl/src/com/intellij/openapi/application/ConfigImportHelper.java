@@ -77,14 +77,12 @@ public final class ConfigImportHelper {
     ConfigImportSettings settings = null;
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
-      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass =
-        (Class<ConfigImportSettings>)Class.forName(customProviderName);
+      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass = (Class<ConfigImportSettings>)Class.forName(customProviderName);
       if (ConfigImportSettings.class.isAssignableFrom(customProviderClass)) {
         settings = ReflectionUtil.newInstance(customProviderClass);
       }
     }
-    catch (Exception ignored) {
-    }
+    catch (Exception ignored) { }
 
     List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
 
@@ -98,15 +96,14 @@ public final class ConfigImportHelper {
       if (configProvider != null) {
         importedFromCloud = configProvider.importSettingsSilently(newConfigDir);
       }
-
       if (!importedFromCloud && !veryFirstStartOnThisComputer) {
         oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
       }
     }
-     else {
-       Path bestConfigGuess = guessedOldConfigDirs.get(0);
-       oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess); // todo maybe integrate into findConfigDirectories
-     }
+    else {
+      Path bestConfigGuess = guessedOldConfigDirs.get(0);
+      oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess); // todo maybe integrate into findConfigDirectories
+    }
 
     if (oldConfigDirAndOldIdePath != null) {
       doImport(oldConfigDirAndOldIdePath.first, newConfigDir, oldConfigDirAndOldIdePath.second, log);
