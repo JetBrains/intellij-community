@@ -22,10 +22,10 @@ public class CreatePythonFileAction extends CreateFileFromTemplateAction impleme
   @Override
   protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
-      .setTitle("New Python file")
-      .addKind("Python file", PythonFileType.INSTANCE.getIcon(), "Python Script")
-      .addKind("Python unit test", PythonFileType.INSTANCE.getIcon(), "Python Unit Test")
-      .addKind("Python stub", PyiFileType.INSTANCE.getIcon(), "Python Stub");
+      .setTitle(PyBundle.message("create.python.file.action.new.python.file"))
+      .addKind(PyBundle.message("create.python.file.action.python.file"), PythonFileType.INSTANCE.getIcon(), "Python Script")
+      .addKind(PyBundle.message("create.python.file.action.python.unit.test"), PythonFileType.INSTANCE.getIcon(), "Python Unit Test")
+      .addKind(PyBundle.message("create.python.file.action.python.stub"), PyiFileType.INSTANCE.getIcon(), "Python Stub");
   }
 
   @Override
