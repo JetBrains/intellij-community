@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ESCAPE
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -117,10 +118,14 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
       val wasAlreadyOpen = FileEditorManager.getInstance(project).isFileOpen(file)
       val editor = FileEditorManager.getInstance(project).openFile(file, focusEditor, true).singleOrNull() ?: return
 
-      if (wasAlreadyOpen) return
-      escapeHandler?.let { r -> DumbAwareAction.create { r.run() }.registerCustomShortcutSet(ESCAPE, editor.component, editor) }
+      if (wasAlreadyOpen || escapeHandler == null) return
+      EditorTabPreviewEscapeAction(escapeHandler).registerCustomShortcutSet(ESCAPE, editor.component, editor)
     }
   }
+}
+
+internal class EditorTabPreviewEscapeAction(private val escapeHandler: Runnable) : DumbAwareAction() {
+  override fun actionPerformed(e: AnActionEvent) = escapeHandler.run()
 }
 
 private class EditorTabDiffPreviewProvider(
