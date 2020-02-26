@@ -48,19 +48,19 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
         result.add((ActivateToolWindowAction)action);
       }
     }
-    Collections.sort(result, getActionComparator(project));
+    Collections.sort(result, getActionComparator());
     return result;
   }
 
   @NotNull
-  private static Comparator<ActivateToolWindowAction> getActionComparator(@NotNull Project project) {
-    return comparingMnemonic(project).thenComparing(it -> it.getToolWindowId(), CASE_INSENSITIVE_ORDER);
+  private static Comparator<ActivateToolWindowAction> getActionComparator() {
+    return comparingMnemonic().thenComparing(it -> it.getToolWindowId(), CASE_INSENSITIVE_ORDER);
   }
 
   @NotNull
-  private static Comparator<ActivateToolWindowAction> comparingMnemonic(@NotNull Project project) {
+  private static Comparator<ActivateToolWindowAction> comparingMnemonic() {
     return comparingInt(it -> {
-      int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(project, it.getToolWindowId());
+      int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(it.getToolWindowId());
       return mnemonic != -1 ? mnemonic : Integer.MAX_VALUE;
     });
   }

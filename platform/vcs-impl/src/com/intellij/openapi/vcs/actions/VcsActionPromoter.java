@@ -20,7 +20,6 @@ public class VcsActionPromoter implements ActionPromoter {
     List<AnAction> reorderedActions = new ArrayList<>(actions);
     List<String> reorderedIds = ContainerUtil.map(reorderedActions, it -> am.getId(it));
 
-    reorderActionPair(reorderedActions, reorderedIds, "ActivateCommitToolWindow", "ActivateVersionControlToolWindow");
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.MoveChangedLinesToChangelist", "ChangesView.Move");
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.RollbackChangedLines", "ChangesView.Revert");
 
