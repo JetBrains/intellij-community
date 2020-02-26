@@ -5,6 +5,7 @@ package com.intellij.notification;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -153,7 +154,10 @@ public final class EventLog {
         public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent event) {
           Object source = event.getSource();
           DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
-          Notification.fire(notification, notification.getActions().get(Integer.parseInt(event.getDescription())), context);
+          AnAction action = notification.getActions().get(Integer.parseInt(event.getDescription()));
+          NotificationCollector.getInstance()
+            .logNotificationActionInvoked(notification, action, NotificationCollector.NotificationPlace.EVENT_LOG);
+          Notification.fire(notification, action, context);
         }
       });
       if (title.length() > 0 || content.length() > 0) {
@@ -440,7 +444,6 @@ public final class EventLog {
     }, true);
   }
 
-  @Service
   static final class ProjectTracker implements Disposable {
     private final Map<String, EventLogConsole> myCategoryMap = ContainerUtil.newConcurrentMap();
     private final List<Notification> myInitial = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -504,6 +507,7 @@ public final class EventLog {
 
       myProjectModel.addNotification(notification);
 
+      NotificationCollector.getInstance().logNotificationLoggedInEventLog(myProject, notification);
       EventLogConsole console = getConsole(notification);
       if (console == null) {
         myInitial.add(notification);
@@ -631,6 +635,7 @@ public final class EventLog {
         Balloon balloon =
           NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, BalloonLayoutData.fullContent(), project);
         balloon.show(target, Balloon.Position.above);
+        NotificationCollector.getInstance().logBalloonShownFromEventLog(myNotification);
       }
     }
 
