@@ -175,13 +175,78 @@ class ElementTree:
     def write_c14n(self, file: _file_or_filename) -> None: ...
 
 def register_namespace(prefix: _str_argument_type, uri: _str_argument_type) -> None: ...
-if sys.version_info >= (3,):
+
+if sys.version_info >= (3, 8):
+    @overload
+    def tostring(
+        element: Element,
+        encoding: None = ...,
+        method: Optional[str] = ...,
+        *,
+        xml_declaration: Optional[bool] = ...,
+        default_namespace: Optional[_str_argument_type] = ...,
+        short_empty_elements: bool = ...,
+    ) -> bytes: ...
+    @overload
+    def tostring(
+        element: Element,
+        encoding: Literal["unicode"],
+        method: Optional[str] = ...,
+        *,
+        xml_declaration: Optional[bool] = ...,
+        default_namespace: Optional[_str_argument_type] = ...,
+        short_empty_elements: bool = ...,
+    ) -> str: ...
+    @overload
+    def tostring(
+        element: Element,
+        encoding: str,
+        method: Optional[str] = ...,
+        *,
+        xml_declaration: Optional[bool] = ...,
+        default_namespace: Optional[_str_argument_type] = ...,
+        short_empty_elements: bool = ...,
+    ) -> Any: ...
+
+    @overload
+    def tostringlist(
+        element: Element,
+        encoding: None = ...,
+        method: Optional[str] = ...,
+        *,
+        xml_declaration: Optional[bool] = ...,
+        default_namespace: Optional[_str_argument_type] = ...,
+        short_empty_elements: bool = ...,
+    ) -> List[bytes]: ...
+    @overload
+    def tostringlist(
+        element: Element,
+        encoding: Literal["unicode"],
+        method: Optional[str] = ...,
+        *,
+        xml_declaration: Optional[bool] = ...,
+        default_namespace: Optional[_str_argument_type] = ...,
+        short_empty_elements: bool = ...,
+    ) -> List[str]: ...
+    @overload
+    def tostringlist(
+        element: Element,
+        encoding: str,
+        method: Optional[str] = ...,
+        *,
+        xml_declaration: Optional[bool] = ...,
+        default_namespace: Optional[_str_argument_type] = ...,
+        short_empty_elements: bool = ...,
+    ) -> List[Any]: ...
+
+elif sys.version_info >= (3,):
     @overload
     def tostring(element: Element, encoding: None = ..., method: Optional[str] = ..., *, short_empty_elements: bool = ...) -> bytes: ...
     @overload
     def tostring(element: Element, encoding: Literal["unicode"], method: Optional[str] = ..., *, short_empty_elements: bool = ...) -> str: ...
     @overload
     def tostring(element: Element, encoding: str, method: Optional[str] = ..., *, short_empty_elements: bool = ...) -> Any: ...
+
     @overload
     def tostringlist(element: Element, encoding: None = ..., method: Optional[str] = ..., *, short_empty_elements: bool = ...) -> List[bytes]: ...
     @overload

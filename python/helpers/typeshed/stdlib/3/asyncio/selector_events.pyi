@@ -13,7 +13,7 @@ else:
 
 class BaseSelectorEventLoop(base_events.BaseEventLoop):
 
-    def __init__(self, selector: selectors.BaseSelector = ...) -> None: ...
+    def __init__(self, selector: Optional[selectors.BaseSelector] = ...) -> None: ...
     if sys.version_info >= (3, 7):
         async def create_unix_connection(
             self,

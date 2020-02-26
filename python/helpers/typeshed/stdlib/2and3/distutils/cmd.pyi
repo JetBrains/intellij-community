@@ -5,7 +5,7 @@ from abc import abstractmethod
 from distutils.dist import Distribution
 
 class Command:
-    sub_commands: List[Tuple[str, Union[Callable[[], bool], str, None]]]
+    sub_commands: List[Tuple[str, Optional[Callable[[Command], bool]]]]
     def __init__(self, dist: Distribution) -> None: ...
     @abstractmethod
     def initialize_options(self) -> None: ...
