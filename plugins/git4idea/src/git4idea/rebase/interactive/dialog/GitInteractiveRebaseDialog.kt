@@ -189,7 +189,7 @@ internal class GitInteractiveRebaseDialog(
     super.doCancelAction()
   }
 
-  private class AnActionButtonSeparator : AnActionButton("Separator"), CustomComponentAction, DumbAware {
+  private class AnActionButtonSeparator : AnActionButton(), CustomComponentAction, DumbAware {
     companion object {
       private val SEPARATOR_HEIGHT = JBUI.scale(20)
     }
