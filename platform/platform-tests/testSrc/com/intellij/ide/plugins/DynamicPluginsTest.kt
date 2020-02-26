@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.Configurable
@@ -39,6 +40,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.*
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
 @RunsInEdt
 class DynamicPluginsTest {
@@ -349,14 +351,24 @@ class DynamicPluginsTest {
   @Test
   fun unloadEPCollection() {
     val project = projectRule.project
+    assertThat(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name }).isFalse()
+    val listenerDisposable = Disposer.newDisposable()
+    
+    val checked = AtomicInteger()
+    Configurable.PROJECT_CONFIGURABLE.getPoint(project).addExtensionPointListener(ExtensionPointChangeListener {
+      checked.incrementAndGet()
+    }, false, listenerDisposable)
+    
     val disposable = loadExtensionWithText("<projectConfigurable instance=\"${MyConfigurable::class.java.name}\" displayName=\"foo\"/>",
                                            DynamicPlugins::class.java.classLoader)
     try {
+      assertThat(checked.get()).isEqualTo(1)
       assertThat(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name }).isTrue()
     }
     finally {
       Disposer.dispose(disposable)
     }
+    assertThat(checked.get()).isEqualTo(2)
     assertThat(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name }).isFalse()
   }
 
