@@ -398,6 +398,8 @@
       <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" icon="AllIcons.Actions.Execute"/>
       <action class="org.jetbrains.idea.devkit.themes.RollbackThemeAction" id="DevKit.RollbackTheme" icon="AllIcons.Actions.Suspend"/>
       <action class="org.jetbrains.idea.devkit.themes.EditThemeEditorColorSchemeAction" id="DevKit.EditThemeEditorColorScheme" icon="AllIcons.Actions.EditScheme"/>
+      <separator/>
+      <action class="org.jetbrains.idea.devkit.themes.OpenThemeReferenceDocsAction" id="DevKit.OpenThemeReferenceDocs" icon="AllIcons.Actions.Help"/>
     </group>
 
   </actions>
