@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.text.OrdinalFormat;
 import org.jetbrains.annotations.Contract;
@@ -20,6 +21,7 @@ public abstract class BundleBase {
   public static final String MNEMONIC_STRING = Character.toString(MNEMONIC);
   public static final String L10N_MARKER = "🔅";
   public static final boolean SHOW_LOCALIZED_MESSAGES = Boolean.getBoolean("idea.l10n");
+  private static final Logger LOG = Logger.getInstance(BundleBase.class);
 
   private static boolean assertOnMissedKeys = false;
 
@@ -71,7 +73,7 @@ public abstract class BundleBase {
     }
 
     if (assertOnMissedKeys) {
-      assert false : "'" + key + "' is not found in " + bundle;
+      LOG.error("'" + key + "' is not found in " + bundle);
     }
     return "!" + key + "!";
   }
