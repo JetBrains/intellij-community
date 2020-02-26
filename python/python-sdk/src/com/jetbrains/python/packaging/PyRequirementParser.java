@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -306,7 +307,8 @@ public class PyRequirementParser {
   }
 
   @NotNull
-  static List<PyRequirement> fromText(@NotNull String text, @Nullable VirtualFile containingFile, @NotNull Set<VirtualFile> visitedFiles) {
+  @ApiStatus.Internal
+  public static List<PyRequirement> fromText(@NotNull String text, @Nullable VirtualFile containingFile, @NotNull Set<VirtualFile> visitedFiles) {
     if (containingFile != null) {
       visitedFiles.add(containingFile);
     }
