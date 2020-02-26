@@ -3,15 +3,18 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import java.util.*
 
-class GHPRReviewCommentModel(val id: String, dateCreated: Date, body: String,
+class GHPRReviewCommentModel(val id: String, state: GHPullRequestReviewCommentState, dateCreated: Date, body: String,
                              authorUsername: String?, authorLinkUrl: String?, authorAvatarUrl: String?,
                              val canBeDeleted: Boolean, val canBeUpdated: Boolean) {
 
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
+  var state = state
+    private set
   var dateCreated = dateCreated
     private set
   var body = body
@@ -27,6 +30,11 @@ class GHPRReviewCommentModel(val id: String, dateCreated: Date, body: String,
     if (comment.id != id) throw IllegalArgumentException("Can't update comment data from different comment")
 
     var updated = false
+
+    if (state != comment.state)
+      updated = true
+    state = comment.state
+
     dateCreated = comment.createdAt
 
     if (body != comment.bodyHtml)
@@ -61,7 +69,7 @@ class GHPRReviewCommentModel(val id: String, dateCreated: Date, body: String,
 
   companion object {
     fun convert(comment: GHPullRequestReviewComment): GHPRReviewCommentModel =
-      GHPRReviewCommentModel(comment.id, comment.createdAt, comment.bodyHtml,
+      GHPRReviewCommentModel(comment.id, comment.state, comment.createdAt, comment.bodyHtml,
                              comment.author?.login, comment.author?.url,
                              comment.author?.avatarUrl,
                              comment.viewerCanDelete, comment.viewerCanUpdate)

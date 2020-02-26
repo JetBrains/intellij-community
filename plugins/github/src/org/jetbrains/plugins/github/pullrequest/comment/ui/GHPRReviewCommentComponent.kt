@@ -7,8 +7,10 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -17,6 +19,7 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.ui.InlineIconButton
@@ -45,22 +48,21 @@ object GHPRReviewCommentComponent {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
-    val href = comment.authorLinkUrl?.let { """href='${it}'""" }.orEmpty()
-    //language=HTML
-    val title = """<a $href>${comment.authorUsername ?: "unknown"}</a> commented ${GithubUIUtil.formatActionDate(comment.dateCreated)}"""
-
-    val titlePane: HtmlEditorPane = HtmlEditorPane(title).apply {
+    val titlePane = HtmlEditorPane().apply {
       foreground = UIUtil.getContextHelpForeground()
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
+    val pendingLabel = JBLabel(" Pending ", UIUtil.ComponentStyle.SMALL).apply {
+      foreground = UIUtil.getContextHelpForeground()
+      background = JBUI.CurrentTheme.Validator.warningBackgroundColor()
+    }.andOpaque()
 
-    val textPane: HtmlEditorPane = HtmlEditorPane(comment.body).apply {
+    val textPane = HtmlEditorPane().apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
-    comment.addChangesListener {
-      textPane.setBody(comment.body)
-    }
+
+    Controller(comment, titlePane, pendingLabel, textPane)
 
     val editorWrapper = Wrapper()
     val editButton = createEditButton(reviewService, comment, editorWrapper, textPane).apply {
@@ -80,7 +82,8 @@ object GHPRReviewCommentComponent {
                          AC().gap("${UI.scale(8)}"))
 
       add(avatarLabel, CC().pushY())
-      add(titlePane, CC().minWidth("0").split(3).alignX("left"))
+      add(titlePane, CC().minWidth("0").split(4).alignX("left"))
+      add(pendingLabel, CC().hideMode(3).alignX("left"))
       add(editButton, CC().hideMode(3).gapBefore("${UI.scale(12)}"))
       add(deleteButton, CC().hideMode(3).gapBefore("${UI.scale(8)}"))
       add(contentPanel, CC().newline().skip().grow().push().minWidth("0").minHeight("0"))
@@ -163,6 +166,37 @@ object GHPRReviewCommentComponent {
       }
     }
     return lineCount
+  }
+
+  private class Controller(private val model: GHPRReviewCommentModel,
+                           private val titlePane: HtmlEditorPane,
+                           private val pendingLabel: JComponent,
+                           private val bodyPane: HtmlEditorPane) {
+    init {
+      model.addChangesListener {
+        update()
+      }
+      update()
+    }
+
+    private fun update() {
+      bodyPane.setBody(model.body)
+
+      val href = model.authorLinkUrl?.let { """href='${it}'""" }.orEmpty()
+      //language=HTML
+      val authorName = """<a $href>${model.authorUsername ?: "unknown"}</a>"""
+
+      when (model.state) {
+        GHPullRequestReviewCommentState.PENDING -> {
+          pendingLabel.isVisible = true
+          titlePane.text = authorName
+        }
+        GHPullRequestReviewCommentState.SUBMITTED -> {
+          pendingLabel.isVisible = false
+          titlePane.text = authorName + """ commented ${GithubUIUtil.formatActionDate(model.dateCreated)}"""
+        }
+      }
+    }
   }
 
   fun factory(thread: GHPRReviewThreadModel, reviewService: GHPRReviewServiceAdapter, avatarIconsProvider: GHAvatarIconsProvider)

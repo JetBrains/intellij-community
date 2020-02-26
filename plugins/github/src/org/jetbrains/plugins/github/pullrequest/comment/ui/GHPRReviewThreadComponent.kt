@@ -46,8 +46,10 @@ object GHPRReviewThreadComponent {
     if (reviewService.canComment() && thread.state != GHPullRequestReviewCommentState.PENDING) {
       panel.add(createThreadActionsPanel(avatarIconsProvider, currentUser) { text ->
         reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
-          thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl,
-                                                   true, true))
+          thread.addComment(
+            GHPRReviewCommentModel(it.nodeId, GHPullRequestReviewCommentState.SUBMITTED, it.createdAt, it.bodyHtml, it.user.login,
+                                   it.user.htmlUrl, it.user.avatarUrl,
+                                   true, true))
         }
       })
     }
