@@ -57,12 +57,26 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
 
     @Override
     public int getValue() {
-      final String s = getUnescapedText();
-      if (s.equals("\\") && getType() == Type.CHAR) return '\\';
-      return unescapeChar(s);
+        final ASTNode node = getNode();
+        final IElementType type = node.getFirstChildNode().getElementType();
+        if (type == RegExpTT.BAD_OCT_VALUE ||
+            type == RegExpTT.BAD_HEX_VALUE ||
+            type == RegExpTT.BAD_CHARACTER ||
+            type == StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN) {
+            return -1;
+        }
+        final String text = getUnescapedText();
+        if (text.length() == 1 && type == RegExpTT.CHARACTER) {
+            return text.codePointAt(0);
+        }
+        else if (type == RegExpTT.UNICODE_CHAR) {
+            final int i = text.indexOf('\\', 1);
+            if (i >= 0) return Character.toCodePoint((char)unescapeChar(text.substring(0, i)), (char)unescapeChar(text.substring(i)));
+        }
+        return unescapeChar(text);
     }
 
-    private static int unescapeChar(String s) {
+    public static int unescapeChar(String s) {
         final int length = s.length();
         assert length > 0;
 

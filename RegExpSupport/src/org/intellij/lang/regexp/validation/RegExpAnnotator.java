@@ -91,39 +91,16 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     if (to == null) {
       return;
     }
-    int fromCodePoint = from.getValue();
-    int toCodePoint = to.getValue();
+    final int fromCodePoint = from.getValue();
+    final int toCodePoint = to.getValue();
     if (fromCodePoint == -1 || toCodePoint == -1) {
       return;
     }
-    int errorStart = range.getTextOffset();
-    int errorEnd = errorStart + range.getTextLength();
-    // \ud800\udc00-\udbff\udfff
-    if (!Character.isSupplementaryCodePoint(fromCodePoint) && Character.isLowSurrogate((char)fromCodePoint)) {
-      final PsiElement prevSibling = range.getPrevSibling();
-      if (prevSibling instanceof RegExpChar) {
-        final int prevSiblingValue = ((RegExpChar)prevSibling).getValue();
-        if (!Character.isSupplementaryCodePoint(prevSiblingValue) && Character.isHighSurrogate((char)prevSiblingValue)) {
-          fromCodePoint = Character.toCodePoint((char)prevSiblingValue, (char)fromCodePoint);
-          errorStart -= prevSibling.getTextLength();
-        }
-      }
-    }
-    if (!Character.isSupplementaryCodePoint(toCodePoint) && Character.isHighSurrogate((char)toCodePoint)) {
-      final PsiElement nextSibling = range.getNextSibling();
-      if (nextSibling instanceof RegExpChar) {
-        final int nextSiblingValue = ((RegExpChar)nextSibling).getValue();
-        if (!Character.isSupplementaryCodePoint(nextSiblingValue) && Character.isLowSurrogate((char)nextSiblingValue)) {
-          toCodePoint = Character.toCodePoint((char)toCodePoint, (char)nextSiblingValue);
-          errorEnd += nextSibling.getTextLength();
-        }
-      }
-    }
     if (toCodePoint < fromCodePoint) {
-      myHolder.createErrorAnnotation(new TextRange(errorStart, errorEnd), "Illegal character range (to < from)");
+      myHolder.newAnnotation(HighlightSeverity.ERROR, "Illegal character range (to < from)").range(range).create();
     }
     else if (toCodePoint == fromCodePoint) {
-      myHolder.createWarningAnnotation(new TextRange(errorStart, errorEnd), "Redundant character range");
+      myHolder.newAnnotation(HighlightSeverity.WARNING, "Redundant character range").range(range).create();
     }
   }
 

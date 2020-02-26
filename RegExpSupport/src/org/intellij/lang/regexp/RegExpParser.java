@@ -21,6 +21,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.intellij.lang.regexp.psi.impl.RegExpCharImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -525,6 +526,22 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       checkMatches(builder, RegExpTT.NAME, "Unicode character name expected");
       checkMatches(builder, RegExpTT.RBRACE, "'}' expected");
       marker.done(RegExpElementTypes.NAMED_CHARACTER);
+    }
+    else if (builder.getTokenType() == RegExpTT.UNICODE_CHAR) {
+      final String text1 = builder.getTokenText();
+      assert text1 != null;
+      final int value1 = RegExpCharImpl.unescapeChar(text1);
+      builder.advanceLexer();
+      // merge surrogate pairs into single regexp char
+      if (!Character.isSupplementaryCodePoint(value1) && Character.isHighSurrogate((char)value1)) {
+        final String text2 = builder.getTokenText();
+        assert text2 != null;
+        final int value2 = RegExpCharImpl.unescapeChar(text2);
+        if (!Character.isSupplementaryCodePoint(value2) && Character.isLowSurrogate((char)value2)) {
+          builder.advanceLexer();
+        }
+      }
+      marker.done(RegExpElementTypes.CHAR);
     }
     else {
       builder.advanceLexer();
