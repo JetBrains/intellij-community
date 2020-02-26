@@ -27,16 +27,22 @@ sync(repo, bundled)
 val whiteList = sequenceOf(
   "__builtin__",
   "__future__",
+  //"_ast", leads to broken tests but could be enabled
   "_codecs",
+  "_compression",
   "_csv",
   "_curses",
+  "_heapq",
+  "_imp",
   "_importlib_modulespec",
   "_io",
   "_json",
   "_operator",
+  "_random",
   "_thread",
   "abc",
   "argparse",
+  "array",
   "ast",
   "asyncio",
   "attr",
@@ -59,6 +65,7 @@ val whiteList = sequenceOf(
   "ctypes",
   "curses",
   "datetime",
+  "dateutil",
   "dbm",
   "decimal",
   "difflib",
@@ -66,6 +73,7 @@ val whiteList = sequenceOf(
   "email",
   "exceptions",
   "fcntl",
+  //"formatter", leads to broken tests but could be enabled
   "functools",
   "gc",
   "genericpath",
@@ -90,23 +98,31 @@ val whiteList = sequenceOf(
   "numbers",
   "opcode",
   "operator",
+  //"optparse", deprecated
+  "orjson",
   "os",
   "os2emxpath",
   "pathlib",
   "pdb",
   "pickle",
+  //"platform", leads to broken tests but could be enabled
+  "plistlib",
   "posix",
   "posixpath",
   "pprint",
+  "py_compile",
   "pyexpat",
   "queue",
   "re",
   "requests",
+  "resource",
   "shutil",
   "signal",
   "six",
   "socket",
+  "socketserver",
   "sqlite3",
+  "sre_constants",
   "sre_parse",
   "ssl",
   "subprocess",
@@ -115,16 +131,20 @@ val whiteList = sequenceOf(
   "threading",
   "time",
   "token",
+  "tokenize",
   "turtle",
   "types",
   "typing",
   "typing_extensions",
   "unittest",
   "urllib",
+  "uu",
   "uuid",
   "webbrowser",
   "werkzeug",
   "xml",
+  "zipapp",
+  "zipimport",
   "zlib"
 ).mapTo(hashSetOf()) { it.toLowerCase() }
 
@@ -181,10 +201,10 @@ fun cleanTopLevelPackages(typeshed: Path, whiteList: Set<String>) {
 
       if (name !in whiteList) {
         blackList.add(name)
-        false
+        true
       }
       else {
-        true
+        false
       }
     }
     .forEach { it.delete() }
