@@ -128,8 +128,8 @@ internal class GitInteractiveRebaseDialog(
       ActionManager.getInstance()
     )
 
-    title = GitBundle.getString("rebase.editor.title")
-    setOKButtonText(GitBundle.getString("rebase.editor.button"))
+    title = GitBundle.getString("rebase.interactive.dialog.title")
+    setOKButtonText(GitBundle.getString("rebase.interactive.dialog.start.rebase"))
     init()
   }
 
