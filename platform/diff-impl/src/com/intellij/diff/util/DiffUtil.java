@@ -450,10 +450,8 @@ public class DiffUtil {
 
   @NotNull
   public static String getSettingsConfigurablePath() {
-    if (SystemInfo.isMac) {
-      return "Preferences | Tools | Diff & Merge";
-    }
-    return "Settings | Tools | Diff & Merge";
+    return SystemInfo.isMac ? DiffBundle.message("label.diff.settings.path.macos")
+                            : DiffBundle.message("label.diff.settings.path");
   }
 
   @NotNull

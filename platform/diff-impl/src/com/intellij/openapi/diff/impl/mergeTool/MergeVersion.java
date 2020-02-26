@@ -63,7 +63,7 @@ public interface MergeVersion {
       final DocumentReference ref = DocumentReferenceManager.getInstance().create(workingDocument);
       myTextBeforeMerge = myDocument.getText();
       ApplicationManager.getApplication().runWriteAction(() -> {
-        setDocumentText(workingDocument, myOriginalText, DiffBundle.message("merge.init.merge.content.command.name"), project);
+        setDocumentText(workingDocument, myOriginalText, DiffBundle.message("message.init.merge.content.command"), project);
         if (project != null) {
           final UndoManager undoManager = UndoManager.getInstance(project);
           if (undoManager != null) { //idea.sh merge command

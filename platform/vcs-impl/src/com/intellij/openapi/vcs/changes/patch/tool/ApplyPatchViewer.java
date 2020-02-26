@@ -272,7 +272,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myPatchRequest));
     final Document outputDocument = myResultEditor.getDocument();
     boolean success =
-      DiffUtil.executeWriteCommand(outputDocument, myProject, DiffBundle.message("merge.init.merge.content.execute.command.name"), () -> {
+      DiffUtil.executeWriteCommand(outputDocument, myProject, DiffBundle.message("message.init.merge.content.command"), () -> {
         outputDocument.setText(myPatchRequest.getLocalContent());
         if (!isReadOnly()) DiffUtil.putNonundoableOperation(myProject, outputDocument);
       });
