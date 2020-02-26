@@ -884,11 +884,11 @@ public final class Switcher extends AnAction implements DumbAware {
     }
 
     @NotNull
-    private Map<String, ToolWindow> createShortcuts(@NotNull List<ToolWindow> windows) {
+    private static Map<String, ToolWindow> createShortcuts(@NotNull List<ToolWindow> windows) {
       final Map<String, ToolWindow> keymap = new HashMap<>(windows.size());
       final List<ToolWindow> otherTW = new ArrayList<>();
       for (ToolWindow window : windows) {
-        int index = ActivateToolWindowAction.getMnemonicForToolWindow(project, window.getId());
+        int index = ActivateToolWindowAction.getMnemonicForToolWindow(window.getId());
         if (index >= '0' && index <= '9') {
           keymap.put(getIndexShortcut(index - '0'), window);
         }
