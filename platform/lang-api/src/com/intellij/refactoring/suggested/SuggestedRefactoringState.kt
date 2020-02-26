@@ -100,21 +100,21 @@ data class SuggestedRefactoringState(
 
   private var restoredDeclarationCopy: PsiElement? = null
 
-  fun restoredDeclarationCopy(): PsiElement {
+  fun restoredDeclarationCopy(): PsiElement? {
     if (restoredDeclarationCopy == null) {
       restoredDeclarationCopy = createRestoredDeclarationCopy()
     }
-    return restoredDeclarationCopy!!
+    return restoredDeclarationCopy
   }
 
   @Deprecated("Use restoredDeclarationCopy()", ReplaceWith("restoredDeclarationCopy()"))
-  fun createRestoredDeclarationCopy(refactoringSupport: SuggestedRefactoringSupport): PsiElement {
+  fun createRestoredDeclarationCopy(refactoringSupport: SuggestedRefactoringSupport): PsiElement? {
     return restoredDeclarationCopy()
   }
 
-  private fun createRestoredDeclarationCopy(): PsiElement {
+  private fun createRestoredDeclarationCopy(): PsiElement? {
     val psiFile = declaration.containingFile
-    val signatureRange = refactoringSupport.signatureRange(declaration)!!
+    val signatureRange = refactoringSupport.signatureRange(declaration) ?: return null
     val importsRange = refactoringSupport.importsRange(psiFile)
     if (importsRange != null) {
       require(importsRange.endOffset < signatureRange.startOffset)
