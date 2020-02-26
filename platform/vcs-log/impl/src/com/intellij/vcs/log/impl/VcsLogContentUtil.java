@@ -171,7 +171,7 @@ public class VcsLogContentUtil {
 
   public static void runInMainLog(@NotNull Project project, @NotNull Consumer<? super MainVcsLogUi> consumer) {
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-    if (!selectMainLog(window)) {
+    if (window == null || !selectMainLog(window.getContentManager())) {
       showLogIsNotAvailableMessage(project);
       return;
     }
@@ -190,8 +190,7 @@ public class VcsLogContentUtil {
     VcsBalloonProblemNotifier.showOverChangesView(project, VcsLogBundle.message("vcs.log.is.not.available"), MessageType.WARNING);
   }
 
-  private static boolean selectMainLog(@NotNull ToolWindow window) {
-    ContentManager cm = window.getContentManager();
+  public static boolean selectMainLog(@NotNull ContentManager cm) {
     Content[] contents = cm.getContents();
     for (Content content : contents) {
       // here tab name is used instead of log ui id to select the correct tab

@@ -28,10 +28,14 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
+import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutableManager;
@@ -165,14 +169,13 @@ public class GitShowExternalLogAction extends DumbAwareAction {
                                                   @NotNull GitVcs vcs,
                                                   @NotNull ContentManager cm,
                                                   @NotNull List<VirtualFile> requestedRoots) {
-    VirtualFile[] projectRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
-    if (Comparing.haveEqualElements(requestedRoots, Arrays.asList(projectRoots))) {
-      Content[] contents = cm.getContents();
-      for (Content content : contents) {
-        if (VcsLogContentProvider.TAB_NAME.equals(content.getDisplayName())) {
-          cm.setSelectedContent(content);
-          return true;
-        }
+    List<VirtualFile> projectRoots = Arrays.asList(ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs));
+    if (projectRoots.containsAll(requestedRoots)) {
+      if (requestedRoots.containsAll(projectRoots)) {
+        return VcsLogContentUtil.selectMainLog(cm);
+      } else {
+        VcsLogFilterCollection filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromRoots(requestedRoots));
+        return VcsProjectLog.getInstance(project).openLogTab(filters) != null;
       }
     }
     return false;
