@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -94,7 +93,7 @@ internal fun interactivelyRebaseUsingLog(repository: GitRepository, commit: VcsS
   val project = repository.project
   val root = repository.root
 
-  object : Task.Backgroundable(project, "Preparing to Rebase${StringUtil.ELLIPSIS}") {
+  object : Task.Backgroundable(project, GitBundle.message("rebase.preparing.progress.indicator.title")) {
     private var generatedEntries: List<GitRebaseEntryGeneratedUsingLog>? = null
 
     override fun run(indicator: ProgressIndicator) {
