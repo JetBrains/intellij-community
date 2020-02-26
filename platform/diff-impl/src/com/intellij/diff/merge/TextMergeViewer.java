@@ -904,7 +904,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private void applyResolvableConflictedChanges() {
-      executeMergeCommand(DiffBundle.message("message.resolve.non.conflicted.command"), true, null, () -> {
+      executeMergeCommand(DiffBundle.message("message.resolve.simple.conflicts.command"), true, null, () -> {
         List<TextMergeChange> allChanges = new ArrayList<>(getAllChanges());
         for (TextMergeChange change : allChanges) {
           resolveChangeAutomatically(change, ThreeSide.BASE);
@@ -1007,7 +1007,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         final List<TextMergeChange> selectedChanges = getSelectedChanges(side);
         if (selectedChanges.isEmpty()) return;
 
-        String title = DiffBundle.message("action.in.merge.text", e.getPresentation().getText());
+        String title = DiffBundle.message("message.do.in.merge.command", e.getPresentation().getText());
 
         executeMergeCommand(title, selectedChanges.size() > 1, selectedChanges, () -> apply(side, selectedChanges));
       }

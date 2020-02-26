@@ -216,7 +216,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
         return DiffBundle.message("binary.diff.contents.are.identical.message.text");
       }
       else {
-        return DiffBundle.message("binary.diff.contents.are.not.identical.message.text");
+        return DiffBundle.message("binary.diff.contents.are.different.message.text");
       }
     }
   }
@@ -230,7 +230,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
     MyAcceptSideAction(@NotNull Side baseSide) {
       myBaseSide = baseSide;
-      getTemplatePresentation().setText(DiffBundle.message("copy.content.to.side", baseSide.getIndex()));
+      getTemplatePresentation().setText(DiffBundle.message("copy.content.to.side", baseSide.other().getIndex()));
       getTemplatePresentation().setIcon(baseSide.select(AllIcons.Vcs.Arrow_right, AllIcons.Vcs.Arrow_left));
       setShortcutSet(ActionManager.getInstance().getAction(baseSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
     }
