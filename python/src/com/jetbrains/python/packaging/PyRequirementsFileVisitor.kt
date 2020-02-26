@@ -64,16 +64,12 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
         }
 
         // report those requirements that were not changed in base files
-        var inBaseFile = parsed.asSequence()
+        parsed.asSequence()
           .filter { it.name.toLowerCase() in importedPackages }
-          .map { it to importedPackages[it.name.toLowerCase()] }
+          .map { it to importedPackages.remove(it.name.toLowerCase()) }
+          .filterNot { compatibleVersion(it.first, it.second!!.version, settings.specifyVersion) }
+          .forEach { unchangedInBaseFiles.add(it.first.name) }
 
-        if (settings.keepMatchingSpecifier) {
-          inBaseFile = inBaseFile.filterNot { compatibleVersion(it.first, it.second!!.version, settings.specifyVersion) }
-        }
-        inBaseFile.forEach { unchangedInBaseFiles.add(it.first.name) }
-
-        parsed.forEach { importedPackages.remove(it.name.toLowerCase())  }
         outputLines.addAll(lines)
       }
       else if (parsed.isEmpty()) {
@@ -86,7 +82,12 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
         // processing only requirements that are used in the project, discarding others
         if (name in importedPackages) {
           val pkg = importedPackages.remove(name)!!
-          if (settings.keepMatchingSpecifier && compatibleVersion(requirement, pkg.version, settings.specifyVersion)) {
+          if (requirement.isEditable || vcsPrefixes.any { line.startsWith(it) }) {
+            // keeping editable and vcs requirements
+            outputLines.addAll(lines)
+          }
+          else if (settings.keepMatchingSpecifier && compatibleVersion(requirement, pkg.version, settings.specifyVersion)) {
+            // existing version separators match the current package version, keeping them
             outputLines.addAll(lines)
           }
           else {
@@ -124,7 +125,6 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
 
   private fun convertToRequirementsEntry(requirement: PyRequirement, settings: PyPackageRequirementsSettings, version: String? = null): String {
     val packageName = when {
-      requirement.isEditable -> "${requirement.installOptions[0]} ${requirement.installOptions[1]}${requirement.extras}"
       settings.specifyVersion -> when {
         version != null -> requirement.name + requirement.extras + settings.versionSpecifier.separator + version
         else -> requirement.presentableText
@@ -132,11 +132,9 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
       else -> requirement.name + requirement.extras
     }
 
-    val optionsToDrop = if (requirement.isEditable) 2 else 1
-
-    if (requirement.installOptions.size == optionsToDrop) return packageName
+    if (requirement.installOptions.size == 1) return packageName
     val offset = " ".repeat(packageName.length + 1)
-    val installOptions = requirement.installOptions.drop(optionsToDrop).joinToString(separator = "\\\n$offset")
+    val installOptions = requirement.installOptions.drop(1).joinToString(separator = "\\\n$offset")
     return "$packageName $installOptions"
   }
 
@@ -145,4 +143,8 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
 
   private fun isFileReference(line: String): Boolean = line.startsWith("-r ") || line.startsWith("--requirement ")
   private fun isEditableSelf(line: String): Boolean = line.startsWith("--editable .") || line.startsWith("-e .")
+
+  companion object {
+    private val vcsPrefixes = listOf("git:", "git+", "svn+", "hg+", "bzr+")
+  }
 }

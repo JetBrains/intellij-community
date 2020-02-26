@@ -40,7 +40,6 @@ import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipEnvInstallQuickFix;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -224,24 +223,14 @@ public class PyPackageRequirementsInspection extends PyInspection {
           }
         }
 
-        final List<LocalQuickFix> quickFixes = new ArrayList<>();
-
-        StreamEx
-          .of(packageName)
-          .append(possiblePyPIPackageNames)
-          .filter(PyPIPackageUtil.INSTANCE::isInPyPI)
-          .map(name -> new AddToRequirementsFix(packageManager, module, name, LanguageLevel.forElement(importedExpression)))
-          .forEach(quickFixes::add);
-
-        quickFixes.add(new PyGenerateRequirementsFileQuickFix(module));
-
-        quickFixes.add(new IgnoreRequirementFix(Collections.singleton(packageName)));
+        final LocalQuickFix[] fixes = { new PyGenerateRequirementsFileQuickFix(module),
+                                        new IgnoreRequirementFix(Collections.singleton(packageName))};
 
         registerProblem(packageReferenceExpression,
                         String.format("Package containing module '%s' is not listed in project requirements", packageName),
                         ProblemHighlightType.WEAK_WARNING,
                         null,
-                        quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+                        fixes);
       }
     }
   }
@@ -661,79 +650,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
               .notify(project);
           }
         }
-      }
-    }
-  }
-
-  private static class AddToRequirementsFix implements LocalQuickFix {
-
-    @NotNull
-    private final PyPackageManager myPackageManager;
-
-    @NotNull
-    private final Module myModule;
-
-    @NotNull
-    private final String myPackageName;
-
-    @NotNull
-    private final LanguageLevel myLanguageLevel;
-
-    private AddToRequirementsFix(@NotNull PyPackageManager packageManager,
-                                 @NotNull Module module,
-                                 @NotNull String packageName,
-                                 @NotNull LanguageLevel languageLevel) {
-      myPackageManager = packageManager;
-      myModule = module;
-      myPackageName = packageName;
-      myLanguageLevel = languageLevel;
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return PyBundle.message("INSP.package.requirements.add.requirement");
-    }
-
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
-    @Override
-    public String getName() {
-      return String.format("Add requirement '%s' to %s", myPackageName, calculateTarget());
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final List<PyRequirement> requirements = myPackageManager.getRequirements(myModule);
-      if (requirements != null && ContainerUtil.exists(requirements, r -> r.getName().equals(myPackageName))) return;
-
-      CommandProcessor.getInstance().executeCommand(
-        project,
-        () -> ApplicationManager.getApplication().runWriteAction(
-          () -> PyPackageUtil.addRequirementToTxtOrSetupPy(myModule, myPackageName, myLanguageLevel)
-        ),
-        getName(),
-        null
-      );
-    }
-
-    @NotNull
-    private String calculateTarget() {
-      final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(myModule);
-      if (requirementsTxt != null) {
-        return requirementsTxt.getName();
-      }
-      else if (PyPackageUtil.findSetupCall(myModule) != null) {
-        return "setup.py";
-      }
-      else {
-        return "project requirements";
       }
     }
   }
