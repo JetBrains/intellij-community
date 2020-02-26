@@ -32,10 +32,12 @@ val whiteList = sequenceOf(
   "_curses",
   "_importlib_modulespec",
   "_io",
+  "_json",
   "_operator",
   "_thread",
   "abc",
   "argparse",
+  "ast",
   "asyncio",
   "attr",
   "audioop",
@@ -52,8 +54,10 @@ val whiteList = sequenceOf(
   "cPickle",
   "crypt",
   "Crypto",
+  "cryptography",
   "csv",
   "ctypes",
+  "curses",
   "datetime",
   "dbm",
   "decimal",
@@ -61,20 +65,26 @@ val whiteList = sequenceOf(
   "distutils",
   "email",
   "exceptions",
+  "fcntl",
   "functools",
+  "gc",
   "genericpath",
   "gflags",
   "hashlib",
   "heapq",
   "http",
+  "imaplib",
   "inspect",
   "io",
+  "ipaddress",
   "itertools",
   "json",
   "logging",
   "macpath",
+  "marshal",
   "math",
   "mock",
+  "modulefinder",
   "multiprocessing",
   "ntpath",
   "numbers",
@@ -97,9 +107,11 @@ val whiteList = sequenceOf(
   "six",
   "socket",
   "sqlite3",
+  "sre_parse",
   "ssl",
   "subprocess",
   "sys",
+  "tempfile",
   "threading",
   "time",
   "token",
@@ -158,12 +170,27 @@ fun sync(repo: Path, bundled: Path) {
 }
 
 fun cleanTopLevelPackages(typeshed: Path, whiteList: Set<String>) {
+  val blackList = mutableSetOf<String>()
+
   sequenceOf(typeshed)
     .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("third_party")) }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
-    .filter { it.nameWithoutExtension().toLowerCase() !in whiteList }
+    .filter {
+      val name = it.nameWithoutExtension().toLowerCase()
+
+      if (name !in whiteList) {
+        blackList.add(name)
+        false
+      }
+      else {
+        true
+      }
+    }
     .forEach { it.delete() }
+
+  println("White list size: ${whiteList.size}")
+  println("Black list size: ${blackList.size}")
 }
 
 fun Path.abs() = toAbsolutePath()

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -503,15 +504,17 @@ public class PyMoveTest extends PyTestCase {
   @Nullable
   private PsiNamedElement findFirstNamedElement(String name) {
     final Project project = myFixture.getProject();
-    final Collection<PyClass> classes = PyClassNameIndex.find(name, project, false);
+    final GlobalSearchScope scope = ProjectScope.getProjectScope(project);
+
+    final Collection<PyClass> classes = PyClassNameIndex.find(name, project, scope);
     if (classes.size() > 0) {
       return classes.iterator().next();
     }
-    final Collection<PyFunction> functions = PyFunctionNameIndex.find(name, project);
+    final Collection<PyFunction> functions = PyFunctionNameIndex.find(name, project, scope);
     if (functions.size() > 0) {
       return functions.iterator().next();
     }
-    final Collection<PyTargetExpression> targets = PyVariableNameIndex.find(name, project, ProjectScope.getAllScope(project));
+    final Collection<PyTargetExpression> targets = PyVariableNameIndex.find(name, project, scope);
     if (targets.size() > 0) {
       return targets.iterator().next();
     }
