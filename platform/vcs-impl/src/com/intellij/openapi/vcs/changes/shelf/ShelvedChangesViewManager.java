@@ -752,6 +752,8 @@ public class ShelvedChangesViewManager implements Disposable {
         }
       };
       editorPreview.setEscapeHandler(() -> {
+        editorPreview.closePreview();
+
         ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
         if (toolWindow != null) toolWindow.activate(null);
       });
