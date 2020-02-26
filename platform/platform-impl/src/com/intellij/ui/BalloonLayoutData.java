@@ -62,6 +62,9 @@ public class BalloonLayoutData {
   public Color fillColor;
   public Color borderColor;
 
+  public boolean isExpandable;
+
+
   @NotNull
   public static BalloonLayoutData createEmpty() {
     BalloonLayoutData layoutData = new BalloonLayoutData();
