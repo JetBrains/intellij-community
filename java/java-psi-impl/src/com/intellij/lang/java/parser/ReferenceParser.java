@@ -185,7 +185,7 @@ public class ReferenceParser {
       type.done(JavaElementType.TYPE);
     }
     else {
-      type.error(JavaPsiBundle.message("wildcard.not.expected"));
+      type.error(JavaPsiBundle.message("error.message.wildcard.not.expected"));
     }
   }
 
@@ -365,7 +365,7 @@ public class ReferenceParser {
       param.done(JavaElementType.TYPE_PARAMETER);
     }
     else {
-      param.error(JavaPsiBundle.message("wildcard.not.expected"));
+      param.error(JavaPsiBundle.message("error.message.wildcard.not.expected"));
     }
     return param;
   }
