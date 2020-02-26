@@ -111,13 +111,9 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
     myReopenLastProject = reopenLastProject;
   }
 
-  @Nullable
-  private static Boolean getSupportScreenReadersOverridden() {
+  private static @Nullable Boolean getSupportScreenReadersOverridden() {
     String prop = System.getProperty(SUPPORT_SCREEN_READERS);
-    if (prop != null) {
-      return Boolean.parseBoolean(prop);
-    }
-    return null;
+    return prop != null ? Boolean.parseBoolean(prop) : null;
   }
 
   public static boolean isSupportScreenReadersOverridden() {
