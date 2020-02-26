@@ -831,7 +831,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   void clearLineToGutterRenderersCache() {
-    EditorImpl.assertIsDispatchThread();
     myLineToGutterRenderers = null;
   }
 
