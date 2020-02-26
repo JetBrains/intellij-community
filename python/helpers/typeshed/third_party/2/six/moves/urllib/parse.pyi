@@ -12,6 +12,7 @@ from urlparse import urlunsplit as urlunsplit
 from urllib import quote as quote
 from urllib import quote_plus as quote_plus
 from urllib import unquote as unquote
+from urllib import unquote as unquote_to_bytes
 from urllib import unquote_plus as unquote_plus
 from urllib import urlencode as urlencode
 from urllib import splitquery as splitquery
