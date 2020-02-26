@@ -796,15 +796,18 @@ public final class ControlFlowUtils {
     return (GrControlFlowOwner)element;
   }
 
-  public static @NotNull Collection<String> getForeignVariableIdentifiers(@NotNull GrControlFlowOwner owner) {
+  public static @NotNull Set<String> getForeignVariableIdentifiers(@NotNull GrControlFlowOwner owner) {
     Set<String> instructions = new LinkedHashSet<>();
     for (Instruction instruction : owner.getControlFlow()) {
       PsiElement element = instruction.getElement();
-      if (element instanceof GrControlFlowOwner) {
-        instructions.addAll(getForeignVariableIdentifiers((GrControlFlowOwner)element));
-      }
-      else if (instruction instanceof ReadWriteVariableInstruction) {
+      // The order of these ifs is important. For each closure, we insert all reads that happen within it before its invocation.
+      // GrClosableBlock may be an element for some ReadWriteVariableInstruction,
+      // so we should avoid running this function recursively for instructions that are not correspond directly to closable blocks.
+      if (instruction instanceof ReadWriteVariableInstruction) {
         instructions.add(((ReadWriteVariableInstruction)instruction).getDescriptor().getName());
+      }
+      else if (element instanceof GrControlFlowOwner) {
+        instructions.addAll(getForeignVariableIdentifiers((GrControlFlowOwner)element));
       }
     }
     GrParameter[] parameters = null;
