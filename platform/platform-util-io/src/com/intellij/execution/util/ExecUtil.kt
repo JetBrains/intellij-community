@@ -139,6 +139,9 @@ object ExecUtil {
         val launcherExe = PathManager.findBinFileWithException("launcher.exe")
         GeneralCommandLine(listOf(launcherExe.path, commandLine.exePath) + commandLine.parametersList.parameters)
       }
+      SystemInfo.isWindows -> {
+        throw UnsupportedOperationException("Executing as Administrator is only available in Windows Vista or newer")
+      }
       SystemInfo.isMac -> {
         val escapedCommand = StringUtil.join(command, {
           escapeAppleScriptArgument(it)
@@ -151,24 +154,21 @@ object ExecUtil {
           "end tell"
         GeneralCommandLine(osascriptPath, "-e", escapedScript)
       }
+      // other UNIX
       hasGkSudo.value -> {
-        GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + envCommand(
-          commandLine) + command)
+        GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + envCommand(commandLine) + command)
       }
       hasKdeSudo.value -> {
-        GeneralCommandLine(listOf("kdesudo", "--comment", prompt, "--") + envCommand(
-          commandLine) + command)
+        GeneralCommandLine(listOf("kdesudo", "--comment", prompt, "--") + envCommand(commandLine) + command)
       }
       hasPkExec.value -> {
-        GeneralCommandLine(listOf("pkexec") + envCommand(
-          commandLine) + command)
+        GeneralCommandLine(listOf("pkexec") + envCommand(commandLine) + command)
       }
-      SystemInfo.isUnix && hasTerminalApp() -> {
+      hasTerminalApp() -> {
         val escapedCommandLine = StringUtil.join(command, {
           escapeUnixShellArgument(it)
         }, " ")
-        val escapedEnvCommand = when (val args = envCommandArgs(
-          commandLine)) {
+        val escapedEnvCommand = when (val args = envCommandArgs(commandLine)) {
           emptyList<String>() -> ""
           else -> "env " + StringUtil.join(args, {
             escapeUnixShellArgument(it)
@@ -184,8 +184,7 @@ object ExecUtil {
           "echo\n" +
           "read -p \"Press Enter to close this window...\" TEMP\n" +
           "exit \$STATUS\n")
-        GeneralCommandLine(
-          getTerminalCommand("Install", script.absolutePath))
+        GeneralCommandLine(getTerminalCommand("Install", script.absolutePath))
       }
       else -> {
         throw UnsupportedOperationException("Cannot `sudo` on this system - no suitable utils found")
@@ -216,8 +215,7 @@ object ExecUtil {
   @JvmStatic
   @Throws(IOException::class, ExecutionException::class)
   fun sudoAndGetOutput(commandLine: GeneralCommandLine, prompt: String): ProcessOutput =
-    execAndGetOutput(
-      sudoCommand(commandLine, prompt))
+    execAndGetOutput(sudoCommand(commandLine, prompt))
 
   private fun escapeAppleScriptArgument(arg: String) = "quoted form of \"${arg.replace("\"", "\\\"")}\""
 
