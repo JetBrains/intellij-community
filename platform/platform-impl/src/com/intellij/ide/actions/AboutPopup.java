@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.AboutPopupDescriptionProvider;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -15,6 +16,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -131,6 +133,8 @@ public class AboutPopup {
   }
 
   private static class InfoSurface extends JPanel {
+    private static final ExtensionPointName<AboutPopupDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
+
     private final Color myColor;
     private final Color myLinkColor;
     private final Icon myImage;
@@ -202,6 +206,22 @@ public class AboutPopup {
       String vmVendor = properties.getProperty("java.vendor", "unknown");
       myLines.add(new AboutBoxLine(IdeBundle.message("about.box.vm", vmVersion, vmVendor)));
       appendLast();
+
+      for (AboutPopupDescriptionProvider aboutInfoProvider : EP_NAME.getExtensions()) {
+        String description = aboutInfoProvider.getDescription();
+        if (description == null) continue;
+
+        String[] lines = description.split("[\n]+");
+
+        if (lines.length == 0) continue;
+
+        myLines.add(new AboutBoxLine(""));
+
+        for (String line : lines) {
+          myLines.add(new AboutBoxLine(line));
+          appendLast();
+        }
+      }
 
       myLines.add(new AboutBoxLine(""));
       myLines.add(new AboutBoxLine(""));
