@@ -71,9 +71,8 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     if (!project.isInitialized()) return;
 
     PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
-    if (documentManager.isEventSystemEnabled(document)) {
-      TransactionGuard.getInstance().assertWriteSafeContext(modality);
-    }
+    assert documentManager.isEventSystemEnabled(document) :"Asynchronous commit is only supported for physical PSI";
+    TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
     PsiFile psiFile = documentManager.getCachedPsiFile(document);
     if (psiFile == null || psiFile instanceof PsiCompiledElement) return;
