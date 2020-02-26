@@ -78,6 +78,9 @@ class InferenceCache {
     if (myTooComplexInstructions.contains(instruction)) return null;
     state.markOwnerAsVisited(myScope);
     final List<DefinitionMap> definitionMaps = myDefinitionMaps.getValue();
+    if (definitionMaps == null) {
+      return null;
+    }
     TypeDfaState cache = myVarTypes.get().get(instruction.num());
     if (!cache.containsVariable(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;

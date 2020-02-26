@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
@@ -776,6 +777,9 @@ public final class ControlFlowUtils {
     }
     else {
       GrControlFlowOwner firstOpenBlock = getNearestControlFlowScope(expression);
+      if (!(firstOpenBlock instanceof GrFunctionalExpression)) {
+        return true;
+      }
       GrControlFlowOwner secondOpenBlock = getNearestControlFlowScope(definition);
       return Objects.equals(firstOpenBlock, secondOpenBlock);
     }
