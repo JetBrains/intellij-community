@@ -18,6 +18,7 @@ package org.intellij.lang.xpath.xslt.run;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -26,13 +27,13 @@ import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.SdkComboBox;
+import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -46,6 +47,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.table.JBTable;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -98,7 +100,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     private JRadioButton myJdkChoice;
     private JRadioButton myModuleChoice;
     private ComboBox<Object> myModule;
-    private ComboBox<Sdk> myJDK;
+    private SdkComboBox myJDK;
     private ComboBox<FileType> myFileType;
     private JPanel myClasspathAndJDKPanel;
     private JPanel myPanelSettings;
@@ -218,7 +220,6 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
       myShowInConsole.addItemListener(outputStateListener);
       myShowInStdout.addItemListener(outputStateListener);
       mySaveToFile.addItemListener(outputStateListener);
-      myClasspathAndJDKPanel.setVisible(ALLOW_CHOOSING_SDK);
       updateOutputState();
 
       myFileType.setRenderer(new FileTypeRenderer() {
@@ -273,35 +274,33 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
           }
         }).createPanel(), BorderLayout.CENTER);
 
-      final Module[] modules = ModuleManager.getInstance(project).getModules();
-      myModule.setModel(new DefaultComboBoxModel<>(ArrayUtil.mergeArrays(new Object[]{"<default>"}, modules)));
-      myModule.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
-        if (value instanceof Module) {
-          final Module module = (Module)value;
-          label.setText(ReadAction.compute(() -> module.getName()));
-          label.setIcon(ModuleType.get(module).getIcon());
-        }
-        else if (value instanceof String) {
-          label.setText((String)value);
-        }
-      }));
-
-      final List<Sdk> allJdks = ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(),
-                                                     sdk -> sdk.getSdkType() instanceof JavaSdkType);
-      myJDK.setModel(new DefaultComboBoxModel<>(allJdks.toArray(new Sdk[0])));
-      if (allJdks.size() > 0) {
-        myJDK.setSelectedIndex(0);
+      if (ALLOW_CHOOSING_SDK) {
+        final Module[] modules = ModuleManager.getInstance(project).getModules();
+        myModule.setModel(new DefaultComboBoxModel<>(ArrayUtil.mergeArrays(new Object[]{"<default>"}, modules)));
+        myModule.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+          if (value instanceof Module) {
+            final Module module = (Module)value;
+            label.setText(ReadAction.compute(() -> module.getName()));
+            label.setIcon(ModuleType.get(module).getIcon());
+          }
+          else if (value instanceof String) {
+            label.setText((String)value);
+          }
+        }));
       }
       else {
-        myJdkChoice.setEnabled(false);
-        myJDK.setEnabled(false);
+        myModuleChoice.setEnabled(false);
+        myModule.setEnabled(false);
+        myJdkChoice.setSelected(true);
       }
-      myJDK.setRenderer(SimpleListCellRenderer.create((label, jdk, index) -> {
-        if (jdk != null) {
-          label.setText(ReadAction.compute(() -> jdk.getName()));
-          label.setIcon(((SdkType)jdk.getSdkType()).getIcon());
-        }
-      }));
+
+      SdkComboBoxModel model = SdkComboBoxModel.createJdkComboBoxModel(project, new ProjectSdksModel());
+      myJDK = new SdkComboBox(model);
+      GridConstraints constraints = new GridConstraints();
+      constraints.setColumn(2);
+      constraints.setRow(1);
+      constraints.setFill(GridConstraints.FILL_BOTH);
+      myClasspathAndJDKPanel.add(myJDK, constraints);
 
       final ItemListener updateListener = new ItemListener() {
         @Override
@@ -405,16 +404,20 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
           myXsltDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT,
                                        ProjectRootManager.getInstance(s.getProject()).getFileIndex().getModuleForFile(xsltFile));
         }
-        myModule.setSelectedIndex(0);
+        if (myModule.getItemCount() > 0) {
+          myModule.setSelectedIndex(0);
+        }
       }
-      myJDK.setSelectedItem(s.getJdk());
+      myJDK.getModel().getSdksModel().reset(s.getProject());
+      myJDK.reloadModel();
+      myJDK.setSelectedSdk(s.getJdk());
       mySmartErrorHandling.setSelected(s.mySmartErrorHandling);
       setSelectedIndex(myOutputOptions, s.getOutputType().ordinal());
       setSelectedIndex(myJdkOptions, s.getJdkChoice().ordinal());
       mySaveToFile.setSelected(s.isSaveToFile());
     }
 
-    public void applyTo(XsltRunConfiguration s) {
+    public void applyTo(XsltRunConfiguration s) throws ConfigurationException {
       s.setXsltFile(myXsltFile.getText());
       s.setXmlInputFile(getXmlInputFile());
       s.setFileType((FileType)myFileType.getSelectedItem());
@@ -425,7 +428,8 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
       s.setVmArguments(myVmArguments.getText());
       s.myWorkingDirectory = myWorkingDirectory.getText();
       s.setModule(getModule());
-      s.setJDK((Sdk)myJDK.getSelectedItem());
+      WriteAction.run(() -> myJDK.getModel().getSdksModel().apply());
+      s.setJDK(myJDK.getSelectedSdk());
       s.setJdkChoice(XsltRunConfiguration.JdkChoice.values()[getSelectedIndex(myJdkOptions)]);
       s.mySmartErrorHandling = mySmartErrorHandling.isSelected();
       s.setOutputType(XsltRunConfiguration.OutputType.values()[getSelectedIndex(myOutputOptions)]);
@@ -596,7 +600,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
   }
 
   @Override
-  protected void applyEditorTo(@NotNull XsltRunConfiguration s) {
+  protected void applyEditorTo(@NotNull XsltRunConfiguration s) throws ConfigurationException {
     myEditor.applyTo(s);
   }
 

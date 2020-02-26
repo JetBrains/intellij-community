@@ -441,9 +441,6 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
 
     @Nullable
     public Sdk getEffectiveJDK() {
-        if (!XsltRunSettingsEditor.ALLOW_CHOOSING_SDK) {
-            return getDefaultSdk();
-        }
         if (myJdkChoice == JdkChoice.JDK) {
             return myJdk != null ? ProjectJdkTable.getInstance().findJdk(myJdk) : null;
         }
