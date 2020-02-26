@@ -140,11 +140,10 @@ internal class FilteringBranchesTree(project: Project,
 
   private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
   private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
-  private val nodeDescriptorFilter: (BranchNodeDescriptor) -> Boolean =
-    { descriptor -> descriptor.type == NodeType.GROUP_NODE || !uiController.showOnlyMy || descriptor.branchInfo?.isMy == ThreeState.YES }
+  private val branchFilter: (BranchInfo) -> Boolean =
+    { branch -> !uiController.showOnlyMy || branch.isMy == ThreeState.YES }
   private val nodeDescriptorsModel = NodeDescriptorsModel(localBranchesNode.getNodeDescriptor(),
-                                                          remoteBranchesNode.getNodeDescriptor(),
-                                                          nodeDescriptorFilter)
+                                                          remoteBranchesNode.getNodeDescriptor())
 
   private var localNodeExist = false
   private var remoteNodeExist = false
@@ -273,7 +272,7 @@ internal class FilteringBranchesTree(project: Project,
       localNodeExist = localBranches.isNotEmpty()
       remoteNodeExist = remoteBranches.isNotEmpty()
 
-      nodeDescriptorsModel.populateFrom(localBranches.asSequence() + remoteBranches.asSequence(), useDirectoryGrouping)
+      nodeDescriptorsModel.populateFrom((localBranches.asSequence() + remoteBranches.asSequence()).filter(branchFilter), useDirectoryGrouping)
     }
   }
 
