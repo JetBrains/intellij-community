@@ -147,6 +147,11 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     return condition ? MyResult.suitableClass : MyResult.classNameOrGlobalStatic;
   }
 
+  static boolean isEnumClass(@NotNull ExpectedTypeInfo info) {
+    PsiClass expectedClass = PsiUtil.resolveClassInType(info.getType());
+    return expectedClass != null && expectedClass.isEnum();
+  }
+
   enum MyResult {
     annoMethod,
     probableKeyword,
@@ -171,7 +176,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     nonInitialized,
     classNameOrGlobalStatic,
     introducedVariable,
-    unlikelyClass,
+    unlikelyItem,
     improbableKeyword,
   }
 
@@ -194,7 +199,9 @@ public class PreferByKindWeigher extends LookupElementWeigher {
         object instanceof PsiThisExpression ||
         object instanceof PsiField && !((PsiField)object).hasModifierProperty(PsiModifier.STATIC)) {
       if (PsiTreeUtil.getParentOfType(myPosition, PsiDocComment.class) == null) {
-        return isExpectedTypeItem(item) ? MyResult.expectedTypeVariable : MyResult.variable;
+        return isComparisonWithItself((PsiElement)object) ? MyResult.unlikelyItem :
+               isExpectedTypeItem(item) ? MyResult.expectedTypeVariable :
+               MyResult.variable;
       }
     }
 
@@ -218,7 +225,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     if (object instanceof PsiClass &&
         CommonClassNames.JAVA_LANG_STRING.equals(((PsiClass)object).getQualifiedName()) &&
         JavaSmartCompletionContributor.AFTER_NEW.accepts(myPosition)) {
-      return MyResult.unlikelyClass;
+      return MyResult.unlikelyItem;
     }
     Boolean expectedTypeMember = item.getUserData(MembersGetter.EXPECTED_TYPE_MEMBER);
     if (expectedTypeMember != null) {
@@ -281,6 +288,16 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     return MyResult.normal;
   }
 
+  private boolean isComparisonWithItself(PsiElement itemObject) {
+    if (isComparisonRhs(myPosition) && myPosition.getParent().getParent() instanceof PsiPolyadicExpression) {
+      PsiExpression[] operands = ((PsiPolyadicExpression)myPosition.getParent().getParent()).getOperands();
+      if (operands[0] instanceof PsiReferenceExpression && ((PsiReferenceExpression)operands[0]).resolve() == itemObject) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private boolean isExpectedTypeItem(@NotNull LookupElement item) {
     TypedLookupItem typed = item.as(TypedLookupItem.CLASS_CONDITION_KEY);
     PsiType itemType = typed == null ? null : typed.getType();
@@ -325,8 +342,9 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     if (PsiKeyword.INTERFACE.equals(keyword) && psiElement().afterLeaf("@").accepts(myPosition)) {
       return ThreeState.NO;
     }
-    if (PsiKeyword.NULL.equals(keyword) && psiElement().afterLeaf(psiElement().withElementType(elementType().oneOf(JavaTokenType.EQEQ, JavaTokenType.NE))).accepts(myPosition)) {
-      return ThreeState.YES;
+    if (PsiKeyword.NULL.equals(keyword) && isComparisonRhs(myPosition)) {
+      boolean expectsNotNull = Arrays.stream(myExpectedTypes).anyMatch(PreferByKindWeigher::isEnumClass);
+      return expectsNotNull ? ThreeState.NO : ThreeState.YES;
     }
     if (JavaKeywordCompletion.PRIMITIVE_TYPES.contains(keyword) || PsiKeyword.VOID.equals(keyword)) {
       boolean inCallArg = psiElement().withParents(PsiReferenceExpression.class, PsiExpressionList.class).accepts(myPosition);
@@ -336,6 +354,10 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       return ThreeState.YES;
     }
     return ThreeState.UNSURE;
+  }
+
+  static boolean isComparisonRhs(PsiElement position) {
+    return psiElement().afterLeaf(psiElement().withElementType(elementType().oneOf(JavaTokenType.EQEQ, JavaTokenType.NE))).accepts(position);
   }
 
   private boolean isBeforeVariableOnSameLine(@Nullable PsiStatement parentStatement) {

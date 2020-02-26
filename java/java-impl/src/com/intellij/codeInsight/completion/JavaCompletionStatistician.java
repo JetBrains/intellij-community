@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +50,9 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     }
 
     PsiElement position = location.getCompletionParameters().getPosition();
-    if (SUPER_CALL.accepts(position) || JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)) {
+    if (SUPER_CALL.accepts(position) ||
+        JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position) ||
+        PreferByKindWeigher.isComparisonRhs(position)) {
       return StatisticsInfo.EMPTY;
     }
 
@@ -67,10 +68,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
   }
 
   private static boolean isInEnumAnnotationParameter(PsiElement position, ExpectedTypeInfo firstInfo) {
-    if (PsiTreeUtil.getParentOfType(position, PsiNameValuePair.class) == null) return false;
-    
-    PsiClass expectedClass = PsiUtil.resolveClassInType(firstInfo.getType());
-    return expectedClass != null && expectedClass.isEnum();
+    return PsiTreeUtil.getParentOfType(position, PsiNameValuePair.class) != null && PreferByKindWeigher.isEnumClass(firstInfo);
   }
 
   @Nullable
