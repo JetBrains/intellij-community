@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer.isDisposed
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.wm.ToolWindowManager
@@ -29,6 +30,8 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
   fun installOn(tree: ChangesTree) =
     //do not open file aggressively on start up, do it later
     DumbService.getInstance(project).smartInvokeLater {
+      if (isDisposed(updatePreviewQueue)) return@smartInvokeLater
+
       tree.addSelectionListener(
         Runnable {
           updatePreviewQueue.queue(Update.create(this) {
