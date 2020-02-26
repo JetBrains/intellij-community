@@ -97,7 +97,9 @@ public abstract class PsiDocumentManager {
    * Before a modified document is committed, accessing its PSI may return elements
    * corresponding to original (unmodified) state of the document.<p/>
    *
-   * Should be called in UI thread in a write-safe context (see {@link com.intellij.openapi.application.TransactionGuard}).
+   * For documents with event-system-enabled PSI ({@link FileViewProvider#isEventSystemEnabled()}), should be called in UI thread in a write-safe context (see {@link com.intellij.openapi.application.TransactionGuard}).
+   * For other documents, can be called in background thread with read access. It's the responsibility of the caller to properly synchronize
+   * that PSI and ensure no other threads are reading or modifying it concurrently.
    *
    * @param document the document to commit.
    */
@@ -235,7 +237,7 @@ public abstract class PsiDocumentManager {
   public abstract void doPostponedOperationsAndUnblockDocument(@NotNull Document doc);
 
   /**
-   * Defer action until all documents are committed.
+   * Defer action until all documents with event-system-enabled PSI are committed.
    * Must be called from the EDT only.
    *
    * @param action to run when all documents committed
@@ -249,7 +251,8 @@ public abstract class PsiDocumentManager {
   public abstract void performLaterWhenAllCommitted(@NotNull Runnable runnable);
 
   /**
-   * Schedule the runnable to be executed on Swing thread when all the documents are committed at some later moment in a given modality state.
+   * Schedule the runnable to be executed on Swing thread when all the documents with event-system-enabled PSI
+   * are committed at some later moment in a given modality state.
    * The runnable is guaranteed to be invoked when no write action is running, and not immediately.
    * If the project is disposed before such moment, the runnable is not run.
    */

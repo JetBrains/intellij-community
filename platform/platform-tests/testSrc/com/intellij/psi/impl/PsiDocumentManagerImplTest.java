@@ -67,9 +67,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -716,22 +714,6 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(document));
   }
 
-  public void testCommitNonPhysicalCopyOnPerformWhenAllCommitted() throws Exception {
-    assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
-
-    PsiFile original = getPsiManager().findFile(getVirtualFile(createTempFile("X.txt", "")));
-    assertNotNull(original);
-    PsiFile copy = (PsiFile)original.copy();
-    assertEquals("", copy.getText());
-    Document document = copy.getViewProvider().getDocument();
-    assertNotNull(document);
-
-    document.setText("class A{}");
-    PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> assertEquals(document.getText(), copy.getText()));
-    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
-    assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(document));
-  }
-
   public void testPerformWhenAllCommittedWorksAfterFileDeletion() throws Exception {
     PsiFile file = getPsiManager().findFile(getVirtualFile(createTempFile("X.txt", "")));
     Document document = file.getViewProvider().getDocument();
@@ -945,6 +927,40 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       assertEquals(" " + text, file.getText());
       assertTrue(documentCommitCallback.get());
     })).get();
+  }
+
+  public void test_performWhenAllCommitted_does_not_race_with_background_light_commits_resulting_in_exceptions(){
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
+
+    PsiFile mainFile = findFile(createFile());
+    Document mainDoc = getDocument(mainFile);
+
+    PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
+    List<Future<?>> futures = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      for (int j = 0; j < 20; j++) {
+        PsiFile tempFile = factory.createFileFromText(i + ".xml", XMLLanguage.INSTANCE, "<a><b><c/></b></a>", false, false);
+        Document document = FileDocumentManager.getInstance().getDocument(tempFile.getViewProvider().getVirtualFile());
+        document.insertString(0, " ");
+
+        futures.add(ReadAction.nonBlocking(() -> {
+          getPsiDocumentManager().commitDocument(document);
+          assertEquals(tempFile.getText(), document.getText());
+        }).submit(executor));
+      }
+
+      Semaphore semaphore = new Semaphore(1);
+      WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        mainDoc.insertString(0, " ");
+        getPsiDocumentManager().performWhenAllCommitted(semaphore::up);
+      });
+      waitAndPump(semaphore);
+      assertTrue(getPsiDocumentManager().isCommitted(mainDoc));
+      assertEquals(mainFile.getText(), mainDoc.getText());
+    }
+    for (Future<?> future : futures) {
+      PlatformTestUtil.waitForFuture(future, 10_000);
+    }
   }
 
   public void testDoNotLeakForgottenUncommittedDocument() throws Exception {

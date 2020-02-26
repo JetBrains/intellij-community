@@ -587,13 +587,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
     actions.add(action);
 
-    // this client obviously expects all documents to be committed ASAP even inside modal dialog
-    boolean newModality = modality != ModalityState.NON_MODAL;
-
-    for (Document document : myUncommittedDocuments) {
-      if (newModality || !isEventSystemEnabled(document)) {
-        myDocumentCommitProcessor.commitAsynchronously(myProject, document,
-                                                       "re-added because performWhenAllCommitted("+modality+") was called", modality);
+    if (modality != ModalityState.NON_MODAL) {
+      // this client obviously expects all documents to be committed ASAP even inside modal dialog
+      for (Document document : myUncommittedDocuments) {
+        if (isEventSystemEnabled(document)) {
+          myDocumentCommitProcessor.commitAsynchronously(myProject, document,
+                                                         "re-added because performWhenAllCommitted("+modality+") was called", modality);
+        }
       }
     }
     return false;
@@ -692,7 +692,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean mayRunActionsWhenAllCommitted() {
-    return !hasUncommitedDocuments() && !actionsWhenAllDocumentsAreCommitted.isEmpty();
+    return myIsCommitInProgress.get() == null &&
+           !actionsWhenAllDocumentsAreCommitted.isEmpty() &&
+           !ContainerUtil.exists(myUncommittedDocuments, this::isEventSystemEnabled);
   }
 
   private void beforeCommitHandler() {
