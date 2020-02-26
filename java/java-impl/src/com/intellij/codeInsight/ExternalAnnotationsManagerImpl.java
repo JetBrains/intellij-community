@@ -59,6 +59,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -211,29 +212,38 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     
     if (annotationsByFiles.isEmpty()) return;
 
-    WriteCommandAction.writeCommandAction(project).run(() -> {
-      try {
-        for (Map.Entry<Optional<XmlFile>, List<ExternalAnnotation>> entry : annotationsByFiles.entrySet()) {
-          XmlFile annotationsFile = entry.getKey().orElse(null);
-          List<ExternalAnnotation> fileAnnotations = entry.getValue();
-          annotateExternally(annotationsFile, fileAnnotations);
+    WriteCommandAction.writeCommandAction(project).run(new ThrowableRunnable<RuntimeException>() {
+      @Override
+      public void run() throws RuntimeException {
+        if (project.isDisposed()) return;
+        if (DumbService.isDumb(project)) {
+          DumbService.getInstance(project).runWhenSmart(this::run);
+          return;
         }
-
-        UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
-          @Override
-          public void undo() {
-            dropAnnotationsCache();
-            notifyChangedExternally();
+        try {
+          for (Map.Entry<Optional<XmlFile>, List<ExternalAnnotation>> entry : annotationsByFiles.entrySet()) {
+            XmlFile annotationsFile = entry.getKey().orElse(null);
+            List<ExternalAnnotation> fileAnnotations = entry.getValue();
+            annotateExternally(annotationsFile, fileAnnotations);
           }
 
-          @Override
-          public void redo() {
-            dropAnnotationsCache();
-            notifyChangedExternally();
-          }
-        });
-      } finally {
-        dropAnnotationsCache();
+          UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
+            @Override
+            public void undo() {
+              dropAnnotationsCache();
+              notifyChangedExternally();
+            }
+
+            @Override
+            public void redo() {
+              dropAnnotationsCache();
+              notifyChangedExternally();
+            }
+          });
+        }
+        finally {
+          dropAnnotationsCache();
+        }
       }
     });
   }
