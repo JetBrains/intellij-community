@@ -10,9 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspace.api.ModuleId
-import com.intellij.workspace.api.TypedEntityStorageDiffBuilder
-import com.intellij.workspace.api.TypedEntityStore
+import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.WorkspaceModelChangeListener
+import com.intellij.workspace.ide.WorkspaceModelTopics
 import com.intellij.workspace.legacyBridge.facet.FacetManagerViaWorkspaceModel
 import java.io.File
 
@@ -25,6 +25,20 @@ internal class LegacyBridgeModuleImpl(
   override var diff: TypedEntityStorageDiffBuilder?
 ) : ModuleImpl(name, project, filePath), LegacyBridgeModule {
   private val directoryPath: String? = filePath?.let { File(it).parent }
+
+  init {
+    // default project doesn't have modules
+    if (!project.isDefault) {
+      val busConnection = project.messageBus.connect(this)
+
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
+        override fun beforeChanged(event: EntityStoreChanged) {
+          event.getChanges(ModuleEntity::class.java).filter { it is EntityChange.Removed }
+            .forEach{ if ((it as EntityChange.Removed).entity.persistentId() == moduleEntityId) entityStore = EntityStoreOnStorage(entityStore.current) }
+        }
+      })
+    }
+  }
 
   override fun rename(newName: String, notifyStorage: Boolean) {
     moduleEntityId = moduleEntityId.copy(name = newName)
