@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.regexp.validation;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
@@ -27,6 +28,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.regexp.RegExpHighlighter;
 import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
@@ -87,6 +89,8 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpCharRange(RegExpCharRange range) {
     final RegExpChar from = range.getFrom();
+    final PsiElement hyphen = from.getNextSibling();
+    myHolder.newSilentAnnotation(HighlightInfoType.SYMBOL_TYPE_SEVERITY).range(hyphen).textAttributes(RegExpHighlighter.META).create();
     final RegExpChar to = range.getTo();
     if (to == null) {
       return;

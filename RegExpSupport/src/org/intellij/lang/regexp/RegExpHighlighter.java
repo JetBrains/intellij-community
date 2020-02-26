@@ -36,7 +36,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
 
   static final TextAttributesKey CHARACTER = createTextAttributesKey("REGEXP.CHARACTER", DefaultLanguageHighlighterColors.STRING);
   static final TextAttributesKey DOT = createTextAttributesKey("REGEXP.DOT", DefaultLanguageHighlighterColors.DOT);
-  static final TextAttributesKey META = createTextAttributesKey("REGEXP.META", DefaultLanguageHighlighterColors.KEYWORD);
+  public static final TextAttributesKey META = createTextAttributesKey("REGEXP.META", DefaultLanguageHighlighterColors.KEYWORD);
   static final TextAttributesKey INVALID_CHARACTER_ESCAPE = createTextAttributesKey("REGEXP.INVALID_STRING_ESCAPE", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE);
   static final TextAttributesKey BAD_CHARACTER = createTextAttributesKey("REGEXP.BAD_CHARACTER", HighlighterColors.BAD_CHARACTER);
   static final TextAttributesKey REDUNDANT_ESCAPE = createTextAttributesKey("REGEXP.REDUNDANT_ESCAPE", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
@@ -63,6 +63,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
   static {
     ourMap.put(RegExpTT.CHARACTER, CHARACTER);
     ourMap.put(RegExpTT.COLON, CHARACTER);
+    ourMap.put(RegExpTT.MINUS, CHARACTER);
     ourMap.put(RegExpTT.DOT, DOT);
 
     ourMap.put(RegExpTT.NAME, NAME);
@@ -72,7 +73,6 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
     ourMap.put(RegExpTT.CARET, META);
     ourMap.put(RegExpTT.DOLLAR, META);
     ourMap.put(RegExpTT.ANDAND, META);
-    ourMap.put(RegExpTT.MINUS, META);
 
     ourMap.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, INVALID_CHARACTER_ESCAPE);
     ourMap.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, INVALID_CHARACTER_ESCAPE);
