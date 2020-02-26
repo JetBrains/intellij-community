@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -22,7 +23,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
@@ -192,8 +196,8 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private void handleClosureBlock(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
     GrClosableBlock element = Objects.requireNonNull((GrClosableBlock)instruction.getElement());
-    if (Arrays.stream(element.getControlFlow()).filter(it -> it instanceof ReadWriteVariableInstruction)
-      .noneMatch(it -> ((ReadWriteVariableInstruction)it).getDescriptor().getName().equals(myDfaComputationState.getTargetDescriptor().getName()))) {
+    if (ControlFlowUtils.getForeignVariableIdentifiers(element).stream()
+      .noneMatch(it -> Objects.equals(it, myDfaComputationState.getTargetDescriptor().getName()))) {
       return;
     }
     if (instruction.num() > myInteresting.stream().mapToInt(Instruction::num).max().orElse(Integer.MAX_VALUE) &&

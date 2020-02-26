@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -44,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AfterCallInstruction;
@@ -788,6 +790,30 @@ public final class ControlFlowUtils {
       element = element.getParent();
     }
     return (GrControlFlowOwner)element;
+  }
+
+  public static @NotNull Collection<String> getForeignVariableIdentifiers(@NotNull GrControlFlowOwner owner) {
+    Set<String> instructions = new LinkedHashSet<>();
+    for (Instruction instruction : owner.getControlFlow()) {
+      PsiElement element = instruction.getElement();
+      if (element instanceof GrControlFlowOwner) {
+        instructions.addAll(getForeignVariableIdentifiers((GrControlFlowOwner)element));
+      }
+      else if (instruction instanceof ReadWriteVariableInstruction) {
+        instructions.add(((ReadWriteVariableInstruction)instruction).getDescriptor().getName());
+      }
+    }
+    GrParameter[] parameters = null;
+    if (owner instanceof GrClosableBlock) {
+      parameters = ((GrClosableBlock)owner).getAllParameters();
+    }
+    else if (owner instanceof GrLambdaExpression) {
+      parameters = ((GrLambdaExpression)owner).getParameters();
+    }
+    if (parameters != null) {
+      instructions.removeAll(ContainerUtil.map(parameters, GrParameter::getName));
+    }
+    return Collections.unmodifiableSet(instructions);
   }
 
   @Nullable
