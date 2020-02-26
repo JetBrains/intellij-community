@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
@@ -24,9 +24,11 @@ class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(commentableRangesModel: Si
   init {
     val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
 
-    GHPREditorCommentableRangesController(commentableRanges, componentsFactory, inlaysManager) {
+    val gutterIconRendererFactory = GHPRDiffEditorGutterIconRendererFactoryImpl(inlaysManager, componentsFactory) {
       viewer.side to it
     }
+
+    GHPREditorCommentableRangesController(commentableRanges, gutterIconRendererFactory, viewer.editor)
     GHPREditorReviewThreadsController(editorThreads, componentsFactory, inlaysManager)
   }
 
