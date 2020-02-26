@@ -28,10 +28,6 @@ public class DiffDialogHints {
   @NotNull public static final DiffDialogHints MODAL = new DiffDialogHints(WindowWrapper.Mode.MODAL);
   @NotNull public static final DiffDialogHints NON_MODAL = new DiffDialogHints(WindowWrapper.Mode.NON_MODAL);
 
-  //
-  // Impl
-  //
-
   @Nullable private final WindowWrapper.Mode myMode;
   @Nullable private final Component myParent;
   @Nullable private final Consumer<WindowWrapper> myWindowConsumer;
@@ -49,10 +45,6 @@ public class DiffDialogHints {
     myParent = parent;
     myWindowConsumer = windowConsumer;
   }
-
-  //
-  // Getters
-  //
 
   @Nullable
   public WindowWrapper.Mode getMode() {
