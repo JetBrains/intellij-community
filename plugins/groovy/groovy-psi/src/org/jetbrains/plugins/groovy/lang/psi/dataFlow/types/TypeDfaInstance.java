@@ -196,6 +196,10 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       .noneMatch(it -> ((ReadWriteVariableInstruction)it).getDescriptor().getName().equals(myDfaComputationState.getTargetDescriptor().getName()))) {
       return;
     }
+    if (instruction.num() > myInteresting.stream().mapToInt(Instruction::num).max().orElse(Integer.MAX_VALUE) &&
+        !myDfaComputationState.isVisited(element)) {
+      return;
+    }
     InvocationKind kind = ClosureFlowUtil.getInvocationKind(element);
     switch (kind) {
       case EXACTLY_ONCE:
