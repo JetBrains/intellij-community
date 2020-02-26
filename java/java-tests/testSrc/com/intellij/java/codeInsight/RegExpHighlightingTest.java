@@ -59,6 +59,10 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
     doTest("[\\w-<warning descr=\"Duplicate predefined character class '\\w' inside character class\">\\w</warning>]");
   }
 
+  public void testNotDuplicateControlCharacter() {
+    doTest("[\\ca\\cb]");
+  }
+
   public void testNoRange() {
     doTest("[\\w-a]");
   }

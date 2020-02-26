@@ -48,6 +48,8 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             return Type.UNICODE;
         } else if (t == RegExpTT.NAMED_CHARACTER) {
             return Type.NAMED;
+        } else if (t == RegExpTT.CTRL) {
+            return Type.CONTROL;
         } else {
             return Type.CHAR;
         }
@@ -77,15 +79,15 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             case 't':
                 return '\t';
             case 'a':
-                return '\u0007';
+                return '\u0007'; // The alert (bell) character
             case 'e':
-                return '\u001b';
+                return '\u001b'; // The escape character
             case 'f':
-                return '\f';
+                return '\f'; // The form-feed character
             case 'b':
                 return '\b';
             case 'c':
-                return (char)(codePoint ^ 64);
+                return s.codePointAt(2) ^ 64; // control character
             case 'N':
                 if (length < 4 || s.charAt(2) != '{' || s.charAt(length - 1) != '}') {
                     return -1;
