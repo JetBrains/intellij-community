@@ -32,7 +32,6 @@ public class FacetsTreeCellRenderer extends GroupedElementsRenderer.Tree {
 
   @Override
   protected void layout() {
-    myRendererComponent.setOpaqueActive(false);
     myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
     myRendererComponent.add(myComponent, BorderLayout.CENTER);
   }
