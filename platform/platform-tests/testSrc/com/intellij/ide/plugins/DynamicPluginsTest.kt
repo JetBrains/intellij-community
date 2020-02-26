@@ -367,6 +367,7 @@ class DynamicPluginsTest {
     }
     finally {
       Disposer.dispose(disposable)
+      Disposer.dispose(listenerDisposable)
     }
     assertThat(checked.get()).isEqualTo(2)
     assertThat(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name }).isFalse()
