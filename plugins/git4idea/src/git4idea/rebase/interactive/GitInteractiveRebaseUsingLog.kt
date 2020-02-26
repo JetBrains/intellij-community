@@ -22,6 +22,7 @@ import git4idea.GitUtil.HEAD
 import git4idea.GitVcs
 import git4idea.branch.GitRebaseParams
 import git4idea.history.GitLogUtil
+import git4idea.i18n.GitBundle
 import git4idea.rebase.*
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.rebase.interactive.dialog.GitRebaseEntryWithEditedMessage
@@ -122,7 +123,7 @@ internal fun startInteractiveRebase(
   commit: VcsShortCommitDetails,
   editorHandler: GitRebaseEditorHandler? = null
 ) {
-  object : Task.Backgroundable(repository.project, "Rebasing${StringUtil.ELLIPSIS}") {
+  object : Task.Backgroundable(repository.project, GitBundle.message("rebase.progress.indicator.title")) {
     override fun run(indicator: ProgressIndicator) {
       val params = GitRebaseParams.editCommits(repository.vcs.version, commit.parents.first().asString(), editorHandler, false)
       GitRebaseUtils.rebase(repository.project, listOf(repository), params, indicator)

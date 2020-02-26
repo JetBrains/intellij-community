@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.update.GitUpdateResult;
 import git4idea.util.GitUIUtil;
@@ -67,7 +68,7 @@ public class GitRebaser {
 
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
       String oldText = myProgressIndicator.getText();
-      myProgressIndicator.setText("Rebasing...");
+      myProgressIndicator.setText(GitBundle.getString("rebase.progress.indicator.title"));
       GitCommandResult result = myGit.runCommand(rebaseHandler);
       myProgressIndicator.setText(oldText);
       return result.success() ?
