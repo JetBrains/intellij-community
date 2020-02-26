@@ -13,7 +13,10 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.*
+import com.intellij.ui.AnActionButton
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBDimension
@@ -134,8 +137,8 @@ internal class GitInteractiveRebaseDialog(
 
   override fun createCenterPanel() = BorderLayoutPanel().apply {
     val decorator = ToolbarDecorator.createDecorator(commitsTable)
-      .setAsUsualTopToolbar()
-      .setPanelBorder(IdeBorderFactory.createBorder(SideBorder.TOP))
+      .setToolbarPosition(ActionToolbarPosition.TOP)
+      .setPanelBorder(JBUI.Borders.empty())
       .disableAddAction()
       .disableRemoveAction()
       .addExtraActions(*iconActions.toTypedArray())
