@@ -3,10 +3,10 @@
   <vendor>JetBrains</vendor>
   <version>1.0</version>
 
-  <idea-version since-build="193.*"/>
+  <idea-version since-build="201.*"/>
 
   <applicationListeners>
-    <listener class="java.util.ArrayList" topic="java.util.Collection"
+    <listener class="java.util.ArrayList" topic="java.util.Collection" os="freebsd"
               activeInHeadlessMode="true" activeInTestMode="true"/>
   </applicationListeners>
 
@@ -24,6 +24,7 @@
 
 
     <listener class="java.util.ArrayList" topic="java.util.Collection"
+              os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"
               activeInHeadlessMode="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
               activeInTestMode="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"/>
   </applicationListeners>
@@ -47,6 +48,7 @@
 
 
     <listener class="java.util.ArrayList" topic="java.util.Collection"
+              os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"
               activeInHeadlessMode="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
               activeInTestMode="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"/>
   </projectListeners>

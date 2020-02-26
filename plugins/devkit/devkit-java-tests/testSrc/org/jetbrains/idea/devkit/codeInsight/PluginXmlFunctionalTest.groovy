@@ -116,6 +116,10 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     doHighlightingTest("ListenersPre193.xml")
   }
 
+  void testListenersOsAttributePre201() {
+    doHighlightingTest("ListenersOsAttributePre201.xml")
+  }
+
   void testListenersDepends() {
     myFixture.copyFileToProject(getTestName(false) + ".xml", "META-INF/plugin.xml")
     doHighlightingTest("ListenersDepends-dependency.xml")

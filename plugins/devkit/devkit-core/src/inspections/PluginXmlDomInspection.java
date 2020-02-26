@@ -252,6 +252,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static final int LISTENERS_PLATFORM_VERSION = 193;
+  private static final int LISTENERS_OS_ATTRIBUTE_PLATFORM_VERSION = 201;
 
   private static void annotateListeners(Listeners listeners, DomElementAnnotationHolder holder) {
     final Module module = listeners.getModule();
@@ -282,6 +283,21 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
     final int baselineVersion = sinceBuild.getValue().getBaselineVersion();
+    
+    boolean canHaveOsAttribute = baselineVersion >= LISTENERS_OS_ATTRIBUTE_PLATFORM_VERSION;
+    if (!canHaveOsAttribute) {
+      for (Listeners.Listener listener : listeners.getListeners()) {
+        if (DomUtil.hasXml(listener.getOs())) {
+          holder.createProblem(listener.getOs(), ProblemHighlightType.ERROR,
+                               "Attribute 'os' available in platform version " +
+                               LISTENERS_OS_ATTRIBUTE_PLATFORM_VERSION + " or later only, " +
+                               "but specified 'since-build' platform is '" + baselineVersion + "'", null)
+            .highlightWholeElement();
+        }
+      }
+    }
+
+
     if (baselineVersion >= LISTENERS_PLATFORM_VERSION) return;
 
     holder.createProblem(listeners, ProblemHighlightType.ERROR,
