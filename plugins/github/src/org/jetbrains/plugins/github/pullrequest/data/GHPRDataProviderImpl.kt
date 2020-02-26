@@ -41,7 +41,7 @@ internal class GHPRDataProviderImpl(private val project: Project,
                                     private val requestExecutor: GithubApiRequestExecutor,
                                     private val gitRemote: GitRemoteUrlCoordinates,
                                     private val repository: GHRepositoryCoordinates,
-                                    override val number: Long)
+                                    override val id: GHPRIdentifier)
   : GHPRDataProvider {
 
   private val requestsChangesEventDispatcher = EventDispatcher.create(GHPRDataProvider.RequestsChangedListener::class.java)
@@ -51,8 +51,8 @@ internal class GHPRDataProviderImpl(private val project: Project,
   private var lastKnownHeadSha: String? = null
 
   private val detailsRequestValue: LazyCancellableBackgroundProcessValue<GHPullRequest> = backingValue {
-    val details = requestExecutor.execute(it, GHGQLRequests.PullRequest.findOne(repository, number))
-                  ?: throw GHNotFoundException("Pull request $number does not exist")
+    val details = requestExecutor.execute(it, GHGQLRequests.PullRequest.findOne(repository, id.number))
+                  ?: throw GHNotFoundException("Pull request $id.number does not exist")
     invokeAndWaitIfNeeded {
 
       var baseBranchChanged = false
@@ -79,7 +79,7 @@ internal class GHPRDataProviderImpl(private val project: Project,
 
   private val headBranchFetchRequestValue = backingValue {
     GitFetchSupport.fetchSupport(project)
-      .fetch(gitRemote.repository, gitRemote.remote, "refs/pull/${number}/head:").throwExceptionIfFailed()
+      .fetch(gitRemote.repository, gitRemote.remote, "refs/pull/${id.number}/head:").throwExceptionIfFailed()
   }
   override val headBranchFetchRequest by backgroundProcessValue(headBranchFetchRequestValue)
 
@@ -93,7 +93,7 @@ internal class GHPRDataProviderImpl(private val project: Project,
 
   private val apiCommitsRequestValue = backingValue { indicator ->
     SimpleGHGQLPagesLoader(requestExecutor, { p ->
-      GHGQLRequests.PullRequest.commits(repository, number, p)
+      GHGQLRequests.PullRequest.commits(repository, id.number, p)
     }).loadAll(indicator).map { it.commit }
   }
   override val apiCommitsRequest by backgroundProcessValue(apiCommitsRequestValue)
@@ -131,7 +131,7 @@ internal class GHPRDataProviderImpl(private val project: Project,
 
   private val reviewThreadsRequestValue = backingValue {
     SimpleGHGQLPagesLoader(requestExecutor, { p ->
-      GHGQLRequests.PullRequest.reviewThreads(repository, number, p)
+      GHGQLRequests.PullRequest.reviewThreads(repository, id.number, p)
     }).loadAll(it)
   }
   override val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>> by backgroundProcessValue(reviewThreadsRequestValue)
@@ -153,8 +153,8 @@ internal class GHPRDataProviderImpl(private val project: Project,
     val detailsRequest = detailsRequestValue.value
     val baseBranchProtectionRulesRequest = baseBranchProtectionRulesRequestValue.value
 
-    val mergeabilityData = requestExecutor.execute(GHGQLRequests.PullRequest.mergeabilityData(repository, number))
-                           ?: error("Could not find pull request $number")
+    val mergeabilityData = requestExecutor.execute(GHGQLRequests.PullRequest.mergeabilityData(repository, id.number))
+                           ?: error("Could not find pull request $id.number")
     val builder = GHPRMergeabilityStateBuilder(detailsRequest.joinCancellable(),
                                                mergeabilityData)
     val protectionRules = baseBranchProtectionRulesRequest.joinCancellable()
@@ -169,7 +169,7 @@ internal class GHPRDataProviderImpl(private val project: Project,
   private val timelineLoaderHolder = GHPRCountingTimelineLoaderHolder {
     val timelineModel = GHPRTimelineMergingModel()
     GHPRTimelineLoader(progressManager, requestExecutor,
-                       repository.serverPath, repository.repositoryPath, number,
+                       repository.serverPath, repository.repositoryPath, id.number,
                        timelineModel)
   }
 

@@ -37,6 +37,7 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
@@ -329,14 +330,14 @@ internal class GHPRComponentFactory(private val project: Project) {
   }
 
   private fun installSelectionSaver(list: GHPRList, listSelectionHolder: GithubPullRequestsListSelectionHolder) {
-    var savedSelectionNumber: Long? = null
+    var savedSelection: GHPRIdentifier? = null
 
     list.selectionModel.addListSelectionListener { e: ListSelectionEvent ->
       if (!e.valueIsAdjusting) {
         val selectedIndex = list.selectedIndex
         if (selectedIndex >= 0 && selectedIndex < list.model.size) {
-          listSelectionHolder.selectionNumber = list.model.getElementAt(selectedIndex).number
-          savedSelectionNumber = null
+          listSelectionHolder.selection = list.model.getElementAt(selectedIndex)
+          savedSelection = null
         }
       }
     }
@@ -344,13 +345,13 @@ internal class GHPRComponentFactory(private val project: Project) {
     list.model.addListDataListener(object : ListDataListener {
       override fun intervalAdded(e: ListDataEvent) {
         if (e.type == ListDataEvent.INTERVAL_ADDED)
-          (e.index0..e.index1).find { list.model.getElementAt(it).number == savedSelectionNumber }
+          (e.index0..e.index1).find { list.model.getElementAt(it) == savedSelection }
             ?.run { ApplicationManager.getApplication().invokeLater { ScrollingUtil.selectItem(list, this) } }
       }
 
       override fun contentsChanged(e: ListDataEvent) {}
       override fun intervalRemoved(e: ListDataEvent) {
-        if (e.type == ListDataEvent.INTERVAL_REMOVED) savedSelectionNumber = listSelectionHolder.selectionNumber
+        if (e.type == ListDataEvent.INTERVAL_REMOVED) savedSelection = listSelectionHolder.selection
       }
     })
   }
@@ -430,7 +431,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     fun setNewProvider(provider: GHPRDataProvider?) {
       val oldValue = model.value
-      if (oldValue != null && provider != null && oldValue.number != provider.number) {
+      if (oldValue != null && provider != null && oldValue.id != provider.id) {
         model.value = null
       }
       model.value = provider
@@ -440,11 +441,11 @@ internal class GHPRComponentFactory(private val project: Project) {
     })
 
     listSelectionHolder.addSelectionChangeListener(parentDisposable) {
-      setNewProvider(listSelectionHolder.selectionNumber?.let(dataContext.dataLoader::getDataProvider))
+      setNewProvider(listSelectionHolder.selection?.let(dataContext.dataLoader::getDataProvider))
     }
 
     dataContext.dataLoader.addInvalidationListener(parentDisposable) {
-      val selection = listSelectionHolder.selectionNumber
+      val selection = listSelectionHolder.selection
       if (selection != null && selection == it) {
         setNewProvider(dataContext.dataLoader.getDataProvider(selection))
       }

@@ -56,7 +56,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean {
     if (file !is GHPRVirtualFile) return false
     val context = file.context
-    return context.pullRequest != null && context.pullRequestDataProvider != null && context.pullRequestDetails != null
+    return context.pullRequestDataProvider != null && context.pullRequestDetails != null
   }
 
   override fun createEditor(project: Project, file: VirtualFile): GHPRFileEditor {

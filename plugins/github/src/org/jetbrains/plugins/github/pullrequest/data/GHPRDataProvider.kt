@@ -10,7 +10,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 interface GHPRDataProvider : GHPRTimelineLoaderHolder {
-  val number: Long
+  val id: GHPRIdentifier
 
   val detailsRequest: CompletableFuture<GHPullRequest>
   val mergeabilityStateRequest: CompletableFuture<GHPRMergeabilityState>

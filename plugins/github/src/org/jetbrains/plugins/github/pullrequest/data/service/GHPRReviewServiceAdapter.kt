@@ -66,22 +66,22 @@ interface GHPRReviewServiceAdapter {
                                 commitSha: String,
                                 fileName: String,
                                 diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml> {
-          return reviewService.addComment(progressIndicator, dataProvider.number, body, commitSha, fileName, diffLine)
+          return reviewService.addComment(progressIndicator, dataProvider.id, body, commitSha, fileName, diffLine)
         }
 
         override fun addComment(progressIndicator: ProgressIndicator,
                                 body: String,
                                 replyToCommentId: Long): CompletableFuture<GithubPullRequestCommentWithHtml> {
-          return reviewService.addComment(progressIndicator, dataProvider.number, body, replyToCommentId)
+          return reviewService.addComment(progressIndicator, dataProvider.id, body, replyToCommentId)
         }
 
         override fun deleteComment(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<Unit> {
-          return reviewService.deleteComment(progressIndicator, dataProvider.number, commentId)
+          return reviewService.deleteComment(progressIndicator, dataProvider.id, commentId)
         }
 
         override fun updateComment(progressIndicator: ProgressIndicator, commentId: String, newText: String)
           : CompletableFuture<GHPullRequestReviewComment> {
-          return reviewService.updateComment(progressIndicator, dataProvider.number, commentId, newText)
+          return reviewService.updateComment(progressIndicator, dataProvider.id, commentId, newText)
         }
 
         override fun addReviewThreadsListener(disposable: Disposable, listener: () -> Unit) {

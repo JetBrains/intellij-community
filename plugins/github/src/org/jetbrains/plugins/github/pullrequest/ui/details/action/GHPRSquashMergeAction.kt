@@ -36,6 +36,6 @@ internal class GHPRSquashMergeAction(busyStateModel: SingleValueModel<Boolean>,
     }
     dialog.message
   }.thenCompose { message ->
-    stateService.squashMerge(EmptyProgressIndicator(), mergeability.number, message, mergeability.headRefOid)
+    stateService.squashMerge(EmptyProgressIndicator(), mergeability, message, mergeability.headRefOid)
   }
 }

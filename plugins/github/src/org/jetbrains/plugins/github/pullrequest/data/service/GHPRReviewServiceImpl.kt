@@ -11,6 +11,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.submitIOTask
 import java.util.concurrent.CompletableFuture
 
@@ -29,41 +30,41 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
   }
 
   override fun addComment(progressIndicator: ProgressIndicator,
-                          pullRequest: Long,
+                          pullRequestId: GHPRIdentifier,
                           body: String,
                           replyToCommentId: Long): CompletableFuture<GithubPullRequestCommentWithHtml> {
     return progressManager.submitIOTask(progressIndicator) {
       val comment = requestExecutor.execute(
-        GithubApiRequests.Repos.PullRequests.Comments.createReply(repository, pullRequest, replyToCommentId, body))
-      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
+        GithubApiRequests.Repos.PullRequests.Comments.createReply(repository, pullRequestId.number, replyToCommentId, body))
+      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequestId)
       comment
     }
   }
 
   override fun addComment(progressIndicator: ProgressIndicator,
-                          pullRequest: Long,
+                          pullRequestId: GHPRIdentifier,
                           body: String,
                           commitSha: String,
                           fileName: String,
                           diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml> {
     return progressManager.submitIOTask(progressIndicator) {
       val comment = requestExecutor.execute(
-        GithubApiRequests.Repos.PullRequests.Comments.create(repository, pullRequest, commitSha, fileName, diffLine, body))
-      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
+        GithubApiRequests.Repos.PullRequests.Comments.create(repository, pullRequestId.number, commitSha, fileName, diffLine, body))
+      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequestId)
       comment
     }
   }
 
-  override fun deleteComment(progressIndicator: ProgressIndicator, pullRequest: Long, commentId: String) =
+  override fun deleteComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String) =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(GHGQLRequests.PullRequest.Review.deleteComment(repository.serverPath, commentId))
-      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
+      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequestId)
     }
 
-  override fun updateComment(progressIndicator: ProgressIndicator, pullRequest: Long, commentId: String, newText: String) =
+  override fun updateComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String, newText: String) =
     progressManager.submitIOTask(progressIndicator) {
       val comment = requestExecutor.execute(GHGQLRequests.PullRequest.Review.updateComment(repository.serverPath, commentId, newText))
-      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
+      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequestId)
       comment
     }
 }

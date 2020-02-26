@@ -90,26 +90,26 @@ internal class GHPRDataContextRepository(private val project: Project) {
       dataLoader.invalidateAllData()
     }
     messageBus.connect().subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
-      override fun onPullRequestEdited(number: Long) {
+      override fun onPullRequestEdited(id: GHPRIdentifier) {
         runInEdt {
-          val dataProvider = dataLoader.findDataProvider(number)
+          val dataProvider = dataLoader.findDataProvider(id)
           dataProvider?.reloadDetails()
           dataProvider?.detailsRequest?.let { listLoader.reloadData(it) }
           dataProvider?.timelineLoader?.loadMore(true)
         }
       }
 
-      override fun onPullRequestReviewsEdited(number: Long) {
+      override fun onPullRequestReviewsEdited(id: GHPRIdentifier) {
         runInEdt {
-          val dataProvider = dataLoader.findDataProvider(number)
+          val dataProvider = dataLoader.findDataProvider(id)
           dataProvider?.reloadReviewThreads()
           dataProvider?.timelineLoader?.loadMore(true)
         }
       }
 
-      override fun onPullRequestCommentsEdited(number: Long) {
+      override fun onPullRequestCommentsEdited(id: GHPRIdentifier) {
         runInEdt {
-          val dataProvider = dataLoader.findDataProvider(number)
+          val dataProvider = dataLoader.findDataProvider(id)
           dataProvider?.timelineLoader?.loadMore(true)
         }
       }

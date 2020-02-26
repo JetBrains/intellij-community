@@ -24,7 +24,6 @@ class GHPRFixedActionDataContext internal constructor(private val delegate: GHPR
   override val avatarIconsProviderFactory = delegate.avatarIconsProviderFactory
   override val currentUser = delegate.securityService.currentUser
 
-  override val pullRequest = dataProvider.number
   override val pullRequestDetails = details
   override val pullRequestDataProvider = dataProvider
 

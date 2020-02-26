@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -15,6 +15,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
@@ -93,7 +94,9 @@ class GHPRMetadataServiceImpl internal constructor(progressManager: ProgressMana
   }
 
   @CalledInBackground
-  override fun adjustReviewers(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GHPullRequestRequestedReviewer>) {
+  override fun adjustReviewers(indicator: ProgressIndicator,
+                               pullRequestId: GHPRIdentifier,
+                               delta: CollectionDelta<GHPullRequestRequestedReviewer>) {
     if (delta.isEmpty) return
 
     val removedItems = delta.removedItems
@@ -101,7 +104,7 @@ class GHPRMetadataServiceImpl internal constructor(progressManager: ProgressMana
       indicator.text2 = "Removing reviewers"
       requestExecutor.execute(indicator,
                               GithubApiRequests.Repos.PullRequests.Reviewers
-                                .remove(serverPath, repoPath.owner, repoPath.repository, pullRequest,
+                                .remove(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number,
                                         removedItems.filterIsInstance(GHUser::class.java).map { it.login },
                                         removedItems.filterIsInstance(GHTeam::class.java).map { it.slug }))
     }
@@ -110,32 +113,33 @@ class GHPRMetadataServiceImpl internal constructor(progressManager: ProgressMana
       indicator.text2 = "Adding reviewers"
       requestExecutor.execute(indicator,
                               GithubApiRequests.Repos.PullRequests.Reviewers
-                                .add(serverPath, repoPath.owner, repoPath.repository, pullRequest,
+                                .add(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number,
                                      newItems.filterIsInstance(GHUser::class.java).map { it.login },
                                      newItems.filterIsInstance(GHTeam::class.java).map { it.slug }))
     }
-    messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
+    messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequestId)
   }
 
   @CalledInBackground
-  override fun adjustAssignees(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GHUser>) {
+  override fun adjustAssignees(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHUser>) {
     if (delta.isEmpty) return
 
     requestExecutor.execute(indicator,
                             GithubApiRequests.Repos.Issues.updateAssignees(serverPath, repoPath.owner, repoPath.repository,
-                                                                           pullRequest.toString(), delta.newCollection.map { it.login }))
-    messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
+                                                                           pullRequestId.number.toString(),
+                                                                           delta.newCollection.map { it.login }))
+    messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequestId)
   }
 
   @CalledInBackground
-  override fun adjustLabels(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GHLabel>) {
+  override fun adjustLabels(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHLabel>) {
     if (delta.isEmpty) return
 
     requestExecutor.execute(indicator,
                             GithubApiRequests.Repos.Issues.Labels
-                              .replace(serverPath, repoPath.owner, repoPath.repository, pullRequest.toString(),
+                              .replace(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number.toString(),
                                        delta.newCollection.map { it.name }))
-    messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
+    messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequestId)
   }
 
   override fun dispose() {

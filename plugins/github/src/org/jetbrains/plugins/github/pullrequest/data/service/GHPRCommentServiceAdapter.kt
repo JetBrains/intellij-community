@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -24,7 +24,7 @@ interface GHPRCommentServiceAdapter {
         override fun canComment() = commentService.canComment()
 
         override fun addComment(progressIndicator: ProgressIndicator, body: String) =
-          commentService.addComment(progressIndicator, dataProvider.number, body)
+          commentService.addComment(progressIndicator, dataProvider.id, body)
       }
     }
   }

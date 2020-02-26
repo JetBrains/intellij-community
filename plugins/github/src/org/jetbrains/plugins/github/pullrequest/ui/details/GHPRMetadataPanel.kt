@@ -86,7 +86,7 @@ internal class GHPRMetadataPanel(private val project: Project,
           GithubUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider)
         }, reviewers, metadataService.potentialReviewers.thenApply { it - author })
         .handleOnEdt(getAdjustmentHandler("reviewer") { indicator, delta ->
-          metadataService.adjustReviewers(indicator, details.number, delta)
+          metadataService.adjustReviewers(indicator, details, delta)
         })
     }
   }
@@ -106,7 +106,7 @@ internal class GHPRMetadataPanel(private val project: Project,
           GithubUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider)
         }, details.assignees, metadataService.issuesAssignees)
         .handleOnEdt(getAdjustmentHandler("assignee") { indicator, delta ->
-          metadataService.adjustAssignees(indicator, details.number, delta)
+          metadataService.adjustAssignees(indicator, details, delta)
         })
     }
   }
@@ -129,7 +129,7 @@ internal class GHPRMetadataPanel(private val project: Project,
       GithubUIUtil
         .showChooserPopup("Labels", editButton, { GithubUIUtil.SelectionListCellRenderer.Labels() }, details.labels, metadataService.labels)
         .handleOnEdt(getAdjustmentHandler("label") { indicator, delta ->
-          metadataService.adjustLabels(indicator, details.number, delta)
+          metadataService.adjustLabels(indicator, details, delta)
         })
     }
   }

@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewService {
@@ -15,21 +16,21 @@ interface GHPRReviewService {
   fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String>
 
   @CalledInAny
-  fun addComment(progressIndicator: ProgressIndicator, pullRequest: Long, body: String, replyToCommentId: Long)
+  fun addComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, body: String, replyToCommentId: Long)
     : CompletableFuture<GithubPullRequestCommentWithHtml>
 
   @CalledInAny
   fun addComment(progressIndicator: ProgressIndicator,
-                 pullRequest: Long,
+                 pullRequestId: GHPRIdentifier,
                  body: String,
                  commitSha: String,
                  fileName: String,
                  diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml>
 
   @CalledInAny
-  fun deleteComment(progressIndicator: ProgressIndicator, pullRequest: Long, commentId: String): CompletableFuture<Unit>
+  fun deleteComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String): CompletableFuture<Unit>
 
   @CalledInAny
-  fun updateComment(progressIndicator: ProgressIndicator, pullRequest: Long, commentId: String, newText: String)
+  fun updateComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String, newText: String)
     : CompletableFuture<GHPullRequestReviewComment>
 }

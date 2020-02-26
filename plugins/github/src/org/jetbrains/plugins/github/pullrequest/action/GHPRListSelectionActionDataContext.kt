@@ -32,12 +32,9 @@ class GHPRListSelectionActionDataContext internal constructor(private val dataCo
     dataContext.dataLoader.invalidateAllData()
   }
 
-  override val pullRequest: Long?
-    get() = selectionHolder.selectionNumber
-
   override val pullRequestDetails: GHPullRequestShort?
-    get() = pullRequest?.let { dataContext.listLoader.findData(it) }
+    get() = selectionHolder.selection?.let { dataContext.listLoader.findData(it) }
 
   override val pullRequestDataProvider: GHPRDataProvider?
-    get() = pullRequest?.let { dataContext.dataLoader.getDataProvider(it) }
+    get() = selectionHolder.selection?.let { dataContext.dataLoader.getDataProvider(it) }
 }
