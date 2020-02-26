@@ -15,13 +15,12 @@
  */
 package org.jetbrains.git4idea.http;
 
-import org.apache.xmlrpc.DefaultXmlRpcTransportFactory;
-import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.XmlRpcClientLite;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.MalformedURLException;
 import java.util.Vector;
 
 /**
@@ -31,14 +30,10 @@ import java.util.Vector;
  */
 class GitAskPassXmlRpcClient {
 
-  // Android Studio: BuiltinWebServerAccess
-  @NotNull private final XmlRpcClient myClient;
+  @NotNull private final XmlRpcClientLite myClient;
 
-  GitAskPassXmlRpcClient(int port, String token) throws IOException {
-    URL url = new URL("http", "localhost", port, "/RPC2");
-    DefaultXmlRpcTransportFactory factory = new DefaultXmlRpcTransportFactory(url);
-    factory.setBasicAuthentication("_token_", token);
-    myClient = new XmlRpcClient(url, factory);
+  GitAskPassXmlRpcClient(int port) throws MalformedURLException {
+    myClient = new XmlRpcClientLite("127.0.0.1", port);
   }
 
   // Obsolete collection usage because of the XmlRpcClientLite API

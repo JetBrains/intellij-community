@@ -55,7 +55,6 @@ public interface GitSSHHandler {
   @NonNls String SSH_PROXY_AUTHENTICATION_ENV = "GIT4IDEA_SSH_PROXY_AUTHENTICATION";
   @NonNls String SSH_PROXY_USER_ENV = "GIT4IDEA_SSH_PROXY_USER";
   @NonNls String SSH_PROXY_PASSWORD_ENV = "GIT4IDEA_SSH_PROXY_PASSWORD";
-  @NonNls String SSH_TOKEN_ENV = "GIT4IDEA_SSH_TOKEN";  // Android Studio: BuiltinWebServerAccess
   /**
    * Verify server host key
    *

@@ -15,7 +15,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
-import com.intellij.util.BuiltinWebServerAccess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInServerOptions;
@@ -85,7 +84,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     String externalDoc = null;
     myElement = element;
 
-    String projectPath = "/" + BuiltinWebServerAccess.getUserAuthenticationToken() + myProject.getName() + "/";  // Android Studio: BuiltinWebServerAccess
+    String projectPath = "/" + myProject.getName() + "/";
     String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + projectPath;
     if (docURL.startsWith(builtInServer)) {
       Url url = Urls.parseFromIdea(docURL);

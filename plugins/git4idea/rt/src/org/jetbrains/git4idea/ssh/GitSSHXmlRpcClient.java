@@ -1,14 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.git4idea.ssh;
 
-import org.apache.xmlrpc.DefaultXmlRpcTransportFactory;
-import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.XmlRpcClientLite;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Vector;
 
 /**
@@ -19,7 +17,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
   /**
    * XML RPC client
    */
-  @Nullable private final XmlRpcClient myClient;  // Android Studio: BuiltinWebServerAccess
+  @Nullable private final XmlRpcClientLite myClient;
 
   /**
    * A constructor
@@ -28,16 +26,8 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    * @param batchMode if true, the client is run in the batch mode, so nothing should be prompted
    * @throws IOException if there is IO problem
    */
-  // Android Studio: BuiltinWebServerAccess
-  GitSSHXmlRpcClient(final int port, final boolean batchMode, String token) throws IOException {
-    if (!batchMode) {
-      URL url = new URL("http", "localhost", port, "/RPC2");
-      DefaultXmlRpcTransportFactory factory = new DefaultXmlRpcTransportFactory(url);
-      factory.setBasicAuthentication("_token_", token);
-      myClient = new XmlRpcClient(url, factory);
-    } else {
-      myClient = null;
-    }
+  GitSSHXmlRpcClient(final int port, final boolean batchMode) throws IOException {
+    myClient = batchMode ? null : new XmlRpcClientLite("127.0.0.1", port);
   }
 
   /**

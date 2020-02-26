@@ -58,9 +58,7 @@ public class GitAskPassApp implements GitExternalApp {
 
       String token = getNotNull(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV);
       int xmlRpcPort = Integer.parseInt(getNotNull(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV));
-      // Android Studio: BuiltinWebServerAccess
-      String xmlRpcToken = getNotNull(GitAskPassXmlRpcHandler.GIT_ASK_PASS_TOKEN_ENV);
-      GitAskPassXmlRpcClient xmlRpcClient = new GitAskPassXmlRpcClient(xmlRpcPort, xmlRpcToken);
+      GitAskPassXmlRpcClient xmlRpcClient = new GitAskPassXmlRpcClient(xmlRpcPort);
 
       if (usernameNeeded) {
         String username = xmlRpcClient.askUsername(token, url);
