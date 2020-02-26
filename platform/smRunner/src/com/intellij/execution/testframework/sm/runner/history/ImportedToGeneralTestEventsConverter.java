@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.sm.runner.history;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.openapi.application.ApplicationManager;
