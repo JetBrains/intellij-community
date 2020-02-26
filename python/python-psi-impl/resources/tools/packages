@@ -4778,3 +4778,4 @@ can python-can
 github PyGithub
 gitlab python-gitlab
 tensorflow tensorflow-gpu
+aocd advent-of-code-data

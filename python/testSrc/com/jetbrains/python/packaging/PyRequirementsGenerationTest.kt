@@ -10,7 +10,7 @@ import org.easymock.EasyMock
 
 class PyRequirementsGenerationTest : PyTestCase() {
 
-  var oldPackageManagers: PyPackageManagers? = null
+  private var oldPackageManagers: PyPackageManagers? = null
 
   fun testNewFileGeneration() = doTest()
   fun testNewFileWithoutVersion() = doTest(PyRequirementsVersionSpecifierType.NO_VERSION)
@@ -64,6 +64,7 @@ class PyRequirementsGenerationTest : PyTestCase() {
         syncWithImports(myFixture.module)
         myFixture.checkResultByFile("$testName/new_${settings.requirementsPath}")
       }
+      assertProjectFilesNotParsed(myFixture.file)
     }
     finally {
       settings.requirementsPath = oldRequirementsPath

@@ -54,7 +54,7 @@ fun syncWithImports(module: Module) {
   if (matchResult == null) return
 
   val psiManager = PsiManager.getInstance(module.project)
-  WriteCommandAction.runWriteCommandAction(module.project) {
+  WriteCommandAction.runWriteCommandAction(module.project, PyBundle.message("python.requirements.action.name"), null, {
     if (requirementsFile == null) {
       val path = Paths.get(settings.requirementsPath)
       val location = when {
@@ -73,7 +73,7 @@ fun syncWithImports(module: Module) {
     matchResult.baseFilesOutput.forEach { (file, content) ->
       documentManager.getDocument(file)!!.setText(content.joinToString("\n"))
     }
-  }
+  }, emptyArray())
   psiManager.findFile(requirementsFile!!)?.navigate(true)
   if (matchResult.unhandledLines.isNotEmpty()) {
     val text = PyBundle.message("python.requirements.warning.unhandled.lines", matchResult.unhandledLines.joinToString(", "))
@@ -172,7 +172,7 @@ private fun showSpecifyRequirementsFileDialog(project: Project, settings: PyPack
                { settings.keepMatchingSpecifier = it })
     }
   }
-  val dialog = dialog(title = PyBundle.message("python.requirements.requirements.file.dialog.header"),
+  val dialog = dialog(title = PyBundle.message("python.requirements.action.name"),
                       panel = panel,
                       resizable = true,
                       project = project)
