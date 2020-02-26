@@ -20,11 +20,9 @@ class BranchesInGitLogUiFactoryProvider(private val project: Project) : CustomVc
     BranchesVcsLogUiFactory(vcsLogManager, logId, filters)
 
   private fun hasGitRoots(project: Project, logManager: VcsLogManager) =
-    logManager.dataManager.roots.let { logRoots ->
-      ProjectLevelVcsManager.getInstance(project).allVcsRoots.asSequence()
-        .filter { it.vcs?.keyInstanceMethod == GitVcs.getKey() }
-        .map(VcsRoot::getPath)
-        .filter(logRoots::contains)
-        .any()
-    }
+    ProjectLevelVcsManager.getInstance(project).allVcsRoots.asSequence()
+      .filter { it.vcs?.keyInstanceMethod == GitVcs.getKey() }
+      .map(VcsRoot::getPath)
+      .toSet()
+      .containsAll(logManager.dataManager.roots)
 }
