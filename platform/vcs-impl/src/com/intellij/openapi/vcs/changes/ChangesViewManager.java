@@ -481,6 +481,8 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       };
       editorPreview.setEscapeHandler(() -> {
+        editorPreview.closePreview();
+
         ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
         if (toolWindow != null) toolWindow.activate(null);
       });
