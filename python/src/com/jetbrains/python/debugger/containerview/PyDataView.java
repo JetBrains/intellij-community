@@ -164,7 +164,7 @@ public final class PyDataView implements DumbAware {
       }
       return null;
     });
-    myTabs.getPresentation().setEmptyText("Run Python Console or Debugger to view available data");
+    myTabs.getPresentation().setEmptyText(PyBundle.message("debugger.data.view.empty.text"));
     myTabs.setPopupGroup(new DefaultActionGroup(new ColoredAction()), ActionPlaces.UNKNOWN, true);
     myTabs.setTabDraggingEnabled(true);
     final Content content = ContentFactory.SERVICE.getInstance().createContent(myTabs, PyBundle.message("debugger.data.view.data"), false);
@@ -193,12 +193,12 @@ public final class PyDataView implements DumbAware {
     TabInfo info = new TabInfo(panel);
     if (frameAccessor instanceof PydevConsoleCommunication) {
       info.setIcon(PythonIcons.Python.PythonConsole);
-      info.setTooltipText("Connected to Python Console");
+      info.setTooltipText(PyBundle.message("debugger.data.view.connected.to.python.console"));
     }
     if (frameAccessor instanceof PyDebugProcess) {
       info.setIcon(AllIcons.Toolwindows.ToolWindowDebugger);
       String name = ((PyDebugProcess)frameAccessor).getSession().getSessionName();
-      info.setTooltipText("Connected to debug session '"+  name + "'");
+      info.setTooltipText(PyBundle.message("debugger.data.view.connected.to.debug.session", name));
     }
     info.setText(EMPTY_TAB_NAME);
     info.setPreferredFocusableComponent(panel.getSliceTextField());
