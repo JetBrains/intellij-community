@@ -599,6 +599,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     fixMacOSDarkThemeDecorations();
 
+    uiDefaults.put(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false));
+    uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue());
+    uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS,
+                   UISettings.FORCE_USE_FRACTIONAL_METRICS
+                   ? RenderingHints.VALUE_FRACTIONALMETRICS_ON
+                   : RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+
     for (Frame frame : Frame.getFrames()) {
       updateUI(frame);
     }
