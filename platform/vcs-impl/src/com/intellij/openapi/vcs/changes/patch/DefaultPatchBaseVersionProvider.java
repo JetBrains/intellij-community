@@ -149,7 +149,7 @@ public class DefaultPatchBaseVersionProvider {
             break;
           }
           catch (IOException e) {
-            LOG.error(e);
+            LOG.warn(e);
           }
         }
       }
