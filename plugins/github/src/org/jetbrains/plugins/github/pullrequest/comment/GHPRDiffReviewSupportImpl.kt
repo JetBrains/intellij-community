@@ -16,14 +16,14 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRDiffEditorReviewC
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRSimpleOnesideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRTwosideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRUnifiedDiffViewerReviewThreadsHandler
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successAsync
 import kotlin.properties.Delegates
 
-class GHPRDiffReviewSupportImpl(private val reviewService: GHPRReviewServiceAdapter,
+class GHPRDiffReviewSupportImpl(private val reviewDataProvider: GHPRReviewDataProvider,
                                 private val diffRanges: List<Range>,
                                 private val reviewThreadMapper: (GHPullRequestReviewThread) -> GHPRDiffReviewThreadMapping?,
                                 private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
@@ -42,10 +42,10 @@ class GHPRDiffReviewSupportImpl(private val reviewService: GHPRReviewServiceAdap
   }
 
   override fun install(viewer: DiffViewerBase) {
-    val diffRangesModel = SingleValueModel(if (reviewService.canComment()) diffRanges else null)
+    val diffRangesModel = SingleValueModel(if (reviewDataProvider.canComment()) diffRanges else null)
     loadReviewThreads(reviewThreadsModel, viewer)
 
-    val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(reviewService,
+    val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(reviewDataProvider,
                                                                       createCommentParametersHelper,
                                                                       avatarIconsProviderFactory, currentUser)
     when (viewer) {
@@ -60,19 +60,19 @@ class GHPRDiffReviewSupportImpl(private val reviewService: GHPRReviewServiceAdap
   }
 
   override fun reloadReviewThreads() {
-    reviewService.resetReviewThreads()
+    reviewDataProvider.resetReviewThreads()
   }
 
   private fun loadReviewThreads(threadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>, disposable: Disposable) {
     doLoadReviewThreads(threadsModel, disposable)
-    reviewService.addReviewThreadsListener(disposable) {
+    reviewDataProvider.addReviewThreadsListener(disposable) {
       doLoadReviewThreads(threadsModel, disposable)
     }
   }
 
   private fun doLoadReviewThreads(threadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>, disposable: Disposable) {
     isLoadingReviewThreads = true
-    reviewService.loadReviewThreads()
+    reviewDataProvider.loadReviewThreads()
       .successAsync(ProcessIOExecutorService.INSTANCE) {
         it.mapNotNull(reviewThreadMapper)
       }

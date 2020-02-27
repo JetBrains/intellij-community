@@ -10,7 +10,7 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.successOnEdt
@@ -21,16 +21,16 @@ import javax.swing.JPanel
 
 object GHPRReviewThreadComponent {
 
-  fun create(thread: GHPRReviewThreadModel, reviewService: GHPRReviewServiceAdapter,
+  fun create(thread: GHPRReviewThreadModel, reviewDataProvider: GHPRReviewDataProvider,
              avatarIconsProvider: GHAvatarIconsProvider, currentUser: GHUser): JComponent =
-    create(thread, reviewService, null, avatarIconsProvider, currentUser)
+    create(thread, reviewDataProvider, null, avatarIconsProvider, currentUser)
 
-  fun createWithDiff(thread: GHPRReviewThreadModel, reviewService: GHPRReviewServiceAdapter,
+  fun createWithDiff(thread: GHPRReviewThreadModel, reviewDataProvider: GHPRReviewDataProvider,
                      diffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                      avatarIconsProvider: GHAvatarIconsProvider, currentUser: GHUser): JComponent =
-    create(thread, reviewService, diffComponentFactory, avatarIconsProvider, currentUser)
+    create(thread, reviewDataProvider, diffComponentFactory, avatarIconsProvider, currentUser)
 
-  private fun create(thread: GHPRReviewThreadModel, reviewService: GHPRReviewServiceAdapter,
+  private fun create(thread: GHPRReviewThreadModel, reviewDataProvider: GHPRReviewDataProvider,
                      diffComponentFactory: GHPRReviewThreadDiffComponentFactory?,
                      avatarIconsProvider: GHAvatarIconsProvider, currentUser: GHUser): JComponent {
 
@@ -41,11 +41,12 @@ object GHPRReviewThreadComponent {
       panel.add(diffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
     }
 
-    panel.add(GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(thread, reviewService, avatarIconsProvider)))
+    panel.add(
+      GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(thread, reviewDataProvider, avatarIconsProvider)))
 
-    if (reviewService.canComment() && thread.state != GHPullRequestReviewCommentState.PENDING) {
+    if (reviewDataProvider.canComment() && thread.state != GHPullRequestReviewCommentState.PENDING) {
       panel.add(createThreadActionsPanel(avatarIconsProvider, currentUser) { text ->
-        reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
+        reviewDataProvider.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
           thread.addComment(
             GHPRReviewCommentModel(it.nodeId, GHPullRequestReviewCommentState.SUBMITTED, it.createdAt, it.bodyHtml, it.user.login,
                                    it.user.htmlUrl, it.user.avatarUrl,

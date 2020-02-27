@@ -38,9 +38,9 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContex
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentServiceAdapter
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.*
@@ -74,7 +74,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     val dataProvider = context.pullRequestDataProvider!!
 
     val detailsModel = SingleValueModel(context.pullRequestDetails!!)
-    val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(dataProvider, disposable)
+    val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(dataProvider.reviewData, disposable)
 
     val loader: GHPRTimelineLoader = dataProvider.acquireTimelineLoader(disposable)
 
@@ -101,9 +101,8 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     val avatarIconsProvider = context.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
 
     val header = GHPRHeaderPanel(detailsModel, avatarIconsProvider)
-    val reviewService = dataProvider.let { GHPRReviewServiceAdapter.create(context.reviewService, it) }
     val timeline = GHPRTimelineComponent(loader.listModel,
-                                         createItemComponentFactory(project, reviewService, reviewThreadsModelsProvider,
+                                         createItemComponentFactory(project, dataProvider.reviewData, reviewThreadsModelsProvider,
                                                                     avatarIconsProvider, context.currentUser)).apply {
       border = JBUI.Borders.empty(16, 0)
     }
@@ -210,7 +209,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
   }
 
   private fun createItemComponentFactory(project: Project,
-                                         reviewService: GHPRReviewServiceAdapter,
+                                         reviewDataProvider: GHPRReviewDataProvider,
                                          reviewThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                          avatarIconsProvider: GHAvatarIconsProvider,
                                          currentUser: GHUser)
@@ -218,7 +217,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     val diffFactory = GHPRReviewThreadDiffComponentFactory(FileTypeRegistry.getInstance(), project, EditorFactory.getInstance())
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
-    return GHPRTimelineItemComponentFactory(reviewService, avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
+    return GHPRTimelineItemComponentFactory(reviewDataProvider, avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
                                             eventsFactory,
                                             currentUser)
   }

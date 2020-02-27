@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
+import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.submitIOTask
@@ -22,6 +23,13 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                             private val repository: GHRepositoryCoordinates) : GHPRReviewService {
 
   override fun canComment() = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)
+
+  override fun loadReviewThreads(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier) =
+    progressManager.submitIOTask(progressIndicator) {
+      SimpleGHGQLPagesLoader(requestExecutor, { p ->
+        GHGQLRequests.PullRequest.reviewThreads(repository, pullRequestId.number, p)
+      }).loadAll(it)
+    }
 
   override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String> {
     return progressManager.submitIOTask(progressIndicator) {

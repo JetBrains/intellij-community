@@ -13,7 +13,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
@@ -75,11 +74,10 @@ internal class GHPRComponentFactory(private val project: Project) {
                       parentDisposable: Disposable): JComponent {
 
     val contextDisposable = Disposer.newDisposable()
-    val contextValue = object : LazyCancellableBackgroundProcessValue<GHPRDataContext>(progressManager) {
-      override fun compute(indicator: ProgressIndicator) =
-        dataContextRepository.getContext(indicator, account, requestExecutor, remoteUrl).also {
-          Disposer.register(contextDisposable, it)
-        }
+    val contextValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
+      dataContextRepository.getContext(indicator, account, requestExecutor, remoteUrl).also {
+        Disposer.register(contextDisposable, it)
+      }
     }
     Disposer.register(parentDisposable, contextDisposable)
     Disposer.register(parentDisposable, Disposable { contextValue.drop() })
@@ -188,8 +186,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
 
     val changesModel = GHPRChangesModelImpl(project)
-    val diffHelper = GHPRChangesDiffHelperImpl(dataContext.reviewService,
-                                               avatarIconsProviderFactory, dataContext.securityService.currentUser)
+    val diffHelper = GHPRChangesDiffHelperImpl(avatarIconsProviderFactory, dataContext.securityService.currentUser)
     val changesLoadingModel = createChangesLoadingModel(changesModel, diffHelper,
                                                         dataProviderModel, projectUiSettings, disposable)
     val changesBrowser = GHPRChangesBrowser(changesModel, diffHelper, project)

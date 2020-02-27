@@ -84,7 +84,8 @@ internal class GHPRDataContextRepository(private val project: Project) {
 
     val dataLoader = GHPRDataLoaderImpl {
       GHPRDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), securityService, requestExecutor,
-                           gitRemoteCoordinates, repositoryCoordinates, it)
+                           gitRemoteCoordinates, repositoryCoordinates, it,
+                           GHPRReviewDataProviderImpl(reviewService, it))
     }
     requestExecutor.addListener(dataLoader) {
       dataLoader.invalidateAllData()
@@ -102,7 +103,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
       override fun onPullRequestReviewsEdited(id: GHPRIdentifier) {
         runInEdt {
           val dataProvider = dataLoader.findDataProvider(id)
-          dataProvider?.reloadReviewThreads()
+          dataProvider?.reviewData?.resetReviewThreads()
           dataProvider?.timelineLoader?.loadMore(true)
         }
       }

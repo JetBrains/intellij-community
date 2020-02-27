@@ -10,7 +10,7 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
@@ -22,7 +22,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 class GHPRDiffEditorReviewComponentsFactoryImpl
-internal constructor(private val reviewService: GHPRReviewServiceAdapter,
+internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
                      private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
                      private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                      private val currentUser: GHUser)
@@ -33,7 +33,7 @@ internal constructor(private val reviewService: GHPRReviewServiceAdapter,
       border = JBUI.Borders.empty(2, 0)
     }
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
-    val component = GHPRReviewThreadComponent.create(thread, reviewService, avatarIconsProvider, currentUser).apply {
+    val component = GHPRReviewThreadComponent.create(thread, reviewDataProvider, avatarIconsProvider, currentUser).apply {
       border = JBUI.Borders.empty(8, 8)
     }
     wrapper.add(component, BorderLayout.NORTH)
@@ -54,7 +54,7 @@ internal constructor(private val reviewService: GHPRReviewServiceAdapter,
       val commitSha = createCommentParametersHelper.commitSha
       val filePath = createCommentParametersHelper.filePath
       val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
-      reviewService.addComment(EmptyProgressIndicator(), it, commitSha, filePath, diffLine).successOnEdt {
+      reviewDataProvider.addComment(EmptyProgressIndicator(), it, commitSha, filePath, diffLine).successOnEdt {
         hideCallback()
       }
     }

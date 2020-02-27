@@ -21,7 +21,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -36,7 +36,7 @@ import javax.swing.text.Utilities
 
 object GHPRReviewCommentComponent {
 
-  fun create(reviewService: GHPRReviewServiceAdapter,
+  fun create(reviewDataProvider: GHPRReviewDataProvider,
              thread: GHPRReviewThreadModel, comment: GHPRReviewCommentModel,
              avatarIconsProvider: GHAvatarIconsProvider): JComponent {
 
@@ -65,10 +65,10 @@ object GHPRReviewCommentComponent {
     Controller(comment, titlePane, pendingLabel, textPane)
 
     val editorWrapper = Wrapper()
-    val editButton = createEditButton(reviewService, comment, editorWrapper, textPane).apply {
+    val editButton = createEditButton(reviewDataProvider, comment, editorWrapper, textPane).apply {
       isVisible = comment.canBeUpdated
     }
-    val deleteButton = createDeleteButton(reviewService, thread, comment).apply {
+    val deleteButton = createDeleteButton(reviewDataProvider, thread, comment).apply {
       isVisible = comment.canBeDeleted
     }
 
@@ -90,7 +90,7 @@ object GHPRReviewCommentComponent {
     }
   }
 
-  private fun createDeleteButton(reviewService: GHPRReviewServiceAdapter,
+  private fun createDeleteButton(reviewDataProvider: GHPRReviewDataProvider,
                                  thread: GHPRReviewThreadModel,
                                  comment: GHPRReviewCommentModel): JComponent {
     val icon = GithubIcons.Delete
@@ -99,14 +99,14 @@ object GHPRReviewCommentComponent {
       actionListener = ActionListener {
         if (Messages.showConfirmationDialog(this, "Are you sure you want to delete this comment?", "Delete Comment",
                                             Messages.getYesButton(), Messages.getNoButton()) == Messages.YES) {
-          reviewService.deleteComment(EmptyProgressIndicator(), comment.id)
+          reviewDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
           thread.removeComment(comment)
         }
       }
     }
   }
 
-  private fun createEditButton(reviewService: GHPRReviewServiceAdapter,
+  private fun createEditButton(reviewDataProvider: GHPRReviewDataProvider,
                                comment: GHPRReviewCommentModel,
                                editorWrapper: Wrapper,
                                textPane: JEditorPane): JComponent {
@@ -116,7 +116,7 @@ object GHPRReviewCommentComponent {
       val text = StringUtil.repeatSymbol('\n', linesCount - 1)
 
       val model = GHPRSubmittableTextField.Model { newText ->
-        reviewService.updateComment(EmptyProgressIndicator(), comment.id, newText).successOnEdt {
+        reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText).successOnEdt {
           comment.update(it)
         }.handleOnEdt { _, _ ->
           editorWrapper.setContent(null)
@@ -130,7 +130,7 @@ object GHPRReviewCommentComponent {
           setReadOnly(true)
         }
 
-        reviewService.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id).successOnEdt {
+        reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id).successOnEdt {
           runWriteAction {
             setReadOnly(false)
             setText(it)
@@ -199,10 +199,10 @@ object GHPRReviewCommentComponent {
     }
   }
 
-  fun factory(thread: GHPRReviewThreadModel, reviewService: GHPRReviewServiceAdapter, avatarIconsProvider: GHAvatarIconsProvider)
+  fun factory(thread: GHPRReviewThreadModel, reviewDataProvider: GHPRReviewDataProvider, avatarIconsProvider: GHAvatarIconsProvider)
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->
-      create(reviewService, thread, comment, avatarIconsProvider)
+      create(reviewDataProvider, thread, comment, avatarIconsProvider)
     }
   }
 }
