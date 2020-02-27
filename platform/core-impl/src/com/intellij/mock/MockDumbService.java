@@ -54,6 +54,9 @@ public class MockDumbService extends DumbService {
   public void cancelTask(@NotNull DumbModeTask task) { }
 
   @Override
+  public void cancelAllTasksAndWait() { }
+
+  @Override
   public void completeJustSubmittedTasks() {
   }
 

@@ -239,6 +239,12 @@ public abstract class DumbService {
   public abstract void cancelTask(@NotNull DumbModeTask task);
 
   /**
+   * Cancels all tasks and wait when their execution is finished. Should be called on write thread.
+   */
+  @ApiStatus.Internal
+  public abstract void cancelAllTasksAndWait();
+
+  /**
    * Runs the "just submitted" tasks under a modal dialog. "Just submitted" means that tasks were queued for execution
    * earlier within the same Swing event dispatch thread event processing, and there were no other tasks already running at that moment. Otherwise, this method does nothing.<p/>
    * <p>
