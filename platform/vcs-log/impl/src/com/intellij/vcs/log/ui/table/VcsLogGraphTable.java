@@ -454,8 +454,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       Object path = getValueAt(row, column.ordinal());
       if (path instanceof FilePath) {
         String clickMessage = isShowRootNames()
-                              ? VcsLogBundle.message("vcs.log.action.click.to.collapse.paths.column")
-                              : VcsLogBundle.message("vcs.log.action.click.to.expand.paths.column");
+                              ? VcsLogBundle.message("vcs.log.click.to.collapse.paths.column.tooltip")
+                              : VcsLogBundle.message("vcs.log.click.to.expand.paths.column.tooltip");
         return "<html><b>" + myColorManager.getLongName((FilePath)path) + "</b><br/>" + clickMessage + "</html>"; // NON-NLS
       }
     }
