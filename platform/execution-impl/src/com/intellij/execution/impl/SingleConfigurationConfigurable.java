@@ -598,7 +598,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
 
       boolean targetAware =
-        configuration instanceof TargetEnvironmentAwareRunProfile && Experiments.getInstance().isFeatureEnabled("runtime.environments");
+        configuration instanceof TargetEnvironmentAwareRunProfile && Experiments.getInstance().isFeatureEnabled("run.targets");
       myRunOnPanel.setVisible(targetAware);
       if (targetAware) {
         String defaultTargetName = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultTargetName();

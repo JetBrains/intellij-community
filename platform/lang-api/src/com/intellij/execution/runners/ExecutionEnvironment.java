@@ -107,7 +107,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   @NotNull
   private TargetEnvironmentFactory createTargetEnvironmentFactory() {
     if (myRunProfile instanceof TargetEnvironmentAwareRunProfile &&
-        Experiments.getInstance().isFeatureEnabled("runtime.environments")) {
+        Experiments.getInstance().isFeatureEnabled("run.targets")) {
       String targetName = ((TargetEnvironmentAwareRunProfile)myRunProfile).getDefaultTargetName();
       if (targetName != null) {
         TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
