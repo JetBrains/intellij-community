@@ -177,7 +177,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   protected void runStartupActivities() {
   }
 
-  private static void typeInAlienEditor(Editor alienEditor, char c) {
+  private static void typeInAlienEditor(@NotNull Editor alienEditor, char c) {
     EditorActionManager.getInstance();
     TypedAction action = TypedAction.getInstance();
     DataContext dataContext = ((EditorEx)alienEditor).getDataContext();
@@ -2521,6 +2521,58 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testAddAnnotationViaBuilderEntailsCreatingCorrespondingRangeHighlighterImmediately() {
     if (!ensureEnoughParallelism()) return;
     useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MyNewBuilderAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+  }
+
+  private static final AtomicBoolean annotated = new AtomicBoolean();
+  private static final AtomicBoolean inspected = new AtomicBoolean();
+  public static class MySlowAnnotator extends MyRecordingAnnotator {
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiFile) {
+        annotated.set(true);
+        iDidIt();
+      }
+      assertFalse(inspected.get());
+    }
+  }
+  public void test_RunInspectionsAfterCompletionOfGeneralHighlightPass_SecretSettingDoesWork() {
+    if (!ensureEnoughParallelism()) return;
+    assertFalse("Some rogue plugin left the dangerous setting on", myDaemonCodeAnalyzer.isRunInspectionsAfterCompletionOfGeneralHighlightPass());
+    registerInspection(new LocalInspectionTool() {
+      @Override
+      public @NotNull String getID() {
+        return getTestName(false)+"MySlowInspectionTool";
+      }
+
+      @Override
+      public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+        inspected.set(true);
+        return null;
+      }
+
+      @Override
+      public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                     boolean isOnTheFly,
+                                                     @NotNull LocalInspectionToolSession session) {
+        return new PsiElementVisitor() {
+          @Override
+          public void visitElement(@NotNull PsiElement element) {
+            assertTrue(annotated.get());
+          }
+        };
+      }
+    });
+    try {
+      myDaemonCodeAnalyzer.runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(true);
+
+      useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MySlowAnnotator(), }, () -> {
+        configureByText(StdFileTypes.JAVA, "class X{}");
+        doHighlighting();
+      });
+    }
+    finally {
+      myDaemonCodeAnalyzer.runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(false);
+    }
   }
 }
 

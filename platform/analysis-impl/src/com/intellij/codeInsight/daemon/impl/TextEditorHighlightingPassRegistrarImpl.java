@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@SuppressWarnings("SynchronizeOnThis")
 public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx implements Disposable {
   public static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
 
@@ -40,7 +39,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
   public TextEditorHighlightingPassRegistrarImpl(@NotNull Project project) {
     myProject = project;
 
-    registerFactories();
+    reregisterFactories();
 
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<TextEditorHighlightingPassFactoryRegistrar>() {
       @Override
@@ -55,24 +54,24 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       @Override
       public void extensionRemoved(@NotNull TextEditorHighlightingPassFactoryRegistrar factoryRegistrar,
                                    @NotNull PluginDescriptor pluginDescriptor) {
-        synchronized (TextEditorHighlightingPassRegistrarImpl.this) {
-          checkedForCycles = false;
-        }
-        myRegisteredPassFactories.clear();
-        myDirtyScopeTrackingFactories.clear();
-        registerFactories();
+        reregisterFactories();
       }
     }, this);
   }
 
-  @Override
-  public void dispose() {
-  }
-
-  public void registerFactories() {
+  void reregisterFactories() {
+    synchronized (this) {
+      checkedForCycles = false;
+    }
+    myRegisteredPassFactories.clear();
+    myDirtyScopeTrackingFactories.clear();
     for (TextEditorHighlightingPassFactoryRegistrar factoryRegistrar : EP_NAME.getExtensionList()) {
       factoryRegistrar.registerHighlightingPassFactory(this, myProject);
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private static class PassConfig {
