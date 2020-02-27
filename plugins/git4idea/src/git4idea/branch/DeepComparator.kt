@@ -148,7 +148,7 @@ class DeepComparator(private val project: Project,
     return providers.keys.mapNotNull { repositoryManager.getRepositoryForRootQuick(it) }.filter { repository ->
       repository.currentBranch != null &&
       repository.branches.findBranchByName(branchToCompare) != null
-    }.associate { Pair(it, it.currentBranch!!) }
+    }.associateWith { it.currentBranch!! }
   }
 
   private fun notifyUnhighlight() {
@@ -179,7 +179,7 @@ class DeepComparator(private val project: Project,
 
     override fun run(indicator: ProgressIndicator) {
       try {
-        repositoriesWithCurrentBranches.forEach { repo, currentBranch ->
+        repositoriesWithCurrentBranches.forEach { (repo, currentBranch) ->
           val commits = if (Registry.`is`("git.log.use.index.for.picked.commits.highlighting")) {
             if (Registry.`is`("git.log.fast.picked.commits.highlighting")) {
               getCommitsByIndexFast(repo.root, comparedBranch) ?: getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch.name)
