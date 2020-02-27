@@ -4,6 +4,7 @@ package com.intellij.workspace.legacyBridge.libraries.libraries
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.util.Disposer
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
+import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 import com.intellij.workspace.ide.WorkspaceModelTopics
 import org.jetbrains.annotations.ApiStatus
@@ -87,6 +89,7 @@ class LegacyBridgeRootsWatcher(
       override fun after(events: List<VFileEvent>) = events.forEach { event ->
         val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
 
+        updateModuleName(oldUrl, newUrl)
         updateRoots(currentRoots, oldUrl, newUrl)
         updateRoots(currentJarDirectories, oldUrl, newUrl)
         updateRoots(currentRecursiveJarDirectories, oldUrl, newUrl)
@@ -96,6 +99,18 @@ class LegacyBridgeRootsWatcher(
         map.filter { it.key.url == oldUrl }.forEach { (url, disposable) ->
           map.remove(url)
           map[VirtualFileUrlManager.fromUrl(newUrl)] = disposable
+        }
+      }
+
+      private fun updateModuleName(oldUrl: String, newUrl: String) {
+        val oldModuleName = getModuleNameByFilePath(oldUrl)
+        val newModuleName = getModuleNameByFilePath(newUrl)
+        if (oldModuleName == newModuleName) return
+
+        val workspaceModel = WorkspaceModel.getInstance(project)
+        val moduleEntity = workspaceModel.entityStore.current.resolve(ModuleId(oldModuleName)) ?: return
+        workspaceModel.updateProjectModel { diff ->
+          diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) { this.name = newModuleName }
         }
       }
 
