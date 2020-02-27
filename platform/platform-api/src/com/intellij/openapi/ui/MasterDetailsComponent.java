@@ -151,13 +151,16 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
     };
 
-    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree);
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree)
+      .setToolbarPosition(ActionToolbarPosition.TOP)
+      .setPanelBorder(JBUI.Borders.empty())
+      .setScrollPaneBorder(JBUI.Borders.empty());
     DefaultActionGroup group = createToolbarActionGroup();
     if (group != null) {
       decorator.setActionGroup(group);
     }
     //left.add(myNorthPanel, BorderLayout.NORTH);
-    myMaster = decorator.setAsUsualTopToolbar().setPanelBorder(JBUI.Borders.empty()).createPanel();
+    myMaster = decorator.createPanel();
     myNorthPanel.setVisible(false);
     left.add(myMaster, BorderLayout.CENTER);
     mySplitter.setFirstComponent(left);

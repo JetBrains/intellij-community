@@ -3,6 +3,7 @@ package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
 import com.intellij.ui.components.labels.ActionLink
@@ -28,7 +29,8 @@ open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunD
     val moveUpAction = MyMoveAction(ExecutionBundle.message("move.up.action.name"), null, IconUtil.getMoveUpIcon(), -1)
     val moveDownAction = MyMoveAction(ExecutionBundle.message("move.down.action.name"), null, IconUtil.getMoveDownIcon(), 1)
     toolbarDecorator = ToolbarDecorator.createDecorator(tree)
-      .setAsUsualTopToolbar()
+      .setToolbarPosition(ActionToolbarPosition.TOP)
+      .setPanelBorder(JBUI.Borders.empty())
       .setAddAction(toolbarAddAction).setAddActionName(ExecutionBundle.message("add.new.run.configuration.action2.name"))
       .setRemoveAction(removeAction).setRemoveActionUpdater(removeAction)
       .setRemoveActionName(ExecutionBundle.message("remove.run.configuration.action.name"))

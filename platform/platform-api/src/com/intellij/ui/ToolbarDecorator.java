@@ -10,6 +10,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -32,12 +34,12 @@ import java.util.*;
 public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFactory {
   protected Border myPanelBorder;
   protected Border myToolbarBorder;
+  protected Border myScrollPaneBorder;
   protected boolean myAddActionEnabled;
   protected boolean myEditActionEnabled;
   protected boolean myRemoveActionEnabled;
   protected boolean myUpActionEnabled;
   protected boolean myDownActionEnabled;
-  protected Border myActionsPanelBorder;
   private final List<AnActionButton> myExtraActions = new SmartList<>();
   private ActionToolbarPosition myToolbarPosition;
   protected AnActionButtonRunnable myAddAction;
@@ -59,7 +61,6 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   private Dimension myMinimumSize;
   private CommonActionsPanel myActionsPanel;
   private Comparator<AnActionButton> myButtonComparator;
-  private boolean myAsUsualTopToolbar = false;
   private Icon myAddIcon;
   private boolean myForcedDnD = false;
 
@@ -84,10 +85,17 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return this;
   }
 
+  /**
+   * @deprecated Equivalent to
+   * <pre>{@code decorator
+   * .setToolbarPosition(ActionToolbarPosition.TOP)
+   * .setPanelBorder(JBUI.Borders.empty())}</pre>
+   *
+   * @see #setScrollPaneBorder(Border)
+   */
+  @Deprecated
   public ToolbarDecorator setAsUsualTopToolbar() {
-    myAsUsualTopToolbar = true;
-    setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.TOP);
-    return this;
+    return setToolbarPosition(ActionToolbarPosition.TOP).setPanelBorder(JBUI.Borders.empty());
   }
 
   public static ToolbarDecorator createDecorator(@NotNull JTable table) {
@@ -146,7 +154,12 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   public ToolbarDecorator setToolbarBorder(Border border) {
-    myActionsPanelBorder = border;
+    myToolbarBorder = border;
+    return this;
+  }
+
+  public ToolbarDecorator setScrollPaneBorder(Border border) {
+    myScrollPaneBorder = border;
     return this;
   }
 
@@ -171,10 +184,6 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return this;
   }
 
-  public ToolbarDecorator setLineBorder(int top, int left, int bottom, int right) {
-    return setToolbarBorder(new CustomLineBorder(top, left, bottom, right));
-  }
-
   public ToolbarDecorator addExtraAction(@NotNull AnActionButton action) {
     myExtraActions.add(action);
     return this;
@@ -191,10 +200,6 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
 
   public ToolbarDecorator setToolbarPosition(ActionToolbarPosition position) {
     myToolbarPosition = position;
-    myActionsPanelBorder = new CustomLineBorder(myToolbarPosition == ActionToolbarPosition.BOTTOM ? 1 : 0,
-                                                myToolbarPosition == ActionToolbarPosition.RIGHT ? 1 : 0,
-                                                myToolbarPosition == ActionToolbarPosition.TOP ? 1 : 0,
-                                                myToolbarPosition == ActionToolbarPosition.LEFT ? 1 : 0);
     return this;
   }
 
@@ -317,22 +322,22 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * @return panel that contains wrapped component (with added scrollpane) and toolbar panel.
    */
   public JPanel createPanel() {
-    final CommonActionsPanel.Buttons[] buttons = getButtons();
-    final JComponent contextComponent = getComponent();
+    CommonActionsPanel.Buttons[] buttons = getButtons();
+    JComponent contextComponent = getComponent();
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
                              myToolbarPosition,
                              myExtraActions.toArray(new AnActionButton[0]),
                              myButtonComparator,
                              myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
                              myAddIcon, buttons);
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contextComponent, true);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contextComponent, true);
     if (myPreferredSize != null) {
       scrollPane.setPreferredSize(myPreferredSize);
     }
     if (myMinimumSize != null) {
       scrollPane.setMinimumSize(myMinimumSize);
     }
-    final JPanel panel = new JPanel(new BorderLayout()) {
+    JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       public void addNotify() {
         super.addNotify();
@@ -346,14 +351,20 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     installDnD();
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myActionsPanel.getComponent(0));
 
-    Border mainBorder = myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL);
-    if (myAsUsualTopToolbar) {
-      scrollPane.setBorder(mainBorder);
+    panel.setBorder(myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL));
+    if (myScrollPaneBorder != null || myPanelBorder instanceof EmptyBorder) {
+      // if the panel border is empty, the scrollpane shall get one anyway
+      scrollPane.setBorder(myScrollPaneBorder != null ? myScrollPaneBorder : IdeBorderFactory.createBorder(SideBorder.ALL));
     }
-    else {
-      myActionsPanel.setBorder(myActionsPanelBorder);
-      panel.setBorder(mainBorder);
+    if ((myToolbarBorder == null || myToolbarBorder instanceof EmptyBorder) &&
+        scrollPane.getBorder() == null || scrollPane.getBorder() instanceof EmptyBorder) {
+      myToolbarBorder = new CustomLineBorder(
+        myToolbarPosition == ActionToolbarPosition.BOTTOM ? 1 : 0,
+        myToolbarPosition == ActionToolbarPosition.RIGHT ? 1 : 0,
+        myToolbarPosition == ActionToolbarPosition.TOP ? 1 : 0,
+        myToolbarPosition == ActionToolbarPosition.LEFT ? 1 : 0);
     }
+    myActionsPanel.setBorder(myToolbarBorder != null ? myToolbarBorder : JBUI.Borders.empty());
     return panel;
   }
 
