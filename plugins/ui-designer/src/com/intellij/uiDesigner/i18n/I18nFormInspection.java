@@ -100,7 +100,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
       PsiParameter[] parameters = setter.getParameterList().getParameters();
       if (parameters.length == 1 &&
           "java.lang.String".equals(parameters[0].getType().getCanonicalText()) &&
-          AnnotationUtil.isAnnotated(parameters [0], AnnotationUtil.NON_NLS, 0)) {
+          AnnotationUtil.isAnnotated(parameters [0], AnnotationUtil.NON_NLS, AnnotationUtil.CHECK_EXTERNAL)) {
         return true;
       }
     }
