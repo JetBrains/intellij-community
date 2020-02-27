@@ -45,7 +45,7 @@ class ProblemAnalyzer(private val project: Project) : DaemonCodeAnalyzer.DaemonL
     }
   }
 
-  override fun daemonFinished(fileEditors: MutableCollection<FileEditor>) {
+  override fun daemonFinished(fileEditors: Collection<FileEditor>) {
     fileEditors.mapNotNull { it.file }.forEach { analyzeFile(it) }
   }
 
@@ -57,7 +57,7 @@ class ProblemAnalyzer(private val project: Project) : DaemonCodeAnalyzer.DaemonL
     DumbService.getInstance(project).smartInvokeLater { reportBrokenUsages(psiFile, scope, false) }
   }
 
-  override fun before(events: MutableList<out VFileEvent>) {
+  override fun before(events: List<VFileEvent>) {
     val problemsView = ProjectProblemsView.SERVICE.getInstance(project)
     for (event in events) {
       if (event !is VFileDeleteEvent && event !is VFileMoveEvent) continue
@@ -71,7 +71,7 @@ class ProblemAnalyzer(private val project: Project) : DaemonCodeAnalyzer.DaemonL
     }
   }
 
-  override fun after(events: MutableList<out VFileEvent>) {
+  override fun after(events: List<VFileEvent>) {
     for (event in events) {
       if (event !is VFileCreateEvent && event !is VFileMoveEvent) continue
       val file = event.file ?: continue
