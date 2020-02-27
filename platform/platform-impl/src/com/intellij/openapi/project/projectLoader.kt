@@ -58,7 +58,7 @@ private inline fun createActivity(project: ProjectImpl, message: () -> String): 
 }
 
 private inline fun <T : Any> runHandler(ep: ExtensionPointImpl<T>, crossinline executor: (T) -> Unit) {
-  ep.processWithPluginDescriptor(/* shouldBeSorted = */ false) { handler, pluginDescriptor ->
+  ep.processWithPluginDescriptor(true) { handler, pluginDescriptor ->
     if (pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
       LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
     }
