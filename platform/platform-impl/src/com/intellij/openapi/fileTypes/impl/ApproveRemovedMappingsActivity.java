@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -34,9 +35,9 @@ public class ApproveRemovedMappingsActivity implements StartupActivity {
         for (RemovedMappingTracker.RemovedMapping mapping : list) {
           final FileNameMatcher matcher = mapping.getFileNameMatcher();
           final FileType fileType = FileTypeManager.getInstance().findFileTypeByName(mapping.getFileTypeName());
-          Notification notification = new Notification("File type recognized", "File type recognized",
-                                                       "File extension " + matcher.getPresentableString() +
-                                                       " was reassigned to " + fileType.getName() + " <a href='revert'>Revert</a>",
+          Notification notification = new Notification(IdeBundle.message("notification.title.file.type.recognized"),
+                                                       IdeBundle.message("notification.title.file.type.recognized"),
+                                                       IdeBundle.message("notification.file.extension.0.was.reassigned.to.1.revert", matcher.getPresentableString(), fileType.getName()),
                                                        NotificationType.WARNING, new NotificationListener.Adapter() {
             @Override
             protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {

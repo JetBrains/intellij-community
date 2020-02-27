@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -18,7 +19,7 @@ public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements
 
   @Override
   protected String getPopupTitle(@NotNull AnActionEvent e) {
-    return "Switch...";
+    return IdeBundle.message("popup.title.switch");
   }
 
   @Override

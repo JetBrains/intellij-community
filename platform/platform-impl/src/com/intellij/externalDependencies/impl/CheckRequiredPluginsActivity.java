@@ -3,6 +3,7 @@ package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -100,7 +101,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
         errorMessages.add("<a href=\"install\">Install required plugins</a>");
       }
       NOTIFICATION_GROUP
-        .createNotification("Required plugins weren't loaded", StringUtil.join(errorMessages, "<br>"), NotificationType.ERROR,
+        .createNotification(IdeBundle.message("notification.title.required.plugins.weren.t.loaded"), StringUtil.join(errorMessages, "<br>"), NotificationType.ERROR,
                             new NotificationListener() {
                               @Override
                               public void hyperlinkUpdate(@NotNull final Notification notification,

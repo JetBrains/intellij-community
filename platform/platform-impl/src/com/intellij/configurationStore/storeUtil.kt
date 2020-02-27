@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
@@ -98,18 +99,19 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
       LOG.warn("Save settings failed", e)
     }
 
-    val messagePostfix = "Please restart ${ApplicationNamesInfo.getInstance().fullProductName}</p>" +
-                         (if (ApplicationManager.getApplication().isInternal) "<p>" + StringUtil.getThrowableText(e) + "</p>" else "")
+    val messagePostfix = IdeBundle.message("notification.content.please.restart.0", ApplicationNamesInfo.getInstance().fullProductName,
+                                           (if (ApplicationManager.getApplication().isInternal) "<p>" + StringUtil.getThrowableText(e) + "</p>" else ""))
 
     val pluginId = PluginUtil.getInstance().findPluginId(e)
     val notification = if (pluginId == null) {
-      Notification("Settings Error", "Unable to save settings", "<p>Failed to save settings. $messagePostfix",
+      Notification(IdeBundle.message("notification.group.settings.error"), IdeBundle.message("notification.title.unable.to.save.settings"),
+                   IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix),
                    NotificationType.ERROR)
     }
     else {
       PluginManagerCore.disablePlugin(pluginId)
-      Notification("Settings Error", "Unable to save plugin settings",
-                   "<p>The plugin <i>$pluginId</i> failed to save settings and has been disabled. $messagePostfix",
+      Notification(IdeBundle.message("notification.group.settings.error"), IdeBundle.message("notification.title.unable.to.save.plugin.settings"),
+                   IdeBundle.message("notification.content.plugin.failed.to.save.settings.and.has.been.disabled", pluginId.idString, messagePostfix),
                    NotificationType.ERROR)
     }
     notification.notify(componentManager as? Project)

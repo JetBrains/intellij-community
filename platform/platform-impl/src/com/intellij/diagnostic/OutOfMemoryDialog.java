@@ -144,7 +144,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
   private void snapshot() {
     enableControls(false);
     myDumpMessageLabel.setVisible(true);
-    myDumpMessageLabel.setText("Dumping memory...");
+    myDumpMessageLabel.setText(IdeBundle.message("label.dumping.memory"));
 
     Runnable task = () -> {
       TimeoutUtil.sleep(250);  // to give UI chance to update

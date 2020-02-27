@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -33,7 +34,7 @@ public class MaintenanceAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("MaintenanceGroup");
     JBPopupFactory.getInstance().
-      createActionGroupPopup("Maintenance", group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true).
+      createActionGroupPopup(IdeBundle.message("popup.title.maintenance"), group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true).
       showInFocusCenter();
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.configurationStore.SerializableScheme
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.notification.*
@@ -769,13 +770,13 @@ internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
             else -> null
           }
           val action: AnAction? = when (pluginId) {
-            null -> object : NotificationAction("Search for $keymapName Keymap plugin") {
+            null -> object : NotificationAction(IdeBundle.message("action.text.search.for.keymap", keymapName)) {
               override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                 //TODO enableSearch("$keymapName /tag:Keymap")?.run()
                 ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PluginManagerConfigurable::class.java)
               }
             }
-            else -> object : NotificationAction("Install $keymapName Keymap") {
+            else -> object : NotificationAction(IdeBundle.message("action.text.install.keymap", keymapName)) {
               override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                 val connect = ApplicationManager.getApplication().messageBus.connect()
                 connect.subscribe(KeymapManagerListener.TOPIC, object: KeymapManagerListener {
@@ -786,7 +787,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
                         KeymapManagerEx.getInstanceEx().activeKeymap = keymap
                         val group = NotificationGroup("Keymap", NotificationDisplayType.BALLOON, true)
                         val notificationManager = SingletonNotificationManager(group, NotificationType.INFORMATION)
-                        notificationManager.notify("Keymap $keymapName successfully activated", project)
+                        notificationManager.notify(IdeBundle.message("notification.content.keymap.successfully.activated", keymapName), project)
                       }
                     }
                   }
@@ -811,7 +812,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
               }
             }
           }
-          NOTIFICATION_MANAGER.notify("Missing Keymap", message, action = action)
+          NOTIFICATION_MANAGER.notify(IdeBundle.message("notification.group.missing.keymap"), message, action = action)
         }, ModalityState.NON_MODAL)
     }
   }

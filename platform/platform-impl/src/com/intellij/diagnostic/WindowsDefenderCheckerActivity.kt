@@ -3,6 +3,7 @@ package com.intellij.diagnostic
 
 import com.intellij.CommonBundle
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.IdeBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -47,7 +48,7 @@ class WindowsDefenderCheckerActivity : StartupActivity.Background {
 }
 
 class WindowsDefenderNotification(text: String, val paths: Collection<Path>) :
-  Notification("System Health",  "", text, NotificationType.WARNING), NotificationFullContent
+  Notification(IdeBundle.message("notification.group.system.health"), "", text, NotificationType.WARNING), NotificationFullContent
 
 class WindowsDefenderFixAction(val paths: Collection<Path>) : NotificationAction("Fix...") {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
@@ -69,7 +70,7 @@ class WindowsDefenderFixAction(val paths: Collection<Path>) : NotificationAction
         ApplicationManager.getApplication().executeOnPooledThread {
           if (WindowsDefenderChecker.getInstance().runExcludePathsCommand(e.project, paths)) {
             UIUtil.invokeLaterIfNeeded {
-              Notifications.Bus.notify(Notification("System Health", "", DiagnosticBundle.message("virus.scanning.fix.success.notification"),
+              Notifications.Bus.notify(Notification(IdeBundle.message("notification.group.system.health"), "", DiagnosticBundle.message("virus.scanning.fix.success.notification"),
                                                     NotificationType.INFORMATION))
             }
           }

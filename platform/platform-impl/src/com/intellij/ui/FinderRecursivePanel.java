@@ -158,7 +158,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   @Nls
   protected String getListEmptyText() {
-    return "No entries";
+    return IdeBundle.message("empty.text.no.entries");
   }
 
   @NotNull
@@ -208,7 +208,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   @Nullable
   protected JComponent createDefaultRightComponent() {
-    return new JBPanelWithEmptyText().withEmptyText("Nothing selected");
+    return new JBPanelWithEmptyText().withEmptyText(IdeBundle.message("empty.text.nothing.selected"));
   }
 
   protected JComponent createLeftComponent() {

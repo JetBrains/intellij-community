@@ -185,7 +185,7 @@ public class PluginInstallOperation {
             String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
             String deps = getPluginsText(depends);
             String message = IdeBundle.message("plugin.manager.dependencies.detected.message", pluginNode.getName(), deps);
-            proceed[0] = Messages.showYesNoDialog(message, title, "Install", Messages.getNoButton(), Messages.getWarningIcon()) == Messages.YES;
+            proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(), Messages.getWarningIcon()) == Messages.YES;
           }, ModalityState.any());
         }
         catch (Exception e) {
@@ -203,7 +203,7 @@ public class PluginInstallOperation {
             String title = IdeBundle.message("plugin.manager.optional.dependencies.detected.title");
             String deps = getPluginsText(optionalDeps);
             String message = IdeBundle.message("plugin.manager.optional.dependencies.detected.message", pluginNode.getName(), deps);
-            proceed[0] = Messages.showYesNoDialog(message, title, "Install", Messages.getNoButton(), Messages.getWarningIcon()) == Messages.YES;
+            proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(), Messages.getWarningIcon()) == Messages.YES;
           }, ModalityState.any());
         }
         catch (Exception e) {
@@ -227,7 +227,7 @@ public class PluginInstallOperation {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           String title = IdeBundle.message("plugin.manager.obsolete.plugins.detected.title");
           String message = pluginReplacement.getReplacementMessage(oldPlugin, pluginNode);
-          if (Messages.showYesNoDialog(message, title, "Disabled", Messages.getNoButton(), Messages.getWarningIcon()) == Messages.YES) {
+          if (Messages.showYesNoDialog(message, title, IdeBundle.message("button.disable"), Messages.getNoButton(), Messages.getWarningIcon()) == Messages.YES) {
             toDisable.set(oldPlugin);
           }
         }, ModalityState.any());

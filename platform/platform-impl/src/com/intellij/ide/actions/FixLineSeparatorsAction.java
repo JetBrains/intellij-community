@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -41,7 +42,7 @@ public class FixLineSeparatorsAction extends AnAction {
       for (VirtualFile vFile : vFiles) {
         fixSeparators(vFile);
       }
-    }, "fixing line separators", null);
+    }, IdeBundle.message("command.fixing.line.separators"), null);
   }
 
   private static void fixSeparators(@NotNull VirtualFile vFile) {

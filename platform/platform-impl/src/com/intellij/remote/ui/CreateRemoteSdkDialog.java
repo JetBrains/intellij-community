@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -208,14 +209,15 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     }
     if (askSaveUnfinished) {
       if (Messages
-            .showOkCancelDialog(validation, "Can't create " + getSdkFactory().sdkName() + " SDK", "Save anyway", "Continue editing",
+            .showOkCancelDialog(validation, IdeBundle.message("dialog.title.can.t.create.0.sdk", getSdkFactory().sdkName()), IdeBundle.message("button.save.anyway"),
+                                IdeBundle.message("button.continue.editing"),
                                 Messages.getWarningIcon()) ==
           Messages.OK) {
         return true;
       }
     }
     else {
-      Messages.showErrorDialog(validation, "Can't create " + getSdkFactory().sdkName() + " SDK");
+      Messages.showErrorDialog(validation, IdeBundle.message("dialog.title.can.t.create.0.sdk", getSdkFactory().sdkName()));
     }
     return false;
   }

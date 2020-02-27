@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -174,10 +175,10 @@ public final class PluginInstaller {
       catch (IOException e) {
         ref.set(e);
       }
-    }, "Installing Plugin...", false, null, parent instanceof JComponent ? (JComponent)parent : null);
+    }, IdeBundle.message("progress.title.installing.plugin"), false, null, parent instanceof JComponent ? (JComponent)parent : null);
     IOException exception = ref.get();
     if (exception != null) {
-      Messages.showErrorDialog(parent, "Plugin installation failed: " + exception.getMessage());
+      Messages.showErrorDialog(parent, IdeBundle.message("message.plugin.installation.failed.0", exception.getMessage()));
     }
     PluginStateManager.fireState(descriptor, true);
     return exception != null ? null : refTarget.get();
@@ -308,7 +309,7 @@ public final class PluginInstaller {
       String deps = StringUtil.join(dependencies, IdeaPluginDescriptor::getName, ", ");
       String message = "Plugin " + pluginDescriptor.getName() + " depends on " + part + deps + ". Enable " + part.trim() + "?";
       if (Messages
-            .showOkCancelDialog(message, "Install Plugin", "Install", CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) ==
+            .showOkCancelDialog(message, IdeBundle.message("dialog.title.install.plugin"), IdeBundle.message("button.install"), CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) ==
           Messages.OK) {
         model.enableRows(dependencies.toArray(new IdeaPluginDescriptor[0]), Boolean.TRUE);
       }
@@ -324,8 +325,8 @@ public final class PluginInstaller {
         return Comparing.strEqual(extension, "jar") || Comparing.strEqual(extension, "zip");
       }
     };
-    descriptor.setTitle("Choose Plugin File");
-    descriptor.setDescription("JAR and ZIP archives are accepted");
+    descriptor.setTitle(IdeBundle.message("chooser.title.plugin.file"));
+    descriptor.setDescription(IdeBundle.message("chooser.description.jar.and.zip.archives.are.accepted"));
     final String oldPath = PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH);
     final VirtualFile toSelect =
       oldPath == null ? null : VfsUtil.findFileByIoFile(new File(FileUtil.toSystemDependentName(oldPath)), false);

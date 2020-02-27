@@ -195,7 +195,8 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       });
     }
     else {
-      Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
+      Messages.showErrorDialog(IdeBundle.message("message.this.action.isn.t.supported.on.the.current.platform"),
+                               IdeBundle.message("dialog.title.cannot.open.file"));
     }
   }
 

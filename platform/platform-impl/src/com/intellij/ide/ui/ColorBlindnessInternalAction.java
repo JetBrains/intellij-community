@@ -31,6 +31,7 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
     new ColorDialog(event).show();
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   private static final class ColorDialog extends DialogWrapper {
     private final ColorView myView = new ColorView();
     private final JComboBox myCombo = new ComboBox<>(FilterItem.ALL);

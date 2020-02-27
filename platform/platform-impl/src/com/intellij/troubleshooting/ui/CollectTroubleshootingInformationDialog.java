@@ -17,6 +17,7 @@ package com.intellij.troubleshooting.ui;
 
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -41,7 +42,7 @@ public class CollectTroubleshootingInformationDialog extends DialogWrapper {
 
   public CollectTroubleshootingInformationDialog(@NotNull Project project) {
     super(project);
-    setTitle("Collect Troubleshooting Information");
+    setTitle(IdeBundle.message("dialog.title.collect.troubleshooting.information"));
     CompositeGeneralTroubleInfoCollector generalInfoCollector = new CompositeGeneralTroubleInfoCollector();
     troubleTypeBox.addItem(generalInfoCollector);
     TroubleInfoCollector[] extensions = TroubleInfoCollector.EP_SETTINGS.getExtensions();
@@ -76,7 +77,7 @@ public class CollectTroubleshootingInformationDialog extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    Action copy = new DialogWrapperAction("&Copy") {
+    Action copy = new DialogWrapperAction(IdeBundle.message("action.text.copy")) {
       @Override
       protected void doAction(ActionEvent e) {
         CopyPasteManager.getInstance().setContents(new StringSelection(summary.getText()));

@@ -124,7 +124,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       setDevelopers(developers);
     }
     else {
-      new Task.Backgroundable(null, "Loading Developers List", true) {
+      new Task.Backgroundable(null, IdeBundle.message("progress.title.loading.developers.list"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -277,7 +277,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       });
       myAssigneeCombo.setSwingPopup(false);
       myAssigneePanel = new JPanel();
-      myAssigneePanel.add(new JBLabel("Assignee:"));
+      myAssigneePanel.add(new JBLabel(IdeBundle.message("label.assignee")));
       myAssigneePanel.add(myAssigneeCombo);
     }
 
@@ -705,7 +705,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class BackAction extends AnAction implements DumbAware {
     BackAction() {
-      super("Previous", null, AllIcons.Actions.Back);
+      super(IdeBundle.message("button.previous"), null, AllIcons.Actions.Back);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB);
       if (action != null) {
         registerCustomShortcutSet(action.getShortcutSet(), getRootPane(), getDisposable());
@@ -726,7 +726,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class ForwardAction extends AnAction implements DumbAware {
     ForwardAction() {
-      super("Next", null, AllIcons.Actions.Forward);
+      super(IdeBundle.message("button.next"), null, AllIcons.Actions.Forward);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB);
       if (action != null) {
         registerCustomShortcutSet(action.getShortcutSet(), getRootPane(), getDisposable());

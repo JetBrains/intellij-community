@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
@@ -333,13 +334,13 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
   @NotNull
   @Override
   public String getPreviousContentActionName() {
-    return "Select Previous Tab";
+    return IdeBundle.message("action.text.select.previous.tab");
   }
 
   @NotNull
   @Override
   public String getNextContentActionName() {
-    return "Select Next Tab";
+    return IdeBundle.message("action.text.select.next.tab");
   }
 
 }

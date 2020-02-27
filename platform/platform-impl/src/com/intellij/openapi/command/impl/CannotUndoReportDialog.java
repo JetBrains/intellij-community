@@ -55,7 +55,7 @@ public class CannotUndoReportDialog extends DialogWrapper implements DataProvide
           if (content != null && content.length() > FILE_TEXT_PREVIEW_CHARS_LIMIT) {
             content = content.subSequence(0, FILE_TEXT_PREVIEW_CHARS_LIMIT) + "...";
           }
-          setText("<temporary file>" + (content == null ? "" : " [" + content + "]"));
+          setText(IdeBundle.message("list.item.temporary.file.0", content == null ? "" : " [" + content + "]"));
         }
       }
     });

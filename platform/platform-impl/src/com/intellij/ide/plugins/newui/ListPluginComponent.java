@@ -286,7 +286,7 @@ public class ListPluginComponent extends JPanel {
         setTagTooltip("The license is not required for EAP version");
         return;
       }
-      licensePanel.setText("No license.", true, false);
+      licensePanel.setText(IdeBundle.message("label.text.plugin.no.license"), true, false);
     }
     else {
       licensePanel.setTextFromStamp(stamp, instance.getExpirationDate(productCode));
@@ -348,7 +348,7 @@ public class ListPluginComponent extends JPanel {
           }
         }
 
-        myUpdateLicensePanel.setText("Next plugin version is paid.\nUse the trial for up to 30 days or", true, false);
+        myUpdateLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or"), true, false);
         myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
         myUpdateLicensePanel.setVisible(true);
       }

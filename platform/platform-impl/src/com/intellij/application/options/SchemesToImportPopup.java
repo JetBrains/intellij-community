@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -22,7 +23,8 @@ public abstract class SchemesToImportPopup<T> {
 
   public void show(Collection<T> schemes) {
     if (schemes.isEmpty()) {
-      Messages.showMessageDialog("There are no available schemes to import", "Import", Messages.getWarningIcon());
+      Messages.showMessageDialog(IdeBundle.message("message.there.are.no.available.schemes.to.import"),
+                                 IdeBundle.message("dialog.title.import"), Messages.getWarningIcon());
       return;
     }
 
@@ -37,7 +39,7 @@ public abstract class SchemesToImportPopup<T> {
 
   private void showList(JList list, Runnable selectAction) {
     JBPopupFactory.getInstance().createListPopupBuilder(list).
-      setTitle("Import Scheme").
+      setTitle(IdeBundle.message("popup.title.import.scheme")).
       setItemChoosenCallback(selectAction).
       createPopup().
       showInCenterOf(myParent);

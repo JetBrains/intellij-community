@@ -917,9 +917,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     public UnableToSaveProjectNotification(@NotNull Project project, @NotNull List<VirtualFile> readOnlyFiles) {
-      super("Project Settings", IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"),
-            "Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
-            " <a href=\"\">Try to save project again</a>.", NotificationType.ERROR,
+      super(IdeBundle.message("notification.group.project.settings"), IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"),
+            IdeBundle.message("notification.content.unable.to.save.project.files"), NotificationType.ERROR,
             (notification, event) -> {
               UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
               Project _project = unableToSaveProjectNotification.myProject;

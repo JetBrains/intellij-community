@@ -467,7 +467,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         LaterInvocator.markTransparent(indicator.getModalityState());
-        indicator.setText("Waiting for indexing to finish...");
+        indicator.setText(IdeBundle.message("progress.text.waiting.for.indexing.to.finish"));
         ApplicationManager.getApplication().invokeAndWait(() -> {
           myDialogIndicator = (ProgressIndicatorEx)indicator;
           attachDialogIndicatorToCurrentProgress();

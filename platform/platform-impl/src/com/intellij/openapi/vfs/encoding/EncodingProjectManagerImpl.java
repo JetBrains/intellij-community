@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -364,7 +365,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
         }
         return true;
       }
-      ProgressManager.progress("Reloading files...", file.getPresentableUrl());
+      ProgressManager.progress(IdeBundle.message("progress.text.reloading.files"), file.getPresentableUrl());
       TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> clearAndReload(file, project));
       return true;
     };
@@ -416,7 +417,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     Boolean suppress = SUPPRESS_RELOAD.get();
     if (suppress == Boolean.TRUE) return;
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> suppressReloadDuring(reloadAction), "Reload Files", false, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> suppressReloadDuring(reloadAction),
+                                                                      IdeBundle.message("progress.title.reload.files"), false, myProject);
   }
 
   private void reloadAllFilesUnder(@Nullable final VirtualFile root) {
@@ -424,7 +426,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       if (!(file instanceof VirtualFileSystemEntry)) return true;
       Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
       if (cachedDocument != null) {
-        ProgressManager.progress("Reloading file...", file.getPresentableUrl());
+        ProgressManager.progress(IdeBundle.message("progress.text.reloading.file"), file.getPresentableUrl());
         TransactionGuard.submitTransaction(myProject, () -> reload(file, myProject, (FileDocumentManagerImpl)FileDocumentManager.getInstance()));
       }
       // for not loaded files deep under project, reset encoding to give them chance re-detect the right one later

@@ -495,7 +495,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     String productCode = myPlugin.getProductCode();
     if (productCode == null) {
       if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null) {
-        myLicensePanel.setText("Next plugin version is paid.\nUse the trial for up to 30 days or", true, false);
+        myLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or"), true, false);
         myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
         myLicensePanel.setVisible(true);
       }
@@ -504,7 +504,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       }
     }
     else if (myMarketplace) {
-      myLicensePanel.setText("Use the trial for up to 30 days or", false, false);
+      myLicensePanel.setText(IdeBundle.message("label.use.the.trial.for.up.to.30.days.or"), false, false);
       myLicensePanel.showBuyPlugin(() -> myPlugin);
       myLicensePanel.setVisible(true);
     }
@@ -522,7 +522,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
           myLicensePanel.hideWithChildren();
           return;
         }
-        myLicensePanel.setText("No license.", true, false);
+        myLicensePanel.setText(IdeBundle.message("label.text.plugin.no.license"), true, false);
       }
       else {
         myLicensePanel.setTextFromStamp(stamp, instance.getExpirationDate(productCode));
