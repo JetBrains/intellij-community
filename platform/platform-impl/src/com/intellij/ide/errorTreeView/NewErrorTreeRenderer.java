@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -128,7 +128,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
                                                   int row,
                                                   boolean hasFocus) {
       myPanel.removeAll();
-      myPanel.setBackground(tree.getBackground());
+      myPanel.setBackground(UIUtil.getTreeBackground(tree));
       myPanel.add(myLeft.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus), BorderLayout.WEST);
       myPanel.add(myRight.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus), BorderLayout.EAST);
       return myPanel;
