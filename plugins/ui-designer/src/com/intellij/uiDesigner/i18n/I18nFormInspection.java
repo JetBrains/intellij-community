@@ -22,6 +22,7 @@ import com.intellij.uiDesigner.lw.ITabbedPane;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,17 +59,17 @@ public class I18nFormInspection extends StringDescriptorInspection {
       EditorQuickFixProvider provider;
 
       if (prop.getName().equals(BorderProperty.NAME)) {
-        provider = (editor, component12) -> new I18nizeFormBorderQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.border.title"),
-                                                                      (RadContainer)component12);
+        provider = (editor, component12) -> new I18nizeFormQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.border.title"),
+                                                                    new FormBorderStringDescriptorAccessor((RadContainer)component));
       }
       else if (prop.getName().equals(ITabbedPane.TAB_TITLE_PROPERTY) || prop.getName().equals(ITabbedPane.TAB_TOOLTIP_PROPERTY)) {
-        provider = (editor, component1) -> new I18nizeTabTitleQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.tab.title", prop.getName()),
-                                                                       component1, prop.getName());
+        provider = (editor, component1) -> new I18nizeFormQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.tab.title", prop.getName()),
+                                                                   new TabTitleStringDescriptorAccessor((RadComponent)component, prop.getName()));
       }
       else {
-        provider = (editor, component13) -> new I18nizeFormPropertyQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.property", prop.getName()),
-                                                                            component13,
-                                                                        (IntrospectedProperty)prop);
+        provider = (editor, component13) -> new I18nizeFormQuickFix(editor,
+                                                                    UIDesignerBundle.message("i18n.quickfix.property", prop.getName()),
+                                                                    new FormPropertyStringDescriptorAccessor((RadComponent)component, (IntrospectedProperty)prop));
       }
 
       collector.addError(getID(), component, prop,

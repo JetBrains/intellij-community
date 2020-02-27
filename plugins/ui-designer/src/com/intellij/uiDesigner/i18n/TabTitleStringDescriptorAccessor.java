@@ -1,20 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.i18n;
 
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 
-/**
- * @author yole
- */
-public class I18nizeTabTitleQuickFix extends I18nizeFormQuickFix {
+public class TabTitleStringDescriptorAccessor extends StringDescriptorAccessor {
+  private final RadComponent myComponent;
   private final String myPropName;
 
-  public I18nizeTabTitleQuickFix(final GuiEditor editor, final String name, final RadComponent component, final String propName) {
-    super(editor, name, component);
+  public TabTitleStringDescriptorAccessor(final RadComponent tab,
+                                          final String propName) {
+    myComponent = tab;
     myPropName = propName;
+  }
+
+  @Override
+  public RadComponent getComponent() {
+    return myComponent;
   }
 
   @Override
