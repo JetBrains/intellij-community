@@ -234,15 +234,15 @@ internal open class UpdateIdeFromSourcesAction
       FileUtil.writeToFile(updateScript, """
         @echo off
         SET count=30
-        SET time_to_wait=500
+        SET time_to_wait=1
         :DELETE_DIR
         RMDIR /Q /S "$workHomePath"
         IF EXIST "$workHomePath" (
           IF %count% GEQ 0 (
-            ECHO "$workHomePath" still exists, wait %time_to_wait%ms and try delete again
-            PING 127.0.0.1 -n 2 -w %time_to_wait% >NUL
+            ECHO "$workHomePath" still exists, wait %time_to_wait%s and try delete again
+            SET /A time_to_wait=%time_to_wait%+1
+            PING 127.0.0.1 -n %time_to_wait% >NUL
             SET /A count=%count%-1
-            SET /A time_to_wait=%time_to_wait%+1000
             ECHO %count% attempts remain
             GOTO DELETE_DIR
           )
