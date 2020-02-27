@@ -460,6 +460,9 @@
   <item name="javax.swing.LookAndFeel void installColorsAndFont(javax.swing.JComponent, java.lang.String, java.lang.String, java.lang.String) 3">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='javax.swing.LookAndFeel void installProperty(javax.swing.JComponent, java.lang.String, java.lang.Object) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="javax.swing.RowSorter.SortKey SortKey(int, javax.swing.SortOrder) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
