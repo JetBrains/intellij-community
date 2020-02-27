@@ -4,6 +4,9 @@ package com.intellij.roots.libraries
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
 import com.intellij.openapi.roots.libraries.*
@@ -64,6 +67,33 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
       assertEquals(MockLibraryType.KIND, library.kind)
       assertEquals("hello", (library.properties as MockLibraryProperties).data)
     }
+  }
+
+  fun `test set library properties in modifiable model`() {
+    registerLibraryType(testRootDisposable)
+    ModuleRootModificationUtil.updateModel(myModule) {
+      val library = it.moduleLibraryTable.createLibrary("foo")
+      val model = library.modifiableModel as LibraryEx.ModifiableModelEx
+      model.kind = MockLibraryType.KIND
+      model.properties = MockLibraryProperties("1")
+      runWriteAction { model.commit() }
+    }
+
+    assertEquals("1", getMockLibraryData())
+
+    ModuleRootModificationUtil.updateModel(myModule) {
+      val library = it.moduleLibraryTable.libraries.single()
+      val model = library.modifiableModel as LibraryEx.ModifiableModelEx
+      model.properties = MockLibraryProperties("2")
+      runWriteAction { model.commit() }
+    }
+
+    assertEquals("2", getMockLibraryData())
+  }
+
+  private fun getMockLibraryData(): String {
+    val libEntries = ModuleRootManager.getInstance(myModule).orderEntries.filterIsInstance<LibraryOrderEntry>()
+    return ((libEntries.single().library as LibraryEx).properties as MockLibraryProperties).data
   }
 
   private fun runWithRegisteredType(action: () -> Unit) {
