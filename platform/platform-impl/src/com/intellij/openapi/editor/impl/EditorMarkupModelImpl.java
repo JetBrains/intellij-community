@@ -1641,8 +1641,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
       if (myCurrentStatus != analyzerStatus) {
         myCurrentStatus = analyzerStatus;
-        myContent = createContent();
-        myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null);
+
+        AnalyzerController controller = myCurrentStatus.getController().invoke();
+        myContent = createContent(controller);
+        myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null).
+          setCancelCallback(controller::onClose).setCancelOnClickOutside(true);
         myEditor.getComponent().addAncestorListener(new AncestorListenerAdapter() {
           @Override
           public void ancestorMoved(AncestorEvent event) {
@@ -1672,7 +1675,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       myPopup = null;
     }
 
-    private JComponent createContent() {
+    private JComponent createContent(AnalyzerController controller) {
       JPanel contentPanel = new JPanel(new GridBagLayout());
       contentPanel.setOpaque(true);
       contentPanel.setBackground(UIUtil.getToolTipBackground());
@@ -1689,7 +1692,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       presentation.setIcon(AllIcons.Actions.More);
       presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
 
-      AnalyzerController controller = myCurrentStatus.getController().invoke();
       ActionButton menuButton = new ActionButton(controller.getActionMenu(),
                                                  presentation,
                                                  ActionPlaces.EDITOR_POPUP,
@@ -1756,8 +1758,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
           }
         }
       }
-
       panel.add(Box.createHorizontalGlue(), gc.next().fillCellHorizontally().weightx(1.0));
+
+      controller.fillHectorPanels(panel, gc);
+
       panel.setOpaque(true);
       panel.setBackground(UIUtil.getToolTipActionBackground());
       panel.setBorder(JBUI.Borders.empty(4, 10));

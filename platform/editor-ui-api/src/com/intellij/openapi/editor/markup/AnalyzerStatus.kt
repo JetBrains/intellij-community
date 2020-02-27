@@ -3,7 +3,9 @@ package com.intellij.openapi.editor.markup
 
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.util.ui.GridBag
 import com.intellij.xml.util.XmlStringUtil
+import java.awt.Container
 import javax.swing.Icon
 
 // Analyzer Highlight Level
@@ -26,6 +28,9 @@ interface AnalyzerController {
   fun getAvailableLevels() : AvailableLevels
   fun getHighlightLevels() : HighlightLevels
   fun setHighLightLevel(newLevels: LanguageHighlightLevel)
+
+  fun fillHectorPanels(container: Container, gc: GridBag)
+  fun onClose() : Boolean
 }
 
 // Status
