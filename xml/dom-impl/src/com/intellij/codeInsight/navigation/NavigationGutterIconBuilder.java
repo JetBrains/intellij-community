@@ -277,7 +277,7 @@ public class NavigationGutterIconBuilder<T> {
   protected NavigationGutterIconRenderer createGutterIconRenderer(@NotNull final Project project) {
     checkBuilt();
 
-    NotNullLazyValue<List<SmartPsiElementPointer>> pointers = createPointersThunk(myLazy, project, evaluateAndForget(myTargets),
+    NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers = createPointersThunk(myLazy, project, evaluateAndForget(myTargets),
                                                                                   myConverter);
 
     final boolean empty = isEmpty();
@@ -307,14 +307,14 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   @NotNull
-  protected NavigationGutterIconRenderer createGutterIconRenderer(@NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers,
-                                                                  @NotNull Computable<PsiElementListCellRenderer<?>> renderer,
-                                                                  boolean empty) {
+  protected NavigationGutterIconRenderer createGutterIconRenderer(@NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
+                                                                @NotNull Computable<PsiElementListCellRenderer<?>> renderer,
+                                                                boolean empty) {
     return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty);
   }
 
   @NotNull
-  private static <T> NotNullLazyValue<List<SmartPsiElementPointer>> createPointersThunk(boolean lazy,
+  private static <T> NotNullLazyValue<List<SmartPsiElementPointer<?>>> createPointersThunk(boolean lazy,
                                                                                         final Project project,
                                                                                         final NotNullFactory<? extends Collection<T>> targets,
                                                                                         final NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> converter) {
@@ -322,22 +322,22 @@ public class NavigationGutterIconBuilder<T> {
       return NotNullLazyValue.createConstantValue(calcPsiTargets(project, targets.create(), converter));
     }
 
-    return new NotNullLazyValue<List<SmartPsiElementPointer>>() {
+    return new NotNullLazyValue<List<SmartPsiElementPointer<?>>>() {
       @Override
       @NotNull
-      public List<SmartPsiElementPointer> compute() {
+      public List<SmartPsiElementPointer<?>> compute() {
         return calcPsiTargets(project, targets.create(), converter);
       }
     };
   }
 
   @NotNull
-  private static <T> List<SmartPsiElementPointer> calcPsiTargets(@NotNull Project project,
+  private static <T> List<SmartPsiElementPointer<?>> calcPsiTargets(@NotNull Project project,
                                                                  @NotNull Collection<? extends T> targets,
                                                                  @NotNull NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> converter) {
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
     Set<PsiElement> elements = new THashSet<>();
-    final List<SmartPsiElementPointer> list = new ArrayList<>(targets.size());
+    final List<SmartPsiElementPointer<?>> list = new ArrayList<>(targets.size());
     for (final T target : targets) {
       for (final PsiElement psiElement : converter.fun(target)) {
         if (psiElement == null) {
@@ -379,7 +379,7 @@ public class NavigationGutterIconBuilder<T> {
                                    @NotNull Alignment alignment,
                                    final Icon icon,
                                    @Nullable final String tooltipText,
-                                   @NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers,
+                                   @NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
                                    @NotNull Computable<PsiElementListCellRenderer<?>> cellRenderer,
                                    boolean empty) {
       super(builder.myPopupTitle, builder.myEmptyText, cellRenderer, pointers);
