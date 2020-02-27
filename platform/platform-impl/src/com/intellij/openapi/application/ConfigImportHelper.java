@@ -134,6 +134,9 @@ public final class ConfigImportHelper {
           }
         }
       }
+      else {
+        log.info("No configs imported, starting with clean configs at " + newConfigDir);
+      }
 
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
     }
@@ -412,6 +415,7 @@ public final class ConfigImportHelper {
 
   private static void doImport(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @Nullable Path oldIdeHome, @NotNull Logger log) {
     if (oldConfigDir.equals(newConfigDir)) {
+      log.info("New config directory is the same as the old one, no import needed.");
       return;
     }
 
@@ -434,6 +438,9 @@ public final class ConfigImportHelper {
     Path newPluginsDir = newConfigDir.getFileSystem().getPath(PathManager.getPluginsPath());
 
     try {
+      log.info(String.format(
+        "Importing configs: oldConfigDir=[%s], newConfigDir=[%s], oldIdeHome=[%s], oldPluginsDir=[%s], newPluginsDir=[%s]",
+        oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir));
       doImport(oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir, log);
     }
     catch (Exception e) {
