@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.util.ArrayUtil;
@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ui.tree.TreeUtil.EMPTY_TREE_PATH;
@@ -212,6 +213,19 @@ public class TreePathUtil {
 
   public static TreePath[] toTreePaths(TreeNode... nodes) {
     return nodes == null ? null : Stream.of(nodes).map(TreePathUtil::toTreePath).filter(Objects::nonNull).toArray(TreePath[]::new);
+  }
+
+  /**
+   * @param path      a tree path to iterate through ancestors
+   * @param predicate a predicate that tests every ancestor of the given path
+   * @return an ancestor of the given path, or {@code null} if the path does not have any applicable ancestor
+   */
+  public static TreePath findAncestor(TreePath path, @NotNull Predicate<TreePath> predicate) {
+    while (path != null) {
+      if (predicate.test(path)) return path;
+      path = path.getParentPath();
+    }
+    return null;
   }
 
   /**
