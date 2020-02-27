@@ -110,7 +110,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     }
 
     List<NamedRunnable> runnables = new ArrayList<>();
-    runnables.add(new NamedRunnable(VcsLogBundle.message("vcs.log.action.view.and.reset")) {
+    runnables.add(new NamedRunnable(VcsLogBundle.message("vcs.log.commit.does.not.match.view.and.reset.link")) {
       @Override
       public void run() {
         getFilterUi().setFilter(null);
@@ -120,7 +120,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     });
     VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
     if (projectLog.getDataManager() == myLogData) {
-      runnables.add(new NamedRunnable(VcsLogBundle.message("vcs.log.action.view.in.tab")) {
+      runnables.add(new NamedRunnable(VcsLogBundle.message("vcs.log.commit.does.not.match.view.in.tab.link")) {
         @Override
         public void run() {
           MainVcsLogUi ui = projectLog.openLogTab(VcsLogFilterObject.collection());

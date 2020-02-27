@@ -195,7 +195,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   @NotNull
   @Nls
   protected static <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {
-    return exists ? VcsLogBundle.message("vcs.log.commit.does.not.match.filters", getCommitPresentation(commitId)) :
+    return exists ? VcsLogBundle.message("vcs.log.commit.does.not.match", getCommitPresentation(commitId)) :
            VcsLogBundle.message("vcs.log.commit.not.found", getCommitPresentation(commitId));
   }
 
