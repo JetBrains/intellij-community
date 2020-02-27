@@ -33,7 +33,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.Collection;
@@ -41,11 +40,13 @@ import java.util.Collection;
 /**
  * @author yole
  */
-public abstract class I18nizeFormQuickFix extends QuickFix {
+public class I18nizeFormQuickFix extends QuickFix {
   private static final Logger LOG = Logger.getInstance(I18nizeFormQuickFix.class);
+  private final StringDescriptorAccessor myAccessor;
 
-  I18nizeFormQuickFix(final GuiEditor editor, final String name, final RadComponent component) {
-    super(editor, name, component);
+  I18nizeFormQuickFix(final GuiEditor editor, final String name, StringDescriptorAccessor accessor) {
+    super(editor, name, accessor.getComponent());
+    myAccessor = accessor;
   }
 
   @Override
@@ -118,6 +119,11 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
     }
   }
 
-  protected abstract StringDescriptor getStringDescriptorValue();
-  protected abstract void setStringDescriptorValue(final StringDescriptor descriptor) throws Exception;
+  protected StringDescriptor getStringDescriptorValue() {
+    return myAccessor.getStringDescriptorValue();
+  }
+
+  protected void setStringDescriptorValue(final StringDescriptor descriptor) throws Exception {
+    myAccessor.setStringDescriptorValue(descriptor);
+  }
 }
