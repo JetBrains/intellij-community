@@ -216,7 +216,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
                 String message = IdeBundle.message("low.disk.space.message", productName);
                 if (usableSpace < 100 * 1024) {
                   LOG.warn(message + " (" + usableSpace + ")");
-                  Messages.showErrorDialog(message, "Fatal Configuration Problem");
+                  Messages.showErrorDialog(message, IdeBundle.message("dialog.title.fatal.configuration.problem"));
                   reported.compareAndSet(true, false);
                   restart(timeout);
                 }

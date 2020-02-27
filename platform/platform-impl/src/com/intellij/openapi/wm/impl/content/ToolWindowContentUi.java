@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
@@ -485,7 +486,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   @NotNull
   private static AnAction createSplitTabsAction(@NotNull TabbedContent content) {
-    return new DumbAwareAction("Split '" + content.getTitlePrefix() + "' group") {
+    return new DumbAwareAction(IdeBundle.message("action.text.split.0.group", content.getTitlePrefix())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         content.split();
@@ -495,7 +496,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   @NotNull
   private static AnAction createMergeTabsAction(@NotNull ContentManager manager, String tabPrefix) {
-    return new DumbAwareAction("Merge tabs to '" + tabPrefix + "' group") {
+    return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.0.group", tabPrefix)) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final Content selectedContent = manager.getSelectedContent();

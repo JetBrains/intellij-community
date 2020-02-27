@@ -3,6 +3,7 @@ package com.intellij.remote;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.execution.ExecutionException;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -21,13 +22,14 @@ public abstract class VagrantSupport {
   public static VagrantSupport getInstance() {
     return ServiceManager.getService(VagrantSupport.class);
   }
+
   public abstract ListenableFuture<RemoteCredentials> computeVagrantSettings(@Nullable Project project,
                                                                              @NotNull String vagrantFolder,
                                                                              @Nullable String machineName);
 
   public static void showMissingVagrantSupportMessage(final @Nullable Project project) {
-    UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(project, "Enable Vagrant Support plugin",
-                                                          "Vagrant Support Disabled"));
+    UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(project, IdeBundle.message("message.enable.vagrant.support.plugin"),
+                                                              IdeBundle.message("dialog.title.vagrant.support.disabled")));
   }
 
   @NotNull

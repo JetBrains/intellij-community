@@ -2,6 +2,7 @@
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -218,7 +219,7 @@ public class PluginConflictDialog extends DialogWrapper {
 
   private class DisableAction extends DialogWrapperAction {
     protected DisableAction() {
-      super("Disable");
+      super(IdeBundle.message("button.disable"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 

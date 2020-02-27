@@ -202,16 +202,16 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
 
     final JBTextField minVersionField = new JBTextField(StringUtil.notNullize(original.getMinVersion()));
     final JBTextField maxVersionField = new JBTextField(StringUtil.notNullize(original.getMaxVersion()));
-    minVersionField.getEmptyText().setText("<any>");
+    minVersionField.getEmptyText().setText(IdeBundle.message("label.version.any"));
     minVersionField.setColumns(10);
-    maxVersionField.getEmptyText().setText("<any>");
+    maxVersionField.getEmptyText().setText(IdeBundle.message("label.version.any"));
     maxVersionField.setColumns(10);
     JPanel panel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Plugin:", pluginChooser)
-      .addLabeledComponent("Minimum version:", minVersionField)
-      .addLabeledComponent("Maximum version:", maxVersionField)
+      .addLabeledComponent(IdeBundle.message("label.plugin"), pluginChooser)
+      .addLabeledComponent(IdeBundle.message("label.minimum.version"), minVersionField)
+      .addLabeledComponent(IdeBundle.message("label.maximum.version"), maxVersionField)
       .getPanel();
-    final DialogBuilder dialogBuilder = new DialogBuilder(parent).title("Required Plugin").centerPanel(panel);
+    final DialogBuilder dialogBuilder = new DialogBuilder(parent).title(IdeBundle.message("dialog.title.required.plugin")).centerPanel(panel);
     dialogBuilder.setPreferredFocusComponent(pluginChooser);
     pluginChooser.addActionListener(new ActionListener() {
       @Override

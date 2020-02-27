@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.CommonBundle;
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
@@ -408,7 +409,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         register.update(e);
         Presentation presentation = e.getPresentation();
         if (presentation.isEnabled()) {
-          ActionLink registerLink = new ActionLink("Register", register);
+          ActionLink registerLink = new ActionLink(IdeBundle.message("action.link.register"), register);
           // Don't allow focus, as the containing panel is going to focusable.
           registerLink.setFocusable(false);
           registerLink.setNormalColor(getLinkNormalColor());
@@ -1074,7 +1075,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   private static JComponent createCancelButton(@Nullable Runnable cancelAction) {
     if (cancelAction == null) return null;
 
-    JButton cancelButton = new JButton("Cancel");
+    JButton cancelButton = new JButton(CommonBundle.getCancelButtonText());
     cancelButton.addActionListener(e -> cancelAction.run());
 
     return cancelButton;

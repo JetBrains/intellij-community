@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -180,7 +181,7 @@ public class RemoteFilePanel {
           showCard(EDITOR_CARD);
         }
         else {
-          myErrorLabel.setText("Downloading cancelled");
+          myErrorLabel.setText(IdeBundle.message("label.downloading.cancelled"));
           showCard(ERROR_CARD);
         }
       });

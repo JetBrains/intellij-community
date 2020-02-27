@@ -327,7 +327,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
     group.add(commonActionsManager.createCollapseAllAction(treeExpander, myActionsTree.getTree()));
 
-    group.add(new AnAction("Edit Shortcut", "Edit Shortcut", AllIcons.Actions.Edit) {
+    group.add(new AnAction(IdeBundle.message("action.text.edit.shortcut"), IdeBundle.message("action.text.edit.shortcut"), AllIcons.Actions.Edit) {
       {
         registerCustomShortcutSet(CommonShortcuts.ENTER, myActionsTree.getTree());
       }
@@ -521,7 +521,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
             keyDesc += ", " + KeymapUtil.getKeystrokeText(ksc.getSecondKeyStroke());
           final int result = Messages.showYesNoCancelDialog(
             parent,
-            "Action shortcut " + keyDesc + " is already assigned to system action '" + kscs.get(ksc) + "' . Do you want to remove this shortcut?",
+            IdeBundle.message("message.action.shortcut.0.is.already.assigned.to.system.action.1.do.you.want.to.remove.this.shortcut", keyDesc, kscs.get(ksc)),
             KeyMapBundle.message("conflict.shortcut.dialog.title"),
             KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
             KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
@@ -653,7 +653,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
     else if (!isDoubleClick || !ActionManager.getInstance().isGroup(actionId)) {
       DataContext dataContext = DataManager.getInstance().getDataContext(this);
-      ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Edit Shortcuts",
+      ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.edit.shortcuts"),
                                                                             group,
                                                                             dataContext,
                                                                             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
@@ -696,7 +696,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       group.add(new DumbAwareAction(IdeBundle.lazyMessage("action.Anonymous.text.add.abbreviation")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          String abbr = Messages.showInputDialog("Enter new abbreviation:", "Abbreviation", null);
+          String abbr = Messages.showInputDialog(IdeBundle.message("label.enter.new.abbreviation"),
+                                                 IdeBundle.message("dialog.title.abbreviation"), null);
           if (abbr != null) {
             AbbreviationManager.getInstance().register(abbr, actionId);
             repaintLists();
@@ -708,7 +709,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.addSeparator();
 
     for (Shortcut shortcut : selectedKeymap.getShortcuts(actionId)) {
-      group.add(new DumbAwareAction("Remove " + KeymapUtil.getShortcutText(shortcut)) {
+      group.add(new DumbAwareAction(IdeBundle.message("action.text.remove.0", KeymapUtil.getShortcutText(shortcut))) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           Keymap keymap = myManager.getMutableKeymap(selectedKeymap);
@@ -723,7 +724,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     if (Registry.is("actionSystem.enableAbbreviations")) {
       for (final String abbreviation : AbbreviationManager.getInstance().getAbbreviations(actionId)) {
-        group.addAction(new DumbAwareAction("Remove Abbreviation '" + abbreviation + "'") {
+        group.addAction(new DumbAwareAction(IdeBundle.message("action.text.remove.abbreviation.0", abbreviation)) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             AbbreviationManager.getInstance().remove(abbreviation, actionId);

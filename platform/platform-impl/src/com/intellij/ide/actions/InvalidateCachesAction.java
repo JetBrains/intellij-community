@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -67,7 +68,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
                      "Would you like to continue?\n";
     int result = Messages.showDialog(e.getData(CommonDataKeys.PROJECT),
                                      message,
-                                     "Invalidate Caches",
+                                     IdeBundle.message("dialog.title.invalidate.caches"),
                                      options, 0,
                                      Messages.getWarningIcon());
 

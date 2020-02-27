@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -122,10 +123,9 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     if (!ourMappingFailedNotificationPosted && SystemInfo.isWindows && SystemInfo.is32Bit) {
       ourMappingFailedNotificationPosted = true;
       String exceptionMessage = event.getThrowable().getMessage();
-      String text = exceptionMessage +
-        "<br>Possible cause: unable to allocate continuous memory chunk of necessary size.<br>" +
-        "Reducing JVM maximum heap size (-Xmx) may help.";
-      Notifications.Bus.notify(new Notification("Memory", "Memory Mapping Failed", text, NotificationType.WARNING), null);
+      String text = IdeBundle.message("notification.0.br.possible.cause.unable.to.allocate.memory", exceptionMessage);
+      Notifications.Bus.notify(new Notification(IdeBundle.message("notification.group.memory"),
+                                                IdeBundle.message("notification.title.memory.mapping.failed"), text, NotificationType.WARNING), null);
     }
   }
 }

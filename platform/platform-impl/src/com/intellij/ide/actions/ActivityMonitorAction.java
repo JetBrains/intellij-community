@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -249,7 +250,7 @@ class ActivityMonitorAction extends DumbAwareAction {
         return new Action[]{getOKAction()};
       }
     };
-    dialog.setTitle("Activity Monitor");
+    dialog.setTitle(IdeBundle.message("dialog.title.activity.monitor"));
     dialog.setModal(false);
     Disposer.register(dialog.getDisposable(), () -> future.cancel(false));
     dialog.show();

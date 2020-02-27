@@ -2,6 +2,7 @@
 package com.intellij.application.options.schemes;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -351,8 +352,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
    */
   private void deleteScheme(@NotNull T scheme) {
     if (Messages.showOkCancelDialog(
-      "Do you want to delete \"" + scheme.getName() + "\" " + StringUtil.toLowerCase(mySchemesPanel.getSchemeTypeName()) + "?",
-      "Delete " + mySchemesPanel.getSchemeTypeName(), "Delete", CommonBundle.getCancelButtonText(),
+      IdeBundle.message("message.do.you.want.to.delete.0.1", scheme.getName(), StringUtil.toLowerCase(mySchemesPanel.getSchemeTypeName())),
+      IdeBundle.message("dialog.title.delete.0", mySchemesPanel.getSchemeTypeName()), "Delete", CommonBundle.getCancelButtonText(),
       Messages.getQuestionIcon()) == Messages.OK) {
       mySchemesPanel.getModel().removeScheme(scheme);
     }

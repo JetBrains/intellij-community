@@ -2,6 +2,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -19,30 +20,22 @@ public class CustomizeMacKeyboardLayoutStep extends AbstractCustomizeWizardStep 
                    "table {margin:0px; cell-padding:0px; border:none;}" +
                    "</style>";
 
-    JRadioButton macRadioButton = new JRadioButton("I've never used " + ApplicationNamesInfo.getInstance().getFullProductName());
+    JRadioButton macRadioButton = new JRadioButton(
+      IdeBundle.message("radio.button.i.ve.never.used.0", ApplicationNamesInfo.getInstance().getFullProductName()));
     macRadioButton.setOpaque(false);
     JPanel macPanel = createBigButtonPanel(new VerticalFlowLayout(), macRadioButton,
                                            () -> WelcomeWizardUtil.setWizardKeymap(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP));
     macPanel.add(macRadioButton);
-    macPanel.add(new JLabel("<html><head>" + style + "</head><body><h3>" + KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP + " keymap</h3>" +
-                            "Adapted for OS X<br><br><table><tr><td align=\"left\" colspan=\"2\">EXAMPLES</td></tr>" +
-                            "<tr><td style=\"text-align:right;\">&#8984;N</td><td style=\"text-align:left;\">Generate</td></tr>" +
-                            "<tr><td style=\"text-align:right;\">&#8984;O</td><td style=\"text-align:left;\">Go to class</td></tr>" +
-                            "<tr><td style=\"text-align:right;\">&#8997;&#8593;</td><td style=\"text-align:left;\">Extend selection</td></tr>" +
-                            "</table></body></html>"));
+    macPanel.add(new JLabel(IdeBundle.message("label.text.mac.os.x.keymap.examples", style, KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP)));
     add(macPanel);
 
-    JRadioButton defaultRadioButton = new JRadioButton("I used " + ApplicationNamesInfo.getInstance().getFullProductName() + " before");
+    JRadioButton defaultRadioButton = new JRadioButton(
+      IdeBundle.message("radio.button.i.used.0.before", ApplicationNamesInfo.getInstance().getFullProductName()));
     defaultRadioButton.setOpaque(false);
     JPanel defaultPanel = createBigButtonPanel(new VerticalFlowLayout(), defaultRadioButton,
                                                () -> WelcomeWizardUtil.setWizardKeymap(KeymapManager.MAC_OS_X_KEYMAP));
     defaultPanel.add(defaultRadioButton);
-    defaultPanel.add(new JLabel("<html><head>" + style + "</head><body><h3>" + KeymapManager.MAC_OS_X_KEYMAP + " keymap</h3>" +
-                                "Default for all platforms<br><br><table><tr><td align=\"left\" colspan=\"2\">EXAMPLES</td></tr>" +
-                                "<tr><td style=\"text-align:right;\">^N</td><td style=\"text-align:left;\">Generate</td></tr>" +
-                                "<tr><td style=\"text-align:right;\">&#8984;N</td><td style=\"text-align:left;\">Go to class</td></tr>" +
-                                "<tr><td style=\"text-align:right;\">&#8984;W</td><td style=\"text-align:left;\">Extend selection</td></tr>" +
-                                "</table></body></html>"));
+    defaultPanel.add(new JLabel(IdeBundle.message("label.mac.os.default.keymap.examples", style, KeymapManager.MAC_OS_X_KEYMAP)));
     add(defaultPanel);
 
     ButtonGroup group = new ButtonGroup();
@@ -53,16 +46,16 @@ public class CustomizeMacKeyboardLayoutStep extends AbstractCustomizeWizardStep 
 
   @Override
   public String getTitle() {
-    return "Keymaps";
+    return IdeBundle.message("step.title.keymaps");
   }
 
   @Override
   public String getHTMLHeader() {
-    return "<html><body><h2>Select keymap scheme</h2>&nbsp;</body></html>";
+    return IdeBundle.message("label.select.keymap.scheme");
   }
 
   @Override
   public String getHTMLFooter() {
-    return "Keymap scheme can be changed later in " + CommonBundle.settingsTitle() + " | Keymap";
+    return IdeBundle.message("label.keymap.scheme.can.be.changed.later.in.0.keymap", CommonBundle.settingsTitle());
   }
 }

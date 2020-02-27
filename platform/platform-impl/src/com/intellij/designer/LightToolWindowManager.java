@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -126,7 +127,7 @@ public abstract class LightToolWindowManager implements Disposable {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   public AnAction createGearActions() {
-    DefaultActionGroup group = DefaultActionGroup.createPopupGroup(() -> "In Editor Mode");
+    DefaultActionGroup group = DefaultActionGroup.createPopupGroup(IdeBundle.lazyMessage("popup.title.in.editor.mode"));
 
     group.add(createToggleAction(ToolWindowAnchor.LEFT));
     group.add(createToggleAction(ToolWindowAnchor.RIGHT));

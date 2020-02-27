@@ -52,7 +52,7 @@ public class ExportToFileUtil {
       int result = Messages.showYesNoCancelDialog(
         project,
         IdeBundle.message("error.text.file.already.exists", fileName),
-        "Export To File",
+        IdeBundle.message("dialog.title.export.to.file"),
         IdeBundle.message("action.overwrite"),
         IdeBundle.message("action.append"),
         CommonBundle.getCancelButtonText(),

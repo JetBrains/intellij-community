@@ -6,6 +6,7 @@ import com.intellij.designer.model.PropertiesContainer;
 import com.intellij.designer.model.Property;
 import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -841,7 +842,7 @@ public abstract class PropertyTable extends JBTable {
     }
 
     Messages.showMessageDialog(MessageFormat.format("Error setting value: {0}", message),
-                               "Invalid Input",
+                               IdeBundle.message("dialog.title.invalid.input"),
                                Messages.getErrorIcon());
   }
 

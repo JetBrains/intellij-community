@@ -29,6 +29,7 @@ import javax.swing.*;
 /**
  * @author Denis Fokin
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class ShowDelayedMessageInternalAction extends AnAction implements DumbAware{
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

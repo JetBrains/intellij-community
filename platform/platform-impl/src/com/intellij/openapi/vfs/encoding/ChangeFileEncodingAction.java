@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -192,7 +193,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
     CommandProcessor.getInstance().executeCommand(project, () -> {
       UndoManager undoManager = UndoManager.getInstance(project);
       undoManager.undoableActionPerformed(action);
-    }, "Change encoding for '" + virtualFile.getName() + "'", null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+    }, IdeBundle.message("command.change.encoding.for.0", virtualFile.getName()), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
 
     return true;
   }
