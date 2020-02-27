@@ -78,13 +78,13 @@ class LegacyBridgeRootsWatcher(
       }
     })
     messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun before(events: MutableList<out VFileEvent>): Unit = events.forEach { event ->
+      override fun before(events: List<VFileEvent>): Unit = events.forEach { event ->
         val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
 
         rootFilePointers.onVfsChange(oldUrl, newUrl)
       }
 
-      override fun after(events: MutableList<out VFileEvent>) = events.forEach { event ->
+      override fun after(events: List<VFileEvent>) = events.forEach { event ->
         val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
 
         updateRoots(currentRoots, oldUrl, newUrl)

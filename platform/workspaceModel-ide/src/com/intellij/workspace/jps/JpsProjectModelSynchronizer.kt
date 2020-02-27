@@ -90,7 +90,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
 
   private fun registerListener() {
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: MutableList<out VFileEvent>) {
+      override fun after(events: List<VFileEvent>) {
         //todo support move/rename
         //todo optimize: filter events before creating lists
         val toProcess = events.asSequence().filter { isFireStorageFileChangedEvent(it) }

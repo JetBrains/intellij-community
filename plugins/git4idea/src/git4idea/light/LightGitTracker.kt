@@ -106,7 +106,7 @@ class LightGitTracker : Disposable {
   }
 
   private inner class MyBulkFileListener : BulkFileListener {
-    override fun after(events: MutableList<out VFileEvent>) {
+    override fun after(events: List<VFileEvent>) {
       if (!hasGit) return
 
       val targetFiles = events.filter { it.isFromSave || it.isFromRefresh }.mapNotNullTo(mutableSetOf()) { it.file }
