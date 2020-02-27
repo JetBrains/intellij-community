@@ -8,7 +8,7 @@ import java.util.function.Consumer
 /**
  * @author victor
  */
-class MPSProperties extends ProductProperties {
+class MPSProperties extends JetBrainsProductProperties {
     MPSProperties(String home) {
         baseFileName = "mps"
         productCode = "MPS"
@@ -36,7 +36,7 @@ class MPSProperties extends ProductProperties {
         productLayout.additionalPlatformJars.put("forms_rt.jar", "intellij.java.guiForms.compiler")
         productLayout.additionalPlatformJars.putAll("util.jar", ["intellij.platform.util", "intellij.platform.util.rt"])
 
-        productLayout.bundledPluginModules = [
+        productLayout.bundledPluginModules += [
                 "intellij.java.plugin",
                 "intellij.java.ide.customization",
                 "intellij.terminal",
