@@ -84,7 +84,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
   private volatile ProgressSuspender myCurrentSuspender;
   private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
-  private final BlockingQueue<TrackedEdtActivity> myNextTaskPollingRunnables = new LinkedBlockingQueue<>();
+   private final BlockingQueue<TrackedEdtActivity> myTrackedEdtActivities = new LinkedBlockingQueue<>();
 
   public DumbServiceImpl(Project project) {
     myProject = project;
@@ -564,8 +564,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     while (myState.get() != State.SMART && !myProject.isDisposed()) {
       LockSupport.parkNanos(50_000_000);
       // polls next dumb mode task
-      while (!myNextTaskPollingRunnables.isEmpty()) {
-        myNextTaskPollingRunnables.poll().run();
+      while (!myTrackedEdtActivities.isEmpty()) {
+        myTrackedEdtActivities.poll().run();
       }
       // cancels all scheduled and running tasks
       for (DumbModeTask task : myProgresses.keySet()) {
@@ -915,7 +915,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     TrackedEdtActivity(@NotNull Runnable runnable) {
       myRunnable = runnable;
-      myNextTaskPollingRunnables.add(this);
+      myTrackedEdtActivities.add(this);
     }
 
     void invokeLater() {
@@ -930,13 +930,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     @Override
     public void run() {
-      myNextTaskPollingRunnables.remove(this);
+      myTrackedEdtActivities.remove(this);
       myRunnable.run();
     }
 
     @NotNull
     Condition<?> getExpirationCondition() {
-      return __ -> !myNextTaskPollingRunnables.contains(this);
+      return __ -> !myTrackedEdtActivities.contains(this);
     }
   }
 }
