@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -17,8 +16,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.CacheableAnnotationProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,38 +41,36 @@ public final class AnnotationsPreloader {
   private void schedulePreloading(@NotNull final VirtualFile file) {
     if (myProject.isDisposed() || file.getFileType().isBinary()) return;
 
-    myUpdateQueue.queue(new Update(file) {
+    myUpdateQueue.queue(new DisposableUpdate(myProject, file) {
       @Override
-      public void run() {
-        BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-          try {
-            long start = 0;
-            if (LOG.isDebugEnabled()) {
-              start = System.currentTimeMillis();
-            }
-            if (!FileEditorManager.getInstance(myProject).isFileOpen(file)) return;
-
-            FileStatus fileStatus = ChangeListManager.getInstance(myProject).getStatus(file);
-            if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) {
-              return;
-            }
-
-            AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
-            if (vcs == null) return;
-
-            CacheableAnnotationProvider annotationProvider = ObjectUtils.tryCast(vcs.getAnnotationProvider(),
-                                                                                 CacheableAnnotationProvider.class);
-            if (annotationProvider == null) return;
-
-            annotationProvider.populateCache(file);
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Preloaded VCS annotations for ", file.getName(), " in ", String.valueOf(System.currentTimeMillis() - start), "ms");
-            }
+      public void doRun() {
+        try {
+          long start = 0;
+          if (LOG.isDebugEnabled()) {
+            start = System.currentTimeMillis();
           }
-          catch (VcsException e) {
-            LOG.info(e);
+          if (!FileEditorManager.getInstance(myProject).isFileOpen(file)) return;
+
+          FileStatus fileStatus = ChangeListManager.getInstance(myProject).getStatus(file);
+          if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) {
+            return;
           }
-        });
+
+          AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+          if (vcs == null) return;
+
+          CacheableAnnotationProvider annotationProvider = ObjectUtils.tryCast(vcs.getAnnotationProvider(),
+                                                                               CacheableAnnotationProvider.class);
+          if (annotationProvider == null) return;
+
+          annotationProvider.populateCache(file);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Preloaded VCS annotations for ", file.getName(), " in ", String.valueOf(System.currentTimeMillis() - start), "ms");
+          }
+        }
+        catch (VcsException e) {
+          LOG.info(e);
+        }
       }
     });
   }

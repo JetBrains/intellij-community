@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -22,6 +21,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.log.Hash;
@@ -195,7 +195,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private void scheduleUpdate() {
-    myQueue.queue(Update.create("update", () -> {
+    myQueue.queue(DisposableUpdate.createDisposable(myProject, "update", () -> {
       List<GitRepository> withIncoming;
       List<GitRepository> withOutgoing;
 
@@ -210,18 +210,16 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
         myShouldRequestRemoteInfo = false;
       }
 
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-        for (GitRepository r : withOutgoing) {
-          myLocalBranchesWithOutgoing.put(r, calculateBranchesWithOutgoing(r));
+      for (GitRepository r : withOutgoing) {
+        myLocalBranchesWithOutgoing.put(r, calculateBranchesWithOutgoing(r));
+      }
+      for (GitRepository r : withIncoming) {
+        if (shouldRequestRemoteInfo) {
+          myLocalBranchesToFetch.put(r, calculateBranchesToFetch(r));
         }
-        for (GitRepository r : withIncoming) {
-          if (shouldRequestRemoteInfo) {
-            myLocalBranchesToFetch.put(r, calculateBranchesToFetch(r));
-          }
-          myLocalBranchesWithIncoming.put(r, calcBranchesWithIncoming(r));
-        }
-        myProject.getMessageBus().syncPublisher(GIT_INCOMING_OUTGOING_CHANGED).incomingOutgoingInfoChanged();
-      });
+        myLocalBranchesWithIncoming.put(r, calcBranchesWithIncoming(r));
+      }
+      myProject.getMessageBus().syncPublisher(GIT_INCOMING_OUTGOING_CHANGED).incomingOutgoingInfoChanged();
     }));
   }
 
