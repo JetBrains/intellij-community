@@ -55,7 +55,7 @@ public class DefaultPatchBaseVersionProvider {
 
   private final AbstractVcs myVcs;
 
-  public DefaultPatchBaseVersionProvider(final Project project, final VirtualFile file, final String versionId) {
+  private DefaultPatchBaseVersionProvider(@NotNull Project project, @NotNull VirtualFile file, @NotNull String versionId) {
     myProject = project;
     myFile = file;
     myVersionId = versionId;
@@ -71,8 +71,19 @@ public class DefaultPatchBaseVersionProvider {
   }
 
   @CalledInAny
-  public void getBaseVersionContent(final FilePath filePath,
-                                    final Processor<? super String> processor) throws VcsException {
+  public static void getBaseVersionContent(@NotNull Project project,
+                                           @NotNull String versionId,
+                                           @NotNull VirtualFile file,
+                                           @NotNull FilePath pathBeforeRename,
+                                           @NotNull Processor<? super String> processor) throws VcsException {
+    DefaultPatchBaseVersionProvider provider = new DefaultPatchBaseVersionProvider(project, file, versionId);
+    if (provider.canProvideContent()) {
+      provider.doGetBaseVersionContent(pathBeforeRename, processor);
+    }
+  }
+
+  private void doGetBaseVersionContent(final FilePath filePath,
+                                       final Processor<? super String> processor) throws VcsException {
     if (myVcs == null) {
       return;
     }
@@ -155,7 +166,7 @@ public class DefaultPatchBaseVersionProvider {
     });
   }
 
-  public boolean canProvideContent() {
+  private boolean canProvideContent() {
     if (myVcs == null) {
       return false;
     }
@@ -170,10 +181,6 @@ public class DefaultPatchBaseVersionProvider {
       return false;
     }
     return true;
-  }
-
-  public boolean hasVcs() {
-    return myVcs != null;
   }
 
   private static void runWithModalProgressIfNeeded(@Nullable Project project,
