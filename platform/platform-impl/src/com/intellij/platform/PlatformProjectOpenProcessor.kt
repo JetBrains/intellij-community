@@ -10,7 +10,6 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEdit
