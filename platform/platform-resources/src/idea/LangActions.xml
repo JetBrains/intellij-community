@@ -1403,5 +1403,10 @@
     </group>
 
     <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
+    <action id="FileChooser.LightEditGotoOpenedFile"
+            class="com.intellij.ide.lightEdit.actions.LightEditGotoOpenedFileAction"
+            icon="AllIcons.General.Locate">
+      <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoDesktop"/>
+    </action>
   </actions>
 </idea-plugin>
