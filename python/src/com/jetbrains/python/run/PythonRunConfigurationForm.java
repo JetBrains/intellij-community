@@ -36,6 +36,7 @@ import com.jetbrains.extensions.ProjectSdkContextAnchor;
 import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,8 +52,12 @@ import java.util.Objects;
  * @author yole
  */
 public class PythonRunConfigurationForm implements PythonRunConfigurationParams, PanelWithAnchor {
-  public static final String SCRIPT_PATH = "Script path";
-  public static final String MODULE_NAME = "Module name";
+  @Nls public final static String SCRIPT_PATH;
+  @Nls public final static String MODULE_NAME;
+  static {
+    SCRIPT_PATH = PyBundle.message("runcfg.labels.script.path");
+    MODULE_NAME = PyBundle.message("runcfg.labels.module.name");
+  }
   private JPanel myRootPanel;
   private TextFieldWithBrowseButton myScriptTextField;
   private RawCommandLineEditor myScriptParametersTextField;
@@ -125,7 +130,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     //myTargetComboBox.addActionListener(e -> updateRunModuleMode());
 
     myInputFileTextFieldWithBrowseButton.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor(), myProject));
-    HideableDecorator executionOptionsDecorator = new HideableDecorator(myExecutionOptionsPlaceholder, "Execution", false);
+    HideableDecorator executionOptionsDecorator = new HideableDecorator(myExecutionOptionsPlaceholder, PyBundle.message("runcfg.labels.execution"), false);
     myExecutionOptionsPanel.setBorder(JBUI.Borders.empty(5, 0));
     executionOptionsDecorator.setOn(true);
     executionOptionsDecorator.setContentComponent(myExecutionOptionsPanel);
