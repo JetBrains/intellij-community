@@ -571,6 +571,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       for (DumbModeTask task : myProgresses.keySet()) {
         cancelTask(task);
       }
+
+      if (myCurrentSuspender != null && myCurrentSuspender.isSuspended()) {
+        myCurrentSuspender.resumeProcess();
+      }
     }
   }
 
