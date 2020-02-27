@@ -49,6 +49,7 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
     val selectedFile = LightEditService.getInstance().selectedFile
     if (selectedFile != null) {
       val statusText = lightGitTracker.getFileStatus(selectedFile).getPresentation()
+      @Suppress("HardCodedStringLiteral")
       if (statusText.isNotBlank()) return "$locationText<br/>$statusText"
     }
     return locationText

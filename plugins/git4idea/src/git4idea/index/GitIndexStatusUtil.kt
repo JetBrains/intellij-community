@@ -187,6 +187,7 @@ private fun GitFileStatus.StatusRecord.getPresentation(): String {
   val workTreePresentation = if (workTree == ' ') "" else GitBundle.message("git.status.work.tree", getPresentation(workTree))
   if (indexPresentation.isBlank()) return "$fileName: $workTreePresentation"
   if (workTreePresentation.isBlank()) return "$fileName: $indexPresentation"
+  @Suppress("HardCodedStringLiteral")
   return "$fileName:<br/>$indexPresentation<br/>$workTreePresentation"
 }
 
