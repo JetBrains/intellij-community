@@ -211,12 +211,11 @@ public final class LightEditServiceImpl implements LightEditService,
           System.exit(1);
         }
       }
-      return true;
     }
     else {
       LOG.info("Close cancelled");
-      return false;
     }
+    return false;
   }
 
   private boolean canClose() {
