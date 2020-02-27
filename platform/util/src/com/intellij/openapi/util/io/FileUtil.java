@@ -22,10 +22,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
@@ -803,7 +800,12 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String resolveShortWindowsName(@NotNull String path) throws IOException {
-    return SystemInfo.isWindows && containsWindowsShortName(path) ? Paths.get(path).toRealPath(LinkOption.NOFOLLOW_LINKS).toString() : path;
+    try {
+      return SystemInfo.isWindows && containsWindowsShortName(path) ? Paths.get(path).toRealPath(LinkOption.NOFOLLOW_LINKS).toString() : path;
+    }
+    catch (InvalidPathException e) {
+      throw new IOException(e);
+    }
   }
 
   public static boolean containsWindowsShortName(@NotNull String path) {
