@@ -29,6 +29,7 @@ public class ChangeNotesPanel {
   };
   private final JEditorPane myEditorPane = PluginDetailsPageComponent.createDescriptionComponent(null);
   private final JEditorPane myDescriptionPane;
+  private String myText;
 
   public ChangeNotesPanel(@NotNull JPanel parent, @Nullable Object constraints, @NotNull JEditorPane descriptionPane) {
     myDescriptionPane = descriptionPane;
@@ -54,7 +55,8 @@ public class ChangeNotesPanel {
     if (text == null) {
       myPanel.setVisible(false);
     }
-    else {
+    else if (!text.equals(myText)) {
+      myText = text;
       myEditorPane.setText(XmlStringUtil.wrapInHtml(text));
       if (myEditorPane.getCaret() != null) {
         myEditorPane.setCaretPosition(0);

@@ -104,7 +104,7 @@ public final class PluginLogo {
   }
 
   @NotNull
-  private static PluginLogoIconProvider getDefault() {
+  static PluginLogoIconProvider getDefault() {
     if (Default == null) {
       Default = new HiDPIPluginLogoIcon(AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.PluginLogoDisabled_40,
                                         AllIcons.Plugins.PluginLogo_80, AllIcons.Plugins.PluginLogoDisabled_80);

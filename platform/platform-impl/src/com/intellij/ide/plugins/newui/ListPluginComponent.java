@@ -456,7 +456,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   protected void updateIcon(boolean errors, boolean disabled) {
-    myIconComponent.setIcon(PluginLogo.getIcon(myPlugin, false, false, errors, disabled));
+    myIconComponent.setIcon(myPluginModel.getIcon(myPlugin, false, false, errors, disabled));
   }
 
   public void showProgress() {
