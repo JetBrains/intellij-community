@@ -35,7 +35,9 @@ import java.util.EnumSet;
 
 public class RegExpParserDefinition implements ParserDefinition {
 
-    @NotNull
+  public static final IFileElementType REGEXP_FILE = new RegExpFileElementType();
+
+  @NotNull
     public EnumSet<RegExpCapability> getDefaultCapabilities() {
         return RegExpCapability.DEFAULT_CAPABILITIES;
     }
@@ -63,7 +65,7 @@ public class RegExpParserDefinition implements ParserDefinition {
 
     @Override
     public IFileElementType getFileNodeType() {
-        return RegExpElementTypes.REGEXP_FILE;
+        return REGEXP_FILE;
     }
 
     @Override
