@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -269,28 +269,13 @@ class AssociationsEditor {
     }
 
     @Override
-    public boolean isShowMembers() {
-      return false;
-    }
-
-    public boolean isShowModules() {
-      return true;
-    }
-
     public boolean isFlattenPackages() {
       return true;
     }
 
-    public boolean isAbbreviatePackageNames() {
-      return false;
-    }
-
+    @Override
     public boolean isHideEmptyMiddlePackages() {
       return true;
-    }
-
-    public boolean isShowLibraryContents() {
-      return false;
     }
   }
 
