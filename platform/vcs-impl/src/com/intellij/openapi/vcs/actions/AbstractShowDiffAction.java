@@ -78,7 +78,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction {
     Project project = Objects.requireNonNull(vcsContext.getProject());
 
     String actionName = removeEllipsisSuffix(removeMnemonic(vcsContext.getActionName()));
-    if (!ChangeListManager.getInstance(project).isFreezedWithNotification(VcsBundle.message("commit.error.cant.commit.now", actionName))) {
+    if (!ChangeListManager.getInstance(project).isFreezedWithNotification(VcsBundle.message("error.cant.perform.operation.now", actionName))) {
       VirtualFile file = vcsContext.getSelectedFiles()[0];
       AbstractVcs vcs = Objects.requireNonNull(ChangesUtil.getVcsForFile(file, project));
       DiffProvider provider = Objects.requireNonNull(vcs.getDiffProvider());
