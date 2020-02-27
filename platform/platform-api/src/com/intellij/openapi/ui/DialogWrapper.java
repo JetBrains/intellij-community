@@ -1898,7 +1898,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  private void recordAction(String name, AWTEvent event) {
+  private void recordAction(@NonNls String name, AWTEvent event) {
     if (event instanceof KeyEvent && ApplicationManager.getApplication() != null) {
       ActionsCollector.getInstance().record(name, (KeyEvent)event, getClass());
     }

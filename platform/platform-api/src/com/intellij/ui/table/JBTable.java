@@ -217,6 +217,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
             if (component instanceof JLabel && StringUtil.isEmpty(((JLabel)component).getText())) {
               String oldText = ((JLabel)component).getText();
               try {
+                //noinspection HardCodedStringLiteral
                 ((JLabel)component).setText("Jj");
                 size = component.getPreferredSize();
                 result = Math.max(size.height, result);

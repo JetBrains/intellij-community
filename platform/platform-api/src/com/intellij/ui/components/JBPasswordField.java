@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
@@ -44,7 +45,7 @@ public class JBPasswordField extends JPasswordField implements ComponentWithEmpt
 
   public void setPasswordIsStored(boolean stored) {
     if (stored) {
-      myEmptyText.setText("<hidden>", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      myEmptyText.setText(IdeBundle.message("text.password.hidden"), SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
     else {
       myEmptyText.clear();

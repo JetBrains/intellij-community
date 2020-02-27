@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.codeInsight.intention.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -191,7 +192,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   @NotNull
   @Nls
   protected String getIntentionActionFamilyName() {
-    return "Editor notification";
+    return IdeBundle.message("intention.family.editor.notification");
   }
 
   private static class ActionHyperlinkLabel extends HyperlinkLabel {
@@ -295,7 +296,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Editor notification option";
+      return IdeBundle.message("intention.family.editor.notification.option");
     }
 
     @Override
@@ -332,7 +333,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Editor notification settings";
+      return IdeBundle.message("intention.family.editor.notification.settings");
     }
 
     @Override

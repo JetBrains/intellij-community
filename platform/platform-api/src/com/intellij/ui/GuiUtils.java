@@ -61,6 +61,7 @@ public final class GuiUtils {
   @Deprecated
   public static JPanel constructDirectoryBrowserField(final JTextField field, final String objectName) {
     return constructFieldWithBrowseButton(field, new ActionListener() {
+      @SuppressWarnings("HardCodedStringLiteral")
       @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle("Select " + objectName);
