@@ -108,8 +108,7 @@ public class DefaultPatchBaseVersionProvider {
         try {
           final Matcher tsMatcher = ourTsPattern.matcher(myVersionId);
           if (tsMatcher.find()) {
-            final Long fromTsPattern = getFromTsPattern();
-            if (fromTsPattern == null) return;
+            long fromTsPattern = Long.parseLong(tsMatcher.group(1));
             versionDate = new Date(fromTsPattern);
           }
           else {
@@ -175,23 +174,6 @@ public class DefaultPatchBaseVersionProvider {
 
   public boolean hasVcs() {
     return myVcs != null;
-  }
-
-  private Long getFromTsPattern() {
-    final String trimmed = myVersionId.trim();
-    final String startPattern = "(date"; //NON-NLS
-    final int start = trimmed.indexOf(startPattern);
-    if (start >= 0) {
-      String number = trimmed.substring(startPattern.length() + start);
-      number = number.endsWith(")") ? number.substring(0, number.length() - 1) : number;
-      try {
-        return Long.parseLong(number.trim());
-      }
-      catch (NumberFormatException e) {
-        return null;
-      }
-    }
-    return null;
   }
 
   private static void runWithModalProgressIfNeeded(@Nullable Project project,
