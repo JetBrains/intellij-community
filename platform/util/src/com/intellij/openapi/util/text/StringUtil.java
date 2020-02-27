@@ -2340,7 +2340,7 @@ public class StringUtil extends StringUtilRt {
       return s.substring(0, s.length() - THREE_DOTS.length());
     }
     if (s.endsWith(ELLIPSIS)) {
-      return s.substring(0, s.length() - 1);
+      return s.substring(0, s.length() - ELLIPSIS.length());
     }
     return s;
   }
