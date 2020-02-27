@@ -475,7 +475,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     List<IdIndexEntry> entries = getWordEntries(text, caseSensitively);
     if (entries.isEmpty()) return true;
 
-    Condition<Integer> contextMatches = integer -> (integer.intValue() & searchContext) != 0;
+    Condition<Integer> contextMatches = matchContextCondition(searchContext);
     return processFilesContainingAllKeys(myManager.getProject(), scope, contextMatches, entries, processor);
   }
 
@@ -922,13 +922,17 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (entries.isEmpty()) return null;
     entries.addAll(keys); // should find words from both text and container names
 
-    final short finalSearchContext = searchContext;
-    Condition<Integer> contextMatches = context -> (context.intValue() & finalSearchContext) != 0;
+    Condition<Integer> contextMatches = matchContextCondition(searchContext);
     Set<VirtualFile> containerFiles = new THashSet<>();
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(containerFiles);
     processFilesContainingAllKeys(myManager.getProject(), commonScope, contextMatches, entries, processor);
 
     return containerFiles;
+  }
+
+  @NotNull
+  private static Condition<Integer> matchContextCondition(short searchContext) {
+    return context -> (context & searchContext) != 0;
   }
 
   @NotNull
@@ -1051,9 +1055,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     Boolean[] result = {null};
     if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
-      ReadAction.nonBlocking(() -> {
-        FileBasedIndex.getInstance().ignoreDumbMode(() -> result[0] = query.compute(), project, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
-      }).executeSynchronously();
+      ReadAction.nonBlocking(() ->
+        FileBasedIndex.getInstance().ignoreDumbMode(() -> result[0] = query.compute(), project, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE)
+      ).executeSynchronously();
     }
     return result[0] != null ? result[0] : DumbService.getInstance(project).runReadActionInSmartMode(query);
   }
