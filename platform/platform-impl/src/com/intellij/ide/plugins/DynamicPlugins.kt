@@ -290,10 +290,11 @@ object DynamicPlugins {
       if (save) {
         saveDocumentsAndProjectsAndApp(true)
       }
+      application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, isUpdate)
+      IdeEventQueue.getInstance().flushQueue()
+
       application.runWriteAction {
         try {
-          application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, isUpdate)
-
           processOptionalDependenciesOnPlugin(pluginDescriptor) { _, dependencyDescriptor ->
             unloadPluginDescriptor(dependencyDescriptor, dependencyDescriptor)
             true
@@ -459,8 +460,8 @@ object DynamicPlugins {
       PluginManagerCore.initClassLoader(pluginDescriptor)
     }
     val application = ApplicationManager.getApplication() as ApplicationImpl
+    application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
     application.runWriteAction {
-      application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
 
       try {
         loadPluginDescriptor(pluginDescriptor, pluginDescriptor)

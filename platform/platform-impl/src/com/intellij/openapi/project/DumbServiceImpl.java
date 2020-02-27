@@ -32,10 +32,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.AppIconScheme;
@@ -56,9 +53,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
@@ -89,6 +84,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
   private volatile ProgressSuspender myCurrentSuspender;
   private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
+  private final BlockingQueue<TrackedEdtActivity> myNextTaskPollingRunnables = new LinkedBlockingQueue<>();
 
   public DumbServiceImpl(Project project) {
     myProject = project;
@@ -365,8 +361,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // The current suspender, however, might have already got suspended between the point of the last check cancelled call and
       // this point. If it has happened it will be cleaned up when the suspender is closed on the background process thread.
       myCurrentSuspender = null;
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-        (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(this::updateFinished, myDumbStartModality, myProject.getDisposed()));
+      new TrackedEdtActivity(this::updateFinished).invokeLaterAfterProjectInitialized();
     }
   }
 
@@ -557,6 +552,26 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myCurrentProgress.second.addStateDelegate(delegatingVisibleStateIndicator);
     dialogIndicator.setText(text);
     dialogIndicator.setIndeterminate(delegatingVisibleStateIndicator.isIndeterminate());
+  }
+
+  @Override
+  public void cancelAllTasksAndWait() {
+    Application application = ApplicationManager.getApplication();
+    if (!application.isWriteThread() || application.isWriteAccessAllowed()) {
+      throw new AssertionError("Must be called on write thread without write action");
+    }
+
+    while (myState.get() != State.SMART && !myProject.isDisposed()) {
+      LockSupport.parkNanos(50_000_000);
+      // polls next dumb mode task
+      while (!myNextTaskPollingRunnables.isEmpty()) {
+        myNextTaskPollingRunnables.poll().run();
+      }
+      // cancels all scheduled and running tasks
+      for (DumbModeTask task : myProgresses.keySet()) {
+        cancelTask(task);
+      }
+    }
   }
 
   @Override
@@ -775,7 +790,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Nullable
   private Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable DumbModeTask prevTask) {
     CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result = new CompletableFuture<>();
-    UIUtil.invokeLaterIfNeeded(() -> {
+    new TrackedEdtActivity(() -> {
       if (myProject.isDisposed()) {
         result.completeExceptionally(new ProcessCanceledException());
         return;
@@ -789,7 +804,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       myCurrentProgress = value;
       attachDialogIndicatorToCurrentProgress();
       result.complete(value);
-    });
+    }).invokeLater();
     return waitForFuture(result);
   }
 
@@ -888,5 +903,36 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
      * (in a write-safe context on EDT when project is initialized). If new tasks are queued at this state, it's switched to {@link #SCHEDULED_TASKS}.
      */
     WAITING_FOR_FINISH
+  }
+
+  private class TrackedEdtActivity implements Runnable {
+    @NotNull
+    private final Runnable myRunnable;
+
+    TrackedEdtActivity(@NotNull Runnable runnable) {
+      myRunnable = runnable;
+      myNextTaskPollingRunnables.add(this);
+    }
+
+    void invokeLater() {
+      ApplicationManager.getApplication().invokeLater(this, getExpirationCondition());
+    }
+
+    void invokeLaterAfterProjectInitialized() {
+      //noinspection unchecked,RedundantCast
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
+        (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(this, myDumbStartModality, Conditions.or((Condition)myProject.getDisposed(), (Condition)getExpirationCondition())));
+    }
+
+    @Override
+    public void run() {
+      myNextTaskPollingRunnables.remove(this);
+      myRunnable.run();
+    }
+
+    @NotNull
+    Condition<?> getExpirationCondition() {
+      return __ -> !myNextTaskPollingRunnables.contains(this);
+    }
   }
 }

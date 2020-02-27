@@ -196,9 +196,7 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
     @JvmStatic
     fun restartFileBasedIndex(indexZip: Path?, project: Project?) {
       val indexSwitcher = FileBasedIndexSwitcher(FileBasedIndex.getInstance() as FileBasedIndexImpl)
-      ApplicationManager.getApplication().runWriteAction {
-        indexSwitcher.turnOff()
-      }
+      indexSwitcher.turnOff()
 
       FileUtil.delete(PathManager.getIndexRoot())
       val rootProp = indexZip?.toAbsolutePath()?.toString()
