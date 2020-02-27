@@ -12,6 +12,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
@@ -36,7 +37,7 @@ public class WatchRootsManager {
   private final NavigableSet<String> myOptimizedRecursiveWatchRoots = WatchRootsUtil.createFileNavigableSet();
 
   private final NavigableMap<String, SymlinkData> mySymlinksByPath = WatchRootsUtil.createFileNavigableMap();
-  private final Map<Integer, SymlinkData> mySymlinksById = new HashMap<>();
+  private final TIntObjectHashMap<SymlinkData> mySymlinksById = new TIntObjectHashMap<>();
   private final MultiMap<String, String> myPathMappings = MultiMap.createConcurrentSet();
 
 
@@ -76,7 +77,7 @@ public class WatchRootsManager {
       myOptimizedRecursiveWatchRoots.clear();
       myFlatWatchRoots.clear();
       myPathMappings.clear();
-      mySymlinksById.values().forEach(data -> data.clear());
+      mySymlinksById.forEachValue(data -> { data.clear(); return true; });
     }
   }
 
