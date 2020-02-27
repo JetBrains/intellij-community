@@ -77,7 +77,6 @@ final class BeforeRunStepsPanel extends JPanel {
     });
 
     ToolbarDecorator myDecorator = ToolbarDecorator.createDecorator(myList);
-    myDecorator.setAsUsualTopToolbar();
 
     myDecorator.setEditAction(new AnActionButtonRunnable() {
       @Override

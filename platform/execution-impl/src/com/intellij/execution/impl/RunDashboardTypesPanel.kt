@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -12,6 +13,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBUI
 import gnu.trove.THashSet
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
@@ -57,7 +59,8 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
     }
 
     val toolbarDecorator = ToolbarDecorator.createDecorator(list)
-    toolbarDecorator.setAsUsualTopToolbar()
+      .setToolbarPosition(ActionToolbarPosition.TOP)
+      .setPanelBorder(JBUI.Borders.empty())
     toolbarDecorator.setAddAction { button ->
       showAddPopup(myProject, listModel.items.map(ConfigurationType::getId).toSet(),
                    Consumer { newTypes ->

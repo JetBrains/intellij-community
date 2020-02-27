@@ -11,6 +11,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunManagerImplKt;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,14 +98,17 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   @NotNull
   @Override
   protected JComponent createEditor() {
-    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList);
-    return decorator.disableUpDownActions().setAddAction(new AnActionButtonRunnable() {
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
+      .setToolbarPosition(ActionToolbarPosition.TOP)
+      .setPanelBorder(JBUI.Borders.empty())
+      .disableUpDownActions();
+    decorator.setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
         List<RunConfiguration> configurations = new ArrayList<>();
         for (RunnerAndConfigurationSettings settings : myRunManager.getAllSettings()) {
           RunConfiguration configuration = settings.getConfiguration();
-          if (!mySnapshot.getConfigurationsWithTargets(myRunManager).keySet().contains(configuration) && canBeAdded(configuration, mySnapshot)) {
+          if (!mySnapshot.getConfigurationsWithTargets(myRunManager).containsKey(configuration) && canBeAdded(configuration, mySnapshot)) {
             configurations.add(configuration);
           }
         }
@@ -126,6 +131,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
           selector.select(configuration);
         }
       }
-    }).setAsUsualTopToolbar().createPanel();
+    });
+    return decorator.createPanel();
   }
 }
