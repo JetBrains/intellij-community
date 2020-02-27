@@ -279,7 +279,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     return repository.getRepositoryFiles().isOrigHeadFile(path);
   }
 
-  private static boolean indexChanged(@NotNull GitRepository repository, @NotNull String path) {
+  public static boolean indexChanged(@NotNull GitRepository repository, @NotNull String path) {
     return repository.getRepositoryFiles().isIndexFile(path);
   }
 
