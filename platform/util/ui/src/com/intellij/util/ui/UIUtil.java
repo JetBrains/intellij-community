@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -2229,12 +2230,11 @@ public final class UIUtil {
   }
 
   public static void removeScrollBorder(final Component c) {
-    for (JScrollPane scrollPane : uiTraverser(c).filter(JScrollPane.class)) {
-      if (!uiParents(scrollPane, true)
-        .takeWhile(Conditions.notEqualTo(c))
-        .filter(Conditions.not(Conditions.instanceOf(JPanel.class, JLayeredPane.class)))
-        .isEmpty()) continue;
-
+    JBIterable<JScrollPane> scrollPanes = uiTraverser(c)
+      .expand(o -> o == c || o instanceof JPanel || o instanceof JLayeredPane)
+      .expand(o -> !(o instanceof Splitter)) // temp solution for jruby facet ui
+      .filter(JScrollPane.class);
+    for (JScrollPane scrollPane : scrollPanes) {
       Integer keepBorderSides = ComponentUtil.getClientProperty(scrollPane, KEEP_BORDER_SIDES);
       if (keepBorderSides != null) {
         if (scrollPane.getBorder() instanceof LineBorder) {
