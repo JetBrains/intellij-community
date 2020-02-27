@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.startup.StartupActivity;
@@ -42,9 +43,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import java.util.*;
 import java.util.function.Predicate;
+
+import static org.jetbrains.idea.maven.aether.ArtifactKind.ARTIFACT;
+import static org.jetbrains.idea.maven.utils.library.RepositoryUtils.getStorageRoot;
 
 /**
  * @author gregsh
@@ -142,39 +147,63 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      final Runnable syncTask = () -> {
-        final Collection<Library> toSync = collectLibraries(project, library -> {
-          if (library instanceof LibraryEx) {
-            final LibraryEx libraryEx = (LibraryEx)library;
-            return libraryEx.getProperties() instanceof RepositoryLibraryProperties &&
-                   isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
-          }
-          return false;
-        });
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      loadDependenciesSync(project);
+    }
 
-        ApplicationManager.getApplication().invokeLater(() -> {
-          for (Library library : toSync) {
-            if (LibraryTableImplUtil.isValidLibrary(library)) {
-              RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
-            }
-          }
-        }, project.getDisposed());
-      };
-      project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-        private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
-        @Override
-        public void rootsChanged(@NotNull final ModuleRootEvent event) {
-          if (!myAlarm.isDisposed() && event.getSource() instanceof Project) {
-            myAlarm.cancelAllRequests();
-            myAlarm.addRequest(syncTask, 300L);
+    final Runnable syncTask = () -> {
+      final Collection<Library> toSync = collectLibrariesToSync(project);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        for (Library library : toSync) {
+          if (LibraryTableImplUtil.isValidLibrary(library)) {
+            RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
           }
         }
-      });
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        removeDuplicatedUrlsFromRepositoryLibraries(project);
-        syncTask.run();
-      });
+      }, project.getDisposed());
+
+    };
+
+    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
+
+      @Override
+      public void rootsChanged(@NotNull final ModuleRootEvent event) {
+        if (!myAlarm.isDisposed() && event.getSource() instanceof Project) {
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(syncTask, 300L);
+        }
+      }
+    });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      removeDuplicatedUrlsFromRepositoryLibraries(project);
+      syncTask.run();
+    });
+  }
+
+  private static void loadDependenciesSync(@NotNull Project project) {
+    final Collection<Library> toSync = collectLibrariesToSync(project);
+    for (Library library : toSync) {
+      if (LibraryTableImplUtil.isValidLibrary(library)) {
+        LibraryProperties<?> properties = ((LibraryEx)library).getProperties();
+        if (properties instanceof RepositoryLibraryProperties) {
+          RepositoryLibraryProperties repositoryProperties = (RepositoryLibraryProperties)properties;
+          JpsMavenRepositoryLibraryDescriptor descriptor = new JpsMavenRepositoryLibraryDescriptor(repositoryProperties.getMavenId());
+          JarRepositoryManager.loadDependenciesSync(project, descriptor, EnumSet.of(ARTIFACT), null, getStorageRoot(library, project));
+        }
+      }
     }
+  }
+
+  @NotNull
+  private static Set<Library> collectLibrariesToSync(@NotNull Project project) {
+    return collectLibraries(project, library -> {
+      if (library instanceof LibraryEx) {
+        final LibraryEx libraryEx = (LibraryEx)library;
+        return libraryEx.getProperties() instanceof RepositoryLibraryProperties &&
+               isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
+      }
+      return false;
+    });
   }
 }
