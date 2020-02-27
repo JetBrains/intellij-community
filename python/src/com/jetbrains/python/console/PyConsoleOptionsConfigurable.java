@@ -39,7 +39,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
     List<Configurable> result = Lists.newArrayList();
 
     PyConsoleSpecificOptionsPanel pythonConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel(myProject);
-    result.add(createConsoleChildConfigurable("Python Console", pythonConsoleOptionsPanel,
+    result.add(createConsoleChildConfigurable(PyBundle.message("configurable.PyConsoleOptionsConfigurable.child.display.name"), pythonConsoleOptionsPanel,
                                               myOptionsProvider.getPythonConsoleSettings(), CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON));
 
     for (PyConsoleOptionsProvider provider : PyConsoleOptionsProvider.EP_NAME.getExtensionList()) {
@@ -54,7 +54,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
     return result.toArray(new Configurable[0]);
   }
 
-  private static Configurable createConsoleChildConfigurable(final String name,
+  private static Configurable createConsoleChildConfigurable(@Nls final String name,
                                                              final PyConsoleSpecificOptionsPanel panel,
                                                              final PyConsoleOptions.PyConsoleSettings settings, final String helpReference) {
     return new SearchableConfigurable() {
