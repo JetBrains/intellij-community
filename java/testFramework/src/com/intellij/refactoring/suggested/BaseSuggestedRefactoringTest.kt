@@ -38,7 +38,7 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
         if (expectedPresentation != null) {
           val state = SuggestedRefactoringProviderImpl.getInstance(project).state!!
             .let { it.refactoringSupport.availability.refineSignaturesWithResolve(it) }
-          assertFalse(state.syntaxError)
+          assertEquals(SuggestedRefactoringState.ErrorLevel.NO_ERRORS, state.errorLevel)
           assertNotEquals(state.oldSignature, state.newSignature)
           val refactoringSupport = state.refactoringSupport
           val data = refactoringSupport.availability.detectAvailableRefactoring(state) as SuggestedChangeSignatureData

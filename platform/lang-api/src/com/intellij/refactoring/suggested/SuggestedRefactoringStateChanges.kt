@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 
 /**
@@ -49,7 +50,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
     return SuggestedRefactoringState(
       declaration,
       refactoringSupport,
-      syntaxError = false,
+      errorLevel = ErrorLevel.NO_ERRORS,
       oldDeclarationText = document.getText(signatureRange),
       oldImportsText = refactoringSupport.importsRange(file)
         ?.extendWithWhitespace(document.charsSequence)
@@ -62,7 +63,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
 
   open fun updateState(state: SuggestedRefactoringState, declaration: PsiElement): SuggestedRefactoringState {
     val newSignature = signature(declaration, state)
-                       ?: return state.withDeclaration(declaration).withSyntaxError(true)
+                       ?: return state.withDeclaration(declaration).withErrorLevel(ErrorLevel.SYNTAX_ERROR)
 
     val idsPresent = newSignature.parameters.map { it.id }.toSet()
     val disappearedParameters = state.disappearedParameters.entries
@@ -78,7 +79,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
     return state
       .withDeclaration(declaration)
       .withNewSignature(newSignature)
-      .withSyntaxError(refactoringSupport.hasSyntaxError(declaration))
+      .withErrorLevel(if (refactoringSupport.hasSyntaxError(declaration)) ErrorLevel.SYNTAX_ERROR else ErrorLevel.NO_ERRORS)
       .withParameterMarkers(parameterMarkers(declaration))
       .withDisappearedParameters(disappearedParameters)
   }
