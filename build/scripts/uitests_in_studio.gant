@@ -24,6 +24,7 @@ target("default": "Run UI tests") {
 
   TestingOptions options = new TestingOptions()
   options.platformPrefix = "AndroidStudio"
+  options.mainModule = "android-uitests"
 
   /*
   options.debugPort = 5005
@@ -38,5 +39,5 @@ target("default": "Run UI tests") {
     "-XX:+UseCodeCacheFlushing"
   ]
 
-  TestingTasks.create(context, options).runTests(jvmArgs, "android-uitests", null)
+  TestingTasks.create(context, options).runTests(jvmArgs, options.mainModule, null)
 }
