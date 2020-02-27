@@ -59,8 +59,8 @@ class GrazieAddDeleteListPanel(private val download: (Lang) -> Boolean, private 
 
   override fun findItemToAdd(): Lang? {
     // remove already enabled languages and their dialects
-    val langsInList = listItems.map { (it as Lang).shortCode }.toSet()
-    val (downloadedLangs, otherLangs) = Lang.sortedValues().filter { it.shortCode !in langsInList }.partition { it.jLanguage != null }
+    val langsInList = listItems.map { (it as Lang).iso }.toSet()
+    val (downloadedLangs, otherLangs) = Lang.sortedValues().filter { it.iso !in langsInList }.partition { it.jLanguage != null }
 
     val step = GrazieListPopupStep(msg("grazie.ui.settings.language.popup.title"), downloadedLangs, otherLangs, download, ::addElement)
     val menu = object : ListPopupImpl(null, step) {

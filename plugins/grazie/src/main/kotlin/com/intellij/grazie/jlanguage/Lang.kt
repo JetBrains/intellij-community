@@ -5,8 +5,8 @@ import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.grazie.remote.RemoteLangDescriptor
 import org.languagetool.language.Language
+import tanvd.grazie.langdetect.model.LanguageISO
 
-@Suppress("unused")
 enum class Lang(val displayName: String, val className: String, val remote: RemoteLangDescriptor) {
   BRITISH_ENGLISH("English (GB)", "BritishEnglish", RemoteLangDescriptor.ENGLISH),
   AMERICAN_ENGLISH("English (US)", "AmericanEnglish", RemoteLangDescriptor.ENGLISH),
@@ -30,16 +30,11 @@ enum class Lang(val displayName: String, val className: String, val remote: Remo
   UKRAINIAN("Ukrainian", "Ukrainian", RemoteLangDescriptor.UKRAINIAN);
 
   companion object {
-    operator fun get(lang: Language): Lang? = values().find { lang.name == it.displayName }
-
-    // NOTE: dialects have same short code
-    operator fun get(code: String): Lang? = values().find { it.shortCode == code }
-
     fun sortedValues() = values().sortedBy(Lang::displayName)
   }
 
-  val shortCode: String
-    get() = remote.shortCode
+  val iso: LanguageISO
+    get() = remote.iso
 
   private var _jLanguage: Language? = null
   val jLanguage: Language?
@@ -49,9 +44,9 @@ enum class Lang(val displayName: String, val className: String, val remote: Remo
 
   fun isAvailable() = GrazieRemote.isAvailableLocally(this)
 
-  fun isEnglish() = shortCode == "en"
+  fun isEnglish() = iso == LanguageISO.EN
 
-  fun equalsTo(language: tanvd.grazie.langdetect.model.Language) = this.shortCode == language.iso.toString()
+  fun equalsTo(language: tanvd.grazie.langdetect.model.Language) = iso == language.iso
 
   override fun toString() = displayName
 }

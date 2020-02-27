@@ -6,9 +6,18 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import tanvd.grazie.langdetect.model.Language
 
-object GrazieFUCounterCollector {
-  fun languageDetected(lang: Language?) = log("language.detected") {
-    addData("language", lang?.iso?.toString() ?: "")
+internal object GrazieFUSCounter {
+  fun languageDetected(lang: Language) = log("language.detected") {
+    addData("language", lang.iso.toString())
+  }
+
+  fun languagesSuggested(languages: Collection<Language>, isEnabled: Boolean) {
+    for (language in languages) {
+      log("language.suggested") {
+        addData("language", language.iso.toString())
+        addData("enabled", isEnabled)
+      }
+    }
   }
 
   fun typoFound(typo: Typo) = log("typo.found") {
@@ -21,6 +30,7 @@ object GrazieFUCounterCollector {
     addData("cancelled", cancelled)
   }
 
-  private fun log(eventId: String, body: FeatureUsageData.() -> Unit) = FUCounterUsageLogger.getInstance()
-    .logEvent("grazi.count", eventId, FeatureUsageData().apply(body))
+  private fun log(eventId: String, body: FeatureUsageData.() -> Unit) {
+    FUCounterUsageLogger.getInstance().logEvent("grazie.count", eventId, FeatureUsageData().apply(body))
+  }
 }

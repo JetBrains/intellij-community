@@ -15,6 +15,8 @@ class LanguageGrammarChecking : LanguageExtensionPoint<GrammarCheckingStrategy>(
 
     fun getLanguageExtensionPoints(): List<LanguageExtensionPoint<GrammarCheckingStrategy>> = EP_NAME.extensionList
 
+    fun getStrategies(): Set<GrammarCheckingStrategy> = getLanguageExtensionPoints().map { it.instance }.toSet()
+
     fun getExtensionPointByStrategy(strategy: GrammarCheckingStrategy) = EP_NAME.extensions.firstOrNull { it.instance == strategy }
 
     fun getStrategiesForElement(element: PsiElement, enabledIDs: Set<String>, disabledIDs: Set<String>): Set<GrammarCheckingStrategy> {

@@ -6,12 +6,13 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
 
-@Suppress("MissingRecentApi")
-class GrazieWhiteListRule : CustomWhiteListRule() {
-  override fun doValidate(data: String, context: EventContext) = if (data in LangTool.allRules)
+internal class GrazieFUSRuleIDRule : CustomWhiteListRule() {
+  override fun doValidate(data: String, context: EventContext) = if (data in LangTool.allRules) {
     ValidationResultType.ACCEPTED
-  else
+  }
+  else {
     ValidationResultType.REJECTED
+  }
 
-  override fun acceptRuleId(ruleId: String?) = ruleId == "grazi_rule_id"
+  override fun acceptRuleId(ruleId: String?) = ruleId == "grazie_rule_id"
 }

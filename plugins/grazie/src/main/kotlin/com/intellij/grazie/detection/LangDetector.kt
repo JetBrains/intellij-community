@@ -2,7 +2,7 @@
 package com.intellij.grazie.detection
 
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.ide.fus.GrazieFUCounterCollector
+import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.lazyConfig
@@ -27,7 +27,7 @@ object LangDetector : GrazieStateLifecycle {
 
     if (detected.preferred == Language.UNKNOWN) return null
 
-    GrazieFUCounterCollector.languageDetected(detected.preferred)
+    GrazieFUSCounter.languageDetected(detected.preferred)
 
     return detected.preferred
   }
