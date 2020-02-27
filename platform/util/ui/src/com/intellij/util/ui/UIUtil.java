@@ -3415,7 +3415,11 @@ public final class UIUtil {
 
   @NotNull
   public static Color getTreeBackground(@NotNull JTree tree, boolean selected) {
-    if (selected) return getTreeSelectionBackground(tree.hasFocus());
+    return !selected ? getTreeBackground(tree) : getTreeSelectionBackground(tree.hasFocus());
+  }
+
+  @NotNull
+  public static Color getTreeBackground(@NotNull JTree tree) {
     Color background = tree.getBackground();
     return background != null ? background : getTreeBackground();
   }
@@ -3457,7 +3461,11 @@ public final class UIUtil {
 
   @NotNull
   public static Color getTreeForeground(@NotNull JTree tree, boolean selected) {
-    if (selected) return getTreeSelectionForeground(tree.hasFocus());
+    return !selected ? getTreeForeground(tree) : getTreeSelectionForeground(tree.hasFocus());
+  }
+
+  @NotNull
+  public static Color getTreeForeground(@NotNull JTree tree) {
     Color foreground = tree.getForeground();
     return foreground != null ? foreground : getTreeForeground();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -290,7 +290,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
       rowGraphics.setClip(clipBounds);
 
       final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
-      Color background = tree.getBackground();
+      Color background = UIUtil.getTreeBackground(tree);
 
       if ((row % 2) == 0 && Boolean.TRUE.equals(tree.getClientProperty(STRIPED_CLIENT_PROPERTY))) {
         background = UIUtil.getDecoratedRowColor();

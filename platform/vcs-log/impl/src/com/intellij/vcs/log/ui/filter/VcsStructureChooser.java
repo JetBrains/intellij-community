@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.application.ReadAction;
@@ -282,7 +282,7 @@ public class VcsStructureChooser extends DialogWrapper {
       mySelectionManager = selectionManager;
       myModulesSet = modulesSet;
       myRoots = roots;
-      setBackground(tree.getBackground());
+      setBackground(UIUtil.getTreeBackground(tree));
       myColoredRenderer = new ColoredTreeCellRenderer() {
         @Override
         public void customizeCellRenderer(@NotNull JTree tree,
@@ -296,7 +296,7 @@ public class VcsStructureChooser extends DialogWrapper {
         }
       };
       myFictive = new JBList();
-      myFictive.setBackground(tree.getBackground());
+      myFictive.setBackground(UIUtil.getTreeBackground(tree));
       myFictive.setSelectionBackground(UIUtil.getListSelectionBackground(true));
       myFictive.setSelectionForeground(UIUtil.getListSelectionForeground());
 
@@ -308,10 +308,10 @@ public class VcsStructureChooser extends DialogWrapper {
           }
         }
       };
-      myTextRenderer.setBackground(tree.getBackground());
+      myTextRenderer.setBackground(UIUtil.getTreeBackground(tree));
 
       myCheckbox = new JCheckBox();
-      myCheckbox.setBackground(tree.getBackground());
+      myCheckbox.setBackground(UIUtil.getTreeBackground(tree));
       myEmpty = new JLabel("");
 
       add(myCheckbox, BorderLayout.WEST);

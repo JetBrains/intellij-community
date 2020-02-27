@@ -28,6 +28,7 @@ import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -311,7 +312,7 @@ public final class PushLog extends JPanel implements DataProvider {
 
   private JComponent createStrategyPanel() {
     final JPanel labelPanel = new JPanel(new BorderLayout());
-    labelPanel.setBackground(myTree.getBackground());
+    labelPanel.setBackground(UIUtil.getTreeBackground(myTree));
     final LinkLabel<String> linkLabel = new LinkLabel<>(DvcsBundle.getString("push.edit.all.targets"), null);
     linkLabel.setBorder(JBUI.Borders.empty(2));
     linkLabel.setListener(new LinkListener<String>() {

@@ -100,7 +100,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
       component.setBackground(background);
     }
     else if (component.isOpaque()) {
-      component.setBackground(tree.getBackground());
+      component.setBackground(UIUtil.getTreeBackground(tree));
     }
   }
 
