@@ -495,7 +495,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
     // fine but grabs all CPUs
     //return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(fileList, indicator, false, false, processor);
 
-    int parallelism = UnindexedFilesUpdater.getIndexingThreadsNumber();
+    int parallelism = UnindexedFilesUpdater.getNumberOfIndexingThreads();
     final Callable<Boolean> processFileFromSet = () -> {
       final boolean[] result = {true};
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
