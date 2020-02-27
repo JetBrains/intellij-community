@@ -4,6 +4,7 @@ import com.intellij.codeInspection.SuppressIntentionAction
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.displayName
+import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
@@ -32,6 +33,7 @@ class DisableLanguageSuggestionIntention(private val languages: Set<Language>) :
     val action = object : BasicUndoableAction(element.containingFile?.virtualFile) {
       override fun redo() {
         GrazieConfig.update { state -> state.copy(detectionContext = state.detectionContext.disable(languages)) }
+        GrazieFUSCounter.languagesSuggested(languages, isEnabled = false)
       }
 
       override fun undo() {

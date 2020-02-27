@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.grazie.grammar.Typo
-import com.intellij.grazie.ide.fus.GrazieFUCounterCollector
+import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.ide.DataManager
 import com.intellij.injected.editor.EditorWindow
@@ -50,7 +50,7 @@ class GrazieReplaceTypoQuickFix(private val typo: Typo) : LocalQuickFix, Iconabl
   private fun LookupEx.registerFUCollector(typo: Typo) {
     addLookupListener(object : LookupListener {
       override fun lookupCanceled(event: LookupEvent) {
-        GrazieFUCounterCollector.quickfixApplied(typo.info.rule.id, cancelled = true)
+        GrazieFUSCounter.quickfixApplied(typo.info.rule.id, cancelled = true)
       }
 
       override fun beforeItemSelected(event: LookupEvent): Boolean {
@@ -69,7 +69,7 @@ class GrazieReplaceTypoQuickFix(private val typo: Typo) : LocalQuickFix, Iconabl
       }
 
       override fun itemSelected(event: LookupEvent) {
-        GrazieFUCounterCollector.quickfixApplied(typo.info.rule.id, cancelled = false)
+        GrazieFUSCounter.quickfixApplied(typo.info.rule.id, cancelled = false)
       }
     })
   }

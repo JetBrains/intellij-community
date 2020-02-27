@@ -5,7 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.grazie.grammar.Typo
-import com.intellij.grazie.ide.fus.GrazieFUCounterCollector
+import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.utils.*
@@ -38,7 +38,7 @@ class GrazieProblemDescriptor(id: String, fix: Typo, isOnTheFly: Boolean) : Prob
 
       if (isOnTheFly && !ApplicationManager.getApplication().isUnitTestMode) {
         if (this.fixes.isNotEmpty()) {
-          GrazieFUCounterCollector.typoFound(this@toFixes)
+          GrazieFUSCounter.typoFound(this@toFixes)
           fixes.add(GrazieReplaceTypoQuickFix(this@toFixes))
         }
       }

@@ -7,6 +7,7 @@ import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.displayName
 import com.intellij.grazie.detection.toLang
+import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.openapi.project.Project
 import tanvd.grazie.langdetect.model.Language
@@ -36,5 +37,6 @@ class DownloadLanguageQuickFix(private val languages: Set<Language>) : LocalQuic
     }
 
     GrazieConfig.update { state -> state.copy(enabledLanguages = state.enabledLanguages + langs) }
+    GrazieFUSCounter.languagesSuggested(languages, isEnabled = true)
   }
 }
