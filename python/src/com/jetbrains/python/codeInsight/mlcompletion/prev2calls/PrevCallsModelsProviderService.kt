@@ -6,14 +6,17 @@ import com.completion.features.models.prevcalls.python.PrevCallsModelsLoader
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import java.util.concurrent.ExecutionException
 
-object PrevCallsModelsStorage {
+@Service
+class PrevCallsModelsProviderService {
   internal class ModelNotFoundException: Exception()
-  private val logger = Logger.getInstance(PrevCallsModelsStorage::class.java)
+  private val logger = Logger.getInstance(PrevCallsModelsProviderService::class.java)
 
   private val package2model = CacheBuilder.newBuilder()
     .softValues()
@@ -27,7 +30,7 @@ object PrevCallsModelsStorage {
     })
 
   private val modelsLoadingQueue = MergingUpdateQueue("ModelsLoadingQueue", 1000, true, null,
-                                                      null, null, false)
+                                                      ApplicationManager.getApplication(), null, false)
   private fun createUpdate(identity: Any, runnable: () -> Unit) = object : Update(identity) {
     override fun canEat(update: Update?) = this == update
     override fun run() = runnable()
@@ -62,4 +65,9 @@ object PrevCallsModelsStorage {
   fun getModelFor(qualifierName: String) = package2model.getIfPresent(qualifierName)
 
   fun haveModelForQualifier(qualifier: String) = PrevCallsModelsLoader.haveModule(qualifier.substringBefore("."))
+
+  companion object {
+    val instance: PrevCallsModelsProviderService
+          get() = service()
+  }
 }

@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
-import kotlin.streams.toList
 
 object PyPrevCallsCompletionFeatures {
   val PREV_CALLS_CONTEXT_INFO_KEY = Key<PrevCallsContextInfo>("py.ml.completion.prev.calls.user.data")
@@ -39,7 +38,8 @@ object PyPrevCallsCompletionFeatures {
   }
 
   fun getResult(lookupString: String, contextInfo: PrevCallsContextInfo): PrevCallsModelResponse? {
-    val model = PrevCallsModelsStorage.getModelFor(contextInfo.qualifier.substringBefore(".")) ?: return null
+    val model = PrevCallsModelsProviderService.instance.getModelFor(contextInfo.qualifier.substringBefore("."))
+                ?: return null
     return model.getWeightForElement(lookupString, contextInfo)
   }
 }

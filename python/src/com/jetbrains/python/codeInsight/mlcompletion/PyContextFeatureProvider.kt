@@ -4,7 +4,7 @@ package com.jetbrains.python.codeInsight.mlcompletion
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
-import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PrevCallsModelsStorage
+import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PrevCallsModelsProviderService
 import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PyPrevCallsCompletionFeatures
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -64,7 +64,7 @@ class PyContextFeatureProvider : ContextFeatureProvider {
     val isInCondition = result["is_in_condition"]?.value as? Boolean ?: false
     val isInForStatement = result["is_in_for_statement"]?.value as? Boolean ?: false
     PyPrevCallsCompletionFeatures.calculatePrevCallsContextInfo(cursorOffset, position, isInCondition, isInForStatement)?.let {
-      PrevCallsModelsStorage.loadModelFor(it.qualifier)
+      PrevCallsModelsProviderService.instance.loadModelFor(it.qualifier)
       environment.putUserData(PyPrevCallsCompletionFeatures.PREV_CALLS_CONTEXT_INFO_KEY, it)
     }
 
