@@ -60,29 +60,22 @@ class MPSProperties extends ProductProperties {
 
                 withModule("intellij.java.rt", "idea_rt.jar", null)
                 withProjectLibrary("Eclipse")
-//                withProjectLibrary("jgoodies-common")
-//                withProjectLibrary("commons-net")
                 withProjectLibrary("JUnit4")
                 withProjectLibrary("http-client-3.1")
                 withProjectLibrary("pty4j") // for terminal plugin
                 withoutProjectLibrary("Ant")
                 withoutProjectLibrary("Gradle")
-                excludeFromModule("intellij.java.resources", "componentSets/*")
-//                excludeFromModule("community-resources", "idea")
-//                excludeFromModule("community-resources", "lafs")
-//                excludeFromModule("community-resources", "lafs")
                 excludeFromModule("intellij.platform.resources", "META-INF/LangExtensions.xml")
                 excludeFromModule("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
                 excludeFromModule("intellij.platform.resources", "META-INF/PlatformLangXmlPlugin.xml")
                 excludeFromModule("intellij.platform.resources", "META-INF/XmlPlugin.xml")
                 excludeFromModule("intellij.platform.resources", "META-INF/XmlActions.xml")
                 excludeFromModule("intellij.platform.resources", "idea/PlatformActions.xml")
-                excludeFromModule("intellij.platform.resources.en", "messages/FeatureStatisticsBundle.properties")
+                excludeFromModule("intellij.platform.ide", "messages/FeatureStatisticsBundle.properties")
                 //Removing Idea Tips & Tricks
                 excludeFromModule("intellij.java.ide.resources", "ProductivityFeaturesRegistry.xml")
                 excludeFromModule("intellij.java.resources.en", "tips/*")
                 excludeFromModule("intellij.platform.resources.en", "tips/*")
-                excludeFromModule("intellij.platform.remoteServers.impl", "tips/*")
             }
         } as Consumer<PlatformLayout>
 
