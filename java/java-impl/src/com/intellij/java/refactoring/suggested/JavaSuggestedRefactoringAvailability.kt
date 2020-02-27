@@ -36,7 +36,7 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
       }
 
       if (state.additionalData[HAS_USAGES] == null) {
-        val declarationCopy = state.restoredDeclarationCopy() ?: return@iterator
+        val declarationCopy = state.restoredDeclarationCopy()
         val useScope = declarationCopy.useScope
         if (useScope is LocalSearchScope) {
           val hasUsages = ReferencesSearch.search(declarationCopy, useScope).findFirst() != null

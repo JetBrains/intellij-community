@@ -17,6 +17,7 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
    * This method is supposed to use [SuggestedRefactoringState.restoredDeclarationCopy] in order to analyze the original declaration.
    * It's allowed to use reference resolve in this method.
    * If resolve is not needed then it's recommended to override [SuggestedRefactoringStateChanges.createInitialState] and do the checks there.
+   * This method should not be called if [SuggestedRefactoringState.errorLevel] == [SuggestedRefactoringState.ErrorLevel.INCONSISTENT].
    * @return true, if the refactoring suggestion should be permanently disabled for this declaration
    * and all further changes in the signature ignored.
    */
@@ -26,6 +27,7 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
    * Refines the old and the new signatures with use of resolve.
    *
    * Resolve may be useful, for example, to filter out annotation changes that are not supposed to be copied across method hierarchy.
+   * This method should be called only when [SuggestedRefactoringState.errorLevel] == [SuggestedRefactoringState.ErrorLevel.NO_ERRORS].
    */
   open fun refineSignaturesWithResolve(state: SuggestedRefactoringState): SuggestedRefactoringState = state
 
@@ -35,6 +37,7 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
    * Normally, the state is amended by modifying [SuggestedRefactoringState.additionalData]
    * (see [SuggestedRefactoringState.withAdditionalData]). The additional data can be retrieved later and used by
    * implementations of [detectAvailableRefactoring] and [shouldSuppressRefactoringForDeclaration].
+   * This method should not be called if [SuggestedRefactoringState.errorLevel] == [SuggestedRefactoringState.ErrorLevel.INCONSISTENT].
    * @return lazy iterator over sequence of amended states
    */
   open fun amendStateInBackground(state: SuggestedRefactoringState): Iterator<SuggestedRefactoringState> = iterator { }
