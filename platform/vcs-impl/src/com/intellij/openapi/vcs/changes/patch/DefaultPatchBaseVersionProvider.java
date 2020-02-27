@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressManager;
@@ -30,7 +29,8 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
@@ -66,57 +66,54 @@ public class DefaultPatchBaseVersionProvider {
     if (vcsRevisionString == null && versionDate == null) return;
 
     runWithModalProgressIfNeeded(project, message("progress.text.loading.patch.base.revision"), () -> {
-      VcsRevisionNumber revision = null;
-      if (vcsRevisionString != null) {
-        revision = vcs.parseRevisionNumber(vcsRevisionString, pathBeforeRename);
-        if (revision != null) {
-          if (historyProvider instanceof VcsBaseRevisionAdviser) {
-            VcsBaseRevisionAdviser revisionAdviser = (VcsBaseRevisionAdviser)historyProvider;
-            boolean loadedExactRevision = revisionAdviser.getBaseVersionContent(pathBeforeRename, processor, revision.asString());
-            if (loadedExactRevision) return;
-          }
-          else {
-            DiffProvider diffProvider = vcs.getDiffProvider();
-            if (diffProvider != null && pathBeforeRename.getVirtualFile() != null) {
-              ContentRevision fileContent = diffProvider.createFileContent(revision, pathBeforeRename.getVirtualFile());
-              boolean loadedExactRevision = fileContent != null && !processor.process(fileContent.getContent());
-              if (loadedExactRevision) return;
-            }
-          }
-        }
-      }
+      VcsRevisionNumber revision = vcsRevisionString != null ? vcs.parseRevisionNumber(vcsRevisionString, pathBeforeRename) : null;
       if (revision == null && versionDate == null) return;
 
-      ProgressManager.progress2(message("loading.text2.file.history.progress"));
-      final VcsHistorySession historySession = historyProvider.createSessionFor(pathBeforeRename);
-
-      //if not found or cancelled
-      if (historySession == null) return;
-      final List<VcsFileRevision> list = historySession.getRevisionList();
-      if (list == null) return;
-      for (VcsFileRevision fileRevision : list) {
-        boolean found;
-        if (revision != null) {
-          found = fileRevision.getRevisionNumber().compareTo(revision) <= 0;
+      if (revision != null) {
+        boolean loadedExactRevision = false;
+        if (historyProvider instanceof VcsBaseRevisionAdviser) {
+          VcsBaseRevisionAdviser revisionAdviser = (VcsBaseRevisionAdviser)historyProvider;
+          loadedExactRevision = revisionAdviser.getBaseVersionContent(pathBeforeRename, processor, revision.asString());
         }
         else {
-          final Date date = fileRevision instanceof VcsFileRevisionEx ?
-                            ((VcsFileRevisionEx)fileRevision).getAuthorDate() : fileRevision.getRevisionDate();
-          found = (date != null) && (date.before(versionDate) || date.equals(versionDate));
+          DiffProvider diffProvider = vcs.getDiffProvider();
+          if (diffProvider != null && pathBeforeRename.getVirtualFile() != null) {
+            ContentRevision fileContent = diffProvider.createFileContent(revision, pathBeforeRename.getVirtualFile());
+            loadedExactRevision = fileContent != null && !processor.process(fileContent.getContent());
+          }
         }
+        if (loadedExactRevision) return;
+      }
 
-        if (found) {
-          try {
-            byte[] byteContent = fileRevision.loadContent();
-            if (byteContent == null) return;
-            CharSequence content = LoadTextUtil.getTextByBinaryPresentation(byteContent, file, false, false);
-            processor.process(content.toString());
-            // TODO: try to download more than one version
-            break;
-          }
-          catch (IOException e) {
-            LOG.warn(e);
-          }
+      ProgressManager.progress2(message("loading.text2.file.history.progress"));
+      VcsHistorySession historySession = historyProvider.createSessionFor(pathBeforeRename);
+      if (historySession == null) return; // not found or cancelled
+
+      List<VcsFileRevision> list = historySession.getRevisionList();
+      if (list == null) return;
+
+      // TODO: try to download more than one version
+      VcsFileRevision foundRevision = ContainerUtil.find(list, fileRevision -> {
+        if (revision != null) {
+          return fileRevision.getRevisionNumber().compareTo(revision) <= 0;
+        }
+        else {
+          Date date = fileRevision instanceof VcsFileRevisionEx ?
+                      ((VcsFileRevisionEx)fileRevision).getAuthorDate() : fileRevision.getRevisionDate();
+          return date != null && (date.before(versionDate) || date.equals(versionDate));
+        }
+      });
+
+      if (foundRevision != null) {
+        try {
+          byte[] byteContent = foundRevision.loadContent();
+          if (byteContent == null) return;
+
+          CharSequence content = LoadTextUtil.getTextByBinaryPresentation(byteContent, file, false, false);
+          processor.process(content.toString());
+        }
+        catch (IOException e) {
+          LOG.warn(e);
         }
       }
     });
@@ -152,17 +149,8 @@ public class DefaultPatchBaseVersionProvider {
     }
   }
 
-  private static void runWithModalProgressIfNeeded(@Nullable Project project,
-                                                   @NotNull String title,
-                                                   @NotNull ThrowableRunnable<? extends VcsException> task) throws VcsException {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      VcsUtil.computeWithModalProgress(project, title, true, indicator -> {
-        task.run();
-        return null;
-      });
-    }
-    else {
-      task.run();
-    }
+  private static void runWithModalProgressIfNeeded(@Nullable Project project, @NotNull String title, @NotNull VcsRunnable task)
+    throws VcsException {
+    VcsUtil.runVcsProcessWithProgress(task, title, true, project);
   }
 }
