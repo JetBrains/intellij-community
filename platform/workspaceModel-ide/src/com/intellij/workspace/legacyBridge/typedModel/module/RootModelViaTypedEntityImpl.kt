@@ -82,6 +82,10 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
           get() = moduleEntity.entitySource
 
         override fun hasEqualProperties(e: TypedEntity): Boolean = throw UnsupportedOperationException()
+
+        override fun <R : TypedEntity> referrers(
+          entityClass: Class<R>, propertyName: String
+        ): Sequence<R> = throw UnsupportedOperationException()
       }.also { contentEntries.add(it) }
 
       contentEntry.url
