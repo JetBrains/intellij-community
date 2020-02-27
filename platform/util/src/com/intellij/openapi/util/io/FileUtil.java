@@ -1447,7 +1447,12 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean isRootPath(@NotNull String path) {
-    return path.equals("/") || path.matches("[a-zA-Z]:[/\\\\]");
+    if (path.equals("/")) return true;
+    if (path.length() == 3 && path.charAt(1) == ':') {
+      char ch = path.charAt(0);
+      return 'A' <= ch && ch <= 'Z' || 'a' <= ch && ch <= 'z';
+    }
+    return false;
   }
 
   public static boolean deleteWithRenaming(@NotNull File file) {
