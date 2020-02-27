@@ -54,9 +54,6 @@ public class RemoteRevisionsCache implements VcsListener {
 
     ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
     myVcsManager = vcsManager;
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
     myKinds = new HashMap<>();
 
     final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
@@ -72,6 +69,10 @@ public class RemoteRevisionsCache implements VcsListener {
       }
       return shouldBeDone;
     }, "Finishing \"changed on server\" update", DEFAULT_REFRESH_INTERVAL);
+
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
 
     updateRoots();
 
