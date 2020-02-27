@@ -6,14 +6,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
@@ -24,7 +23,7 @@ public class SymlinkRegistry {
 
   private final ConcurrentList<SymlinkListener> myListeners = ContainerUtil.createConcurrentList();
   // TODO make persistent across sessions
-  private final Set<Integer> mySymlinks = new HashSet<>();
+  private final TIntHashSet mySymlinks = new TIntHashSet();
 
   private final SymlinkEventsBatchProducer myBatchProducer = new SymlinkEventsBatchProducer();
 
