@@ -80,7 +80,7 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
     }
     final String title = ActionPlaces.CHANGES_VIEW_TOOLBAR.equals(e.getPlace())
                          ? null
-                         : VcsBundle.message("commit.error.cant.commit.now",
+                         : VcsBundle.message("error.cant.perform.operation.now",
                                              removeEllipsisSuffix(removeMnemonic(RollbackUtil.getRollbackOperationName(project))));
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(title)) return;
 
