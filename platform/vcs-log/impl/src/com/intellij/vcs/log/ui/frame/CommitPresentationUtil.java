@@ -280,17 +280,17 @@ public class CommitPresentationUtil {
     if (branches == null) {
       return VcsLogBundle.message("vcs.log.details.in.branches.loading");
     }
-    if (branches.isEmpty()) return VcsLogBundle.message("vcs.log.details.not.in.any.branch");
+    if (branches.isEmpty()) return VcsLogBundle.message("vcs.log.details.in.branches.empty");
 
     String head = VcsLogBundle.message("vcs.log.details.in.branches", branches.size()) + " ";
 
     if (expanded) {
-      String hide = VcsLogBundle.message("vcs.log.details.hide");
+      String hide = VcsLogBundle.message("vcs.log.details.in.branches.hide");
       //noinspection HardCodedStringLiteral
       return head + "<a href=\"" + SHOW_HIDE_BRANCHES + "\">" + hide + "</a><br/>" + StringUtil.join(branches, "<br/>");
     }
 
-    String showAll = VcsLogBundle.message("vcs.log.details.show.all");
+    String showAll = VcsLogBundle.message("vcs.log.details.in.branches.show.all");
     String tail = "… <a href=\"" + SHOW_HIDE_BRANCHES + "\">" + showAll + "</a>";
     int headWidth = metrics.stringWidth(head);
     int tailWidth = metrics.stringWidth(StringUtil.removeHtmlTags(tail));
