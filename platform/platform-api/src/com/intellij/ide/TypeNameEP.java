@@ -13,6 +13,10 @@ import org.jetbrains.annotations.Nls;
 import java.util.ResourceBundle;
 
 /**
+ * Provides type name for instances of given class.
+ * <p/>
+ * Register via {@code com.intellij.typeName} extension point.
+ *
  * @author yole
  */
 public class TypeNameEP extends AbstractExtensionPointBean {
@@ -22,10 +26,16 @@ public class TypeNameEP extends AbstractExtensionPointBean {
   @RequiredElement
   public String className;
 
+  /**
+   * Use {@link #resourceKey} for i18n.
+   */
   @Attribute("name")
   @Nls(capitalization = Nls.Capitalization.Title)
   public String name;
 
+  /**
+   * If unspecified, plugin's {@code <resource-bundle>} will be used.
+   */
   @Attribute("resourceBundle")
   public String resourceBundle;
 
