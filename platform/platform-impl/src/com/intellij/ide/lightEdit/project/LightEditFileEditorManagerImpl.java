@@ -6,6 +6,7 @@ import com.intellij.ide.lightEdit.LightEditorInfoImpl;
 import com.intellij.ide.lightEdit.LightEditorManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
@@ -103,6 +104,14 @@ final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
 
   @Override
   public VirtualFile getFile(@NotNull FileEditor editor) {
-    return editor.getFile();
+    VirtualFile file = editor.getFile();
+    if (file != null) {
+      return file;
+    }
+    FileEditorLocation location = editor.getCurrentLocation();
+    if (location != null) {
+      return location.getEditor().getFile();
+    }
+    return null;
   }
 }
