@@ -51,6 +51,7 @@ import org.jetbrains.uast.generate.UastElementFactory;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
@@ -314,6 +315,9 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       Splitter splitter = new JBSplitter(true);
       myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation());
       JBTable table = new JBTable(new MyKeyValueModel());
+      DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
+      renderer.putClientProperty("html.disable", Boolean.TRUE);
+      table.setDefaultRenderer(String.class, renderer);
       table.getSelectionModel().addListSelectionListener(e -> {
         updateUsagePreview(table);
       });
@@ -367,6 +371,11 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       @Override
       public int getColumnCount() {
         return 2;
+      }
+
+      @Override
+      public Class<?> getColumnClass(int columnIndex) {
+        return String.class;
       }
 
       @Override
