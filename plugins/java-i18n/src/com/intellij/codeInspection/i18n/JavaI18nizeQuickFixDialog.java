@@ -62,7 +62,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
   public JavaI18nizeQuickFixDialog(@NotNull Project project,
                                @NotNull final PsiFile context,
                                @Nullable final PsiLiteralExpression literalExpression,
-                               String defaultPropertyValue,
+                               @NotNull String defaultPropertyValue,
                                DialogCustomization customization,
                                final boolean showJavaCodeInfo,
                                final boolean showPreview) {

@@ -109,7 +109,12 @@ public interface PropertiesFile {
   IProperty addPropertyAfter(@NotNull String key, @NotNull String value, IProperty anchor) throws IncorrectOperationException;
 
   @NotNull
-  IProperty addProperty(@NotNull String key, @NotNull String value);
+  default IProperty addProperty(@NotNull String key, @NotNull String value) {
+    return addProperty(key, value, PropertyKeyValueFormat.PRESENTABLE);
+  }
+
+  @NotNull
+  IProperty addProperty(@NotNull String key, @NotNull String value, @NotNull PropertyKeyValueFormat format);
 
   /**
    * @return Property key to the property value map.

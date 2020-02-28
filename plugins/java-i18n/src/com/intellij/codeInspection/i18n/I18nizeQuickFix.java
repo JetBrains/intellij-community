@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -140,7 +141,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
   }
 
   protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
-    String value = (String)literalExpression.getValue();
+    String value = StringUtil.notNullize((String)literalExpression.getValue());
     if (mySelectionRange != null) {
       TextRange literalRange = literalExpression.getTextRange();
       TextRange intersection = literalRange.intersection(mySelectionRange);
