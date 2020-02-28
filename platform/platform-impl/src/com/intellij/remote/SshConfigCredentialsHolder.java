@@ -4,6 +4,7 @@ package com.intellij.remote;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SshConfigCredentialsHolder {
 
@@ -13,13 +14,15 @@ public class SshConfigCredentialsHolder {
 
   private String myCredentialsId;
   private String mySshConfigName;
+  private String mySshConfigId;
 
   public SshConfigCredentialsHolder() {
-    this(null);
+    this(null, null);
   }
 
-  public SshConfigCredentialsHolder(String sshConfigName) {
+  public SshConfigCredentialsHolder(@Nullable String sshConfigName, @Nullable String sshConfigId) {
     mySshConfigName = sshConfigName;
+    mySshConfigId = sshConfigId;
     updateCredentialsId();
   }
 
@@ -29,6 +32,18 @@ public class SshConfigCredentialsHolder {
 
   public String getSshConfigName() {
     return mySshConfigName;
+  }
+
+  public void setSshConfigName(String sshConfigName) {
+    mySshConfigName = sshConfigName;
+  }
+
+  public String getSshConfigId() {
+    return mySshConfigId;
+  }
+
+  public void setSshConfigId(String sshConfigId) {
+    mySshConfigId = sshConfigId;
   }
 
   public void save(@NotNull Element element) {
@@ -43,6 +58,7 @@ public class SshConfigCredentialsHolder {
 
   public void cleanConfigData() {
     mySshConfigName = null;
+    mySshConfigId = null;
     updateCredentialsId();
   }
 
@@ -53,5 +69,6 @@ public class SshConfigCredentialsHolder {
   public void copyFrom(SshConfigCredentialsHolder credentials) {
     myCredentialsId = credentials.myCredentialsId;
     mySshConfigName = credentials.mySshConfigName;
+    mySshConfigId = credentials.mySshConfigId;
   }
 }
