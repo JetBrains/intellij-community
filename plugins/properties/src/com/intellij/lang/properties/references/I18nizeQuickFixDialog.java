@@ -102,7 +102,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
   public I18nizeQuickFixDialog(@NotNull Project project,
                                @NotNull final PsiFile context,
-                               String defaultPropertyValue,
+                               @NotNull String defaultPropertyValue,
                                DialogCustomization customization
                                ) {
     this(project, context, defaultPropertyValue, customization, false);
@@ -110,7 +110,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
   protected I18nizeQuickFixDialog(@NotNull Project project,
                                   @NotNull final PsiFile context,
-                                  String defaultPropertyValue,
+                                  @NotNull String defaultPropertyValue,
                                   DialogCustomization customization,
                                   boolean ancestorResponsible) {
     super(false);
@@ -288,7 +288,41 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     }
 
 
-    myValue.setText(myDefaultPropertyValue);
+    myValue.setText(escapeLineBreaks(myDefaultPropertyValue));
+  }
+
+  private static String escapeLineBreaks(String value) {
+    return StringUtil.escapeLineBreak(StringUtil.escapeBackSlashes(value));
+  }
+
+  private static String unescapeLineBreaks(String value) {
+    StringBuilder buffer = new StringBuilder(value.length());
+    int length = value.length();
+    int last = length - 1;
+    for (int i = 0; i < length; i++) {
+      char ch = value.charAt(i);
+      if (ch == '\\' && i != last) {
+        i++;
+        ch = value.charAt(i);
+        if (ch == 'n') {
+          buffer.append('\n');
+        }
+        else if (ch == 'r') {
+          buffer.append('\n');
+        }
+        else if (ch == '\\') {
+          buffer.append('\\');
+        }
+        else {
+          buffer.append('\\');
+          buffer.append(ch);
+        }
+      }
+      else {
+        buffer.append(ch);
+      }
+    }
+    return buffer.toString();
   }
 
   protected void somethingChanged() {
@@ -429,7 +463,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     Collection<PropertiesFile> propertiesFiles = getAllPropertiesFiles();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       IProperty existingProperty = propertiesFile.findPropertyByKey(getKey());
-      final String propValue = myValue.getText();
+      final String propValue = getValue();
       if (existingProperty != null && !Comparing.strEqual(existingProperty.getValue(), propValue)) {
         final String messageText = PropertiesBundle.message("i18nize.dialog.error.property.already.defined.message", getKey(), propertiesFile.getName());
         final int code = Messages.showOkCancelDialog(myProject,
@@ -450,13 +484,9 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     return "editing.propertyFile.i18nInspection";
   }
 
-  public JComponent getValueComponent() {
-    return myValue;
-  }
-
   @Override
   public String getValue() {
-    return myValue.getText();
+    return unescapeLineBreaks(myValue.getText());
   }
 
   @Override
