@@ -365,6 +365,8 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
         myToolbarPosition == ActionToolbarPosition.LEFT ? 1 : 0);
     }
     myActionsPanel.setBorder(myToolbarBorder != null ? myToolbarBorder : JBUI.Borders.empty());
+    Dimension scrollPanePreferredSize = scrollPane.getPreferredSize();
+    scrollPane.setPreferredSize(new Dimension(0, scrollPanePreferredSize.height));
     return panel;
   }
 
