@@ -77,7 +77,7 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
     Disposer.register(disposable, Disposable { emptyProgressIndicator.cancel() })
     githubLoginPanel.acquireLoginAndToken(emptyProgressIndicator).handleOnEdt { loginToken, throwable ->
       if (throwable != null && !GithubAsyncUtil.isCancellation(throwable)) startTrackingValidation()
-      if (loginToken != null) {
+      else {
         login = loginToken.first
         token = loginToken.second
         close(OK_EXIT_CODE, true)

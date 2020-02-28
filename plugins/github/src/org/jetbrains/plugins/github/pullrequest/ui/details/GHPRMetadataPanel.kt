@@ -140,7 +140,7 @@ internal class GHPRMetadataPanel(private val project: Project,
 
   private fun <T> getAdjustmentHandler(@Nls entityName: String,
                                        adjuster: (ProgressIndicator, CollectionDelta<T>) -> Unit)
-    : (CollectionDelta<T>?, Throwable?) -> Unit {
+    : (CollectionDelta<T>, Throwable?) -> Unit {
 
     return handler@{ delta, error ->
       if (error != null) {
@@ -148,7 +148,7 @@ internal class GHPRMetadataPanel(private val project: Project,
           GithubNotifications.showError(project, "Failed to adjust list of ${StringUtil.pluralize(entityName)}", error)
         return@handler
       }
-      if (delta == null || delta.isEmpty) {
+      if (delta.isEmpty) {
         return@handler
       }
 
