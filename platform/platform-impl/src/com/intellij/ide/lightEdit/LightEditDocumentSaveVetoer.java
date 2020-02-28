@@ -8,6 +8,9 @@ import org.jetbrains.annotations.NotNull;
 public class LightEditDocumentSaveVetoer extends FileDocumentSynchronizationVetoer {
   @Override
   public boolean maySaveDocument(@NotNull Document document, boolean isSaveExplicit) {
+    if (LightEditUtil.getProjectIfCreated() == null) {
+      return super.maySaveDocument(document, isSaveExplicit);
+    }
     return isSaveExplicit || LightEditService.getInstance().getEditorManager().isImplicitSaveAllowed(document);
   }
 }

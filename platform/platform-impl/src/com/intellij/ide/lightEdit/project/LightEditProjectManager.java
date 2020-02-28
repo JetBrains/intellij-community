@@ -2,6 +2,7 @@
 package com.intellij.ide.lightEdit.project;
 
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -37,6 +38,7 @@ public final class LightEditProjectManager {
     long start = System.nanoTime();
     LightEditProjectImpl project = new LightEditProjectImpl();
     LOG.info(LightEditProjectImpl.class.getSimpleName() + " loaded in " + TimeoutUtil.getDurationMillis(start) + " ms");
+    LightEditUtil.setProject(project);
     return project;
   }
 
@@ -48,6 +50,7 @@ public final class LightEditProjectManager {
     }
     synchronized (LOCK) {
       myProject = null;
+      LightEditUtil.setProject(null);
     }
   }
 }

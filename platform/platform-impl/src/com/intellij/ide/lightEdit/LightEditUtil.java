@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 public final class LightEditUtil {
   private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
+  private static volatile Project ourCurrentProject;
 
   private LightEditUtil() {
   }
@@ -41,7 +42,12 @@ public final class LightEditUtil {
 
   @Nullable
   public static Project getProjectIfCreated() {
-    return LightEditService.getInstance().getProject();
+    return ourCurrentProject;
+  }
+
+  public static void setProject(@Nullable Project project) {
+    assert project == null || LightEdit.owns(project);
+    ourCurrentProject = project;
   }
 
   static boolean confirmClose(@NotNull String message,
