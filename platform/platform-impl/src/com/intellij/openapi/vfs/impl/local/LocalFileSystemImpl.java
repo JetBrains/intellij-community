@@ -27,12 +27,10 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable, VirtualFilePointerCapableFileSystem {
-  private static final String FS_ROOT = "/";
   private static final int STATUS_UPDATE_PERIOD = 1000;
 
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
-
   private final WatchRootsManager myWatchRootsManager;
 
   public LocalFileSystemImpl() {
@@ -43,7 +41,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
         () -> { if (!ApplicationManager.getApplication().isDisposed()) storeRefreshStatusToFiles(); },
         STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
-    myWatchRootsManager = new WatchRootsManager(myWatcher, this);
+    myWatchRootsManager = new WatchRootsManager(myWatcher);
     Disposer.register(ApplicationManager.getApplication(), this);
   }
 
@@ -132,8 +130,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return myWatchRootsManager.replaceWatchedRoots(nonNullWatchRequestsToRemove,
                                                    ObjectUtils.notNull(recursiveRootsToAdd, Collections.emptyList()),
                                                    ObjectUtils.notNull(flatRootsToAdd, Collections.emptyList()));
-
   }
+
   @Override
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
     Runnable heavyRefresh = () -> {
@@ -149,6 +147,14 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     else {
       heavyRefresh.run();
     }
+  }
+
+  public void symlinkUpdated(int fileId, String linkPath, @Nullable String linkTarget) {
+    myWatchRootsManager.updateSymlink(fileId, linkPath, linkTarget);
+  }
+
+  public void symlinkRemoved(int fileId) {
+    myWatchRootsManager.removeSymlink(fileId);
   }
 
   @Override
