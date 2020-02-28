@@ -18,6 +18,8 @@ package com.intellij.ide.fileTemplates;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -42,18 +44,20 @@ public class JavaTemplateUtil {
   public static final String INTERNAL_ENUM_TEMPLATE_NAME = "Enum";
   public static final String INTERNAL_RECORD_TEMPLATE_NAME = "Record";
 
-  public static final String[] INTERNAL_CLASS_TEMPLATES = {
-    INTERNAL_CLASS_TEMPLATE_NAME, INTERNAL_INTERFACE_TEMPLATE_NAME, INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME, INTERNAL_ENUM_TEMPLATE_NAME,
-    INTERNAL_RECORD_TEMPLATE_NAME};
+  public static final List<String> INTERNAL_CLASS_TEMPLATES = Arrays
+    .asList(INTERNAL_CLASS_TEMPLATE_NAME, INTERNAL_INTERFACE_TEMPLATE_NAME, INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME,
+            INTERNAL_ENUM_TEMPLATE_NAME,
+            INTERNAL_RECORD_TEMPLATE_NAME);
 
   public static final String INTERNAL_PACKAGE_INFO_TEMPLATE_NAME = "package-info";
   public static final String INTERNAL_MODULE_INFO_TEMPLATE_NAME = "module-info";
 
-  public static final String[] INTERNAL_FILE_TEMPLATES = {INTERNAL_PACKAGE_INFO_TEMPLATE_NAME, INTERNAL_MODULE_INFO_TEMPLATE_NAME};
+  public static final List<String> INTERNAL_FILE_TEMPLATES =
+    Arrays.asList(INTERNAL_PACKAGE_INFO_TEMPLATE_NAME, INTERNAL_MODULE_INFO_TEMPLATE_NAME);
 
   private JavaTemplateUtil() { }
 
-  public static void setClassAndMethodNameProperties (@NotNull Properties properties, @NotNull PsiClass aClass, @NotNull PsiMethod method) {
+  public static void setClassAndMethodNameProperties(@NotNull Properties properties, @NotNull PsiClass aClass, @NotNull PsiMethod method) {
     properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, notNull(aClass.getQualifiedName(), ""));
     properties.setProperty(FileTemplate.ATTRIBUTE_SIMPLE_CLASS_NAME, notNull(aClass.getName(), ""));
     properties.setProperty(FileTemplate.ATTRIBUTE_METHOD_NAME, method.getName());
