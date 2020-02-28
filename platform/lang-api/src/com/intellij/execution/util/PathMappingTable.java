@@ -16,6 +16,7 @@
 
 package com.intellij.execution.util;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.ui.ColumnInfo;
@@ -23,7 +24,7 @@ import com.intellij.util.ui.ListTableModel;
 
 final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.PathMapping> {
   PathMappingTable() {
-    getTableView().getEmptyText().setText("No mappings");
+    getTableView().getEmptyText().setText(ExecutionBundle.message("empty.text.no.mappings"));
   }
 
   @Override
