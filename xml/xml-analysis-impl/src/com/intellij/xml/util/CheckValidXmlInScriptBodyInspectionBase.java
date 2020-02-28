@@ -16,7 +16,10 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XmlLexer;
@@ -114,12 +117,6 @@ public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInsp
 
   protected LocalQuickFix createFix(PsiElement psiElement, int offsetInElement) {
     return null;
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return XmlInspectionGroupNames.HTML_INSPECTIONS;
   }
 
   @Override

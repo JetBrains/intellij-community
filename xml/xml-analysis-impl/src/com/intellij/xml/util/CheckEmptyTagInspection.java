@@ -79,12 +79,6 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
 
   @Override
   @NotNull
-  public String getGroupDisplayName() {
-    return XmlInspectionGroupNames.HTML_INSPECTIONS;
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "CheckEmptyScriptTag";

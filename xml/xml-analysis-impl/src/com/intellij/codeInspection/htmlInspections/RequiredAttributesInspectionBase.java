@@ -58,12 +58,6 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
 
   @Override
   @NotNull
-  public String getGroupDisplayName() {
-    return XmlInspectionGroupNames.HTML_INSPECTIONS;
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return REQUIRED_ATTRIBUTES_SHORT_NAME;
