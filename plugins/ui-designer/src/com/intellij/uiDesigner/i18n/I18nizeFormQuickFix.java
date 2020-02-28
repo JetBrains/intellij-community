@@ -97,17 +97,8 @@ public class I18nizeFormQuickFix extends QuickFix {
     }
 
     if (aPropertiesFile != null) {
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      String packageName = fileIndex.getPackageNameByDirectory(aPropertiesFile.getVirtualFile().getParent());
-      if (packageName != null) {
-        String bundleName;
-        if (!packageName.isEmpty()) {
-          bundleName = packageName + "." + aPropertiesFile.getResourceBundle().getBaseName();
-        }
-        else {
-          bundleName = aPropertiesFile.getResourceBundle().getBaseName();
-        }
-        bundleName = bundleName.replace('.', '/');
+      String bundleName = getBundleName(project, aPropertiesFile);
+      if (bundleName != null){
         try {
           setStringDescriptorValue(new StringDescriptor(bundleName, dialog.getKey()));
         }
@@ -117,6 +108,20 @@ public class I18nizeFormQuickFix extends QuickFix {
         myEditor.refreshAndSave(true);
       }
     }
+  }
+
+  static String getBundleName(Project project, PropertiesFile aPropertiesFile) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    String packageName = fileIndex.getPackageNameByDirectory(aPropertiesFile.getVirtualFile().getParent());
+    if (packageName == null) return null;
+    String bundleName;
+    if (!packageName.isEmpty()) {
+      bundleName = packageName + "." + aPropertiesFile.getResourceBundle().getBaseName();
+    }
+    else {
+      bundleName = aPropertiesFile.getResourceBundle().getBaseName();
+    }
+    return bundleName.replace('.', '/');
   }
 
   protected StringDescriptor getStringDescriptorValue() {
