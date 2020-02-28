@@ -315,14 +315,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation());
       JBTable table = new JBTable(new MyKeyValueModel());
       table.getSelectionModel().addListSelectionListener(e -> {
-        int index = table.getSelectionModel().getLeadSelectionIndex();
-        if (index != -1) {
-          List<PsiElement> elements = myKeyValuePairs.get(index).getPsiElements();
-          myUsagePreviewPanel.updateLayout(ContainerUtil.map(elements, element -> new UsageInfo(element.getParent())));
-        }
-        else {
-          myUsagePreviewPanel.updateLayout(null);
-        }
+        updateUsagePreview(table);
       });
 
       splitter.setFirstComponent(ToolbarDecorator.createDecorator(table).setRemoveAction(new AnActionButtonRunnable() {
@@ -330,10 +323,22 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         public void run(AnActionButton button) {
           TableUtil.removeSelectedItems(table);
           table.repaint();
+          updateUsagePreview(table);
         }
       }).createPanel());
       splitter.setSecondComponent(myUsagePreviewPanel);
       return splitter;
+    }
+
+    private void updateUsagePreview(JBTable table) {
+      int index = table.getSelectionModel().getLeadSelectionIndex();
+      if (index != -1) {
+        List<PsiElement> elements = myKeyValuePairs.get(index).getPsiElements();
+        myUsagePreviewPanel.updateLayout(ContainerUtil.map(elements, element -> new UsageInfo(element.getParent())));
+      }
+      else {
+        myUsagePreviewPanel.updateLayout(null);
+      }
     }
 
     @Override
