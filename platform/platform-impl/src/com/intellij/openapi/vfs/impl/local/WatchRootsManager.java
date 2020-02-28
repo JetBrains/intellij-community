@@ -1,14 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest;
-import com.intellij.openapi.vfs.newvfs.persistent.SymlinkRegistry;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -20,31 +19,30 @@ import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class WatchRootsManager {
+  private static final int ROOTS_UPDATE_DELAY_MS = 20;
 
   protected static final Logger LOG = Logger.getInstance(WatchRootsManager.class);
 
   private final FileWatcher myFileWatcher;
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private boolean watcherRequiresUpdate; // Synchronized on myLock
-
-  private final Object myLock = new Object();
 
   private final NavigableMap<String, List<WatchRequest>> myRecursiveWatchRoots = WatchRootsUtil.createFileNavigableMap();
   private final NavigableMap<String, List<WatchRequest>> myFlatWatchRoots = WatchRootsUtil.createFileNavigableMap();
-
   private final NavigableSet<String> myOptimizedRecursiveWatchRoots = WatchRootsUtil.createFileNavigableSet();
-
   private final NavigableMap<String, SymlinkData> mySymlinksByPath = WatchRootsUtil.createFileNavigableMap();
-  private final TIntObjectHashMap<SymlinkData> mySymlinksById = new TIntObjectHashMap<>();
+  private final TIntObjectHashMap<SymlinkData> mySymlinksById = new TIntObjectHashMap<>();  // TODO make persistent across sessions
   private final MultiMap<String, String> myPathMappings = MultiMap.createConcurrentSet();
 
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private boolean myWatcherRequiresUpdate;  // synchronized on `myLock`
+  private Future<?> myScheduledUpdate = CompletableFuture.completedFuture(null);
+  private final Object myLock = new Object();
 
-  public WatchRootsManager(@NotNull FileWatcher fileWatcher,
-                           @NotNull Disposable parentDisposable) {
+  public WatchRootsManager(@NotNull FileWatcher fileWatcher) {
     myFileWatcher = fileWatcher;
-    SymlinkRegistry.INSTANCE.watchSymlinks(this::processSymlinkEvents, parentDisposable);
   }
 
   @NotNull
@@ -54,7 +52,7 @@ public class WatchRootsManager {
     Set<WatchRequest> result = new HashSet<>(recursiveRootsToAdd.size() + flatRootsToAdd.size());
 
     synchronized (myLock) {
-      watcherRequiresUpdate = false;
+      myWatcherRequiresUpdate = false;
 
       updateWatchRoots(recursiveRootsToAdd,
                        ContainerUtil.map2SetNotNull(watchRequestsToRemove, req -> req.isToWatchRecursively() ? req : null),
@@ -64,14 +62,15 @@ public class WatchRootsManager {
                        ContainerUtil.map2SetNotNull(watchRequestsToRemove, req -> req.isToWatchRecursively() ? null : req),
                        result, myFlatWatchRoots, false);
 
-      if (watcherRequiresUpdate) {
+      if (myWatcherRequiresUpdate) {
         updateFileWatcher();
       }
     }
+
     return result;
   }
 
-  public void clear() {
+  void clear() {
     synchronized (myLock) {
       myRecursiveWatchRoots.clear();
       myOptimizedRecursiveWatchRoots.clear();
@@ -79,6 +78,63 @@ public class WatchRootsManager {
       myPathMappings.clear();
       mySymlinksById.forEachValue(data -> { data.clear(); return true; });
     }
+  }
+
+  void updateSymlink(int fileId, @SystemIndependent String linkPath, @Nullable @SystemIndependent String linkTarget) {
+    synchronized (myLock) {
+      myWatcherRequiresUpdate = false;
+
+      SymlinkData data = mySymlinksById.remove(fileId);
+      if (data != null && data.path != null) {
+        data.removeRequest(this);
+      }
+
+      SymlinkData existing = mySymlinksByPath.get(linkPath);
+      if (existing != null) {
+        if (existing.id == fileId) {
+          LOG.warn("Duplicated add symlink event on: " + existing);
+        }
+        else {
+          LOG.error("Path conflict. Existing symlink: " + existing + " vs. new symlink: " + linkPath + " -> " + linkTarget);
+        }
+        return;
+      }
+
+      data = new SymlinkData(fileId, linkPath, linkTarget);
+      mySymlinksByPath.put(data.path, data);
+      mySymlinksById.put(data.id, data);
+      if (WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, data.path)) {
+        addWatchSymlinkRequest(data.getWatchRequest());
+      }
+
+      if (myWatcherRequiresUpdate) {
+        scheduleUpdate();
+      }
+    }
+  }
+
+  void removeSymlink(int fileId) {
+    synchronized (myLock) {
+      myWatcherRequiresUpdate = false;
+
+      SymlinkData data = mySymlinksById.remove(fileId);
+      if (data != null && data.path != null) {
+        data.removeRequest(this);
+      }
+
+      if (myWatcherRequiresUpdate) {
+        scheduleUpdate();
+      }
+    }
+  }
+
+  private void scheduleUpdate() {
+    myScheduledUpdate.cancel(false);
+    myScheduledUpdate = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      synchronized (myLock) {
+        updateFileWatcher();
+      }
+    }, ROOTS_UPDATE_DELAY_MS, TimeUnit.MILLISECONDS);
   }
 
   private void updateFileWatcher() {
@@ -130,7 +186,7 @@ public class WatchRootsManager {
             collectSymlinkRequests(newRequest, watchSymlinkRequestsToAdd);
           }
           if (requests.size() == 1 && !WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, watchRoot)) {
-            watcherRequiresUpdate = true;
+            myWatcherRequiresUpdate = true;
             if (recursiveWatchRoots) {
               WatchRootsUtil.insertRecursivePath(myOptimizedRecursiveWatchRoots, watchRoot);
             }
@@ -165,63 +221,13 @@ public class WatchRootsManager {
         roots.remove(watchRoot);
         if (request.isToWatchRecursively()) {
           if (WatchRootsUtil.removeRecursivePath(myOptimizedRecursiveWatchRoots, myRecursiveWatchRoots, watchRoot)) {
-            watcherRequiresUpdate = true;
+            myWatcherRequiresUpdate = true;
           }
         }
         else if (!WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, watchRoot)) {
-          watcherRequiresUpdate = true;
+          myWatcherRequiresUpdate = true;
         }
       }
-    }
-  }
-
-  private void processSymlinkEvents(List<SymlinkRegistry.SymlinkEvent> events) {
-    synchronized (myLock) {
-      watcherRequiresUpdate = false;
-      for (SymlinkRegistry.SymlinkEvent event : events) {
-        switch (event.eventType) {
-          case ADDED:
-            addSymlink(event);
-            break;
-          case DELETED:
-            removeSymlink(event.fileId);
-            break;
-          case UPDATED:
-            removeSymlink(event.fileId);
-            addSymlink(event);
-            break;
-        }
-      }
-      if (watcherRequiresUpdate) {
-        updateFileWatcher();
-      }
-    }
-  }
-
-  private void addSymlink(SymlinkRegistry.SymlinkEvent event) {
-    SymlinkData existing = mySymlinksByPath.get(event.linkPath);
-    if (existing != null) {
-      if (existing.id == event.fileId) {
-        LOG.warn("Duplicated add symlink event on: " + existing);
-      }
-      else {
-        LOG.error("Path conflict. Existing symlink: " + existing + " vs. new symlink: " + event);
-      }
-      return;
-    }
-
-    SymlinkData data = new SymlinkData(event.fileId, event.linkPath, event.linkTarget);
-    mySymlinksByPath.put(data.path, data);
-    mySymlinksById.put(data.id, data);
-    if (WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, data.path)) {
-      addWatchSymlinkRequest(data.getWatchRequest());
-    }
-  }
-
-  private void removeSymlink(int fileId) {
-    SymlinkData data = mySymlinksById.remove(fileId);
-    if (data != null && data.path != null) {
-      data.removeRequest(this);
     }
   }
 
@@ -246,7 +252,7 @@ public class WatchRootsManager {
       }
     }
     if (request.setRegistered(true)) {
-      watcherRequiresUpdate = true;
+      myWatcherRequiresUpdate = true;
       myPathMappings.putValue(watchRoot, request.getOriginalPath());
     }
   }
@@ -275,7 +281,7 @@ public class WatchRootsManager {
     removeWatchRequest(request);
     if (request.setRegistered(false)) {
       myPathMappings.remove(request.getRootPath(), request.getOriginalPath());
-      watcherRequiresUpdate = true;
+      myWatcherRequiresUpdate = true;
     }
   }
 

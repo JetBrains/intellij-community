@@ -22,6 +22,8 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
@@ -285,11 +287,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     if (attributes.isSymLink()) {
       FSRecords.storeSymlinkTarget(id, symlinkTarget);
-      VirtualFile parent = getInstance().findFileById(parentId);
-      assert parent != null : parentId + '/' + id + ": " + name.toString() + " -> " + symlinkTarget;
-      SymlinkRegistry.INSTANCE.symlinkTargetStored(id, parent.getPath() + '/' + name.toString(), symlinkTarget);
-    } else {
-      SymlinkRegistry.INSTANCE.symlinkPossiblyRemoved(id);
+      if (fs instanceof Win32LocalFileSystem) {
+        fs = LocalFileSystem.getInstance();
+      }
+      if (fs instanceof LocalFileSystemImpl) {
+        VirtualFile parent = getInstance().findFileById(parentId);
+        assert parent != null : parentId + '/' + id + ": " + name.toString() + " -> " + symlinkTarget;
+        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent.getPath() + '/' + name.toString(), symlinkTarget);
+      }
     }
 
     return true;
@@ -1426,7 +1431,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void invalidateSubtree(@NotNull VirtualFile file) {
-    final VirtualFileSystemEntry impl = (VirtualFileSystemEntry)file;
+    VirtualFileSystemEntry impl = (VirtualFileSystemEntry)file;
+    if (file.is(VFileProperty.SYMLINK)) {
+      VirtualFileSystem fs = file.getFileSystem();
+      if (fs instanceof LocalFileSystemImpl) {
+        ((LocalFileSystemImpl)fs).symlinkRemoved(impl.getId());
+      }
+    }
     impl.invalidate();
     for (VirtualFile child : impl.getCachedChildren()) {
       invalidateSubtree(child);
@@ -1465,7 +1476,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static void executeSetTarget(@NotNull VirtualFile file, @Nullable String target) {
     int id = getFileId(file);
     FSRecords.storeSymlinkTarget(id, target);
-    SymlinkRegistry.INSTANCE.symlinkTargetStored(id, file.getPath(), target);
+    VirtualFileSystem fs = file.getFileSystem();
+    if (fs instanceof LocalFileSystemImpl) {
+      ((LocalFileSystemImpl)fs).symlinkUpdated(id, file.getPath(), target);
+    }
   }
 
   private static void setFlag(@NotNull VirtualFile file, int mask, boolean value) {
