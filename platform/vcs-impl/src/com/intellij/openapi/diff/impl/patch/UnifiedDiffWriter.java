@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.patch.GitPatchWriter;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,9 +51,16 @@ public class UnifiedDiffWriter {
                            final String lineSeparator,
                            @NotNull final List<? extends PatchEP> extensions,
                            final CommitContext commitContext) throws IOException {
+    //write the patch files without content modifications strictly after the files with content modifications,
+    // because GitPatchReader is not ready for mixed style patches
+    List<FilePatch> noContentPatches = new ArrayList<>();
     for (FilePatch filePatch : patches) {
       if (!(filePatch instanceof TextFilePatch)) continue;
       TextFilePatch patch = (TextFilePatch)filePatch;
+      if (patch.hasNoModifiedContent()) {
+        noContentPatches.add(patch);
+        continue;
+      }
       @Nullable String t = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
       String path = Objects.requireNonNull(t);
       String pathRelatedToProjectDir =
@@ -93,6 +101,9 @@ public class UnifiedDiffWriter {
           }
         }
       }
+    }
+    for (FilePatch patch : noContentPatches) {
+      GitPatchWriter.writeGitHeader(writer, basePath, patch);
     }
   }
 
