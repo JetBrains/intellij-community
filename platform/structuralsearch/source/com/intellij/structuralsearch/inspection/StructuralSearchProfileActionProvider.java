@@ -52,6 +52,18 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     if (!Registry.is("ssr.separate.inspections")) return Collections.emptyList();
 
     final InspectionProfileModifiableModel profile = panel.getProfile();
+    if (!profile.isToolEnabled(HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME))) {
+      // enable SSBasedInspection if it was manually disabled
+      profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true);
+
+      for (ScopeToolState tool : profile.getAllTools()) {
+        final InspectionToolWrapper<?, ?> wrapper = tool.getTool();
+        if (wrapper instanceof StructuralSearchInspectionToolWrapper) {
+          tool.setEnabled(false);
+        }
+      }
+    }
+
     for (ScopeToolState tool : profile.getAllTools()) {
       final InspectionToolWrapper<?, ?> wrapper = tool.getTool();
       if (wrapper instanceof StructuralSearchInspectionToolWrapper) {
@@ -155,7 +167,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       // already added
       return;
     }
-    final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration, true);
+    final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
     wrapped.setProfile(profile);
     profile.addTool(project, wrapped, null);
 

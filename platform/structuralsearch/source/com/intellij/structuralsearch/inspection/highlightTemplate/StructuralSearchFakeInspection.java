@@ -42,18 +42,15 @@ import java.util.List;
 public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
   @NotNull private Configuration myConfiguration;
-  private final boolean myEnabled;
   private InspectionProfileImpl myProfile = null;
 
-  public StructuralSearchFakeInspection(@NotNull Configuration configuration, boolean enabled) {
+  public StructuralSearchFakeInspection(@NotNull Configuration configuration) {
     myConfiguration = configuration;
-    myEnabled = enabled;
   }
 
   public StructuralSearchFakeInspection(StructuralSearchFakeInspection copy) {
     myConfiguration = copy.myConfiguration;
     myProfile = copy.myProfile;
-    myEnabled = copy.myEnabled;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -71,7 +68,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {
-    return myEnabled;
+    return true;
   }
 
   @SuppressWarnings("PatternValidation")
