@@ -34,8 +34,9 @@ interface AnalyzerController {
 }
 
 // Status
-class AnalyzerStatus(val icon: Icon, statusText: String, val controller: () -> AnalyzerController) {
-  val statusText = XmlStringUtil.wrapInHtml(statusText)
+class AnalyzerStatus(val icon: Icon, title: String, details: String?, val controller: () -> AnalyzerController) {
+  val title = XmlStringUtil.wrapInHtml(title)
+  val details = if (details != null) XmlStringUtil.wrapInHtml(details) else ""
   var showNavigation = false
   var expandedIcon: Icon = icon
 
@@ -54,7 +55,7 @@ class AnalyzerStatus(val icon: Icon, statusText: String, val controller: () -> A
 
     return icon == other.icon &&
            expandedIcon == other.expandedIcon &&
-           statusText == other.statusText &&
+           title == other.title && details == other.details &&
            showNavigation == other.showNavigation
   }
 }

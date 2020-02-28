@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -1581,7 +1582,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private class StatusAction extends AnAction {
+  private class StatusAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myPopupManager.showPopup(e.getInputEvent());
@@ -1681,7 +1682,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       contentPanel.setBackground(UIUtil.getToolTipBackground());
 
       GridBag gc = new GridBag();
-      contentPanel.add(new JLabel(myCurrentStatus.getStatusText()),
+      contentPanel.add(new JLabel(myCurrentStatus.getTitle()),
                        gc.nextLine().next().
                          anchor(GridBagConstraints.LINE_START).
                          weightx(1).
@@ -1697,6 +1698,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
                                                  ActionPlaces.EDITOR_POPUP,
                                                  ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
       contentPanel.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
+      if (StringUtil.isNotEmpty(myCurrentStatus.getDetails())) {
+        contentPanel.add(new JLabel(myCurrentStatus.getDetails()),
+                         gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().
+                           coverLine().weightx(1).insets(0, 10, 10, 6));
+      }
+
       contentPanel.add(createLowerPanel(controller),
                        gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
 
