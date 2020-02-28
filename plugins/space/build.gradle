@@ -1,8 +1,10 @@
+import static Versions.*
+
 buildscript {
     repositories {
         maven { url "https://www.jetbrains.com/intellij-repository/snapshots" } // for nightly builds
-        if (Build.buildSettings.useCacheRedirector){
-            maven { url "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-plugin-service"}
+        if (Build.buildSettings.useCacheRedirector) {
+            maven { url "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-plugin-service" }
         } else {
             maven { url "https://dl.bintray.com/jetbrains/intellij-plugin-service" }
         }
