@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -265,7 +266,7 @@ public class LambdaRefactoringUtil {
     if (copyTopLevelCall != null) {
       PsiMethodReferenceExpression methodReferenceInCopy = (PsiMethodReferenceExpression)PsiTreeUtil.releaseMark(copyTopLevelCall, marker);
       if (methodReferenceInCopy != null) {
-        PsiClassType functionalInterfaceType = (PsiClassType)methodReferenceInCopy.getFunctionalInterfaceType();
+        PsiClassType functionalInterfaceType = ObjectUtils.tryCast(methodReferenceInCopy.getFunctionalInterfaceType(), PsiClassType.class);
         if (functionalInterfaceType == null) return false;
         PsiClassType.ClassResolveResult funcResult = functionalInterfaceType.resolveGenerics();
         PsiClass funcClass = funcResult.getElement();
