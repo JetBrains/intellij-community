@@ -5,8 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.BinaryEncoder;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -18,17 +16,14 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
 
-import static com.intellij.openapi.diff.impl.patch.PatchUtil.EXECUTABLE_FILE_MODE;
-import static com.intellij.openapi.diff.impl.patch.PatchUtil.REGULAR_FILE_MODE;
 import static com.intellij.openapi.vcs.changes.patch.BlobIndexUtil.NOT_COMMITTED_HASH;
+import static com.intellij.openapi.vcs.changes.patch.GitPatchWriter.getIndexHeader;
+import static com.intellij.openapi.vcs.changes.patch.GitPatchWriter.writeGitHeader;
 
 public class BinaryPatchWriter {
 
   private final static Logger LOG = Logger.getInstance(BinaryFilePatch.class);
 
-  private final static @NonNls String GIT_DIFF_HEADER = "diff --git %s %s";
-  private final static @NonNls String FILE_MODE_HEADER = "%s file mode %s";
-  private final static @NonNls String INDEX_SHA1_HEADER = "index %s..%s";
   private final static @NonNls String GIT_BINARY_HEADER = "GIT binary patch";
   private final static @NonNls String LITERAL_HEADER = "literal %s";
 
@@ -38,18 +33,7 @@ public class BinaryPatchWriter {
     String lineSeparator = "\n"; //use it for git headers&binary content, otherwise git won't parse&apply it properly
     for (FilePatch patch : patches) {
       BinaryFilePatch filePatch = (BinaryFilePatch)patch;
-      writer.write(String.format(GIT_DIFF_HEADER, filePatch.getBeforeName(), filePatch.getAfterName()));
-      writer.write(lineSeparator);
-      File afterFile = new File(basePath, filePatch.getAfterName());
-      if (filePatch.isDeletedFile()) {
-        writer.write(getFileModeHeader(FileStatus.DELETED, REGULAR_FILE_MODE));
-        writer.write(lineSeparator);
-      }
-      else if (filePatch.isNewFile()) {
-        writer.write(getFileModeHeader(FileStatus.ADDED, !SystemInfo.isWindows && afterFile.canExecute()
-                                                         ? EXECUTABLE_FILE_MODE : REGULAR_FILE_MODE));
-        writer.write(lineSeparator);
-      }
+      writeGitHeader(writer, basePath, filePatch);
       byte[] afterContent = filePatch.getAfterContent();
       writer.write(getIndexHeader(filePatch.isNewFile() ? NOT_COMMITTED_HASH : getSha1ForContent(filePatch.getBeforeContent()),
                                   filePatch.isDeletedFile() ? NOT_COMMITTED_HASH : getSha1ForContent(afterContent)));
@@ -62,20 +46,11 @@ public class BinaryPatchWriter {
         BinaryEncoder.encode(new ByteArrayInputStream(afterContent != null ? afterContent : ArrayUtilRt.EMPTY_BYTE_ARRAY), writer);
       }
       catch (BinaryEncoder.BinaryPatchException e) {
+        File afterFile = new File(basePath, filePatch.getAfterName());
         LOG.error("Can't write patch for binary file: " + afterFile.getPath(), e);
       }
       writer.write(lineSeparator);
     }
-  }
-
-  @NotNull
-  private static String getFileModeHeader(@NotNull FileStatus fileStatus, int mode) {
-    return String.format(FILE_MODE_HEADER, fileStatus == FileStatus.DELETED ? "deleted" : "new", mode); //NON-NLS NON-NLS
-  }
-
-  @NotNull
-  private static String getIndexHeader(@NotNull String beforeHash, @NotNull String afterHash) {
-    return String.format(INDEX_SHA1_HEADER, beforeHash, afterHash);
   }
 
   @NotNull

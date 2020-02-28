@@ -44,4 +44,9 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
     VirtualFile file = dir.findChild(name);
     setFileText(file, "some content");
   }
+
+  protected static void createChildDataWithoutContent(@NotNull VirtualFile dir, @NotNull String name) {
+    createChildData(dir, name);
+    dir.findChild(name);
+  }
 }
