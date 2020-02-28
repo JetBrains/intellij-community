@@ -27,10 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
-
 public class GitRebaseUtils {
-  public static final String CONTINUE_PROGRESS_TITLE = "Continue Rebase Process" + ELLIPSIS;
   private final static Logger LOG = Logger.getInstance(GitRebaseUtils.class.getName());
 
   private GitRebaseUtils() {
