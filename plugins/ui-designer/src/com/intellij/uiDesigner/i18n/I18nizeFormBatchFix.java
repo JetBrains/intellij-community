@@ -15,6 +15,8 @@ import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -32,14 +34,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.inspections.FormElementProblemDescriptor;
+import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.ITabbedPane;
+import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.ItemRemovable;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -68,7 +75,8 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
     List<ReplacementBean> beans = new ArrayList<>();
     HashSet<Module> contextModules = new HashSet<>();
     Map<File, Element> fileElementMap = new HashMap<>();
-    //todo group same values, eliminate duplicates
+    UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
+    Map<String, List<ReplacementBean>> myDuplicates = new HashMap<>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       FormElementProblemDescriptor formElementProblemDescriptor = (FormElementProblemDescriptor)descriptor;
       PsiFile containingFile = formElementProblemDescriptor.getPsiElement().getContainingFile();
@@ -87,11 +95,16 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
       Element elementById = findElementById(formElementProblemDescriptor.getComponentId(), rootElement);
       String propertyName = formElementProblemDescriptor.getPropertyName();
       String value = getValue(elementById, propertyName);
-      ReplacementBean bean = new ReplacementBean(I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null), elementById,
+      ReplacementBean bean = new ReplacementBean(uniqueNameGenerator.generateUniqueName(I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null)), elementById,
                                                  propertyName,
-                                                 value
-      );
-      beans.add(bean);
+                                                 value);
+      if (myDuplicates.containsKey(value)) {
+        myDuplicates.computeIfAbsent(value, k -> new ArrayList<>(1)).add(bean);
+      }
+      else {
+        beans.add(bean);
+        myDuplicates.put(value, null);
+      }
     }
 
     I18NBatchDialog dialog = new I18NBatchDialog(project, beans, contextModules);
@@ -117,13 +130,49 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
                                                                         bean.myValue,
                                                                         PsiExpression.EMPTY_ARRAY);
           applyFix(bean.myElement, bean.myPropertyName, bundleName, bean.myKey);
+          List<ReplacementBean> duplicates = myDuplicates.get(bean.myValue);
+          if (duplicates != null) {
+            for (ReplacementBean duplicateBean : duplicates) {
+              applyFix(duplicateBean.myElement, duplicateBean.myPropertyName, bundleName, bean.myKey);
+            }
+          }
         }
 
         for (Map.Entry<File, Element> entry : fileElementMap.entrySet()) {
+
+          final String text = JDOMUtil.write(entry.getValue());
+
+          VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(entry.getKey());
+          if (virtualFile == null) continue;
+          final ClassLoader classLoader = LoaderFactory.getInstance(project).getLoader(virtualFile);
+          Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+
           try {
-            JDOMUtil.write(entry.getValue(), entry.getKey(), "\n");
+            final LwRootContainer rootContainer = Utils.getRootContainer(text, new CompiledClassPropertiesProvider(classLoader));
+            ModuleProvider moduleProvider = new ModuleProvider() {
+              @Override
+              public Module getModule() {
+                return module;
+              }
+
+              @Override
+              public Project getProject() {
+                return project;
+              }
+            };
+            final RadRootContainer container = XmlReader.createRoot(moduleProvider, rootContainer, classLoader, null);
+            final XmlWriter writer = new XmlWriter();
+            container.write(writer);
+            FileUtil.writeToFile(entry.getKey(), writer.getText());
+
+            FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors(virtualFile);
+            for (FileEditor editor : editors) {
+              if (editor instanceof UIFormEditor) {
+                ((UIFormEditor)editor).getEditor().refresh();
+              }
+            }
           }
-          catch (IOException e) {
+          catch (Exception e) {
             LOG.error(e);
           }
         }
