@@ -56,6 +56,7 @@ interface SuggestedRefactoringSupport {
    */
   fun nameRange(declaration: PsiElement): TextRange?
 
+  @JvmDefault
   open fun hasSyntaxError(declaration: PsiElement): Boolean {
     val signatureRange = signatureRange(declaration) ?: return true
     return declaration.containingFile.hasErrorElementInRange(signatureRange)
