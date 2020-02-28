@@ -40,6 +40,7 @@ import git4idea.GitRevisionNumber;
 import git4idea.branch.GitRebaseParams;
 import git4idea.commands.*;
 import git4idea.history.GitHistoryUtils;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitDefaultMergeDialogCustomizer;
 import git4idea.merge.GitDefaultMergeDialogCustomizerKt;
@@ -51,10 +52,7 @@ import git4idea.stash.GitChangesSaver;
 import git4idea.util.GitFreezingProcess;
 import git4idea.util.GitUntrackedFilesHelper;
 import kotlin.Pair;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.*;
@@ -79,12 +77,18 @@ public class GitRebaseProcess {
 
   private static final Logger LOG = Logger.getInstance(GitRebaseProcess.class);
 
-  private final NotificationAction ABORT_ACTION =
-    NotificationAction.createSimpleExpiring("Abort", () -> abort());
-  private final NotificationAction CONTINUE_ACTION =
-    NotificationAction.createSimpleExpiring("Continue", () -> retry(GitRebaseUtils.CONTINUE_PROGRESS_TITLE));
-  private final NotificationAction RETRY_ACTION =
-    NotificationAction.createSimpleExpiring("Retry", () -> retry("Retry Rebase Process" + ELLIPSIS));
+  private final NotificationAction ABORT_ACTION = NotificationAction.createSimpleExpiring(
+    GitBundle.message("rebase.notification.action.abort.text"),
+    () -> abort()
+  );
+  private final NotificationAction CONTINUE_ACTION = NotificationAction.createSimpleExpiring(
+    GitBundle.message("rebase.notification.action.continue.text"),
+    () -> retry(GitBundle.getString("rebase.progress.indicator.continue.title"))
+  );
+  private final NotificationAction RETRY_ACTION = NotificationAction.createSimpleExpiring(
+    GitBundle.message("rebase.notification.action.retry.text"),
+    () -> retry(GitBundle.getString("rebase.progress.indicator.retry.title"))
+  );
   private final NotificationAction VIEW_STASH_ACTION;
 
   @NotNull private final Project myProject;
@@ -700,7 +704,7 @@ public class GitRebaseProcess {
     @Override
     protected boolean proceedAfterAllMerged() {
       if (myCalledFromNotification) {
-        retry(GitRebaseUtils.CONTINUE_PROGRESS_TITLE);
+        retry(GitBundle.getString("rebase.progress.indicator.continue.title"));
       }
       return true;
     }
@@ -759,7 +763,7 @@ public class GitRebaseProcess {
     });
   }
 
-  private void retry(@NotNull String processTitle) {
+  private void retry(@NotNull @Nls String processTitle) {
     myProgressManager.run(new Task.Backgroundable(myProject, processTitle, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

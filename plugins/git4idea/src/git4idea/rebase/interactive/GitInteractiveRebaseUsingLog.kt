@@ -93,7 +93,7 @@ internal fun interactivelyRebaseUsingLog(repository: GitRepository, commit: VcsS
   val project = repository.project
   val root = repository.root
 
-  object : Task.Backgroundable(project, GitBundle.message("rebase.preparing.progress.indicator.title")) {
+  object : Task.Backgroundable(project, GitBundle.message("rebase.progress.indicator.preparing.title")) {
     private var generatedEntries: List<GitRebaseEntryGeneratedUsingLog>? = null
 
     override fun run(indicator: ProgressIndicator) {
