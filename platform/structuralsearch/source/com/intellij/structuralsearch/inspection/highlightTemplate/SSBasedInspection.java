@@ -34,10 +34,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -192,12 +190,6 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
         return SSRBundle.message("SSRInspection.family.name");
       }
     };
-  }
-
-  @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SSBasedInspectionOptions(myConfigurations).getComponent();
   }
 
   @TestOnly
