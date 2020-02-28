@@ -4,9 +4,10 @@ package com.intellij.sh.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiReference;
 
-public interface ShLiteral extends ShSimpleCommandElement {
+public interface ShLiteral extends ShSimpleCommandElement, PsiNameIdentifierOwner {
 
   @Nullable
   PsiElement getWord();

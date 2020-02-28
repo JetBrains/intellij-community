@@ -11,7 +11,7 @@ import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
 import com.intellij.psi.PsiReference;
 
-public class ShLiteralImpl extends ShSimpleCommandElementImpl implements ShLiteral {
+public class ShLiteralImpl extends ShLiteralMixin implements ShLiteral {
 
   public ShLiteralImpl(ASTNode node) {
     super(node);

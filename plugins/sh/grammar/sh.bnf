@@ -117,7 +117,7 @@
   extends("variable|string|number")=literal
   extends(".*command|function_definition")=command
 
-  implements("function_definition|assignment_command|assignment_expression")="com.intellij.psi.PsiNameIdentifierOwner"
+  implements("function_definition|assignment_command|assignment_expression|literal")="com.intellij.psi.PsiNameIdentifierOwner"
 
   extends("(comma|assignment|conditional|logical_or|logical_and|bitwise_or|bitwise_exclusive_or|bitwise_and|equality|comparison|bitwise_shift|add|mul|exp)_expression")=binary_expression
   extends(".*expression")=expression
@@ -300,6 +300,7 @@ array_assignment ::= newlines '='? expression newlines
 
 literal ::= word | string | number | variable {
   extends=simple_command_element
+  mixin="com.intellij.sh.psi.impl.ShLiteralMixin"
   methods=[getReferences]
 }
 private not_lvalue ::= '!' | vars | '$' | brace_expansion | 'file descriptor'

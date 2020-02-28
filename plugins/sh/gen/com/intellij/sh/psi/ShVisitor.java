@@ -196,6 +196,7 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitLiteral(@NotNull ShLiteral o) {
     visitSimpleCommandElement(o);
+    // visitPsiNameIdentifierOwner(o);
   }
 
   public void visitLiteralCondition(@NotNull ShLiteralCondition o) {
