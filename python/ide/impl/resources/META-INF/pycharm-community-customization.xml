@@ -30,7 +30,9 @@
 
     <filetype.prebuiltStubsProvider filetype="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider"/>
 
-    <statusBarWidgetFactory implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"/>
+    <statusBarWidgetFactory id="pythonInterpreterWidget"
+                            implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"
+                            order="after codeStyleWidget, before gitWidget, before hgWidget, before notificationsWidget"/>
 
     <projectConfigurable groupId="build"
                          id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
