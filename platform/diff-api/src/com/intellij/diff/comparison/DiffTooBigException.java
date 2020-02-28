@@ -19,9 +19,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 
 public class DiffTooBigException extends ProcessCanceledException {
-  @SuppressWarnings("SSBasedInspection")
-  public static final String MESSAGE = DiffBundle.message("file.is.too.big.and.there.are.too.many.changes");
-
   public DiffTooBigException() {
   }
 
