@@ -17,7 +17,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -49,8 +47,6 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   @NotNull
   @Override
   public List<AnAction> getActions(SingleInspectionProfilePanel panel) {
-    if (!Registry.is("ssr.separate.inspections")) return Collections.emptyList();
-
     final InspectionProfileModifiableModel profile = panel.getProfile();
     if (!profile.isToolEnabled(HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME))) {
       // enable SSBasedInspection if it was manually disabled

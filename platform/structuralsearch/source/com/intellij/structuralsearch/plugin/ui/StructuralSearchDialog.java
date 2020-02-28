@@ -585,20 +585,18 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
           ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(getConfiguration());
         }
       });
-    if (Registry.is("ssr.separate.inspections")) {
-      templateActionGroup.add(
-        new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFileTypesComboBox));
-            if (project == null) {
-              return;
-            }
-            final InspectionProfileImpl inspectionProfile = InspectionProfileManager.getInstance(project).getCurrentProfile();
-            StructuralSearchProfileActionProvider.createNewInspection(getConfiguration(), inspectionProfile, project);
+    templateActionGroup.add(
+      new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFileTypesComboBox));
+          if (project == null) {
+            return;
           }
-        });
-    }
+          final InspectionProfileImpl inspectionProfile = InspectionProfileManager.getInstance(project).getCurrentProfile();
+          StructuralSearchProfileActionProvider.createNewInspection(getConfiguration(), inspectionProfile, project);
+        }
+      });
     templateActionGroup.addSeparator();
     templateActionGroup.addAll(
       new CopyConfigurationAction(),
