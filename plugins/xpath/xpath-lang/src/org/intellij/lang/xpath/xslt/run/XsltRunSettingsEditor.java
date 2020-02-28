@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.run;
 
+import com.intellij.execution.impl.CheckableRunConfigurationEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ReadAction;
@@ -71,11 +72,17 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 
-class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
+class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
+  implements CheckableRunConfigurationEditor<XsltRunConfiguration> {
   static final boolean ALLOW_CHOOSING_SDK = !(StdFileTypes.JAVA instanceof PlainTextFileType);
   private final Project myProject;
 
   private Editor myEditor;
+
+  @Override
+  public void checkEditorData(XsltRunConfiguration s) {
+    // this prevents applyTo() call with unneeded sdk model update
+  }
 
   static class Editor implements PanelWithAnchor {
     private JTabbedPane myComponent;
