@@ -52,7 +52,9 @@
     <!--END HG ignore lang-->
     <vcs.actions.ScheduleForAdditionActionExtension implementation="org.zmlx.hg4idea.action.HgAdd"/>
 
-    <statusBarWidgetFactory implementation="org.zmlx.hg4idea.status.ui.HgStatusWidget$Factory" order="after selectionModeWidget,before notificationsWidget"/>
+    <statusBarWidgetFactory id="hgWidget"
+                            implementation="org.zmlx.hg4idea.status.ui.HgStatusWidget$Factory"
+                            order="after selectionModeWidget,before notificationsWidget"/>
   </extensions>
 
   <projectListeners>
