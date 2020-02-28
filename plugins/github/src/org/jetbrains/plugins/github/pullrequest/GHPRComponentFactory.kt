@@ -85,7 +85,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     val uiDisposable = Disposer.newDisposable()
     Disposer.register(parentDisposable, uiDisposable)
 
-    val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>()
+    val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>(uiDisposable)
     val contentContainer = JBPanelWithEmptyText(null).apply {
       background = UIUtil.getListBackground()
     }
@@ -377,7 +377,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private fun createDetailsLoadingModel(dataProviderModel: SingleValueModel<GHPRDataProvider?>,
                                         parentDisposable: Disposable): GHCompletableFutureLoadingModel<GHPullRequest> {
-    val model = GHCompletableFutureLoadingModel<GHPullRequest>()
+    val model = GHCompletableFutureLoadingModel<GHPullRequest>(parentDisposable)
 
     var listenerDisposable: Disposable? = null
 

@@ -1,13 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates.observable
 
-class GHCompletableFutureLoadingModel<T> : GHSimpleLoadingModel<T>() {
+class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
+  : GHSimpleLoadingModel<T>(), Disposable {
+
   override var loading: Boolean = false
 
   override var result: T? = null
@@ -18,16 +22,21 @@ class GHCompletableFutureLoadingModel<T> : GHSimpleLoadingModel<T>() {
     oldValue?.cancel(true)
   }
 
+  init {
+    Disposer.register(parentDisposable, this)
+  }
+
   @set:CalledInAwt
   @get:CalledInAwt
   var future by observable<CompletableFuture<T>?>(null) { _, _, newValue ->
+    if (Disposer.isDisposed(this)) return@observable
     if (newValue != null) load(newValue) else reset()
   }
 
   private fun load(future: CompletableFuture<T>) {
     loading = true
     eventDispatcher.multicaster.onLoadingStarted()
-    updateFuture = future.handleOnEdt { result, error ->
+    updateFuture = future.handleOnEdt(this) { result, error ->
       if (error != null && !GithubAsyncUtil.isCancellation(error)) this.error = error
       else this.result = result
       loading = false
@@ -41,5 +50,9 @@ class GHCompletableFutureLoadingModel<T> : GHSimpleLoadingModel<T>() {
     result = null
     error = null
     eventDispatcher.multicaster.onReset()
+  }
+
+  override fun dispose() {
+    future = null
   }
 }
