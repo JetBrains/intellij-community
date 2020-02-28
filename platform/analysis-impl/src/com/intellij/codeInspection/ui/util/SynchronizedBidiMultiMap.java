@@ -6,8 +6,8 @@ package com.intellij.codeInspection.ui.util;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
