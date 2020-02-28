@@ -45,6 +45,7 @@ Adds support for working with shell script files
     <configurationType implementation="com.intellij.sh.run.ShConfigurationType"/>
     <stepsBeforeRunProvider implementation="com.intellij.sh.run.ShBeforeRunTaskProvider"/>
     <runConfigurationProducer implementation="com.intellij.sh.run.ShRunConfigurationProducer"/>
+    <programRunner implementation="com.intellij.sh.run.ShRunProgramRunner"/>
     <runLineMarkerContributor language="Shell Script" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
 
     <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>
