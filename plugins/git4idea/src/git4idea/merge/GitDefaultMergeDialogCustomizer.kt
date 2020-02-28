@@ -38,6 +38,7 @@ import git4idea.history.GitLogUtil.readFullDetailsForHashes
 import git4idea.rebase.GitRebaseUtils
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.JPanel
 
@@ -279,7 +280,7 @@ internal fun getSingleCurrentBranchName(roots: Collection<GitRepository>): Strin
 }
 
 internal fun getTitleWithCommitDetailsCustomizer(
-  title: String,
+  @Nls title: String,
   repository: GitRepository,
   file: FilePath,
   commit: String
@@ -304,7 +305,7 @@ internal fun getTitleWithCommitDetailsCustomizer(
 }
 
 internal fun getTitleWithCommitsRangeDetailsCustomizer(
-  title: String,
+  @Nls title: String,
   repository: GitRepository,
   file: FilePath,
   range: Pair<String, String>
@@ -337,7 +338,7 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
   }
 }
 
-internal fun getTitleWithShowDetailsAction(title: String, action: () -> Unit): JPanel =
+internal fun getTitleWithShowDetailsAction(@Nls title: String, action: () -> Unit): JPanel =
   BorderLayoutPanel()
     .addToCenter(JBLabel(title).setCopyable(true))
     .addToRight(LinkLabel.create("Show Details", action))
