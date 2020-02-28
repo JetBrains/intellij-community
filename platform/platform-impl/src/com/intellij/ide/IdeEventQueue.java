@@ -3,7 +3,6 @@ package com.intellij.ide;
 
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.LoggableEventWatcher;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.dnd.DnDManager;
@@ -472,9 +471,9 @@ public final class IdeEventQueue extends EventQueue {
           if (finalE1 instanceof KeyEvent) {
             maybeReady();
           }
-          if (eventWatcher instanceof LoggableEventWatcher &&
+          if (eventWatcher != null &&
               runnableClass != FLUSH_NOW_CLASS) {
-            ((LoggableEventWatcher)eventWatcher).logTimeMillis(
+            eventWatcher.logTimeMillis(
               runnableClass != Runnable.class ? runnableClass.getName() : finalE1.toString(),
               startedAt,
               runnableClass
@@ -1509,8 +1508,8 @@ public final class IdeEventQueue extends EventQueue {
     }
 
     EventWatcher watcher = obtainEventWatcher();
-    if (watcher instanceof LoggableEventWatcher) {
-      ((LoggableEventWatcher)watcher).logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
+    if (watcher != null) {
+      watcher.logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
     }
   }
 

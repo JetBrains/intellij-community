@@ -3,7 +3,6 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.LoggableEventWatcher;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
@@ -1008,8 +1007,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static void logTimeMillis(long startedAt, @NotNull AnAction action) {
     EventWatcher watcher = EventWatcher.getInstance();
-    if (watcher instanceof LoggableEventWatcher) {
-      ((LoggableEventWatcher)watcher).logTimeMillis(action.toString(), startedAt);
+    if (watcher != null) {
+      watcher.logTimeMillis(action.toString(), startedAt);
     }
   }
 
