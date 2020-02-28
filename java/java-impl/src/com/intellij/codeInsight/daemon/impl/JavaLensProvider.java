@@ -48,6 +48,8 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
       @Override
       public boolean collect(@NotNull PsiElement element, @NotNull Editor editor, @NotNull InlayHintsSink sink) {
         if (!(element instanceof PsiMember) || element instanceof PsiTypeParameter) return true;
+        PsiElement prevSibling = element.getPrevSibling();
+        if (!(prevSibling instanceof PsiWhiteSpace && prevSibling.textContains('\n'))) return true;
         PsiMember member = (PsiMember)element;
         if (member.getName() == null) return true;
 
