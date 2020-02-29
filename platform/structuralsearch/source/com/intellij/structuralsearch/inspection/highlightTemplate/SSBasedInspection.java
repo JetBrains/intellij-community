@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -92,12 +93,19 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
     final List<Configuration> configurations;
     final InspectionProfileImpl profile;
-    for (Configuration configuration : myConfigurations) {
-      configuration.initialize();
+    final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    if (!unitTestMode) {
+      for (Configuration configuration : myConfigurations) {
+        configuration.initialize();
+      }
+      profile = (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
+      configurations = ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
+      if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
     }
-    profile = (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
-    configurations = ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
-    if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
+    else {
+      profile = null;
+      configurations = myConfigurations;
+    }
 
     final Map<Configuration, Matcher> compiledOptions =
       SSBasedInspectionCompiledPatternsCache.getCompiledOptions(configurations, project);
@@ -110,7 +118,12 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       final LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
       final ProblemDescriptor descriptor =
         holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-      holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, configuration.getUuid().toString()));
+      if (!unitTestMode) {
+        holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, configuration.getUuid().toString()));
+      }
+      else {
+        holder.registerProblem(descriptor);
+      }
       return true;
     };
     for (Map.Entry<Configuration, Matcher> entry : compiledOptions.entrySet()) {
@@ -132,7 +145,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
             if (matcher == null) continue;
 
             if (matcher.checkIfShouldAttemptToMatch(matchedNodes) &&
-                profile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element)) {
+                (profile == null || profile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element))) {
               final int nodeCount = matcher.getMatchContext().getPattern().getNodeCount();
               try {
                 matcher.processMatchesInElement(new CountingNodeIterator(nodeCount, matchedNodes));
