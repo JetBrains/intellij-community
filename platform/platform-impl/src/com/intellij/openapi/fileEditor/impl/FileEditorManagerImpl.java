@@ -65,6 +65,7 @@ import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -1445,10 +1446,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       ApplicationManager.getApplication().invokeLater(() -> {
         CommandProcessor.getInstance().executeCommand(myProject, () -> {
           ApplicationManager.getApplication().invokeLater(() -> {
-            long currentTime = System.nanoTime();
             Long startTime = myProject.getUserData(ProjectImpl.CREATION_TIME);
             if (startTime != null) {
-              long time = (currentTime - startTime.longValue()) / 1000000;
+              long time = TimeoutUtil.getDurationMillis(startTime.longValue());
               LifecycleUsageTriggerCollector.onProjectOpenFinished(myProject, time);
 
               LOG.info("Project opening took " + time + " ms");
