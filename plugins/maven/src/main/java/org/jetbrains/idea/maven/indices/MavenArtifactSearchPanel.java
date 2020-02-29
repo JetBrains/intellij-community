@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -329,7 +330,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       myLeftComponent.clear();
       myRightComponent.clear();
 
-      setBackground(selected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeBackground(tree));
+      setBackground(RenderingUtil.getBackground(tree, selected));
 
       myLeftComponent.setForeground(selected ? UIUtil.getTreeSelectionForeground(hasFocus) : null);
       myRightComponent.setForeground(selected ? UIUtil.getTreeSelectionForeground(hasFocus) : null);

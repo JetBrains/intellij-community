@@ -22,9 +22,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
@@ -81,7 +81,7 @@ public class ImportTree extends NodeRenderer {
     }
     setIcon(descriptor.getIcon() == null ? null : IconLoader.getDisabledIcon(descriptor.getIcon()));
     final String text = tree.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
-    append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, UIUtil.getTreeForeground(tree)));
+    append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, RenderingUtil.getForeground(tree)));
     return true;
   }
 
