@@ -79,7 +79,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         @JvmStatic
         fun createMainFrameHeader(frame: JFrame, delegatingMenuBar: IdeMenuBar?): MainFrameHeader = MainFrameHeader(frame, delegatingMenuBar)
 
-        private val borderThicknessInPhysicalPx: Int = run {
+        private val windowBorderThicknessInPhysicalPx: Int = run {
             // Windows 10 (tested on 1809) determines the window border size by the main display scaling, rounded down. This value is
             // calculated once on desktop session start, so it should be okay to store once per IDE session.
             val scale = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration.defaultTransform.scaleY
@@ -272,6 +272,9 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     inner class CustomFrameTopBorder(val isTopNeeded: ()-> Boolean = {true}, val isBottomNeeded: ()-> Boolean = {false}) : Border {
 
+        // Bottom border is a line between a window title/main menu area and the frame content.
+        private val bottomBorderWidthLogicalPx = JBUI.scale(1)
+
         // In reality, Windows uses #262626 with alpha-blending with alpha=0.34, but we have no (easy) way of doing the same, so let's just
         // use the value on white background (since it is most noticeable on white).
         //
@@ -326,8 +329,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
         }
 
-        private fun calculateBorderThicknessInLogicalPx(): Double {
-            return borderThicknessInPhysicalPx.toDouble() / JBUIScale.sysScale(window)
+        private fun calculateWindowBorderThicknessInLogicalPx(): Double {
+            return windowBorderThicknessInPhysicalPx.toDouble() / JBUIScale.sysScale(window)
         }
 
         private val listeners = mutableListOf<Pair<String, PropertyChangeListener>>()
@@ -363,7 +366,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         fun repaintBorder() {
             val borderInsets = getBorderInsets(this@CustomHeader)
 
-            val thickness = calculateBorderThicknessInLogicalPx()
+            val thickness = calculateWindowBorderThicknessInLogicalPx()
             repaint(0, 0, width, ceil(thickness).toInt())
             repaint(0, height - borderInsets.bottom, width, borderInsets.bottom)
         }
@@ -376,7 +379,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
 
         override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-            val thickness = calculateBorderThicknessInLogicalPx()
+            val thickness = calculateWindowBorderThicknessInLogicalPx()
             if (isTopNeeded() && shouldDrawTopBorder) {
                 g.color = if (myActive) activeColor else inactiveColor
                 LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble(), LinePainter2D.StrokeType.CENTERED, thickness)
@@ -384,15 +387,15 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
             if (isBottomNeeded()) {
                 g.color = menuBarBorderColor
-                val y1 = y + height - thickness
-                LinePainter2D.paint(g as Graphics2D, x.toDouble(), y1, width.toDouble(), y1, LinePainter2D.StrokeType.CENTERED, thickness)
+                val y1 = y + height - bottomBorderWidthLogicalPx
+                LinePainter2D.paint(g as Graphics2D, x.toDouble(), y1.toDouble(), width.toDouble(), y1.toDouble())
             }
         }
 
         override fun getBorderInsets(c: Component): Insets {
-            val thickness = calculateBorderThicknessInLogicalPx()
+            val thickness = calculateWindowBorderThicknessInLogicalPx()
             val top = if (isTopNeeded() && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF())) ceil(thickness).toInt() else 0
-            val bottom = if (isBottomNeeded()) ceil(thickness).toInt() else 0
+            val bottom = if (isBottomNeeded()) bottomBorderWidthLogicalPx else 0
             return Insets(top, 0, bottom, 0)
         }
 
