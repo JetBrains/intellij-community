@@ -57,6 +57,10 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
     if (isForceNonModalCommit.asBoolean()) return true
     if (!appSettings.COMMIT_FROM_LOCAL_CHANGES) return false
 
+    return canSetNonModal()
+  }
+
+  internal fun canSetNonModal(): Boolean {
     val activeVcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss
     return activeVcses.isNotEmpty() && activeVcses.all { it.type == VcsType.distributed }
   }

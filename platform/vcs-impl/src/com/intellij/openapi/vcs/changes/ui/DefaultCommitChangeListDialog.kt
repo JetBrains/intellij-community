@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
@@ -8,11 +8,16 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyRight
+import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.addBorder
+import com.intellij.util.ui.UIUtil.getRegularPanelInsets
+import com.intellij.vcs.commit.NonModalCommitPromoter
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflow
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi
 import java.awt.Dimension
+import javax.swing.JComponent
 
 class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : CommitChangeListDialog(workflow) {
   private val changeListEventDispatcher = EventDispatcher.create(SingleChangeListCommitWorkflowUi.ChangeListListener::class.java)
@@ -45,6 +50,16 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
       override fun changeListChanged() = this@DefaultCommitChangeListDialog.changeListChanged()
     }, this)
   }
+
+  override fun createTitlePane(): JComponent? = NonModalCommitPromoter.getInstance(project).getPromotionPanel(this)
+
+  override fun createCenterPanel(): JComponent =
+    simplePanel(super.createCenterPanel()).apply {
+      putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
+
+      val insets = getRegularPanelInsets()
+      border = empty(insets.top, insets.left, 0, insets.right)
+    }
 
   override fun getBrowser(): CommitDialogChangesBrowser = browser
 
