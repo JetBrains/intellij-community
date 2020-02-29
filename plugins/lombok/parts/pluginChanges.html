@@ -1,6 +1,18 @@
 <ul>
   <li>0.29
     <ol>
+      <li>Added link for simply annotation processing activation into warning message box, thanks to @wyhasany (Michał
+        Rowicki)
+      </li>
+      <li>Added new inspection for redundant class and field modifiers for @Value annotated classes, thanks to @wyhasany
+        (Michał Rowicki)
+      </li>
+      <li>Fixed #740: Builder.build() method throws exceptions from wrong constructor</li>
+      <li>Fixed #735: FieldDefaults processing should check for @UtilityClass annotation, thanks to @Sheigutn (Florian
+        Böhm)
+      </li>
+      <li>Fixed #724: @Accessors with prefix can break with numbers, thanks to @Lekanich (Aleksandr Zhelezniak)</li>
+      <li>Fixed #719: Add support for new setterPrefix for Builder enhancement, thanks to @ocadaruma (Okada Haruki)</li>
       <li>Fixed #680: Add support for lombok.builder.className config property, thanks to @tagae (Sebastián González)
       </li>
     </ol>
