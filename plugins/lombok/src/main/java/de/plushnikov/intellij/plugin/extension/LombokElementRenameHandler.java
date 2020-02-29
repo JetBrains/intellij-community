@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
@@ -44,9 +43,7 @@ public class LombokElementRenameHandler extends MemberInplaceRenameHandler {
 
     if (null != element) {
       editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-      // TODO check this replaycement
-      //      PsiElement nameSuggestionContext = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, editor.getCaretModel().getOffset());
-      PsiElement nameSuggestionContext = InjectedLanguageUtil.findElementAtNoCommit(file, editor.getCaretModel().getOffset());
+      PsiElement nameSuggestionContext = file.getViewProvider().findElementAt(editor.getCaretModel().getOffset());
       PsiElementRenameHandler.invoke(element, project, nameSuggestionContext, editor);
     }
   }
