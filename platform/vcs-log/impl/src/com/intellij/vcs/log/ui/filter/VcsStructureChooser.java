@@ -21,6 +21,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
@@ -282,7 +283,7 @@ public class VcsStructureChooser extends DialogWrapper {
       mySelectionManager = selectionManager;
       myModulesSet = modulesSet;
       myRoots = roots;
-      setBackground(UIUtil.getTreeBackground(tree));
+      setBackground(RenderingUtil.getBackground(tree));
       myColoredRenderer = new ColoredTreeCellRenderer() {
         @Override
         public void customizeCellRenderer(@NotNull JTree tree,
@@ -296,7 +297,7 @@ public class VcsStructureChooser extends DialogWrapper {
         }
       };
       myFictive = new JBList();
-      myFictive.setBackground(UIUtil.getTreeBackground(tree));
+      myFictive.setBackground(RenderingUtil.getBackground(tree));
       myFictive.setSelectionBackground(UIUtil.getListSelectionBackground(true));
       myFictive.setSelectionForeground(UIUtil.getListSelectionForeground());
 
@@ -308,10 +309,10 @@ public class VcsStructureChooser extends DialogWrapper {
           }
         }
       };
-      myTextRenderer.setBackground(UIUtil.getTreeBackground(tree));
+      myTextRenderer.setBackground(RenderingUtil.getBackground(tree));
 
       myCheckbox = new JCheckBox();
-      myCheckbox.setBackground(UIUtil.getTreeBackground(tree));
+      myCheckbox.setBackground(RenderingUtil.getBackground(tree));
       myEmpty = new JLabel("");
 
       add(myCheckbox, BorderLayout.WEST);

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.ui.Control;
 import com.intellij.ui.tree.ui.DefaultControl;
@@ -80,7 +81,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   public SettingsTreeView(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
     myFilter = filter;
     myTree = new MyTree();
-    myTree.putClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY, Boolean.TRUE);
+    myTree.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
     myTree.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     myTree.getInputMap().clear();
     TreeUtil.installActions(myTree);

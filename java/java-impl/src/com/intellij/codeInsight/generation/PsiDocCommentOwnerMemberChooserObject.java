@@ -3,7 +3,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.render.RenderingUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,6 +24,6 @@ public class PsiDocCommentOwnerMemberChooserObject extends PsiElementMemberChoos
   protected SimpleTextAttributes getTextAttributes(final JTree tree) {
     return new SimpleTextAttributes(
         getPsiDocCommentOwner().isDeprecated() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN,
-        UIUtil.getTreeForeground(tree));
+        RenderingUtil.getForeground(tree));
   }
 }

@@ -2,7 +2,6 @@
 package com.intellij.ui.render;
 
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,8 +21,8 @@ public class LabelBasedRenderer extends JLabel {
     public Component getListCellRendererComponent(@NotNull JList<? extends E> list, @Nullable E value,
                                                   int index, boolean selected, boolean focused) {
       configure(list, value);
-      setForeground(UIUtil.getListForeground(list, selected));
-      setBackground(UIUtil.getListBackground(list, selected));
+      setForeground(RenderingUtil.getForeground(list, selected));
+      setBackground(RenderingUtil.getBackground(list, selected));
       setBorder(EMPTY);
       return this;
     }
@@ -37,8 +36,8 @@ public class LabelBasedRenderer extends JLabel {
     public Component getTreeCellRendererComponent(@NotNull JTree tree, @Nullable Object value,
                                                   boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
       configure(tree, tree.convertValueToText(value, selected, expanded, leaf, row, focused));
-      setForeground(UIUtil.getTreeForeground(tree, selected));
-      setBackground(UIUtil.getTreeBackground(tree, selected));
+      setForeground(RenderingUtil.getForeground(tree, selected));
+      setBackground(RenderingUtil.getBackground(tree, selected));
       setBorder(EMPTY);
       return this;
     }

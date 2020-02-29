@@ -11,6 +11,7 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.render.RenderingHelper;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -40,7 +41,6 @@ import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
 import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
-import static com.intellij.util.ui.tree.WideSelectionTreeUI.TREE_TABLE_TREE_KEY;
 
 @DirtyUI
 public final class DefaultTreeUI extends BasicTreeUI {
@@ -74,9 +74,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   @Nullable
   private static Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
     if (selected) {
-      Object property = tree.getClientProperty(TREE_TABLE_TREE_KEY);
-      if (property instanceof JTable) return ((JTable)property).getSelectionBackground();
-      return UIUtil.getTreeSelectionBackground(tree.hasFocus() || Boolean.TRUE.equals(property));
+      return RenderingUtil.getSelectionBackground(tree);
     }
     Object node = TreeUtil.getLastUserObject(path);
     if (node instanceof ColoredItem) {
@@ -104,7 +102,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
       component.setBackground(background);
     }
     else if (component.isOpaque()) {
-      component.setBackground(UIUtil.getTreeBackground(tree));
+      component.setBackground(RenderingUtil.getBackground(tree));
     }
   }
 
