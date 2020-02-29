@@ -48,7 +48,8 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   @Override
   public List<AnAction> getActions(SingleInspectionProfilePanel panel) {
     final InspectionProfileModifiableModel profile = panel.getProfile();
-    if (!profile.isToolEnabled(HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME))) {
+    if (profile.getToolsOrNull(SSBasedInspection.SHORT_NAME, null) != null &&
+        !profile.isToolEnabled(HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME))) {
       // enable SSBasedInspection if it was manually disabled
       profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true);
 
