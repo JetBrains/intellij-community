@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -38,10 +37,11 @@ import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.inspections.FormElementProblemDescriptor;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
-import com.intellij.uiDesigner.lw.ITabbedPane;
-import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -49,8 +49,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.ItemRemovable;
 import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.Namespace;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,8 +58,6 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
@@ -74,28 +70,48 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
                        @Nullable Runnable refreshViews) {
     List<ReplacementBean> beans = new ArrayList<>();
     HashSet<Module> contextModules = new HashSet<>();
-    Map<File, Element> fileElementMap = new HashMap<>();
+    Map<VirtualFile, RadRootContainer> containerMap = new HashMap<>();
     UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
     Map<String, List<ReplacementBean>> myDuplicates = new HashMap<>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       FormElementProblemDescriptor formElementProblemDescriptor = (FormElementProblemDescriptor)descriptor;
       PsiFile containingFile = formElementProblemDescriptor.getPsiElement().getContainingFile();
       ContainerUtil.addIfNotNull(contextModules, ModuleUtilCore.findModuleForFile(containingFile));
-      File ioFile = VfsUtilCore.virtualToIoFile(containingFile.getVirtualFile());
-      Element rootElement = fileElementMap.computeIfAbsent(ioFile, f -> {
+      VirtualFile virtualFile = containingFile.getVirtualFile();
+
+      final RadRootContainer rootContainer = containerMap.computeIfAbsent(virtualFile, f -> {
         try {
-          return JDOMUtil.load(f);
+          final ClassLoader classLoader = LoaderFactory.getInstance(project).getLoader(virtualFile);
+          LwRootContainer lwRootContainer = Utils.getRootContainer(containingFile.getText(), new CompiledClassPropertiesProvider(classLoader));
+          Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+
+          ModuleProvider moduleProvider = new ModuleProvider() {
+            @Override
+            public Module getModule() {
+              return module;
+            }
+
+            @Override
+            public Project getProject() {
+              return project;
+            }
+          };
+
+          return XmlReader.createRoot(moduleProvider, lwRootContainer, LoaderFactory.getInstance(project).getLoader(virtualFile), null);
         }
-        catch (IOException | JDOMException e) {
+        catch (Exception e) {
           LOG.error(e);
           return null;
         }
       });
-      if (rootElement == null) continue;
-      Element elementById = findElementById(formElementProblemDescriptor.getComponentId(), rootElement);
+      if (rootContainer == null) continue;
+      RadComponent component = (RadComponent)FormEditingUtil.findComponent(rootContainer, formElementProblemDescriptor.getComponentId());
+      if (component == null) continue;
       String propertyName = formElementProblemDescriptor.getPropertyName();
-      String value = getValue(elementById, propertyName);
-      ReplacementBean bean = new ReplacementBean(uniqueNameGenerator.generateUniqueName(I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null)), elementById,
+      String value = getValue(component, propertyName);
+      if (value == null) continue;
+      ReplacementBean bean = new ReplacementBean(uniqueNameGenerator.generateUniqueName(I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null)),
+                                                 component,
                                                  propertyName,
                                                  value);
       if (myDuplicates.containsKey(value)) {
@@ -110,13 +126,15 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
     I18NBatchDialog dialog = new I18NBatchDialog(project, beans, contextModules);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
+      PsiManager manager = PsiManager.getInstance(project);
       Set<PsiFile> files = new HashSet<>();
-      files.add(propertiesFile.getContainingFile());
-
-
+      for (VirtualFile file : containerMap.keySet()) {
+        ContainerUtil.addIfNotNull(files, manager.findFile(file));
+      }
       if (files.isEmpty()) {
         return;
       }
+      files.add(propertiesFile.getContainingFile());
 
       String bundleName = I18nizeFormQuickFix.getBundleName(project, propertiesFile);
       if (bundleName == null) {
@@ -129,43 +147,22 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
                                                                         bean.myKey,
                                                                         bean.myValue,
                                                                         PsiExpression.EMPTY_ARRAY);
-          applyFix(bean.myElement, bean.myPropertyName, bundleName, bean.myKey);
+          applyFix(bean.myComponent, bean.myPropertyName, bundleName, bean.myKey);
           List<ReplacementBean> duplicates = myDuplicates.get(bean.myValue);
           if (duplicates != null) {
             for (ReplacementBean duplicateBean : duplicates) {
-              applyFix(duplicateBean.myElement, duplicateBean.myPropertyName, bundleName, bean.myKey);
+              applyFix(duplicateBean.myComponent, duplicateBean.myPropertyName, bundleName, bean.myKey);
             }
           }
         }
 
-        for (Map.Entry<File, Element> entry : fileElementMap.entrySet()) {
-
-          final String text = JDOMUtil.write(entry.getValue());
-
-          VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(entry.getKey());
-          if (virtualFile == null) continue;
-          final ClassLoader classLoader = LoaderFactory.getInstance(project).getLoader(virtualFile);
-          Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
-
+        for (Map.Entry<VirtualFile, RadRootContainer> entry : containerMap.entrySet()) {
           try {
-            final LwRootContainer rootContainer = Utils.getRootContainer(text, new CompiledClassPropertiesProvider(classLoader));
-            ModuleProvider moduleProvider = new ModuleProvider() {
-              @Override
-              public Module getModule() {
-                return module;
-              }
-
-              @Override
-              public Project getProject() {
-                return project;
-              }
-            };
-            final RadRootContainer container = XmlReader.createRoot(moduleProvider, rootContainer, classLoader, null);
             final XmlWriter writer = new XmlWriter();
-            container.write(writer);
-            FileUtil.writeToFile(entry.getKey(), writer.getText());
+            entry.getValue().write(writer);
+            FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(entry.getKey()), writer.getText());
 
-            FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors(virtualFile);
+            FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors(entry.getKey());
             for (FileEditor editor : editors) {
               if (editor instanceof UIFormEditor) {
                 ((UIFormEditor)editor).getEditor().refresh();
@@ -180,44 +177,47 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
     }
   }
 
-  private static void applyFix(Element element, String propertyName, String resourceBundle, String key) {
+  private static void applyFix(RadComponent component, String propertyName, String resourceBundle, String key) {
+    StringDescriptor stringDescriptor = new StringDescriptor(resourceBundle, key);
     if (BorderProperty.NAME.equals(propertyName)) {
-      Element borderElement = getChild(element, BorderProperty.NAME);
-      borderElement.removeAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE);
-      borderElement.setAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE, resourceBundle);
-      borderElement.setAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_KEY, key);
+      ((RadContainer)component).setBorderTitle(stringDescriptor);
     }
-    else if (propertyName.equals(ITabbedPane.TAB_TITLE_PROPERTY)) {
-      Element tabbedPaneElement =
-        getChild(getChild(element, UIFormXmlConstants.ELEMENT_CONSTRAINTS),
-                 UIFormXmlConstants.ELEMENT_TABBEDPANE);
-      tabbedPaneElement.removeAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE);
-      tabbedPaneElement.setAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE, resourceBundle);
-      tabbedPaneElement.setAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_KEY, key);
+    else if (propertyName.equals(ITabbedPane.TAB_TITLE_PROPERTY) || propertyName.equals(ITabbedPane.TAB_TOOLTIP_PROPERTY)) {
+      try {
+        new TabTitleStringDescriptorAccessor(component, propertyName).setStringDescriptorValue(stringDescriptor);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
     else {
-      Element child = getChild(getChild(element, UIFormXmlConstants.ELEMENT_PROPERTIES), propertyName);
-      child.removeAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE);
-      child.setAttribute(UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE, resourceBundle);
-      child.setAttribute(UIFormXmlConstants.ATTRIBUTE_KEY, key);
+      Arrays.stream(component.getModifiedProperties())
+        .filter(p -> propertyName.equals(p.getName()))
+        .findFirst()
+        .ifPresent(p -> {
+        try {
+          new FormPropertyStringDescriptorAccessor(component, (IntrospectedProperty)p).setStringDescriptorValue(stringDescriptor);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      });
     }
   }
 
-  private static String getValue(Element element, String propertyName) {
+  private static String getValue(IComponent component, String propertyName) {
     if (BorderProperty.NAME.equals(propertyName)) {
-      Element borderElement = getChild(element, BorderProperty.NAME);
-      return borderElement.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_TITLE);
+      return ((IContainer)component).getBorderTitle().getValue();
     }
-    else if (propertyName.equals(ITabbedPane.TAB_TITLE_PROPERTY)) {
-      return getChild(getChild(element, UIFormXmlConstants.ELEMENT_CONSTRAINTS),
-                      UIFormXmlConstants.ELEMENT_TABBEDPANE).getAttributeValue(UIFormXmlConstants.ATTRIBUTE_TITLE);
+    else if (propertyName.equals(ITabbedPane.TAB_TITLE_PROPERTY) || propertyName.equals(ITabbedPane.TAB_TOOLTIP_PROPERTY)) {
+      return ((ITabbedPane)component.getParentContainer()).getTabProperty(component, propertyName).getValue();
     }
-    return getChild(getChild(element, UIFormXmlConstants.ELEMENT_PROPERTIES), propertyName)
-      .getAttributeValue(UIFormXmlConstants.ATTRIBUTE_VALUE);
-  }
-
-  private static Element getChild(Element element, String name) {
-    return element.getChild(name, Namespace.getNamespace(Utils.FORM_NAMESPACE));
+    for (IProperty property : component.getModifiedProperties()) {
+      if (property.getName().equals(propertyName)) {
+        return ((StringDescriptor)property.getPropertyValue(component)).getValue();
+      }
+    }
+    return null;
   }
 
   @Override
@@ -240,16 +240,16 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
   }
 
   private static class ReplacementBean {
-    private final Element myElement;
+    private final RadComponent myComponent;
     private final String myPropertyName;
     private String myKey;
     private final String myValue;
 
     private ReplacementBean(String key,
-                            Element element,
+                            RadComponent component,
                             String propertyName,
                             String value) {
-      myElement = element;
+      myComponent = component;
       myPropertyName = propertyName;
       myKey = key;
       myValue = value;
