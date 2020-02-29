@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.Disposable;
@@ -15,13 +15,12 @@ import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UI;
-import com.intellij.vcs.commit.CommitWorkflowManager;
 import com.intellij.vcs.commit.message.CommitMessageInspectionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.vcs.commit.CommitWorkflowManager.setCommitFromLocalChanges;
 
 public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguration>, Disposable {
   @NotNull private final Project myProject;
@@ -49,16 +48,6 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
   @NotNull
   private static VcsApplicationSettings getAppSettings() {
     return VcsApplicationSettings.getInstance();
-  }
-
-  private static void setCommitFromLocalChanges(boolean value) {
-    VcsApplicationSettings settings = getAppSettings();
-    boolean oldValue = settings.COMMIT_FROM_LOCAL_CHANGES;
-    settings.COMMIT_FROM_LOCAL_CHANGES = value;
-
-    if (oldValue != value) {
-      getApplication().getMessageBus().syncPublisher(CommitWorkflowManager.SETTINGS).settingsChanged();
-    }
   }
 
   @Override
@@ -117,6 +106,4 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
     Disposer.dispose(myInspectionsPanel);
     Disposer.dispose(myCommitOptions);
   }
-
-
 }
