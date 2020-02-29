@@ -117,7 +117,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return myRollover;
   }
 
-  protected final boolean isSelected() {
+  public final boolean isSelected() {
     return myAction instanceof Toggleable && Toggleable.isSelected(myPresentation);
   }
 
