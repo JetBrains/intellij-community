@@ -44,6 +44,8 @@ public class LombokElementRenameHandler extends MemberInplaceRenameHandler {
 
     if (null != element) {
       editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      // TODO check this replaycement
+      //      PsiElement nameSuggestionContext = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, editor.getCaretModel().getOffset());
       PsiElement nameSuggestionContext = InjectedLanguageUtil.findElementAtNoCommit(file, editor.getCaretModel().getOffset());
       PsiElementRenameHandler.invoke(element, project, nameSuggestionContext, editor);
     }
