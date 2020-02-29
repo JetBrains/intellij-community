@@ -1,8 +1,8 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.JavaElementVisitor;
@@ -28,7 +28,7 @@ public class DeprecatedLombokAnnotationInspection extends AbstractBaseJavaLocalI
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GroupNames.BUGS_GROUP_NAME;
+    return InspectionsBundle.message("group.names.probable.bugs");
   }
 
   @NotNull
