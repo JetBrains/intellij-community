@@ -513,6 +513,7 @@ public class AllIcons {
     /** 14x14 */ public static final Icon External_link_arrow = load("/ide/external_link_arrow.svg");
     /** 16x16 */ public static final Icon FatalError_read = load("/ide/fatalError-read.svg");
     /** 16x16 */ public static final Icon FatalError = load("/ide/fatalError.svg");
+    /** 16x16 */ public static final Icon Gift = load("/ide/gift.svg");
     /** 16x16 */ public static final Icon HectorOff = load("/ide/hectorOff.svg");
     /** 16x16 */ public static final Icon HectorOn = load("/ide/hectorOn.svg");
     /** 16x16 */ public static final Icon HectorSyntax = load("/ide/hectorSyntax.svg");
