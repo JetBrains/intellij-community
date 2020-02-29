@@ -382,7 +382,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             val thickness = calculateWindowBorderThicknessInLogicalPx()
             if (isTopNeeded() && shouldDrawTopBorder) {
                 g.color = if (myActive) activeColor else inactiveColor
-                LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble(), LinePainter2D.StrokeType.CENTERED, thickness)
+                LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble(), LinePainter2D.StrokeType.INSIDE, thickness)
             }
 
             if (isBottomNeeded()) {
