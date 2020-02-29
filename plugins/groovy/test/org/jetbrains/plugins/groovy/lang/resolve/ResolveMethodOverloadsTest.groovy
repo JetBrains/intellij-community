@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiMethod
@@ -24,6 +24,16 @@ class ResolveMethodOverloadsTest extends GroovyLatestTest implements ResolveTest
   void 'null argument List vs Object'() {
     def method = resolveTest 'def foo(Object o); def foo(List l); <caret>foo(null)', GrMethod
     assert method.parameterList.parameters.first().type.equalsToText(JAVA_LANG_OBJECT)
+  }
+
+  @Test
+  void 'null argument List vs erased Object'() {
+    def method = resolveTest '''\
+def <R> void bar(List<R> l) {}
+def <R> void bar(R r) {}
+<caret>bar(null)
+''', PsiMethod
+    assert method.parameterList.parameters.last().type.equalsToText('R')
   }
 
   @Test
