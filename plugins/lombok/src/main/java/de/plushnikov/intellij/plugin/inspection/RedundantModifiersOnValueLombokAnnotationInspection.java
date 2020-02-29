@@ -11,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Optional;
 
-import static com.intellij.psi.PsiModifier.FINAL;
-import static com.intellij.psi.PsiModifier.PRIVATE;
+import static com.intellij.psi.PsiModifier.*;
 
 /**
  * @author Rowicki Michał
@@ -57,15 +56,34 @@ public class RedundantModifiersOnValueLombokAnnotationInspection extends Abstrac
     }
 
     @Override
+    public void visitClass(PsiClass clazz) {
+      super.visitClass(clazz);
+
+      if (clazz.hasAnnotation(lombok.Value.class.getName())) {
+        final PsiModifierList modifierList = clazz.getModifierList();
+        if (modifierList != null && modifierList.hasExplicitModifier(FINAL)) {
+          final Optional<PsiElement> psiFinal = Arrays.stream(modifierList.getChildren())
+            .filter(psiElement -> FINAL.equals(psiElement.getText()))
+            .findFirst();
+
+          psiFinal.ifPresent(psiElement -> holder.registerProblem(psiElement,
+            "Redundant final class modifier",
+            ProblemHighlightType.WARNING,
+            new RemoveModifierFix(FINAL))
+          );
+        }
+      }
+    }
+
+    @Override
     public void visitField(PsiField field) {
       super.visitField(field);
-
-      final PsiElement parent = field.getParent();
-      if (parent instanceof PsiClass) {
-        final PsiClass clazz = (PsiClass) parent;
-        if (clazz.hasAnnotation(lombok.Value.class.getName())) {
-          final PsiModifierList modifierList = field.getModifierList();
-          if (modifierList != null) {
+      final PsiModifierList modifierList = field.getModifierList();
+      if (modifierList != null && !modifierList.hasExplicitModifier(STATIC)) {
+        final PsiElement parent = field.getParent();
+        if (parent instanceof PsiClass) {
+          final PsiClass clazz = (PsiClass) parent;
+          if (clazz.hasAnnotation(lombok.Value.class.getName())) {
             if (modifierList.hasExplicitModifier(PRIVATE)) {
               final Optional<PsiElement> psiPrivate = Arrays.stream(modifierList.getChildren())
                 .filter(psiElement -> PRIVATE.equals(psiElement.getText()))
