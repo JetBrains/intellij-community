@@ -41,7 +41,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
         () -> { if (!ApplicationManager.getApplication().isDisposed()) storeRefreshStatusToFiles(); },
         STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
-    myWatchRootsManager = new WatchRootsManager(myWatcher);
+    myWatchRootsManager = new WatchRootsManager(myWatcher, this);
     Disposer.register(ApplicationManager.getApplication(), this);
   }
 

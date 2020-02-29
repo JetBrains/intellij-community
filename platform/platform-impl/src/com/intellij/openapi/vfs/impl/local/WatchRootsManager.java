@@ -1,13 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -19,13 +23,8 @@ import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 public class WatchRootsManager {
-  private static final int ROOTS_UPDATE_DELAY_MS = 20;
-
   protected static final Logger LOG = Logger.getInstance(WatchRootsManager.class);
 
   private final FileWatcher myFileWatcher;
@@ -38,11 +37,20 @@ public class WatchRootsManager {
   private final MultiMap<String, String> myPathMappings = MultiMap.createConcurrentSet();
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private boolean myWatcherRequiresUpdate;  // synchronized on `myLock`
-  private Future<?> myScheduledUpdate = CompletableFuture.completedFuture(null);
   private final Object myLock = new Object();
 
-  public WatchRootsManager(@NotNull FileWatcher fileWatcher) {
+  public WatchRootsManager(@NotNull FileWatcher fileWatcher, @NotNull Disposable parent) {
     myFileWatcher = fileWatcher;
+    ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        synchronized (myLock) {
+          if (myWatcherRequiresUpdate) {
+            updateFileWatcher();
+          }
+        }
+      }
+    });
   }
 
   @NotNull
@@ -52,8 +60,6 @@ public class WatchRootsManager {
     Set<WatchRequest> result = new HashSet<>(recursiveRootsToAdd.size() + flatRootsToAdd.size());
 
     synchronized (myLock) {
-      myWatcherRequiresUpdate = false;
-
       updateWatchRoots(recursiveRootsToAdd,
                        ContainerUtil.map2SetNotNull(watchRequestsToRemove, req -> req.isToWatchRecursively() ? req : null),
                        result, myRecursiveWatchRoots, true);
@@ -82,8 +88,6 @@ public class WatchRootsManager {
 
   void updateSymlink(int fileId, @SystemIndependent String linkPath, @Nullable @SystemIndependent String linkTarget) {
     synchronized (myLock) {
-      myWatcherRequiresUpdate = false;
-
       SymlinkData data = mySymlinksById.remove(fileId);
       if (data != null && data.path != null) {
         data.removeRequest(this);
@@ -106,35 +110,16 @@ public class WatchRootsManager {
       if (WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, data.path)) {
         addWatchSymlinkRequest(data.getWatchRequest());
       }
-
-      if (myWatcherRequiresUpdate) {
-        scheduleUpdate();
-      }
     }
   }
 
   void removeSymlink(int fileId) {
     synchronized (myLock) {
-      myWatcherRequiresUpdate = false;
-
       SymlinkData data = mySymlinksById.remove(fileId);
       if (data != null && data.path != null) {
         data.removeRequest(this);
       }
-
-      if (myWatcherRequiresUpdate) {
-        scheduleUpdate();
-      }
     }
-  }
-
-  private void scheduleUpdate() {
-    myScheduledUpdate.cancel(false);
-    myScheduledUpdate = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-      synchronized (myLock) {
-        updateFileWatcher();
-      }
-    }, ROOTS_UPDATE_DELAY_MS, TimeUnit.MILLISECONDS);
   }
 
   private void updateFileWatcher() {
@@ -157,6 +142,7 @@ public class WatchRootsManager {
     }
     NavigableSet<@SystemDependent String> flatWatchRoots = WatchRootsUtil.optimizeFlatRoots(flatWatchRootsIterable, recursiveWatchRoots);
     myFileWatcher.setWatchRoots(new CanonicalPathMap(recursiveWatchRoots, flatWatchRoots, initialMappings));
+    myWatcherRequiresUpdate = false;
   }
 
   private void updateWatchRoots(@NotNull Collection<String> rootsToAdd,
