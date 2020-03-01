@@ -270,6 +270,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   protected void initializeLocalVars() {
     super.initializeLocalVars();
+    //todo maybe uncomment this fix to overcome 450x400 default (see JTable.initializeLocalVars)
+    //setPreferredScrollableViewportSize(new Dimension(getPreferredScrollableViewportSize().width, getRowHeight() * 8));
     setPreferredScrollableViewportSize(JBUI.size(getPreferredScrollableViewportSize()));
   }
 
