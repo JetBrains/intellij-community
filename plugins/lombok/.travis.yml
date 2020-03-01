@@ -36,8 +36,7 @@ notifications:
 
 deploy:
   provider: releases
-  api_key:
-    secure: ${GITHUB_KEY}
+  api_key: ${GITHUB_KEY}
   skip_cleanup: true
   file_glob: true
   file: "build/distributions/lombok-plugin-*.zip"
