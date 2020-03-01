@@ -149,8 +149,8 @@ public class CanonicalPathMapTest {
   }
 
   private static CanonicalPathMap createCanonicalPathMap(Collection<String> recursive, Collection<String> flat) {
-    NavigableSet<String> recursiveSet = StreamEx.of(recursive).map(CanonicalPathMap::ensureNormalized).into(WatchRootsUtil.createFileNavigableSet());
-    NavigableSet<String> flatSet = StreamEx.of(flat).map(CanonicalPathMap::ensureNormalized).into(WatchRootsUtil.createFileNavigableSet());
+    NavigableSet<String> recursiveSet = StreamEx.of(recursive).into(WatchRootsUtil.createFileNavigableSet());
+    NavigableSet<String> flatSet = StreamEx.of(flat).into(WatchRootsUtil.createFileNavigableSet());
     CanonicalPathMap pathMap = new CanonicalPathMap(recursiveSet, flatSet, MultiMap.empty());
     pathMap.getCanonicalWatchRoots();
     return pathMap;

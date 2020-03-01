@@ -2,23 +2,19 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.util.Processor;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
 
-import java.io.File;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
+/**
+ * Unless stated otherwise, methods in the class are system-agnostic - i.e. capable to work with both OS and VFS paths.
+ * Care should be taken though to make sure that within each call of a method parameters are of the same breed.
+ */
 class WatchRootsUtil {
-  public static final Comparator<String> FILE_NAME_COMPARATOR = SystemInfo.isFileSystemCaseSensitive
-                                                                ? String::compareTo
-                                                                : String::compareToIgnoreCase;
+  static final Comparator<String> FILE_NAME_COMPARATOR = FileUtil::comparePaths;
 
   public static boolean isCoveredRecursively(@NotNull NavigableSet<String> recursiveRoots, @NotNull String path) {
     String recursiveRoot = recursiveRoots.floor(path);
@@ -49,17 +45,17 @@ class WatchRootsUtil {
     }
   }
 
-  public static void forEachFilePathSegment(@SystemIndependent @NotNull String filePath,
-                                            char separator, @NotNull Processor<? super String> consumer) {
-    int position = filePath.indexOf(separator);
-    int length = filePath.length();
+  public static void forEachPathSegment(@NotNull String path, char separator, @NotNull Predicate<String> consumer) {
+    int position = path.indexOf(separator);
+    int length = path.length();
     while (position >= 0 && position < length) {
-      String subPath = filePath.substring(0, position + 1);
-      if (!consumer.process(subPath)) {
-        break;
+      String subPath = path.substring(0, position);
+      if (!consumer.test(subPath)) {
+        return;
       }
-      position = filePath.indexOf(separator, position + 1);
+      position = path.indexOf(separator, position + 1);
     }
+    consumer.test(path);
   }
 
   @NotNull
@@ -84,19 +80,6 @@ class WatchRootsUtil {
     return new TreeMap<>(FILE_NAME_COMPARATOR);
   }
 
-  @Contract("null -> null; !null -> !null")
-  @SystemIndependent
-  public static String normalizeFileName(String path) {
-    if (path != null) {
-      path = FileUtil.toSystemIndependentName(path);
-      if (!path.endsWith("/")) {
-        path += "/";
-      }
-      return path;
-    }
-    return null;
-  }
-
   public static boolean removeRecursivePath(@NotNull NavigableSet<String> optimizedRecursiveRoots,
                                             @NotNull NavigableMap<String, ?> sourceRecursiveRoots,
                                             @NotNull String path) {
@@ -113,19 +96,5 @@ class WatchRootsUtil {
       }
     });
     return true;
-  }
-
-  @Nullable
-  @SystemIndependent
-  static String mapToSystemPath(@SystemIndependent @NotNull String rootPath) {
-    int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
-    if (index >= 0) rootPath = rootPath.substring(0, index);
-
-    File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
-    if (!rootFile.isAbsolute()) {
-      WatchRootsManager.LOG.warn("Invalid path: " + rootPath);
-      return null;
-    }
-    return normalizeFileName(rootFile.getAbsolutePath());
   }
 }
