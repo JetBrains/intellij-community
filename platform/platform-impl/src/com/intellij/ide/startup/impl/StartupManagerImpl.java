@@ -6,6 +6,7 @@ import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Activities;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.ProjectLoadListener;
@@ -120,8 +121,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   public final void projectOpened(@Nullable ProgressIndicator indicator) {
     if (indicator != null && ApplicationManager.getApplication().isInternal()) {
-      //noinspection HardCodedStringLiteral
-      indicator.setText("Running startup activities...");
+      indicator.setText(IdeBundle.message("startup.indicator.text.running.startup.activities"));
     }
 
     doRunStartUpActivities(indicator);
