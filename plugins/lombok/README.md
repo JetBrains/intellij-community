@@ -83,9 +83,17 @@ If you are using Gradle/Maven/Ivy, see example below:
 ##### Gradle
 In your `build.gradle`:
 ```groovy
-// 'compile' can be changed to 'compileOnly' for Gradle 2.12+
-// or 'provided' if using 'propdeps' plugin from SpringSource
-compile "org.projectlombok:lombok:1.18.12"
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compileOnly 'org.projectlombok:lombok:1.18.12'
+	annotationProcessor 'org.projectlombok:lombok:1.18.12'
+
+	testCompileOnly 'org.projectlombok:lombok:1.18.12'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+}
 ```
 
 ##### Maven
