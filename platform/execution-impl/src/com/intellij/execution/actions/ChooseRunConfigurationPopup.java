@@ -598,7 +598,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
       }
 
-      result.add(new ActionWrapper("Edit...", AllIcons.Actions.EditSource, true) {
+      result.add(new ActionWrapper(ExecutionBundle.message("choose.run.popup.edit"), AllIcons.Actions.EditSource, true) {
         @Override
         public void perform() {
           if (dynamic) {
@@ -609,7 +609,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       });
 
       if (settings.isTemporary() || dynamic) {
-        result.add(new ActionWrapper("Save configuration", AllIcons.Actions.Menu_saveall) {
+        result.add(new ActionWrapper(ExecutionBundle.message("choose.run.popup.save"), AllIcons.Actions.Menu_saveall) {
           @Override
           public void perform() {
             final RunManager manager = RunManager.getInstance(project);
@@ -620,7 +620,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
           }
         });
       }
-      result.add(new ActionWrapper("Delete", AllIcons.Actions.Cancel) {
+      result.add(new ActionWrapper(ExecutionBundle.message("choose.run.popup.delete"), AllIcons.Actions.Cancel) {
         @Override
         public void perform() {
           deleteConfiguration(action, project, settings);
