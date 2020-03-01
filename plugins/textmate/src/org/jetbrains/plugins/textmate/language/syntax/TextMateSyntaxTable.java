@@ -146,7 +146,10 @@ public class TextMateSyntaxTable {
     else if (Constants.INCLUDE_SELF_VALUE.equalsIgnoreCase(include) || Constants.INCLUDE_BASE_VALUE.equalsIgnoreCase(include)) {
       return new SyntaxRootProxyDescriptor(result);
     }
-    return new SyntaxScopeProxyDescriptor(interner.intern(include), this, result);
+    int i = include.indexOf('#');
+    CharSequence scope = i >= 0 ? include.subSequence(0, i) : include;
+    String ruleId = i >= 0 ? include.substring(i + 1) : "";
+    return new SyntaxScopeProxyDescriptor(interner.intern(scope), ruleId.isEmpty() ? -1 : getRuleId(ruleId), this, result);
   }
 
   private void loadPatterns(@NotNull MutableSyntaxNodeDescriptor result,
