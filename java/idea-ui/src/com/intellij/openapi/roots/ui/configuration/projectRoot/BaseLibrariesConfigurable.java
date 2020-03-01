@@ -346,7 +346,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @Override
   @Nullable
   protected String getEmptySelectionString() {
-    return "Select a library to view or edit its details here";
+    return JavaUiBundle.message("configurable.empty.text.select.library");
   }
 
   private class CopyLibraryAction extends AnAction {
