@@ -5,7 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -22,10 +23,16 @@ import org.jetbrains.annotations.SystemDependent;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
+/**
+ * Unless stated otherwise, all paths are {@link SystemIndependent @SystemIndependent}.
+ */
 public class WatchRootsManager {
-  protected static final Logger LOG = Logger.getInstance(WatchRootsManager.class);
+  private static final Logger LOG = Logger.getInstance(WatchRootsManager.class);
 
   private final FileWatcher myFileWatcher;
 
@@ -86,10 +93,10 @@ public class WatchRootsManager {
     }
   }
 
-  void updateSymlink(int fileId, @SystemIndependent String linkPath, @Nullable @SystemIndependent String linkTarget) {
+  void updateSymlink(int fileId, String linkPath, @Nullable String linkTarget) {
     synchronized (myLock) {
       SymlinkData data = mySymlinksById.remove(fileId);
-      if (data != null && data.path != null) {
+      if (data != null) {
         data.removeRequest(this);
       }
 
@@ -116,7 +123,7 @@ public class WatchRootsManager {
   void removeSymlink(int fileId) {
     synchronized (myLock) {
       SymlinkData data = mySymlinksById.remove(fileId);
-      if (data != null && data.path != null) {
+      if (data != null) {
         data.removeRequest(this);
       }
     }
@@ -145,44 +152,45 @@ public class WatchRootsManager {
     myWatcherRequiresUpdate = false;
   }
 
-  private void updateWatchRoots(@NotNull Collection<String> rootsToAdd,
-                                Set<WatchRequest> toRemoveSet,
+  private void updateWatchRoots(Collection<String> rootsToAdd,
+                                Set<WatchRequest> requestsToRemove,
                                 Set<WatchRequest> result,
                                 NavigableMap<String, List<WatchRequest>> roots,
                                 boolean recursiveWatchRoots) {
     List<WatchSymlinkRequest> watchSymlinkRequestsToAdd = new SmartList<>();
-    for (String watchRoot : rootsToAdd) {
-      watchRoot = WatchRootsUtil.mapToSystemPath(watchRoot);
-      if (watchRoot != null) {
-        List<WatchRequest> requests = roots.computeIfAbsent(watchRoot, (key) -> new SmartList<>());
-        boolean foundSameRequest = false;
-        if (!toRemoveSet.isEmpty()) {
-          for (WatchRequest currentRequest : requests) {
-            if (toRemoveSet.remove(currentRequest)) {
-              foundSameRequest = true;
-              result.add(currentRequest);
-            }
+    for (String root : rootsToAdd) {
+      String watchRoot = prepareWatchRoot(root);
+      if (watchRoot == null) continue;
+
+      List<WatchRequest> requests = roots.computeIfAbsent(watchRoot, (key) -> new SmartList<>());
+      boolean foundSameRequest = false;
+      if (!requestsToRemove.isEmpty()) {
+        for (WatchRequest currentRequest : requests) {
+          if (requestsToRemove.remove(currentRequest)) {
+            foundSameRequest = true;
+            result.add(currentRequest);
           }
         }
-        if (!foundSameRequest) {
-          WatchRequestImpl newRequest = new WatchRequestImpl(watchRoot, recursiveWatchRoots);
-          requests.add(newRequest);
-          result.add(newRequest);
+      }
+
+      if (!foundSameRequest) {
+        WatchRequestImpl newRequest = new WatchRequestImpl(watchRoot, recursiveWatchRoots);
+        requests.add(newRequest);
+        result.add(newRequest);
+        if (recursiveWatchRoots) {
+          collectSymlinkRequests(newRequest, watchSymlinkRequestsToAdd);
+        }
+        if (requests.size() == 1 && !WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, watchRoot)) {
+          myWatcherRequiresUpdate = true;
           if (recursiveWatchRoots) {
-            collectSymlinkRequests(newRequest, watchSymlinkRequestsToAdd);
-          }
-          if (requests.size() == 1 && !WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, watchRoot)) {
-            myWatcherRequiresUpdate = true;
-            if (recursiveWatchRoots) {
-              WatchRootsUtil.insertRecursivePath(myOptimizedRecursiveWatchRoots, watchRoot);
-            }
+            WatchRootsUtil.insertRecursivePath(myOptimizedRecursiveWatchRoots, watchRoot);
           }
         }
       }
     }
 
     List<WatchSymlinkRequest> watchSymlinkRequestsToRemove = new SmartList<>();
-    for (WatchRequest request : toRemoveSet) {
+    for (WatchRequest request : requestsToRemove) {
       removeWatchRequest(request);
       if (recursiveWatchRoots) {
         collectSymlinkRequests((WatchRequestImpl)request, watchSymlinkRequestsToRemove);
@@ -192,6 +200,20 @@ public class WatchRootsManager {
     if (recursiveWatchRoots) {
       addWatchSymlinkRequests(watchSymlinkRequestsToAdd);
       removeWatchSymlinkRequests(watchSymlinkRequestsToRemove);
+    }
+  }
+
+  private static @Nullable String prepareWatchRoot(String root) {
+    int index = root.indexOf(JarFileSystem.JAR_SEPARATOR);
+    if (index >= 0) root = root.substring(0, index);
+    try {
+      Path rootPath = Paths.get(FileUtil.toSystemDependentName(root));
+      if (!rootPath.isAbsolute()) throw new InvalidPathException(root, "Watch roots should be absolute");
+      return FileUtil.toSystemIndependentName(rootPath.toString());
+    }
+    catch (InvalidPathException e) {
+      LOG.warn("invalid watch root", e);
+      return null;
     }
   }
 
@@ -246,8 +268,8 @@ public class WatchRootsManager {
   private void removeWatchSymlinkRequests(List<WatchSymlinkRequest> watchSymlinkRequestsToRemove) {
     for (WatchSymlinkRequest request : watchSymlinkRequestsToRemove) {
       Ref<Boolean> remove = new Ref<>(true);
-      WatchRootsUtil.forEachFilePathSegment(request.getOriginalPath(), '/', subPath -> {
-        List<WatchRequest> requests = myRecursiveWatchRoots.get(subPath);
+      WatchRootsUtil.forEachPathSegment(request.getOriginalPath(), '/', path -> {
+        List<WatchRequest> requests = myRecursiveWatchRoots.get(path);
         if (requests != null && ContainerUtil.findInstance(requests, WatchRequestImpl.class) != null) {
           remove.set(false);
           return false;
@@ -274,23 +296,20 @@ public class WatchRootsManager {
   private void collectSymlinkRequests(WatchRequestImpl newRequest,
                                       Collection<WatchSymlinkRequest> watchSymlinkRequestsToAdd) {
     assert newRequest.isToWatchRecursively() : newRequest;
-    WatchRootsUtil.collectByPrefix(mySymlinksByPath, newRequest.myFSRootPath, entry -> watchSymlinkRequestsToAdd.add(
-      entry.getValue().getWatchRequest()));
+    WatchRootsUtil.collectByPrefix(mySymlinksByPath, newRequest.getRootPath(), e -> watchSymlinkRequestsToAdd.add(e.getValue().getWatchRequest()));
   }
 
   private static class WatchRequestImpl implements WatchRequest {
     private final String myFSRootPath;
     private final boolean myWatchRecursively;
 
-    private WatchRequestImpl(@SystemIndependent @NotNull String rootPath, boolean watchRecursively) {
+    WatchRequestImpl(String rootPath, boolean watchRecursively) {
       myFSRootPath = rootPath;
       myWatchRecursively = watchRecursively;
     }
 
     @Override
-    @NotNull
-    @SystemIndependent
-    public String getRootPath() {
+    public @NotNull @SystemIndependent String getRootPath() {
       return myFSRootPath;
     }
 
@@ -344,14 +363,14 @@ public class WatchRootsManager {
 
   private static class SymlinkData {
     final int id;
-    final String path;
-    final String target;
+    final @NotNull @SystemIndependent String path;
+    final @NotNull @SystemIndependent String target;
     private WatchSymlinkRequest myWatchRequest;
 
     SymlinkData(int id, String path, @Nullable String target) {
       this.id = id;
-      this.path = WatchRootsUtil.normalizeFileName(path);
-      this.target = StringUtil.notNullize(WatchRootsUtil.normalizeFileName(target));
+      this.path = FileUtil.toSystemIndependentName(path);
+      this.target = target != null ? FileUtil.toSystemIndependentName(target) : "";
     }
 
     @NotNull WatchSymlinkRequest getWatchRequest() {

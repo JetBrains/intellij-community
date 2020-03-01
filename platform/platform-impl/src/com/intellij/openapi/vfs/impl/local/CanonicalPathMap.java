@@ -4,13 +4,10 @@ package com.intellij.openapi.vfs.impl.local;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -45,7 +42,7 @@ final class CanonicalPathMap {
     Stream.concat(myOptimizedRecursiveWatchRoots.stream(), myOptimizedFlatWatchRoots.stream())
       .parallel()
       .forEach(root -> {
-        String canonicalRoot = ensureNormalized(FileSystemUtil.resolveSymLink(root));
+        String canonicalRoot = FileSystemUtil.resolveSymLink(root);
         if (canonicalRoot != null && WatchRootsUtil.FILE_NAME_COMPARATOR.compare(canonicalRoot, root) != 0) {
           canonicalPathMappings.put(root, canonicalRoot);
         }
@@ -77,15 +74,12 @@ final class CanonicalPathMap {
       }
     }
 
-    List<String> recursiveRoots = ContainerUtil.map(canonicalRecursiveRoots, CanonicalPathMap::denormalize);
-    List<String> flatRoots = ContainerUtil.map(canonicalFlatRoots, CanonicalPathMap::denormalize);
-    return pair(recursiveRoots, flatRoots);
+    return pair(new ArrayList<>(canonicalRecursiveRoots), new ArrayList<>(canonicalFlatRoots));
   }
 
   public void addMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
     for (Pair<String, String> pair : mapping) {
-      String from = ensureNormalized(pair.first);
-      String to = ensureNormalized(pair.second);
+      String from = pair.first, to = pair.second;
 
       // See if we are adding a mapping that itself should be mapped to a different path
       // Example: /foo/real_path -> /foo/symlink, /foo/remapped_path -> /foo/real_path
@@ -118,15 +112,13 @@ final class CanonicalPathMap {
   public Collection<String> mapToOriginalWatchRoots(@NotNull String reportedPath, boolean isExact) {
     if (myOptimizedFlatWatchRoots.isEmpty() && myOptimizedRecursiveWatchRoots.isEmpty()) return Collections.emptyList();
 
-    boolean endsWithSlash = reportedPath.endsWith("/");
-
-    Collection<String> affectedPaths = applyMapping(ensureNormalized(reportedPath));
+    Collection<String> affectedPaths = applyMapping(reportedPath);
     Collection<String> changedPaths = new HashSet<>();
 
     for (String affectedPath : affectedPaths) {
       if (WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, affectedPath)
           || myOptimizedFlatWatchRoots.contains(affectedPath)
-          || (isExact && myOptimizedFlatWatchRoots.contains(ensureNormalized(getParentPath(affectedPath))))) {
+          || (isExact && myOptimizedFlatWatchRoots.contains(getParentPath(affectedPath)))) {
         changedPaths.add(affectedPath);
       }
       else if (!isExact) {
@@ -134,7 +126,8 @@ final class CanonicalPathMap {
         addPrefixedPaths(myOptimizedFlatWatchRoots, affectedPath, changedPaths);
       }
     }
-    return ContainerUtil.map(changedPaths, path -> endsWithSlash ? path : path.substring(0, path.length() - 1));
+
+    return changedPaths;
   }
 
   private Collection<String> applyMapping(@NotNull String reportedPath) {
@@ -142,7 +135,7 @@ final class CanonicalPathMap {
       return Collections.singletonList(reportedPath);
     }
     List<String> results = new SmartList<>(reportedPath);
-    WatchRootsUtil.forEachFilePathSegment(reportedPath, File.separatorChar, path -> {
+    WatchRootsUtil.forEachPathSegment(reportedPath, File.separatorChar, path -> {
       Collection<String> mappedPaths = myPathMappings.get(path);
       for (String mappedPath : mappedPaths) {
         results.add(mappedPath + reportedPath.substring(path.length()));
@@ -167,14 +160,5 @@ final class CanonicalPathMap {
         }
       }
     }
-  }
-
-  @Contract("null -> null; !null -> !null")
-  static String ensureNormalized(@Nullable String path) {
-    return path == null || path.endsWith(File.separator) ? path : path + File.separator;
-  }
-
-  private static String denormalize(String path) {
-    return FileUtil.isRootPath(path) ? path : StringUtil.trimTrailing(path, File.separatorChar);
   }
 }
