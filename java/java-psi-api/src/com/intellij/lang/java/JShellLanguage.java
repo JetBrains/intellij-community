@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.java;
 
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +28,6 @@ public class JShellLanguage extends Language {
   @NotNull
   @Override
   public String getDisplayName() {
-    return JavaPsiBundle.message("jshell.language.snippet");
+    return "JShell Snippet";
   }
 }

@@ -209,7 +209,6 @@ public abstract class Language extends UserDataHolderBase {
   }
 
   @NotNull
-  @Nls
   public String getDisplayName() {
     return getID();
   }
