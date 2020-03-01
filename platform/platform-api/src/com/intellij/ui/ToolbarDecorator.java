@@ -233,27 +233,27 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return this;
   }
 
-  public ToolbarDecorator setAddActionName(String name) {
+  public ToolbarDecorator setAddActionName(@Nls String name) {
     myAddName = name;
     return this;
   }
 
-  public ToolbarDecorator setEditActionName(String name) {
+  public ToolbarDecorator setEditActionName(@Nls String name) {
     myEditName = name;
     return this;
   }
 
-  public ToolbarDecorator setRemoveActionName(String name) {
+  public ToolbarDecorator setRemoveActionName(@Nls String name) {
     myRemoveName = name;
     return this;
   }
 
-  public ToolbarDecorator setMoveUpActionName(String name) {
+  public ToolbarDecorator setMoveUpActionName(@Nls String name) {
     myMoveUpName = name;
     return this;
   }
 
-  public ToolbarDecorator setMoveDownActionName(String name) {
+  public ToolbarDecorator setMoveDownActionName(@Nls String name) {
     myMoveDownName = name;
     return this;
   }
