@@ -12,8 +12,8 @@
   </modules>
 
   <properties>
-    <slf4j.version>1.7.14</slf4j.version>
-    <log4j2.version>2.5</log4j2.version>
+    <slf4j.version>1.7.30</slf4j.version>
+    <log4j2.version>2.13.0</log4j2.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -101,7 +101,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>19.0</version>
+      <version>28.2-jre</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -116,7 +116,7 @@
       <plugins>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.5</version>
+          <version>3.8.1</version>
           <configuration>
             <source>1.8</source>
             <target>1.8</target>
