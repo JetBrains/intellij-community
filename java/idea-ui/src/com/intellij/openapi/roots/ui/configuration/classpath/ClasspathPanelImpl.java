@@ -420,7 +420,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       })
       .setMoveUpActionUpdater(moveUpDownUpdater)
-      .setMoveUpActionName("Move Up (disabled if items are shown in sorted order)")
+      .setMoveUpActionName(JavaUiBundle.message("action.text.class.path.move.up"))
       .setMoveDownAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -428,7 +428,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       })
       .setMoveDownActionUpdater(moveUpDownUpdater)
-      .setMoveDownActionName("Move Down (disabled if items are shown in sorted order)")
+      .setMoveDownActionName(JavaUiBundle.message("action.text.class.path.move.down"))
       .addExtraAction(myEditButton);
 
     final JPanel panel = decorator.createPanel();
