@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.CommonBundle;
 import com.intellij.facet.*;
 import com.intellij.facet.impl.invalid.InvalidFacetManager;
 import com.intellij.facet.impl.invalid.InvalidFacetType;
@@ -242,7 +243,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> actions = new ArrayList<>();
-    actions.add(new AbstractAddGroup("Add") {
+    actions.add(new AbstractAddGroup(CommonBundle.message("button.add")) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return AddFacetOfTypeAction.createAddFacetActions(FacetStructureConfigurable.this);
