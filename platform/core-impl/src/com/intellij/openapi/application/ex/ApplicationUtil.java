@@ -23,15 +23,19 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ApplicationUtil {
-  // Used in com.intellij.ide.instrument.LockWrappingClassVisitor
+  /**
+   * Used in {@link com.intellij.ide.instrument.LockWrappingClassVisitor.MyAdviceAdapter#acquireLock}
+   */
   @SuppressWarnings("unused")
   @ApiStatus.Internal
-  public static boolean acquireWriteIntentLockIfNeeded() {
+  public static boolean acquireWriteIntentLockIfNeeded(@NotNull String invokedClassFqn) {
     if (!EDT.isCurrentThreadEdt()) return false; // do not do anything for non-EDT calls
-    return ApplicationManager.getApplication().acquireWriteIntentLockIfNeeded();
+    return ApplicationManager.getApplication().acquireWriteIntentLockIfNeeded(invokedClassFqn);
   }
 
-  // Used in com.intellij.ide.instrument.LockWrappingClassVisitor
+  /**
+   * Used in {@link com.intellij.ide.instrument.LockWrappingClassVisitor.MyAdviceAdapter#releaseLock}
+   */
   @SuppressWarnings("unused")
   @ApiStatus.Internal
   public static void releaseWriteIntentLockIfNeeded(boolean needed) {

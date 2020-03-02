@@ -97,6 +97,19 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final ExecutorService ourThreadExecutorsService = AppExecutorUtil.getAppExecutorService();
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
+  private static void lockAcquired(@NotNull Class<?> invokedClass,
+                                   @NotNull LockKind lockKind) {
+    lockAcquired(invokedClass.getName(), lockKind);
+  }
+
+  private static void lockAcquired(@NotNull String invokedClassFqn,
+                                   @NotNull LockKind lockKind) {
+    EventWatcher watcher = EventWatcher.getInstance();
+    if (watcher != null) {
+      watcher.lockAcquired(invokedClassFqn, lockKind);
+    }
+  }
+
   public ApplicationImpl(boolean isInternal,
                          boolean isUnitTestMode,
                          boolean isHeadless,
@@ -146,7 +159,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myLock = new ReadMostlyRWLock();
     // Acquire IW lock on EDT indefinitely in legacy mode
     if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
-      EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(() -> myLock.writeIntentLock());
+      EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass()));
     }
     activity.end();
 
@@ -350,7 +363,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     super.dispose();
     // Remove IW lock from EDT as EDT might be re-created which might lead to deadlock if anybody uses this disposed app
     if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode()) {
-      invokeLater(() -> myLock.writeIntentUnlock(), ModalityState.NON_MODAL);
+      invokeLater(() -> releaseWriteIntentLock(), ModalityState.NON_MODAL);
     }
 
     // FileBasedIndexImpl can schedule some more activities to execute, so, shutdown executor only after service disposing
@@ -810,16 +823,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
-  public boolean acquireWriteIntentLockIfNeeded() {
+  public boolean acquireWriteIntentLockIfNeeded(@NotNull String invokedClassFqn) {
     if (myLock.isWriteThread()) return false;
-    myLock.writeIntentLock();
+    acquireWriteIntentLock(invokedClassFqn);
     return true;
   }
 
   @Override
   public void releaseWriteIntentLockIfNeeded(boolean needed) {
     if (needed) {
-      myLock.writeIntentUnlock();
+      releaseWriteIntentLock();
     }
   }
 
@@ -829,12 +842,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       action.run();
     }
     else {
-      myLock.writeIntentLock();
+      acquireWriteIntentLock(action.getClass());
       try {
         action.run();
       }
       finally {
-        myLock.writeIntentUnlock();
+        releaseWriteIntentLock();
       }
     }
   }
@@ -843,12 +856,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
     // Do not ever unlock IW in legacy mode (EDT is holding lock at all times)
     if (myLock.isWriteThread() && USE_SEPARATE_WRITE_THREAD) {
-      myLock.writeIntentUnlock();
+      releaseWriteIntentLock();
       try {
         return action.compute();
       }
       finally {
-        myLock.writeIntentLock();
+        acquireWriteIntentLock(action.getClass());
       }
     }
     else {
@@ -862,12 +875,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       action.run();
     }
     else {
-      startRead();
+      acquireReadLock(action.getClass());
       try {
         action.run();
       }
       finally {
-        endRead();
+        releaseReadLock();
       }
     }
   }
@@ -877,12 +890,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     if (checkReadAccessAllowedAndNoPendingWrites()) {
       return computation.compute();
     }
-    startRead();
+    acquireReadLock(computation.getClass());
     try {
       return computation.compute();
     }
     finally {
-      endRead();
+      releaseReadLock();
     }
   }
 
@@ -891,21 +904,52 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     if (checkReadAccessAllowedAndNoPendingWrites()) {
       return computation.compute();
     }
-    startRead();
+    acquireReadLock(computation.getClass());
     try {
       return computation.compute();
     }
     finally {
-      endRead();
+      releaseReadLock();
     }
   }
 
-  private void startRead() {
+  private void acquireReadLock(@NotNull Class<?> invokedClass) {
     myLock.readLock();
+    lockAcquired(invokedClass, LockKind.READ);
   }
 
-  private void endRead() {
+  private boolean tryAcquireReadLock(@NotNull Class<? extends Runnable> invokedClass) {
+    boolean result = myLock.tryReadLock();
+    if (result) {
+      lockAcquired(invokedClass, LockKind.READ);
+    }
+    return result;
+  }
+
+  private void releaseReadLock() {
     myLock.readUnlock();
+  }
+
+  private void acquireWriteLock(@NotNull Class<?> invokedClass) {
+    myLock.writeLock();
+    lockAcquired(invokedClass, LockKind.WRITE);
+  }
+
+  private void releaseWriteLock() {
+    myLock.writeUnlock();
+  }
+
+  private void acquireWriteIntentLock(@NotNull Class<?> invokedClass) {
+    acquireWriteIntentLock(invokedClass.getName());
+  }
+
+  private void acquireWriteIntentLock(@NotNull String invokedClassFqn) {
+    myLock.writeIntentLock();
+    lockAcquired(invokedClassFqn, LockKind.WRITE_INTENT);
+  }
+
+  private void releaseWriteIntentLock() {
+    myLock.writeIntentUnlock();
   }
 
   @Override
@@ -1099,12 +1143,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       action.run();
     }
     else {
-      if (!myLock.tryReadLock()) return false;
+      if (!tryAcquireReadLock(action.getClass())) return false;
       try {
         action.run();
       }
       finally {
-        endRead();
+        releaseReadLock();
       }
     }
     return true;
@@ -1167,7 +1211,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                                                               ourDumpThreadsOnLongWriteActionWaiting,
                                                               ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS);
         long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
-        myLock.writeLock();
+        acquireWriteLock(clazz);
         if (LOG.isDebugEnabled()) {
           long elapsed = System.currentTimeMillis() - t;
           if (elapsed != 0) {
@@ -1199,7 +1243,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         ActionPauses.WRITE.finished("write action ("+clazz+")");
       }
       if (myWriteActionsStack.size() == myWriteStackBase) {
-        myLock.writeUnlock();
+        releaseWriteLock();
       }
       if (myWriteActionsStack.isEmpty()) {
         fireAfterWriteActionFinished(clazz);
@@ -1267,12 +1311,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private class ReadAccessToken extends AccessToken {
     private ReadAccessToken() {
-      startRead();
+      acquireReadLock(Runnable.class);
     }
 
     @Override
     public void finish() {
-      endRead();
+      releaseReadLock();
     }
   }
 

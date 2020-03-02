@@ -55,12 +55,10 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
 
   private static class TableProvidingListener implements RunnablesListener {
 
-    @NotNull
-    private final ListTableModel<InvocationsInfo> myInvocationsModel;
-    @NotNull
-    private final ListTableModel<InvocationDescription> myRunnablesModel;
-    @NotNull
-    private final ListTableModel<WrapperDescription> myWrappersModel;
+    private final @NotNull ListTableModel<InvocationsInfo> myInvocationsModel;
+    private final @NotNull ListTableModel<InvocationDescription> myRunnablesModel;
+    private final @NotNull ListTableModel<WrapperDescription> myWrappersModel;
+    private final @NotNull ListTableModel<LockAcquirementDescription> myAcquirementsModel;
 
     @NotNull
     private final List<Content> myContents;
@@ -68,8 +66,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
     TableProvidingListener() {
       myInvocationsModel = new ListTableModel<>(
         new ColumnInfo[]{
-          new FunctionBasedColumnInfo<>("Runnable/Callable", String.class, InvocationsInfo::getFQN,
-                                        Comparator.<InvocationsInfo>naturalOrder()),
+          FunctionBasedColumnInfo.stringBased("Runnable/Callable", InvocationsInfo::getFQN),
           new FunctionBasedColumnInfo<>("Average duration, ms", Double.TYPE, InvocationsInfo::getAverageDuration),
           new FunctionBasedColumnInfo<>("Count", Integer.TYPE, InvocationsInfo::getCount)
         },
@@ -79,8 +76,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
       );
 
       myRunnablesModel = new ListTableModel<>(
-        new FunctionBasedColumnInfo<>("Runnable", String.class, InvocationDescription::getProcessId,
-                                      Comparator.<InvocationDescription>naturalOrder()),
+        FunctionBasedColumnInfo.stringBased("Runnable", InvocationDescription::getProcessId),
         new FunctionBasedColumnInfo<>("Duration, ms", Long.TYPE, InvocationDescription::getDuration),
         new FunctionBasedColumnInfo<>("Started at", String.class,
                                       description -> new SimpleDateFormat().format(new Date(description.getStartedAt())),
@@ -88,15 +84,22 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
       );
 
       myWrappersModel = new ListTableModel<>(
-        new FunctionBasedColumnInfo<>("Runnable/Callable", String.class, WrapperDescription::getFQN,
-                                      Comparator.<WrapperDescription>naturalOrder()),
+        FunctionBasedColumnInfo.stringBased("Runnable/Callable", WrapperDescription::getFQN),
         new FunctionBasedColumnInfo<>("Usages count", Integer.TYPE, WrapperDescription::getUsagesCount)
+      );
+
+      myAcquirementsModel = new ListTableModel<>(
+        FunctionBasedColumnInfo.stringBased("Runnable", LockAcquirementDescription::getFQN),
+        new FunctionBasedColumnInfo<>("Reads", Long.TYPE, LockAcquirementDescription::getReads),
+        new FunctionBasedColumnInfo<>("Writes", Long.TYPE, LockAcquirementDescription::getWrites),
+        new FunctionBasedColumnInfo<>("Write intents", Long.TYPE, LockAcquirementDescription::getWriteIntents)
       );
 
       myContents = Arrays.asList(
         createTableContent("Invocations", myInvocationsModel),
         createTableContent("Runnables", myRunnablesModel),
-        createTableContent("Wrappers", myWrappersModel)
+        createTableContent("Wrappers", myWrappersModel),
+        createTableContent("Locks", myAcquirementsModel)
       );
     }
 
@@ -107,6 +110,11 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
       myRunnablesModel.addRows(invocations);
       myInvocationsModel.setItems(new ArrayList<>(infos));
       myWrappersModel.setItems(new ArrayList<>(wrappers));
+    }
+
+    @Override
+    public void locksAcquired(@NotNull Collection<LockAcquirementDescription> acquirements) {
+      myAcquirementsModel.setItems(new ArrayList<>(acquirements));
     }
 
     @NotNull
@@ -170,6 +178,11 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
       @Override
       public final Comparator<Item> getComparator() {
         return myComparator;
+      }
+
+      private static <Item extends Comparable<? super Item>> FunctionBasedColumnInfo<Item, String> stringBased(@NotNull String name,
+                                                                                                               @NotNull Function<? super Item, String> extractor) {
+        return new FunctionBasedColumnInfo<Item, String>(name, String.class, extractor, Comparator.naturalOrder());
       }
     }
   }

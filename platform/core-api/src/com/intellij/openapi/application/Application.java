@@ -56,10 +56,11 @@ public interface Application extends ComponentManager {
    * <p>
    * Acquires IW lock if it's not acquired by the current thread.
    *
+   * @param invokedClassFqn fully qualified name of the class requiring the write intent lock.
    * @return {@code true} if IW lock was acquired, or {@code false} if it is held by the current thread already.
    */
   @ApiStatus.Internal
-  boolean acquireWriteIntentLockIfNeeded();
+  boolean acquireWriteIntentLockIfNeeded(@NotNull String invokedClassFqn);
 
   /**
    * Private API to use in instrumented code.

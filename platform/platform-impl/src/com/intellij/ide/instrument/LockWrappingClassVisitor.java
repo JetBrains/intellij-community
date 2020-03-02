@@ -3,6 +3,7 @@ package com.intellij.ide.instrument;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.commons.AdviceAdapter;
 
@@ -20,10 +21,14 @@ class LockWrappingClassVisitor extends ClassVisitor {
     "getListCellRendererComponent",
     "getElementText"
   );
-  private final Set<String> myMethodsToAnnotate;
+  private final @NotNull String myClassName;
+  private final @NotNull Set<String> myMethodsToAnnotate;
 
-  LockWrappingClassVisitor(ClassWriter cw, Set<String> methodsToAnnotate) {
+  LockWrappingClassVisitor(ClassWriter cw,
+                           @NotNull String className,
+                           @NotNull Set<String> methodsToAnnotate) {
     super(Opcodes.API_VERSION, cw);
+    myClassName = className.replace('/', '.');
     myMethodsToAnnotate = methodsToAnnotate;
   }
 
@@ -31,29 +36,28 @@ class LockWrappingClassVisitor extends ClassVisitor {
   public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
     MethodVisitor mv = cv.visitMethod(access, name, descriptor, signature, exceptions);
 
-
     if (METHODS_TO_WRAP.contains(name) || myMethodsToAnnotate.contains(name)) {
-      return new MyAdviceAdapter(api, mv, access, name, descriptor);
+      return new MyAdviceAdapter(mv, access, name, descriptor);
     }
     return mv;
   }
 
-  /*
-  L0
-    LINENUMBER 20 L0
-    INVOKESTATIC com/intellij/openapi/application/ex/ApplicationUtil.acquireWriteIntentLockIfNeeded ()Z
-    ISTORE 0
-   L2
-    LINENUMBER 24 L2
-    ILOAD 0
-    INVOKESTATIC com/intellij/openapi/application/ex/ApplicationUtil.releaseWriteIntentLockIfNeeded (Z)V
+  /**
+   * L0
+   * LINENUMBER 20 L0
+   * INVOKESTATIC {@link com.intellij.openapi.application.ex.ApplicationUtil#acquireWriteIntentLockIfNeeded} (Ljava/lang/String;)Z
+   * ISTORE 0
+   * L2
+   * LINENUMBER 24 L2
+   * ILOAD 0
+   * INVOKESTATIC {@link com.intellij.openapi.application.ex.ApplicationUtil#releaseWriteIntentLockIfNeeded} (Z)V
    */
 
-  private static class MyAdviceAdapter extends AdviceAdapter {
+  private class MyAdviceAdapter extends AdviceAdapter {
     private static final String applicationUtil = "com/intellij/openapi/application/ex/ApplicationUtil";
     private static final String acquireLock = "acquireWriteIntentLockIfNeeded";
     private static final String releaseLock = "releaseWriteIntentLockIfNeeded";
-    private static final String acquireLockSignature = "()Z";
+    private static final String acquireLockSignature = "(Ljava/lang/String;)Z";
     private static final String releaseLockSignature = "(Z)V";
 
     private int newVarIndex;
@@ -61,20 +65,19 @@ class LockWrappingClassVisitor extends ClassVisitor {
     /**
      * Constructs a new {@link AdviceAdapter}.
      *
-     * @param api           the ASM API version implemented by this visitor. Must be one of {@link
-     *                      Opcodes#ASM4}, {@link Opcodes#ASM5}, {@link Opcodes#ASM6} or {@link Opcodes#ASM7}.
      * @param methodVisitor the method visitor to which this adapter delegates calls.
      * @param access        the method's access flags (see {@link Opcodes}).
      * @param name          the method's name.
      * @param descriptor    the method's descriptor (see {@link Type Type}).
      */
-    protected MyAdviceAdapter(int api, MethodVisitor methodVisitor, int access, String name, String descriptor) {
-      super(api, methodVisitor, access, name, descriptor);
+    protected MyAdviceAdapter(MethodVisitor methodVisitor, int access, String name, String descriptor) {
+      super(LockWrappingClassVisitor.this.api, methodVisitor, access, name, descriptor);
     }
 
     @Override
     protected void onMethodEnter() {
       newVarIndex = newLocal(Type.BOOLEAN_TYPE);
+      mv.visitLdcInsn(myClassName + "#" + getName());
       mv.visitMethodInsn(INVOKESTATIC,
                          applicationUtil,
                          acquireLock,
