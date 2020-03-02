@@ -28,7 +28,7 @@ public class CreateNewProjectGroupAction extends RecentProjectsWelcomeScreenActi
         return true;
       }
     };
-    final String newGroup = Messages.showInputDialog((Project)null, IdeBundle.message("message.project.group.name"),
+    final String newGroup = Messages.showInputDialog((Project)null, IdeBundle.message("dialog.message.project.group.name"),
                                                      IdeBundle.message("dialog.title.create.new.project.group"), null, null, validator);
     if (newGroup != null) {
       RecentProjectsManager.getInstance().addGroup(new ProjectGroup(newGroup));

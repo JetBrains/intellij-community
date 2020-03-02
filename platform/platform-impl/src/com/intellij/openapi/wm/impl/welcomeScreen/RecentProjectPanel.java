@@ -205,7 +205,7 @@ public class RecentProjectPanel extends JPanel {
 
     int rc = Messages.showOkCancelDialog(
       this,
-      IdeBundle.message("message.remove.0.from.recent.projects.list",
+      IdeBundle.message("dialog.message.remove.0.from.recent.projects.list",
                         StringUtil.join(selection, action -> action.getTemplatePresentation().getText(), "'\n'")),
       IdeBundle.message("dialog.title.remove.recent.project"),
       CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());

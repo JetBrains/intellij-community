@@ -94,7 +94,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
       more = true;
     }
     Messages.showMessageDialog(
-      IdeBundle.message("message.could.not.erase.files.or.folders.0.1", StringUtil.join(problems, ",\n  "), more ? "\n  ..." : ""),
+      IdeBundle.message("dialog.message.could.not.erase.files.or.folders.0.1", StringUtil.join(problems, ",\n  "), more ? "\n  ..." : ""),
       UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
   }
 
