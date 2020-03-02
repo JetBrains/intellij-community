@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.project;
 
-import com.intellij.ide.lightEdit.LightEditService;
-import com.intellij.ide.lightEdit.LightEditorInfoImpl;
-import com.intellij.ide.lightEdit.LightEditorManagerImpl;
+import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
@@ -111,6 +109,13 @@ final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
     FileEditorLocation location = editor.getCurrentLocation();
     if (location != null) {
       return location.getEditor().getFile();
+    }
+    LightEditorManagerImpl editorManager = (LightEditorManagerImpl)LightEditService.getInstance().getEditorManager();
+    for (VirtualFile openFile : editorManager.getOpenFiles()) {
+      LightEditorInfo editorInfo = editorManager.findOpen(openFile);
+      if (editorInfo != null && editorInfo.getFileEditor().equals(editor)) {
+        return openFile;
+      }
     }
     return null;
   }
