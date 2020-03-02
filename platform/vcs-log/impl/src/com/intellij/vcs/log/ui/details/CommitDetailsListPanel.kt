@@ -13,6 +13,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -28,7 +29,11 @@ import javax.swing.ScrollPaneConstants
 import kotlin.math.max
 import kotlin.math.min
 
-abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Disposable) : BorderLayoutPanel(), EditorColorsListener {
+abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Disposable) :
+  BorderLayoutPanel(),
+  EditorColorsListener,
+  ComponentWithEmptyText {
+
   companion object {
     private const val MAX_ROWS = 50
     private const val MIN_SIZE = 20
@@ -130,6 +135,8 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
   protected abstract fun getCommitDetailsPanel(): Panel
 
   protected open fun isEmptyStatusVisible(): Boolean = statusText.text.isNotEmpty()
+
+  override fun getEmptyText(): StatusText = statusText
 
   override fun globalSchemeChange(scheme: EditorColorsScheme?) {
     update()
