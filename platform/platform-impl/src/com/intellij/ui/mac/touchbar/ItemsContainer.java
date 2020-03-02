@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -10,7 +10,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-class ItemsContainer {
+final class ItemsContainer {
   private final @NotNull String myName;    // just for logging/debugging
   private final @NotNull List<TBItem> myItems = new ArrayList<>();
 
@@ -19,6 +19,7 @@ class ItemsContainer {
   ItemsContainer(@NotNull String name) { myName = name; }
 
   boolean isEmpty() { return myItems.isEmpty(); }
+
   boolean hasAnActionItems() { return anyMatchDeep(item -> item instanceof TBItemAnActionButton); }
 
   @Override
@@ -29,12 +30,15 @@ class ItemsContainer {
   }
 
   void addItem(@NotNull TBItem item, int index) {
-    if (item.getUid() == null || item.getUid().isEmpty())
+    if (item.getUid() == null || item.getUid().isEmpty()) {
       item.setUid(_genNewID(item.getName()));
-    if (index >= 0 && index < myItems.size())
+    }
+    if (index >= 0 && index < myItems.size()) {
       myItems.add(index, item);
-    else
+    }
+    else {
       myItems.add(item);
+    }
   }
 
   void addItem(@NotNull TBItem item, @Nullable TBItem positionAnchor) {
@@ -49,10 +53,12 @@ class ItemsContainer {
   void addSpacing(boolean large, int index) {
     final SpacingItem spacing = new SpacingItem();
     spacing.setUid(large ? "static_touchbar_item_large_space" : "static_touchbar_item_small_space");
-    if (index >= 0 && index < myItems.size())
+    if (index >= 0 && index < myItems.size()) {
       myItems.add(index, spacing);
-    else
+    }
+    else {
       myItems.add(spacing);
+    }
   }
 
   void addFlexibleSpacing() {
@@ -62,10 +68,12 @@ class ItemsContainer {
   void addFlexibleSpacing(int index) {
     final SpacingItem spacing = new SpacingItem();
     spacing.setUid("static_touchbar_item_flexible_space");
-    if (index >= 0 && index < myItems.size())
+    if (index >= 0 && index < myItems.size()) {
       myItems.add(index, spacing);
-    else
+    }
+    else {
       myItems.add(spacing);
+    }
   }
 
   void releaseAll() {
@@ -86,8 +94,9 @@ class ItemsContainer {
       if (item instanceof TBItemGroup) {
         final ItemsContainer group = ((TBItemGroup)item).getContainer();
         group.remove(filter);
-        if (group.isEmpty())
+        if (group.isEmpty()) {
           removeGroup = true;
+        }
       }
       if (removeGroup || filter.test(item)) {
         item.releaseNativePeer();
@@ -96,12 +105,13 @@ class ItemsContainer {
     }
   }
 
-  String @NotNull [] getVisibleIds() {
-    final String[] ids = new String[myItems.size()];
+  @NotNull String @NotNull [] getVisibleIds() {
+    String[] ids = new String[myItems.size()];
     int c = 0;
     for (TBItem item : myItems) {
-      if (item.myIsVisible)
+      if (item.myIsVisible) {
         ids[c++] = item.getUid();
+      }
     }
     return c == myItems.size() ? ids : Arrays.copyOf(ids, c);
   }
@@ -110,8 +120,9 @@ class ItemsContainer {
     final ID[] ids = new ID[myItems.size()];
     int c = 0;
     for (TBItem item : myItems) {
-      if (item.myIsVisible && !ID.NIL.equals(item.getNativePeer()))
+      if (item.myIsVisible && !ID.NIL.equals(item.getNativePeer())) {
         ids[c++] = item.getNativePeer();
+      }
     }
     return c == myItems.size() ? ids : Arrays.copyOf(ids, c);
   }
@@ -145,8 +156,9 @@ class ItemsContainer {
 
   boolean anyMatchDeep(Predicate<? super TBItem> proc) {
     return myItems.stream().anyMatch(item -> {
-      if (item instanceof TBItemGroup)
+      if (item instanceof TBItemGroup) {
         return ((TBItemGroup)item).getContainer().anyMatchDeep(proc);
+      }
       return proc.test(item);
     });
   }
@@ -167,9 +179,11 @@ class ItemsContainer {
 
   @Nullable
   TBItem findItem(String uid) {
-    for (TBItem item : myItems)
-      if (item.getUid().equals(uid))
+    for (TBItem item : myItems) {
+      if (item.getUid().equals(uid)) {
         return item;
+      }
+    }
     return null;
   }
 
