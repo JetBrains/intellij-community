@@ -518,7 +518,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return toLog;
   }
 
-  private static void log(String message) {
+  private static void log(@NonNls String message) {
     LOG.debug(message + " - "+Thread.currentThread());
   }
 
@@ -1096,6 +1096,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   // for diagnostics
+  @NonNls 
   @SuppressWarnings("ConstantConditions")
   private static Object streamInfo(@NotNull InputStream stream) throws IOException {
     if (stream instanceof BufferedInputStream) {
@@ -1376,7 +1377,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private void unignoreMask(@NotNull final String maskToRemove) {
+  private void unignoreMask(@NonNls @NotNull final String maskToRemove) {
     final Set<String> masks = new LinkedHashSet<>(myIgnoredPatterns.getIgnoreMasks());
     masks.remove(maskToRemove);
 

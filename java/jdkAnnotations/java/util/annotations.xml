@@ -2819,6 +2819,15 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Properties java.lang.String getProperty(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.util.Properties java.lang.String getProperty(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.util.Properties java.lang.String getProperty(java.lang.String, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='java.util.Properties void store(java.io.OutputStream, java.lang.String) 1'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>

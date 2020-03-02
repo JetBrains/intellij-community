@@ -25,6 +25,7 @@ import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ class ITNProxy {
   private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
 
   private static final NotNullLazyValue<Map<String, String>> TEMPLATE = AtomicNotNullLazyValue.createValue(() -> {
-    Map<String, String> template = new LinkedHashMap<>();
+    @NonNls Map<String, String> template = new LinkedHashMap<>();
 
     template.put("protocol.version", "1.1");
     template.put("os.name", SystemInfo.OS_NAME);
@@ -275,7 +276,7 @@ class ITNProxy {
     return builder;
   }
 
-  private static void append(StringBuilder builder, String key, @Nullable String value) {
+  private static void append(StringBuilder builder, @NonNls String key, @NonNls @Nullable String value) {
     if (!StringUtil.isEmpty(value)) {
       String encoded;
       try { encoded = URLEncoder.encode(value, StandardCharsets.UTF_8.name()); }
@@ -372,7 +373,7 @@ class ITNProxy {
     }
   }
 
-  @SuppressWarnings("SpellCheckingInspection") private static final String JB_CA_CERT =
+  @SuppressWarnings("SpellCheckingInspection") private static final @NonNls String JB_CA_CERT =
     "-----BEGIN CERTIFICATE-----\n" +
     "MIIFvjCCA6agAwIBAgIQMYHnK1dpIZVCoitWqBwhXjANBgkqhkiG9w0BAQsFADBn\n" +
     "MRMwEQYKCZImiZPyLGQBGRYDTmV0MRgwFgYKCZImiZPyLGQBGRYISW50ZWxsaUox\n" +

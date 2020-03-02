@@ -20,6 +20,7 @@ import com.intellij.util.io.IdeUtilIoBundle;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,11 +93,11 @@ public class GeneralCommandLine implements UserDataHolder {
 
   public GeneralCommandLine() { }
 
-  public GeneralCommandLine(String @NotNull ... command) {
+  public GeneralCommandLine(@NonNls String @NotNull ... command) {
     this(Arrays.asList(command));
   }
 
-  public GeneralCommandLine(@NotNull List<String> command) {
+  public GeneralCommandLine(@NonNls @NotNull List<String> command) {
     int size = command.size();
     if (size > 0) {
       setExePath(command.get(0));

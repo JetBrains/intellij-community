@@ -18,6 +18,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Element;
@@ -222,7 +223,7 @@ public class UITheme {
     return color != null ? StringUtil.toLowerCase(color) : StringUtil.toLowerCase(fillValue);
   }
 
-  private static final Map<String, String> colorPalette = new HashMap<>();
+  private static final @NonNls Map<String, String> colorPalette = new HashMap<>();
   static {
     colorPalette.put("Actions.Red", "#DB5860");
     colorPalette.put("Actions.Red.Dark", "#C75450");

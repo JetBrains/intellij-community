@@ -186,7 +186,7 @@ public final class Switcher extends AnAction implements DumbAware {
     return createAndShowSwitcher(e, title, "RecentFiles", pinned, vFiles != null);
   }
 
-  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned) {
+  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, @NonNls @NotNull String actionId, boolean onlyEdited, boolean pinned) {
     if (SWITCHER != null && Comparing.equal(SWITCHER.myTitle, title)) return null;
 
     Project project = e.getProject();

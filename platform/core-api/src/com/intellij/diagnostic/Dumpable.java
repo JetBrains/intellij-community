@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,6 +23,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface Dumpable {
 
-  @NotNull
+  @NonNls @NotNull
   String dumpState();
 }

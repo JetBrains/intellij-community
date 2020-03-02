@@ -33,6 +33,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -465,7 +466,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
            + ") ";
   }
 
-  private static void error(String message, VirtualFileSystemEntry[] array, Object... details) {
+  private static void error(@NonNls String message, VirtualFileSystemEntry[] array, Object... details) {
     String children = StringUtil.join(array, VirtualDirectoryImpl::verboseToString, "\n");
     String detailsStr = StringUtil.join(ContainerUtil.<Object, Object>map(details, o -> o instanceof Object[] ? Arrays.toString((Object[])o) : o), "\n");
     throw new AssertionError(message + "; children: " + children + "\nDetails: " + detailsStr);

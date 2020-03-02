@@ -1613,8 +1613,8 @@ public class PluginManagerConfigurable
   private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap,
                         @NotNull @Nls String name,
-                        @NotNull String query,
-                        @NotNull String showAllQuery) throws IOException {
+                        @NotNull @NonNls String query,
+                        @NotNull @NonNls String showAllQuery) throws IOException {
     addGroup(groups, name, showAllQuery, descriptors -> PluginRepositoryRequests.loadPlugins(descriptors, allRepositoriesMap, query));
   }
 

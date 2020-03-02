@@ -39,6 +39,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -208,7 +209,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return panel;
   }
 
-  private static JComponent actionToolbar(String id, AnAction action) {
+  private static JComponent actionToolbar(@NonNls String id, AnAction action) {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(id, new DefaultActionGroup(action), true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     toolbar.getComponent().setBorder(JBUI.Borders.empty());
