@@ -95,23 +95,25 @@ public class WatchRootsManager {
 
   void updateSymlink(int fileId, String linkPath, @Nullable String linkTarget) {
     synchronized (myLock) {
-      SymlinkData data = mySymlinksById.remove(fileId);
+      SymlinkData data = mySymlinksById.get(fileId);
       if (data != null) {
+        if (FileUtil.pathsEqual(data.path, linkPath) && FileUtil.pathsEqual(data.path, linkTarget)) {
+          // Avoid costly removal and re-addition of the request in case of no-op update
+          return;
+        }
+        mySymlinksById.remove(fileId);
+        mySymlinksByPath.remove(data.path);
         data.removeRequest(this);
       }
 
+      data = new SymlinkData(fileId, linkPath, linkTarget);
+
       SymlinkData existing = mySymlinksByPath.get(linkPath);
       if (existing != null) {
-        if (existing.id == fileId) {
-          LOG.warn("Duplicated add symlink event on: " + existing);
-        }
-        else {
-          LOG.error("Path conflict. Existing symlink: " + existing + " vs. new symlink: " + linkPath + " -> " + linkTarget);
-        }
+        LOG.error("Path conflict. Existing symlink: " + existing + " vs. new symlink: " + data);
         return;
       }
 
-      data = new SymlinkData(fileId, linkPath, linkTarget);
       mySymlinksByPath.put(data.path, data);
       mySymlinksById.put(data.id, data);
       if (WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, data.path)) {
@@ -124,6 +126,7 @@ public class WatchRootsManager {
     synchronized (myLock) {
       SymlinkData data = mySymlinksById.remove(fileId);
       if (data != null) {
+        mySymlinksByPath.remove(data.path);
         data.removeRequest(this);
       }
     }
