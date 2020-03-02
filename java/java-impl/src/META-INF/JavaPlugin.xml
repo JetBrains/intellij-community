@@ -2009,20 +2009,6 @@
     <commandLineInspectionProjectConfigurator implementation="com.intellij.codeInspection.JavaCommandLineInspectionProjectConfigurator"/>
 
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
-
-    <appStarter implementation="com.intellij.internal.DumpJdkIndexStarter"/>
-    <appStarter implementation="com.intellij.internal.DumpProjectIndexesStarter" />
-    <applicationService serviceImplementation="com.intellij.internal.SharedIndexesLoader"/>
-    <sharedIndexChunkLocator implementation="com.intellij.internal.SharedJdkIndexChunkLocator"/>
-    <jdkDownloader.jdkInstallerListener implementation="com.intellij.internal.SharedJdkIndexChunkPreloader"/>
-
-    <registryKey key="shared.indexes.url"
-                 defaultValue="https://idea-indexes-cdn.s3-eu-west-1.amazonaws.com/"
-                 description="Shared Indexes download URL" />
-
-    <registryKey key="shared.indexes.eventLogMessages"
-                 defaultValue="true"
-                 description="Show noisy event log messages of the actual progress" />
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

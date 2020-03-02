@@ -1032,9 +1032,6 @@
     <actionPromoter implementation="com.intellij.ui.EditorTextFieldActionPromoter"/>
     <actionPromoter implementation="com.intellij.codeInsight.editorActions.TabActionsPromoter"/>
 
-    <projectService serviceImplementation="com.intellij.util.indexing.hash.building.IndexesExporter"/>
-    <projectService serviceImplementation="com.intellij.util.indexing.hash.building.ProjectIndexesExporter"/>
-
     <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
 
     <lang.foldingBuilder language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFoldingBuilder"/>
@@ -1253,11 +1250,6 @@
     <editorFactoryListener implementation="com.intellij.internal.statistic.fileTypes.UpdateComponentEditorListener"/>
 
     <applicationService serviceImplementation="com.intellij.util.indexing.IndexableSetContributorModificationTracker"/>
-
-    <applicationService serviceInterface="com.intellij.util.indexing.hash.SharedIndexChunkConfiguration"
-                        serviceImplementation="com.intellij.util.indexing.hash.SharedIndexChunkConfigurationImpl"/>
-    <sharedIndexChunkLocator implementation="com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator"/>
-    <sharedIndexLoader implementation="com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator"/>
 
     <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.Problems" doNotActivateOnStart="true" canCloseContents="false"
                 factoryClass="com.intellij.analysis.problemsView.inspection.ProblemsViewToolWindowFactory"/>

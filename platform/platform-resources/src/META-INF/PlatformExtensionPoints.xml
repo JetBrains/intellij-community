@@ -4,7 +4,8 @@
     <extensionPoint name="projectStoreClassProvider" interface="com.intellij.openapi.project.impl.ProjectStoreFactory"/>
 
     <extensionPoint name="appStarter"
-                    interface="com.intellij.openapi.application.ApplicationStarter"/>
+                    interface="com.intellij.openapi.application.ApplicationStarter"
+                    dynamic="true"/>
 
     <extensionPoint name="defaultProjectTypeProvider"
                     beanClass="com.intellij.openapi.project.DefaultProjectTypeEP"/>
