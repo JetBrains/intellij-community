@@ -1059,7 +1059,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         String findNextText = KeymapUtil.getFirstKeyboardShortcutText("FindNext");
         String findPreviousText = KeymapUtil.getFirstKeyboardShortcutText("FindPrevious");
         if (!StringUtil.isEmpty(findNextText) &&  !StringUtil.isEmpty(findPreviousText)) {
-          myNavigationHintLabel.setText("Use " + findNextText + " and " + findPreviousText + " to select usages");
+          myNavigationHintLabel.setText(FindBundle.message("label.use.0.and.1.to.select.usages", findNextText, findPreviousText));
         }
       }
     }
@@ -1324,7 +1324,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private void onStart(int hash) {
     myLoadingHash = hash;
     myLoadingDecorator.startLoading(false);
-    myResultsPreviewTable.getEmptyText().setText("Searching...");
+    myResultsPreviewTable.getEmptyText().setText(FindBundle.message("empty.text.searching"));
   }
 
 
@@ -1408,7 +1408,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       }
 
       if (mask.contains(";")) {
-        return new ValidationInfo("File masks should be comma-separated", myFileMaskField);
+        return new ValidationInfo(FindBundle.message("message.file.masks.should.be.comma.separated"), myFileMaskField);
       }
       try {
         createFileMaskRegExp(mask);   // verify that the regexp compiles
