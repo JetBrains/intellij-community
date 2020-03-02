@@ -8,7 +8,6 @@ import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +19,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class DiffIterableUtil {
-  private static boolean SHOULD_VERIFY_ITERABLE = Registry.is("diff.verify.iterable");
+  @TestOnly
+  private static boolean SHOULD_VERIFY_ITERABLE = false;
 
   /*
    * Compare two integer arrays
