@@ -503,6 +503,9 @@ public class CommandLineUtil {
   }
 
   private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument) {
+    if (argument.length() == 0) {
+      return true;
+    }
     for (int i = 0; i < argument.length(); i++) {
       char c = argument.charAt(i);
       if (!Character.isAlphabetic(c) &&
