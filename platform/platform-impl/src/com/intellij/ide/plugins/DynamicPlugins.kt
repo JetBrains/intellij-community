@@ -96,6 +96,10 @@ object DynamicPlugins {
   @JvmStatic
   @JvmOverloads
   fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl, baseDescriptor: IdeaPluginDescriptorImpl? = null): Boolean {
+    if (!Registry.`is`("ide.plugins.allow.unload")) {
+      return allowLoadUnloadSynchronously(descriptor)
+    }
+
     val projectManager = ProjectManager.getInstance()
     val anyProject = projectManager.openProjects.firstOrNull() ?: projectManager.defaultProject
 
@@ -138,11 +142,13 @@ object DynamicPlugins {
         }
 
         @Suppress("RemoveExplicitTypeArguments") val ep =
-          Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName) ?: anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
+          Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName)
+          ?: anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
         if (ep != null) {
           if (!ep.isDynamic) {
             if (baseDescriptor != null) {
-              LOG.info("Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it")
+              LOG.info(
+                "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it")
             }
             else {
               LOG.info("Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName")
@@ -156,7 +162,8 @@ object DynamicPlugins {
           val baseEP = findPluginExtensionPoint(baseDescriptor, epName)
           if (baseEP != null) {
             if (!baseEP.isDynamic) {
-              LOG.info("Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it")
+              LOG.info(
+                "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it")
               return false
             }
             continue
