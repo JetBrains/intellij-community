@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status.widget;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareToggleAction;
@@ -9,8 +10,11 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 public class StatusBarPopupActionGroup extends ComputableActionGroup {
   @NotNull
@@ -24,9 +28,28 @@ public class StatusBarPopupActionGroup extends ComputableActionGroup {
   @NotNull
   @Override
   protected CachedValueProvider<AnAction[]> createChildrenProvider(@NotNull ActionManager actionManager) {
-    return () ->
-      CachedValueProvider.Result.create(ContainerUtil.map2Array(myManager.getWidgetFactories(), AnAction.class, ToggleWidgetAction::new),
-                                        myManager);
+    return () -> {
+      Collection<AnAction> toggleActions = ContainerUtil.map(myManager.getWidgetFactories(), ToggleWidgetAction::new);
+      toggleActions.add(new MemoryIndicatorToggleAction());
+      return CachedValueProvider.Result.create(toggleActions.toArray(AnAction.EMPTY_ARRAY), myManager);
+    };
+  }
+
+  private static class MemoryIndicatorToggleAction extends DumbAwareToggleAction {
+    private MemoryIndicatorToggleAction() {
+      super(() -> UIBundle.message("status.bar.memory.usage.widget.name"));
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return UISettings.getInstance().getShowMemoryIndicator();
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      UISettings.getInstance().setShowMemoryIndicator(state);
+      UISettings.getInstance().fireUISettingsChanged();
+    }
   }
 
   private class ToggleWidgetAction extends DumbAwareToggleAction {
