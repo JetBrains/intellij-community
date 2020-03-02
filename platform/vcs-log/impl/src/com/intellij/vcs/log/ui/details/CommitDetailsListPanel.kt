@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.details
 
 import com.intellij.openapi.Disposable
@@ -41,7 +41,7 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
     override fun getBackground(): Color = getCommitDetailsBackground()
   }
   private val statusText: StatusText = object : StatusText(mainContentPanel) {
-    override fun isStatusVisible(): Boolean = this.text.isNotEmpty()
+    override fun isStatusVisible(): Boolean = isEmptyStatusVisible()
   }
 
   private val scrollPane =
@@ -129,6 +129,8 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
 
   protected abstract fun getCommitDetailsPanel(): Panel
 
+  protected open fun isEmptyStatusVisible(): Boolean = statusText.text.isNotEmpty()
+
   override fun globalSchemeChange(scheme: EditorColorsScheme?) {
     update()
   }
@@ -152,7 +154,7 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
     override fun getBackground(): Color = getCommitDetailsBackground()
 
     override fun paintChildren(g: Graphics) {
-      if (statusText.text.isNotEmpty()) {
+      if (isEmptyStatusVisible()) {
         statusText.paint(this, g)
       }
       else {
