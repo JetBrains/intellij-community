@@ -115,11 +115,12 @@ class CompilationOutputsUploader {
   private void uploadCompilationOutput(CompilationOutput compilationOutput, JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
     executor.submit {
       def sourcePath = "${compilationOutput.type}/${compilationOutput.name}/${compilationOutput.hash}"
-      if (uploader.isExist(sourcePath)) return
       def outputFolder = new File(compilationOutput.path)
       File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
-      uploader.upload(sourcePath, zipFile)
+      if (!uploader.isExist(sourcePath)) {
+        uploader.upload(sourcePath, zipFile)
+      }
       File zipCopy = new File(tmpDir, sourcePath)
       FileUtil.copy(zipFile, zipCopy)
       FileUtil.delete(zipFile)
