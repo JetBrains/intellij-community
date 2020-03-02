@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content.impl;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.ContentManager;
@@ -141,7 +140,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
     ContentManager manager = Objects.requireNonNull(getManager());
     String prefix = getTitlePrefix();
     manager.removeContent(this, false);
-    PropertiesComponent.getInstance().setValue(SPLIT_PROPERTY_PREFIX + prefix, Boolean.TRUE.toString());
+    ContentUtilEx.setSplitMode(prefix, true);
     for (int i = 0; i < copy.size(); i++) {
       final boolean select = i == selectedTab;
       final JComponent component = copy.get(i).second;
