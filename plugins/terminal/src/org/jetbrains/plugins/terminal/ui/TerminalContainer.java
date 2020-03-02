@@ -3,6 +3,9 @@ package org.jetbrains.plugins.terminal.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -70,14 +73,24 @@ public class TerminalContainer {
 
     myPanel = createPanel(myTerminalWidget);
 
-    Splitter splitter = new OnePixelSplitter(vertically, 0.5f, 0.1f, 0.9f);
-    splitter.setDividerWidth(JBUI.scale(1));
+    Splitter splitter = createSplitter(vertically);
     splitter.setFirstComponent(myPanel);
     TerminalContainer newContainer = new TerminalContainer(myProject, myContent, newTerminalWidget, myTerminalView);
     splitter.setSecondComponent(newContainer.getComponent());
 
     parent.add(splitter, BorderLayout.CENTER);
     parent.revalidate();
+  }
+
+  private static @NotNull Splitter createSplitter(boolean vertically) {
+    Splitter splitter = new OnePixelSplitter(vertically, 0.5f, 0.1f, 0.9f);
+    splitter.setDividerWidth(JBUI.scale(1));
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    Color color = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
+    if (color != null) {
+      splitter.getDivider().setBackground(color);
+    }
+    return splitter;
   }
 
   private void onSessionClosed() {
