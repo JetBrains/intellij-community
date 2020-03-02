@@ -139,6 +139,7 @@ internal class GitInteractiveRebaseDialog(
     val decorator = ToolbarDecorator.createDecorator(commitsTable)
       .setToolbarPosition(ActionToolbarPosition.TOP)
       .setPanelBorder(JBUI.Borders.empty())
+      .setScrollPaneBorder(JBUI.Borders.empty())
       .disableAddAction()
       .disableRemoveAction()
       .addExtraActions(*iconActions.toTypedArray())
