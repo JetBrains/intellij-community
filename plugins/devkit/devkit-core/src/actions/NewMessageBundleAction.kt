@@ -43,20 +43,12 @@ class NewMessageBundleAction : CreateElementActionBase() {
     }
 
     val validator = MyInputValidator(project, directory)
-    val defaultName = generateDefaultName(module)
+    val defaultName = generateDefaultBundleName(module)
     val result = Messages.showInputDialog(project, DevKitBundle.message("label.bundle.name"),
                                           DevKitBundle.message("title.create.new.message.bundle"), null, defaultName, validator)
     if (result != null) {
       elementsConsumer.accept(validator.createdElements)
     }
-  }
-
-  private fun generateDefaultName(module: Module): String {
-    val nameWithoutPrefix = module.name.removePrefix("intellij.")
-    val commonGroupNames = listOf("platform", "vcs", "tools", "clouds")
-    val commonPrefix = commonGroupNames.find { nameWithoutPrefix.startsWith("$it.") }
-    val shortenedName = if (commonPrefix != null) nameWithoutPrefix.removePrefix("$commonPrefix.") else nameWithoutPrefix
-    return shortenedName.split(".").joinToString("") { StringUtil.capitalize(it) } + "Bundle"
   }
 
   override fun create(newName: String, directory: PsiDirectory): Array<PsiElement> {
@@ -136,4 +128,12 @@ class NewMessageBundleAction : CreateElementActionBase() {
   override fun getActionName(directory: PsiDirectory?, newName: String?): String {
     return DevKitBundle.message("action.name.create.new.message.bundle", newName)
   }
+}
+
+internal fun generateDefaultBundleName(module: Module): String {
+  val nameWithoutPrefix = module.name.removePrefix("intellij.").removeSuffix(".impl")
+  val commonGroupNames = listOf("platform", "vcs", "tools", "clouds")
+  val commonPrefix = commonGroupNames.find { nameWithoutPrefix.startsWith("$it.") }
+  val shortenedName = if (commonPrefix != null) nameWithoutPrefix.removePrefix("$commonPrefix.") else nameWithoutPrefix
+  return shortenedName.split(".").joinToString("") { StringUtil.capitalize(it) } + "Bundle"
 }

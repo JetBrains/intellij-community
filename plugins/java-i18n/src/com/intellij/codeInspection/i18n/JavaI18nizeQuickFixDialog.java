@@ -222,7 +222,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     return myResourceBundleManager.suggestPropertiesFiles(myContextModules);
   }
 
-  public String getI18nizedText() {
+  public @NotNull String getI18nizedText() {
     String propertyKey = StringUtil.escapeStringCharacters(getKey());
     I18nizedTextGenerator textGenerator = myResourceBundleManager.getI18nizedTextGenerator();
     if (textGenerator != null) {
@@ -237,18 +237,17 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     attributes.put(RESOURCE_BUNDLE_OPTION_KEY, getResourceBundleText());
     attributes.put(PROPERTY_VALUE_ATTR, StringUtil.escapeStringCharacters(myDefaultPropertyValue));
     addAdditionalAttributes(attributes);
-    String text = null;
     try {
-      text = template.getText(attributes);
+      return template.getText(attributes);
     }
     catch (IOException e) {
       LOG.error(e);
+      return "";
     }
-    return text;
   }
 
   protected String generateText(final I18nizedTextGenerator textGenerator,
-                                final String propertyKey,
+                                @NotNull String propertyKey,
                                 final PropertiesFile propertiesFile,
                                 final PsiLiteralExpression literalExpression) {
     return textGenerator.getI18nizedText(propertyKey, propertiesFile, literalExpression);
