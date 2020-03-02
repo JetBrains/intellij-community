@@ -40,6 +40,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.SdkLookup"
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkLookupImpl" />
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkLookupProviders"/>
 
     <registryKey key="sdk.detector.enabled" defaultValue="true" description="Toggles SDK detection features" />
     <registryKey key="editor.intention.action.auto.preview" defaultValue="false" description="Show intention preview automatically" />
