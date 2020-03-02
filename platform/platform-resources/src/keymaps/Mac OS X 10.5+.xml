@@ -55,7 +55,7 @@
     <mouse-shortcut keystroke="control button2"/>
   </action>
   <action id="ToggleRenderedDocPresentation">
-    <keyboard-shortcut first-keystroke="control F1"/>
+    <keyboard-shortcut first-keystroke="control alt Q"/>
   </action>
   <action id="ExpressionTypeInfo">
     <keyboard-shortcut first-keystroke="control shift P"/>
