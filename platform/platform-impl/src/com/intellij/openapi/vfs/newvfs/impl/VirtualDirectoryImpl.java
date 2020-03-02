@@ -58,6 +58,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     super(id, segment, parent);
     myData = data;
     myFs = fs;
+    if (parent != null) {
+      registerLink(fs);
+    }
   }
 
   @Override
