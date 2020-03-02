@@ -10,6 +10,9 @@
   missing1
   missing2
   missing3
++ optional_config_cycle1
+  optional_config_cycle0
+  optional_config_cycle2
   optional_cycle2
   optional_cycle0
   optional_cycle1
@@ -26,7 +29,7 @@ The missing4 (id=missing4, path=file:/missing4.xml) plugin defines no module dep
 Module com.intellij.modules.duplicate is declared by plugins:
   PluginDescriptor(name=duplicate0, id=duplicate0, path=file:/duplicate0.xml)
   PluginDescriptor(name=duplicate, id=duplicate, path=file:/duplicate1.xml).
-Plugins should not have cyclic dependencies: optional_cycle1 <-> optional_cycle2 <-> optional_cycle0, cycle5 <-> cycle4, cycle2 <-> cycle3 <-> cycle1.
+Plugins should not have cyclic dependencies: optional_cycle1 <-> optional_cycle2 <-> optional_cycle0, optional_config_cycle2 <-> optional_config_cycle0, cycle5 <-> cycle4, cycle2 <-> cycle3 <-> cycle1.
 The missing2 (id=missing2, path=file:/missing2.xml) plugin requires "com.intellij.missing" plugin to be installed.
 The missing3 (id=missing3, path=file:/missing3.xml) plugin requires "missing2" plugin to be enabled.
 The missing1 (id=missing1, path=file:/missing1.xml) plugin requires "com.intellij.modules.missing" plugin to be installed.
