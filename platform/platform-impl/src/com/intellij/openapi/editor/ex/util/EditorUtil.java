@@ -207,13 +207,13 @@ public final class EditorUtil {
   }
 
   public static int calcRelativeCaretPosition(@NotNull Editor editor) {
-    int caretY = editor.getCaretModel().getVisualPosition().line * editor.getLineHeight();
+    int caretY = editor.visualLineToY(editor.getCaretModel().getVisualPosition().line);
     int viewAreaPosition = editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
     return caretY - viewAreaPosition;
   }
 
   public static void setRelativeCaretPosition(@NotNull Editor editor, int position) {
-    int caretY = editor.getCaretModel().getVisualPosition().line * editor.getLineHeight();
+    int caretY = editor.visualLineToY(editor.getCaretModel().getVisualPosition().line);
     editor.getScrollingModel().scrollVertically(caretY - position);
   }
 
