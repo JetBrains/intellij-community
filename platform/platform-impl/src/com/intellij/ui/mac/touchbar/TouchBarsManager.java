@@ -437,16 +437,10 @@ public final class TouchBarsManager {
     };
   }
 
-  @Nullable
-  public static Disposable showDialogWrapperButtons(@NotNull Container contentPane) {
+  public static @Nullable Disposable showDialogWrapperButtons(@NotNull Container contentPane) {
     if (!isTouchBarEnabled()) {
       return null;
     }
-
-    ModalityState ms = LaterInvocator.getCurrentModalityState();
-    BarType barType = ModalityState.NON_MODAL.equals(ms) ? BarType.DIALOG : BarType.MODAL_DIALOG;
-    BarContainer bc;
-    TouchBar tb;
 
     Map<TouchbarDataKeys.DlgButtonDesc, JButton> buttonMap = new HashMap<>();
     Map<Component, ActionGroup> actions = new HashMap<>();
@@ -459,23 +453,25 @@ public final class TouchBarsManager {
     boolean replaceEsc = false;
     boolean emulateEsc = false;
     if (!actions.isEmpty()) {
-      final ActionGroup ag = actions.values().iterator().next();
-      final TouchbarDataKeys.ActionDesc groupDesc = ag.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+      ActionGroup actionGroup = actions.values().iterator().next();
+      TouchbarDataKeys.ActionDesc groupDesc = actionGroup.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
       replaceEsc = groupDesc == null || groupDesc.isReplaceEsc();
       emulateEsc = true;
     }
-    tb = new TouchBar("dialog_buttons", replaceEsc, false, emulateEsc, null, null);
-    BuildUtils.addDialogButtons(tb, buttonMap, actions);
-    bc = new BarContainer(barType, tb, null, contentPane);
+    TouchBar touchBar = new TouchBar("dialog_buttons", replaceEsc, false, emulateEsc, null, null);
+    BuildUtils.addDialogButtons(touchBar, buttonMap, actions);
 
-    ourTemporaryBars.put(contentPane, bc);
-    ourStack.showContainer(bc);
+    ModalityState modalityState = LaterInvocator.getCurrentModalityState();
+    BarType barType = ModalityState.NON_MODAL.equals(modalityState) ? BarType.DIALOG : BarType.MODAL_DIALOG;
+    final BarContainer barContainer = new BarContainer(barType, touchBar, null, contentPane);
 
-    final BarContainer fbc = bc;
+    ourTemporaryBars.put(contentPane, barContainer);
+    ourStack.showContainer(barContainer);
+
     return () -> {
       ourTemporaryBars.remove(contentPane);
-      ourStack.removeContainer(fbc);
-      fbc.release();
+      ourStack.removeContainer(barContainer);
+      barContainer.release();
     };
   }
 
