@@ -247,7 +247,7 @@ public class DiffUtil {
 
   public static void configureEditor(@NotNull EditorEx editor, @NotNull DocumentContent content, @Nullable Project project) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(content.getDocument());
-    if (virtualFile != null && Registry.is("diff.enable.psi.highlighting")) {
+    if (virtualFile != null) {
       editor.setFile(virtualFile);
     }
 

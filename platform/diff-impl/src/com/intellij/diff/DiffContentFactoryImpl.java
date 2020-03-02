@@ -19,7 +19,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -466,8 +465,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                          @Nullable @NonNls String fileName,
                                          boolean readOnly) {
     if (project != null && !project.isDefault() &&
-        fileType != null && !fileType.isBinary() &&
-        Registry.is("diff.enable.psi.highlighting")) {
+        fileType != null && !fileType.isBinary()) {
       if (fileName == null) {
         fileName = "diff." + StringUtil.defaultIfEmpty(fileType.getDefaultExtension(), "txt");
       }
