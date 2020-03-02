@@ -64,7 +64,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     UsageViewEx usageView = new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
     if (usages.length != 0) {
       usageView.appendUsagesInBulk(Arrays.asList(usages));
-      ProgressManager.getInstance().run(new Task.Modal(myProject, "Waiting For Usages", false) {
+      ProgressManager.getInstance().run(new Task.Modal(myProject, UsageViewBundle.message("progress.title.waiting.for.usages"), false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           usageView.waitForUpdateRequestsCompletion();
@@ -153,7 +153,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
         int count = usageView == null ? 0 : usageView.getUsagesCount();
         String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
         LOG.debug(notification +" in "+(System.currentTimeMillis()-start) +"ms.");
-        return new NotificationInfo("Find Usages", "Find Usages Finished", notification);
+        return new NotificationInfo("Find Usages", UsageViewBundle.message("notification.title.find.usages.finished"), notification);
       }
     };
     ProgressManager.getInstance().run(task);

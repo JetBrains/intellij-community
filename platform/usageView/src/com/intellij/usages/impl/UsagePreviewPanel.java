@@ -118,7 +118,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     @NotNull
     @Override
     public String getTabTitle() {
-      return "Preview";
+      return UsageViewBundle.message("tab.title.preview");
     }
   }
 
