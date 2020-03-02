@@ -10,6 +10,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -55,6 +56,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * WARNING
@@ -72,7 +74,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     Set<PsiElement> distinct = new HashSet<>();
     Map<String, ReplacementBean> keyValuePairs = new LinkedHashMap<>();
     UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
-    Set<Module> contextModules = new LinkedHashSet<>();
+    Set<PsiFile> contextFiles = new LinkedHashSet<>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
       ULiteralExpression literalExpression = UastUtils.findContaining(psiElement, ULiteralExpression.class);
@@ -96,7 +98,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
               uExpressions.add(literalExpression);
               keyValuePairs.put(value, new ReplacementBean(uniqueNameGenerator.generateUniqueName(key), value, uExpressions, elements, Collections.emptyList()));
             }
-            ContainerUtil.addIfNotNull(contextModules, ModuleUtilCore.findModuleForPsiElement(psiElement));
+            ContainerUtil.addIfNotNull(contextFiles, psiElement.getContainingFile());
           }
         }
         else if (distinct.add(concatenation)) {
@@ -110,7 +112,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
                                                 Collections.singletonList(UastUtils.findContaining(concatenation, UPolyadicExpression.class)),
                                                 Collections.singletonList(concatenation),
                                                 ContainerUtil.map(args, arg -> UastUtils.findContaining(arg, UExpression.class))));
-          ContainerUtil.addIfNotNull(contextModules, ModuleUtilCore.findModuleForPsiElement(psiElement));
+          ContainerUtil.addIfNotNull(contextFiles, psiElement.getContainingFile());
         }
       }
     }
@@ -118,7 +120,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     if (keyValuePairs.isEmpty()) return;
 
     ArrayList<ReplacementBean> replacements = new ArrayList<>(keyValuePairs.values());
-    I18NBatchDialog dialog = new I18NBatchDialog(project, replacements, contextModules);
+    I18NBatchDialog dialog = new I18NBatchDialog(project, replacements, contextFiles);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       Set<PsiFile> files = new HashSet<>();
@@ -245,16 +247,26 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     @NotNull private final Project myProject;
     private final List<ReplacementBean> myKeyValuePairs;
     private final Set<Module> myContextModules;
+    private final @Nullable ResourceBundleManager myResourceBundleManager;
     private JComboBox<String> myPropertiesFile;
     private UsagePreviewPanel myUsagePreviewPanel;
 
     protected I18NBatchDialog(@NotNull Project project,
                               List<ReplacementBean> keyValuePairs,
-                              Set<Module> contextModules) {
+                              Set<PsiFile> contextFiles) {
       super(project, true);
       myProject = project;
       myKeyValuePairs = keyValuePairs;
-      myContextModules = contextModules;
+      ResourceBundleManager resourceBundleManager;
+      try {
+        resourceBundleManager = ResourceBundleManager.getManager(contextFiles, project);
+      }
+      catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
+        LOG.error(e);
+        resourceBundleManager = null;
+      }
+      myResourceBundleManager = resourceBundleManager;
+      myContextModules = contextFiles.stream().map(ModuleUtilCore::findModuleForFile).filter(Objects::nonNull).collect(Collectors.toSet());
       setTitle(PropertiesBundle.message("i18nize.dialog.title"));
       init();
     }
@@ -267,7 +279,8 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
-      List<String> files = I18nUtil.defaultSuggestPropertiesFiles(myProject, myContextModules);
+      List<String> files = myResourceBundleManager != null ? myResourceBundleManager.suggestPropertiesFiles(myContextModules)
+                                                           : I18nUtil.defaultSuggestPropertiesFiles(myProject, myContextModules);
       myPropertiesFile = new ComboBox<>(ArrayUtil.toStringArray(files));
       new ComboboxSpeedSearch(myPropertiesFile);
       LabeledComponent<JComboBox<String>> component = new LabeledComponent<>();
