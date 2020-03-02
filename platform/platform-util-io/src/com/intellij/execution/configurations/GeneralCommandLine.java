@@ -12,7 +12,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -86,7 +86,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private final Map<String, String> myEnvParams = new MyTHashMap();
   private ParentEnvironmentType myParentEnvironmentType = ParentEnvironmentType.CONSOLE;
   private final ParametersList myProgramParams = new ParametersList();
-  private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
+  private Charset myCharset = EncodingManager.getInstance().getDefaultConsoleEncoding();
   private boolean myRedirectErrorStream;
   private File myInputFile;
   private Map<Object, Object> myUserData;

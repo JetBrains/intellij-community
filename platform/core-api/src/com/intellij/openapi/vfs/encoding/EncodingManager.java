@@ -50,6 +50,11 @@ public abstract class EncodingManager extends EncodingRegistry {
 
   public abstract void setDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile, @Nullable Charset charset);
 
+  @Override
+  public abstract @NotNull Charset getDefaultConsoleEncoding();
+
+  public abstract void setDefaultConsoleEncodingName(@NotNull String name);
+
   @Nullable
   public abstract Charset getCachedCharsetFromContent(@NotNull Document document);
 

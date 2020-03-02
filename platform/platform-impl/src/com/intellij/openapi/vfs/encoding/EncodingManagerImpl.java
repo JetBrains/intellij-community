@@ -64,6 +64,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   static final class State {
     @NotNull
     private Charset myDefaultEncoding = StandardCharsets.UTF_8;
+    private @NotNull Charset myDefaultConsoleEncoding = CharsetToolkit.getDefaultSystemCharset();
 
     @Attribute("default_encoding")
     @NotNull
@@ -75,6 +76,15 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
       myDefaultEncoding = name.isEmpty()
                           ? ChooseFileEncodingAction.NO_ENCODING
                           : ObjectUtils.notNull(CharsetToolkit.forName(name), CharsetToolkit.getDefaultSystemCharset());
+    }
+
+    @Attribute("default_console_encoding")
+    public @NotNull String getDefaultConsoleEncodingName() {
+      return myDefaultConsoleEncoding.name();
+    }
+
+    void setDefaultConsoleEncodingName(@NotNull String name) {
+      myDefaultConsoleEncoding = ObjectUtils.notNull(CharsetToolkit.forName(name), CharsetToolkit.getDefaultSystemCharset());
     }
   }
 
@@ -328,6 +338,16 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     Project project = guessProject(virtualFile);
     if (project == null) return;
     EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(virtualFile, charset);
+  }
+
+  @Override
+  public @NotNull Charset getDefaultConsoleEncoding() {
+    return myState.myDefaultConsoleEncoding;
+  }
+
+  @Override
+  public void setDefaultConsoleEncodingName(@NotNull String name) {
+    myState.setDefaultConsoleEncodingName(name);
   }
 
   void firePropertyChange(@Nullable Document document,

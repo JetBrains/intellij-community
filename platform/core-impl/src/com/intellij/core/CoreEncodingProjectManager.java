@@ -67,6 +67,14 @@ public class CoreEncodingProjectManager extends EncodingProjectManager {
 
   }
 
+  @Override
+  public @NotNull Charset getDefaultConsoleEncoding() {
+    return CharsetToolkit.getDefaultSystemCharset();
+  }
+
+  @Override
+  public void setDefaultConsoleEncodingName(@NotNull String name) {}
+
   @Nullable
   @Override
   public Charset getCachedCharsetFromContent(@NotNull Document document) {

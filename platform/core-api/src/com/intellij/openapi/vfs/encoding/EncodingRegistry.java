@@ -39,6 +39,11 @@ public abstract class EncodingRegistry {
     return null;
   }
 
+  /**
+   * @return default charset for use in ProcessHandler
+   */
+  public abstract @NotNull Charset getDefaultConsoleEncoding();
+
   public static EncodingRegistry getInstance() {
     return EncodingManager.getInstance();
   }
