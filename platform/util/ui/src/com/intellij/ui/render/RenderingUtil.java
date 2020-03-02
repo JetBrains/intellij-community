@@ -3,6 +3,7 @@ package com.intellij.ui.render;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,8 +57,8 @@ public final class RenderingUtil {
 
   @NotNull
   public static Color getBackground(@NotNull JTree tree) {
-    JComponent component = UIUtil.getClientProperty(tree, FOCUSABLE_SIBLING);
-    if (component instanceof JTable) return getBackground((JTable)component); // tree table
+    JTable table = getTableFor(tree);
+    if (table != null) return getBackground(table); // tree table
     Color background = tree.getBackground();
     return background != null ? background : UIUtil.getTreeBackground();
   }
@@ -75,8 +76,8 @@ public final class RenderingUtil {
 
   @NotNull
   public static Color getSelectionBackground(@NotNull JTree tree) {
-    JComponent component = UIUtil.getClientProperty(tree, FOCUSABLE_SIBLING);
-    if (component instanceof JTable) return getSelectionBackground((JTable)component); // tree table
+    JTable table = getTableFor(tree);
+    if (table != null) return getSelectionBackground(table); // tree table
     return UIUtil.getTreeSelectionBackground(isFocused(tree));
   }
 
@@ -111,8 +112,8 @@ public final class RenderingUtil {
 
   @NotNull
   public static Color getForeground(@NotNull JTree tree) {
-    JComponent component = UIUtil.getClientProperty(tree, FOCUSABLE_SIBLING);
-    if (component instanceof JTable) return getForeground((JTable)component); // tree table
+    JTable table = getTableFor(tree);
+    if (table != null) return getForeground(table); // tree table
     Color foreground = tree.getForeground();
     return foreground != null ? foreground : UIUtil.getTreeForeground();
   }
@@ -130,8 +131,8 @@ public final class RenderingUtil {
 
   @NotNull
   public static Color getSelectionForeground(@NotNull JTree tree) {
-    JComponent component = UIUtil.getClientProperty(tree, FOCUSABLE_SIBLING);
-    if (component instanceof JTable) return getSelectionForeground((JTable)component); // tree table
+    JTable table = getTableFor(tree);
+    if (table != null) return getSelectionForeground(table); // tree table
     return UIUtil.getTreeSelectionForeground(isFocused(tree));
   }
 
@@ -144,5 +145,13 @@ public final class RenderingUtil {
 
   private static boolean isFocusedImpl(@NotNull JComponent component) {
     return component.hasFocus() || UIUtil.isClientPropertyTrue(component, ALWAYS_PAINT_SELECTION_AS_FOCUSED);
+  }
+
+  private static JTable getTableFor(@NotNull JTree tree) {
+    @SuppressWarnings("deprecation")
+    Object property = tree.getClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY);
+    if (property instanceof JTable) return (JTable)property;
+    JComponent sibling = UIUtil.getClientProperty(tree, FOCUSABLE_SIBLING);
+    return sibling instanceof JTable ? (JTable)sibling : null;
   }
 }
