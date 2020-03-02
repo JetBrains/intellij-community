@@ -80,7 +80,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     try {
       Throwable throwable = event.getThrowable();
       MemoryKind kind = getOOMErrorKind(throwable);
-      if (kind != null) {
+      if (kind != null && System.getProperty("testscript.filename") == null) {
         ourOomOccurred = true;
         SwingUtilities.invokeAndWait(() -> new OutOfMemoryDialog(kind).show());
       }
