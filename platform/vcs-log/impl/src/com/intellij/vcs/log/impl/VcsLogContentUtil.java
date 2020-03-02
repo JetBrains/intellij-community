@@ -21,16 +21,15 @@ import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Utility methods to operate VCS Log tabs as {@link Content}s of the {@link ContentManager} of the VCS toolwindow.
@@ -136,14 +135,18 @@ public class VcsLogContentUtil {
     return existingIds;
   }
 
+
   public static <U extends VcsLogUiEx> U openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
-                                                    @NotNull String tabGroupName, @NotNull String shortName,
+                                                    @NotNull @NonNls String groupId, @NotNull @NonNls String tabId,
+                                                    @NotNull Supplier<String> tabGroupDisplayName,
+                                                    @NotNull Function<U, String> tabDisplayName,
                                                     @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
     U logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.TOOL_WINDOW);
 
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-    ContentUtilEx.addTabbedContent(toolWindow.getContentManager(),
-                                   new VcsLogPanel(logManager, logUi), tabGroupName, shortName, focus, logUi);
+    ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi),
+                                   groupId, tabId, tabGroupDisplayName, () -> tabDisplayName.apply(logUi),
+                                   focus, logUi);
     if (focus) {
       toolWindow.activate(null);
     }

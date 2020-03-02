@@ -18,6 +18,7 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.matches
 import com.intellij.vcsUtil.VcsUtil
+import java.util.function.Function
 
 private const val TAB_NAME = "History"
 
@@ -94,6 +95,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     if (firstTime) {
       val suffix = if (hash != null) " (" + hash.toShortString() + ")" else ""
       fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, path.name + suffix,
+                                                   VcsLogBundle.messagePointer("file.history.tab.name"), Function { path.name + suffix },
                                                    FileHistoryUiFactory(path, root, hash), true)
     }
     consumer(fileHistoryUi!!, firstTime)
