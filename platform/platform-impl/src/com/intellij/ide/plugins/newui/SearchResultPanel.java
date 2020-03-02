@@ -39,7 +39,7 @@ public abstract class SearchResultPanel {
     this.tabIndex = tabIndex;
     this.backTabIndex = backTabIndex;
 
-    setEmptyText();
+    setEmptyText("");
 
     if (isProgressMode()) {
       loading(false);
@@ -74,7 +74,7 @@ public abstract class SearchResultPanel {
     return pane;
   }
 
-  protected void setEmptyText() {
+  protected void setEmptyText(@NotNull String query) {
     myPanel.getEmptyText().setText(IdeBundle.message("empty.text.nothing.found"));
   }
 
@@ -95,7 +95,7 @@ public abstract class SearchResultPanel {
   public void setQuery(@NotNull String query) {
     assert SwingUtilities.isEventDispatchThread();
 
-    setEmptyText();
+    setEmptyText(query);
 
     if (query.equals(myQuery)) {
       myEmpty = query.isEmpty();

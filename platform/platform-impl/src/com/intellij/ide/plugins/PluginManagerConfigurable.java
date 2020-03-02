@@ -1011,8 +1011,13 @@ public class PluginManagerConfigurable
 
         myInstalledSearchPanel = new SearchResultPanel(installedController, panel, 0, 0) {
           @Override
-          protected void setEmptyText() {
+          protected void setEmptyText(@NotNull String query) {
             myPanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.nothing.found"));
+            if (query.contains("/downloaded") || query.contains("/outdated") ||
+                query.contains("/enabled") || query.contains("/disabled") ||
+                query.contains("/invalid") || query.contains("/bundled")) {
+              return;
+            }
             myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                                        e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
           }
