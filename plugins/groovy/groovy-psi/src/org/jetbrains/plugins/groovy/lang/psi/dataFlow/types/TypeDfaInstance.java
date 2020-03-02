@@ -200,7 +200,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       .noneMatch(it -> Objects.equals(it, myDfaComputationState.getTargetDescriptor().getName()))) {
       return;
     }
-    if (instruction.num() > myInteresting.stream().mapToInt(Instruction::num).max().orElse(Integer.MAX_VALUE) &&
+    if (instruction.num() > myInteresting.stream().mapToInt(Instruction::num).max().orElse(0) &&
         !myDfaComputationState.isVisited(element)) {
       return;
     }
