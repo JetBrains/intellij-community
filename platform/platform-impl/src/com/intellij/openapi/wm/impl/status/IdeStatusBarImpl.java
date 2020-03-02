@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -113,6 +114,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   @NotNull
   @Override
   public StatusBar createChild(@NotNull IdeFrame frame) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     IdeStatusBarImpl bar = new IdeStatusBarImpl(frame, false);
     bar.setVisible(isVisible());
     myChildren.add(bar);
@@ -244,6 +246,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   @Override
   public void removeCustomIndicationComponent(@NotNull final JComponent c) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final Set<String> keySet = myWidgetMap.keySet();
     final String[] keys = ArrayUtilRt.toStringArray(keySet);
     for (final String key : keys) {
@@ -275,6 +278,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position position, @NotNull String anchor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     JComponent c = wrap(widget);
     JPanel panel = getTargetPanel(position);
     if (position == Position.LEFT && panel.getComponentCount() == 0) {
@@ -519,16 +523,16 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   @Override
   public void removeWidget(@NotNull String id) {
-    WidgetBean bean = myWidgetMap.remove(id);
-    if (bean != null) {
-      UIUtil.invokeLaterIfNeeded(() -> {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      WidgetBean bean = myWidgetMap.remove(id);
+      if (bean != null) {
         JPanel targetPanel = getTargetPanel(bean.position);
         targetPanel.remove(bean.component);
         targetPanel.revalidate();
-      });
-      Disposer.dispose(bean.widget);
-    }
-    updateChildren(child -> child.removeWidget(id));
+        Disposer.dispose(bean.widget);
+      }
+      updateChildren(child -> child.removeWidget(id));
+    });
   }
 
   @Override
@@ -560,7 +564,9 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     return bean == null ? null : bean.widget;
   }
 
+  @ApiStatus.Internal
   @Nullable
+  //todo: make private after removing all external usages
   public JComponent getWidgetComponent(@NotNull String id) {
     WidgetBean bean = myWidgetMap.get(id);
     return bean == null ? null : bean.component;
