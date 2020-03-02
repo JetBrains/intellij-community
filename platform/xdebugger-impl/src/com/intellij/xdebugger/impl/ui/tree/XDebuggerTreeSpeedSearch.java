@@ -48,6 +48,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       @Nullable
       @Override
       public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
+        myRecentSearchText = pattern;
         int index = StringUtil.indexOfIgnoreCase(text, pattern, 0);
         return index >= 0 ? Collections.singleton(TextRange.from(index, pattern.length())) : null;
       }
