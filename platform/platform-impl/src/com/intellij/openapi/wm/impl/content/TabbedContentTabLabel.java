@@ -54,7 +54,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
   public void update() {
     super.update();
     if (myContent != null) {
-      setText(myContent.getTabName());
+      setText(myContent.getDisplayName());
     }
   }
 

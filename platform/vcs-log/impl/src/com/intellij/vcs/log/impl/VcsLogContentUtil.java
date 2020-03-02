@@ -203,14 +203,14 @@ public class VcsLogContentUtil {
     return false;
   }
 
-  public static void renameLogUi(@NotNull Project project, @NotNull VcsLogUi ui, @NotNull String newName) {
+  public static void updateLogUiName(@NotNull Project project, @NotNull VcsLogUi ui) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
     if (toolWindow == null) return;
 
     ContentManager manager = toolWindow.getContentManager();
     JComponent component = ContentUtilEx.findContentComponent(manager, c -> ui == getLogUi(c));
     if (component == null) return;
-    ContentUtilEx.renameTabbedContent(manager, component, newName);
+    ContentUtilEx.updateTabbedContentDisplayName(manager, component);
   }
 
   /**
