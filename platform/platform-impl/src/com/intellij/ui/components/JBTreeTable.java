@@ -38,7 +38,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import static com.intellij.ui.render.RenderingUtil.CORRESPONDING_TREE_TABLE;
+import static com.intellij.ui.render.RenderingUtil.FOCUSABLE_SIBLING;
 
 /**
  * The tree-table view supports horizontal scrolling on a tree column only.
@@ -176,7 +176,8 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
         return renderer.getTableCellRendererComponent(myTable, value, selected, hasFocus, row, cm.treeColumnIndex);
       }
     });
-    myTree.putClientProperty(CORRESPONDING_TREE_TABLE, myTable);
+    myTree.putClientProperty(FOCUSABLE_SIBLING, myTable);
+    myTable.putClientProperty(FOCUSABLE_SIBLING, myTree);
 
     setModel(model);
   }

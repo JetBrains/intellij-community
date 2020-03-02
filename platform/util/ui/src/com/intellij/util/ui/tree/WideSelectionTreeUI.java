@@ -38,7 +38,7 @@ import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 @Deprecated
 public class WideSelectionTreeUI extends BasicTreeUI {
   /**
-   * @deprecated use {@link RenderingUtil#CORRESPONDING_TREE_TABLE} or {@link RenderingUtil#ALWAYS_PAINT_SELECTION_AS_FOCUSED}
+   * @deprecated use {@link RenderingUtil#FOCUSABLE_SIBLING} or {@link RenderingUtil#ALWAYS_PAINT_SELECTION_AS_FOCUSED}
    */
   @Deprecated
   public static final String TREE_TABLE_TREE_KEY = "TreeTableTree";

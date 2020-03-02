@@ -15,7 +15,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-import static com.intellij.ui.render.RenderingUtil.CORRESPONDING_TREE_TABLE;
+import static com.intellij.ui.render.RenderingUtil.FOCUSABLE_SIBLING;
 
 /**
  * author: lesya
@@ -31,7 +31,7 @@ public class TreeTableTree extends Tree {
     super(model);
     myTreeTable = treeTable;
     setCellRenderer(getCellRenderer());
-    putClientProperty(CORRESPONDING_TREE_TABLE, treeTable);
+    putClientProperty(FOCUSABLE_SIBLING, treeTable);
     setBorder(null);
   }
 

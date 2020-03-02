@@ -194,7 +194,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
           boolean leaf = isLeaf(path.getLastPathComponent());
           boolean expanded = !leaf && cache.getExpandedState(path);
           boolean selected = tree.isRowSelected(row);
-          boolean focused = tree.hasFocus();
+          boolean focused = RenderingUtil.isFocused(tree);
           boolean lead = focused && row == getLeadSelectionRow();
 
           Color background = getBackground(tree, path, row, selected);
@@ -224,7 +224,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
                 DRAW.paint((Graphics2D)g, helper.getX(), bounds.y, helper.getWidth(), bounds.height, 0);
               }
               else if (1 < tree.getSelectionModel().getSelectionCount()) {
-                g.setColor(UIUtil.getTreeBackground());
+                g.setColor(RenderingUtil.getBackground(tree));
                 DRAW.paint((Graphics2D)g, helper.getX() + 1, bounds.y + 1, helper.getWidth() - 2, bounds.height - 2, 0);
               }
             }
