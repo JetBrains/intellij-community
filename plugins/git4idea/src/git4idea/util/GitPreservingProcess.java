@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -17,8 +16,9 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.commands.Git;
-import git4idea.config.GitVcsSettings;
 import git4idea.config.GitSaveChangesPolicy;
+import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.stash.GitChangesSaver;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +117,10 @@ public class GitPreservingProcess {
       @NotNull
       @Override
       public String getLeftPanelTitle(@NotNull VirtualFile file) {
-        return "Uncommitted changes from the " + saveMethod.getStorageName();
+        return saveMethod.selectBundleMessage(
+          GitBundle.getString("restore.conflict.diff.dialog.left.stash.title"),
+          GitBundle.getString("restore.conflict.diff.dialog.left.shelf.title")
+        );
       }
 
       @NotNull
@@ -146,9 +149,12 @@ public class GitPreservingProcess {
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
       VcsNotifier.getInstance(myProject).notifyError(
-        "Couldn't save uncommitted changes.",
-        String.format("Tried to save uncommitted changes in %s before %s, but failed with an error.<br/>%s",
-                      mySaver.getSaveMethod().getStorageName(), myOperationTitle, join(e.getMessages())));
+        GitBundle.getString("save.notification.failed.title"),
+        mySaver.getSaveMethod().selectBundleMessage(
+          GitBundle.message("save.notification.failed.stash.text", myOperationTitle, join(e.getMessages())),
+          GitBundle.message("save.notification.failed.shelf.text", myOperationTitle, join(e.getMessages()))
+        )
+      );
       return false;
     }
   }

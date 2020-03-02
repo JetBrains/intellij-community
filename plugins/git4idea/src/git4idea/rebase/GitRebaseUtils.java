@@ -15,6 +15,7 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.history.GitHistoryUtils;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
 import org.jetbrains.annotations.NotNull;
@@ -231,9 +232,13 @@ public class GitRebaseUtils {
 
   @NotNull
   static String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
-    return saver != null && saver.wereChangesSaved() ?
-           "<br/>Local changes were " + saver.getSaveMethod().getVerbInPast() + " before rebase." :
-           "";
+    if (saver == null || !saver.wereChangesSaved()) {
+      return "";
+    }
+    return saver.getSaveMethod().selectBundleMessage(
+      GitBundle.getString("rebase.notification.saved.local.changes.part.stash.text"),
+      GitBundle.getString("rebase.notification.saved.local.changes.part.shelf.text")
+    );
   }
 
   @NotNull
