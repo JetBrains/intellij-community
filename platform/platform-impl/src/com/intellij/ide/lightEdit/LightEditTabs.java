@@ -100,6 +100,9 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
   private class CloseTabAction extends DumbAwareAction implements LightEditCompatible {
     private final LightEditorInfo myEditorInfo;
 
+    @SuppressWarnings("UseJBColor")
+    private final Icon myUnsavedIcon = LightEditSaveStatusIcon.create(new Color(0x4083c9));
+
     private CloseTabAction(@NotNull LightEditorInfo editorInfo) {
       myEditorInfo = editorInfo;
     }
@@ -123,7 +126,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
     }
 
     private Icon getIcon() {
-      return myEditorInfo.isUnsaved() ? AllIcons.General.Modified : AllIcons.Actions.Close;
+      return myEditorInfo.isUnsaved() ? myUnsavedIcon : AllIcons.Actions.Close;
     }
 
     private void closeCurrentTab() {
