@@ -16,14 +16,14 @@ import java.util.function.Predicate;
 class WatchRootsUtil {
   static final Comparator<String> FILE_NAME_COMPARATOR = FileUtil::comparePaths;
 
-  public static boolean isCoveredRecursively(@NotNull NavigableSet<String> recursiveRoots, @NotNull String path) {
+  static boolean isCoveredRecursively(@NotNull NavigableSet<String> recursiveRoots, @NotNull String path) {
     String recursiveRoot = recursiveRoots.floor(path);
     return recursiveRoot != null && FileUtil.startsWith(path, recursiveRoot);
   }
 
-  public static <T> void collectByPrefix(@NotNull NavigableMap<String, T> paths,
-                                         @NotNull String prefix,
-                                         @NotNull Consumer<Map.Entry<String, T>> collector) {
+  static <T> void collectByPrefix(@NotNull NavigableMap<String, T> paths,
+                                  @NotNull String prefix,
+                                  @NotNull Consumer<Map.Entry<String, T>> collector) {
     for (Map.Entry<String, T> entry : paths.tailMap(prefix, false).entrySet()) {
       if (FileUtil.startsWith(entry.getKey(), prefix)) {
         collector.accept(entry);
@@ -34,7 +34,7 @@ class WatchRootsUtil {
     }
   }
 
-  public static void insertRecursivePath(@NotNull NavigableSet<String> recursiveRoots, @NotNull String path) {
+  static void insertRecursivePath(@NotNull NavigableSet<String> recursiveRoots, @NotNull String path) {
     if (!isCoveredRecursively(recursiveRoots, path)) {
       recursiveRoots.add(path);
       // Remove any roots covered by newly added
@@ -45,7 +45,7 @@ class WatchRootsUtil {
     }
   }
 
-  public static void forEachPathSegment(@NotNull String path, char separator, @NotNull Predicate<String> consumer) {
+  static void forEachPathSegment(@NotNull String path, char separator, @NotNull Predicate<String> consumer) {
     int position = path.indexOf(separator);
     int length = path.length();
     while (position >= 0 && position < length) {
@@ -58,9 +58,7 @@ class WatchRootsUtil {
     consumer.test(path);
   }
 
-  @NotNull
-  public static NavigableSet<String> optimizeFlatRoots(@NotNull Iterable<String> flatRoots,
-                                                       @NotNull NavigableSet<String> recursiveRoots) {
+  static @NotNull NavigableSet<String> optimizeFlatRoots(@NotNull Iterable<String> flatRoots, @NotNull NavigableSet<String> recursiveRoots) {
     NavigableSet<String> result = createFileNavigableSet();
     for (String flatRoot : flatRoots) {
       if (!isCoveredRecursively(recursiveRoots, flatRoot)) {
@@ -70,19 +68,17 @@ class WatchRootsUtil {
     return result;
   }
 
-  @NotNull
-  public static NavigableSet<String> createFileNavigableSet() {
+  static @NotNull NavigableSet<String> createFileNavigableSet() {
     return new TreeSet<>(FILE_NAME_COMPARATOR);
   }
 
-  @NotNull
-  public static <T> NavigableMap<String, T> createFileNavigableMap() {
+  static <T> @NotNull NavigableMap<String, T> createFileNavigableMap() {
     return new TreeMap<>(FILE_NAME_COMPARATOR);
   }
 
-  public static boolean removeRecursivePath(@NotNull NavigableSet<String> optimizedRecursiveRoots,
-                                            @NotNull NavigableMap<String, ?> sourceRecursiveRoots,
-                                            @NotNull String path) {
+  static boolean removeRecursivePath(@NotNull NavigableSet<String> optimizedRecursiveRoots,
+                                     @NotNull NavigableMap<String, ?> sourceRecursiveRoots,
+                                     @NotNull String path) {
     if (!optimizedRecursiveRoots.remove(path)) {
       return false;
     }

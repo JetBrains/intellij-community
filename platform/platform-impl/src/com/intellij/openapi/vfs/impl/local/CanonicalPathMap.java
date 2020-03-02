@@ -20,7 +20,7 @@ import static com.intellij.util.PathUtil.getParentPath;
  * Unless stated otherwise, all paths are {@link org.jetbrains.annotations.SystemDependent @SystemDependent}.
  */
 final class CanonicalPathMap {
-  public static CanonicalPathMap empty() {
+  static CanonicalPathMap empty() {
     return new CanonicalPathMap(Collections.emptyNavigableSet(), Collections.emptyNavigableSet(), MultiMap.empty());
   }
 
@@ -77,7 +77,7 @@ final class CanonicalPathMap {
     return pair(new ArrayList<>(canonicalRecursiveRoots), new ArrayList<>(canonicalFlatRoots));
   }
 
-  public void addMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
+  void addMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
     for (Pair<String, String> pair : mapping) {
       String from = pair.first, to = pair.second;
 
@@ -108,8 +108,7 @@ final class CanonicalPathMap {
    * For recursive roots, if the path given to us is already the parent of the actual dirty path, we need to compare the path to the parent
    * of the recursive root because if the root itself was changed, we need to know about it.
    */
-  @NotNull
-  public Collection<String> mapToOriginalWatchRoots(@NotNull String reportedPath, boolean isExact) {
+  @NotNull Collection<String> mapToOriginalWatchRoots(@NotNull String reportedPath, boolean isExact) {
     if (myOptimizedFlatWatchRoots.isEmpty() && myOptimizedRecursiveWatchRoots.isEmpty()) return Collections.emptyList();
 
     Collection<String> affectedPaths = applyMapping(reportedPath);
@@ -130,7 +129,7 @@ final class CanonicalPathMap {
     return changedPaths;
   }
 
-  private Collection<String> applyMapping(@NotNull String reportedPath) {
+  private Collection<String> applyMapping(String reportedPath) {
     if (myPathMappings.isEmpty()) {
       return Collections.singletonList(reportedPath);
     }
@@ -145,9 +144,7 @@ final class CanonicalPathMap {
     return results;
   }
 
-  private static void addPrefixedPaths(@NotNull NavigableSet<String> paths,
-                                       @NotNull String prefix,
-                                       @NotNull Collection<String> result) {
+  private static void addPrefixedPaths(NavigableSet<String> paths, String prefix, Collection<String> result) {
     String possibleRoot = paths.ceiling(prefix);
     if (possibleRoot != null && FileUtil.startsWith(possibleRoot, prefix)) {
       // It's worth going for the set and iterator

@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -149,11 +150,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     }
   }
 
-  public void symlinkUpdated(int fileId, String linkPath, @Nullable String linkTarget) {
+  @ApiStatus.Internal
+  public final void symlinkUpdated(int fileId, @NotNull String linkPath, @Nullable String linkTarget) {
     myWatchRootsManager.updateSymlink(fileId, linkPath, linkTarget);
   }
 
-  public void symlinkRemoved(int fileId) {
+  @ApiStatus.Internal
+  public final void symlinkRemoved(int fileId) {
     myWatchRootsManager.removeSymlink(fileId);
   }
 
