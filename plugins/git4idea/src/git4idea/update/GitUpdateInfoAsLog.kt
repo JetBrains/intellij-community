@@ -36,12 +36,14 @@ import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
+import git4idea.i18n.GitBundle
 import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledInBackground
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.function.Supplier
 import kotlin.collections.ArrayList
 
 private val LOG = logger<GitUpdateInfoAsLog>()
@@ -162,8 +164,9 @@ class GitUpdateInfoAsLog(private val project: Project,
     val logUi = logManager.createLogUi(logUiFactory, VcsLogManager.LogWindowKind.TOOL_WINDOW)
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
-    ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info",
-                                   DateFormatUtil.formatDateTime(System.currentTimeMillis()),
+    val tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis())
+    ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info", tabName,
+                                   GitBundle.messagePointer("git.update.tab.name"), Supplier { tabName },
                                    select, panel.getUi())
     if (select) {
       ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.activate(null)
