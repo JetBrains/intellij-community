@@ -327,7 +327,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
         final String newName = Messages.showInputDialog(
           ProjectLayoutPanel.this,
           JavaUiBundle.message("label.enter.new.name.for.merge.result"),
-          CommonBundle.message("dialog.title.merge"),
+          JavaUiBundle.message("dialog.title.merge.module.or.library"),
           Messages.getQuestionIcon(), getElementName(elements.get(0)), getValidator());
         if (newName != null) {
           final T merged = merge(elements);
