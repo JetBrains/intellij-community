@@ -39,6 +39,7 @@ import git4idea.GitProtectedBranchesKt;
 import git4idea.GitRevisionNumber;
 import git4idea.branch.GitRebaseParams;
 import git4idea.commands.*;
+import git4idea.config.GitSaveChangesPolicy;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
@@ -61,8 +62,6 @@ import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.ui.Messages.getWarningIcon;
-import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
-import static com.intellij.openapi.util.text.StringUtil.capitalize;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -116,8 +115,13 @@ public class GitRebaseProcess {
     myProgressManager = ProgressManager.getInstance();
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
-    VIEW_STASH_ACTION = NotificationAction.createSimple("View " + capitalize(mySaver.getSaveMethod().getStorageName()) + ELLIPSIS,
-                                                        () -> mySaver.showSavedChanges());
+    VIEW_STASH_ACTION = NotificationAction.createSimple(
+      mySaver.getSaveMethod().selectBundleMessage(
+        GitBundle.getString("rebase.notification.action.view.stash.text"),
+        GitBundle.getString("rebase.notification.action.view.shelf.text")
+      ),
+      () -> mySaver.showSavedChanges()
+    );
   }
 
   public void rebase() {
@@ -267,7 +271,12 @@ public class GitRebaseProcess {
           retryWhenDirty = true; // try same repository again
         }
         else {
-          LOG.warn("Couldn't " + mySaver.getSaveMethod().getVerb() + " root " + repository.getRoot() + ": " + saveError);
+          LOG.warn(String.format(
+            "Couldn't %s root %s: %s",
+            mySaver.getSaveMethod() == GitSaveChangesPolicy.SHELVE ? "shelve" : "stash",
+            repository.getRoot(),
+            saveError
+          ));
           showFatalError(saveError, repository, somethingRebased, alreadyRebased.keySet(), allSkippedCommits);
           GitRebaseStatus.Type type = somethingRebased ? GitRebaseStatus.Type.SUSPENDED : GitRebaseStatus.Type.ERROR;
           return new GitRebaseStatus(type, skippedCommits);
@@ -366,7 +375,10 @@ public class GitRebaseProcess {
     }
     catch (VcsException e) {
       LOG.warn(e);
-      return "Couldn't " + mySaver.getSaveMethod().getVerb() + " local uncommitted changes:<br/>" + e.getMessage();
+      return mySaver.getSaveMethod().selectBundleMessage(
+        GitBundle.message("rebase.notification.failed.stash.text", e.getMessage()),
+        GitBundle.message("rebase.notification.failed.shelf.text", e.getMessage())
+      );
     }
   }
 
