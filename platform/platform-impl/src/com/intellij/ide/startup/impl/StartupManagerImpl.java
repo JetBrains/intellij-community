@@ -171,7 +171,10 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
 
       PluginId id = pluginDescriptor.getPluginId();
-      if (!(id == PluginManagerCore.CORE_ID || id == PluginManagerCore.JAVA_PLUGIN_ID || id.getIdString().equals("com.jetbrains.performancePlugin"))) {
+      if (!(id == PluginManagerCore.CORE_ID ||
+            id == PluginManagerCore.JAVA_PLUGIN_ID ||
+            id.getIdString().equals("com.jetbrains.performancePlugin") ||
+            id.getIdString().equals("com.intellij.kotlinNative.platformDeps"))) {
         LOG.error("Only bundled plugin can define " + extensionPoint.getName() + ": " + pluginDescriptor);
         return;
       }
