@@ -335,7 +335,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       }
 
       private @Nullable Integer editNumber(String key, String value) {
-        String newValue = Messages.showInputDialog(getRootPane(), IdeBundle.message("message.enter.new.value.for.0", key),
+        String newValue = Messages.showInputDialog(getRootPane(), IdeBundle.message("dialog.message.enter.new.value.for.0", key),
                                                    IdeBundle.message("dialog.title.number.editor"), null, value,
                                                    new InputValidator() {
                                      @Override
@@ -360,7 +360,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       @Nullable
       private Insets editInsets(String key, String value) {
         String newValue = Messages.showInputDialog(getRootPane(),
-                                                   IdeBundle.message("message.enter.new.value.for.0.in.form.top.left.bottom.right", key),
+                                                   IdeBundle.message("dialog.message.enter.new.value.for.0.in.form.top.left.bottom.right", key),
                                                    IdeBundle.message("dialog.title.insets.editor"), null, value,
                                                    new InputValidator() {
              @Override
@@ -395,7 +395,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       @Nullable
       private UIUtil.GrayFilter editGrayFilter(String key, String value) {
         String newValue = Messages.showInputDialog(getRootPane(),
-                                                   IdeBundle.message("message.enter.new.value.for.0.in.form.brightness.contrast.alpha", key),
+                                                   IdeBundle.message(
+                                                     "dialog.message.enter.new.value.for.0.in.form.brightness.contrast.alpha", key),
                                                    IdeBundle.message("dialog.title.gray.filter.editor"), null, value,
                                                    new InputValidator() {
                                                      @Override

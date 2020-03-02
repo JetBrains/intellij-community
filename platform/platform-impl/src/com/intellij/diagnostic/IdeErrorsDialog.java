@@ -124,7 +124,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       setDevelopers(developers);
     }
     else {
-      new Task.Backgroundable(null, IdeBundle.message("progress.title.loading.developers.list"), true) {
+      new Task.Backgroundable(null, DiagnosticBundle.message("progress.title.loading.developers.list"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -277,7 +277,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       });
       myAssigneeCombo.setSwingPopup(false);
       myAssigneePanel = new JPanel();
-      myAssigneePanel.add(new JBLabel(IdeBundle.message("label.assignee")));
+      myAssigneePanel.add(new JBLabel(DiagnosticBundle.message("label.assignee")));
       myAssigneePanel.add(myAssigneeCombo);
     }
 

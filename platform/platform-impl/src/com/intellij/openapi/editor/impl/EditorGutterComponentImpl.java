@@ -1705,8 +1705,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                                                                                          : Balloon.Position.atRight;
     AtomicReference<String> tooltip = new AtomicReference<>();
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myEditor.getProject(),
-                                                                                               IdeBundle.message(
-                                                                                                 "progress.title.constructing.tooltip")) {
+                                                                                               IdeBundle.message("progress.title.constructing.tooltip")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         tooltip.set(ReadAction.compute(() -> renderer.getTooltipText()));

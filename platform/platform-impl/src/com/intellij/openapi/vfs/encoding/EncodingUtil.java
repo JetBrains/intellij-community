@@ -124,7 +124,7 @@ public class EncodingUtil {
     boolean writable = ReadonlyStatusHandler.ensureFilesWritable(project, virtualFile);
     if (!writable) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          IdeBundle.message("message.cannot.save.the.file.0", virtualFile.getPresentableUrl()),
+                                          IdeBundle.message("dialog.message.cannot.save.the.file.0", virtualFile.getPresentableUrl()),
                                           IdeBundle.message("dialog.title.unable.to.save"), null);
       return;
     }
