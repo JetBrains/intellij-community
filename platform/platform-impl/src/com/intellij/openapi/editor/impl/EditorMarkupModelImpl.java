@@ -134,7 +134,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   private final ActionToolbar statusToolbar;
   private final ComponentListener toolbarComponentListener;
   private Rectangle cachedToolbarBounds = new Rectangle();
-  private final JLabel statusIcon;
+  private final JLabel smallIconLabel;
   private AnalyzerStatus analyzerStatus;
   private InspectionPopupManager myPopupManager = new InspectionPopupManager();
   private final Disposable resourcesDisposable = Disposer.newDisposable();
@@ -223,21 +223,21 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     };
     statusToolbar.getComponent().addComponentListener(toolbarComponentListener);
 
-    statusIcon = new JLabel();
-    statusIcon.addMouseListener(new MouseAdapter() {
+    smallIconLabel = new JLabel();
+    smallIconLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
         myPopupManager.showPopup(event);
       }
     });
-    statusIcon.setOpaque(true);
-    statusIcon.setBackground(new JBColor(() -> myEditor.getColorsScheme().getDefaultBackground()));
-    statusIcon.setVisible(false);
+    smallIconLabel.setOpaque(true);
+    smallIconLabel.setBackground(new JBColor(() -> myEditor.getColorsScheme().getDefaultBackground()));
+    smallIconLabel.setVisible(false);
 
     JPanel statusPanel = new NonOpaquePanel();
     statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
     statusPanel.add(statusToolbar.getComponent());
-    statusPanel.add(statusIcon);
+    statusPanel.add(smallIconLabel);
 
     ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusPanel);
 
@@ -279,12 +279,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       if (!bounds.isEmpty() && bounds.contains(point)) {
         cachedToolbarBounds = bounds;
         stComponent.setVisible(false);
-        statusIcon.setVisible(true);
+        smallIconLabel.setVisible(true);
       }
     }
     else if (!cachedToolbarBounds.contains(point)) {
       stComponent.setVisible(true);
-      statusIcon.setVisible(false);
+      smallIconLabel.setVisible(false);
     }
   }
 
@@ -337,13 +337,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus(myEditor);
       if (!Objects.equals(newStatus, analyzerStatus)) {
         analyzerStatus = newStatus;
-        statusIcon.setIcon(analyzerStatus.getIcon());
-      }
-    }
+        smallIconLabel.setIcon(analyzerStatus.getIcon());
 
-    MyErrorPanel errorPanel = getErrorPanel();
-    if (errorPanel != null) {
-      errorPanel.repaintTrafficTooltip();
+        myPopupManager.updateContent();
+      }
     }
   }
 
@@ -727,9 +724,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         hideMyEditorPreviewHint();
       }
       setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
-      repaintTrafficTooltip();
       repaintTrafficLightIcon();
       repaintVerticalScrollBar();
+
+      myPopupManager.updateContent();
     }
 
     @Override
@@ -1073,12 +1071,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       }
       showTooltip(myTrafficTooltipRenderer, new HintHint(e).setAwtTooltip(true).setMayCenterPosition(true).setContentActive(false)
         .setPreferredPosition(Balloon.Position.atLeft));
-    }
-
-    private void repaintTrafficTooltip() {
-      if (myTrafficTooltipRenderer != null) {
-        myTrafficTooltipRenderer.repaintTooltipWindow();
-      }
     }
 
     private void cancelMyToolTips(final MouseEvent e, boolean checkIfShouldSurvive) {
@@ -1594,6 +1586,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       if (!Objects.equals(e.getPresentation().getIcon(), newIcon)) {
         e.getPresentation().setIcon(newIcon);
       }
+
+      e.getPresentation().setEnabledAndVisible(newIcon != null);
     }
   }
 
@@ -1632,41 +1626,42 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   private static final int DELTA_Y = 6;
 
   private class InspectionPopupManager {
-    private AnalyzerStatus myCurrentStatus;
-    private ComponentPopupBuilder myPopupBuilder;
+    private final JPanel myContent;
+    private final ComponentPopupBuilder myPopupBuilder;
+
     private JBPopup myPopup;
-    private JComponent myContent;
+
+    private InspectionPopupManager() {
+      myContent = new JPanel(new GridBagLayout());
+      myContent.setOpaque(true);
+      myContent.setBackground(UIUtil.getToolTipBackground());
+
+      myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null).setCancelOnClickOutside(true);
+    }
 
     private void showPopup(InputEvent event) {
       hidePopup();
 
-      if (myCurrentStatus != analyzerStatus) {
-        myCurrentStatus = analyzerStatus;
-
-        AnalyzerController controller = myCurrentStatus.getController().invoke();
-        myContent = createContent(controller);
-        myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null).
-          setCancelCallback(controller::onClose).setCancelOnClickOutside(true);
+      if (myPopupBuilder != null) {
+        myPopup = myPopupBuilder.createPopup();
         myEditor.getComponent().addAncestorListener(new AncestorListenerAdapter() {
           @Override
           public void ancestorMoved(AncestorEvent event) {
             hidePopup();
           }
         });
+
+        JComponent owner = (JComponent)event.getComponent();
+        Dimension size = myContent.getPreferredSize();
+        size.width = Math.max(size.width, JBUIScale.scale(296));
+
+        RelativePoint point = new RelativePoint(owner,
+                                                new Point(owner.getWidth() - owner.getInsets().right + JBUIScale.scale(DELTA_X) - size.width,
+                                                          owner.getHeight() + JBUIScale.scale(DELTA_Y)));
+
+        myPopup.setSize(size);
+        myPopup.show(point);
       }
-
-      myPopup = myPopupBuilder.createPopup();
-
-      JComponent owner = (JComponent)event.getComponent();
-      Dimension size = myContent.getPreferredSize();
-      size.width = Math.max(size.width, JBUIScale.scale(296));
-
-      RelativePoint point = new RelativePoint(owner,
-            new Point(owner.getWidth() - owner.getInsets().right + JBUIScale.scale(DELTA_X) - size.width,
-                      owner.getHeight() + JBUIScale.scale(DELTA_Y)));
-
-      myPopup.setSize(size);
-      myPopup.show(point);
     }
 
     private void hidePopup() {
@@ -1676,13 +1671,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       myPopup = null;
     }
 
-    private JComponent createContent(AnalyzerController controller) {
-      JPanel contentPanel = new JPanel(new GridBagLayout());
-      contentPanel.setOpaque(true);
-      contentPanel.setBackground(UIUtil.getToolTipBackground());
+    private void updateContentPanel(AnalyzerController controller) {
+      myContent.removeAll();
 
       GridBag gc = new GridBag();
-      contentPanel.add(new JLabel(myCurrentStatus.getTitle()),
+      myContent.add(new JLabel(analyzerStatus.getTitle()),
                        gc.nextLine().next().
                          anchor(GridBagConstraints.LINE_START).
                          weightx(1).
@@ -1697,22 +1690,31 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
                                                  presentation,
                                                  ActionPlaces.EDITOR_POPUP,
                                                  ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
-      contentPanel.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
-      if (StringUtil.isNotEmpty(myCurrentStatus.getDetails())) {
-        contentPanel.add(new JLabel(myCurrentStatus.getDetails()),
+      myContent.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
+      if (StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
+        myContent.add(new JLabel(analyzerStatus.getDetails()),
                          gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().
                            coverLine().weightx(1).insets(0, 10, 10, 6));
       }
 
-      contentPanel.add(createLowerPanel(controller),
+      myContent.add(createLowerPanel(controller),
                        gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
-
-      return contentPanel;
     }
 
-    private void revalidatePopup() {
-      if (myContent != null && myPopup != null && !myPopup.isDisposed()) {
-        myContent.revalidate();
+    private void updateContent() {
+      AnalyzerController controller = analyzerStatus.getController().invoke();
+      updateContentPanel(controller);
+      myPopupBuilder.setCancelCallback(controller::onClose);
+
+      revalidateAndResize(false);
+    }
+
+    private void revalidateAndResize(boolean revalidate) {
+      if (myPopup != null && !myPopup.isDisposed()) {
+
+        if (revalidate) {
+          myContent.revalidate();
+        }
 
         Dimension size = myContent.getPreferredSize();
         size.width = Math.max(size.width, JBUIScale.scale(296));
@@ -1744,7 +1746,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
           DropDownLink<AHLevel> levelLink = new DropDownLink<>(level.getLevel(), controller.getAvailableLevels(),
                                                                l -> {
                                                                  controller.setHighLightLevel(level.copy(level.getLanguage(), l));
-                                                                 revalidatePopup();
+                                                                 revalidateAndResize(true);
                                                                }, true);
 
           panel.add(levelLink, gc.next());
@@ -1758,7 +1760,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
             DropDownLink<AHLevel> levelLink = new DropDownLink<>(level.getLevel(), controller.getAvailableLevels(),
                                                                  l -> {
                                                                    controller.setHighLightLevel(level.copy(level.getLanguage(), l));
-                                                                   revalidatePopup();
+                                                                   revalidateAndResize(true);
                                                                  }, true);
 
             panel.add(levelLink, gc.next());
