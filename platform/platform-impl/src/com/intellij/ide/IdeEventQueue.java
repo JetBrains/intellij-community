@@ -90,7 +90,6 @@ public final class IdeEventQueue extends EventQueue {
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
   private static PerformanceWatcher ourPerformanceWatcher;
-  private static EventWatcher ourEventWatcher;
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -378,7 +377,7 @@ public final class IdeEventQueue extends EventQueue {
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
     PerformanceWatcher performanceWatcher = obtainPerformanceWatcher();
-    EventWatcher eventWatcher = obtainEventWatcher();
+    EventWatcher eventWatcher = EventWatcher.getInstance();
     try {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventStarted();
@@ -617,15 +616,6 @@ public final class IdeEventQueue extends EventQueue {
         watcher = PerformanceWatcher.getInstance();
         ourPerformanceWatcher = watcher;
       }
-    }
-    return watcher;
-  }
-
-  @Nullable
-  private static EventWatcher obtainEventWatcher() {
-    EventWatcher watcher = ourEventWatcher;
-    if (watcher == null) {
-      ourEventWatcher = watcher = EventWatcher.getInstance();
     }
     return watcher;
   }
@@ -1510,7 +1500,7 @@ public final class IdeEventQueue extends EventQueue {
       postDelayedKeyEvents();
     }
 
-    EventWatcher watcher = obtainEventWatcher();
+    EventWatcher watcher = EventWatcher.getInstance();
     if (watcher != null) {
       watcher.logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
     }
