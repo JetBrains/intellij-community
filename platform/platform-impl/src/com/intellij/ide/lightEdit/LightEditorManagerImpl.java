@@ -42,7 +42,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
 
   final static Key<Boolean> NO_IMPLICIT_SAVE = Key.create("light.edit.no.implicit.save");
 
-  private final static String DEFAULT_FILE_NAME = "Untitled";
+  private final static String DEFAULT_FILE_NAME = "untitled_";
 
   public LightEditorManagerImpl(LightEditServiceImpl service) {
     myLightEditService = service;
@@ -189,8 +189,8 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   }
 
   private String getUniqueName() {
-    for (int i = 0; ; i++) {
-      String candidate = DEFAULT_FILE_NAME + (i > 0 ? " (" + i + ")" : "");
+    for (int i = 1; ; i++) {
+      String candidate = DEFAULT_FILE_NAME + i;
       if (myEditors.stream().noneMatch(editorInfo -> editorInfo.getFile().getName().equals(candidate))) {
         return candidate;
       }
