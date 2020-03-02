@@ -2,14 +2,11 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindManager;
-import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -46,23 +43,6 @@ public class SearchCommand {
     myProcessPresentation = new FindUsagesProcessPresentation(presentation);
     myProcessPresentation.setShowNotFoundMessage(true);
     myProcessPresentation.setShowPanelIfOnlyOneUsage(true);
-
-    myProcessPresentation.setProgressIndicatorFactory(
-      new Factory<ProgressIndicator>() {
-        @Override
-        public ProgressIndicator create() {
-          FindProgressIndicator indicator = new FindProgressIndicator(mySearchContext.getProject(), presentation.getScopeText());
-          indicator.addStateDelegate(new AbstractProgressIndicatorExBase(){
-            @Override
-            public void cancel() {
-              super.cancel();
-              stopAsyncSearch();
-            }
-          });
-          return indicator;
-        }
-      }
-    );
 
     PsiDocumentManager.getInstance(mySearchContext.getProject()).commitAllDocuments();
     final ConfigurableUsageTarget target = context.getTarget();
