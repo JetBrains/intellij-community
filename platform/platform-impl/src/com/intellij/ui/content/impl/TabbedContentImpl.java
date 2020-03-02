@@ -6,13 +6,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -53,8 +55,18 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   }
 
   private void selectTab(@NotNull Pair<String, JComponent> tab) {
-    setDisplayName(ContentUtilEx.getFullName(myPrefix, tab.first));
+    setDisplayName(getDisplayName(tab.second, true));
     setComponent(tab.second);
+  }
+
+  @Nls
+  @NotNull
+  private String getDisplayName(@NotNull JComponent c, boolean withPrefix) {
+    String displayName = ContentUtilEx.getDisplayName(c, withPrefix);
+    if (displayName != null) return displayName;
+    String tabName = Objects.requireNonNull(findTab(c)).first;
+    if (withPrefix) return ContentUtilEx.getFullName(myPrefix, tabName);
+    return tabName;
   }
 
   @Override
@@ -92,9 +104,10 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
     }
   }
 
+  @Nls
   @Override
   public String getDisplayName() {
-    return getTabName();
+    return getDisplayName(getComponent(), true);
   }
 
   @Override
@@ -116,6 +129,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
     return false;
   }
 
+  @NonNls
   @Override
   public String getTabName() {
     return ContentUtilEx.getFullName(myPrefix, Objects.requireNonNull(selectedTab()).first);
@@ -124,7 +138,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   @NotNull
   @Override
   public List<Pair<String, JComponent>> getTabs() {
-    return Collections.unmodifiableList(myTabs);
+    return ContainerUtil.map2List(myTabs, pair -> Pair.create(getDisplayName(pair.second, false), pair.second));
   }
 
   @Override
@@ -154,15 +168,10 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
     Disposer.dispose(this);
   }
 
-  public boolean rename(@NotNull JComponent component, @NotNull String newName) {
-    Pair<String, JComponent> tab = findTab(component);
-    if (tab == null) return false;
-    if (newName.equals(tab.first)) return true;
-
-    int index = myTabs.indexOf(tab);
-    myTabs.set(index, new Pair<>(newName, component));
+  public boolean updateName(@NotNull JComponent component) {
+    if (findTab(component) == null) return false;
     if (getComponent() == component) {
-      setDisplayName(ContentUtilEx.getFullName(myPrefix, newName));
+      setDisplayName(getDisplayName(component, true));
     }
 
     return true;

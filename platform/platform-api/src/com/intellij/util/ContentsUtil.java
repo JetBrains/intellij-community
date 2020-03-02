@@ -21,6 +21,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -32,7 +33,7 @@ public class ContentsUtil {
 
     Content[] contents = manager.getContents();
     Content oldContentFound = null;
-    for(Content oldContent: contents) {
+    for (Content oldContent : contents) {
       if (!oldContent.isPinned() && oldContent.getDisplayName().equals(contentName)) {
         oldContentFound = oldContent;
         break;
@@ -69,10 +70,16 @@ public class ContentsUtil {
     contentManager.removeContent(content, true);
   }
 
+  @Nullable
+  public static Disposable getDisposable(@NotNull JComponent contentComponent) {
+    Object disposable = contentComponent.getClientProperty(DISPOSABLE_KEY);
+    if (disposable instanceof Disposable) return (Disposable)disposable;
+    return null;
+  }
+
   public static void dispose(@NotNull JComponent component) {
-    Object disposable = component.getClientProperty(DISPOSABLE_KEY);
-    if (disposable instanceof Disposable) {
-      Disposer.dispose((Disposable)disposable);
-    }
+    Disposable disposable = getDisposable(component);
+    if (disposable == null) return;
+    Disposer.dispose(disposable);
   }
 }

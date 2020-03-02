@@ -81,17 +81,13 @@ public class VcsLogTabsManager {
     }
     else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
       ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
-      updateTabName(ui);
-      ui.addFilterListener(() -> updateTabName(ui));
+      VcsLogContentUtil.updateLogUiName(myProject, ui);
+      ui.addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
     }
     else {
       throw new UnsupportedOperationException("Only log in editor or tool window is supported");
     }
     return ui;
-  }
-
-  private void updateTabName(@NotNull VcsLogUi ui) {
-    VcsLogContentUtil.renameLogUi(myProject, ui, generateShortDisplayName(ui));
   }
 
   @NotNull
@@ -103,7 +99,7 @@ public class VcsLogTabsManager {
 
   @NotNull
   private static String getFullName(@NotNull String shortName) {
-    return ContentUtilEx.getFullName(VcsLogContentProvider.TAB_NAME, shortName);
+    return ContentUtilEx.getFullName(VcsLogBundle.message("vcs.log.tab.name"), shortName);
   }
 
   @NotNull
