@@ -80,7 +80,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   @Override
   public void selectContent(int index) {
     Pair<String, JComponent> tab = myTabs.get(index);
-    setDisplayName(tab.first);
+    setDisplayName(ContentUtilEx.getFullName(myPrefix, tab.first));
     setComponent(tab.second);
   }
 
@@ -96,7 +96,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   public boolean findAndSelectContent(@NotNull JComponent contentComponent) {
     String tabName = findTabNameByComponent(contentComponent);
     if (tabName != null) {
-      setDisplayName(tabName);
+      setDisplayName(ContentUtilEx.getFullName(myPrefix, tabName));
       setComponent(contentComponent);
       return true;
     }
@@ -158,7 +158,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
     int index = myTabs.indexOf(tab);
     myTabs.set(index, new Pair<>(newName, component));
     if (getComponent() == component) {
-      setDisplayName(newName);
+      setDisplayName(ContentUtilEx.getFullName(myPrefix, newName));
     }
 
     return true;
