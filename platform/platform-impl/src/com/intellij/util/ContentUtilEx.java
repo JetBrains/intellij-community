@@ -227,4 +227,31 @@ public class ContentUtilEx extends ContentsUtil {
       }
     }
   }
+
+  public static void mergeTabs(@NotNull ContentManager manager, @NotNull String tabPrefix) {
+    final Content selectedContent = manager.getSelectedContent();
+    final List<Pair<String, JComponent>> tabs = new ArrayList<>();
+    int selectedTab = -1;
+    List<Content> mergedContent = new ArrayList<>();
+    for (Content content : manager.getContents()) {
+      if (tabPrefix.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY))) {
+        final String label = content.getTabName().substring(tabPrefix.length() + 2);
+        final JComponent component = content.getComponent();
+        if (content == selectedContent) {
+          selectedTab = tabs.size();
+        }
+        tabs.add(Pair.create(label, component));
+        manager.removeContent(content, false);
+        content.setComponent(null);
+        content.setShouldDisposeContent(false);
+        mergedContent.add(content);
+      }
+    }
+    PropertiesComponent.getInstance().unsetValue(TabbedContent.SPLIT_PROPERTY_PREFIX + tabPrefix);
+    for (int i = 0; i < tabs.size(); i++) {
+      final Pair<String, JComponent> tab = tabs.get(i);
+      addTabbedContent(manager, tab.second, tabPrefix, tab.first, i == selectedTab);
+    }
+    mergedContent.forEach(Disposer::dispose);
+  }
 }
