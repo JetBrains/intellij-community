@@ -102,11 +102,11 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   private Set<VcsRoot> scanForRootsInsideDir(@NotNull VirtualFile root) {
     Set<VcsRoot> roots = new HashSet<>();
     VcsRootScanner.visitDirsRecursivelyWithoutExcluded(myProject, ProjectRootManager.getInstance(myProject), root, dir -> {
-      if (Registry.is("vcs.root.detector.skip.vendor") && dir.getName().equalsIgnoreCase("vendor")) return SKIP_CHILDREN;
-      AbstractVcs vcs = getVcsFor(dir);
-      if (vcs != null) {
-        LOG.debug("Found VCS " + vcs + " in " + dir);
-        roots.add(new VcsRoot(vcs, dir));
+      if (isIgnoredDirectory(dir)) return SKIP_CHILDREN;
+      VcsRoot vcsRoot = getVcsRootFor(dir);
+      if (vcsRoot != null) {
+        LOG.debug("Found VCS " + vcsRoot.getVcs() + " in " + vcsRoot.getPath());
+        roots.add(vcsRoot);
       }
       return CONTINUE;
     });
@@ -117,33 +117,41 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
     return rootsInsideDir.stream().noneMatch(it -> startDir.equals(it.getPath()));
   }
 
+  private boolean isIgnoredDirectory(@NotNull VirtualFile dir) {
+    return Registry.is("vcs.root.detector.skip.vendor") && dir.getName().equalsIgnoreCase("vendor");
+  }
+
   @Nullable
   private VcsRoot scanForSingleRootAboveDir(@NotNull final VirtualFile dir) {
     if (myProject.isDisposed()) {
       return null;
     }
 
-    ProgressManager.checkCanceled();
+    VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
     VirtualFile par = dir.getParent();
-    while (par != null && !par.equals(VfsUtil.getUserHomeDir())) {
-      AbstractVcs vcs = getVcsFor(par, dir);
-      if (vcs != null) return new VcsRoot(vcs, par);
+    while (par != null) {
+      if (par.equals(userHomeDir)) break; // ignore mappings in ~/ and above
+      VcsRoot vcsRoot = getVcsRootFor(par, dir);
+      if (vcsRoot != null) return vcsRoot;
       par = par.getParent();
     }
     return null;
   }
 
   @Nullable
-  private AbstractVcs getVcsFor(@NotNull VirtualFile dir) {
-    return getVcsFor(dir, null);
+  private VcsRoot getVcsRootFor(@NotNull VirtualFile dir) {
+    return getVcsRootFor(dir, null);
   }
 
   @Nullable
-  private AbstractVcs getVcsFor(@NotNull VirtualFile maybeRoot, @Nullable VirtualFile dirToCheckForIgnore) {
+  private VcsRoot getVcsRootFor(@NotNull VirtualFile maybeRoot, @Nullable VirtualFile dirToCheckForIgnore) {
+    ProgressManager.checkCanceled();
     String path = maybeRoot.getPath();
     return VcsRootChecker.EXTENSION_POINT_NAME.computeSafeIfAny(checker -> {
       if (checker.isRoot(path) && (dirToCheckForIgnore == null || !checker.isIgnored(maybeRoot, dirToCheckForIgnore))) {
-        return myVcsManager.findVcsByName(checker.getSupportedVcs().getName());
+        AbstractVcs vcs = myVcsManager.findVcsByName(checker.getSupportedVcs().getName());
+        if (vcs != null) return new VcsRoot(vcs, maybeRoot);
+        return null;
       }
       return null;
     });
