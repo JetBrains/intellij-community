@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.hash.SharedIndexChunkConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -117,7 +116,7 @@ final class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanRu
         }
       }
 
-      SharedIndexChunkConfiguration.getInstance().locateIndexes(myProject, allEntries, indicator);
+      FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.processProjectEntries(myProject, allEntries, indicator));
 
       return tasks;
     });

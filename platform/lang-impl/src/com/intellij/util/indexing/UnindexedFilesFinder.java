@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
-import com.intellij.index.SharedIndexExtensions;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -13,15 +12,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.util.indexing.hash.FileContentHashIndex;
-import com.intellij.util.indexing.hash.SharedIndexChunkConfiguration;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 class UnindexedFilesFinder implements CollectingContentIterator {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
@@ -30,18 +29,18 @@ class UnindexedFilesFinder implements CollectingContentIterator {
   private final Project myProject;
   private final boolean myDoTraceForFilesToBeIndexed = FileBasedIndexImpl.LOG.isTraceEnabled();
   private final FileBasedIndexImpl myFileBasedIndex;
-
-  private final FileContentHashIndex myFileContentHashIndex;
-  private final TIntHashSet myAttachedChunks;
-  private final TIntHashSet myInvalidatedChunks;
+  private final Collection<FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor> myStateProcessors;
 
   UnindexedFilesFinder(@NotNull Project project) {
     myProject = project;
     myFileBasedIndex = ((FileBasedIndexImpl)FileBasedIndex.getInstance());
 
-    myFileContentHashIndex = SharedIndexExtensions.areSharedIndexesEnabled() ? myFileBasedIndex.getOrCreateFileContentHashIndex() : null;
-    myAttachedChunks = SharedIndexExtensions.areSharedIndexesEnabled() ? new TIntHashSet() : null;
-    myInvalidatedChunks = SharedIndexExtensions.areSharedIndexesEnabled() ? new TIntHashSet() : null;
+    myStateProcessors = FileBasedIndexInfrastructureExtension
+      .EP_NAME
+      .extensions()
+      .map(ex -> ex.createFileIndexingStatusProcessor(project))
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
   }
 
   @NotNull
@@ -111,34 +110,9 @@ class UnindexedFilesFinder implements CollectingContentIterator {
               try {
                 if (myFileBasedIndex.needsFileContentLoading(indexId)) {
                   FileBasedIndexImpl.FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(fileContent, indexId);
-                  if (fileIndexingState == FileBasedIndexImpl.FileIndexingState.UP_TO_DATE && myFileContentHashIndex != null) {
-                    //append existing chunk
-                    int chunkId = myFileContentHashIndex.getAssociatedChunkId(inputId, file);
-                    boolean shouldAttach;
-                    synchronized (myAttachedChunks) {
-                      shouldAttach = myAttachedChunks.add(chunkId);
-                    }
-                    boolean isInvalidatedChunk;
-                    if (shouldAttach) {
-                      if (!SharedIndexChunkConfiguration.getInstance().attachExistingChunk(chunkId, myProject)) {
-                        isInvalidatedChunk = true;
-                        synchronized (myInvalidatedChunks) {
-                          myAttachedChunks.add(chunkId);
-                        }
-                      } else isInvalidatedChunk = false;
-                    } else {
-                      synchronized (myInvalidatedChunks) {
-                        isInvalidatedChunk = myInvalidatedChunks.contains(chunkId);
-                      }
-                    }
-                    if (isInvalidatedChunk) {
-                      myFileContentHashIndex.update(inputId, null).compute();
-                      for (ID<?, ?> state : IndexingStamp.getNontrivialFileIndexedStates(inputId)) {
-                        myFileBasedIndex.getIndex(state).resetIndexedStateForFile(inputId);
-                      }
-                    }
-                  }
-                  if (fileIndexingState == FileBasedIndexImpl.FileIndexingState.SHOULD_INDEX) {
+                  if (fileIndexingState == FileBasedIndexImpl.FileIndexingState.UP_TO_DATE) {
+                    myStateProcessors.forEach(p -> p.processUpToDateFile(file, inputId, indexId));
+                  } else if (fileIndexingState == FileBasedIndexImpl.FileIndexingState.SHOULD_INDEX) {
                     if (myDoTraceForFilesToBeIndexed) {
                       LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
                     }
