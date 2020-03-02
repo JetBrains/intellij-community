@@ -276,6 +276,11 @@
   <action id="Exit">
     <keyboard-shortcut first-keystroke="meta Q"/>
   </action>
+  <action id="GotoDeclaration">
+    <keyboard-shortcut first-keystroke="meta B"/>
+    <mouse-shortcut keystroke="ctrl button1"/>
+    <mouse-shortcut keystroke="Force touch" />
+  </action>
   <action id="GotoTypeDeclaration">
     <keyboard-shortcut first-keystroke="control shift B"/>
     <mouse-shortcut keystroke="meta shift button1"/>
