@@ -104,6 +104,7 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
       mainContentPanel.add(label)
     }
 
+    revalidate()
     repaint()
     return newRowsCount
   }
@@ -115,11 +116,6 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
 
   fun setCommits(commits: List<VcsCommitMetadata>) {
     rebuildPanel(commits.size)
-    if (commits.isEmpty()) {
-      setStatusText(StatusText.getDefaultEmptyText())
-      return
-    }
-    setStatusText("")
     forEachPanelIndexed { i, panel ->
       val commit = commits[i]
       panel.setCommit(commit)
@@ -134,7 +130,7 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
 
   protected abstract fun getCommitDetailsPanel(): Panel
 
-  protected open fun isEmptyStatusVisible(): Boolean = statusText.text.isNotEmpty()
+  protected open fun isEmptyStatusVisible(): Boolean = commitDetailsList.isEmpty()
 
   override fun getEmptyText(): StatusText = statusText
 
