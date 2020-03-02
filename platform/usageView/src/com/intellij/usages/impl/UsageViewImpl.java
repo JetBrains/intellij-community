@@ -1071,7 +1071,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private class ShowSettings extends AnAction {
     private ShowSettings() {
-      super("Settings...", null, AllIcons.General.GearPlain);
+      super(UsageViewBundle.message("action.text.usage.view.settings"), null, AllIcons.General.GearPlain);
       final ConfigurableUsageTarget configurableUsageTarget = getConfigurableTarget(myTargets);
       String description = null;
       try {

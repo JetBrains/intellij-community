@@ -39,11 +39,11 @@ public final class UsageType {
   @SuppressWarnings("UnresolvedPropertyKey")
   public static final UsageType UNCLASSIFIED = new UsageType(UsageViewBundle.lazyMessage("usage.type.unclassified"));
 
-  public static final UsageType RECURSION = new UsageType("Recursion");
-  public static final UsageType DELEGATE_TO_SUPER = new UsageType("Delegate to super method");
-  public static final UsageType DELEGATE_TO_SUPER_PARAMETERS_CHANGED = new UsageType("Delegate to super method, parameters changed");
-  public static final UsageType DELEGATE_TO_ANOTHER_INSTANCE = new UsageType("Delegate to another instance method");
-  public static final UsageType DELEGATE_TO_ANOTHER_INSTANCE_PARAMETERS_CHANGED = new UsageType("Delegate to another instance method, parameters changed");
+  public static final UsageType RECURSION = new UsageType(UsageViewBundle.message("usage.type.recursion"));
+  public static final UsageType DELEGATE_TO_SUPER = new UsageType(UsageViewBundle.message("usage.type.delegate.to.super.method"));
+  public static final UsageType DELEGATE_TO_SUPER_PARAMETERS_CHANGED = new UsageType(UsageViewBundle.message("usage.type.delegate.to.super.method.parameters.changed"));
+  public static final UsageType DELEGATE_TO_ANOTHER_INSTANCE = new UsageType(UsageViewBundle.message("usage.type.delegate.to.another.instance.method"));
+  public static final UsageType DELEGATE_TO_ANOTHER_INSTANCE_PARAMETERS_CHANGED = new UsageType(UsageViewBundle.message("usage.type.delegate.to.another.instance.method.parameters.changed"));
 
   private final Supplier<String> myNameComputable;
 
