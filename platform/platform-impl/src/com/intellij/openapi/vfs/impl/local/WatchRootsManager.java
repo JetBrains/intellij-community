@@ -40,7 +40,7 @@ public class WatchRootsManager {
   private final NavigableMap<String, List<WatchRequest>> myFlatWatchRoots = WatchRootsUtil.createFileNavigableMap();
   private final NavigableSet<String> myOptimizedRecursiveWatchRoots = WatchRootsUtil.createFileNavigableSet();
   private final NavigableMap<String, SymlinkData> mySymlinksByPath = WatchRootsUtil.createFileNavigableMap();
-  private final TIntObjectHashMap<SymlinkData> mySymlinksById = new TIntObjectHashMap<>();  // TODO make persistent across sessions
+  private final TIntObjectHashMap<SymlinkData> mySymlinksById = new TIntObjectHashMap<>();
   private final MultiMap<String, String> myPathMappings = MultiMap.createConcurrentSet();
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private boolean myWatcherRequiresUpdate;  // synchronized on `myLock`
