@@ -250,6 +250,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     private final @Nullable ResourceBundleManager myResourceBundleManager;
     private JComboBox<String> myPropertiesFile;
     private UsagePreviewPanel myUsagePreviewPanel;
+    private JBTable myTable;
 
     protected I18NBatchDialog(@NotNull Project project,
                               List<ReplacementBean> keyValuePairs,
@@ -327,20 +328,20 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     protected JComponent createCenterPanel() {
       Splitter splitter = new JBSplitter(true);
       myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation());
-      JBTable table = new JBTable(new MyKeyValueModel());
+      myTable = new JBTable(new MyKeyValueModel());
       DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
       renderer.putClientProperty("html.disable", Boolean.TRUE);
-      table.setDefaultRenderer(String.class, renderer);
-      table.getSelectionModel().addListSelectionListener(e -> {
-        updateUsagePreview(table);
+      myTable.setDefaultRenderer(String.class, renderer);
+      myTable.getSelectionModel().addListSelectionListener(e -> {
+        updateUsagePreview(myTable);
       });
 
-      splitter.setFirstComponent(ToolbarDecorator.createDecorator(table).setRemoveAction(new AnActionButtonRunnable() {
+      splitter.setFirstComponent(ToolbarDecorator.createDecorator(myTable).setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          TableUtil.removeSelectedItems(table);
-          table.repaint();
-          updateUsagePreview(table);
+          TableUtil.removeSelectedItems(myTable);
+          myTable.repaint();
+          updateUsagePreview(myTable);
         }
       }).createPanel());
       splitter.setSecondComponent(myUsagePreviewPanel);
@@ -360,6 +361,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
 
     @Override
     protected void doOKAction() {
+      TableUtil.stopEditing(myTable);
       PropertiesComponent.getInstance(myProject).setValue(LAST_USED_PROPERTIES_FILE, (String)myPropertiesFile.getSelectedItem());
       super.doOKAction();
     }
