@@ -110,6 +110,7 @@ IS_JYTHON = platform.python_implementation() == 'Jython'
 IS_APPVEYOR = os.environ.get('APPVEYOR', '') in ('True', 'true', '1')
 
 IS_PY37_OR_GREATER = sys.version_info >= (3, 7)
+IS_PY38_OR_GREATER = sys.version_info >= (3, 8)
 
 try:
     from thread import start_new_thread

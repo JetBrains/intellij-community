@@ -7,6 +7,8 @@ import sys
 from contextlib import contextmanager
 import weakref
 
+from _pydevd_bundle.pydevd_collect_try_except_info import collect_return_info
+
 if sys.version_info[:2] < (2, 6):
     raise RuntimeError('The PyDev.Debugger requires Python 2.6 onwards to be run. If you need to use an older Python version, use an older version of the debugger.')
 
@@ -456,6 +458,8 @@ class PyDB(object):
         self.process_created_msg_received_events = dict()
         # the role PyDB plays in the communication with IDE
         self.communication_role = None
+
+        self.collect_return_info = collect_return_info
 
     def get_thread_local_trace_func(self):
         try:
