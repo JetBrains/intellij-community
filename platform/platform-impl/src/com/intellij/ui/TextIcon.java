@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.util.Objects;
 
 import static com.intellij.ide.ui.UISettings.setupAntialiasing;
 import static com.intellij.ui.paint.RectanglePainter.FILL;
@@ -102,5 +103,24 @@ public final class TextIcon implements Icon {
         g.dispose();
       }
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    TextIcon icon = (TextIcon)o;
+    return myInsets.equals(icon.myInsets) &&
+           Objects.equals(myRound, icon.myRound) &&
+           Objects.equals(myBackground, icon.myBackground) &&
+           Objects.equals(myForeground, icon.myForeground) &&
+           Objects.equals(myFont, icon.myFont) &&
+           Objects.equals(myText, icon.myText) &&
+           Objects.equals(myTextBounds, icon.myTextBounds);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds);
   }
 }

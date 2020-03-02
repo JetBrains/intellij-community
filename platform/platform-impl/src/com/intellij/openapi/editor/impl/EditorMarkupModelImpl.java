@@ -75,6 +75,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class EditorMarkupModelImpl extends MarkupModelImpl
       implements EditorMarkupModel, CaretListener, DocumentListener, VisibleAreaListener {
@@ -1628,6 +1629,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   private class InspectionPopupManager {
     private final JPanel myContent;
     private final ComponentPopupBuilder myPopupBuilder;
+    private final Map<String, JProgressBar> myProgressBarMap;
+    private final JPanel myProgressPanel;
 
     private JBPopup myPopup;
 
@@ -1636,7 +1639,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       myContent.setOpaque(true);
       myContent.setBackground(UIUtil.getToolTipBackground());
 
-      myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null).setCancelOnClickOutside(true);
+      myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null).
+        setCancelOnClickOutside(true);
+
+      myProgressBarMap = new HashMap<>();
+      myProgressPanel = new NonOpaquePanel(new GridBagLayout());
     }
 
     private void showPopup(InputEvent event) {
@@ -1690,11 +1697,37 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
                                                  presentation,
                                                  ActionPlaces.EDITOR_POPUP,
                                                  ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+
       myContent.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
+
+      if (myProgressBarMap.keySet().equals(analyzerStatus.getPassStat().stream().map(p->p.getPresentableName()).collect(Collectors.toSet()))) {
+        analyzerStatus.getPassStat().forEach(s -> myProgressBarMap.get(s.getPresentableName()).setValue(s.toPercent()));
+      }
+      else {
+        myProgressBarMap.clear();
+        myProgressPanel.removeAll();
+        GridBag progressGC = new GridBag();
+        analyzerStatus.getPassStat().forEach(s -> {
+          myProgressPanel.add(new JLabel(s.getPresentableName() + ":"),
+                        progressGC.nextLine().next().anchor(GridBagConstraints.LINE_START).weightx(0).insets(0, 10, 0, 6));
+
+          JProgressBar pb = new JProgressBar(0, 100);
+          pb.setValue(s.toPercent());
+          myProgressPanel.add(pb, progressGC.next().anchor(GridBagConstraints.LINE_START).weightx(1).fillCellHorizontally().insets(0, 0, 0, 6));
+          myProgressBarMap.put(s.getPresentableName(), pb);
+        });
+
+        if (myProgressBarMap.size() > 0) {
+          myContent.add(myProgressPanel,
+                        gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
+        }
+      }
+
       if (StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
+        int topIndent = myProgressBarMap.size() > 0 ? 10 : 0;
         myContent.add(new JLabel(analyzerStatus.getDetails()),
-                         gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().
-                           coverLine().weightx(1).insets(0, 10, 10, 6));
+                      gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().
+                        coverLine().weightx(1).insets(topIndent, 10, 10, 6));
       }
 
       myContent.add(createLowerPanel(controller),

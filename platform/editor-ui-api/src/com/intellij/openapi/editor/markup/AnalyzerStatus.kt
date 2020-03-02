@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.util.ui.GridBag
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.Container
+import java.util.*
 import javax.swing.Icon
+import kotlin.math.roundToInt
 
 // Analyzer Highlight Level
 enum class AHLevel(val type: String) {
@@ -18,10 +20,17 @@ enum class AHLevel(val type: String) {
 }
 
 data class LanguageHighlightLevel(val language: Language, val level: AHLevel)
+data class StatInfo(val presentableName: String, val progress: Double, val finished: Boolean) {
+  fun toPercent() : Int {
+    var percent = (progress * 100).roundToInt()
+    return if (percent == 100 && !finished) 99 else percent
+  }
+}
 
 // Result in a callable controller
 typealias HighlightLevels = List<LanguageHighlightLevel>
 typealias AvailableLevels = List<AHLevel>
+typealias PassStat = List<StatInfo>
 
 interface AnalyzerController {
   fun getActionMenu() : AnAction
@@ -39,6 +48,7 @@ class AnalyzerStatus(val icon: Icon, title: String, details: String?, val contro
   val details = if (details != null) XmlStringUtil.wrapInHtml(details) else ""
   var showNavigation = false
   var expandedIcon: Icon = icon
+  var passStat : PassStat = Collections.emptyList()
 
   fun withNavigation() : AnalyzerStatus {
     showNavigation = true
@@ -47,6 +57,11 @@ class AnalyzerStatus(val icon: Icon, title: String, details: String?, val contro
 
   fun withExpandedIcon(eIcon: Icon): AnalyzerStatus {
     expandedIcon = eIcon
+    return this
+  }
+
+  fun withPathStat(pStat: PassStat) : AnalyzerStatus {
+    passStat = pStat
     return this
   }
 
