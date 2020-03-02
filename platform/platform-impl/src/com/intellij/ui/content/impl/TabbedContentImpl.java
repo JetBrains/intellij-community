@@ -6,8 +6,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,6 +30,33 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
     addContent(component, displayName, true);
   }
 
+  @Nullable
+  private Pair<String, JComponent> findTab(@NotNull JComponent c) {
+    for (Pair<String, JComponent> tab : myTabs) {
+      if (tab.second == c) {
+        return tab;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Pair<String, JComponent> selectedTab() {
+    return findTab(getComponent());
+  }
+
+  private int indexOf(@NotNull JComponent c) {
+    for (int i = 0; i < myTabs.size(); i++) {
+      if (myTabs.get(i).second == c) return i;
+    }
+    return -1;
+  }
+
+  private void selectTab(@NotNull Pair<String, JComponent> tab) {
+    setDisplayName(ContentUtilEx.getFullName(myPrefix, tab.first));
+    setComponent(tab.second);
+  }
+
   @Override
   public void addContent(@NotNull JComponent content, @NotNull String name, boolean selectTab) {
     Pair<String, JComponent> tab = Pair.create(name, content);
@@ -37,7 +64,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
       myTabs.add(tab);
     }
     if (selectTab && getComponent() != content) {
-      setComponent(content);
+      selectTab(tab);
     }
   }
 
@@ -55,14 +82,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
 
   @Override
   public void removeContent(@NotNull JComponent content) {
-    Pair<String, JComponent> toRemove = null;
-    for (Pair<String, JComponent> tab : myTabs) {
-      if (tab.second == content) {
-        toRemove = tab;
-        break;
-      }
-    }
-    int index = myTabs.indexOf(toRemove);
+    int index = indexOf(content);
     if (index != -1) {
       myTabs.remove(index);
       index = index > 0 ? index - 1 : index;
@@ -79,25 +99,18 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
 
   @Override
   public void selectContent(int index) {
-    Pair<String, JComponent> tab = myTabs.get(index);
-    setDisplayName(ContentUtilEx.getFullName(myPrefix, tab.first));
-    setComponent(tab.second);
+    selectTab(myTabs.get(index));
   }
 
   @Override
   public int getSelectedIndex() {
-    JComponent selected = getComponent();
-    for (int i = 0; i < myTabs.size(); i++) {
-      if (myTabs.get(i).second == selected) return i;
-    }
-    return -1;
+    return indexOf(getComponent());
   }
 
   public boolean findAndSelectContent(@NotNull JComponent contentComponent) {
-    String tabName = findTabNameByComponent(contentComponent);
-    if (tabName != null) {
-      setDisplayName(ContentUtilEx.getFullName(myPrefix, tabName));
-      setComponent(contentComponent);
+    Pair<String, JComponent> tab = findTab(contentComponent);
+    if (tab != null) {
+      selectTab(tab);
       return true;
     }
     return false;
@@ -105,16 +118,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
 
   @Override
   public String getTabName() {
-    return myPrefix + ": " + findTabNameByComponent(getComponent());
-  }
-
-  private String findTabNameByComponent(JComponent c) {
-    for (Pair<String, JComponent> tab : myTabs) {
-      if (tab.second == c) {
-        return tab.first;
-      }
-    }
-    return null;
+    return ContentUtilEx.getFullName(myPrefix, Objects.requireNonNull(selectedTab()).first);
   }
 
   @NotNull
@@ -151,7 +155,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   }
 
   public boolean rename(@NotNull JComponent component, @NotNull String newName) {
-    Pair<String, JComponent> tab = ContainerUtil.find(myTabs, pair -> pair.second == component);
+    Pair<String, JComponent> tab = findTab(component);
     if (tab == null) return false;
     if (newName.equals(tab.first)) return true;
 
