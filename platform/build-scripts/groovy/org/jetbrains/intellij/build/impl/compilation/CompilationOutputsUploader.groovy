@@ -30,12 +30,14 @@ class CompilationOutputsUploader {
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
+  private final String tmpDir
   private final Map<String, String> remotePerCommitHash
   private final SourcesStateProcessor sourcesStateProcessor
 
   CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash,
-                             String agentPersistentStorage) {
+                             String agentPersistentStorage, String tmpDir) {
     this.agentPersistentStorage = agentPersistentStorage
+    this.tmpDir = tmpDir
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
     this.remotePerCommitHash = remotePerCommitHash
@@ -70,12 +72,16 @@ class CompilationOutputsUploader {
         File zipFile = new File(dataStorageRoot.parent, commitHash)
         zipBinaryData(zipFile, dataStorageRoot)
         uploader.upload(sourcePath, zipFile)
+        File zipCopy = new File(tmpDir, sourcePath)
+        FileUtil.copy(zipFile, zipCopy)
         FileUtil.delete(zipFile)
 
         // Upload compilation metadata
         sourcePath = "metadata/$commitHash"
         if (uploader.isExist(sourcePath)) return
         uploader.upload(sourcePath, sourceStateFile)
+        File sourceStateFileCopy = new File(tmpDir, sourcePath)
+        FileUtil.copy(sourceStateFile, sourceStateFileCopy)
         return
       }
 
@@ -114,6 +120,8 @@ class CompilationOutputsUploader {
       File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
       uploader.upload(sourcePath, zipFile)
+      File zipCopy = new File(tmpDir, sourcePath)
+      FileUtil.copy(zipFile, zipCopy)
       FileUtil.delete(zipFile)
     }
   }
