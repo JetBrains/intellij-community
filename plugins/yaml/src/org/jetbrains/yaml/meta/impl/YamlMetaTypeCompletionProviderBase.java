@@ -256,10 +256,12 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
   private static class CompletionContextImpl implements CompletionContext {
     private final CompletionType myType;
     private final int myInvocationCount;
+    private final String myPrefix;
 
-    private CompletionContextImpl(CompletionParameters completionParameters) {
+    CompletionContextImpl(CompletionParameters completionParameters) {
       myType = completionParameters.getCompletionType();
       myInvocationCount = completionParameters.getInvocationCount();
+      myPrefix = computeCompletionPrefix(completionParameters);
     }
 
     @NotNull
@@ -271,6 +273,25 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     @Override
     public int getInvocationCount() {
       return myInvocationCount;
+    }
+
+    @NotNull
+    @Override
+    public String getCompletionPrefix() {
+      return myPrefix;
+    }
+
+    @NotNull
+    private static String computeCompletionPrefix(CompletionParameters parameters) {
+      String textWithInsertedPart = parameters.getPosition().getText();
+      int positionInRange = parameters.getOffset() - parameters.getPosition().getTextRange().getStartOffset();
+      if (positionInRange < 0) {
+        positionInRange = 0;
+      }
+      else if (positionInRange > textWithInsertedPart.length()) {
+        positionInRange = textWithInsertedPart.length();
+      }
+      return textWithInsertedPart.substring(0, positionInRange);
     }
   }
 }
