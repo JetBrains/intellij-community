@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -42,11 +41,10 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.*;
 
 public class VcsRootScanner implements AsyncVfsEventsListener {
-  private static final Logger LOG = getInstance(VcsRootScanner.class);
+  private static final Logger LOG = Logger.getInstance(VcsRootScanner.class);
 
   @NotNull private final VcsRootProblemNotifier myRootProblemNotifier;
   @NotNull private final Project myProject;
@@ -94,11 +92,13 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
     ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
     Option depthLimit = limit(Registry.intValue("vcs.root.detector.folder.depth"));
     Pattern ignorePattern = parseDirIgnorePattern();
+
+    if (isUnderIgnoredDirectory(project, ignorePattern, root)) return;
+
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>(NO_FOLLOW_SYMLINKS, depthLimit) {
       @NotNull
       @Override
       public VirtualFileVisitor.Result visitFileEx(@NotNull VirtualFile file) {
-        ProgressManager.checkCanceled();
         if (!file.isDirectory()) {
           return CONTINUE;
         }
@@ -107,16 +107,11 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
           return SKIP_CHILDREN;
         }
 
-        VirtualFileVisitor.Result result = dirFound.apply(file);
-        if (result != CONTINUE) {
-          return result;
-        }
-
-        if (ReadAction.compute(() -> project.isDisposed() || !file.equals(project.getBaseDir()) && !fileIndex.isInContent(file))) {
+        if (ReadAction.compute(() -> project.isDisposed() || !fileIndex.isInContent(file))) {
           return SKIP_CHILDREN;
         }
 
-        return CONTINUE;
+        return dirFound.apply(file);
       }
     });
   }
@@ -136,7 +131,16 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
   }
 
 
-  private static boolean isIgnoredDirectory(@NotNull Project project, @Nullable Pattern ignorePattern, @NotNull VirtualFile dir) {
+  static boolean isUnderIgnoredDirectory(@NotNull Project project, @Nullable Pattern ignorePattern, @NotNull VirtualFile dir) {
+    VirtualFile parent = dir;
+    while (parent != null) {
+      if (isIgnoredDirectory(project, ignorePattern, parent)) return true;
+      parent = parent.getParent();
+    }
+    return false;
+  }
+
+  static boolean isIgnoredDirectory(@NotNull Project project, @Nullable Pattern ignorePattern, @NotNull VirtualFile dir) {
     if (ProjectLevelVcsManager.getInstance(project).isIgnored(dir)) {
       LOG.debug("Skipping ignored dir: ", dir);
       return true;
@@ -149,7 +153,7 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
   }
 
   @Nullable
-  private static Pattern parseDirIgnorePattern() {
+  static Pattern parseDirIgnorePattern() {
     try {
       return Pattern.compile(Registry.stringValue("vcs.root.detector.ignore.pattern"));
     }
