@@ -792,8 +792,7 @@ public class GitBranchPopupActions {
         return;
       }
       String branchPresentation = getBranchPresentation(myBranchName);
-      String description = GitBundle.message("branches.fetch.remote.and.fast.forward",
-                                             branchPresentation, myBranchName, myBranchName);
+      String description = GitBundle.message("branches.fetch.remote.and.fast.forward", branchPresentation, myBranchName);
       presentation.setDescription(description);
       if (GitFetchSupport.fetchSupport(myProject).isFetchRunning()) {
         presentation.setEnabled(false);
