@@ -468,8 +468,7 @@ object UpdateChecker {
         }
         else {
           val title = IdeBundle.message("updates.plugins.ready.short.title.available")
-          val plugins = updatedPlugins.joinToString { downloader -> downloader.pluginName }
-          val message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size, plugins)
+          val message = updatedPlugins.joinToString { downloader -> downloader.pluginName }
           showNotification(project, title, message, runnable, { notification ->
             notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.title")
             notification.actions.add(0, object : NotificationAction(
