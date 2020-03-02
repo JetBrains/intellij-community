@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
@@ -16,31 +15,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.CONTINUE;
-import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_CHILDREN;
 
 public class VcsRootDetectorImpl implements VcsRootDetector {
   private static final Logger LOG = Logger.getInstance(VcsRootDetectorImpl.class);
 
   @NotNull private final Project myProject;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
-
-  private final Pattern myIgnorePattern = parseIgnorePattern();
-
-  @NotNull
-  private static Pattern parseIgnorePattern() {
-    try {
-      return Pattern.compile(Registry.stringValue("vcs.root.detector.ignore.pattern"));
-    }
-    catch (MissingResourceException | PatternSyntaxException e) {
-      LOG.warn(e);
-      return Pattern.compile(".{0}"); // match nothing
-    }
-  }
 
   @Nullable private Collection<VcsRoot> myDetectedRoots;
   @NotNull private final Object LOCK = new Object();
@@ -114,7 +100,6 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   private Set<VcsRoot> scanForRootsInsideDir(@NotNull VirtualFile root) {
     Set<VcsRoot> roots = new HashSet<>();
     VcsRootScanner.visitDirsRecursivelyWithoutExcluded(myProject, ProjectRootManager.getInstance(myProject), root, dir -> {
-      if (isIgnoredDirectory(dir)) return SKIP_CHILDREN;
       VcsRoot vcsRoot = getVcsRootFor(dir);
       if (vcsRoot != null) {
         LOG.debug("Found VCS " + vcsRoot.getVcs() + " in " + vcsRoot.getPath());
@@ -127,18 +112,6 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   private static boolean shouldScanAbove(@NotNull VirtualFile startDir, @NotNull Set<? extends VcsRoot> rootsInsideDir) {
     return rootsInsideDir.stream().noneMatch(it -> startDir.equals(it.getPath()));
-  }
-
-  private boolean isIgnoredDirectory(@NotNull VirtualFile dir) {
-    if (myVcsManager.isIgnored(dir)) {
-      LOG.debug("Skipping ignored dir: ", dir);
-      return true;
-    }
-    if (myIgnorePattern.matcher(dir.getName()).matches()) {
-      LOG.debug("Skipping dir by pattern: ", dir);
-      return true;
-    }
-    return false;
   }
 
   @Nullable
