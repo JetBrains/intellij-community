@@ -233,7 +233,7 @@ internal open class UpdateIdeFromSourcesAction
          removal of the script file is performed in separate process to avoid errors while executing the script */
       FileUtil.writeToFile(updateScript, """
         @echo off
-        SET count=30
+        SET count=20
         SET time_to_wait=1
         :DELETE_DIR
         RMDIR /Q /S "$workHomePath"
