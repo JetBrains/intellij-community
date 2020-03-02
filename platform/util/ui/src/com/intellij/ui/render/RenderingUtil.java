@@ -18,11 +18,12 @@ public final class RenderingUtil {
   public static final Key<Boolean> ALWAYS_PAINT_SELECTION_AS_FOCUSED = Key.create("ALWAYS_PAINT_SELECTION_AS_FOCUSED");
 
   /**
-   * This key is set to a tree, which is a part of a compound tree table.
-   * It is needed to provide corresponding colors from a table to an internal tree.
+   * This key allows to paint focused selection even if a component does not have a focus.
+   * Our tree table implementations use a table as a focusable sibling of a tree.
+   * In such case the table colors will be used to paint the tree.
    */
   @ApiStatus.Internal
-  public static final Key<JTable> CORRESPONDING_TREE_TABLE = Key.create("CORRESPONDING_TREE_TABLE");
+  public static final Key<JComponent> FOCUSABLE_SIBLING = Key.create("FOCUSABLE_SIBLING");
 
 
   @NotNull
@@ -55,8 +56,8 @@ public final class RenderingUtil {
 
   @NotNull
   public static Color getBackground(@NotNull JTree tree) {
-    JTable table = UIUtil.getClientProperty(tree, CORRESPONDING_TREE_TABLE);
-    if (table != null) return getBackground(table);
+    JComponent component = UIUtil.getClientProperty(tree, FOCUSABLE_SIBLING);
+    if (component instanceof JTable) return getBackground((JTable)component); // tree table
     Color background = tree.getBackground();
     return background != null ? background : UIUtil.getTreeBackground();
   }
@@ -74,8 +75,8 @@ public final class RenderingUtil {
 
   @NotNull
   public static Color getSelectionBackground(@NotNull JTree tree) {
-    JTable table = UIUtil.getClientProperty(tree, CORRESPONDING_TREE_TABLE);
-    if (table != null) return getSelectionBackground(table);
+    JComponent component = UIUtil.getClientProperty(tree, FOCUSABLE_SIBLING);
+    if (component instanceof JTable) return getSelectionBackground((JTable)component); // tree table
     return UIUtil.getTreeSelectionBackground(isFocused(tree));
   }
 
@@ -110,8 +111,8 @@ public final class RenderingUtil {
 
   @NotNull
   public static Color getForeground(@NotNull JTree tree) {
-    JTable table = UIUtil.getClientProperty(tree, CORRESPONDING_TREE_TABLE);
-    if (table != null) return getForeground(table);
+    JComponent component = UIUtil.getClientProperty(tree, FOCUSABLE_SIBLING);
+    if (component instanceof JTable) return getForeground((JTable)component); // tree table
     Color foreground = tree.getForeground();
     return foreground != null ? foreground : UIUtil.getTreeForeground();
   }
@@ -129,13 +130,19 @@ public final class RenderingUtil {
 
   @NotNull
   public static Color getSelectionForeground(@NotNull JTree tree) {
-    JTable table = UIUtil.getClientProperty(tree, CORRESPONDING_TREE_TABLE);
-    if (table != null) return getSelectionForeground(table);
+    JComponent component = UIUtil.getClientProperty(tree, FOCUSABLE_SIBLING);
+    if (component instanceof JTable) return getSelectionForeground((JTable)component); // tree table
     return UIUtil.getTreeSelectionForeground(isFocused(tree));
   }
 
 
-  private static boolean isFocused(@NotNull JComponent component) {
+  public static boolean isFocused(@NotNull JComponent component) {
+    if (isFocusedImpl(component)) return true;
+    JComponent sibling = UIUtil.getClientProperty(component, FOCUSABLE_SIBLING);
+    return sibling != null && isFocusedImpl(sibling);
+  }
+
+  private static boolean isFocusedImpl(@NotNull JComponent component) {
     return component.hasFocus() || UIUtil.isClientPropertyTrue(component, ALWAYS_PAINT_SELECTION_AS_FOCUSED);
   }
 }
