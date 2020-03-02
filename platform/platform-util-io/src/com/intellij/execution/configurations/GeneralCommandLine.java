@@ -86,7 +86,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private ParentEnvironmentType myParentEnvironmentType = ParentEnvironmentType.CONSOLE;
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
-  private boolean myRedirectErrorStream = false;
+  private boolean myRedirectErrorStream;
   private File myInputFile;
   private Map<Object, Object> myUserData;
 
@@ -391,14 +391,16 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     for (Map.Entry<String, String> entry : myEnvParams.entrySet()) {
-      String name = entry.getKey(), value = entry.getValue();
+      String name = entry.getKey();
+      String value = entry.getValue();
       if (!EnvironmentUtil.isValidName(name)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.name", name));
       if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.value", name, value));
     }
 
     String exePath = myExePath;
     if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.separatorChar) == -1) {
-      String systemPath = System.getenv("PATH"), shellPath = EnvironmentUtil.getValue("PATH");
+      String systemPath = System.getenv("PATH");
+      String shellPath = EnvironmentUtil.getValue("PATH");
       if (!Objects.equals(systemPath, shellPath)) {
         File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
         if (exeFile != null) {
