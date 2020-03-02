@@ -46,12 +46,12 @@ class AtomicBooleanProperty(initial: Boolean) : BooleanProperty {
     Disposer.register(parentDisposable, Disposable { setListeners.remove(listener) })
   }
 
-  fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {
+  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {
     resetListeners.add(listener)
     Disposer.register(parentDisposable, Disposable { resetListeners.remove(listener) })
   }
 
-  fun afterChange(listener: (Boolean) -> Unit, parentDisposable: Disposable) {
+  override fun afterChange(listener: (Boolean) -> Unit, parentDisposable: Disposable) {
     changeListeners.add(listener)
     Disposer.register(parentDisposable, Disposable { changeListeners.remove(listener) })
   }
