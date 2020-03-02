@@ -12,6 +12,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.content.impl.TabbedContentImpl;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ public class ContentUtilEx extends ContentsUtil {
                                       @NotNull String tabName,
                                       boolean select,
                                       @Nullable Disposable childDisposable) {
-    if (PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupPrefix)) {
+    if (isSplitMode(groupPrefix)) {
       final Content content = ContentFactory.SERVICE.getInstance().createContent(contentComponent, getFullName(groupPrefix, tabName), true);
       content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);
       content.putUserData(Content.TAB_GROUP_NAME_KEY, groupPrefix);
@@ -247,11 +248,24 @@ public class ContentUtilEx extends ContentsUtil {
         mergedContent.add(content);
       }
     }
-    PropertiesComponent.getInstance().unsetValue(TabbedContent.SPLIT_PROPERTY_PREFIX + tabPrefix);
+    setSplitMode(tabPrefix, false);
     for (int i = 0; i < tabs.size(); i++) {
       final Pair<String, JComponent> tab = tabs.get(i);
       addTabbedContent(manager, tab.second, tabPrefix, tab.first, i == selectedTab);
     }
     mergedContent.forEach(Disposer::dispose);
+  }
+
+  public static boolean isSplitMode(@NonNls @NotNull String groupId) {
+    return PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupId, false);
+  }
+
+  public static void setSplitMode(@NonNls @NotNull String groupId, boolean value) {
+    if (value) {
+      PropertiesComponent.getInstance().setValue(TabbedContent.SPLIT_PROPERTY_PREFIX + groupId, Boolean.TRUE.toString());
+    }
+    else {
+      PropertiesComponent.getInstance().unsetValue(TabbedContent.SPLIT_PROPERTY_PREFIX + groupId);
+    }
   }
 }
