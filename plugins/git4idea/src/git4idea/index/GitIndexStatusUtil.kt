@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import com.intellij.util.ui.UIUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -187,8 +188,7 @@ private fun GitFileStatus.StatusRecord.getPresentation(): String {
   val workTreePresentation = if (workTree == ' ') "" else GitBundle.message("git.status.work.tree", getPresentation(workTree))
   if (indexPresentation.isBlank()) return "$fileName: $workTreePresentation"
   if (workTreePresentation.isBlank()) return "$fileName: $indexPresentation"
-  @Suppress("HardCodedStringLiteral")
-  return "$fileName:<br/>$indexPresentation<br/>$workTreePresentation"
+  return "$fileName:${UIUtil.BR}$indexPresentation${UIUtil.BR}$workTreePresentation"
 }
 
 @Nls
