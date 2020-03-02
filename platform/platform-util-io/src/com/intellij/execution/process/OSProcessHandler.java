@@ -34,13 +34,13 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Set<String> REPORTED_EXECUTIONS = ContainerUtil.newConcurrentSet();
   private static final long ALLOWED_TIMEOUT_THRESHOLD = 10;
 
-  static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
+  private static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
 
   private final boolean myHasErrorStream;
   private final ModalityState myModality;
   private boolean myHasPty;
   private boolean myDestroyRecursively = true;
-  private final Set<File> myFilesToDelete;
+  private final Set<? extends File> myFilesToDelete;
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(startProcess(commandLine), commandLine.getCommandLineString(), commandLine.getCharset());
@@ -84,7 +84,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   /**
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset, @Nullable Set<File> filesToDelete) {
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset, @Nullable Set<? extends File> filesToDelete) {
     super(process, commandLine, charset);
     setHasPty(isPtyProcess(process));
     myFilesToDelete = filesToDelete;
