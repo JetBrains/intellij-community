@@ -16,10 +16,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.CONTINUE;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_CHILDREN;
@@ -29,6 +28,19 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @NotNull private final Project myProject;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
+
+  private final Pattern myIgnorePattern = parseIgnorePattern();
+
+  @NotNull
+  private static Pattern parseIgnorePattern() {
+    try {
+      return Pattern.compile(Registry.stringValue("vcs.root.detector.ignore.pattern"));
+    }
+    catch (MissingResourceException | PatternSyntaxException e) {
+      LOG.warn(e);
+      return Pattern.compile(".{0}"); // match nothing
+    }
+  }
 
   @Nullable private Collection<VcsRoot> myDetectedRoots;
   @NotNull private final Object LOCK = new Object();
@@ -118,7 +130,15 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   }
 
   private boolean isIgnoredDirectory(@NotNull VirtualFile dir) {
-    return Registry.is("vcs.root.detector.skip.vendor") && dir.getName().equalsIgnoreCase("vendor");
+    if (myVcsManager.isIgnored(dir)) {
+      LOG.debug("Skipping ignored dir: ", dir);
+      return true;
+    }
+    if (myIgnorePattern.matcher(dir.getName()).matches()) {
+      LOG.debug("Skipping dir by pattern: ", dir);
+      return true;
+    }
+    return false;
   }
 
   @Nullable

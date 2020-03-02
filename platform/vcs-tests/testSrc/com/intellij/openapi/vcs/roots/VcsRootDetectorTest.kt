@@ -14,8 +14,6 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.File
 import java.util.Collections.emptyList
 
-private const val DOT_IDEA = PathMacroUtil.DIRECTORY_STORE_NAME
-
 class VcsRootDetectorTest : VcsRootBaseTest() {
 
   fun `test no roots`() {
@@ -33,8 +31,8 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
   }
 
   fun `test 3 roots under project`() {
-    val vcsRoots = createVcsRoots(listOf(DOT_IDEA, "src", "community"))
-    expect(vcsRoots)
+    val vcsRoots = createVcsRoots(listOf(PathMacroUtil.DIRECTORY_STORE_NAME, "src", "community", "test"))
+    expect(vcsRoots.subList(1, 4))
   }
 
   fun `test vcs root above project`() {
