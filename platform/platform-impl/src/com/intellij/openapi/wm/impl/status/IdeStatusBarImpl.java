@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetWrapper;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -57,8 +58,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   private static final String uiClassID = "IdeStatusBarUI";
 
-  private final Map<String, WidgetBean> myWidgetMap = new HashMap<>();
-  private final List<String> myOrderedWidgets = new ArrayList<>();
+  private final Map<String, WidgetBean> myWidgetMap = new LinkedHashMap<>();
 
   private JPanel myLeftPanel;
   private JPanel myRightPanel;
@@ -119,8 +119,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     Disposer.register(this, bar);
     Disposer.register(bar, () -> myChildren.remove(bar));
 
-    for (String eachId : myOrderedWidgets) {
-      WidgetBean eachBean = myWidgetMap.get(eachId);
+    for (WidgetBean eachBean : myWidgetMap.values()) {
       if (eachBean.widget instanceof StatusBarWidget.Multiframe) {
         StatusBarWidget copy = ((StatusBarWidget.Multiframe)eachBean.widget).copy();
         bar.addWidget(copy, eachBean.position, eachBean.anchor);
@@ -276,7 +275,6 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position position, @NotNull String anchor) {
-    myOrderedWidgets.add(widget.ID());
     JComponent c = wrap(widget);
     JPanel panel = getTargetPanel(position);
     if (position == Position.LEFT && panel.getComponentCount() == 0) {
@@ -521,7 +519,6 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   @Override
   public void removeWidget(@NotNull String id) {
-    myOrderedWidgets.remove(id);
     WidgetBean bean = myWidgetMap.remove(id);
     if (bean != null) {
       UIUtil.invokeLaterIfNeeded(() -> {
