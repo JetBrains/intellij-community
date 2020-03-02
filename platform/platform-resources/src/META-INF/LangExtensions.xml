@@ -1264,6 +1264,8 @@
     <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.Problems" doNotActivateOnStart="true" canCloseContents="false"
                 factoryClass="com.intellij.analysis.problemsView.inspection.ProblemsViewToolWindowFactory"/>
     <projectService serviceImplementation="com.intellij.analysis.problemsView.inspection.InspectionProblemsView"/>
+
+    <applicationService serviceImplementation="com.intellij.codeInsight.documentation.render.DocRenderItemUpdater"/>
   </extensions>
 </idea-plugin>
 
