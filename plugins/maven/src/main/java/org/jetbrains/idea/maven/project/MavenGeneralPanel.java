@@ -17,6 +17,7 @@
 
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PanelWithAnchor;
@@ -122,7 +123,7 @@ public class MavenGeneralPanel implements PanelWithAnchor {
 
   @Nls
   public String getDisplayName() {
-    return MavenProjectBundle.message("maven.tab.general");
+    return CommonBundle.message("tab.title.general");
   }
 
   @Override
