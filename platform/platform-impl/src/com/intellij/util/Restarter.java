@@ -34,6 +34,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class Restarter {
+  public static final String DO_NOT_LOCK_INSTALL_FOLDER = "DO_NOT_LOCK_INSTALL_FOLDER";
+
   private Restarter() { }
 
   public static boolean isSupported() {
@@ -248,8 +250,10 @@ public class Restarter {
 
   private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
     String restarter = restarterFile.getPath();
-    if (restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS)) {
-      Path tempDir = Paths.get(PathManager.getSystemPath(), "restart");
+    boolean doNotLock = restarterArgs.contains(DO_NOT_LOCK_INSTALL_FOLDER);
+    Path tempDir = null;
+    if (doNotLock || restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS)) {
+      tempDir = Paths.get(PathManager.getSystemPath(), "restart");
       Files.createDirectories(tempDir);
       Path copy = tempDir.resolve(restarterFile.getName());
       Files.copy(restarterFile.toPath(), copy, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
@@ -257,7 +261,7 @@ public class Restarter {
     }
     restarterArgs.add(0, restarter);
     Logger.getInstance(Restarter.class).info("run restarter: " + restarterArgs);
-    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs));
+    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs), null, doNotLock ? tempDir.toFile() : null);
   }
 
   @SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})

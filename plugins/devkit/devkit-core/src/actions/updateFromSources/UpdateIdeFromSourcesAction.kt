@@ -28,6 +28,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.task.ProjectTaskManager
+import com.intellij.util.Restarter
 import com.intellij.util.SystemProperties
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
@@ -254,8 +255,9 @@ internal open class UpdateIdeFromSourcesAction
         :CLEANUP_AND_EXIT
         START /b "" cmd /c DEL /Q /F "${updateScript.absolutePath}" & EXIT /b
       """.trimIndent())
-      // 'Runner' class specified as a parameter which is actually not used by the script; this is needed to use a copy of restarter (see com.intellij.util.Restarter.runRestarter)
-      return arrayOf("cmd", "/c", updateScript.absolutePath, "com.intellij.updater.Runner", ">${restartLogFile.absolutePath}", "2>&1")
+      // DO_NOT_LOCK_INSTALL_FOLDER is not used by the script above, it's a flag forcing restarter to operate outside installation folder
+      return arrayOf("cmd", "/c", updateScript.absolutePath, Restarter.DO_NOT_LOCK_INSTALL_FOLDER,
+                     ">${restartLogFile.absolutePath}", "2>&1")
     }
 
     val command = arrayOf(
