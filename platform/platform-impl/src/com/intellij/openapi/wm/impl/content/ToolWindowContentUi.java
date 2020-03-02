@@ -7,15 +7,12 @@ import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -43,7 +40,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class ToolWindowContentUi implements ContentUI, DataProvider {
@@ -499,30 +495,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.0.group", tabPrefix)) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        final Content selectedContent = manager.getSelectedContent();
-        final List<Pair<String, JComponent>> tabs = new ArrayList<>();
-        int selectedTab = -1;
-        List<Content> mergedContent = new ArrayList<>();
-        for (Content content : manager.getContents()) {
-          if (tabPrefix.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY))) {
-            final String label = content.getTabName().substring(tabPrefix.length() + 2);
-            final JComponent component = content.getComponent();
-            if (content == selectedContent) {
-              selectedTab = tabs.size();
-            }
-            tabs.add(Pair.create(label, component));
-            manager.removeContent(content, false);
-            content.setComponent(null);
-            content.setShouldDisposeContent(false);
-            mergedContent.add(content);
-          }
-        }
-        PropertiesComponent.getInstance().unsetValue(TabbedContent.SPLIT_PROPERTY_PREFIX + tabPrefix);
-        for (int i = 0; i < tabs.size(); i++) {
-          final Pair<String, JComponent> tab = tabs.get(i);
-          ContentUtilEx.addTabbedContent(manager, tab.second, tabPrefix, tab.first, i == selectedTab);
-        }
-        mergedContent.forEach(Disposer::dispose);
+        ContentUtilEx.mergeTabs(manager, tabPrefix);
       }
     };
   }
