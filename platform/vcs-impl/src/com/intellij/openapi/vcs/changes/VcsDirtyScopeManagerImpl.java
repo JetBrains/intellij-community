@@ -25,6 +25,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,35 +112,29 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   }
 
   @NotNull
-  private Map<AbstractVcs, Set<FilePath>> groupByVcs(@Nullable Collection<? extends FilePath> from) {
+  private Map<VcsRoot, Set<FilePath>> groupByVcs(@Nullable Iterable<? extends FilePath> from) {
     if (from == null) return Collections.emptyMap();
 
-    VcsDirtyScopeMap map = new VcsDirtyScopeMap();
+    ProjectLevelVcsManager vcsManager = getVcsManager(myProject);
+    Map<VcsRoot, Set<FilePath>> map = new HashMap<>();
     for (FilePath path : from) {
-      AbstractVcs vcs = getVcsManager(myProject).getVcsFor(path);
-      if (vcs != null) {
-        map.add(vcs, path);
+      VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
+      if (vcsRoot != null && vcsRoot.getVcs() != null) {
+        Set<FilePath> pathSet = map.computeIfAbsent(vcsRoot, key -> new THashSet<>(getDirtyScopeHashingStrategy(key.getVcs())));
+        pathSet.add(path);
       }
     }
-    return map.asMap();
+    return map;
   }
 
   @NotNull
-  private Map<AbstractVcs, Set<FilePath>> groupFilesByVcs(@Nullable final Collection<? extends VirtualFile> from) {
+  private Map<VcsRoot, Set<FilePath>> groupFilesByVcs(@Nullable Collection<? extends VirtualFile> from) {
     if (from == null) return Collections.emptyMap();
-
-    VcsDirtyScopeMap map = new VcsDirtyScopeMap();
-    for (VirtualFile file : from) {
-      AbstractVcs vcs = getVcsManager(myProject).getVcsFor(file);
-      if (vcs != null) {
-        map.add(vcs, VcsUtil.getFilePath(file));
-      }
-    }
-    return map.asMap();
+    return groupByVcs(() -> ContainerUtil.mapIterator(from.iterator(), file -> VcsUtil.getFilePath(file)));
   }
 
-  private void fileVcsPathsDirty(@NotNull Map<AbstractVcs, Set<FilePath>> filesConverted,
-                                 @NotNull Map<AbstractVcs, Set<FilePath>> dirsConverted) {
+  private void fileVcsPathsDirty(@NotNull Map<VcsRoot, Set<FilePath>> filesConverted,
+                                 @NotNull Map<VcsRoot, Set<FilePath>> dirsConverted) {
     if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
 
     if (LOG.isDebugEnabled()) {
@@ -147,33 +142,37 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
                               toString(filesConverted), toString(dirsConverted), findFirstInterestingCallerClass()));
     }
 
-    ReadAction.run(() -> {
-      boolean hasSomethingDirty;
+    boolean hasSomethingDirty = false;
+    for (VcsRoot vcsRoot : ContainerUtil.union(filesConverted.keySet(), dirsConverted.keySet())) {
+      AbstractVcs vcs = Objects.requireNonNull(vcsRoot.getVcs());
+      VirtualFile root = vcsRoot.getPath();
+
+      Set<FilePath> files = ContainerUtil.notNullize(filesConverted.get(vcsRoot));
+      Set<FilePath> dirs = ContainerUtil.notNullize(dirsConverted.get(vcsRoot));
+
       synchronized (LOCK) {
         if (!myReady) return;
-        markDirty(myDirtBuilder, filesConverted, false);
-        markDirty(myDirtBuilder, dirsConverted, true);
-        hasSomethingDirty = !myDirtBuilder.isEmpty();
-      }
+        VcsDirtyScopeImpl scope = myDirtBuilder.getScope(vcs);
 
-      if (hasSomethingDirty) {
-        ChangeListManager.getInstance(myProject).scheduleUpdate();
-      }
-    });
-  }
+        for (FilePath filePath : files) {
+          scope.addDirtyPathFast(root, filePath, false);
+        }
+        for (FilePath filePath : dirs) {
+          scope.addDirtyPathFast(root, filePath, true);
+        }
 
-  private static void markDirty(@NotNull DirtBuilder dirtBuilder,
-                                @NotNull Map<AbstractVcs, Set<FilePath>> filesOrDirs,
-                                boolean recursively) {
-    for (AbstractVcs vcs : filesOrDirs.keySet()) {
-      for (FilePath path : filesOrDirs.get(vcs)) {
-        dirtBuilder.addDirtyFile(vcs, path, recursively);
+        hasSomethingDirty |= !myDirtBuilder.isEmpty();
       }
+    }
+
+    if (hasSomethingDirty) {
+      ChangeListManager.getInstance(myProject).scheduleUpdate();
     }
   }
 
   @Override
-  public void filePathsDirty(@Nullable final Collection<? extends FilePath> filesDirty, @Nullable final Collection<? extends FilePath> dirsRecursivelyDirty) {
+  public void filePathsDirty(@Nullable Collection<? extends FilePath> filesDirty,
+                             @Nullable Collection<? extends FilePath> dirsRecursivelyDirty) {
     try {
       fileVcsPathsDirty(groupByVcs(filesDirty), groupByVcs(dirsRecursivelyDirty));
     }
@@ -182,7 +181,8 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   }
 
   @Override
-  public void filesDirty(@Nullable final Collection<? extends VirtualFile> filesDirty, @Nullable final Collection<? extends VirtualFile> dirsRecursivelyDirty) {
+  public void filesDirty(@Nullable Collection<? extends VirtualFile> filesDirty,
+                         @Nullable Collection<? extends VirtualFile> dirsRecursivelyDirty) {
     try {
       fileVcsPathsDirty(groupFilesByVcs(filesDirty), groupFilesByVcs(dirsRecursivelyDirty));
     }
@@ -233,7 +233,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
         AbstractVcs vcs = root.getVcs();
         VirtualFile path = root.getPath();
         if (vcs != null) {
-          dirt.addDirtyFile(vcs, VcsUtil.getFilePath(path), true);
+          dirt.getScope(vcs).addDirtyPathFast(path, VcsUtil.getFilePath(path), true);
         }
       }
     }
@@ -273,9 +273,9 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   }
 
   @NotNull
-  private static String toString(@NotNull Map<AbstractVcs, Set<FilePath>> filesByVcs) {
+  private static String toString(@NotNull Map<VcsRoot, Set<FilePath>> filesByVcs) {
     return StringUtil.join(filesByVcs.keySet(), vcs
-      -> vcs.getName() + ": " + StringUtil.join(filesByVcs.get(vcs), path -> path.getPath(), "\n"), "\n");
+      -> vcs.getVcs() + ": " + StringUtil.join(filesByVcs.get(vcs), path -> path.getPath(), "\n"), "\n");
   }
 
   @Nullable

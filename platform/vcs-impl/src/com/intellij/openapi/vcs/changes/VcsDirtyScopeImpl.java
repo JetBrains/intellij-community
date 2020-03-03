@@ -116,9 +116,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
    * <p>
    * Use {@link #addDirtyFile} / {@link #addDirtyDirRecursively} to add file path and remove duplicates.
    */
-  public void addDirtyPathFast(@NotNull FilePath filePath, boolean recursively) {
-    final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(filePath);
-    if (vcsRoot == null) return;
+  public void addDirtyPathFast(@NotNull VirtualFile vcsRoot, @NotNull FilePath filePath, boolean recursively) {
     myAffectedContentRoots.add(vcsRoot);
 
     RecursiveFilePathSet dirsByRoot = myDirtyDirectoriesRecursively.get(vcsRoot);
