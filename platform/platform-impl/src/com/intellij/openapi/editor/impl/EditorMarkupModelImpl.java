@@ -191,6 +191,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
           public void updateIcon() {
             super.updateIcon();
             revalidate();
+            repaint();
           }
 
           @Override
