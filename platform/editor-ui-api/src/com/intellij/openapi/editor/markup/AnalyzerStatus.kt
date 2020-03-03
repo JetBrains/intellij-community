@@ -20,9 +20,10 @@ enum class AHLevel(val type: String) {
 }
 
 data class LanguageHighlightLevel(val language: Language, val level: AHLevel)
+
 data class StatInfo(val presentableName: String, val progress: Double, val finished: Boolean) {
   fun toPercent() : Int {
-    var percent = (progress * 100).roundToInt()
+    val percent = (progress * 100).roundToInt()
     return if (percent == 100 && !finished) 99 else percent
   }
 }
