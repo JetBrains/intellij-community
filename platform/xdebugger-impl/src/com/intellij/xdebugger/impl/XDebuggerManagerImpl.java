@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.AppTopics;
@@ -141,7 +141,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     messageBusConnection.subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
       @Override
       public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-        if (descriptor != null && executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
+        if (descriptor != null && ToolWindowId.DEBUG.equals(executor.getToolWindowId())) {
           XDebugSessionImpl session = mySessions.get(descriptor.getProcessHandler());
           if (session != null) {
             session.activateSession();
@@ -154,7 +154,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
       @Override
       public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-        if (descriptor != null && executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
+        if (descriptor != null && ToolWindowId.DEBUG.equals(executor.getToolWindowId())) {
           mySessions.remove(descriptor.getProcessHandler());
         }
       }
