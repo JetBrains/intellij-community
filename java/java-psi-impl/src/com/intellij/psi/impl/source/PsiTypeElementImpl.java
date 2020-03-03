@@ -316,7 +316,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     }
     if (firstChild instanceof PsiJavaCodeReferenceElement) {
       PsiIdentifier identifier = PsiTreeUtil.getChildOfType(firstChild, PsiIdentifier.class);
-      if (identifier != null) {
+      if (identifier != null && identifier != firstChild.getFirstChild()) {
+        // qualified reference
         return (PsiAnnotation)firstChild.addBefore(annotation, identifier);
       }
     }

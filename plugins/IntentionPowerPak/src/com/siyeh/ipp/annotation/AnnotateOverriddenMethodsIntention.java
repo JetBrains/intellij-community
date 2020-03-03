@@ -15,10 +15,7 @@
  */
 package com.siyeh.ipp.annotation;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -145,11 +142,8 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
                                PsiNameValuePair[] attributes,
                                List<String> annotationsToRemove,
                                ExternalAnnotationsManager annotationsManager) throws ProcessCanceledException {
-    final PsiModifierList modifierList = modifierListOwner.getModifierList();
-    if (modifierList == null) {
-      return;
-    }
-    if (modifierList.hasAnnotation(annotationName)) return;
+    PsiAnnotationOwner target = AnnotationTargetUtil.getTarget(modifierListOwner, annotationName);
+    if (target == null || target.hasAnnotation(annotationName)) return;
     final ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace = annotationsManager.chooseAnnotationsPlace(modifierListOwner);
     if (annotationAnnotationPlace == ExternalAnnotationsManager.AnnotationPlace.NOWHERE) {
       return;
@@ -171,7 +165,7 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
             annotation.delete();
           }
         }
-        final PsiAnnotation inserted = modifierList.addAnnotation(annotationName);
+        final PsiAnnotation inserted = target.addAnnotation(annotationName);
         for (PsiNameValuePair pair : attributes) {
           inserted.setDeclaredAttributeValue(pair.getName(), pair.getValue());
         }
