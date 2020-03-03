@@ -139,12 +139,11 @@ class CompilationOutputsUploader {
   }
 
   private void updateCommitHistory(JpsCompilationPartsUploader uploader) {
-    if (remotePerCommitHash.size() == 1) return
     Map<String, List<String>> commitHistory = new HashMap<>()
     if (uploader.isExist(commitHistoryFile)) {
       def content = uploader.getAsString(commitHistoryFile)
       if (!content.isEmpty()) {
-        Type type = new TypeToken<Map<String, List<String>>>(){}.getType();
+        Type type = new TypeToken<Map<String, List<String>>>(){}.getType()
         commitHistory = new Gson().fromJson(content, type) as Map<String, List<String>>
       }
     }
@@ -167,6 +166,8 @@ class CompilationOutputsUploader {
     file.write(jsonAsString)
     messages.artifactBuilt(file.absolutePath)
     uploader.upload(commitHistoryFile, file)
+    File commitHistoryFileCopy = new File(tmpDir, commitHistoryFile)
+    FileUtil.copy(file, commitHistoryFileCopy)
     FileUtil.delete(file)
   }
 
