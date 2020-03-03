@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.components.ServiceManager;
@@ -25,29 +24,6 @@ public class LombokInspection extends AbstractBaseJavaLocalInspectionTool {
 
   public LombokInspection() {
     valProcessor = ServiceManager.getService(ValProcessor.class);
-  }
-
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Lombok annotations inspection";
-  }
-
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return InspectionsBundle.message("group.names.probable.bugs");
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "Lombok";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

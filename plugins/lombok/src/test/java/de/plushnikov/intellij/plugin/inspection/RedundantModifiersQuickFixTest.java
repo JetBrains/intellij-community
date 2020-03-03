@@ -10,26 +10,38 @@ import java.util.List;
 
 import static de.plushnikov.intellij.plugin.inspection.LombokInspectionTest.TEST_DATA_INSPECTION_DIRECTORY;
 
-public class RedundantModifiersOnValueQuickFixTest extends AbstractLombokLightCodeInsightTestCase {
+public class RedundantModifiersQuickFixTest extends AbstractLombokLightCodeInsightTestCase {
 
   @Override
   protected String getBasePath() {
     return TEST_DATA_INSPECTION_DIRECTORY + "/redundantModifierInspection";
   }
 
-  public void testValueClassWithPrivateField() {
-    myFixture.configureByFile(getBasePath() + '/' + getTestName(false) + ".java");
+  public void testUtilityClassClassWithStaticField() {
+    findAccessModifierActions("@UtilityClass already marks fields static.");
+  }
 
-    final List<IntentionAction> availableActions = getAvailableActions();
-    assertTrue("Redundant private field modifier",
-      availableActions.stream().anyMatch(action -> action.getText().contains("Change access modifier")));
+  public void testUtilityClassClassWithStaticMethod() {
+    findAccessModifierActions("@UtilityClass already marks methods static.");
+  }
+
+  public void testUtilityClassClassWithStaticInnerClass() {
+    findAccessModifierActions("@UtilityClass already marks inner classes static.");
+  }
+
+  public void testValueClassWithPrivateField() {
+    findAccessModifierActions("@Value already marks non-static, package-local fields private.");
   }
 
   public void testValueClassWithFinalField() {
+    findAccessModifierActions("@Value already marks non-static fields final.");
+  }
+
+  private void findAccessModifierActions(String message) {
     myFixture.configureByFile(getBasePath() + '/' + getTestName(false) + ".java");
 
     final List<IntentionAction> availableActions = getAvailableActions();
-    assertTrue("Redundant final field modifier",
+    assertTrue(message,
       availableActions.stream().anyMatch(action -> action.getText().contains("Change access modifier")));
   }
 

@@ -115,7 +115,6 @@
 
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
-    <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
     <projectConfigurable instance="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
 
     <treeGenerator implementation="de.plushnikov.intellij.plugin.extension.LombokLightMethodTreeGenerator"/>
@@ -160,6 +159,36 @@
     <inlineActionHandler implementation="de.plushnikov.intellij.plugin.action.inline.LombokInlineMethodHandler"/>
 
     <canBeFinal implementation="de.plushnikov.intellij.plugin.extension.LombokCanBeFinalHandler"/>
+
+    <localInspection
+      displayName="Lombok annotations"
+      groupName="Lombok"
+      shortName="Lombok"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.LombokInspection"/>
+
+    <localInspection
+      displayName="Deprecated Lombok annotations"
+      groupName="Lombok"
+      shortName="DeprecatedLombok"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.DeprecatedLombokAnnotationInspection"/>
+
+    <localInspection
+      displayName="@Value modifiers"
+      groupPath="Lombok"
+      groupName="Redundant modifiers"
+      shortName="RedundantModifiersValueLombok"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnValueLombokAnnotationInspection"/>
+
+    <localInspection
+      displayName="@UtilityClass modifiers"
+      groupPath="Lombok"
+      groupName="Redundant modifiers"
+      shortName="RedundantModifiersUtilityClassLombok"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnUtilityClassLombokAnnotationInspection"/>
 
     <codeInsight.template.postfixTemplateProvider language="JAVA"
                                                   implementationClass="de.plushnikov.intellij.plugin.extension.postfix.LombokPostfixTemplateProvider"/>

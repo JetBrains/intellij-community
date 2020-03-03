@@ -1,9 +1,9 @@
 package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnValueLombokAnnotationInspection;
+import de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnUtilityClassLombokAnnotationInspection;
 
-public class RedundantModifiersOnValueLombokInspectionTest extends LombokInspectionTest {
+public class RedundantModifiersOnUtilityClassLombokInspectionTest extends LombokInspectionTest {
 
   @Override
   protected String getTestDataPath() {
@@ -12,10 +12,10 @@ public class RedundantModifiersOnValueLombokInspectionTest extends LombokInspect
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new RedundantModifiersOnValueLombokAnnotationInspection();
+    return new RedundantModifiersOnUtilityClassLombokAnnotationInspection();
   }
 
-  public void testValueClass() {
+  public void testUtilityClassClass() {
     doTest();
   }
 
