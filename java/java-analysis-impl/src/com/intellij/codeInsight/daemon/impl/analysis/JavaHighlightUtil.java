@@ -208,9 +208,9 @@ public class JavaHighlightUtil {
   private static String getClassInaccessibleMessage(@NotNull PsiElement context, @NotNull String className) {
     Module module = ModuleUtilCore.findModuleForPsiElement(context);
     if (module == null) {
-      return JavaAnalysisBundle.message("get.class.in.accessible.message.class.0.is.not.accessible.here", className);
+      return JavaAnalysisBundle.message("message.class.inaccessible", className);
     }
-    return JavaAnalysisBundle.message("get.class.in.accessible.message.class.0.is.not.accessible.from.module", className, module.getName());
+    return JavaAnalysisBundle.message("message.class.inaccessible.from.module", className, module.getName());
   }
 
   static class ConstructorVisitorInfo {
