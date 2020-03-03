@@ -85,6 +85,7 @@ object Agreements {
         it.close(DialogWrapper.OK_EXIT_CODE)
       }
       .setDeclineButton(bundle.getString("dataSharing.dialog.decline")) {
+        //AppUIUtil.saveConsents(ConsentOptions.getInstance().consents.first);
         it.close(DialogWrapper.CANCEL_EXIT_CODE)
       }
     return this
