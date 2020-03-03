@@ -22,7 +22,7 @@ public final class SystemProperties {
   }
 
   public static String getLineSeparator() {
-    return System.getProperty("line.separator");
+    return System.lineSeparator();
   }
 
   /** @deprecated use {@link SystemInfo#OS_NAME} */
