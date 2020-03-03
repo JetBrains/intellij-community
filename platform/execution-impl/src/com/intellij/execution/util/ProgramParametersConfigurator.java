@@ -25,13 +25,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ProgramParametersConfigurator {
@@ -60,10 +63,11 @@ public class ProgramParametersConfigurator {
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 
-  @Nullable
-  public String expandPathAndMacros(String s, Module module, Project project) {
-    return expandMacros(expandPath(s, module, project),
-                        projectContext(project, module));
+  @Contract("!null, _, _ -> !null")
+  public @Nullable String expandPathAndMacros(String s, Module module, Project project) {
+    final String path = expandPath(s, module, project);
+    if (path == null) return null;
+    return expandMacros(path, projectContext(project, module), false);
   }
 
   private static @NotNull DataContext projectContext(Project project, Module module) {
@@ -74,12 +78,30 @@ public class ProgramParametersConfigurator {
     };
   }
 
+  /**
+   * Unless expanding macros in a generic value that doesn't represent a path of some kind, or a parameter string,
+   * consider using the following specialized methods instead:
+   *
+   * @see #expandMacrosAndParseParameters For values representing parameters: program arguments, VM options
+   * @see #expandPathAndMacros For paths: working directory, input file, etc.
+   */
   public static String expandMacros(@Nullable String path) {
-    return expandMacros(path, DataContext.EMPTY_CONTEXT);
+    if (StringUtil.isEmpty(path)) {
+      return path;
+    }
+    return expandMacros(path, DataContext.EMPTY_CONTEXT, false);
   }
 
-  protected static String expandMacros(@Nullable String path, @NotNull DataContext dataContext) {
-    if (path == null || !Registry.is("allow.macros.for.run.configurations")) {
+  public static @NotNull List<String> expandMacrosAndParseParameters(@Nullable String parametersStringWithMacros) {
+    if (StringUtil.isEmpty(parametersStringWithMacros)) {
+      return Collections.emptyList();
+    }
+    final String expandedParametersString = expandMacros(parametersStringWithMacros, DataContext.EMPTY_CONTEXT, true);
+    return ParametersListUtil.parse(expandedParametersString);
+  }
+
+  private static @NotNull String expandMacros(@NotNull String path, @NotNull DataContext dataContext, boolean applyParameterEscaping) {
+    if (!Registry.is("allow.macros.for.run.configurations")) {
       return path;
     }
 
@@ -89,7 +111,9 @@ public class ProgramParametersConfigurator {
            index != -1 && index < path.length() + template.length();
            index = path.indexOf(template, index)) {
         String value = StringUtil.notNullize(previewOrExpandMacro(macro, dataContext));
-        value = ParametersListUtil.escape(value);
+        if (applyParameterEscaping) {
+          value = ParametersListUtil.escape(value);
+        }
         path = path.substring(0, index) + value + path.substring(index + template.length());
         //noinspection AssignmentToForLoopParameter
         index += value.length();
