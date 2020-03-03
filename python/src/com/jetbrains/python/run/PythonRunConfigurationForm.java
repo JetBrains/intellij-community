@@ -52,12 +52,6 @@ import java.util.Objects;
  * @author yole
  */
 public class PythonRunConfigurationForm implements PythonRunConfigurationParams, PanelWithAnchor {
-  @Nls public final static String SCRIPT_PATH;
-  @Nls public final static String MODULE_NAME;
-  static {
-    SCRIPT_PATH = PyBundle.message("runcfg.labels.script.path");
-    MODULE_NAME = PyBundle.message("runcfg.labels.module.name");
-  }
   private JPanel myRootPanel;
   private TextFieldWithBrowseButton myScriptTextField;
   private RawCommandLineEditor myScriptParametersTextField;
@@ -155,7 +149,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   }
 
   private void updateRunModuleMode() {
-    boolean mode = (MODULE_NAME + ":").equals(myTargetComboBox.getText());
+    boolean mode = (getModuleNameText() + ":").equals(myTargetComboBox.getText());
     checkTargetComboConsistency(mode);
     setModuleModeInternal(mode);
   }
@@ -248,6 +242,14 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   public void setMultiprocessMode(boolean multiprocess) {
   }
 
+  @Nls public static String getScriptPathText() {
+    return PyBundle.message("runcfg.labels.script.path");
+  }
+
+  @Nls public static String getModuleNameText() {
+    return PyBundle.message("runcfg.labels.module.name");
+  }
+
   @Override
   @NotNull
   public String getInputFile() {
@@ -280,7 +282,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   @Override
   public void setModuleMode(boolean moduleMode) {
-    setTargetComboBoxValue(moduleMode ? MODULE_NAME : SCRIPT_PATH);
+    setTargetComboBoxValue(moduleMode ? getModuleNameText() : getScriptPathText());
     updateRunModuleMode();
     checkTargetComboConsistency(moduleMode);
   }
@@ -308,7 +310,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
         @Override
         public void mouseClicked(MouseEvent e) {
           JBPopupFactory.getInstance().createListPopup(
-            new BaseListPopupStep<String>("Choose target to run", Lists.newArrayList(SCRIPT_PATH, MODULE_NAME)) {
+            new BaseListPopupStep<String>("Choose target to run", Lists.newArrayList(getScriptPathText(), getModuleNameText())) {
               @Override
               public PopupStep onChosen(String selectedValue, boolean finalChoice) {
                 setTargetComboBoxValue(selectedValue);
