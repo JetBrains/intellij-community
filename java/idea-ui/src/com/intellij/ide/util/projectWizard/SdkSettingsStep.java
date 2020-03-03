@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
@@ -131,6 +117,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
       return;
     }
 
+    Sdk best = null;
     ComboBoxModel<JdkComboBox.JdkComboBoxItem> model = myJdkComboBox.getModel();
     for(int i = 0; i < model.getSize(); i++) {
       JdkComboBox.JdkComboBoxItem item = model.getElementAt(i);
@@ -138,13 +125,27 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
       Sdk jdk = item.getJdk();
       if (jdk == null) continue;
-      if (!sdkFilter.value(jdk.getSdkType())) continue;
 
-      myJdkComboBox.setSelectedItem(item);
-      return;
+      SdkTypeId jdkType = jdk.getSdkType();
+      if (!sdkFilter.value(jdkType)) continue;
+
+      if (best == null) {
+        best = jdk;
+        continue;
+      }
+
+      SdkTypeId bestType = best.getSdkType();
+      //it is in theory possible to have several SDK types here, let's just pick the first lucky type for now
+      if (bestType == jdkType && bestType.versionComparator().compare(best, jdk) < 0) {
+        best = jdk;
+      }
     }
 
-    myJdkComboBox.setSelectedItem(myJdkComboBox.showNoneSdkItem());
+    if (best != null) {
+      myJdkComboBox.setSelectedJdk(best);
+    } else {
+      myJdkComboBox.setSelectedItem(myJdkComboBox.showNoneSdkItem());
+    }
   }
 
   protected void onSdkSelected(Sdk sdk) {}
