@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.projectView
+package com.intellij.ide
 
 import com.intellij.ide.projectView.ProjectViewSettings
 import com.intellij.ide.projectView.ViewSettings
@@ -7,7 +7,7 @@ import com.intellij.ide.util.treeView.NodeOptions
 import org.junit.Assert
 import org.junit.Test
 
-class SettingsTest {
+class ProjectViewSettingsTest {
 
   @Test
   fun testDefaultNodeOptions() {
@@ -22,6 +22,7 @@ class SettingsTest {
     Assert.assertFalse(options.isCompactDirectories)
     Assert.assertFalse(options.isShowLibraryContents)
   }
+
 
   @Test
   fun testDefaultViewSettings() {
@@ -38,6 +39,7 @@ class SettingsTest {
     Assert.assertFalse(settings.isFlattenModules)
     Assert.assertTrue(settings.isShowURL)
   }
+
 
   @Test
   fun testDefaultProjectViewSettings() {
