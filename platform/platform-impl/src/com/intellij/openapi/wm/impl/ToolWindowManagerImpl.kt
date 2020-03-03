@@ -6,6 +6,7 @@ import com.intellij.DynamicBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.runActivity
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.UiActivity
 import com.intellij.ide.UiActivityMonitor
@@ -73,6 +74,7 @@ import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
@@ -107,8 +109,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
     else {
       runActivity("toolwindow factory class preloading") {
-        ToolWindowEP.EP_NAME.forEachExtensionSafe { bean ->
-          bean.toolWindowFactory
+        processDescriptors { bean, pluginDescriptor  ->
+          bean.getToolWindowFactory(pluginDescriptor)
         }
       }
     }
@@ -377,17 +379,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val list = mutableListOf<TaskAndBean>()
     runActivity("toolwindow init command creation") {
-      ToolWindowEP.EP_NAME.forEachExtensionSafe { bean ->
-        val condition = bean.condition
+      processDescriptors { bean, pluginDescriptor  ->
+        val condition = bean.getCondition(pluginDescriptor)
         // compute outside of EDT
         if (condition != null && !condition.value(project)) {
-          return@forEachExtensionSafe
+          return@processDescriptors
         }
 
-        // compute outside of EDT (should be already preloaded, but who knows)
-        val factory = bean.toolWindowFactory
+        val factory = bean.getToolWindowFactory(pluginDescriptor)
         if (!factory.isApplicable(project)) {
-          return@forEachExtensionSafe
+          return@processDescriptors
         }
 
         list.add(TaskAndBean(RegisterToolWindowTask(
@@ -397,8 +398,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           sideTool = bean.side,
           canCloseContent = bean.canCloseContents,
           canWorkInDumbMode = DumbService.isDumbAware(factory),
-          shouldBeAvailable = bean.toolWindowFactory.shouldBeAvailable(project),
-          contentFactory = factory
+          shouldBeAvailable = factory.shouldBeAvailable(project),
+          contentFactory = factory,
+          stripeTitle = getStripeTitleSupplier(bean.id, pluginDescriptor)
         ), bean))
       }
     }
@@ -427,7 +429,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
       ToolWindowEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ToolWindowEP> {
         override fun extensionAdded(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
-          initToolWindow(extension)
+          initToolWindow(extension, pluginDescriptor)
         }
 
         override fun extensionRemoved(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
@@ -463,12 +465,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun initToolWindow(bean: ToolWindowEP) {
-    val condition = bean.condition
+    initToolWindow(bean, bean.pluginDescriptor)
+  }
+
+  private fun initToolWindow(bean: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
+    val condition = bean.getCondition(pluginDescriptor)
     if (condition != null && !condition.value(project)) {
       return
     }
 
-    val factory = bean.toolWindowFactory
+    val factory = bean.getToolWindowFactory(bean.pluginDescriptor)
     if (!factory.isApplicable(project)) {
       return
     }
@@ -481,7 +487,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       canCloseContent = bean.canCloseContents,
       canWorkInDumbMode = DumbService.isDumbAware(factory),
       shouldBeAvailable = factory.shouldBeAvailable(project),
-      contentFactory = factory
+      contentFactory = factory,
+      stripeTitle = getStripeTitleSupplier(bean.id, pluginDescriptor)
     ), bean)
 
     toolWindowPane!!.validate()
@@ -947,7 +954,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     val toolWindow = ToolWindowImpl(this, task.id, task.canCloseContent, task.canWorkInDumbMode, task.component, disposable,
-      windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable, stripeTitle = getStripeTitle(task, bean?.pluginDescriptor))
+      windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable, stripeTitle = task.stripeTitle?.get() ?: task.id)
 
     toolWindow.windowInfoDuringInit = windowInfoSnapshot
     try {
@@ -1976,28 +1983,22 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
   return source != null
 }
 
-private fun getStripeTitle(task: RegisterToolWindowTask, pluginDescriptor: PluginDescriptor?): String {
-  task.stripeTitle?.let {
-    return it.get()
-  }
-
-  if (pluginDescriptor != null && pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
-    return getStripeTitleFromPluginResourceBundle(pluginDescriptor, "toolwindow.stripe.${task.id}", defaultValue = task.id)
-  }
-  return task.id
-}
-
-private fun getStripeTitleFromPluginResourceBundle(pluginDescriptor: PluginDescriptor, key: String, defaultValue: String): String {
-  val bundleName = pluginDescriptor.resourceBundleBaseName ?: return defaultValue
+private fun getStripeTitleSupplier(id: String, pluginDescriptor: PluginDescriptor): Supplier<String>? {
   val classLoader = pluginDescriptor.pluginClassLoader
+  val bundleName = when (pluginDescriptor.pluginId) {
+    PluginManagerCore.CORE_ID -> IdeBundle.BUNDLE
+    else -> pluginDescriptor.resourceBundleBaseName ?: return null
+  }
+
   try {
     val bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
-    return BundleBase.messageOrDefault(bundle, key, defaultValue)
+    val label = BundleBase.messageOrDefault(bundle, "toolwindow.stripe.$id", id)
+    return Supplier { label }
   }
   catch (e: MissingResourceException) {
-    LOG.warn("Missing bundle ${bundleName} at ${classLoader}: ${e.message}")
-    return defaultValue
+    LOG.warn("Missing bundle ${bundleName} at ${classLoader}", e)
   }
+  return null
 }
 
 private fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory): Icon? {
@@ -2015,5 +2016,19 @@ private fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory): Ic
   }
   catch (ignored: Exception) {
     return EmptyIcon.ICON_13
+  }
+}
+
+private inline fun processDescriptors(crossinline handler: (bean: ToolWindowEP, pluginDescriptor: PluginDescriptor) -> Unit) {
+  ToolWindowEP.EP_NAME.processWithPluginDescriptor { bean, pluginDescriptor ->
+    try {
+      handler(bean, pluginDescriptor)
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error("Cannot process toolwindow ${bean.id}", e)
+    }
   }
 }

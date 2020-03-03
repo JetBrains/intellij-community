@@ -96,6 +96,7 @@ public abstract class AbstractBundle {
   }
 
   @ApiStatus.Internal
+  @NotNull
   protected ResourceBundle getResourceBundle(@Nullable ClassLoader classLoader) {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(myBundle);
     if (bundle == null) {
@@ -108,6 +109,7 @@ public abstract class AbstractBundle {
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache =
     ConcurrentFactoryMap.createWeakMap(k -> ContainerUtil.createConcurrentSoftValueMap());
 
+  @NotNull
   public ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
     Map<String, ResourceBundle> map = ourCache.get(loader);
     ResourceBundle result = map.get(pathToBundle);
