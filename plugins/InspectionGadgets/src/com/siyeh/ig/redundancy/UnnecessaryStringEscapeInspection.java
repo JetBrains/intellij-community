@@ -166,9 +166,11 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
           final int max = text.length() - 1; // skip closing "
           for (int i = 1; i < max; i++) {
             final char c = text.charAt(i);
-            if (c == '\\') slash = !slash;
-            else if (c == '\'' && slash) registerErrorAtOffset(expression, i - 1, 2);
-            else slash = false;
+            if (slash) {
+              slash = false;
+              if (c == '\'') registerErrorAtOffset(expression, i - 1, 2);
+            }
+            else if (c == '\\') slash = true;
           }
         }
       }
