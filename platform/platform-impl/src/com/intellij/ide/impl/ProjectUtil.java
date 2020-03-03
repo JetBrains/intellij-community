@@ -20,6 +20,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -133,7 +134,7 @@ public final class ProjectUtil {
         }
 
         if (provider.canOpenProject(virtualFile)) {
-          return provider.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame);
+          return openUsingProvider(provider, virtualFile, options);
         }
       }
     }
@@ -165,7 +166,7 @@ public final class ProjectUtil {
       return null;
     }
 
-    Project project = provider.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame);
+    Project project = openUsingProvider(provider, virtualFile, options);
     if (project == null) {
       return null;
     }
@@ -183,6 +184,17 @@ public final class ProjectUtil {
       }, ModalityState.NON_MODAL, project.getDisposed());
     });
     return project;
+  }
+
+  @Nullable
+  private static Project openUsingProvider(@NotNull ProjectOpenProcessor provider,
+                                           @NotNull VirtualFile virtualFile,
+                                           @NotNull OpenProjectTask options) {
+    Ref<Project> result = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      result.set(provider.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame));
+    });
+    return result.get();
   }
 
   @Nullable
