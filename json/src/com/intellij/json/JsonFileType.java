@@ -36,7 +36,7 @@ public class JsonFileType extends LanguageFileType{
   @NotNull
   @Override
   public String getDescription() {
-    return JsonBundle.message("json");
+    return JsonBundle.message("file.type.description.json");
   }
 
   @NotNull
