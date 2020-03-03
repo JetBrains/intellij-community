@@ -32,13 +32,13 @@ public class JpsCachesDummyProjectComponent implements ProjectComponent {
                                                                                JpsCacheBundle.message("notification.content.make.project.automatically.enabled.affect.caches"),
                                                                                NotificationType.WARNING, null);
       notification.addAction(
-        NotificationAction.createSimple(JpsCacheBundle.lazyMessage(
+        NotificationAction.createSimple(JpsCacheBundle.messagePointer(
           "action.NotificationAction.JpsCachesDummyProjectComponent.text.disable.property"), () -> {
         myWorkspaceConfiguration.MAKE_PROJECT_ON_SAVE = false;
         BuildManager.getInstance().clearState(myProject);
         notification.expire();
       }));
-      notification.addAction(NotificationAction.createSimple(JpsCacheBundle.lazyMessage(
+      notification.addAction(NotificationAction.createSimple(JpsCacheBundle.messagePointer(
         "action.NotificationAction.JpsCachesDummyProjectComponent.text.dont.ask"), () -> {
         myPropertiesComponent.setValue(NOT_ASK_AGAIN, true);
         notification.expire();

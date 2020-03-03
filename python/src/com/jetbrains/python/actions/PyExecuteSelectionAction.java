@@ -40,7 +40,7 @@ import java.util.List;
 public class PyExecuteSelectionAction extends DumbAwareAction {
 
   public PyExecuteSelectionAction() {
-    super(PyBundle.lazyMessage("python.execute.selection.action.execute.selection.in.console"));
+    super(PyBundle.messagePointer("python.execute.selection.action.execute.selection.in.console"));
   }
 
   @Override

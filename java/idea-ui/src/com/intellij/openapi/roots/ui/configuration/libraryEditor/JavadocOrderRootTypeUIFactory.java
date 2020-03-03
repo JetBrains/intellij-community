@@ -54,7 +54,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
     @Override
     protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
-      AnActionButton specifyUrlButton = new DumbAwareActionButton(JavaUiBundle.lazyMessage("sdk.paths.specify.url.button"), IconUtil.getAddLinkIcon()) {
+      AnActionButton specifyUrlButton = new DumbAwareActionButton(JavaUiBundle.messagePointer("sdk.paths.specify.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           onSpecifyUrlButtonClicked();

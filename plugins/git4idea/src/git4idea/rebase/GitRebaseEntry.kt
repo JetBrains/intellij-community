@@ -11,13 +11,13 @@ internal open class GitRebaseEntry(var action: Action, val commit: String, val s
   override fun toString() = "$action $commit $subject"
 
   sealed class Action(private val command: String, val visibleName: Supplier<String>) {
-    object PICK : Action("pick", GitBundle.lazyMessage("rebase.entry.action.name.pick"))
-    object EDIT : Action("edit", GitBundle.lazyMessage("rebase.entry.action.name.edit"))
-    object DROP : Action("drop", GitBundle.lazyMessage("rebase.entry.action.name.drop"))
-    object REWORD : Action("reword", GitBundle.lazyMessage("rebase.entry.action.name.reword"))
-    object SQUASH : Action("squash", GitBundle.lazyMessage("rebase.entry.action.name.squash"))
-    object FIXUP : Action("fixup", GitBundle.lazyMessage("rebase.entry.action.name.fixup"))
-    class Other(command: String) : Action(command, GitBundle.lazyMessage("rebase.entry.action.name.unknown"))
+    object PICK : Action("pick", GitBundle.messagePointer("rebase.entry.action.name.pick"))
+    object EDIT : Action("edit", GitBundle.messagePointer("rebase.entry.action.name.edit"))
+    object DROP : Action("drop", GitBundle.messagePointer("rebase.entry.action.name.drop"))
+    object REWORD : Action("reword", GitBundle.messagePointer("rebase.entry.action.name.reword"))
+    object SQUASH : Action("squash", GitBundle.messagePointer("rebase.entry.action.name.squash"))
+    object FIXUP : Action("fixup", GitBundle.messagePointer("rebase.entry.action.name.fixup"))
+    class Other(command: String) : Action(command, GitBundle.messagePointer("rebase.entry.action.name.unknown"))
 
     val mnemonic: Int = command.first().toInt()
 

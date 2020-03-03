@@ -81,9 +81,9 @@ public class FocusTracesAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myActive) {
-      presentation.setText(InternalActionsBundle.lazyMessage("action.presentation.FocusTracesAction.text.stop.focus.tracing"));
+      presentation.setText(InternalActionsBundle.messagePointer("action.presentation.FocusTracesAction.text.stop.focus.tracing"));
     } else {
-      presentation.setText(InternalActionsBundle.lazyMessage("action.presentation.FocusTracesAction.text.start.focus.tracing"));
+      presentation.setText(InternalActionsBundle.messagePointer("action.presentation.FocusTracesAction.text.start.focus.tracing"));
     }
     presentation.setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
   }

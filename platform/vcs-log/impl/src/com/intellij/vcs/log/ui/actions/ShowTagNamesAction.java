@@ -38,8 +38,8 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 public class ShowTagNamesAction extends BooleanPropertyToggleAction {
 
   public ShowTagNamesAction() {
-    super(VcsLogBundle.lazyMessage("vcs.log.action.show.tag.names"),
-          VcsLogBundle.lazyMessage("vcs.log.action.description.show.tag.names"), null);
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.tag.names"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.tag.names"), null);
   }
 
   @Override

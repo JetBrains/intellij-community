@@ -86,7 +86,7 @@ public class ImportTree extends NodeRenderer {
   }
 
   public AnAction createExcludeAction() {
-    return new AnAction(CvsBundle.lazyMessage("import.wizard.exclude.from.import.action.name"), PlatformIcons.DELETE_ICON) {
+    return new AnAction(CvsBundle.messagePointer("import.wizard.exclude.from.import.action.name"), PlatformIcons.DELETE_ICON) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
@@ -117,7 +117,7 @@ public class ImportTree extends NodeRenderer {
   }
 
   public AnAction createIncludeAction() {
-    return new AnAction(CvsBundle.lazyMessage("import.wizard.include.to.import.action.name"), IconUtil.getAddIcon()) {
+    return new AnAction(CvsBundle.messagePointer("import.wizard.include.to.import.action.name"), IconUtil.getAddIcon()) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();

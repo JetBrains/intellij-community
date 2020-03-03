@@ -23,7 +23,7 @@ import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchResult
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle.message
-import git4idea.i18n.GitBundleExtensions.lazyMessage
+import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.isRemoteBranchProtected
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -119,7 +119,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class UpdateSelectedBranchAction : BranchesActionBase(text = lazyMessage("action.Git.Update.Selected.text"),
+  class UpdateSelectedBranchAction : BranchesActionBase(text = messagePointer("action.Git.Update.Selected.text"),
                                                         icon = AllIcons.Actions.CheckOut) {
     override fun update(e: AnActionEvent) {
       val enabledAndVisible = e.project?.let(::hasRemotes) ?: false
@@ -193,7 +193,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class ShowBranchDiffAction : BranchesActionBase(text = lazyMessage("action.Git.Compare.With.Current.title"),
+  class ShowBranchDiffAction : BranchesActionBase(text = messagePointer("action.Git.Compare.With.Current.title"),
                                                   icon = AllIcons.Actions.Diff) {
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
       if (branches.none { !it.isCurrent }) {
@@ -214,7 +214,7 @@ internal object BranchesDashboardActions {
   }
 
   class ShowMyBranchesAction(private val uiController: BranchesDashboardController)
-    : ToggleAction(lazyMessage("action.Git.Show.My.Branches.title"), AllIcons.Actions.Find), DumbAware {
+    : ToggleAction(messagePointer("action.Git.Show.My.Branches.title"), AllIcons.Actions.Find), DumbAware {
 
     override fun isSelected(e: AnActionEvent) = uiController.showOnlyMy
 
@@ -283,7 +283,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class ToggleFavoriteAction : BranchesActionBase(text = lazyMessage("action.Git.Toggle.Favorite.title"), icon = AllIcons.Nodes.Favorite) {
+  class ToggleFavoriteAction : BranchesActionBase(text = messagePointer("action.Git.Toggle.Favorite.title"), icon = AllIcons.Nodes.Favorite) {
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project!!
       val branches = e.getData(GIT_BRANCHES)!!

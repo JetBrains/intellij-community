@@ -54,9 +54,9 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
   public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myFocusDrawer == null) {
-      presentation.setText(InternalActionsBundle.lazyMessage("action.presentation.FocusDebuggerAction.text.start.focus.debugger"));
+      presentation.setText(InternalActionsBundle.messagePointer("action.presentation.FocusDebuggerAction.text.start.focus.debugger"));
     } else {
-      presentation.setText(InternalActionsBundle.lazyMessage("action.presentation.FocusDebuggerAction.text.stop.focus.debugger"));
+      presentation.setText(InternalActionsBundle.messagePointer("action.presentation.FocusDebuggerAction.text.stop.focus.debugger"));
     }
   }
 

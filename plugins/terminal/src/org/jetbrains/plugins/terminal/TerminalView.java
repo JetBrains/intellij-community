@@ -99,8 +99,8 @@ public final class TerminalView {
     myToolWindow = toolWindow;
 
     toolWindow.setTabActions(
-      new DumbAwareAction(IdeBundle.lazyMessage("action.DumbAware.TerminalView.text.new.session"),
-                          IdeBundle.lazyMessage("action.DumbAware.TerminalView.description.create.new.session"), AllIcons.General.Add) {
+      new DumbAwareAction(IdeBundle.messagePointer("action.DumbAware.TerminalView.text.new.session"),
+                          IdeBundle.messagePointer("action.DumbAware.TerminalView.description.create.new.session"), AllIcons.General.Add) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           newTab(toolWindow, null);

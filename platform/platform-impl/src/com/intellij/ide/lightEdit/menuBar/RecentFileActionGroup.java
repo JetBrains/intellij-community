@@ -26,7 +26,7 @@ import java.util.List;
 
 class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisibleActionGroup {
   RecentFileActionGroup() {
-    super(ApplicationBundle.lazyMessage("light.edit.action.recentFile.text"), true);
+    super(ApplicationBundle.messagePointer("light.edit.action.recentFile.text"), true);
   }
 
   @Override

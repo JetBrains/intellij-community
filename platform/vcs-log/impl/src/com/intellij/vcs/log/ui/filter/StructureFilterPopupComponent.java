@@ -52,7 +52,7 @@ public class StructureFilterPopupComponent
   public StructureFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                                        @NotNull VcsLogClassicFilterUi.FileFilterModel filterModel,
                                        @NotNull VcsLogColorManager colorManager) {
-    super(VcsLogBundle.lazyMessage("vcs.log.filter.popup.paths"), filterModel);
+    super(VcsLogBundle.messagePointer("vcs.log.filter.popup.paths"), filterModel);
     myUiProperties = uiProperties;
     myColorManager = colorManager;
   }
@@ -196,14 +196,14 @@ public class StructureFilterPopupComponent
 
     if (roots.size() > 15) {
       return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
-                                    new Separator(VcsBundle.lazyMessage("action.Anonymous.text.recent")),
+                                    new Separator(VcsBundle.messagePointer("action.Anonymous.text.recent")),
                                     new DefaultActionGroup(structureActions),
-                                    new Separator(VcsBundle.lazyMessage("action.Anonymous.text.roots")),
+                                    new Separator(VcsBundle.messagePointer("action.Anonymous.text.roots")),
                                     new DefaultActionGroup(rootActions));
     }
     return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
-                                  new Separator(VcsBundle.lazyMessage("action.Anonymous.text.roots")), new DefaultActionGroup(rootActions),
-                                  new Separator(VcsBundle.lazyMessage("action.Anonymous.text.recent")),
+                                  new Separator(VcsBundle.messagePointer("action.Anonymous.text.roots")), new DefaultActionGroup(rootActions),
+                                  new Separator(VcsBundle.messagePointer("action.Anonymous.text.recent")),
                                   new DefaultActionGroup(structureActions));
   }
 
@@ -355,7 +355,7 @@ public class StructureFilterPopupComponent
   private class SelectFoldersAction extends DumbAwareAction {
 
     SelectFoldersAction() {
-      super(VcsBundle.lazyMessage("vcs.log.filter.select.folders"));
+      super(VcsBundle.messagePointer("vcs.log.filter.select.folders"));
     }
 
     @Override

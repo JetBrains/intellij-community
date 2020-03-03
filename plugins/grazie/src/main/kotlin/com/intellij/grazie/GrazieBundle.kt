@@ -19,7 +19,7 @@ object GrazieBundle {
   }
 
   @JvmStatic
-  fun lazyMessage(@PropertyKey(resourceBundle = DEFAULT_BUNDLE_NAME) key: String, vararg params: String): Supplier<String> = Supplier {
+  fun messagePointer(@PropertyKey(resourceBundle = DEFAULT_BUNDLE_NAME) key: String, vararg params: String): Supplier<String> = Supplier {
     message(key, *params)
   }
 }

@@ -720,7 +720,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other());
 
       copyShortcutFrom(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")));
-      getTemplatePresentation().setText(DiffBundle.lazyMessage("action.presentation.diff.append.text"));
+      getTemplatePresentation().setText(DiffBundle.messagePointer("action.presentation.diff.append.text"));
       getTemplatePresentation().setIcon(DiffUtil.getArrowDownIcon(focusedSide));
     }
 

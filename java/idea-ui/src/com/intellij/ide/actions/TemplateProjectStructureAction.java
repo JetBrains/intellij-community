@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class TemplateProjectStructureAction extends ShowStructureSettingsAction {
   public TemplateProjectStructureAction() {
-    getTemplatePresentation().setText(JavaUiBundle.lazyMessage("action.TemplateProjectStructure.text"));
-    getTemplatePresentation().setDescription(JavaUiBundle.lazyMessage("action.TemplateProjectStructure.description"));
+    getTemplatePresentation().setText(JavaUiBundle.messagePointer("action.TemplateProjectStructure.text"));
+    getTemplatePresentation().setDescription(JavaUiBundle.messagePointer("action.TemplateProjectStructure.description"));
   }
 
   @Override

@@ -127,7 +127,7 @@ public abstract class LightToolWindowManager implements Disposable {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   public AnAction createGearActions() {
-    DefaultActionGroup group = DefaultActionGroup.createPopupGroup(IdeBundle.lazyMessage("popup.title.in.editor.mode"));
+    DefaultActionGroup group = DefaultActionGroup.createPopupGroup(IdeBundle.messagePointer("popup.title.in.editor.mode"));
 
     group.add(createToggleAction(ToolWindowAnchor.LEFT));
     group.add(createToggleAction(ToolWindowAnchor.RIGHT));

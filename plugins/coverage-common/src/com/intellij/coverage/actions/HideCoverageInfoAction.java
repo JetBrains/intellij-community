@@ -18,8 +18,8 @@ import javax.swing.*;
 
 public class HideCoverageInfoAction extends IconWithTextAction {
   public HideCoverageInfoAction() {
-    super(CoverageBundle.lazyMessage("coverage.hide.coverage.action.name"),
-          CoverageBundle.lazyMessage("coverage.hide.coverage.action.description"), null);
+    super(CoverageBundle.messagePointer("coverage.hide.coverage.action.name"),
+          CoverageBundle.messagePointer("coverage.hide.coverage.action.description"), null);
   }
 
   @Override

@@ -201,10 +201,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.add(new ExportAction());
     group.addSeparator();
     group.add(
-      new CopyOrMoveAction(SvnBundle.lazyMessage("action.DumbAware.RepositoryBrowserDialog.text.branch.or.tag"), "copy.dialog.title",
+      new CopyOrMoveAction(SvnBundle.messagePointer("action.DumbAware.RepositoryBrowserDialog.text.branch.or.tag"), "copy.dialog.title",
                            false));
     group.add(
-      new CopyOrMoveAction(SvnBundle.lazyMessage("action.DumbAware.RepositoryBrowserDialog.text.move.or.rename"), "move.dialog.title",
+      new CopyOrMoveAction(SvnBundle.messagePointer("action.DumbAware.RepositoryBrowserDialog.text.move.or.rename"), "move.dialog.title",
                            true));
     group.add(myDeleteAction);
     group.add(copyUrlAction);
@@ -335,8 +335,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   protected class HistoryAction extends DumbAwareAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText(SvnBundle.lazyMessage("repository.browser.history.action"));
-      e.getPresentation().setDescription(SvnBundle.lazyMessage("repository.browser.history.action"));
+      e.getPresentation().setText(SvnBundle.messagePointer("repository.browser.history.action"));
+      e.getPresentation().setDescription(SvnBundle.messagePointer("repository.browser.history.action"));
       final RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       e.getPresentation().setEnabled(node != null && node.getURL() != null && !myProject.isDefault());
     }
@@ -367,8 +367,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText(SvnBundle.lazyMessage("action.name.refresh"));
-      e.getPresentation().setDescription(SvnBundle.lazyMessage("repository.browser.refresh.action"));
+      e.getPresentation().setText(SvnBundle.messagePointer("action.name.refresh"));
+      e.getPresentation().setDescription(SvnBundle.messagePointer("repository.browser.refresh.action"));
       e.getPresentation().setIcon(AllIcons.Actions.Refresh);
       e.getPresentation().setEnabled(myBrowserComponent.getSelectedNode() != null);
     }
@@ -394,8 +394,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (e.getPlace().equals(PLACE_TOOLBAR)) {
-        e.getPresentation().setDescription(SvnBundle.lazyMessage("repository.browser.add.location.action.description"));
-        e.getPresentation().setText(SvnBundle.lazyMessage("repository.browser.add.location.action.text"));
+        e.getPresentation().setDescription(SvnBundle.messagePointer("repository.browser.add.location.action.description"));
+        e.getPresentation().setText(SvnBundle.messagePointer("repository.browser.add.location.action.text"));
         e.getPresentation().setIcon(IconUtil.getAddIcon());
       }
     }
@@ -434,8 +434,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void update(@NotNull AnActionEvent e) {
       RepositoryTreeNode node = myBrowserComponent.getSelectedNode();
       if (e.getPlace().equals(PLACE_TOOLBAR)) {
-        e.getPresentation().setDescription(SvnBundle.lazyMessage("repository.browser.edit.location.menu.item"));
-        e.getPresentation().setText(SvnBundle.lazyMessage("repository.browser.edit.location.menu.item"));
+        e.getPresentation().setDescription(SvnBundle.messagePointer("repository.browser.edit.location.menu.item"));
+        e.getPresentation().setText(SvnBundle.messagePointer("repository.browser.edit.location.menu.item"));
         e.getPresentation().setIcon(AllIcons.Actions.EditSource);
       }
       e.getPresentation().setEnabled(node != null && node.getParent() instanceof RepositoryTreeRootNode);
@@ -870,7 +870,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(showImportAction());
-      e.getPresentation().setText(SvnBundle.lazyMessage("repository.browser.import.action"));
+      e.getPresentation().setText(SvnBundle.messagePointer("repository.browser.import.action"));
       setEnabled(e, getRepositoryBrowser().getSelectedNode(),
                  ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning());
     }
@@ -934,8 +934,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   protected class BrowseCommittedChangesAction extends DumbAwareAction {
     public BrowseCommittedChangesAction() {
-      super(SvnBundle.lazyMessage("repository.browser.browse.changes.action"),
-            SvnBundle.lazyMessage("repository.browser.browse.changes.description"), null);
+      super(SvnBundle.messagePointer("repository.browser.browse.changes.action"),
+            SvnBundle.messagePointer("repository.browser.browse.changes.description"), null);
     }
 
     @Override
@@ -961,8 +961,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      e.getPresentation().setDescription(SvnBundle.lazyMessage("repository.browser.details.action"));
-      e.getPresentation().setText(SvnBundle.lazyMessage("repository.browser.details.action"));
+      e.getPresentation().setDescription(SvnBundle.messagePointer("repository.browser.details.action"));
+      e.getPresentation().setText(SvnBundle.messagePointer("repository.browser.details.action"));
       e.getPresentation().setIcon(AllIcons.Actions.Annotate);
       super.update(e);
     }

@@ -30,7 +30,7 @@ public class UserFilterPopupComponent
   UserFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                            @NotNull VcsLogData logData,
                            @NotNull FilterModel.SingleFilterModel<VcsLogUserFilter> filterModel) {
-    super("User", VcsLogBundle.lazyMessage("vcs.log.user.filter.label"), uiProperties, filterModel);
+    super("User", VcsLogBundle.messagePointer("vcs.log.user.filter.label"), uiProperties, filterModel);
     myLogData = logData;
   }
 

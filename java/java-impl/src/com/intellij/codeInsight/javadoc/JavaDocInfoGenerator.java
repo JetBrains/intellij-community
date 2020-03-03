@@ -750,8 +750,8 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateAuthorAndVersionSections(StringBuilder buffer, PsiDocComment docComment) {
-    generateSingleTagSection(buffer, docComment, "author", JavaBundle.lazyMessage("javadoc.author"));
-    generateSingleTagSection(buffer, docComment, "version", JavaBundle.lazyMessage("javadoc.version"));
+    generateSingleTagSection(buffer, docComment, "author", JavaBundle.messagePointer("javadoc.author"));
+    generateSingleTagSection(buffer, docComment, "version", JavaBundle.messagePointer("javadoc.version"));
   }
 
   private void generateApiSection(StringBuilder buffer, PsiDocComment comment) {
@@ -1436,7 +1436,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateDeprecatedSection(StringBuilder buffer, PsiDocComment comment) {
-    generateSingleTagSection(buffer, comment, "deprecated", JavaBundle.lazyMessage("javadoc.deprecated"));
+    generateSingleTagSection(buffer, comment, "deprecated", JavaBundle.messagePointer("javadoc.deprecated"));
   }
 
   private void generateSingleTagSection(StringBuilder buffer,
@@ -1452,7 +1452,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateSinceSection(StringBuilder buffer, PsiDocComment comment) {
-    generateSingleTagSection(buffer, comment, "since", JavaBundle.lazyMessage("javadoc.since"));
+    generateSingleTagSection(buffer, comment, "since", JavaBundle.messagePointer("javadoc.since"));
   }
 
   protected void generateSeeAlsoSection(StringBuilder buffer, PsiDocComment comment) {

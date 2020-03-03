@@ -99,7 +99,7 @@ public abstract class ImportLayoutPanel extends JPanel {
     add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
 
     JPanel importLayoutPanel = ToolbarDecorator.createDecorator(myImportLayoutTable = createTableForPackageEntries(myImportLayoutList, this))
-      .addExtraAction(new DumbAwareActionButton(JavaBundle.lazyMessage("button.add.package"), IconUtil.getAddPackageIcon()) {
+      .addExtraAction(new DumbAwareActionButton(JavaBundle.messagePointer("button.add.package"), IconUtil.getAddPackageIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           addPackageToImportLayouts();
@@ -110,7 +110,7 @@ public abstract class ImportLayoutPanel extends JPanel {
           return CommonShortcuts.getNewForDialogs();
         }
       })
-      .addExtraAction(new DumbAwareActionButton(JavaBundle.lazyMessage("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
+      .addExtraAction(new DumbAwareActionButton(JavaBundle.messagePointer("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           addBlankLine();

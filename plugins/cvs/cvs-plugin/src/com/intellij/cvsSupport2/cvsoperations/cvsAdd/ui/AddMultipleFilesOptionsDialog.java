@@ -312,7 +312,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
   private class SelectAllAction extends SelectUnselectAllAction {
 
     SelectAllAction() {
-      super(CvsBundle.lazyMessage("action.name.select.all"), AllIcons.Actions.Selectall);
+      super(CvsBundle.messagePointer("action.name.select.all"), AllIcons.Actions.Selectall);
     }
 
     @Override
@@ -323,7 +323,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
 
   private class UnselectAllAction extends SelectUnselectAllAction {
     UnselectAllAction() {
-      super(CvsBundle.lazyMessage("action.name.unselect.all"), AllIcons.Actions.Unselectall);
+      super(CvsBundle.messagePointer("action.name.unselect.all"), AllIcons.Actions.Unselectall);
     }
 
     @Override

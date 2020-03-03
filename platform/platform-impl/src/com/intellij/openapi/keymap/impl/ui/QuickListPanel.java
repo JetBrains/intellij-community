@@ -66,7 +66,7 @@ class QuickListPanel {
                           }
                         }
                       })
-                      .addExtraAction(new AnActionButton(KeyMapBundle.lazyMessage("action.AnActionButton.text.add.separator"),
+                      .addExtraAction(new AnActionButton(KeyMapBundle.messagePointer("action.AnActionButton.text.add.separator"),
                                                          AllIcons.General.SeparatorH) {
                         @Override
                         public void actionPerformed(@NotNull AnActionEvent e) {

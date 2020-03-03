@@ -14,7 +14,7 @@ import java.awt.*;
 
 final class ShowProcessWindowAction extends ToggleAction implements DumbAware {
   ShowProcessWindowAction() {
-    super(ActionsBundle.lazyMessage("action.ShowProcessWindow.text"), ActionsBundle.lazyMessage("action.ShowProcessWindow.description"),
+    super(ActionsBundle.messagePointer("action.ShowProcessWindow.text"), ActionsBundle.messagePointer("action.ShowProcessWindow.description"),
           null);
   }
 

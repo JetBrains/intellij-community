@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MaintenanceAction extends AnAction implements DumbAware {
   public MaintenanceAction() {
-    super(ActionsBundle.lazyMessage("action.MaintenanceAction.text"));
+    super(ActionsBundle.messagePointer("action.MaintenanceAction.text"));
   }
 
   @Override

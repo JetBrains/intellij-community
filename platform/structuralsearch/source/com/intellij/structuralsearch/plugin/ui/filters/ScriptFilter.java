@@ -26,7 +26,7 @@ import java.util.List;
 public class ScriptFilter extends FilterAction {
 
   public ScriptFilter(FilterTable filterTable) {
-    super(SSRBundle.lazyMessage("script.filter.name"), filterTable);
+    super(SSRBundle.messagePointer("script.filter.name"), filterTable);
   }
 
   @Override

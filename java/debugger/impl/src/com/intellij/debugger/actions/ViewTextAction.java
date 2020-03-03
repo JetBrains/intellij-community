@@ -60,7 +60,7 @@ public class ViewTextAction extends XFetchValueActionBase {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (getStringNode(e) != null) {
-      e.getPresentation().setText(ActionsBundle.lazyMessage("action.Debugger.ViewEditText.text"));
+      e.getPresentation().setText(ActionsBundle.messagePointer("action.Debugger.ViewEditText.text"));
     }
   }
 

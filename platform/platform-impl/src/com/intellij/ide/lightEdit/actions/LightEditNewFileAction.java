@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("ComponentNotRegistered")
 public class LightEditNewFileAction extends DumbAwareAction implements LightEditCompatible {
   public LightEditNewFileAction() {
-    super(ActionsBundle.lazyMessage("action.LightEditNewFileAction.text"));
+    super(ActionsBundle.messagePointer("action.LightEditNewFileAction.text"));
   }
 
   @Override

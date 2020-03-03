@@ -25,5 +25,5 @@ object EditorConfigBundle : DynamicBundle(BUNDLE_NAME) {
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, param: String) = get(key, param)
 
   @JvmStatic
-  fun lazyMessage(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): Supplier<String> = getLazyMessage(key, *params)
+  fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): Supplier<String> = getLazyMessage(key, *params)
 }

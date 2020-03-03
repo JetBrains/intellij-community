@@ -351,7 +351,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
   private class CopyLibraryAction extends AnAction {
    private CopyLibraryAction() {
-      super(CommonBundle.lazyMessage("button.copy"), CommonBundle.lazyMessage("button.copy"), COPY_ICON);
+      super(CommonBundle.messagePointer("button.copy"), CommonBundle.messagePointer("button.copy"), COPY_ICON);
     }
 
     @Override

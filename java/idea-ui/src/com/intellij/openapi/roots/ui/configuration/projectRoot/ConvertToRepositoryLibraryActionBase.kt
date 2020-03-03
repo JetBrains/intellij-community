@@ -43,8 +43,8 @@ import java.util.*
 private val LOG = logger<ConvertToRepositoryLibraryActionBase>()
 
 abstract class ConvertToRepositoryLibraryActionBase(protected val context: StructureConfigurableContext) :
-  DumbAwareAction(JavaUiBundle.lazyMessage("action.text.convert.to.repository.library"),
-                  JavaUiBundle.lazyMessage("action.description.convert.to.repository.library"), null) {
+  DumbAwareAction(JavaUiBundle.messagePointer("action.text.convert.to.repository.library"),
+                  JavaUiBundle.messagePointer("action.description.convert.to.repository.library"), null) {
 
   protected val project: Project = context.project
 

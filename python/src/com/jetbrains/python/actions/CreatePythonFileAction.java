@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CreatePythonFileAction extends CreateFileFromTemplateAction implements DumbAware {
   public CreatePythonFileAction() {
-    super(PyBundle.lazyMessage("action.create.python.file.title"), PyBundle.lazyMessage("action.create.python.file.description"), PythonFileType.INSTANCE.getIcon());
+    super(PyBundle.messagePointer("action.create.python.file.title"), PyBundle.messagePointer("action.create.python.file.description"), PythonFileType.INSTANCE.getIcon());
   }
 
   @Override

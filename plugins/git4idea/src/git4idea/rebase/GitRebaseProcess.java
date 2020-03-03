@@ -792,7 +792,7 @@ public class GitRebaseProcess {
     @NotNull private final GitRepository myCurrentRepository;
 
     ResolveAction(@NotNull GitRepository currentRepository) {
-      super(GitBundle.lazyMessage("action.NotificationAction.text.resolve"));
+      super(GitBundle.messagePointer("action.NotificationAction.text.resolve"));
       myCurrentRepository = currentRepository;
     }
 

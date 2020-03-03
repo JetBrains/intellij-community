@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 public class ShowOnlyAffectedChangesAction extends BooleanPropertyToggleAction {
 
   public ShowOnlyAffectedChangesAction() {
-    super(VcsLogBundle.lazyMessage("vcs.log.action.show.only.affected.changes"),
-          VcsLogBundle.lazyMessage("vcs.log.action.description.show.only.affected.changes"),
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.only.affected.changes"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.only.affected.changes"),
           AllIcons.Nodes.Folder);
   }
 

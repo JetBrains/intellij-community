@@ -286,7 +286,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }, ActionPlaces.UNKNOWN, ActionManager.getInstance());
 
-    new AnAction(XDebuggerBundle.lazyMessage("action.Anonymous.text.breakpointdialog.gotosource")) {
+    new AnAction(XDebuggerBundle.messagePointer("action.Anonymous.text.breakpointdialog.gotosource")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);
@@ -294,7 +294,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(CommonShortcuts.ENTER, tree, myDisposable);
 
-    new AnAction(XDebuggerBundle.lazyMessage("action.Anonymous.text.breakpointdialog.showsource")) {
+    new AnAction(XDebuggerBundle.messagePointer("action.Anonymous.text.breakpointdialog.showsource")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);

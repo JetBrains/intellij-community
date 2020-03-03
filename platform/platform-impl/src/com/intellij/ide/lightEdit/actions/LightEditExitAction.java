@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("ComponentNotRegistered")
 public class LightEditExitAction extends DumbAwareAction implements LightEditCompatible {
   public LightEditExitAction() {
-    super(ActionsBundle.lazyMessage("action.LightEditExitAction.text"));
+    super(ActionsBundle.messagePointer("action.LightEditExitAction.text"));
   }
 
   @Override

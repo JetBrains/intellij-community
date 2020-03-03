@@ -262,7 +262,7 @@ public final class PyDataView implements DumbAware {
 
   private class ColoredAction extends ToggleAction {
     ColoredAction() {
-      super(PyBundle.lazyMessage("debugger.data.view.colored"));
+      super(PyBundle.messagePointer("debugger.data.view.colored"));
     }
 
     @Override
