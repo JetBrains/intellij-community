@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDe
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.getInvocationKind
 
 
-class InitialTypeProvider(val start: GrControlFlowOwner) {
+class InitialTypeProvider(val start: GrControlFlowOwner, val initialState: InitialDFAState) {
 
   private val parentFlowOwner by lazyPub {
     val parent = start.parent
@@ -32,9 +32,11 @@ class InitialTypeProvider(val start: GrControlFlowOwner) {
     InvocationKind.UNKNOWN
   }
 
-  fun initialType(descriptor: VariableDescriptor, state: DfaComputationState): PsiType? {
+  fun initialType(descriptor: VariableDescriptor): PsiType? {
+    val typeFromInitialContext = initialState.descriptorTypes[descriptor]?.resultType
+    if (typeFromInitialContext != null) return typeFromInitialContext
     if (invocationKind != InvocationKind.UNKNOWN) {
-      val type = getTypeFromParentContext(descriptor, state)
+      val type = getTypeFromParentDFA(descriptor)
       if (type != null) return type
     }
     val resolvedDescriptor = descriptor as? ResolvedVariableDescriptor ?: return null
@@ -42,8 +44,7 @@ class InitialTypeProvider(val start: GrControlFlowOwner) {
     return field.typeGroovy
   }
 
-  private fun getTypeFromParentContext(descriptor: VariableDescriptor,
-                                       state: DfaComputationState): PsiType? {
+  private fun getTypeFromParentDFA(descriptor: VariableDescriptor): PsiType? {
     val parentFlowOwner = this.parentFlowOwner ?: return null
     val parentCache = TypeInferenceHelper.getInferenceCache(parentFlowOwner)
     val resolvedDescriptor = descriptor.run {
@@ -51,6 +52,6 @@ class InitialTypeProvider(val start: GrControlFlowOwner) {
       else parentCache.findDescriptor(getName())
     } ?: descriptor
     val instruction = parentInstruction ?: return null
-    return parentCache.getInferredType(resolvedDescriptor, instruction, false, state)
+    return parentCache.getInferredType(resolvedDescriptor, instruction, false)
   }
 }

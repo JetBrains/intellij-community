@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.util.LazyKt.lazyPub;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.findReadDependencies;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper.getDefUseMaps;
@@ -66,7 +67,7 @@ class InferenceCache {
   PsiType getInferredType(@NotNull VariableDescriptor descriptor,
                           @NotNull Instruction instruction,
                           boolean mixinOnly) {
-    DfaComputationState state = new DfaComputationState();
+    InitialDFAState state = new InitialDFAState(emptyMap());
     return getInferredType(descriptor, instruction, mixinOnly, state);
   }
 
@@ -74,9 +75,8 @@ class InferenceCache {
   PsiType getInferredType(@NotNull VariableDescriptor descriptor,
                           @NotNull Instruction instruction,
                           boolean mixinOnly,
-                          @NotNull DfaComputationState state) {
+                          @NotNull InitialDFAState state) {
     if (myTooComplexInstructions.contains(instruction)) return null;
-    state.markOwnerAsVisited(myScope);
     final List<DefinitionMap> definitionMaps = myDefinitionMaps.getValue();
     if (definitionMaps == null) {
       return null;
@@ -103,9 +103,9 @@ class InferenceCache {
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             Instruction @NotNull [] flow,
                                             @NotNull Couple<Set<Instruction>> interesting,
-                                            @NotNull DfaComputationState state,
+                                            @NotNull InitialDFAState state,
                                             @NotNull VariableDescriptor descriptor) {
-    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this, new InitialTypeProvider(owner), owner, state, descriptor);
+    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this, new InitialTypeProvider(owner, state), descriptor);
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
   }

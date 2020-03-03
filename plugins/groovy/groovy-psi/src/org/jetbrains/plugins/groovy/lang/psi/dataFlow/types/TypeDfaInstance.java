@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -25,34 +24,37 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toSet;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private final Instruction[] myFlow;
-  private final GrControlFlowOwner myOwner;
   private final Set<Instruction> myInteresting;
   private final Set<Instruction> myAcyclicInstructions;
   private final InferenceCache myCache;
   private final InitialTypeProvider myInitialTypeProvider;
-  private final DfaComputationState myDfaComputationState;
-  private final VariableDescriptor myDescriptor;
+  private final Set<VariableDescriptor> interestingDescriptors;
+  private final int lastInterestingInstruction;
 
   TypeDfaInstance(Instruction @NotNull [] flow,
                   @NotNull Couple<Set<Instruction>> interesting,
                   @NotNull InferenceCache cache,
                   @NotNull InitialTypeProvider initialTypeProvider,
-                  @NotNull GrControlFlowOwner owner,
-                  @NotNull DfaComputationState state,
-                  @NotNull VariableDescriptor descriptor) {
+                  @NotNull VariableDescriptor initialDescriptor) {
     myFlow = flow;
-    myOwner = owner;
     myInteresting = interesting.first;
     myAcyclicInstructions = interesting.second;
     myCache = cache;
     myInitialTypeProvider = initialTypeProvider;
-    myDfaComputationState = state;
-    myDescriptor = descriptor;
+    Stream<VariableDescriptor> dependentDescriptors =
+      Arrays
+        .stream(flow)
+        .filter(instruction -> instruction instanceof ReadWriteVariableInstruction)
+        .map(instruction -> ((ReadWriteVariableInstruction)instruction).getDescriptor());
+    interestingDescriptors = Stream.concat(dependentDescriptors, Stream.of(initialDescriptor)).collect(toSet());
+    lastInterestingInstruction = myInteresting.stream().mapToInt(Instruction::num).max().orElse(0);
   }
 
   @Override
@@ -71,22 +73,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     else if (instruction.getElement() instanceof GrClosableBlock) {
       handleClosureBlock(state, instruction);
-    }
-    else if (instruction.getElement() == null) {
-      handleNullInstruction(state, instruction);
-    }
-  }
-
-  private void handleNullInstruction(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
-    if (instruction.num() == 0) {
-      TypeDfaState currentEntranceState = myDfaComputationState.getEntranceState(myOwner);
-      if (currentEntranceState == null) {
-        return;
-      }
-      currentEntranceState.getVarTypes().forEach(state::putType);
-    }
-    else if (instruction.num() == myFlow.length - 1) {
-      myDfaComputationState.putExitState(myOwner, state);
     }
   }
 
@@ -127,7 +113,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     else {
       DFAType type = state.getVariableType(descriptor);
       if (type == null && myInteresting.contains(instruction)) {
-        PsiType initialType = myInitialTypeProvider.initialType(descriptor, myDfaComputationState);
+        PsiType initialType = myInitialTypeProvider.initialType(descriptor);
         if (initialType != null) {
           updateVariableType(state, instruction, descriptor, () -> DFAType.create(initialType));
         }
@@ -196,28 +182,24 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   }
 
   private void handleClosureBlock(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
-    GrClosableBlock element = Objects.requireNonNull((GrClosableBlock)instruction.getElement());
-    Set<String> interestingDescriptors = myInteresting.stream().filter(it -> it instanceof ReadWriteVariableInstruction)
-      .map(it -> ((ReadWriteVariableInstruction)it).getDescriptor().getName()).collect(
-        Collectors.toSet());
-    if (ControlFlowUtils.getForeignVariableIdentifiers(element).stream()
-      .noneMatch(it -> it.equals(myDescriptor.getName()) || interestingDescriptors.contains(it))) {
+    GrClosableBlock block = Objects.requireNonNull((GrClosableBlock)instruction.getElement());
+    Set<String> foreignIdentifiers = ControlFlowUtils.getForeignVariableIdentifiers(block);
+    if (interestingDescriptors.stream().map(VariableDescriptor::getName).noneMatch(foreignIdentifiers::contains)) {
       return;
     }
-    if (instruction.num() > myInteresting.stream().mapToInt(Instruction::num).max().orElse(0) &&
-        !myDfaComputationState.isVisited(element)) {
+    if (instruction.num() > lastInterestingInstruction) {
       return;
     }
-    InvocationKind kind = ClosureFlowUtil.getInvocationKind(element);
+    InvocationKind kind = ClosureFlowUtil.getInvocationKind(block);
     switch (kind) {
       case EXACTLY_ONCE:
-        handleClosureDFAResult(state, instruction, state::putType);
+        handleClosureDFAResult(state, block, state::putType);
         break;
       case INVOKED_INPLACE:
-        handleClosureDFAResult(state, instruction, (descriptor, dfaType) -> {
+        handleClosureDFAResult(state, block, (descriptor, dfaType) -> {
           DFAType existingType = state.getVariableType(descriptor);
           if (existingType != null) {
-            DFAType mergedType = DFAType.create(dfaType, existingType, element.getManager());
+            DFAType mergedType = DFAType.create(dfaType, existingType, block.getManager());
             state.putType(descriptor, mergedType);
           }
         });
@@ -228,30 +210,19 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   }
 
   private void handleClosureDFAResult(@NotNull TypeDfaState state,
-                                      @NotNull Instruction instruction,
+                                      @NotNull GrClosableBlock block,
                                       @NotNull BiConsumer<? super VariableDescriptor, ? super DFAType> typeConsumer) {
-    GrClosableBlock block = Objects.requireNonNull((GrClosableBlock)instruction.getElement());
     InferenceCache blockCache = TypeInferenceHelper.getInferenceCache(block);
-    VariableDescriptor blockDescriptor = blockCache.findDescriptor(myDescriptor.getName());
-    if (blockDescriptor == null) {
-      return;
-    }
-    int lastInterestingInstruction = myInteresting.stream().mapToInt(Instruction::num).max().orElse(Integer.MAX_VALUE);
-    if (instruction.num() <= lastInterestingInstruction) {
-      Instruction[] blockFlow = block.getControlFlow();
-      myDfaComputationState.putEntranceState(block, state);
-      Instruction lastBlockInstruction = blockFlow[blockFlow.length - 1];
-      blockCache.getInferredType(blockDescriptor, lastBlockInstruction, false, myDfaComputationState);
-      TypeDfaState blockExitState = myDfaComputationState.getExitState(block);
-      if (blockExitState != null) {
-        for (Map.Entry<VariableDescriptor, DFAType> entry : blockExitState.getVarTypes().entrySet()) {
-          VariableDescriptor descriptor = myCache.findDescriptor(entry.getKey().getName());
-          typeConsumer.accept(descriptor, entry.getValue());
-        }
+    Instruction[] blockFlow = block.getControlFlow();
+    Instruction lastBlockInstruction = blockFlow[blockFlow.length - 1];
+    InitialDFAState initialState = new InitialDFAState(state.getVarTypes());
+    for (VariableDescriptor outerDescriptor : interestingDescriptors) {
+      VariableDescriptor innerDescriptor = blockCache.findDescriptor(outerDescriptor.getName());
+      if (innerDescriptor == null) {
+        continue;
       }
-    }
-    else if (myDfaComputationState.isVisited(block)) {
-      myDfaComputationState.putEntranceState(block, state);
+      PsiType descriptorType = blockCache.getInferredType(innerDescriptor, lastBlockInstruction, false, initialState);
+      typeConsumer.accept(outerDescriptor, DFAType.create(descriptorType));
     }
   }
 }
