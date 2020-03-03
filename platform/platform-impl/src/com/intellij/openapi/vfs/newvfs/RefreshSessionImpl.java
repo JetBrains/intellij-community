@@ -47,7 +47,7 @@ class RefreshSessionImpl extends RefreshSession {
     myIsRecursive = recursive;
     myFinishRunnable = finishRunnable;
     myModality = modality;
-    LOG.assertTrue(modality == ModalityState.NON_MODAL || modality != ModalityState.any(), "Refresh session should have a specific modality");
+    TransactionGuard.getInstance().assertWriteSafeContext(modality);
     myStartTrace = rememberStartTrace();
   }
 
