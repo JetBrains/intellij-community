@@ -216,8 +216,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public boolean commitAllDocumentsUnderProgress() {
     Application application = ApplicationManager.getApplication();
-    if (application.isWriteAccessAllowed()) {
-      commitAllDocuments();
+    if (application.isWriteThread()) {
+      if (application.isWriteAccessAllowed()) {
+        commitAllDocuments();
+      }
+      else {
+        WriteAction.run(() -> commitAllDocuments());
+      }
       //there are lot of existing actions/processors/tests which execute it under write lock
       //do not show this message in unit test mode
       if (!application.isUnitTestMode()) {
