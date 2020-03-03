@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ui.DefaultCommitChangeListDialog
+import com.intellij.openapi.vcs.changes.ui.SwitchToCommitDialogHint
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.InplaceButton
@@ -77,6 +78,7 @@ private class NonModalCommitPromotionPanel(private val commitDialog: DefaultComm
         commitDialog.doCancelAction()
 
         setCommitFromLocalChanges(true)
+        SwitchToCommitDialogHint.install(commitDialog.project)
 
         val commitAction = ActionManager.getInstance().getAction(ACTION_CHECKIN_PROJECT) ?: return@addHyperlinkListener
         invokeAction(commitAction, getProjectContext(commitDialog.project), ActionPlaces.UNKNOWN, null, null)
