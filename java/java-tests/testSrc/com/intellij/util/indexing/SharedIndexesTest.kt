@@ -200,7 +200,7 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
 
   companion object {
     @JvmStatic
-    private fun getSharedIndexRetainFileCount(project: Project): Int {
+    fun getSharedIndexRetainFileCount(project: Project): Int {
       val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
       val hashIndex = index.getOrCreateFileContentHashIndex()
       val allKeysCollector = CommonProcessors.CollectProcessor<Long>()
