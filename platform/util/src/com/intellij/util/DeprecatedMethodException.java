@@ -15,15 +15,16 @@ public class DeprecatedMethodException extends RuntimeException {
   }
 
   public static void report(@NotNull String message) {
-    String text = "This method in " + ReflectionUtil.findCallerClass(2) +
-                      " is deprecated and going to be removed soon. " + message;
+    String text = "This method in '" + ReflectionUtil.findCallerClass(2) +
+                      "' is deprecated and going to be removed soon. " + message;
     if (BEAT_DEAD_HORSE.add(text)) {
       LOG.warn(new DeprecatedMethodException(text));
     }
   }
 
-  public static void reportDefaultImplementation(@NotNull String methodName, @NotNull String message, @NotNull Class<?> implementationClass) {
-    String text = "The default implementation of " + methodName + " is deprecated, you need to override it in " + implementationClass.getName() + ". " + message;
+  public static void reportDefaultImplementation(@NotNull String message) {
+    String text = "The default implementation of this method is deprecated, you need to override it in '" +
+                  ReflectionUtil.findCallerClass(2) + "'. " + message;
     if (BEAT_DEAD_HORSE.add(text)) {
       LOG.warn(new DeprecatedMethodException(text));
     }
