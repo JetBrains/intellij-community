@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -84,6 +85,9 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     if (isIgnored()) return false;
 
     VirtualFile vFile = getVirtualFile();
+    if (!vFile.isValid()) {
+      throw new InvalidVirtualFileAccessException(vFile);
+    }
     if (isPhysical() && vFile.isInLocalFileSystem()) { // check directories consistency
       VirtualFile parent = vFile.getParent();
       if (parent == null) return false;
