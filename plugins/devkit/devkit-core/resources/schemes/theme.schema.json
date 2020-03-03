@@ -5,9 +5,9 @@
       "type": "string",
       "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$",
       "title": "Color",
-      "description": "Color in #RRGGBB format",
+      "description": "Color in #RRGGBB or #RRGGBBAA format",
       "examples": [
-        "#123abc"
+        "#123abc", "#123abc80"
       ]
     }
   },
