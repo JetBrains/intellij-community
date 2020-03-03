@@ -42,7 +42,8 @@ class OffsetsInFile(val file: PsiFile, val offsets: OffsetMap) {
   }
 
   fun replaceInCopy(fileCopy: PsiFile, startOffset: Int, endOffset: Int, replacement: String): Supplier<OffsetsInFile> {
-    val tempDocument = DocumentImpl(offsets.document.immutableCharSequence, true)
+    val originalText = offsets.document.immutableCharSequence
+    val tempDocument = DocumentImpl(originalText, originalText.contains('\r') || replacement.contains('\r'), true)
     val tempMap = offsets.copyOffsets(tempDocument)
     tempDocument.replaceString(startOffset, endOffset, replacement)
 
