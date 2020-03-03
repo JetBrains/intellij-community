@@ -867,13 +867,14 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     for (Element extensionElement : extensionElements) {
       adapters.add(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, componentManager));
     }
+    int newSize = myAdapters.size();
 
     if (listenerCallbacks != null) {
       clearCache();
 
       listenerCallbacks.add(() -> {
         notifyListeners(ExtensionEvent.ADDED, () -> {
-          return ContainerUtil.map(myAdapters.subList(oldSize, myAdapters.size()),
+          return ContainerUtil.map(myAdapters.subList(oldSize, newSize),
                                    adapter -> Pair.create(processAdapter(adapter), pluginDescriptor));
         }, myListeners);
       });

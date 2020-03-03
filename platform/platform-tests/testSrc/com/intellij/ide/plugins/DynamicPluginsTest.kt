@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.codeInspection.GlobalInspectionTool
 import com.intellij.codeInspection.InspectionEP
+import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -195,6 +196,36 @@ class DynamicPluginsTest {
     finally {
       Disposer.dispose(plugin1Disposable)
     }
+  }
+
+  @Test
+  fun loadOptionalDependencyDuplicateNotification() {
+    InspectionToolRegistrar.getInstance().createTools()
+
+    val barDisposable = loadPluginWithText("<idea-plugin><id>bar</id></idea-plugin>", DynamicPluginsTest::class.java.classLoader)
+    val fooDisposable = loadPluginWithOptionalDependency(
+      """
+        <idea-plugin>
+          <id>foo</id>
+          <depends optional="true" config-file="bar.xml">bar</depends>
+          <extensions defaultExtensionNs="com.intellij">
+            <globalInspection implementationClass="${MyInspectionTool::class.java.name}"/>
+          </extensions>
+        </idea-plugin>  
+      """,
+      """
+        <idea-plugin>
+          <extensions defaultExtensionNs="com.intellij">
+            <globalInspection implementationClass="${MyInspectionTool2::class.java.name}"/>
+          </extensions>
+        </idea-plugin>
+      """
+    )
+    assertThat(InspectionEP.GLOBAL_INSPECTION.extensions.count {
+      it.implementationClass == MyInspectionTool::class.java.name || it.implementationClass == MyInspectionTool2::class.java.name
+    }).isEqualTo(2)
+    Disposer.dispose(fooDisposable)
+    Disposer.dispose(barDisposable)
   }
 
   @Test
@@ -425,7 +456,7 @@ class DynamicPluginsTest {
 
     return Disposable {
       val unloadDescriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
-      val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)
+      val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(unloadDescriptor)
       DynamicPlugins.unloadPlugin(unloadDescriptor, false)
       assertThat(canBeUnloaded).isTrue()
     }
@@ -474,6 +505,7 @@ class DynamicPluginsTest {
   }
 
   private class MyInspectionTool : GlobalInspectionTool()
+  private class MyInspectionTool2 : GlobalInspectionTool()
 
   private class MyConfigurable : Configurable {
     override fun isModified(): Boolean = TODO()
