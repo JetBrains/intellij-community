@@ -43,10 +43,7 @@ import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -98,6 +95,9 @@ public abstract class DialogWrapper {
   }
 
   public enum DialogStyle {NO_STYLE, COMPACT}
+
+  @ApiStatus.Internal
+  public static final @NotNull String IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY = "isVisualPaddingCompensatedOnComponentLevel";
 
   /**
    * The default exit code for "OK" action.
@@ -1334,7 +1334,8 @@ public abstract class DialogWrapper {
       }
     }
 
-    boolean isVisualPaddingCompensatedOnComponentLevel = centerPanel == null || centerPanel.getClientProperty("isVisualPaddingCompensatedOnComponentLevel") == null;
+    boolean isVisualPaddingCompensatedOnComponentLevel =
+      centerPanel == null || centerPanel.getClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY) == null;
     if (isVisualPaddingCompensatedOnComponentLevel) {
       // see comment about visual paddings in the MigLayoutBuilder.build
       root.setBorder(createContentPaneBorder());
