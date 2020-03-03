@@ -44,7 +44,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   @NotNull
   final PluginLoadingResult result;
 
-  final Set<? extends PluginId> disabledPlugins;
+  final Set<PluginId> disabledPlugins;
 
   private volatile String defaultVersion;
 
@@ -62,7 +62,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     return new DescriptorListLoadingContext(0, disabledPlugins, new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber()));
   }
 
-  DescriptorListLoadingContext(int flags, @NotNull Set<? extends PluginId> disabledPlugins, @NotNull PluginLoadingResult result) {
+  DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult result) {
     this.result = result;
     this.disabledPlugins = disabledPlugins;
     ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;

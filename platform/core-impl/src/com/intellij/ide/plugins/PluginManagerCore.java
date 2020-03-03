@@ -111,10 +111,10 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   public static Set<PluginId> ourPluginsToEnable;
 
+  private static Boolean isRunningFromSources;
+
   private static final class Holder {
     private static final BuildNumber ourBuildNumber = calcBuildNumber();
-    private static final boolean ourIsRunningFromSources =
-      Files.isDirectory(Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER));
 
     @NotNull
     private static BuildNumber calcBuildNumber() {
@@ -129,6 +129,8 @@ public final class PluginManagerCore {
     }
   }
 
+  @Nullable
+  @ApiStatus.Internal
   public static String getPluginsCompatibleBuild() {
     return System.getProperty("idea.plugins.compatible.build");
   }
@@ -691,7 +693,12 @@ public final class PluginManagerCore {
   }
 
   public static boolean isRunningFromSources() {
-    return Holder.ourIsRunningFromSources;
+    Boolean result = isRunningFromSources;
+    if (result == null) {
+      result = Files.isDirectory(Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER));
+      isRunningFromSources = result;
+    }
+    return result;
   }
 
   private static void prepareLoadingPluginsErrorMessage(@NotNull List<String> errors) {
@@ -1104,10 +1111,10 @@ public final class PluginManagerCore {
   public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromClassPath(@NotNull ClassLoader loader)
     throws ExecutionException, InterruptedException {
     Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
-    URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(loader, urlsFromClassPath, true);
+    collectPluginFilesInClassPath(loader, urlsFromClassPath);
     DescriptorListLoadingContext context = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
     try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, true, true, new ClassPathXmlPathResolver(loader))) {
-      loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, platformPluginURL);
+      loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, null);
     }
     return Arrays.asList(context.result.finishLoading());
   }
@@ -1165,12 +1172,12 @@ public final class PluginManagerCore {
   }
 
   @Nullable
-  private static URL computePlatformPluginUrlAndCollectPluginUrls(@NotNull ClassLoader loader, @NotNull Map<URL, String> urls, boolean isRunningFromSources) {
+  private static URL computePlatformPluginUrlAndCollectPluginUrls(@NotNull ClassLoader loader, @NotNull Map<URL, String> urls) {
     String platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     URL result = null;
     if (platformPrefix != null) {
-      // should be the only plugin in lib (only for Ultimate for now)
-      if (!isRunningFromSources && (platformPrefix.equals(PlatformUtils.IDEA_PREFIX) || platformPrefix.equals(PlatformUtils.WEB_PREFIX))) {
+      // should be the only plugin in lib (only for Ultimate and WebStorm for now)
+      if ((platformPrefix.equals(PlatformUtils.IDEA_PREFIX) || platformPrefix.equals(PlatformUtils.WEB_PREFIX)) && !isRunningFromSources()) {
         urls.put(loader.getResource(PLUGIN_XML_PATH), PLUGIN_XML);
         return null;
       }
@@ -1182,7 +1189,11 @@ public final class PluginManagerCore {
         result = resource;
       }
     }
+    collectPluginFilesInClassPath(loader, urls);
+    return result;
+  }
 
+  private static void collectPluginFilesInClassPath(@NotNull ClassLoader loader, @NotNull Map<URL, String> urls) {
     try {
       Enumeration<URL> enumeration = loader.getResources(PLUGIN_XML_PATH);
       while (enumeration.hasMoreElements()) {
@@ -1192,8 +1203,6 @@ public final class PluginManagerCore {
     catch (IOException e) {
       getLogger().info(e);
     }
-
-    return result;
   }
 
   @Nullable
@@ -1279,16 +1288,16 @@ public final class PluginManagerCore {
   @NotNull
   @ApiStatus.Internal
   public static List<? extends IdeaPluginDescriptor> loadUncachedDescriptors() {
-    return Arrays.asList(loadDescriptors(isRunningFromSources()).result.finishLoading());
+    return Arrays.asList(loadDescriptors().result.finishLoading());
   }
 
   @NotNull
   @ApiStatus.Internal
-  private static DescriptorListLoadingContext loadDescriptors(boolean isRunningFromSources) {
+  private static DescriptorListLoadingContext loadDescriptors() {
     PluginLoadingResult result = new PluginLoadingResult(getBrokenPluginVersions(), getBuildNumber());
     Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     ClassLoader classLoader = PluginManagerCore.class.getClassLoader();
-    URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath, isRunningFromSources);
+    URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath);
     int flags = IS_PARALLEL;
     if (isUnitTestMode) {
       flags |= IGNORE_MISSING_INCLUDE;
@@ -1763,10 +1772,10 @@ public final class PluginManagerCore {
   }
 
   private static boolean computePluginEnabled(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                              @NotNull Set<? extends PluginId> loadedIds,
+                                              @NotNull Set<PluginId> loadedIds,
                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                               @NotNull Set<? super PluginId> disabledRequiredIds,
-                                              @NotNull Set<? extends PluginId> disabledPlugins,
+                                              @NotNull Set<PluginId> disabledPlugins,
                                               @NotNull List<? super String> errors) {
     if (descriptor.getPluginId() == CORE_ID || descriptor.isImplementationDetail()) {
       return true;
@@ -1852,7 +1861,7 @@ public final class PluginManagerCore {
     PluginLoadingResult result;
     try {
       Activity loadPluginsActivity = StartUpMeasurer.startActivity("plugin initialization");
-      DescriptorListLoadingContext context = loadDescriptors(isRunningFromSources());
+      DescriptorListLoadingContext context = loadDescriptors();
       result = context.result;
       initializePlugins(context, coreLoader, !isUnitTestMode);
 
