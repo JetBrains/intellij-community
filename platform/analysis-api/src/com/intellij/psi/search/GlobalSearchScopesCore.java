@@ -309,12 +309,12 @@ public class GlobalSearchScopesCore {
   }
 
   static class DirectoriesScope extends GlobalSearchScope {
-    private final Set<VirtualFile> myDirectories;
-    private final Set<VirtualFile> myDirectoriesWithSubdirectories;
+    private final Set<? extends VirtualFile> myDirectories;
+    private final Set<? extends VirtualFile> myDirectoriesWithSubdirectories;
 
     private DirectoriesScope(@NotNull Project project,
-                             @NotNull Set<VirtualFile> directories,
-                             @NotNull Set<VirtualFile> directoriesWithSubdirectories) {
+                             @NotNull Set<? extends VirtualFile> directories,
+                             @NotNull Set<? extends VirtualFile> directoriesWithSubdirectories) {
       super(project);
       myDirectories = directories;
       myDirectoriesWithSubdirectories = directoriesWithSubdirectories;
@@ -378,29 +378,33 @@ public class GlobalSearchScopesCore {
         if (in(other.myDirectory)) {
           return this;
         }
-        Set<VirtualFile> directories = myDirectories;
-        Set<VirtualFile> directoriesWithSubdirectories = myDirectoriesWithSubdirectories;
+        Set<? extends VirtualFile> directories = myDirectories;
+        Set<? extends VirtualFile> directoriesWithSubdirectories = myDirectoriesWithSubdirectories;
         if (other.myWithSubdirectories) {
-          directoriesWithSubdirectories = new HashSet<>(directoriesWithSubdirectories);
-          directoriesWithSubdirectories.add(other.myDirectory);
+          Set<VirtualFile> copy = new HashSet<>(directoriesWithSubdirectories);
+          copy.add(other.myDirectory);
+          directoriesWithSubdirectories = copy;
         }
         else {
-          directories = new HashSet<>(directories);
-          directories.add(other.myDirectory);
+          Set<VirtualFile> copy = new HashSet<>(directories);
+          copy.add(other.myDirectory);
+          directories = copy;
         }
         return new DirectoriesScope(getProject(), directories, directoriesWithSubdirectories);
       }
       if (scope instanceof DirectoriesScope) {
         DirectoriesScope other = (DirectoriesScope)scope;
-        Set<VirtualFile> directories = myDirectories;
-        Set<VirtualFile> directoriesWithSubdirectories = myDirectoriesWithSubdirectories;
+        Set<? extends VirtualFile> directories = myDirectories;
+        Set<? extends VirtualFile> directoriesWithSubdirectories = myDirectoriesWithSubdirectories;
         if (!other.myDirectories.isEmpty()) {
-          directories = new HashSet<>(directories);
-          directories.addAll(other.myDirectories);
+          Set<VirtualFile> copy = new HashSet<>(directories);
+          copy.addAll(other.myDirectories);
+          directories = copy;
         }
         if (!other.myDirectoriesWithSubdirectories.isEmpty()) {
-          directoriesWithSubdirectories = new HashSet<>(directoriesWithSubdirectories);
-          directoriesWithSubdirectories.addAll(other.myDirectoriesWithSubdirectories);
+          Set<VirtualFile> copy = new HashSet<>(directoriesWithSubdirectories);
+          copy.addAll(other.myDirectoriesWithSubdirectories);
+          directoriesWithSubdirectories = copy;
         }
         return new DirectoriesScope(getProject(), directories, directoriesWithSubdirectories);
       }
@@ -418,7 +422,7 @@ public class GlobalSearchScopesCore {
     @Override
     public String getDisplayName() {
       if (myDirectories.size() + myDirectoriesWithSubdirectories.size() == 1) {
-        Set<VirtualFile> dirs = myDirectories.size() == 1 ? myDirectories : myDirectoriesWithSubdirectories;
+        Set<? extends VirtualFile> dirs = myDirectories.size() == 1 ? myDirectories : myDirectoriesWithSubdirectories;
         VirtualFile root = Objects.requireNonNull(ContainerUtil.getFirstItem(dirs));
         return AnalysisBundle.message("display.name.directory.0", root.getName());
       }

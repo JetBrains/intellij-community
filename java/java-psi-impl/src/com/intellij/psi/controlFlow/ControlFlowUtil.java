@@ -2086,8 +2086,8 @@ public class ControlFlowUtil {
    */
   @NotNull
   public static Map<PsiElement, PsiVariable> getWritesBeforeReads(@NotNull ControlFlow flow,
-                                                                  @NotNull Set<PsiVariable> writeVars,
-                                                                  @NotNull Set<PsiVariable> readVars,
+                                                                  @NotNull Set<? extends PsiVariable> writeVars,
+                                                                  @NotNull Set<? extends PsiVariable> readVars,
                                                                   final int stopPoint) {
     Map<PsiElement, PsiVariable> writes = new HashMap<>();
     List<Instruction> instructions = flow.getInstructions();
@@ -2111,7 +2111,7 @@ public class ControlFlowUtil {
    * @return true if it was read
    */
   private static boolean readBeforeStopPoint(@NotNull final ControlFlow flow,
-                                             @NotNull Set<PsiVariable> readVars,
+                                             @NotNull Set<? extends PsiVariable> readVars,
                                              final int startOffset,
                                              final int stopPoint) {
     class MyVisitor extends InstructionClientVisitor<Boolean> {

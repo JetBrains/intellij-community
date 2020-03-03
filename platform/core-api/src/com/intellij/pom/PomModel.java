@@ -28,7 +28,7 @@ public interface PomModel extends UserDataHolder {
 
   void registerAspect(@NotNull Class<? extends PomModelAspect> aClass,
                       @NotNull PomModelAspect aspect,
-                      @NotNull Set<PomModelAspect> dependencies);
+                      @NotNull Set<? extends PomModelAspect> dependencies);
 
   void addModelListener(@NotNull PomModelListener listener);
   void addModelListener(@NotNull PomModelListener listener, @NotNull Disposable parentDisposable);

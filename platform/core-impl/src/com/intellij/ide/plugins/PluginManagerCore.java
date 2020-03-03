@@ -1763,10 +1763,10 @@ public final class PluginManagerCore {
   }
 
   private static boolean computePluginEnabled(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                              @NotNull Set<PluginId> loadedIds,
+                                              @NotNull Set<? extends PluginId> loadedIds,
                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                               @NotNull Set<? super PluginId> disabledRequiredIds,
-                                              @NotNull Set<PluginId> disabledPlugins,
+                                              @NotNull Set<? extends PluginId> disabledPlugins,
                                               @NotNull List<? super String> errors) {
     if (descriptor.getPluginId() == CORE_ID || descriptor.isImplementationDetail()) {
       return true;
