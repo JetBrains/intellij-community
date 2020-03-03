@@ -1028,6 +1028,8 @@
     <group id="EditorContextBarMenu">
       <action id="EditorToggleUseSoftWrapsInPreview" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsInPreviewAction"
               icon="AllIcons.Actions.ToggleSoftWrap"/>
+      <action id="RestoreFontPreviewTextAction" class="com.intellij.application.options.colors.FontEditorPreview$RestorePreviewTextAction"
+              icon="AllIcons.Actions.Rollback"/>
       <separator/>
     </group>
 

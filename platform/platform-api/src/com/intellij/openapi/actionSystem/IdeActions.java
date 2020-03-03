@@ -347,4 +347,6 @@ public interface IdeActions {
   @NonNls String BREADCRUMBS_SHOW_ABOVE = "EditorBreadcrumbsShowAbove";
   @NonNls String BREADCRUMBS_SHOW_BELOW = "EditorBreadcrumbsShowBelow";
   @NonNls String BREADCRUMBS_HIDE_BOTH = "EditorBreadcrumbsHideBoth";
+
+  @NonNls String ACTION_RESTOR_FONT_PREVIEW_TEXT = "RestoreFontPreviewTextAction";
 }
