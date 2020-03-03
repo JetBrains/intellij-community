@@ -45,8 +45,9 @@ class RunConfigurationStorageUi {
     myDotIdeaStoragePath = dotIdeaStoragePath;
     myPathComboBox = createPathComboBox(project, uiDisposable);
 
+    ComponentValidator validator = new ComponentValidator(uiDisposable);
     JTextComponent comboBoxEditorComponent = (JTextComponent)myPathComboBox.getEditor().getEditorComponent();
-    new ComponentValidator(uiDisposable).withValidator(() -> {
+    validator.withValidator(() -> {
       String errorMessage = pathToErrorMessage.fun(getPath());
       return errorMessage != null ? new ValidationInfo(errorMessage, myPathComboBox) : null;
     })
@@ -83,6 +84,7 @@ class RunConfigurationStorageUi {
         myPathComboBox.setPopupVisible(false);
       }
       else {
+        validator.updateInfo(null);
         myClosePopupAction.run();
       }
     }).registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.ESCAPE), myMainPanel, uiDisposable);
