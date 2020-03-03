@@ -38,7 +38,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LayeredIcon;
@@ -231,15 +230,21 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
 
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
-    if (file != null && !file.isDirectory()) return ExecutionBundle.message("run.configuration.storage.folder.such.file.exists");
+    if (file != null && !file.isDirectory()) return ExecutionBundle.message("run.configuration.storage.folder.path.expected");
 
+    String folderName = PathUtil.getFileName(path);
     String parentPath = PathUtil.getParentPath(path);
     while (file == null && !parentPath.isEmpty()) {
+      if (!PathUtil.isValidFileName(folderName)) {
+        return ExecutionBundle.message("run.configuration.storage.folder.path.expected");
+      }
       file = LocalFileSystem.getInstance().findFileByPath(parentPath);
+      folderName = PathUtil.getFileName(parentPath);
       parentPath = PathUtil.getParentPath(parentPath);
     }
 
     if (file == null) return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
+    if (!file.isDirectory()) return ExecutionBundle.message("run.configuration.storage.folder.path.expected");
 
     if (ProjectFileIndex.getInstance(project).getContentRootForFile(file, true) == null) {
       if (ProjectFileIndex.getInstance(project).getContentRootForFile(file, false) == null) {
