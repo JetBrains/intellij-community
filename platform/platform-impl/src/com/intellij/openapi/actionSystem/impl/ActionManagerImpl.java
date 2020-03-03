@@ -1266,7 +1266,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           if (!(group instanceof ActionGroupStub)) {
             //group can be used as a stub in other actions
             for (String parentOfGroup : myId2GroupId.get(groupId)) {
-              DefaultActionGroup parentOfGroupAction = Objects.requireNonNull((DefaultActionGroup)getActionOrStub(parentOfGroup));
+              DefaultActionGroup parentOfGroupAction = (DefaultActionGroup) getActionOrStub(parentOfGroup);
+              if (parentOfGroupAction == null) {
+                LOG.error("Trying to remove action " + actionId + " from non-existing group " + parentOfGroup);
+                continue;
+              }
               for (AnAction stub : parentOfGroupAction.getChildActionsOrStubs()) {
                 if (stub instanceof ActionGroupStub && ((ActionGroupStub)stub).getId() == groupId) {
                   ((ActionGroupStub)stub).remove(actionToRemove, actionId);
