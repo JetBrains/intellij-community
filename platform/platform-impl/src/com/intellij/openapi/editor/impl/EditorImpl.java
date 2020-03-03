@@ -3940,14 +3940,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       if (e.getSource() == myGutterComponent) {
-        if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA ||
-            eventArea == EditorMouseEventArea.ANNOTATIONS_AREA ||
-            eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) {
-          if (!tweakSelectionIfNecessary(e)) {
-            myGutterComponent.mousePressed(e);
-          }
-          if (e.isConsumed()) return false;
+        if (!tweakSelectionIfNecessary(e)) {
+          myGutterComponent.mousePressed(e);
         }
+        if (e.isConsumed()) return false;
         x = 0;
       }
 
