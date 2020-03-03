@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.ui.UISettings;
@@ -342,6 +343,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         smallIconLabel.setIcon(analyzerStatus.getIcon());
 
         myPopupManager.updateContent();
+        ActivityTracker.getInstance().inc();
       }
     }
   }
