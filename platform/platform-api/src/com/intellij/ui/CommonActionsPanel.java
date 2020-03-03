@@ -20,6 +20,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -34,15 +35,13 @@ public class CommonActionsPanel extends JPanel {
     public static final Buttons[] ALL = {ADD, REMOVE, EDIT,  UP, DOWN};
 
     @NotNull
-    private static Map<Buttons, String> getPresentableNamesMap() {
-      return ContainerUtil.newHashMap(
-        new Pair<>(ADD, UIBundle.message("button.text.add")),
-        new Pair<>(REMOVE, UIBundle.message("button.text.remove")),
-        new Pair<>(EDIT, UIBundle.message("button.text.edit")),
-        new Pair<>(UP, UIBundle.message("button.text.up")),
-        new Pair<>(DOWN, UIBundle.message("button.text.down"))
-      );
-    }
+    private static final Map<Buttons, Supplier<String>> ourPresentableNamesMap = ContainerUtil.newHashMap(
+      new Pair<>(ADD, UIBundle.messagePointer("button.text.add")),
+      new Pair<>(REMOVE, UIBundle.messagePointer("button.text.remove")),
+      new Pair<>(EDIT, UIBundle.messagePointer("button.text.edit")),
+      new Pair<>(UP, UIBundle.messagePointer("button.text.up")),
+      new Pair<>(DOWN, UIBundle.messagePointer("button.text.down"))
+    );
 
     public Icon getIcon() {
       switch (this) {
@@ -68,7 +67,7 @@ public class CommonActionsPanel extends JPanel {
     }
 
     public String getText() {
-      return getPresentableNamesMap().get(this);
+      return ourPresentableNamesMap.get(this).get();
     }
   }
 
