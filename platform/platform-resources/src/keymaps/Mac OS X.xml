@@ -278,7 +278,7 @@
   </action>
   <action id="GotoDeclaration">
     <keyboard-shortcut first-keystroke="meta B"/>
-    <mouse-shortcut keystroke="ctrl button1"/>
+    <mouse-shortcut keystroke="meta button1"/>
     <mouse-shortcut keystroke="Force touch" />
   </action>
   <action id="GotoTypeDeclaration">
