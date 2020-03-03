@@ -283,15 +283,18 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
 
     @NotNull
     private static String computeCompletionPrefix(CompletionParameters parameters) {
+      PsiElement position = parameters.getPosition();
       String textWithInsertedPart = parameters.getPosition().getText();
-      int positionInRange = parameters.getOffset() - parameters.getPosition().getTextRange().getStartOffset();
+      int positionInRange = parameters.getOffset() - position.getTextRange().getStartOffset();
       if (positionInRange < 0) {
         positionInRange = 0;
       }
       else if (positionInRange > textWithInsertedPart.length()) {
         positionInRange = textWithInsertedPart.length();
       }
-      return textWithInsertedPart.substring(0, positionInRange);
+
+      boolean startsWithQuote = YAMLElementTypes.SCALAR_QUOTED_STRING.equals(position.getParent().getNode().getElementType());
+      return textWithInsertedPart.substring(startsWithQuote ? "'".length() : 0, positionInRange);
     }
   }
 }
