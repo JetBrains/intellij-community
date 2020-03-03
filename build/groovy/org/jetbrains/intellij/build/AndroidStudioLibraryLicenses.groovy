@@ -145,7 +145,7 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "TightVNC", libraryName: "tightvnc", license: "Commercial License"),
     // for tensorflow-lite-support module library in android.sdktools.mlkit-common
     new LibraryLicense(name: "TensorFlow Lite Support Library", libraryName: "tensorflow-lite-support",
-                       version: "0.0.0-experimental-metadata", url: "https://tensorflow.org/lite",
+                       version: "0.0.0-experimental-metadata-monolithic", url: "https://tensorflow.org/lite",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     // for traceprocessor-proto module library in intellij.android.profilersAndroid
     new LibraryLicense(name: "TraceProcessor Daemon Protos", libraryName: "traceprocessor-proto", license: "Apache 2.0",
