@@ -732,6 +732,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         .setFillColor(UIUtil.getPanelBackground())
         .setHideOnAction(false)
         .setHideOnLinkClick(false)
+        .setHideOnKeyOutside(false) // otherwise any keypress in file chooser hides the underlying balloon
         .setRequestFocus(true)
         .createBalloon();
       balloon.setAnimationEnabled(false);
