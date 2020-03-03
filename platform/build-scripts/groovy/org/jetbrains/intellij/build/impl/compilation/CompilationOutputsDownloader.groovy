@@ -24,7 +24,7 @@ import java.lang.reflect.Type
 
 @CompileStatic
 class CompilationOutputsDownloader {
-  private static final Type CACHES_LIST_TYPE = new TypeToken<List<ReducedCacheEntity>>() {}.getType()
+  private static final Type COMMITS_HISTORY_TYPE = new TypeToken<Map<String, Set<String>>>() {}.getType()
   private static final int COMMITS_COUNT = 1_000
   private static final int COMMITS_SEARCH_TIMEOUT = 10_000
 
@@ -32,14 +32,16 @@ class CompilationOutputsDownloader {
 
   private final CompilationContext context
   private final String remoteCacheUrl
+  private final String gitUrl
 
   private final NamedThreadPoolExecutor executor
 
   private final SourcesStateProcessor sourcesStateProcessor
 
-  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl) {
+  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl) {
     this.context = context
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
+    this.gitUrl = gitUrl
 
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     context.messages.info("Using $executorThreadsCount threads to download caches.")
@@ -143,8 +145,8 @@ class CompilationOutputsDownloader {
   }
 
   private Set<String> getAvailableCachesKeys() {
-    def cachesList = getClient.doGet("$remoteCacheUrl/caches/?json=1", CACHES_LIST_TYPE) as List<ReducedCacheEntity>
-    return cachesList*.name as Set<String>
+    def commitsHistory = getClient.doGet("$remoteCacheUrl/commit_history.json", COMMITS_HISTORY_TYPE)
+    return commitsHistory[gitUrl] as Set<String>
   }
 
   private List<String> getLastCommits() {
@@ -157,10 +159,6 @@ class CompilationOutputsDownloader {
     }
 
     return output.readLines()*.trim()
-  }
-
-  static class ReducedCacheEntity {
-    String name
   }
 }
 
