@@ -176,10 +176,6 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
   }
 
   private class AddAction implements AnActionButtonRunnable {
-    //public AddAction() {
-    //  super(JavaDebuggerBundle.message("button.add"), JavaDebuggerBundle.message("user.renderers.configurable.button.description.add"), ADD_ICON);
-    //}
-
     @Override
     public void run(AnActionButton button) {
       NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundTypeRenderer.UNIQUE_ID);
@@ -189,11 +185,6 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
   }
 
   private class RemoveAction implements AnActionButtonRunnable {
-    //public RemoveAction() {
-    //  super(JavaDebuggerBundle.message("button.remove"), JavaDebuggerBundle.message("user.renderers.configurable.button.description.remove"), REMOVE_ICON);
-    //}
-
-
     @Override
     public void run(AnActionButton button) {
       myRendererChooser.getSelectedElements().forEach(myRendererChooser::removeElement);
@@ -225,9 +216,6 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     private final boolean myMoveUp;
 
     MoveAction(boolean up) {
-      //super(up? JavaDebuggerBundle.message("button.move.up") : JavaDebuggerBundle.message("button.move.down"),
-      //      up? JavaDebuggerBundle.message("user.renderers.configurable.button.description.move.up") : JavaDebuggerBundle.message("user.renderers.configurable.button.description.move.down"),
-      //      up? UP_ICON : DOWN_ICON );
       myMoveUp = up;
     }
 
