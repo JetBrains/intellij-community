@@ -31,6 +31,8 @@ public class ClasspathEditorTest extends LightPlatformTestCase {
     WriteAction.runAndWait(mod::commit);
 
     final ModifiableRootModel uiRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+    disposeOnTearDown(() -> uiRootModel.dispose());
+
     ClasspathEditor e = new ClasspathEditor(new ModuleConfigurationStateImpl(project, new DefaultModulesProvider(project)) {
       @Nullable
       @Override
@@ -41,6 +43,7 @@ public class ClasspathEditorTest extends LightPlatformTestCase {
 
     e.reset();
     JComponent component = e.createComponent();
+    disposeOnTearDown(() -> e.disposeUIResources());
 
     JdkComboBox box = findJdkComboBoxComponent(component);
     assertThat(box).isNotNull();
