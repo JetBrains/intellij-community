@@ -1966,16 +1966,25 @@ public final class UIUtil {
   @Nullable
   public static Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {
     Component component = SwingUtilities.getDeepestComponentAt(parent, x, y);
-    if (component != null && component.getParent() instanceof JRootPane) {//GlassPane case
+    if (component != null && component.getParent() instanceof JRootPane) { // GlassPane case
       JRootPane rootPane = (JRootPane)component.getParent();
-      Point point = SwingUtilities.convertPoint(parent, new Point(x, y), rootPane.getLayeredPane());
-      component = SwingUtilities.getDeepestComponentAt(rootPane.getLayeredPane(), point.x, point.y);
+      component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getLayeredPane());
       if (component == null) {
-        point = SwingUtilities.convertPoint(parent, new Point(x, y), rootPane.getContentPane());
-        component = SwingUtilities.getDeepestComponentAt(rootPane.getContentPane(), point.x, point.y);
+        component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getContentPane());
+      }
+    }
+    if (component != null && component.getParent() instanceof JLayeredPane) { // Handle LoadingDecorator
+      Component[] components = ((JLayeredPane)component.getParent()).getComponentsInLayer(JLayeredPane.DEFAULT_LAYER);
+      if (components.length == 1 && ArrayUtil.indexOf(components, component) == -1) {
+        component = getDeepestComponentAtForComponent(parent, x, y, components[0]);
       }
     }
     return component;
+  }
+
+  private static Component getDeepestComponentAtForComponent(@NotNull Component parent, int x, int y, @NotNull Component component) {
+    Point point = SwingUtilities.convertPoint(parent, new Point(x, y), component);
+    return SwingUtilities.getDeepestComponentAt(component, point.x, point.y);
   }
 
   public static void layoutRecursively(@NotNull Component component) {
