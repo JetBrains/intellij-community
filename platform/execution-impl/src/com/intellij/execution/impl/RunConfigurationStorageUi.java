@@ -73,6 +73,9 @@ class RunConfigurationStorageUi {
       .addComponent(doneButtonPanel)
       .getPanel();
 
+    myMainPanel.setFocusCycleRoot(true);
+    myMainPanel.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+
     // need to handle Enter keypress, otherwise Enter closes the main Run Configurations dialog.
     // Escape should also be handled manually because setHideOnKeyOutside(false) is set for this balloon.
     DumbAwareAction.create(e -> {
@@ -137,11 +140,6 @@ class RunConfigurationStorageUi {
 
   JPanel getMainPanel() {
     return myMainPanel;
-  }
-
-  @NotNull
-  JComponent getPreferredFocusedComponent() {
-    return myPathComboBox;
   }
 
   void reset(@NotNull @SystemIndependent String folderPath, Collection<String> pathsToSuggest, @NotNull Runnable closePopupAction) {

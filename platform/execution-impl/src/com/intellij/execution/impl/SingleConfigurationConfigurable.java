@@ -767,7 +767,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       });
 
       balloon.show(RelativePoint.getSouthOf(myStoreAsFileCheckBox), Balloon.Position.below);
-      IdeFocusManager.getInstance(myProject).requestFocus(storageUi.getPreferredFocusedComponent(), true);
     }
 
     private void applyChangedStoragePath(String newPath) {
