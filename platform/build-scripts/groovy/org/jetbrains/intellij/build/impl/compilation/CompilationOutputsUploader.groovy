@@ -157,6 +157,7 @@ class CompilationOutputsUploader {
       }
       else {
         listOfCommits.add(value)
+        if (listOfCommits.size() > 50) commitHistory.put(key, listOfCommits.takeRight(50))
       }
     }
 
