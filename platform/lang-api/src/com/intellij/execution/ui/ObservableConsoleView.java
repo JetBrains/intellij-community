@@ -27,6 +27,6 @@ public interface ObservableConsoleView  {
 
   interface ChangeListener {
     void contentAdded(@NotNull Collection<ConsoleViewContentType> types);
+    default void textAdded(@NotNull String text, @NotNull ConsoleViewContentType type) {}
   }
-
 }
