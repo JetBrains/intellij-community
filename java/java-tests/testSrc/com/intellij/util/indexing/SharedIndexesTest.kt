@@ -16,6 +16,7 @@ import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
@@ -25,6 +26,7 @@ import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.indexing.hash.FileContentHashIndex
 import com.intellij.util.indexing.hash.FileContentHashIndexExtension
@@ -38,8 +40,10 @@ import com.intellij.util.indexing.impl.ValueContainerImpl
 import com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator
 import com.intellij.util.indexing.provided.SharedIndexChunkLocator
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage
+import gnu.trove.TIntHashSet
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
+import org.assertj.core.annotations.NonNull
 import java.nio.file.Path
 import java.util.*
 import kotlin.collections.HashMap
@@ -180,6 +184,8 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
       val values = fileBasedIndex.getValues(IdIndex.NAME, IdIndexEntry("Comment", true), GlobalSearchScope.allScope(project))
       TestCase.assertEquals(UsageSearchContext.IN_COMMENTS.toInt(), values.single())
       assertHashIndexContainsProperData((virtualFile as VirtualFileWithId).id)
+
+      TestCase.assertEquals(1, getSharedIndexRetainFileCount(project))
     } finally {
       restartFileBasedIndex(null, project)
     }
@@ -193,6 +199,38 @@ class SharedIndexesTest : LightJavaCodeInsightFixtureTestCase() {
 
 
   companion object {
+    @JvmStatic
+    private fun getSharedIndexRetainFileCount(project: Project): Int {
+      val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
+      val hashIndex = index.getOrCreateFileContentHashIndex()
+      val allKeysCollector = CommonProcessors.CollectProcessor<Long>()
+      val projectAllScope = GlobalSearchScope.allScope(project)
+      hashIndex.processAllKeys(allKeysCollector, projectAllScope, null)
+
+      val fileIds = TIntHashSet()
+      for (compositeHashId in allKeysCollector.results) {
+        hashIndex.getData(compositeHashId).forEach { id, _ ->
+          if (!fileIds.add(id)) {
+            fail("Duplicate fileId $id in hashIndex")
+          }
+          return@forEach true
+        }
+      }
+
+      var counter = 0
+      for (fileId in fileIds) {
+        val fileById = ManagingFS.getInstance().findFileById(fileId)
+        if (fileById == null) {
+          fail("Can't find virtual file for id $fileById")
+        }
+        if (projectAllScope.contains(fileById!!)) {
+          counter++
+        }
+      }
+
+      return counter
+    }
+
     @JvmStatic
     fun restartFileBasedIndex(indexZip: Path?, project: Project?) {
       val indexSwitcher = FileBasedIndexSwitcher(FileBasedIndex.getInstance() as FileBasedIndexImpl)
