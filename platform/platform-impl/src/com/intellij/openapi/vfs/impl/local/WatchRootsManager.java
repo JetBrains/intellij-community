@@ -93,7 +93,7 @@ final class WatchRootsManager {
     synchronized (myLock) {
       SymlinkData data = mySymlinksById.get(fileId);
       if (data != null) {
-        if (FileUtil.pathsEqual(data.path, linkPath) && FileUtil.pathsEqual(data.path, linkTarget)) {
+        if (FileUtil.pathsEqual(data.path, linkPath) && FileUtil.pathsEqual(data.target, linkTarget)) {
           // Avoid costly removal and re-addition of the request in case of no-op update
           return;
         }
