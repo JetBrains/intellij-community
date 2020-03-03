@@ -2,6 +2,7 @@
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageAnnotator;
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
@@ -32,7 +33,8 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public ColumnInfo[] createColumnInfos() {
-    return new ColumnInfo[]{new ElementColumnInfo(), new PercentageCoverageColumnInfo(1, "Statistics, %", mySuitesBundle, myStateBean)};
+    return new ColumnInfo[]{new ElementColumnInfo(),
+      new PercentageCoverageColumnInfo(1, CoverageBundle.message("table.column.name.statistics"), mySuitesBundle, myStateBean)};
   }
 
   @Override
@@ -40,7 +42,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
     String statInfo = myAnnotator.getDirCoverageInformationString((PsiDirectory)node.getValue(),
                                                                   mySuitesBundle,
                                                                   myCoverageDataManager);
-    statInfo = StringUtil.notNullize(statInfo, "No coverage");
+    statInfo = StringUtil.notNullize(statInfo, CoverageBundle.message("node.summary.no.coverage"));
     return statInfo + " in '" + node.toString() + "'";
   }
 
