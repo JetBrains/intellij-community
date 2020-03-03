@@ -334,7 +334,6 @@ static Stream<String> topicStream(Path path) {
   }
 
   void 'test IDEA-189274'() {
-    RecursionManager.disableAssertOnRecursionPrevention(myFixture.testRootDisposable)
     testHighlighting '''
 import groovy.transform.CompileStatic
 
@@ -491,7 +490,6 @@ new E().bar()()
   }
 
   void 'test with closeable IDEA-197035'() {
-    RecursionManager.disableAssertOnRecursionPrevention(myFixture.testRootDisposable)
     testHighlighting '''
 import groovy.transform.CompileStatic
 
@@ -685,7 +683,6 @@ def m() {
   }
 
   void 'test IDEA-221874'() {
-    RecursionManager.disableAssertOnRecursionPrevention(myFixture.testRootDisposable)
     testHighlighting '''
 import groovy.transform.CompileStatic
 
