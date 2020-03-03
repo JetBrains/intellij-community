@@ -5,6 +5,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
@@ -47,6 +49,16 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
     if (UISettings.getInstance().getFullPathsInWindowHeader()) {
       return ProjectUtilCore.displayUrlRelativeToProject(file, file.getPresentableUrl(), project, true, false);
     }
+
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    if (!fileIndex.isInContent(file)) {
+      String pathWithLibrary = ProjectUtilCore.decorateWithLibraryName(file, project, file.getPresentableName());
+      if (pathWithLibrary != null) {
+        return pathWithLibrary;
+      }
+      return FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
+    }
+
     return ProjectUtilCore.appendModuleName(file, project, fileTitle, false);
   }
 }
