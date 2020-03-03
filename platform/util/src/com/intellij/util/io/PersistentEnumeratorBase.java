@@ -235,10 +235,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       try {
         myKeyStorage = new AppendableStorageBackedByResizableMappedFile(keyStreamFile(), initialSize, myStorage.getPagedFileStorage().getStorageLockContext(), PagedFileStorage.MB, false);
       }
-      catch (IOException e) {
-        myStorage.close();
-        throw e;
-      }
       catch (Throwable e) {
         LOG.info(e);
         myStorage.close();

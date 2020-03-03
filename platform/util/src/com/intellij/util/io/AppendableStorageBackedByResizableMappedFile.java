@@ -36,7 +36,7 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
                                                       int initialSize,
                                                       @Nullable PagedFileStorage.StorageLockContext lockContext,
                                                       int pageSize,
-                                                      boolean valuesAreBufferAligned) throws IOException {
+                                                      boolean valuesAreBufferAligned) {
     super(file, initialSize, lockContext, pageSize, valuesAreBufferAligned);
     myReadStream = new MyDataIS(this);
     myFileLength = (int)length();
