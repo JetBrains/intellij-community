@@ -19,7 +19,7 @@ public class ToolWindowEP implements PluginAware {
 
   public static final ExtensionPointName<ToolWindowEP> EP_NAME = new ExtensionPointName<>("com.intellij.toolWindow");
 
-  protected PluginDescriptor pluginDescriptor;
+  private PluginDescriptor pluginDescriptor;
 
   @Attribute
   public String id;
@@ -84,7 +84,15 @@ public class ToolWindowEP implements PluginAware {
     pluginDescriptor = value;
   }
 
+  /**
+   * @deprecated Do not use ToolWindowEP.
+   */
+  @Deprecated
   public ToolWindowFactory getToolWindowFactory() {
+    return getToolWindowFactory(getPluginDescriptor());
+  }
+
+  public ToolWindowFactory getToolWindowFactory(@NotNull PluginDescriptor pluginDescriptor) {
     ToolWindowFactory factory = myFactory;
     if (factory != null) {
       return factory;
@@ -115,8 +123,7 @@ public class ToolWindowEP implements PluginAware {
     return factory;
   }
 
-  @Nullable
-  public Class<? extends ToolWindowFactory> getFactoryClass() {
+  public @Nullable Class<? extends ToolWindowFactory> getFactoryClass(@NotNull PluginDescriptor pluginDescriptor) {
     if (myFactoryClass == null) {
       if (factoryClass == null) {
         LOG.error(new PluginException("No toolwindow factory specified for " + id, pluginDescriptor.getPluginId()));
@@ -135,8 +142,15 @@ public class ToolWindowEP implements PluginAware {
     return myFactoryClass;
   }
 
-  @Nullable
-  public Condition<Project> getCondition() {
+  /**
+   * @deprecated Do not use ToolWindowEP.
+   */
+  @Deprecated
+  public @Nullable Condition<Project> getCondition() {
+    return getCondition(getPluginDescriptor());
+  }
+
+  public @Nullable Condition<Project> getCondition(@NotNull PluginDescriptor pluginDescriptor) {
     if (conditionClass == null) {
       return null;
     }

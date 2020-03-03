@@ -56,7 +56,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                               windowInfo: WindowInfo,
                               private var contentFactory: ToolWindowFactory?,
                               private var isAvailable: Boolean = true,
-                              private var stripeTitle: String? = null) : ToolWindowEx {
+                              private var stripeTitle: String) : ToolWindowEx {
   var windowInfoDuringInit: WindowInfoImpl? = null
 
   override fun getId() = id
@@ -383,7 +383,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun getStripeTitle(): String {
     EDT.assertIsEdt()
-    return stripeTitle ?: id
+    return stripeTitle
   }
 
   override fun setIcon(newIcon: Icon) {
