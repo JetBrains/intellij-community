@@ -20,7 +20,6 @@ public class UsageViewPresentation {
 
   private String myTabText;
   private String myScopeText = ""; // Default value. to be overwritten in most cases.
-  private String myContextText = "";
   private String myUsagesString;
   private String mySearchString;
   private String myTargetsNodeText = UsageViewBundle.message("node.targets"); // Default value. to be overwritten in most cases.
@@ -60,15 +59,6 @@ public class UsageViewPresentation {
 
   public void setScopeText(@NotNull String scopeText) {
     myScopeText = scopeText;
-  }
-
-  @NotNull
-  public String getContextText() {
-    return myContextText;
-  }
-
-  public void setContextText(@NotNull String contextText) {
-    myContextText = contextText;
   }
 
   public boolean isShowReadOnlyStatusAsRed() {
@@ -279,7 +269,6 @@ public class UsageViewPresentation {
            && Objects.equals(myDynamicCodeUsagesString, that.myDynamicCodeUsagesString)
            && Objects.equals(myNonCodeUsagesString, that.myNonCodeUsagesString)
            && Objects.equals(myScopeText, that.myScopeText)
-           && Objects.equals(myContextText, that.myContextText)
            && Objects.equals(myTabName, that.myTabName)
            && Objects.equals(myTabText, that.myTabText)
            && Objects.equals(myTargetsNodeText, that.myTargetsNodeText)
@@ -309,7 +298,6 @@ public class UsageViewPresentation {
     int result = Objects.hash(
       myTabText,
       myScopeText,
-      myContextText,
       myUsagesString,
       mySearchString,
       myTargetsNodeText,
@@ -339,7 +327,6 @@ public class UsageViewPresentation {
     UsageViewPresentation copyInstance = new UsageViewPresentation();
     copyInstance.myTabText = myTabText;
     copyInstance.myScopeText = myScopeText;
-    copyInstance.myContextText = myContextText;
     copyInstance.myUsagesString = myUsagesString;
     copyInstance.mySearchString = mySearchString;
     copyInstance.myTargetsNodeText = myTargetsNodeText;
