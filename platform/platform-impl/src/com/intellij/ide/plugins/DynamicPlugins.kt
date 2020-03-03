@@ -517,10 +517,10 @@ object DynamicPlugins {
         (module as PlatformComponentManagerImpl).registerComponents(pluginsToLoad, listenerCallbacks)
       }
     }
-    listenerCallbacks.forEach(Runnable::run)
     for (descriptorToLoad in pluginsToLoad) {
       (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(baseDescriptor, descriptorToLoad.descriptor.actionDescriptionElements, false)
     }
+    listenerCallbacks.forEach(Runnable::run)
   }
 
   private fun isPluginLoaded(pluginId: PluginId?) =
