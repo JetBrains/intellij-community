@@ -417,14 +417,9 @@ class SearchForUsagesRunnable implements Runnable {
             findStartedBalloonShown.set(false);
             return;
           }
-
-          final String message = UsageViewBundle.message("dialog.no.usages.found.in",
-                                                         StringUtil.decapitalize(StringUtil.notNullize(myPresentation.getUsagesString())),
-                                                         myPresentation.getScopeText(),
-                                                         myPresentation.getContextText());
-
           List<String> lines = new ArrayList<>();
-          lines.add(StringUtil.escapeXmlEntities(message));
+          lines.add(StringUtil.escapeXmlEntities(myPresentation.getSearchString()));
+          lines.add(UsageViewBundle.message("search.result.nothing.in.0", StringUtil.escapeXmlEntities(myPresentation.getScopeText())));
           if (myOutOfScopeUsages.get() != 0) {
             lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
           }

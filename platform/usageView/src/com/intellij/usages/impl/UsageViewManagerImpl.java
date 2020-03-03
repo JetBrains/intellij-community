@@ -201,8 +201,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
   @NotNull
   public static String getProgressTitle(@NotNull UsageViewPresentation presentation) {
     final String scopeText = presentation.getScopeText();
-    String usagesString = StringUtil.capitalize(presentation.getUsagesString());
-    return UsageViewBundle.message("progress.searching.for.in", usagesString, scopeText, presentation.getContextText());
+    String usagesString = StringUtil.capitalize(presentation.getSearchString());
+    return UsageViewBundle.message("search.progress.0.in.1", usagesString, scopeText);
   }
 
   void showToolWindow(boolean activateWindow) {
