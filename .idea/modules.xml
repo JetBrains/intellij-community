@@ -500,6 +500,8 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers-android/intellij.android.profilersAndroid.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers-android/intellij.android.profilersAndroid.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system/intellij.android.projectSystem.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system/intellij.android.projectSystem.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system-gradle/intellij.android.projectSystem.gradle.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system-gradle/intellij.android.projectSystem.gradle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system-gradle-psd/intellij.android.projectSystem.gradle.psd.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system-gradle-psd/intellij.android.projectSystem.gradle.psd.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system-gradle-psd/intellij.android.projectSystem.gradle.psd.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system-gradle-psd/intellij.android.projectSystem.gradle.psd.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system-gradle/intellij.android.projectSystem.gradle.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system-gradle/intellij.android.projectSystem.gradle.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/resources-base/intellij.android.resources-base.iml" filepath="$PROJECT_DIR$/../adt/idea/resources-base/intellij.android.resources-base.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/resources-base/intellij.android.resources-base.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/resources-base/intellij.android.resources-base.tests.iml" />

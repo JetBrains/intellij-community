@@ -165,6 +165,8 @@ iml_project(
         "//tools/adt/idea/profilers-atrace:intellij.android.profilers.atrace",
         "//tools/adt/idea/profilers-ui:intellij.android.profilers.ui",
         "//tools/adt/idea/profilers:intellij.android.profilers",
+        "//tools/adt/idea/project-system-gradle-psd:intellij.android.projectSystem.gradle.psd",
+        "//tools/adt/idea/project-system-gradle-psd:intellij.android.projectSystem.gradle.psd.tests",
         "//tools/adt/idea/project-system-gradle:intellij.android.projectSystem.gradle",
         "//tools/adt/idea/project-system-gradle:intellij.android.projectSystem.gradle.tests",
         "//tools/adt/idea/project-system:intellij.android.projectSystem",
