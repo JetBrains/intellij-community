@@ -34,6 +34,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -187,6 +188,7 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
+  @NonNls
   public String getInspectionToolId() {
     return inspectionToolId;
   }
