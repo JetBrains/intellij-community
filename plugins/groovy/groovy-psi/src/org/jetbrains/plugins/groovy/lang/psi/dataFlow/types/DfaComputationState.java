@@ -1,12 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,14 +11,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class DfaComputationState {
-  private final VariableDescriptor mainDescriptor;
   private final Set<GrControlFlowOwner> visitedFlowOwners = new HashSet<>();
   private final Map<GrControlFlowOwner, TypeDfaState> entranceStates = new HashMap<>();
   private final Map<GrControlFlowOwner, TypeDfaState> exitStates = new HashMap<>();
-
-  DfaComputationState(@NotNull VariableDescriptor descriptor) {
-    this.mainDescriptor = descriptor;
-  }
 
   public void markOwnerAsVisited(@NotNull GrControlFlowOwner owner) {
     visitedFlowOwners.add(owner);
@@ -35,11 +27,6 @@ public class DfaComputationState {
     exitStates.put(owner, exitState);
   }
 
-  @NotNull
-  public VariableDescriptor getTargetDescriptor() {
-    return mainDescriptor;
-  }
-
   @Nullable
   public TypeDfaState getEntranceState(@NotNull GrControlFlowOwner owner) {
     return entranceStates.get(owner);
@@ -48,16 +35,6 @@ public class DfaComputationState {
   @Nullable
   public TypeDfaState getExitState(@NotNull GrControlFlowOwner owner) {
     return exitStates.get(owner);
-  }
-
-  @Nullable
-  PsiType getEntranceType(@NotNull VariableDescriptor descriptor, @NotNull GrControlFlowOwner scope) {
-    TypeDfaState entranceState = this.entranceStates.get(scope);
-    if (entranceState == null) {
-      return null;
-    }
-    DFAType type = entranceState.getVariableType(descriptor);
-    return type == null ? null : type.getResultType();
   }
 
   public boolean isVisited(@Nullable GrControlFlowOwner block) {

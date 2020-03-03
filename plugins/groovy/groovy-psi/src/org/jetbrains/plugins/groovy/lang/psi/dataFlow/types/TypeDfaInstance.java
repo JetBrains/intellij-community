@@ -23,11 +23,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
@@ -38,13 +36,15 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private final InferenceCache myCache;
   private final InitialTypeProvider myInitialTypeProvider;
   private final DfaComputationState myDfaComputationState;
+  private final VariableDescriptor myDescriptor;
 
   TypeDfaInstance(Instruction @NotNull [] flow,
                   @NotNull Couple<Set<Instruction>> interesting,
                   @NotNull InferenceCache cache,
                   @NotNull InitialTypeProvider initialTypeProvider,
                   @NotNull GrControlFlowOwner owner,
-                  @NotNull DfaComputationState state) {
+                  @NotNull DfaComputationState state,
+                  @NotNull VariableDescriptor descriptor) {
     myFlow = flow;
     myOwner = owner;
     myInteresting = interesting.first;
@@ -52,6 +52,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     myCache = cache;
     myInitialTypeProvider = initialTypeProvider;
     myDfaComputationState = state;
+    myDescriptor = descriptor;
   }
 
   @Override
@@ -196,8 +197,11 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private void handleClosureBlock(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
     GrClosableBlock element = Objects.requireNonNull((GrClosableBlock)instruction.getElement());
+    Set<String> interestingDescriptors = myInteresting.stream().filter(it -> it instanceof ReadWriteVariableInstruction)
+      .map(it -> ((ReadWriteVariableInstruction)it).getDescriptor().getName()).collect(
+        Collectors.toSet());
     if (ControlFlowUtils.getForeignVariableIdentifiers(element).stream()
-      .noneMatch(it -> Objects.equals(it, myDfaComputationState.getTargetDescriptor().getName()))) {
+      .noneMatch(it -> it.equals(myDescriptor.getName()) || interestingDescriptors.contains(it))) {
       return;
     }
     if (instruction.num() > myInteresting.stream().mapToInt(Instruction::num).max().orElse(0) &&
@@ -228,8 +232,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
                                       @NotNull BiConsumer<? super VariableDescriptor, ? super DFAType> typeConsumer) {
     GrClosableBlock block = Objects.requireNonNull((GrClosableBlock)instruction.getElement());
     InferenceCache blockCache = TypeInferenceHelper.getInferenceCache(block);
-    VariableDescriptor targetDescriptor = myDfaComputationState.getTargetDescriptor();
-    VariableDescriptor blockDescriptor = blockCache.findDescriptor(targetDescriptor.getName());
+    VariableDescriptor blockDescriptor = blockCache.findDescriptor(myDescriptor.getName());
     if (blockDescriptor == null) {
       return;
     }

@@ -46,22 +46,11 @@ class InitialTypeProvider(val start: GrControlFlowOwner) {
                                        state: DfaComputationState): PsiType? {
     val parentFlowOwner = this.parentFlowOwner ?: return null
     val parentCache = TypeInferenceHelper.getInferenceCache(parentFlowOwner)
-    if (!state.isVisited(parentFlowOwner)) {
-      runParentDfa(state, parentCache, descriptor)
-    }
-    val resolvedDescriptor = parentCache.findDescriptor(descriptor.getName()) ?: descriptor
-    return state.getEntranceType(resolvedDescriptor, start)
-  }
-
-  private fun runParentDfa(computationState: DfaComputationState,
-                           parentCache: InferenceCache,
-                           defaultDescriptor: VariableDescriptor) {
-    val resolvedDescriptor = computationState.targetDescriptor.run {
+    val resolvedDescriptor = descriptor.run {
       if (this is ResolvedVariableDescriptor) this
       else parentCache.findDescriptor(getName())
-    } ?: defaultDescriptor
-    val instruction = parentInstruction ?: return
-    parentCache.getInferredType(resolvedDescriptor, instruction, false, computationState)
+    } ?: descriptor
+    val instruction = parentInstruction ?: return null
+    return parentCache.getInferredType(resolvedDescriptor, instruction, false, state)
   }
-
 }

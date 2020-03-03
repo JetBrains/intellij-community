@@ -66,7 +66,7 @@ class InferenceCache {
   PsiType getInferredType(@NotNull VariableDescriptor descriptor,
                           @NotNull Instruction instruction,
                           boolean mixinOnly) {
-    DfaComputationState state = new DfaComputationState(descriptor);
+    DfaComputationState state = new DfaComputationState();
     return getInferredType(descriptor, instruction, mixinOnly, state);
   }
 
@@ -85,7 +85,7 @@ class InferenceCache {
     if (!cache.containsVariable(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
       Couple<Set<Instruction>> interesting = collectRequiredInstructions(definitionMaps, instruction, descriptor, mixinPredicate);
-      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting, state);
+      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting, state, descriptor);
       if (dfaResult == null) {
         myTooComplexInstructions.addAll(interesting.first);
       }
@@ -103,8 +103,9 @@ class InferenceCache {
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             Instruction @NotNull [] flow,
                                             @NotNull Couple<Set<Instruction>> interesting,
-                                            @NotNull DfaComputationState state) {
-    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this, new InitialTypeProvider(owner), owner, state);
+                                            @NotNull DfaComputationState state,
+                                            @NotNull VariableDescriptor descriptor) {
+    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this, new InitialTypeProvider(owner), owner, state, descriptor);
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
   }
