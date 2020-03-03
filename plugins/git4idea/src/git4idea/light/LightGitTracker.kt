@@ -8,6 +8,7 @@ import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -22,6 +23,8 @@ import git4idea.config.GitVersionIdentificationException
 import git4idea.index.GitFileStatus
 import git4idea.index.getFileStatus
 import java.util.*
+
+private val LOG = Logger.getInstance("#git4idea.light.LightGitTracker")
 
 class LightGitTracker : Disposable {
   private val lightEditService = LightEditService.getInstance()
@@ -94,6 +97,7 @@ class LightGitTracker : Disposable {
       hasGit = version.isSupported
     }
     catch (e: GitVersionIdentificationException) {
+      LOG.warn(e)
       hasGit = false
     }
   }
