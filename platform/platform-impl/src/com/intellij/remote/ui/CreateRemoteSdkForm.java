@@ -243,9 +243,6 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
       typeHandler.onSelected();
     }
-    else {
-      myCredentialsType2Handler.get(selectedType).onInit();
-    }
   }
 
   private void changeWindowHeightToPreferred() {
@@ -474,8 +471,6 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     @NotNull JBRadioButton getRadioButton();
 
-    void onInit();
-
     void onSelected();
 
     @Nullable String getInterpreterPath();
@@ -519,10 +514,6 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     @Override
     public void setInterpreterPath(@Nullable String interpreterPath) {
-    }
-
-    @Override
-    public void onInit() {
     }
 
     @Override
@@ -572,10 +563,6 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     @NotNull
     public CredentialsEditor getEditor() {
       return myEditor;
-    }
-
-    @Override
-    public void onInit() {
     }
 
     @Override
