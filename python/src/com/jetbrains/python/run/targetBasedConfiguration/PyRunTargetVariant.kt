@@ -18,7 +18,7 @@ import com.jetbrains.python.run.PythonRunConfigurationForm
  * Types of target (symbol, path or custom) many python runners may have
  */
 enum class PyRunTargetVariant(private val customName: String? = null) {
-  PYTHON(PythonRunConfigurationForm.MODULE_NAME), PATH(PythonRunConfigurationForm.SCRIPT_PATH), CUSTOM;
+  PYTHON(PythonRunConfigurationForm.getModuleNameText()), PATH(PythonRunConfigurationForm.getScriptPathText()), CUSTOM;
 
   fun getCustomName(): String = customName ?: name.toLowerCase().capitalize()
 }
