@@ -99,33 +99,52 @@ public class SdkSettingsStep extends ModuleWizardStep {
       }
     });
 
-    Sdk sdk = getPreselectedSdk(project, component.getValue(selectedJdkProperty), sdkTypeIdFilter);
-    myJdkComboBox.setSelectedJdk(sdk);
+    getPreselectedSdk(project, component.getValue(selectedJdkProperty), sdkTypeIdFilter);
     myJdkPanel.add(myJdkComboBox, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, CENTER, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
   }
 
-  private Sdk getPreselectedSdk(Project project, String lastUsedSdk, Condition<? super SdkTypeId> sdkFilter) {
+  private void getPreselectedSdk(Project project, String lastUsedSdk, Condition<? super SdkTypeId> sdkFilter) {
+    myJdkComboBox.reloadModel();
+
     if (project != null) {
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null && myModuleBuilder.isSuitableSdkType(sdk.getSdkType())) {
         // use project SDK
-        myJdkComboBox.showProjectSdkItem();
-        return null;
+        myJdkComboBox.setSelectedItem(myJdkComboBox.showProjectSdkItem());
+        return;
       }
     }
+
     if (lastUsedSdk != null) {
       Sdk sdk = ProjectJdkTable.getInstance().findJdk(lastUsedSdk);
       if (sdk != null && myModuleBuilder.isSuitableSdkType(sdk.getSdkType())) {
-        return sdk;
+        myJdkComboBox.setSelectedJdk(sdk);
+        return;
       }
     }
+
     // set default project SDK
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     Sdk selected = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     if (selected != null && sdkFilter.value(selected.getSdkType())) {
-      return selected;
+      myJdkComboBox.setSelectedJdk(selected);
+      return;
     }
-    return myJdkComboBox.getSelectedJdk();
+
+    ComboBoxModel<JdkComboBox.JdkComboBoxItem> model = myJdkComboBox.getModel();
+    for(int i = 0; i < model.getSize(); i++) {
+      JdkComboBox.JdkComboBoxItem item = model.getElementAt(i);
+      if (!(item instanceof JdkComboBox.ActualJdkComboBoxItem)) continue;
+
+      Sdk jdk = item.getJdk();
+      if (jdk == null) continue;
+      if (!sdkFilter.value(jdk.getSdkType())) continue;
+
+      myJdkComboBox.setSelectedItem(item);
+      return;
+    }
+
+    myJdkComboBox.setSelectedItem(myJdkComboBox.showNoneSdkItem());
   }
 
   protected void onSdkSelected(Sdk sdk) {}

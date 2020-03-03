@@ -23,7 +23,6 @@ public class SdkSettingsStepTest extends NewProjectWizardTestCase {
 
   @TestFor(issues = "IDEA-234381")
   public void testNoProjectSDKShown() throws IOException {
-
     WriteAction.runAndWait(() -> {
       ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
       for (Sdk jdk : jdkTable.getAllJdks()) {
@@ -43,21 +42,18 @@ public class SdkSettingsStepTest extends NewProjectWizardTestCase {
 
       JdkComboBox jdkComboBox = UIUtil.uiTraverser(sdkStep.getComponent()).filter(JdkComboBox.class).single();
       assertThat(jdkComboBox).isNotNull();
-
-      List<JdkComboBoxItem> boxItems = getItems(jdkComboBox);
-
-      for (JdkComboBoxItem item : boxItems) {
-        System.out.println("SDK Item: " + item + ", " + item.getClass().getName());
-      }
+      List<JdkComboBoxItem> boxItems = getJdkComboBoxItems(jdkComboBox);
 
       //project SDK should not appear here
       assertThat(boxItems).noneMatch(JdkComboBox.ProjectJdkComboBoxItem.class::isInstance);
       assertThat(jdkComboBox.getSelectedJdk()).isNull();
+
+      cancelWizardRun();
     });
   }
 
   @NotNull
-  private static List<JdkComboBoxItem> getItems(@NotNull JdkComboBox comboBox) {
+  private static List<JdkComboBoxItem> getJdkComboBoxItems(@NotNull JdkComboBox comboBox) {
     List<JdkComboBoxItem> result = new ArrayList<>();
     ComboBoxModel<JdkComboBoxItem> model = comboBox.getModel();
     for(int i = 0; i < model.getSize(); i++) {
