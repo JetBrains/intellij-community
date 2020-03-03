@@ -29,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShowCommitTooltipAction extends DumbAwareAction {
   public ShowCommitTooltipAction() {
-    super(VcsBundle.lazyMessage("action.ShowCommitTooltipAction.text"),
-          VcsBundle.lazyMessage("action.ShowCommitTooltipAction.description"), null);
+    super(VcsBundle.messagePointer("action.ShowCommitTooltipAction.text"),
+          VcsBundle.messagePointer("action.ShowCommitTooltipAction.description"), null);
   }
 
   @Override

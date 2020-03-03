@@ -393,7 +393,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class CloseAction extends AnAction implements DumbAware {
     CloseAction() {
-      super(CommonBundle.lazyMessage("action.close"), CodeInsightBundle.lazyMessage("action.close.dependency.description"),
+      super(CommonBundle.messagePointer("action.close"), CodeInsightBundle.messagePointer("action.close.dependency.description"),
             AllIcons.Actions.Cancel);
     }
 
@@ -407,7 +407,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class ShowFilesAction extends ToggleAction {
     ShowFilesAction() {
-      super(CodeInsightBundle.lazyMessage("action.show.files"), CodeInsightBundle.lazyMessage("action.show.files.description"),
+      super(CodeInsightBundle.messagePointer("action.show.files"), CodeInsightBundle.messagePointer("action.show.files.description"),
             AllIcons.FileTypes.Java);
     }
 
@@ -446,7 +446,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
-      super(CodeInsightBundle.lazyMessage("action.group.by.scope.type"), CodeInsightBundle.lazyMessage("action.group.by.scope.type.description"),
+      super(CodeInsightBundle.messagePointer("action.group.by.scope.type"), CodeInsightBundle.messagePointer("action.group.by.scope.type.description"),
             AllIcons.Actions.GroupByTestProduction);
     }
 

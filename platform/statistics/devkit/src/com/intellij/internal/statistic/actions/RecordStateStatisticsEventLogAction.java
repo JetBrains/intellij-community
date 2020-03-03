@@ -80,7 +80,7 @@ public class RecordStateStatisticsEventLogAction extends DumbAwareAction {
                                                          "Finished collecting and recording events", NotificationType.INFORMATION);
             if (logVFile != null) {
               notification.addAction(NotificationAction.createSimple(
-                StatisticsBundle.lazyMessage("action.NotificationAction.RecordStateStatisticsEventLogAction.text.show.log.file"), () -> {
+                StatisticsBundle.messagePointer("action.NotificationAction.RecordStateStatisticsEventLogAction.text.show.log.file"), () -> {
                   FileEditorManager.getInstance(project).openFile(logVFile, true);
                 }));
             }
@@ -100,7 +100,7 @@ public class RecordStateStatisticsEventLogAction extends DumbAwareAction {
                                                  StatisticsBundle.message("stats.feature.usage.statistics"),
                                                  StatisticsBundle.message("stats.logging.is.disabled"),
                                                  NotificationType.WARNING);
-    notification.addAction(NotificationAction.createSimple(StatisticsBundle.lazyMessage("stats.enable.data.sharing"), () -> {
+    notification.addAction(NotificationAction.createSimple(StatisticsBundle.messagePointer("stats.enable.data.sharing"), () -> {
       new SingleConfigurableEditor(project, new ConsentConfigurable()).show();
     }));
     notification.notify(project);

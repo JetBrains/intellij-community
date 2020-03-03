@@ -1985,7 +1985,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private class CloseAnnotationsAction extends DumbAwareAction {
     CloseAnnotationsAction() {
-      super(EditorBundle.lazyMessage("close.editor.annotations.action.name"));
+      super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
     }
 
     @Override
@@ -2086,7 +2086,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
       if (!addActions.isEmpty()) {
-        DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(EditorBundle.lazyMessage("editor.annotations.action.group.name"));
+        DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(EditorBundle.messagePointer("editor.annotations.action.group.name"));
         for (AnAction addAction : addActions) {
           actionGroup.add(addAction);
         }

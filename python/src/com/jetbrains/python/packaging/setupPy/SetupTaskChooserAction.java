@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class SetupTaskChooserAction extends AnAction {
   public SetupTaskChooserAction() {
-    super(PyBundle.lazyMessage("python.packaging.run.setup.py.task"));
+    super(PyBundle.messagePointer("python.packaging.run.setup.py.task"));
   }
 
   @Override

@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 public class ToggleAutoTestAction extends ToggleAction {
 
   public ToggleAutoTestAction() {
-    super(IdeBundle.lazyMessage("action.ToggleAction.text.toggle.auto.test"),
-          IdeBundle.lazyMessage("action.ToggleAction.description.toggle.auto.test"),
+    super(IdeBundle.messagePointer("action.ToggleAction.text.toggle.auto.test"),
+          IdeBundle.messagePointer("action.ToggleAction.description.toggle.auto.test"),
           AllIcons.Actions.SwapPanels);
   }
 

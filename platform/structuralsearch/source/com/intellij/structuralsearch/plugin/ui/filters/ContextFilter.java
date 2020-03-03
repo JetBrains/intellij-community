@@ -23,7 +23,7 @@ import java.util.List;
 
 public class ContextFilter extends FilterAction {
   public ContextFilter(FilterTable table) {
-    super(SSRBundle.lazyMessage("context.filter.name"), table);
+    super(SSRBundle.messagePointer("context.filter.name"), table);
   }
 
   @Override

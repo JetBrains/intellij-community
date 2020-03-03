@@ -19,7 +19,7 @@ import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 public class RestoreShelvedChange extends DumbAwareAction {
   public RestoreShelvedChange() {
-    super(ActionsBundle.lazyMessage("action.RestoreShelvedChange.text"));
+    super(ActionsBundle.messagePointer("action.RestoreShelvedChange.text"));
   }
 
   @Override
@@ -31,9 +31,9 @@ public class RestoreShelvedChange extends DumbAwareAction {
       return;
     }
     Collection<ShelvedChangeList> deletedLists = notNullize(e.getData(ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY));
-    presentation.setText(VcsBundle.lazyMessage("vcs.shelf.action.restore.text"));
+    presentation.setText(VcsBundle.messagePointer("vcs.shelf.action.restore.text"));
     presentation
-      .setDescription(VcsBundle.lazyMessage("vcs.shelf.action.restore.description", deletedLists.size()));
+      .setDescription(VcsBundle.messagePointer("vcs.shelf.action.restore.description", deletedLists.size()));
     presentation.setEnabled(!isEmpty(deletedLists));
   }
 

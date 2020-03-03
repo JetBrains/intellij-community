@@ -190,7 +190,7 @@ public class CommonActionsPanel extends JPanel {
   }
 
   private static void registerDeleteHook(final MyActionButton removeButton) {
-    new AnAction(IdeBundle.lazyMessage("action.Anonymous.text.delete.hook")) {
+    new AnAction(IdeBundle.messagePointer("action.Anonymous.text.delete.hook")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeButton.actionPerformed(e);

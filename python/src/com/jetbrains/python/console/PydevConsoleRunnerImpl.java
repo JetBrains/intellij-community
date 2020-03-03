@@ -664,8 +664,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private AnAction createStopAction() {
-    return new DumbAwareAction(PyBundle.lazyMessage("action.DumbAware.PydevConsoleRunnerImpl.text.stop.console"),
-                               PyBundle.lazyMessage("action.DumbAware.PydevConsoleRunnerImpl.description.stop.python.console"),
+    return new DumbAwareAction(PyBundle.messagePointer("action.DumbAware.PydevConsoleRunnerImpl.text.stop.console"),
+                               PyBundle.messagePointer("action.DumbAware.PydevConsoleRunnerImpl.description.stop.python.console"),
                                AllIcons.Actions.Suspend) {
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -885,7 +885,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     private XDebugSession mySession = null;
 
     ConnectDebuggerAction() {
-      super(PyBundle.lazyMessage("console.attach.debugger"), PyBundle.lazyMessage("console.attach.debugger.description"), AllIcons.Actions.StartDebugger);
+      super(PyBundle.messagePointer("console.attach.debugger"), PyBundle.messagePointer("console.attach.debugger.description"), AllIcons.Actions.StartDebugger);
     }
 
     @Override
@@ -927,7 +927,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   private static class NewConsoleAction extends AnAction implements DumbAware {
     NewConsoleAction() {
-      super(PyBundle.lazyMessage("console.new.console"), PyBundle.lazyMessage("console.new.console.description"), AllIcons.General.Add);
+      super(PyBundle.messagePointer("console.new.console"), PyBundle.messagePointer("console.new.console.description"), AllIcons.General.Add);
     }
 
     @Override

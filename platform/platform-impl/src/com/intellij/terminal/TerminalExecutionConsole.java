@@ -368,8 +368,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private class ClearAction extends DumbAwareAction {
     private ClearAction() {
-      super(ExecutionBundle.lazyMessage("clear.all.from.console.action.name"),
-            ExecutionBundle.lazyMessage("clear.all.from.console.action.text"), AllIcons.Actions.GC);
+      super(ExecutionBundle.messagePointer("clear.all.from.console.action.name"),
+            ExecutionBundle.messagePointer("clear.all.from.console.action.text"), AllIcons.Actions.GC);
     }
 
     @Override
@@ -385,8 +385,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private class ScrollToTheEndAction extends DumbAwareAction {
     private ScrollToTheEndAction() {
-      super(ActionsBundle.lazyMessage("action.EditorConsoleScrollToTheEnd.text"),
-            ActionsBundle.lazyMessage("action.EditorConsoleScrollToTheEnd.text"),
+      super(ActionsBundle.messagePointer("action.EditorConsoleScrollToTheEnd.text"),
+            ActionsBundle.messagePointer("action.EditorConsoleScrollToTheEnd.text"),
             AllIcons.RunConfigurations.Scroll_down);
     }
 

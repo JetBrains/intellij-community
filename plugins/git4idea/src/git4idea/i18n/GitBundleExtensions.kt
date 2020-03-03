@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.PropertyKey
 
 object GitBundleExtensions {
-  fun lazyMessage(@NotNull @PropertyKey(resourceBundle = GitBundle.BUNDLE) key: String, vararg params: Any): () -> String = {
+  fun messagePointer(@NotNull @PropertyKey(resourceBundle = GitBundle.BUNDLE) key: String, vararg params: Any): () -> String = {
     GitBundle.message(key, params)
   }
 }

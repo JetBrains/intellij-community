@@ -75,8 +75,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<>();
     result.add(new DumbAwareAction(
-      JsonBundle.lazyMessage("action.DumbAware.JsonSchemaMappingsConfigurable.text.add"),
-      JsonBundle.lazyMessage("action.DumbAware.JsonSchemaMappingsConfigurable.description.add"),
+      JsonBundle.messagePointer("action.DumbAware.JsonSchemaMappingsConfigurable.text.add"),
+      JsonBundle.messagePointer("action.DumbAware.JsonSchemaMappingsConfigurable.description.add"),
       IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);

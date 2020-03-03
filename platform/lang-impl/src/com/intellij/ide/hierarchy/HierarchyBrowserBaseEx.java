@@ -612,7 +612,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   protected class AlphaSortAction extends ToggleAction {
     public AlphaSortAction() {
-      super(PlatformEditorBundle.lazyMessage("action.sort.alphabetically"), PlatformEditorBundle.lazyMessage("action.sort.alphabetically"),
+      super(PlatformEditorBundle.messagePointer("action.sort.alphabetically"), PlatformEditorBundle.messagePointer("action.sort.alphabetically"),
             AllIcons.ObjectBrowser.Sorted);
     }
 
@@ -698,7 +698,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       else {
         String typeName = ElementDescriptionUtil.getElementDescription(selectedElement, UsageViewTypeLocation.INSTANCE);
         if (StringUtil.isNotEmpty(typeName)) {
-          presentation.setText(IdeBundle.lazyMessage("action.base.on.this.0", StringUtil.capitalize(typeName)));
+          presentation.setText(IdeBundle.messagePointer("action.base.on.this.0", StringUtil.capitalize(typeName)));
         }
         presentation.setEnabled(isEnabled(browser, selectedElement));
       }
@@ -711,7 +711,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   private class RefreshAction extends com.intellij.ide.actions.RefreshAction {
     RefreshAction() {
-      super(IdeBundle.lazyMessage("action.refresh"), IdeBundle.lazyMessage("action.refresh"), AllIcons.Actions.Refresh);
+      super(IdeBundle.messagePointer("action.refresh"), IdeBundle.messagePointer("action.refresh"), AllIcons.Actions.Refresh);
     }
 
     @Override
@@ -808,7 +808,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     private final class ConfigureScopesAction extends AnAction {
       private ConfigureScopesAction() {
-        super(ActionsBundle.lazyMessage("action.ConfigureScopesAction.text"));
+        super(ActionsBundle.messagePointer("action.ConfigureScopesAction.text"));
       }
 
       @Override

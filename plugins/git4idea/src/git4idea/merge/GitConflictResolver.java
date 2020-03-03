@@ -186,7 +186,7 @@ public class GitConflictResolver {
 
   protected void notifyWarning(@NotNull String title, @NotNull String content) {
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null);
-    notification.addAction(NotificationAction.createSimple(GitBundle.lazyMessage("action.NotificationAction.text.resolve"), () -> {
+    notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.text.resolve"), () -> {
       notification.expire();
       BackgroundTaskUtil.executeOnPooledThread(myProject, () -> mergeNoProceed());
     }));

@@ -202,8 +202,8 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
 
   private class CopyAction extends AnActionButton {
     CopyAction() {
-      super(JavaDebuggerBundle.lazyMessage("button.copy"), JavaDebuggerBundle
-        .lazyMessage("user.renderers.configurable.button.description.copy"), PlatformIcons.COPY_ICON);
+      super(JavaDebuggerBundle.messagePointer("button.copy"), JavaDebuggerBundle
+        .messagePointer("user.renderers.configurable.button.description.copy"), PlatformIcons.COPY_ICON);
     }
 
     @Override

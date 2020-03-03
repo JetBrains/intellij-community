@@ -504,8 +504,8 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   @Override
   protected JComponent createNorthPanel() {
     final DefaultActionGroup historyActionGroup =
-      new DefaultActionGroup(new DumbAwareAction(SSRBundle.lazyMessage("history.button"),
-                                                 SSRBundle.lazyMessage("history.button.description"),
+      new DefaultActionGroup(new DumbAwareAction(SSRBundle.messagePointer("history.button"),
+                                                 SSRBundle.messagePointer("history.button.description"),
                                                  AllIcons.Actions.SearchWithHistory) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -1257,7 +1257,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     }
 
     private void init() {
-      getTemplatePresentation().setText(SSRBundle.lazyMessage(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
+      getTemplatePresentation().setText(SSRBundle.messagePointer(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
       final ActionManager actionManager = ActionManager.getInstance();
       final ShortcutSet searchShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet();
       final ShortcutSet replaceShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralReplaceAction").getShortcutSet();
@@ -1271,7 +1271,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   private class CopyConfigurationAction extends AnAction implements DumbAware {
 
     CopyConfigurationAction() {
-      super(SSRBundle.lazyMessage("export.template.action"));
+      super(SSRBundle.messagePointer("export.template.action"));
     }
 
     @Override
@@ -1283,7 +1283,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   private class PasteConfigurationAction extends AnAction implements DumbAware {
 
     PasteConfigurationAction() {
-      super(SSRBundle.lazyMessage("import.template.action"));
+      super(SSRBundle.messagePointer("import.template.action"));
     }
 
     @Override

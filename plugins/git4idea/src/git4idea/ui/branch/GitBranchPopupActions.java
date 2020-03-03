@@ -312,7 +312,7 @@ public class GitBranchPopupActions {
       private final String myBranchName;
 
       public CheckoutAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-        super(GitBundle.lazyMessage("branches.checkout"));
+        super(GitBundle.messagePointer("branches.checkout"));
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
@@ -341,7 +341,7 @@ public class GitBranchPopupActions {
                        @NotNull List<GitRepository> repositories,
                        @NotNull String branchName,
                        boolean hasCommitsToPush) {
-        super(ActionsBundle.lazyMessage("action.Vcs.Push.text"));
+        super(ActionsBundle.messagePointer("action.Vcs.Push.text"));
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
@@ -368,7 +368,7 @@ public class GitBranchPopupActions {
       @NotNull private final String myCurrentBranchName;
 
       RenameBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String currentBranchName) {
-        super(ActionsBundle.lazyMessage("action.RenameAction.text"));
+        super(ActionsBundle.messagePointer("action.RenameAction.text"));
         myProject = project;
         myRepositories = repositories;
         myCurrentBranchName = currentBranchName;
@@ -408,7 +408,7 @@ public class GitBranchPopupActions {
       private final String myBranchName;
 
       DeleteAction(Project project, List<? extends GitRepository> repositories, String branchName) {
-        super(IdeBundle.lazyMessage("action.delete"));
+        super(IdeBundle.messagePointer("action.delete"));
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
@@ -492,7 +492,7 @@ public class GitBranchPopupActions {
 
       CheckoutRemoteBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
                                  @NotNull String remoteBranchName) {
-        super(GitBundle.lazyMessage("branches.checkout"));
+        super(GitBundle.messagePointer("branches.checkout"));
         myProject = project;
         myRepositories = repositories;
         myRemoteBranchName = remoteBranchName;
@@ -571,7 +571,7 @@ public class GitBranchPopupActions {
       private final String myBranchName;
 
       RemoteDeleteAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-        super(IdeBundle.lazyMessage("action.delete"));
+        super(IdeBundle.messagePointer("action.delete"));
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
@@ -596,7 +596,7 @@ public class GitBranchPopupActions {
     private final String myBranchName;
 
     CheckoutAsNewBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-      super(GitBundle.lazyMessage("branches.new.branch.from.selected"));
+      super(GitBundle.messagePointer("branches.new.branch.from.selected"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -616,7 +616,7 @@ public class GitBranchPopupActions {
     private final String myBranchName;
 
     CompareAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-      super(GitBundle.lazyMessage("branches.compare.with.current"));
+      super(GitBundle.messagePointer("branches.compare.with.current"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -646,7 +646,7 @@ public class GitBranchPopupActions {
     private final String myBranchName;
 
     ShowDiffWithBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-      super(GitBundle.lazyMessage("branches.show.diff.with.working.tree"));
+      super(GitBundle.messagePointer("branches.show.diff.with.working.tree"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -675,7 +675,7 @@ public class GitBranchPopupActions {
 
     MergeAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
                 boolean localBranch) {
-      super(GitBundle.lazyMessage("branches.merge.into.current"));
+      super(GitBundle.messagePointer("branches.merge.into.current"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -710,7 +710,7 @@ public class GitBranchPopupActions {
     private final String myBranchName;
 
     RebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-      super(GitBundle.lazyMessage("branches.rebase.current.onto.selected"));
+      super(GitBundle.messagePointer("branches.rebase.current.onto.selected"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -742,7 +742,7 @@ public class GitBranchPopupActions {
     private final String myBranchName;
 
     CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-      super(GitBundle.lazyMessage("branches.checkout.and.rebase.onto.current"));
+      super(GitBundle.messagePointer("branches.checkout.and.rebase.onto.current"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -775,7 +775,7 @@ public class GitBranchPopupActions {
                                @NotNull List<? extends GitRepository> repositories,
                                @NotNull String branchName,
                                boolean hasIncoming) {
-      super(GitBundle.lazyMessage("branches.update"));
+      super(GitBundle.messagePointer("branches.update"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;

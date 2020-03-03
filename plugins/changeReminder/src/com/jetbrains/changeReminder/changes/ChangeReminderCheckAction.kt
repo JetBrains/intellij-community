@@ -26,7 +26,7 @@ class ChangeReminderCheckAction : ToggleAction(), DumbAware {
         e.presentation.isVisible = false
       }
       else {
-        e.presentation.setDescription(ChangeReminderBundle.lazyMessage(
+        e.presentation.setDescription(ChangeReminderBundle.messagePointer(
           "action.ChangesView.ViewOptions.ShowRelatedFiles.disabled.index.description"
         ))
       }

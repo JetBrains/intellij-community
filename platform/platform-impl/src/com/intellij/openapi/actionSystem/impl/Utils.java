@@ -22,7 +22,7 @@ import java.util.List;
 public final class Utils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
   @NonNls public static final String NOTHING_HERE = CommonBundle.message("empty.menu.filler");
-  public static final AnAction EMPTY_MENU_FILLER = new AnAction(CommonBundle.lazyMessage("empty.menu.filler")) {
+  public static final AnAction EMPTY_MENU_FILLER = new AnAction(CommonBundle.messagePointer("empty.menu.filler")) {
 
     {
       getTemplatePresentation().setEnabled(false);

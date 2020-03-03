@@ -129,7 +129,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       setTitle(component.getClass().getName());
 
       DefaultActionGroup actions = new DefaultActionGroup();
-      actions.addAction(new IconWithTextAction(IdeBundle.lazyMessage("action.Anonymous.text.highlight")) {
+      actions.addAction(new IconWithTextAction(IdeBundle.messagePointer("action.Anonymous.text.highlight")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           //highlightCmp(myHighlightComponent == null);
@@ -143,7 +143,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
 
       actions.addSeparator();
 
-      actions.add(new IconWithTextAction(InternalActionsBundle.lazyMessage("action.Anonymous.text.refresh")) {
+      actions.add(new IconWithTextAction(InternalActionsBundle.messagePointer("action.Anonymous.text.refresh")) {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {

@@ -21,8 +21,8 @@ class DropJShellStateAction extends AnAction{
   }
 
   private DropJShellStateAction() {
-    super(ExecutionBundle.lazyMessage("drop.all.code.snippets"),
-          ExecutionBundle.lazyMessage("invalidate.all.code.snippets"), AllIcons.Actions.GC);
+    super(ExecutionBundle.messagePointer("drop.all.code.snippets"),
+          ExecutionBundle.messagePointer("invalidate.all.code.snippets"), AllIcons.Actions.GC);
   }
 
   @Override

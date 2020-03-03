@@ -50,10 +50,10 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
     Presentation presentation = e.getPresentation();
 
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      presentation.setText(IdeBundle.lazyMessage("action.delete.ellipsis"));
+      presentation.setText(IdeBundle.messagePointer("action.delete.ellipsis"));
     }
     else {
-      presentation.setText(IdeBundle.lazyMessage("action.delete"));
+      presentation.setText(IdeBundle.messagePointer("action.delete"));
     }
     if (e.isFromActionToolbar() && e.getPresentation().getIcon() == null) {
       e.getPresentation().setIcon(IconUtil.getRemoveIcon());

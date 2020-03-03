@@ -104,7 +104,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class CopyToProjectAction extends DumbAwareAction {
 
     CopyToProjectAction() {
-      super(ApplicationBundle.lazyMessage("settings.editor.scheme.copy.to.project"));
+      super(ApplicationBundle.messagePointer("settings.editor.scheme.copy.to.project"));
     }
 
     @Override
@@ -127,7 +127,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class CopyToIDEAction extends DumbAwareAction {
 
     CopyToIDEAction() {
-      super(ApplicationBundle.lazyMessage("settings.editor.scheme.copy.to.ide"));
+      super(ApplicationBundle.messagePointer("settings.editor.scheme.copy.to.ide"));
     }
 
     @Override
@@ -149,7 +149,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class ResetAction extends DumbAwareAction {
     
     ResetAction() {
-      super(ApplicationBundle.lazyMessage("settings.editor.scheme.reset"));
+      super(ApplicationBundle.messagePointer("settings.editor.scheme.reset"));
     }
 
     @Override
@@ -178,7 +178,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class CopyAction extends DumbAwareAction {
     CopyAction() {
-      super(ApplicationBundle.lazyMessage("settings.editor.scheme.copy"));
+      super(ApplicationBundle.messagePointer("settings.editor.scheme.copy"));
     }
 
     @Override
@@ -203,7 +203,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class RenameAction extends DumbAwareAction {
     RenameAction() {
-      super(ActionsBundle.lazyMessage("action.RenameAction.text"));
+      super(ActionsBundle.messagePointer("action.RenameAction.text"));
     }
 
     @Override
@@ -222,7 +222,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class DeleteAction extends DumbAwareAction {
     DeleteAction() {
-      super(ApplicationBundle.lazyMessage("settings.editor.scheme.delete"));
+      super(ApplicationBundle.messagePointer("settings.editor.scheme.delete"));
     }
 
     @Override

@@ -34,7 +34,7 @@ public class JdkPopupAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(JdkPopupAction.class);
 
   public JdkPopupAction() {
-    super(JavaBundle.lazyMessage("action.text.show.quick.list"), () -> "", AllIcons.General.AddJdk);
+    super(JavaBundle.messagePointer("action.text.show.quick.list"), () -> "", AllIcons.General.AddJdk);
   }
 
   @Override

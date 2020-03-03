@@ -25,8 +25,8 @@ import java.util.*;
 
 public class VcsCherryPickAction extends DumbAwareAction {
   public VcsCherryPickAction() {
-    super(DvcsBundle.lazyMessage("cherry.pick.action.text"),
-          DvcsBundle.lazyMessage("cherry.pick.action.description"),
+    super(DvcsBundle.messagePointer("cherry.pick.action.text"),
+          DvcsBundle.messagePointer("cherry.pick.action.description"),
           DvcsImplIcons.CherryPick);
   }
 

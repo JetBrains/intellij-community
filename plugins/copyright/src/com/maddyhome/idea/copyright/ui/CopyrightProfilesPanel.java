@@ -180,8 +180,8 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
   @Nullable
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
-    result.add(new DumbAwareAction(CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.text.add"),
-                                   CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.description.add"),
+    result.add(new DumbAwareAction(CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.text.add"),
+                                   CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.description.add"),
                                    IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
@@ -194,8 +194,8 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
     });
     result.add(new MyDeleteAction());
     result.add(new DumbAwareAction(
-      CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.text.copy"),
-      CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.description.copy"),
+      CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.text.copy"),
+      CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.description.copy"),
       PlatformIcons.COPY_ICON) {
       {
         registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myTree);
@@ -220,8 +220,8 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
         event.getPresentation().setEnabled(getSelectedObject() != null);
       }
     });
-    result.add(new DumbAwareAction(CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.text.import"),
-                                   CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.description.import"),
+    result.add(new DumbAwareAction(CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.text.import"),
+                                   CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.description.import"),
                                    PlatformIcons.IMPORT_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {

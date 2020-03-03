@@ -543,7 +543,7 @@ public class ShelvedChangesViewManager implements Disposable {
       @NotNull private final Map<ShelvedChangeList, Date> myListDateMap;
 
       private UndoShelfDeletionAction(@NotNull Project project, @NotNull Map<ShelvedChangeList, Date> listDateMap) {
-        super(IdeBundle.lazyMessage("undo.dialog.title"));
+        super(IdeBundle.messagePointer("undo.dialog.title"));
         myProject = project;
         myListDateMap = listDateMap;
       }

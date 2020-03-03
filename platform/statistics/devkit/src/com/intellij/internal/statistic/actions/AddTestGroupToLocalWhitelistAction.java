@@ -27,8 +27,8 @@ import java.io.IOException;
  */
 public class AddTestGroupToLocalWhitelistAction extends DumbAwareAction {
   public AddTestGroupToLocalWhitelistAction() {
-    super(ActionsBundle.lazyMessage("action.AddTestGroupToLocalWhitelistAction.text"),
-          ActionsBundle.lazyMessage("action.AddTestGroupToLocalWhitelistAction.description"), ICON);
+    super(ActionsBundle.messagePointer("action.AddTestGroupToLocalWhitelistAction.text"),
+          ActionsBundle.messagePointer("action.AddTestGroupToLocalWhitelistAction.description"), ICON);
   }
 
   private static final LayeredIcon ICON = new LayeredIcon(AllIcons.General.Add, AllIcons.Actions.Scratch);

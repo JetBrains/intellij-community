@@ -41,13 +41,13 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
     List<MavenProject> projects = MavenActionUtil.getMavenProjects(context);
 
     if (isIgnoredInSettings(projectsManager, projects)) {
-      e.getPresentation().setText(MavenProjectBundle.lazyMessage("maven.ignore.edit"));
+      e.getPresentation().setText(MavenProjectBundle.messagePointer("maven.ignore.edit"));
     }
     else if (isIgnored(projectsManager, projects)) {
-      e.getPresentation().setText(MavenProjectBundle.lazyMessage("maven.unignore"));
+      e.getPresentation().setText(MavenProjectBundle.messagePointer("maven.unignore"));
     }
     else {
-      e.getPresentation().setText(MavenProjectBundle.lazyMessage("maven.ignore"));
+      e.getPresentation().setText(MavenProjectBundle.messagePointer("maven.ignore"));
     }
   }
 

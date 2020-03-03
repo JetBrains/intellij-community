@@ -85,7 +85,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
   private void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
     String title = toolWindow.getStripeTitle();
     presentation.setText(title);
-    presentation.setDescription(IdeBundle.lazyMessage("action.activate.tool.window", title));
+    presentation.setDescription(IdeBundle.messagePointer("action.activate.tool.window", title));
     Icon icon = toolWindow.getIcon();
     if (EventLog.LOG_TOOL_WINDOW_ID.equals(myToolWindowId)) {
       icon = AllIcons.Ide.Notification.InfoEvents;

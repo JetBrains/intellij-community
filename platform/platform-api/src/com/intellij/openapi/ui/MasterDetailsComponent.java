@@ -773,7 +773,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     public MyDeleteAction(Condition<Object[]> availableCondition) {
-      super(CommonBundle.lazyMessage("button.delete"), CommonBundle.lazyMessage("button.delete"), PlatformIcons.DELETE_ICON);
+      super(CommonBundle.messagePointer("button.delete"), CommonBundle.messagePointer("button.delete"), PlatformIcons.DELETE_ICON);
       registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE), myTree);
       myCondition = availableCondition;
     }

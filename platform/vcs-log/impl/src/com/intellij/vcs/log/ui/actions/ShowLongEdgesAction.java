@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShowLongEdgesAction extends BooleanPropertyToggleAction {
   public ShowLongEdgesAction() {
-    super(VcsLogBundle.lazyMessage("vcs.log.action.show.long.edges"),
-          VcsLogBundle.lazyMessage("vcs.log.action.description.show.long.edges"), null);
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.long.edges"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.long.edges"), null);
   }
 
   @Override

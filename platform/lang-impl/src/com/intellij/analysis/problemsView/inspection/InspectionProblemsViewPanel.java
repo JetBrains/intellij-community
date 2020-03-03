@@ -199,7 +199,7 @@ class InspectionProblemsViewPanel extends AnalysisProblemsViewPanel {
   //
   //private class FilterProblemsAction extends DumbAwareAction implements Toggleable {
   //  FilterProblemsAction() {
-  //    super(DartBundle.lazyMessage("filter.problems"), DartBundle.lazyMessage("filter.problems.description"), AllIcons.General.Filter);
+  //    super(DartBundle.messagePointer("filter.problems"), DartBundle.messagePointer("filter.problems.description"), AllIcons.General.Filter);
   //  }
   //
   //  @Override

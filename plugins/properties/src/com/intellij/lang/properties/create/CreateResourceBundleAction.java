@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public class CreateResourceBundleAction extends CreateElementActionBase {
 
   protected CreateResourceBundleAction() {
-    super(PropertiesBundle.lazyMessage("create.resource.bundle.dialog.action.title"), Presentation.NULL_STRING, AllIcons.FileTypes.Properties);
+    super(PropertiesBundle.messagePointer("create.resource.bundle.dialog.action.title"), Presentation.NULL_STRING, AllIcons.FileTypes.Properties);
   }
 
   @Override

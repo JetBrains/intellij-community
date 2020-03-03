@@ -22,7 +22,7 @@ import java.util.List;
 
 public abstract class AddDomElementAction extends AnAction {
  public AddDomElementAction() {
-    super(XmlDomBundle.lazyMessage("action.add"), IconUtil.getAddIcon());
+    super(XmlDomBundle.messagePointer("action.add"), IconUtil.getAddIcon());
   }
 
   @Override

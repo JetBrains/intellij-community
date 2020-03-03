@@ -24,8 +24,8 @@ import java.awt.*;
 
 public class IntelliSortChooserPopupAction extends DumbAwareAction {
   public IntelliSortChooserPopupAction() {
-    super(VcsBundle.lazyMessage("action.IntelliSortChooserPopupAction.text"),
-          VcsBundle.lazyMessage("action.IntelliSortChooserPopupAction.description"), VcsLogIcons.IntelliSort);
+    super(VcsBundle.messagePointer("action.IntelliSortChooserPopupAction.text"),
+          VcsBundle.messagePointer("action.IntelliSortChooserPopupAction.description"), VcsLogIcons.IntelliSort);
   }
 
   @Override

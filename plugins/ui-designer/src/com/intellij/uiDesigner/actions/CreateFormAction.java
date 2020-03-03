@@ -32,8 +32,8 @@ public class CreateFormAction extends AbstractCreateFormAction {
   private String myLastLayoutManager = null;
 
   public CreateFormAction() {
-    super(UIDesignerBundle.lazyMessage("action.gui.form.text"),
-          UIDesignerBundle.lazyMessage("action.gui.form.description"), PlatformIcons.UI_FORM_ICON);
+    super(UIDesignerBundle.messagePointer("action.gui.form.text"),
+          UIDesignerBundle.messagePointer("action.gui.form.description"), PlatformIcons.UI_FORM_ICON);
   }
 
   @Override
