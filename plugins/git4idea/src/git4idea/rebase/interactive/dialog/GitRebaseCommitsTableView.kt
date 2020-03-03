@@ -6,9 +6,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.ui.CommitIconTableCellRenderer
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.*
+import com.intellij.ui.ColoredTableCellRenderer
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
@@ -25,11 +29,9 @@ import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.awt.geom.Ellipse2D
 import java.util.*
 import javax.swing.*
 import javax.swing.table.TableCellEditor
-import javax.swing.table.TableCellRenderer
 
 internal open class GitRebaseCommitsTableView(
   val project: Project,
@@ -68,21 +70,7 @@ internal open class GitRebaseCommitsTableView(
 
   private fun prepareCommitIconColumn() {
     val commitIconColumn = columnModel.getColumn(GitRebaseCommitsTableModel.COMMIT_ICON_COLUMN)
-    val renderer = CommitIconRenderer()
-    commitIconColumn.cellRenderer = TableCellRenderer { table, _, isSelected, hasFocus, row, column ->
-      renderer.update(
-        table,
-        isSelected,
-        hasFocus,
-        row,
-        column,
-        row == table.rowCount - 1,
-        getDrawNodeType(row),
-        table.editingRow == row,
-        getRowHeight(row)
-      )
-      renderer
-    }
+    commitIconColumn.cellRenderer = GitRebaseCommitIconTableCellRenderer()
     adjustCommitIconColumnWidth()
   }
 
@@ -116,11 +104,11 @@ internal open class GitRebaseCommitsTableView(
     subjectColumn.cellEditor = CommitMessageCellEditor(project, this, disposable)
   }
 
-  private fun getDrawNodeType(row: Int): CommitIconRenderer.NodeType = when {
-    model.getEntryAction(row) == GitRebaseEntry.Action.EDIT -> CommitIconRenderer.NodeType.EDIT
-    model.isFixupOrDrop(row) -> CommitIconRenderer.NodeType.NO_NODE
-    model.isFixupRoot(row) -> CommitIconRenderer.NodeType.DOUBLE_NODE
-    else -> CommitIconRenderer.NodeType.SIMPLE_NODE
+  internal fun getDrawNodeType(row: Int): NodeType = when {
+    model.getEntryAction(row) == GitRebaseEntry.Action.EDIT -> NodeType.EDIT
+    model.isFixupOrDrop(row) -> NodeType.NO_NODE
+    model.isFixupRoot(row) -> NodeType.DOUBLE_NODE
+    else -> NodeType.SIMPLE_NODE
   }
 }
 
@@ -269,7 +257,7 @@ private class SubjectRenderer : ColoredTableCellRenderer() {
   }
 }
 
-private class CommitIconRenderer : SimpleColoredRenderer() {
+private class GitRebaseCommitIconTableCellRenderer : CommitIconTableCellRenderer({ GRAPH_COLOR }, DEFAULT_CELL_HEIGHT, GRAPH_LINE_WIDTH) {
   companion object {
     private const val NODE_WIDTH = 8
     private const val NODE_CENTER_X = NODE_WIDTH
@@ -278,59 +266,39 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
 
   private var isHead = false
   private var nodeType = NodeType.SIMPLE_NODE
-  private var rowHeight = 0
 
-  override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
-    (g as Graphics2D).drawCommitIcon()
+  override fun customizeRenderer(table: JTable?, value: Any?, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+    if (table != null && table is GitRebaseCommitsTableView) {
+      nodeType = table.getDrawNodeType(row)
+      isHead = row == table.rowCount - 1
+    }
   }
 
-  fun update(
-    table: JTable?,
-    isSelected: Boolean,
-    hasFocus: Boolean,
-    row: Int,
-    column: Int,
-    isHead: Boolean,
-    nodeType: NodeType,
-    editing: Boolean,
-    rowHeight: Int
-  ) {
-    clear()
-    setPaintFocusBorder(false)
-    acquireState(table, isSelected && !editing, hasFocus && !editing, row, column)
-    cellState.updateRenderer(this)
-    border = null
-    this.isHead = isHead
-    this.nodeType = nodeType
-    this.rowHeight = rowHeight
-  }
-
-  private fun Graphics2D.drawCommitIcon() {
-    val tableRowHeight = this@CommitIconRenderer.rowHeight
-    setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+  override fun drawCommitIcon(g: Graphics2D) {
+    val tableRowHeight = rowHeight
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     when (nodeType) {
       NodeType.SIMPLE_NODE -> {
-        drawNode()
+        drawNode(g)
       }
       NodeType.DOUBLE_NODE -> {
-        drawDoubleNode()
+        drawDoubleNode(g)
       }
       NodeType.NO_NODE -> {
       }
       NodeType.EDIT -> {
-        drawEditNode()
+        drawEditNode(g)
       }
     }
     if (nodeType != NodeType.EDIT) {
-      drawEdge(tableRowHeight, false)
+      drawEdge(g, tableRowHeight, false)
       if (!isHead) {
-        drawEdge(tableRowHeight, true)
+        drawEdge(g, tableRowHeight, true)
       }
     }
   }
 
-  private fun Graphics2D.drawDoubleNode() {
+  private fun drawDoubleNode(g: Graphics2D) {
     val circleRadius = NODE_WIDTH / 2
     val backgroundCircleRadius = circleRadius + 1
     val leftCircleX0 = NODE_CENTER_X
@@ -338,45 +306,22 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
     val rightCircleX0 = leftCircleX0 + circleRadius
 
     // right circle
-    drawCircle(rightCircleX0, y0)
+    drawCircle(g, rightCircleX0, y0)
 
     // distance between circles
-    drawCircle(leftCircleX0, y0, backgroundCircleRadius, this@CommitIconRenderer.background)
+    drawCircle(g, leftCircleX0, y0, backgroundCircleRadius, background)
 
     // left circle
-    drawCircle(leftCircleX0, y0)
+    drawCircle(g, leftCircleX0, y0)
   }
 
-  private fun Graphics2D.drawEditNode() {
+  private fun drawEditNode(g: Graphics2D) {
     val icon = AllIcons.Actions.Pause
-    icon.paintIcon(null, this@drawEditNode, NODE_CENTER_X - icon.iconWidth / 2, NODE_CENTER_Y - icon.iconHeight / 2)
+    icon.paintIcon(null, g, NODE_CENTER_X - icon.iconWidth / 2, NODE_CENTER_Y - icon.iconHeight / 2)
   }
 
-  private fun Graphics2D.drawNode() {
-    drawCircle(NODE_CENTER_X, NODE_CENTER_Y)
-  }
+}
 
-  private fun Graphics2D.drawCircle(x0: Int, y0: Int, circleRadius: Int = NODE_WIDTH / 2, circleColor: Color = GRAPH_COLOR) {
-    val circle = Ellipse2D.Double(
-      x0 - circleRadius + 0.5,
-      y0 - circleRadius + 0.5,
-      2.0 * circleRadius,
-      2.0 * circleRadius
-    )
-    color = circleColor
-    fill(circle)
-  }
-
-  private fun Graphics2D.drawEdge(tableRowHeight: Int, isDownEdge: Boolean) {
-    val y1 = NODE_CENTER_Y
-    val y2 = if (isDownEdge) tableRowHeight else 0
-    val x = NODE_CENTER_X
-    color = GRAPH_COLOR
-    stroke = BasicStroke(GRAPH_LINE_WIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
-    drawLine(x, y1, x, y2)
-  }
-
-  enum class NodeType {
-    NO_NODE, SIMPLE_NODE, DOUBLE_NODE, EDIT
-  }
+internal enum class NodeType {
+  NO_NODE, SIMPLE_NODE, DOUBLE_NODE, EDIT
 }
