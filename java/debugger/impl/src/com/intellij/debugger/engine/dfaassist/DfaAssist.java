@@ -265,6 +265,12 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
     while (!(element instanceof PsiStatement)) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiStatement) && (parent == null || element.getTextRangeInParent().getStartOffset() > 0)) {
+        if (parent instanceof PsiCodeBlock && ((PsiCodeBlock)parent).getRBrace() == element) {
+          PsiElement grandParent = parent.getParent();
+          if (grandParent instanceof PsiBlockStatement) {
+            return PsiTreeUtil.getNextSiblingOfType(grandParent, PsiStatement.class);
+          }
+        }
         if (parent instanceof PsiPolyadicExpression) {
           // If we are inside the expression we can position only at locations where the stack is empty
           // currently only && and || chains inside if/return/yield are allowed
