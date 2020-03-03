@@ -1584,15 +1584,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (analyzerStatus != null) {
-        Icon newIcon = analyzerStatus.getExpandedIcon();
-        if (!Objects.equals(e.getPresentation().getIcon(), newIcon)) {
-          e.getPresentation().setIcon(newIcon);
-        }
+      Icon newIcon = analyzerStatus != null ? analyzerStatus.getExpandedIcon() : null;
+      if (!Objects.equals(e.getPresentation().getIcon(), newIcon)) {
+        e.getPresentation().setIcon(newIcon);
       }
-      else { // todo: delete or modify
-        e.getPresentation().setIcon(AllIcons.General.InspectionsEye);
-      }
+
+      e.getPresentation().setEnabledAndVisible(newIcon != null);
     }
   }
 
