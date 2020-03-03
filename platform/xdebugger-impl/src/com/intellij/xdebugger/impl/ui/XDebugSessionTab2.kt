@@ -171,13 +171,25 @@ class XDebugSessionTab2(
     toolWindow?.let { toolWindow ->
       if (toolWindow !is ToolWindowEx) return@let
 
-      val visible = toolWindow.contentManager.contents.count() > 1
+      val singleContent = toolWindow.contentManager.contents.singleOrNull()
       val toolbar = DefaultActionGroup().apply {
-        if (!visible) addAll(toolWindow.decorator.headerToolbar.actions)
+        if (singleContent == null) return@apply
+
+        add(object : AnAction() {
+          override fun actionPerformed(e: AnActionEvent) {
+            toolWindow.contentManager.removeContent(singleContent, true)
+          }
+
+          override fun update(e: AnActionEvent) {
+            e.presentation.text = "Close"
+            e.presentation.icon = AllIcons.Actions.Close
+          }
+        })
+        addAll(toolWindow.decorator.headerToolbar.actions)
       }
       myUi.options.setTopRightToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
-      toolWindow.decorator.isHeaderVisible = visible
+      toolWindow.decorator.isHeaderVisible = singleContent == null
     }
   }
 
