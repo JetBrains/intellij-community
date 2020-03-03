@@ -16,6 +16,7 @@ import git4idea.GitVcs;
 import git4idea.commands.GitImplBase;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitLogUtil;
+import git4idea.i18n.GitBundle;
 import git4idea.rebase.interactive.GitRewordedCommitMessageProvider;
 import git4idea.rebase.interactive.RewordedCommitMessageMapping;
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog;
@@ -98,7 +99,13 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
   }
 
   protected boolean handleUnstructuredEditor(@NotNull String path) throws IOException {
-    return GitImplBase.loadFileAndShowInSimpleEditor(myProject, myRoot, path, "Git Commit Message", "Continue Rebasing");
+    return GitImplBase.loadFileAndShowInSimpleEditor(
+      myProject,
+      myRoot,
+      path,
+      GitBundle.getString("rebase.interactive.edit.commit.message.dialog.title"),
+      GitBundle.getString("rebase.interactive.edit.commit.message.ok.action.title")
+    );
   }
 
   protected boolean handleInteractiveEditor(@NotNull String path) throws IOException, VcsException {
@@ -177,12 +184,17 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
 
   private boolean confirmNoopRebase() {
     LOG.info("Noop situation while rebasing " + myRoot);
-    String message = "There are no commits to rebase because the current branch is directly below the base branch, " +
-                     "or they point to the same commit (the 'noop' situation).\n" +
-                     "Do you want to continue (this will reset the current branch to the base branch)?";
     Ref<Boolean> result = Ref.create(false);
     ApplicationManager.getApplication().invokeAndWait(() -> result.set(
-      Messages.OK == showOkCancelDialog(myProject, message, "Git Rebase", getOkButtonText(), getCancelButtonText(), getQuestionIcon())));
+      Messages.OK == showOkCancelDialog(
+        myProject,
+        GitBundle.message("rebase.interactive.noop.dialog.text"),
+        GitBundle.getString("rebase.interactive.noop.dialog.title"),
+        getOkButtonText(),
+        getCancelButtonText(),
+        getQuestionIcon()
+      )
+    ));
     return result.get();
   }
 
