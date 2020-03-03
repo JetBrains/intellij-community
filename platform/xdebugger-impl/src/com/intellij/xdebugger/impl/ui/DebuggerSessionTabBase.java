@@ -12,6 +12,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
+import com.intellij.execution.ui.layout.LayoutStateDefaults;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -28,13 +29,21 @@ import org.jetbrains.annotations.Nullable;
 public abstract class DebuggerSessionTabBase extends RunTab {
   protected ExecutionConsole myConsole;
 
-  public DebuggerSessionTabBase(@NotNull Project project, @NotNull String runnerId, @NotNull String sessionName, @NotNull GlobalSearchScope searchScope) {
+  public DebuggerSessionTabBase(
+    @NotNull Project project,
+    @NotNull String runnerId,
+    @NotNull String sessionName,
+    @NotNull GlobalSearchScope searchScope,
+    boolean shouldInitTabDefaults) {
     super(project, searchScope, runnerId, XDebuggerBundle.message("xdebugger.default.content.title"), sessionName);
 
-    myUi.getDefaults()
-      .initTabDefaults(0, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null)
-      .initFocusContent(DebuggerContentInfo.FRAME_CONTENT, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION)
-      .initFocusContent(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false));
+    LayoutStateDefaults defaults = myUi.getDefaults();
+    if (shouldInitTabDefaults)
+      defaults.initTabDefaults(0, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null);
+
+    defaults
+      .initContentAttraction(DebuggerContentInfo.FRAME_CONTENT, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION)
+      .initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false));
   }
 
   public static ActionGroup getCustomizedActionGroup(final String id) {
