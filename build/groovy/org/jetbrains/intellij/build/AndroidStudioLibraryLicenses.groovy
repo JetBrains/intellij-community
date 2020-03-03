@@ -44,6 +44,9 @@ class AndroidStudioLibraryLicenses {
     // for compose-compiler-hosted module library in intellij.android.compose-ide-plugin
     new LibraryLicense(name: "Compose Compiler Hosted", libraryName: "compose-compiler-hosted",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    // For ADB wireless QR Code generation
+    new LibraryLicense(name: "Core barcode encoding/decoding library", libraryName: "zxing-core",
+                       license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     // for eclipse-layout-kernel module library in intellij.android.designer
     new LibraryLicense(name: "Eclipse Layout Kernel", libraryName: "eclipse-layout-kernel", license: "Eclipse Public License 1.0"),
     // for LSP4J module libraries in intellij.c

@@ -1909,3 +1909,11 @@ java_library(
     exports = ["//tools/base/emulator/proto:emulator_java_proto"],
     runtime_deps = ["//tools/base/emulator/proto:emulator_java_proto"],
 )
+
+# managed by go/iml_to_build
+java_library(
+    name = "zxing-core",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/zxing/core/3.4.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/zxing/core/3.4.0:jar"],
+)
