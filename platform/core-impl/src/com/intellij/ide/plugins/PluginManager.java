@@ -67,16 +67,17 @@ public final class PluginManager {
   // not in PluginManagerCore because it is helper method
   @Nullable
   public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName) {
-    return loadDescriptor(file, fileName, PluginManagerCore.disabledPlugins());
+    return loadDescriptor(file, fileName, PluginManagerCore.disabledPlugins(), false);
   }
 
   @Nullable
   public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
                                                         @NotNull String fileName,
-                                                        @Nullable Set<PluginId> disabledPlugins) {
+                                                        @Nullable Set<PluginId> disabledPlugins,
+                                                        boolean bundled) {
     Set<PluginId> disabled = disabledPlugins == null ? Collections.emptySet() : disabledPlugins;
     DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabled);
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, bundled, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       return PluginManagerCore.loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
     }
   }

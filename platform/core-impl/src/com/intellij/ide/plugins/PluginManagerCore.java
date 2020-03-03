@@ -906,7 +906,7 @@ public final class PluginManagerCore {
   @Nullable
   @Deprecated
   public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file, @NotNull String fileName) {
-    return PluginManager.loadDescriptor(file.toPath(), fileName, disabledPlugins());
+    return PluginManager.loadDescriptor(file.toPath(), fileName, disabledPlugins(), false);
   }
 
   @Nullable
