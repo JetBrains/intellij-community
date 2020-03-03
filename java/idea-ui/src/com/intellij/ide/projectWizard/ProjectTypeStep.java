@@ -334,6 +334,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     return groups;
   }
 
+  @TestOnly
+  @Nullable
+  ModuleWizardStep getSettingsStep() {
+    return mySettingsStep;
+  }
+
   // new TemplatesGroup selected
   private void projectTypeChanged() {
     TemplatesGroup group = getSelectedGroup();
