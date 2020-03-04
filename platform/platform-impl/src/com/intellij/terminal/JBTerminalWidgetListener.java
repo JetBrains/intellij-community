@@ -27,4 +27,10 @@ public interface JBTerminalWidgetListener {
   }
 
   default void split(boolean vertically) {}
+
+  default boolean isGotoNextSplitTerminalAvailable() {
+    return false;
+  }
+
+  default void gotoNextSplitTerminal(boolean forward) {}
 }

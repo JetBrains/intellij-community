@@ -5,11 +5,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.TerminalView;
@@ -29,10 +29,18 @@ public class TerminalSplitActionBase extends TerminalSessionContextMenuActionBas
   @Override
   public void actionPerformed(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow, @Nullable Content content) {
     Project project = Objects.requireNonNull(e.getProject());
-    JBTerminalWidget terminalWidget = TerminalView.getWidgetByContent(Objects.requireNonNull(content));
+    JBTerminalWidget terminalWidget = getContextTerminal(e, Objects.requireNonNull(content));
     if (terminalWidget != null) {
       TerminalView.getInstance(project).split(terminalWidget, myVertically);
     }
+  }
+
+  static @Nullable JBTerminalWidget getContextTerminal(@NotNull AnActionEvent e, @NotNull Content content) {
+    JBTerminalWidget terminal = e.getDataContext().getData(JBTerminalWidget.TERMINAL_DATA_KEY);
+    if (terminal != null && UIUtil.isAncestor(content.getComponent(), terminal)) {
+      return terminal;
+    }
+    return TerminalView.getWidgetByContent(content);
   }
 
   public static class Vertical extends TerminalSplitActionBase {
