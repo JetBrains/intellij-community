@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.wm.ToolWindowId
@@ -36,7 +37,6 @@ import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
-import git4idea.i18n.GitBundle
 import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
@@ -166,7 +166,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
     val tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis())
     ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info", tabName,
-                                   GitBundle.messagePointer("git.update.tab.name"), Supplier { tabName },
+                                   VcsBundle.messagePointer("vcs.update.tab.name"), Supplier { tabName },
                                    select, panel.getUi())
     if (select) {
       ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.activate(null)
