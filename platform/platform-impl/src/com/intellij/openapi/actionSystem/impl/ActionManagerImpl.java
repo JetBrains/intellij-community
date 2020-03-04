@@ -1097,17 +1097,24 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-
   public boolean canUnloadActions(IdeaPluginDescriptor pluginDescriptor) {
     List<Element> elements = pluginDescriptor.getActionDescriptionElements();
     if (elements == null) return true;
     for (Element element : elements) {
       if (!element.getName().equals(ACTION_ELEMENT_NAME) &&
-          !(element.getName().equals(GROUP_ELEMENT_NAME) && element.getAttributeValue(ID_ATTR_NAME) != null) &&
+          !(element.getName().equals(GROUP_ELEMENT_NAME) && canUnloadGroup(element)) &&
           !element.getName().equals(REFERENCE_ELEMENT_NAME)) {
         LOG.info("Plugin " + pluginDescriptor.getPluginId() + " is not unload-safe because of action element " + element.getName());
         return false;
       }
+    }
+    return true;
+  }
+
+  private static boolean canUnloadGroup(Element element) {
+    if (element.getAttributeValue(ID_ATTR_NAME) == null) return false;
+    for (Element child : element.getChildren()) {
+      if (child.getName().equals(GROUP_ELEMENT_NAME) && !canUnloadGroup(child)) return false;
     }
     return true;
   }
@@ -1120,16 +1127,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         unloadActionElement(element);
       }
       else if (element.getName().equals(GROUP_ELEMENT_NAME)) {
-        String id = element.getAttributeValue(ID_ATTR_NAME);
-        if (id == null) {
-          throw new IllegalStateException("Cannot unload groups with no ID");
-        }
-        for (Element groupChild : element.getChildren()) {
-          if (groupChild.getName().equals(ACTION_ELEMENT_NAME)) {
-            unloadActionElement(groupChild);
-          }
-        }
-        unregisterAction(id);
+        unloadGroupElement(element);
       }
       else if (element.getName().equals(REFERENCE_ELEMENT_NAME)) {
         PluginId pluginId = pluginDescriptor.getPluginId();
@@ -1146,6 +1144,22 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         }
       }
     }
+  }
+
+  private void unloadGroupElement(Element element) {
+    String id = element.getAttributeValue(ID_ATTR_NAME);
+    if (id == null) {
+      throw new IllegalStateException("Cannot unload groups with no ID");
+    }
+    for (Element groupChild : element.getChildren()) {
+      if (groupChild.getName().equals(ACTION_ELEMENT_NAME)) {
+        unloadActionElement(groupChild);
+      }
+      else if (groupChild.getName().equals(GROUP_ELEMENT_NAME)) {
+        unloadGroupElement(groupChild);
+      }
+    }
+    unregisterAction(id);
   }
 
   private void unloadActionElement(@NotNull Element element) {

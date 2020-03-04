@@ -165,6 +165,25 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun unloadNestedGroupWithActions() {
+    val disposable = loadPluginWithText("""
+      <idea-plugin>
+        <id>foo</id>
+        <actions>
+          <group id="Foo">
+            <group id="Bar">
+              <action id="foo.bar" class="${MyAction::class.java.name}"/>
+            </group>  
+          </group>
+        </actions>
+      </idea-plugin>
+    """.trimIndent(), DynamicPlugins::class.java.classLoader)
+    assertThat(ActionManager.getInstance().getAction("foo.bar")).isNotNull()
+    Disposer.dispose(disposable)
+    assertThat(ActionManager.getInstance().getAction("foo.bar")).isNull()
+  }
+
+  @Test
   fun loadOptionalDependency() {
     val plugin1Disposable = loadPluginWithOptionalDependency(
       """
