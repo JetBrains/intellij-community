@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore
 
-import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.io.FileUtil
@@ -21,10 +21,13 @@ import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
+import com.intellij.vfs.AsyncVfsEventsListener
+import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
@@ -35,14 +38,10 @@ private val LOG = logger<GitIgnoreInStoreDirGenerator>()
 
 class GitIgnoreInStoreDirGeneratorActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
-    if (!project.isDirectoryBased) return
+    if (!project.isDirectoryBased || project.isDefault) return
 
     ProjectLevelVcsManagerImpl.getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON) {
-      BackgroundTaskUtil.executeOnPooledThread(project, Runnable {
-        with(project.service<GitIgnoreInStoreDirGenerator>()) {
-          generateGitignoreInStoreDirIfNeeded(project)
-        }
-      })
+      project.service<GitIgnoreInStoreDirGenerator>().run()
     }
   }
 }
@@ -50,21 +49,67 @@ class GitIgnoreInStoreDirGeneratorActivity : StartupActivity.Background {
 /**
  * Generate .idea/.gitignore file silently after project create/open
  */
-class GitIgnoreInStoreDirGenerator(private val project: Project) : SettingsSavingComponent {
+@Service
+class GitIgnoreInStoreDirGenerator(private val project: Project) {
 
-  private var needGenerate = AtomicBoolean(true)
+  private val needGenerate = AtomicBoolean(true)
 
-  override suspend fun save() {
-    generateGitignoreInStoreDirIfNeeded(project)
+  fun run() {
+    val listenerRegistered = runReadAction { registerVfsListenerIfNeeded() }
+    if (!listenerRegistered) {
+      generateGitignoreInStoreDirIfNeeded()
+    }
   }
 
-  internal fun generateGitignoreInStoreDirIfNeeded(project: Project) {
+  private fun registerVfsListenerIfNeeded(): Boolean {
+    val projectConfigDirPath = project.stateStore.projectConfigDir
+    if (projectConfigDirPath == null) {
+      LOG.warn("Project config dir path not found. Project is default or not directory based.")
+      needGenerate.set(false)
+      return false
+    }
+    val projectConfigDirVFile = LocalFileSystem.getInstance().findFileByPath(projectConfigDirPath)
+    if (projectConfigDirVFile != null && !needGenerateInternalIgnoreFile(project, projectConfigDirVFile)) {
+      needGenerate.set(false)
+      return false
+    }
+    val needRegister = projectConfigDirVFile == null || project.projectFile?.exists() != true
+    if (needRegister) {
+      LOG.debug(
+        "Project file or project config directory doesn't exist. Register VFS listener and try generate $GITIGNORE after files become available.")
+      AsyncVfsEventsPostProcessor.getInstance().addListener(VfsEventsListener(project), project)
+    }
+    return needRegister
+  }
+
+  private inner class VfsEventsListener(private val project: Project) : AsyncVfsEventsListener {
+    override fun filesChanged(events: List<VFileEvent>) {
+      if (!needGenerate.get() || project.isDisposed) return
+
+      if (projectFileAffected(events)) {
+        generateGitignoreInStoreDirIfNeeded()
+      }
+    }
+
+    private fun projectFileAffected(events: List<VFileEvent>): Boolean =
+      events.asSequence()
+        .mapNotNull(VFileEvent::getFile)
+        .filter(VirtualFile::isInLocalFileSystem)
+        .any { file -> file == project.projectFile && file.exists() }
+
+  }
+
+  private fun generateGitignoreInStoreDirIfNeeded() {
     if (!needGenerate.compareAndSet(true, false)) return
 
-    val projectConfigDirPath = project.stateStore.projectConfigDir ?: return
+    val projectConfigDirPath = project.stateStore.projectConfigDir
+    if (projectConfigDirPath == null) {
+      LOG.warn("Project config dir path not found. Project is default or not directory based.")
+      return
+    }
     val projectConfigDirVFile = LocalFileSystem.getInstance().findFileByPath(projectConfigDirPath)
-    if (projectConfigDirVFile == null) { // store dir (.idea) not created yet
-      needGenerate.set(true)
+    if (projectConfigDirVFile == null) {
+      LOG.warn("Project config dir not found in VFS by path $projectConfigDirPath")
       return
     }
 
