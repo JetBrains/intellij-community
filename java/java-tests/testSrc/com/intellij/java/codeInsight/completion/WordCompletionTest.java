@@ -16,7 +16,6 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.completion.JavaCompletionTestCase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
@@ -28,30 +27,28 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Maxim.Mossienko
  */
-public class WordCompletionTest extends JavaCompletionTestCase {
-  private static final String BASE_PATH = "/codeInsight/completion/word/";
+public class WordCompletionTest extends NormalCompletionTestCase {
 
-  @NotNull
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/word/";
   }
 
-  public void testKeyWordCompletion() throws Exception {
-    configureByFile(BASE_PATH + "1.txt");
-    checkResultByFile(BASE_PATH + "1_after.txt");
+  public void testKeyWordCompletion() {
+    configureByFile("1.txt");
+    checkResultByFile("1_after.txt");
     
-    configureByFile(BASE_PATH + "1.properties");
-    checkResultByFile(BASE_PATH + "1_after.properties");
+    configureByFile("1.properties");
+    checkResultByFile("1_after.properties");
 
-    configureByFile(BASE_PATH + "1.xml");
-    checkResultByFile(BASE_PATH + "1_after.xml");
+    configureByFile("1.xml");
+    checkResultByFile("1_after.xml");
 
-    configureByFile(BASE_PATH + "2.xml");
-    configureByFile(BASE_PATH + "2_after.xml");
+    configureByFile("2.xml");
+    configureByFile("2_after.xml");
   }
 
-  public void testNoWordCompletionForNonSoftReference() throws Throwable {
+  public void testNoWordCompletionForNonSoftReference() {
     final PsiReferenceProvider softProvider = new PsiReferenceProvider() {
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
@@ -90,8 +87,8 @@ public class WordCompletionTest extends JavaCompletionTestCase {
       registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiLiteralExpression.class), softProvider);
       registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiLiteralExpression.class), hardProvider);
 
-      configureByFile(BASE_PATH + "3.java");
-      checkResultByFile(BASE_PATH + "3_after.java");
+      configureByFile("3.java");
+      checkResultByFile("3_after.java");
     }
     finally {
       registrar.unregisterReferenceProvider(PsiLiteralExpression.class, softProvider);
@@ -99,35 +96,26 @@ public class WordCompletionTest extends JavaCompletionTestCase {
     }
   }
 
-  public void testInJavaLiterals() throws Exception {
-    configureByFile(BASE_PATH + "InJavaLiterals.java");
-    checkResultByFile(BASE_PATH + "InJavaLiterals_after.java");
+  public void testInJavaLiterals() { doTest(); }
+
+  public void testComments() {
+    configureByFile("4.java");
+    checkResultByFile("4_after.java");
   }
 
-  public void testComments() throws Throwable {
-    configureByFile(BASE_PATH + "4.java");
-    checkResultByFile(BASE_PATH + "4_after.java");
+  public void testSpaceInComment() { doAntiTest(); }
+
+  public void testTextInComment() { doTest(); }
+
+  public void testDollarsInPrefix() {
+    configureByFile(getTestName(false) + ".txt");
+    checkResultByFile(getTestName(false) + "_after.txt");
   }
 
-  public void testSpaceInComment() throws Throwable {
-    configureByFile(BASE_PATH + "SpaceInComment.java");
-    checkResultByFile(BASE_PATH + "SpaceInComment.java");
-  }
-
-  public void testTextInComment() throws Throwable {
-    configureByFile(BASE_PATH + "TextInComment.java");
-    checkResultByFile(BASE_PATH + "TextInComment_after.java");
-  }
-
-  public void testDollarsInPrefix() throws Throwable {
-    configureByFile(BASE_PATH + getTestName(false) + ".txt");
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.txt");
-  }
-
-  public void testCompleteStringLiteralCopy() throws Throwable {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
+  public void testCompleteStringLiteralCopy() {
+    configureByTestName();
     selectItem(myItems[1]);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    checkResult();
   }
 
 }
