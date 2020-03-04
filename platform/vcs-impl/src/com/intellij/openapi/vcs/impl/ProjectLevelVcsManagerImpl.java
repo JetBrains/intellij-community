@@ -405,7 +405,10 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       return null;  // content manager is made null during dispose; flag is set later
     }
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
-    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()), false, updateInfoTree);
+    String tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis());
+    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info", tabName,
+                                   VcsBundle.messagePointer("vcs.update.tab.name"), () -> tabName,
+                                   false, updateInfoTree);
     updateInfoTree.expandRootChildren();
     return updateInfoTree;
   }
