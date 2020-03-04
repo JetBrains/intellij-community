@@ -36,6 +36,7 @@ import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.util.DefaultJDOMExternalizer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
@@ -328,6 +329,7 @@ object DynamicPlugins {
           jdomSerializer.clearSerializationCaches()
           BeanBinding.clearSerializationCaches()
           TypeFactory.defaultInstance().clearCache()
+          DefaultJDOMExternalizer.clearFieldCache()
           Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
 
           if (disable) {
