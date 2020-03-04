@@ -136,7 +136,7 @@ public class EditorStressTest extends AbstractEditorTest {
       final FoldingModel foldingModel = editor.getFoldingModel();
       foldingModel.runBatchFoldingOperation(() -> foldingModel.addFoldRegion(Math.min(startOffset, endOffset),
                                                                              Math.max(startOffset, endOffset),
-                                                                             "."));
+                                                                             random.nextBoolean() ? "." : ""));
     }
   }
 
