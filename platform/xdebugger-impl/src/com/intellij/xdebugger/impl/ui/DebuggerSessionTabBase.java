@@ -17,11 +17,12 @@ import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.content.Content;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +80,7 @@ public abstract class DebuggerSessionTabBase extends RunTab {
   public void select() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    UIUtil.invokeLaterIfNeeded(() -> {
+    GuiUtils.invokeLaterIfNeeded(() -> {
       if (myRunContentDescriptor != null) {
         RunContentManager manager = RunContentManager.getInstance(myProject);
         ToolWindow toolWindow = manager.getToolWindowByDescriptor(myRunContentDescriptor);
@@ -87,6 +88,6 @@ public abstract class DebuggerSessionTabBase extends RunTab {
         if (toolWindow == null || content == null) return;
         manager.selectRunContent(myRunContentDescriptor);
       }
-    });
+    }, ModalityState.defaultModalityState());
   }
 }
