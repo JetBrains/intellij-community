@@ -80,11 +80,13 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
     @Attribute("default_console_encoding")
     public @NotNull String getDefaultConsoleEncodingName() {
-      return myDefaultConsoleEncoding.name();
+      return myDefaultConsoleEncoding == ChooseFileEncodingAction.NO_ENCODING ? "" : myDefaultConsoleEncoding.name();
     }
 
-    void setDefaultConsoleEncodingName(@NotNull String name) {
-      myDefaultConsoleEncoding = ObjectUtils.notNull(CharsetToolkit.forName(name), CharsetToolkit.getDefaultSystemCharset());
+    public void setDefaultConsoleEncodingName(@NotNull String name) {
+      myDefaultConsoleEncoding = name.isEmpty()
+                                 ? ChooseFileEncodingAction.NO_ENCODING
+                                 : ObjectUtils.notNull(CharsetToolkit.forName(name), CharsetToolkit.getDefaultSystemCharset());
     }
   }
 
@@ -341,8 +343,13 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Override
+  public @NotNull String getDefaultConsoleEncodingName() {
+    return myState.getDefaultConsoleEncodingName();
+  }
+
+  @Override
   public @NotNull Charset getDefaultConsoleEncoding() {
-    return myState.myDefaultConsoleEncoding;
+    return myState.myDefaultConsoleEncoding == ChooseFileEncodingAction.NO_ENCODING ? CharsetToolkit.getDefaultSystemCharset() : myState.myDefaultConsoleEncoding;
   }
 
   @Override

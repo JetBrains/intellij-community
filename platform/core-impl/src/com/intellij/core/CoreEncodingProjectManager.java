@@ -73,6 +73,11 @@ public class CoreEncodingProjectManager extends EncodingProjectManager {
   }
 
   @Override
+  public @NotNull String getDefaultConsoleEncodingName() {
+    return getDefaultConsoleEncoding().name();
+  }
+
+  @Override
   public void setDefaultConsoleEncodingName(@NotNull String name) {}
 
   @Nullable
