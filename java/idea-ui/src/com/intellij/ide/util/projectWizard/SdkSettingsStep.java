@@ -85,11 +85,11 @@ public class SdkSettingsStep extends ModuleWizardStep {
       }
     });
 
-    getPreselectedSdk(project, component.getValue(selectedJdkProperty), sdkTypeIdFilter);
+    preselectSdk(project, component.getValue(selectedJdkProperty), sdkTypeIdFilter);
     myJdkPanel.add(myJdkComboBox, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, CENTER, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
   }
 
-  private void getPreselectedSdk(Project project, String lastUsedSdk, Condition<? super SdkTypeId> sdkFilter) {
+  private void preselectSdk(Project project, String lastUsedSdk, Condition<? super SdkTypeId> sdkFilter) {
     myJdkComboBox.reloadModel();
 
     if (project != null) {
