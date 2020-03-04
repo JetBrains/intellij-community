@@ -8,9 +8,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,22 +25,9 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
     registerSelectAll(list);
   }
 
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public ListSpeedSearch(final JList<T> list, @NotNull Function<? super T, String> convertor) {
     super(list);
     myToStringConvertor = convertor;
-    registerSelectAll(list);
-  }
-
-  /**
-   * @deprecated use {@link #ListSpeedSearch(JList, Function)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  public ListSpeedSearch(final JList<T> list, @Nullable Convertor<? super T, String> convertor) {
-    super(list);
-    myToStringConvertor = convertor == null ? null : convertor::convert;
     registerSelectAll(list);
   }
 
