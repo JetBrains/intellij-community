@@ -315,8 +315,8 @@ private fun filterSuggestedPaths(suggestedPaths: MutableCollection<String>,
     .filterNot { it in existingPaths }
     .distinct()
     .map { PyDetectedSdk(it) }
-    .sortedWith(compareBy<PyDetectedSdk>({ it.isAssociatedWithModule(module) },
-                                         { it.homePath }).reversed())
+    .sortedWith(compareBy({ !it.isAssociatedWithModule(module) },
+                          { it.homePath }))
     .toList()
 }
 
