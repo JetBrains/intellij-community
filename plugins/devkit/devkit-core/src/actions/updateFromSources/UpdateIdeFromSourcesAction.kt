@@ -255,9 +255,7 @@ internal open class UpdateIdeFromSourcesAction
         :CLEANUP_AND_EXIT
         START /b "" cmd /c DEL /Q /F "${updateScript.absolutePath}" & EXIT /b
       """.trimIndent())
-      // DO_NOT_LOCK_INSTALL_FOLDER is not used by the script above, it's a flag forcing restarter to operate outside installation folder
-      return arrayOf("cmd", "/c", updateScript.absolutePath, Restarter.DO_NOT_LOCK_INSTALL_FOLDER,
-                     ">${restartLogFile.absolutePath}", "2>&1")
+      return arrayOf("cmd", "/c", updateScript.absolutePath, ">${restartLogFile.absolutePath}", "2>&1")
     }
 
     val command = arrayOf(
@@ -269,6 +267,7 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   private fun restartWithCommand(command: Array<String>) {
+    Restarter.doNotLockInstallFolderOnRestart()
     (ApplicationManager.getApplication() as ApplicationImpl).restart(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE, command)
   }
 

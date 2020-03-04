@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Restarter {
-  public static final String DO_NOT_LOCK_INSTALL_FOLDER = "DO_NOT_LOCK_INSTALL_FOLDER";
+  private static final String DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY = "restarter.do.not.lock.install.folder";
 
   private Restarter() { }
 
@@ -248,9 +248,13 @@ public class Restarter {
     }
   }
 
+  public static void doNotLockInstallFolderOnRestart() {
+    System.setProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, "true");
+  }
+
   private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
     String restarter = restarterFile.getPath();
-    boolean doNotLock = restarterArgs.contains(DO_NOT_LOCK_INSTALL_FOLDER);
+    boolean doNotLock = Boolean.parseBoolean(System.getProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY));
     Path tempDir = null;
     if (doNotLock || restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS)) {
       tempDir = Paths.get(PathManager.getSystemPath(), "restart");
