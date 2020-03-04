@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
 import com.intellij.notification.NotificationAction
@@ -34,7 +34,6 @@ import git4idea.repo.GitRepositoryChangeListener
 import git4idea.reset.GitResetMode
 import java.io.File
 import java.io.IOException
-import java.util.function.Supplier
 
 class GitRewordOperation(private val repository: GitRepository,
                          private val commit: VcsCommitMetadata,
@@ -117,11 +116,16 @@ class GitRewordOperation(private val repository: GitRepository,
 
   internal fun undo() {
     val possibility = checkUndoPossibility()
-    val errorTitle = "Can't Undo Commit Message Edit"
+    val errorTitle = GitBundle.getString("rebase.log.reword.action.notification.undo.not.allowed.title")
     when (possibility) {
-      is UndoPossibility.HeadMoved -> notifier.notifyError(errorTitle, "Repository has already been changed")
-      is UndoPossibility.PushedToProtectedBranch ->
-        notifier.notifyError(errorTitle, "Commit has already been pushed to ${possibility.branch}")
+      is UndoPossibility.HeadMoved -> notifier.notifyError(
+        errorTitle,
+        GitBundle.getString("rebase.log.reword.action.notification.undo.not.allowed.repository.changed.message")
+      )
+      is UndoPossibility.PushedToProtectedBranch -> notifier.notifyError(
+        errorTitle,
+        GitBundle.message("rebase.log.reword.action.notification.undo.not.allowed.commit.pushed.message", possibility.branch)
+      )
       is UndoPossibility.Error -> notifier.notifyError(errorTitle, "")
       else -> doUndo()
     }
@@ -131,7 +135,7 @@ class GitRewordOperation(private val repository: GitRepository,
     val res = Git.getInstance().reset(repository, GitResetMode.KEEP, initialHeadPosition)
     repository.update()
     if (!res.success()) {
-      notifier.notifyError("Undo Commit Message Edit Failed", res.errorOutputAsHtmlString)
+      notifier.notifyError(GitBundle.getString("rebase.log.reword.action.notification.undo.failed.title"), res.errorOutputAsHtmlString)
     }
   }
 
@@ -189,9 +193,14 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private fun notifySuccess() {
-    val notification = STANDARD_NOTIFICATION.createNotification("Commit Message Changed", "", NotificationType.INFORMATION, null)
+    val notification = STANDARD_NOTIFICATION.createNotification(
+      GitBundle.getString("rebase.log.reword.action.notification.successful.title"),
+      "",
+      NotificationType.INFORMATION,
+      null
+    )
     notification.addAction(NotificationAction.createSimple(
-      Supplier { GitBundle.message("action.NotificationAction.GitRewordOperation.text.undo") },
+      GitBundle.messagePointer("action.NotificationAction.GitRewordOperation.text.undo"),
       Runnable {
         notification.expire()
         undoInBackground()
@@ -211,7 +220,10 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private fun undoInBackground() {
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Undoing Reword...") {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(
+      project,
+      GitBundle.getString("rebase.log.reword.action.progress.indicator.undo.title")
+    ) {
       override fun run(indicator: ProgressIndicator) {
         undo()
       }
