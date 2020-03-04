@@ -82,13 +82,11 @@ public class HardcodedContracts {
                     instanceCall(JAVA_UTIL_LIST, "equals").parameterTypes(JAVA_LANG_OBJECT),
                     instanceCall(JAVA_UTIL_MAP, "equals").parameterTypes(JAVA_LANG_OBJECT)),
               ContractProvider.of(SpecialField.COLLECTION_SIZE.getEqualsContracts()))
-    .register(instanceCall(JAVA_UTIL_COLLECTION, "contains").parameterCount(1),
+    .register(anyOf(instanceCall(JAVA_UTIL_COLLECTION, "contains").parameterCount(1),
+                    instanceCall(JAVA_UTIL_MAP, "containsKey", "containsValue").parameterCount(1)),
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(),
                 returnFalse())))
-    .register(instanceCall(JAVA_UTIL_MAP, "containsKey", "containsValue").parameterCount(1),
-              ContractProvider.of(singleConditionContract(
-                ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(), returnFalse())))
     .register(instanceCall(JAVA_UTIL_LIST, "get", "remove").parameterTypes("int"),
               ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
     .register(anyOf(
