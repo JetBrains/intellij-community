@@ -198,10 +198,12 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     sb.append(VcsUtil.getShortRevisionString(revision.getRevisionNumber())).append(" ");
     sb.append(revision.getAuthor());
     long time = revision.getRevisionDate().getTime();
-    sb.append(" on ").append(DateFormatUtil.formatDate(time)).append(" at ").append(DateFormatUtil.formatTime(time));
+    sb.append(" ").append(VcsBundle.message("file.history.details.on.date.at.time", DateFormatUtil.formatDate(time),
+                                            DateFormatUtil.formatTime(time)));
     if (revision instanceof VcsFileRevisionEx) {
       if (!Comparing.equal(revision.getAuthor(), ((VcsFileRevisionEx)revision).getCommitterName())) {
-        sb.append(" (committed by ").append(((VcsFileRevisionEx)revision).getCommitterName()).append(")");
+        sb.append(" (").append(VcsBundle.message("file.history.details.committer.info",
+                                                 ((VcsFileRevisionEx)revision).getCommitterName())).append(")");
       }
     }
     if (withMessage) {
@@ -750,7 +752,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
           StringBuilder sb = new StringBuilder(StringUtil.notNullize(ex.getAuthor()));
           if (ex.getAuthorEmail() != null) sb.append(" &lt;").append(ex.getAuthorEmail()).append("&gt;");
           if (ex.getCommitterName() != null && !Comparing.equal(ex.getAuthor(), ex.getCommitterName())) {
-            sb.append(", via ").append(ex.getCommitterName());
+            sb.append(", ").append(VcsBundle.message("file.history.details.committer.tooltip.info", ex.getCommitterName()));
             if (ex.getCommitterEmail() != null) sb.append(" &lt;").append(ex.getCommitterEmail()).append("&gt;");
           }
           ((AuthorCellRenderer)renderer).setTooltipText(sb.toString());
