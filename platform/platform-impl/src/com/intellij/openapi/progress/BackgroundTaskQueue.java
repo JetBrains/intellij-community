@@ -50,7 +50,7 @@ public class BackgroundTaskQueue {
   public BackgroundTaskQueue(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
     myTitle = title;
 
-    Condition disposeCondition = project != null ? project.getDisposed() : ApplicationManager.getApplication().getDisposed();
+    Condition<?> disposeCondition = project != null ? project.getDisposed() : ApplicationManager.getApplication().getDisposed();
     myProcessor = new QueueProcessor<>(TaskData::consume, true, ThreadToUse.AWT, disposeCondition);
   }
 
