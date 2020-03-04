@@ -4,7 +4,6 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -60,12 +59,12 @@ public final class MockRuntimeConfiguration extends LocatableConfigurationBase i
     @NotNull
     @Override
     public String getDisplayName() {
-      return SmRunnerBundle.message("sm.test.runner.mock.runtime.config.display.name");
+      return "mock";
     }
 
     @Override
     public String getConfigurationTypeDescription() {
-      return SmRunnerBundle.message("sm.test.runner.mock.runtime.config.type.description");
+      return "mock type";
     }
 
     @Override

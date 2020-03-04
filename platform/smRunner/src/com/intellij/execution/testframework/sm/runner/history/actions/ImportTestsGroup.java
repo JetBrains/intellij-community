@@ -35,8 +35,8 @@ import java.util.stream.Collectors;
 public class ImportTestsGroup extends ActionGroup {
   private SMTRunnerConsoleProperties myProperties;
   public ImportTestsGroup() {
-    super(SmRunnerBundle.message("sm.test.runner.import.test.group.history"),
-          SmRunnerBundle.message("sm.test.runner.import.test.group.open.recent.session"), AllIcons.Vcs.History);
+    super(() -> SmRunnerBundle.message("sm.test.runner.import.test.group.history"),
+          () -> SmRunnerBundle.message("sm.test.runner.import.test.group.open.recent.session"), AllIcons.Vcs.History);
     setPopup(true);
   }
 
