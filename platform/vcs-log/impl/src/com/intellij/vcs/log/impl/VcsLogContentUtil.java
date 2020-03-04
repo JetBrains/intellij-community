@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.TabGroupId;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
@@ -127,7 +128,8 @@ public class VcsLogContentUtil {
     }
     else {
       existingIds = ContainerUtil.map2SetNotNull(Arrays.asList(contentManager.getContents()), content -> {
-        if (!VcsLogContentProvider.TAB_NAME.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY))) return null;
+        TabGroupId groupId = content.getUserData(Content.TAB_GROUP_ID_KEY);
+        if (groupId == null || !VcsLogContentProvider.TAB_NAME.equals(groupId.getId())) return null;
         return getId(content);
       });
     }
@@ -137,7 +139,7 @@ public class VcsLogContentUtil {
 
 
   public static <U extends VcsLogUiEx> U openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
-                                                    @NotNull @NonNls String groupId, @NotNull @NonNls String tabId,
+                                                    @NotNull @NonNls String groupId,
                                                     @NotNull Supplier<String> tabGroupDisplayName,
                                                     @NotNull Function<U, String> tabDisplayName,
                                                     @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
@@ -145,7 +147,7 @@ public class VcsLogContentUtil {
 
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
     ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi),
-                                   groupId, tabId, tabGroupDisplayName, () -> tabDisplayName.apply(logUi),
+                                   groupId, tabGroupDisplayName, () -> tabDisplayName.apply(logUi),
                                    focus, logUi);
     if (focus) {
       toolWindow.activate(null);

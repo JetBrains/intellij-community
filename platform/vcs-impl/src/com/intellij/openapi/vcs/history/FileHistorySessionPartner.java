@@ -143,7 +143,7 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
     boolean selectedExistingContent = ContentUtilEx.selectContent(manager, myContentPanel, true);
     if (!selectedExistingContent) {
       String tabName = getTabName(myPath, myStartingRevisionNumber);
-      ContentUtilEx.addTabbedContent(manager, myContentPanel, "History", tabName,
+      ContentUtilEx.addTabbedContent(manager, myContentPanel, "History",
                                      VcsBundle.messagePointer("file.history.tab.name"), () -> tabName,
                                      true, this);
     }

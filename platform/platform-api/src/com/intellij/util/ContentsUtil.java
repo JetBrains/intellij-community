@@ -15,19 +15,14 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class ContentsUtil {
-  protected static final String DISPOSABLE_KEY = "TabContentDisposable";
-
   public static void addOrReplaceContent(ContentManager manager, Content content, boolean select) {
     final String contentName = content.getDisplayName();
 
@@ -63,23 +58,9 @@ public class ContentsUtil {
         JComponent component = tabbedContent.getComponent();
         tabbedContent.removeContent(component);
         contentManager.setSelectedContent(tabbedContent, true, true);
-        dispose(component);
         return;
       }
     }
     contentManager.removeContent(content, true);
-  }
-
-  @Nullable
-  public static Disposable getDisposable(@NotNull JComponent contentComponent) {
-    Object disposable = contentComponent.getClientProperty(DISPOSABLE_KEY);
-    if (disposable instanceof Disposable) return (Disposable)disposable;
-    return null;
-  }
-
-  public static void dispose(@NotNull JComponent component) {
-    Disposable disposable = getDisposable(component);
-    if (disposable == null) return;
-    Disposer.dispose(disposable);
   }
 }

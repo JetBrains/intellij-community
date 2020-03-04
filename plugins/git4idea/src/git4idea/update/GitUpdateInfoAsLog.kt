@@ -165,7 +165,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
     val tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis())
-    ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info", tabName,
+    ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info",
                                    VcsBundle.messagePointer("vcs.update.tab.name"), Supplier { tabName },
                                    select, panel.getUi())
     if (select) {

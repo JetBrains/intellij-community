@@ -80,7 +80,7 @@ public class VcsLogTabsManager {
       });
     }
     else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
-      ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId,
+      ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME,
                                         () -> VcsLogBundle.message("vcs.log.tab.name"), u -> generateShortDisplayName(u),
                                         factory, focus);
       ui.addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));

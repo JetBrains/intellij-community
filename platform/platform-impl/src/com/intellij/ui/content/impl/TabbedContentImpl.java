@@ -2,13 +2,15 @@
 package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.TabDescriptor;
+import com.intellij.ui.content.TabGroupId;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,26 +18,31 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author Konstantin Bulenkov
  */
 public final class TabbedContentImpl extends ContentImpl implements TabbedContent {
-  private final List<Pair<String, JComponent>> myTabs = new ArrayList<>();
   @NotNull
-  private String myPrefix;
+  private final List<TabDescriptor> myTabs = new ArrayList<>();
+  @NotNull
+  private final TabGroupId myId;
 
   public TabbedContentImpl(JComponent component, @NotNull String displayName, boolean isPinnable, @NotNull String titlePrefix) {
-    super(component, displayName, isPinnable);
-    myPrefix = titlePrefix;
-    addContent(component, displayName, true);
+    this(new TabGroupId(titlePrefix, titlePrefix), new TabDescriptor(component, displayName), isPinnable);
+  }
+
+  public TabbedContentImpl(@NotNull TabGroupId id, @NotNull TabDescriptor tab, boolean isPinnable) {
+    super(tab.getComponent(), id.getDisplayName(tab), isPinnable);
+    myId = id;
+    myTabs.add(tab);
+    Disposer.register(this, tab);
   }
 
   @Nullable
-  private Pair<String, JComponent> findTab(@NotNull JComponent c) {
-    for (Pair<String, JComponent> tab : myTabs) {
-      if (tab.second == c) {
+  private TabDescriptor findTab(@NotNull JComponent c) {
+    for (TabDescriptor tab : myTabs) {
+      if (tab.getComponent() == c) {
         return tab;
       }
     }
@@ -43,41 +50,49 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   }
 
   @Nullable
-  private Pair<String, JComponent> selectedTab() {
+  private TabDescriptor selectedTab() {
     return findTab(getComponent());
   }
 
   private int indexOf(@NotNull JComponent c) {
     for (int i = 0; i < myTabs.size(); i++) {
-      if (myTabs.get(i).second == c) return i;
+      if (myTabs.get(i).getComponent() == c) return i;
     }
     return -1;
   }
 
-  private void selectTab(@NotNull Pair<String, JComponent> tab) {
-    setDisplayName(getDisplayName(tab.second, true));
-    setComponent(tab.second);
-  }
-
-  @Nls
-  @NotNull
-  private String getDisplayName(@NotNull JComponent c, boolean withPrefix) {
-    String displayName = ContentUtilEx.getDisplayName(c, withPrefix);
-    if (displayName != null) return displayName;
-    String tabName = Objects.requireNonNull(findTab(c)).first;
-    if (withPrefix) return ContentUtilEx.getFullName(myPrefix, tabName);
-    return tabName;
+  private void selectTab(@NotNull TabDescriptor tab) {
+    setDisplayName(myId.getDisplayName(tab));
+    setComponent(tab.getComponent());
   }
 
   @Override
   public void addContent(@NotNull JComponent content, @NotNull String name, boolean selectTab) {
-    Pair<String, JComponent> tab = Pair.create(name, content);
+    addContent(new TabDescriptor(content, name), selectTab);
+  }
+
+  @Override
+  public void addContent(@NotNull TabDescriptor tab, boolean selectTab) {
+    Disposer.register(this, tab);
     if (!myTabs.contains(tab)) {
       myTabs.add(tab);
     }
-    if (selectTab && getComponent() != content) {
+    if (selectTab && getComponent() != tab.getComponent()) {
       selectTab(tab);
     }
+  }
+
+  @NotNull
+  @Override
+  public TabGroupId getId() {
+    return myId;
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getTitlePrefix() {
+    return myId.getDisplayName();
   }
 
   @Override
@@ -96,7 +111,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   public void removeContent(@NotNull JComponent content) {
     int index = indexOf(content);
     if (index != -1) {
-      myTabs.remove(index);
+      Disposer.dispose(myTabs.remove(index));
       index = index > 0 ? index - 1 : index;
       if (index < myTabs.size()) {
         selectContent(index);
@@ -107,7 +122,9 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   @Nls
   @Override
   public String getDisplayName() {
-    return getDisplayName(getComponent(), true);
+    TabDescriptor selectedTab = selectedTab();
+    if (selectedTab == null) return myId.getDisplayName();
+    return myId.getDisplayName(selectedTab);
   }
 
   @Override
@@ -121,7 +138,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   }
 
   public boolean findAndSelectContent(@NotNull JComponent contentComponent) {
-    Pair<String, JComponent> tab = findTab(contentComponent);
+    TabDescriptor tab = findTab(contentComponent);
     if (tab != null) {
       selectTab(tab);
       return true;
@@ -129,51 +146,41 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
     return false;
   }
 
-  @NonNls
   @Override
   public String getTabName() {
-    return ContentUtilEx.getFullName(myPrefix, Objects.requireNonNull(selectedTab()).first);
+    return getDisplayName();
   }
 
   @NotNull
   @Override
   public List<Pair<String, JComponent>> getTabs() {
-    return ContainerUtil.map2List(myTabs, pair -> Pair.create(getDisplayName(pair.second, false), pair.second));
+    return ContainerUtil.map2List(myTabs, tab -> Pair.create(myId.getDisplayName(tab), tab.getComponent()));
   }
 
   @Override
-  public String getTitlePrefix() {
-    return myPrefix;
-  }
-
-  @Override
-  public void setTitlePrefix(String titlePrefix) {
-    myPrefix = titlePrefix;
+  public <T> T getUserData(@NotNull Key<T> key) {
+    if (key.equals(TAB_GROUP_ID_KEY)) return (T)myId;
+    if (key.equals(TAB_DESCRIPTOR_KEY)) return (T)selectedTab();
+    return super.getUserData(key);
   }
 
   @Override
   public void split() {
-    List<Pair<String, JComponent>> copy = new ArrayList<>(myTabs);
-    int selectedTab = ContentUtilEx.getSelectedTab(this);
-    ContentManager manager = Objects.requireNonNull(getManager());
-    String prefix = getTitlePrefix();
+    ContentManager manager = getManager();
+    if (manager == null) return;
+
+    boolean selected = manager.isSelected(this);
+    TabDescriptor selectedTab = selectedTab();
+
+    List<TabDescriptor> tabsCopy = new ArrayList<>(myTabs);
+
     manager.removeContent(this, false);
-    ContentUtilEx.setSplitMode(prefix, true);
-    for (int i = 0; i < copy.size(); i++) {
-      final boolean select = i == selectedTab;
-      final JComponent component = copy.get(i).second;
-      final String tabName = copy.get(i).first;
-      ContentUtilEx.addTabbedContent(manager, component, prefix, tabName, select);
+    ContentUtilEx.setSplitMode(myId.getId(), true);
+
+    for (TabDescriptor tab : tabsCopy) {
+      ContentUtilEx.addSplitTabbedContent(manager, myId, tab, selected && tab == selectedTab);
     }
+
     Disposer.dispose(this);
-  }
-
-  public boolean updateName(@NotNull JComponent component) {
-    if (findTab(component) == null) return false;
-    if (getComponent() == component) {
-      setDisplayName(getDisplayName(component, true));
-    }
-
-    return true;
   }
 }

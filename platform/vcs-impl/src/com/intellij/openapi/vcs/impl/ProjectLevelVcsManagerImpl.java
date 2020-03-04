@@ -406,7 +406,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     }
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
     String tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis());
-    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info", tabName,
+    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info",
                                    VcsBundle.messagePointer("vcs.update.tab.name"), () -> tabName,
                                    false, updateInfoTree);
     updateInfoTree.expandRootChildren();

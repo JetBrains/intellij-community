@@ -57,7 +57,7 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
     val logUi = logManager.createLogUi(logUiFactory, VcsLogManager.LogWindowKind.TOOL_WINDOW)
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
-    ContentUtilEx.addTabbedContent(contentManager, panel, "Compare", "$branchName and $currentRef",
+    ContentUtilEx.addTabbedContent(contentManager, panel, "Compare",
                                    GitBundle.messagePointer("git.compare.branches.tab.name"),
                                    GitBundle.messagePointer("git.compare.branches.tab.suffix", branchName, currentRef),
                                    true, panel.getUi())

@@ -36,7 +36,7 @@ public class HgShowUnAppliedPatchesAction extends HgAbstractGlobalSingleRepoActi
     ToolWindow toolWindow = Objects.requireNonNull(ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS));
     String tabName = selectedRepo.getRoot().getName();
     ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), new HgMqUnAppliedPatchesPanel(selectedRepo),
-                                   "MQ", tabName,
+                                   "MQ",
                                    HgBundle.messagePointer("hg4idea.mq.tab.name"), () -> tabName,
                                    true, null);
     toolWindow.activate(null);

@@ -97,7 +97,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     val firstTime = fileHistoryUi == null
     if (firstTime) {
       val suffix = if (hash != null) " (" + hash.toShortString() + ")" else ""
-      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_GROUP_ID, path.name + suffix,
+      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_GROUP_ID,
                                                    VcsBundle.messagePointer("file.history.tab.name"), Function { path.name + suffix },
                                                    FileHistoryUiFactory(path, root, hash), true)
     }
