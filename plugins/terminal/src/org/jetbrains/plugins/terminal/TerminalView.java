@@ -318,7 +318,30 @@ public final class TerminalView {
       public void split(boolean vertically) {
         TerminalView.this.split(terminalWidget, vertically);
       }
+
+      @Override
+      public boolean isGotoNextSplitTerminalAvailable() {
+        return isSplitTerminal(terminalWidget);
+      }
+
+      @Override
+      public void gotoNextSplitTerminal(boolean forward) {
+        TerminalView.this.gotoNextSplitTerminal(terminalWidget, forward);
+      }
     });
+  }
+
+  public boolean isSplitTerminal(@NotNull JBTerminalWidget widget) {
+    TerminalContainer container = Objects.requireNonNull(myContainerByWidgetMap.get(widget));
+    return container.isSplitTerminal();
+  }
+
+  public void gotoNextSplitTerminal(@NotNull JBTerminalWidget widget, boolean forward) {
+    TerminalContainer container = Objects.requireNonNull(myContainerByWidgetMap.get(widget));
+    JBTerminalWidget next = container.getNextSplitTerminal(forward);
+    if (next != null) {
+      next.getTerminalPanel().requestFocusInWindow();
+    }
   }
 
   public void split(@NotNull JBTerminalWidget widget, boolean vertically) {
@@ -339,7 +362,7 @@ public final class TerminalView {
     }
   }
 
-  public @Nullable JBTerminalWidget findWidgetForContent(@NotNull Content content) {
+  private  @Nullable JBTerminalWidget findWidgetForContent(@NotNull Content content) {
     JBTerminalWidget any = null;
     for (Map.Entry<JBTerminalWidget, TerminalContainer> entry : myContainerByWidgetMap.entrySet()) {
       if (entry.getValue().getContent() == content) {

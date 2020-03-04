@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.emulator.ColorPalette;
+import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import com.jediterm.terminal.ui.settings.DefaultTabbedSettingsProvider;
 import org.jdom.Element;
@@ -145,6 +146,22 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       myColorPalette = colorPalette;
     }
     return colorPalette;
+  }
+
+  public static @NotNull String getGotoNextSplitTerminalActionText(boolean forward) {
+    return forward ? ActionsBundle.message("action.NextSplitter.text")
+                   : ActionsBundle.message("action.PrevSplitter.text");
+  }
+
+  public @NotNull TerminalAction getGotoNextSplitTerminalAction(@Nullable JBTerminalWidgetListener listener, boolean forward) {
+    String actionId = forward ? "NextSplitter" : "PrevSplitter";
+    String text = UIUtil.removeMnemonic(getGotoNextSplitTerminalActionText(forward));
+    return new TerminalAction(new TerminalActionPresentation(text, getKeyStrokesByActionId(actionId)), event -> {
+      if (listener != null) {
+        listener.gotoNextSplitTerminal(forward);
+      }
+      return true;
+    });
   }
 
   private static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId) {
