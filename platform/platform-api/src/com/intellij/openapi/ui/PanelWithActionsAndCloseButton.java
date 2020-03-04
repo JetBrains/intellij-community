@@ -5,7 +5,10 @@ import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -98,14 +101,6 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
         Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
         if (content != null) {
           ContentsUtil.closeContentTab(myContentManager, content);
-          if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
-            final TabbedContent tabbedContent = (TabbedContent)content;
-            final JComponent component = content.getComponent();
-            tabbedContent.removeContent(component);
-            myContentManager.setSelectedContent(content, true, true); //we should request focus here
-          } else {
-            myContentManager.removeContent(content, true);
-          }
         }
       }
     }
