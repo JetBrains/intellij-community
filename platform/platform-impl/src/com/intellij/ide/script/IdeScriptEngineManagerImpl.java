@@ -122,7 +122,9 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   @Nullable
   private static IdeScriptEngine createIdeScriptEngine(@Nullable ScriptEngineFactory scriptEngineFactory) {
     if (scriptEngineFactory == null) return null;
-    EngineImpl wrapper = new EngineImpl(scriptEngineFactory.getScriptEngine());
+    EngineImpl wrapper = new EngineImpl(ClassLoaderUtil.computeWithClassLoader(
+      scriptEngineFactory.getClass().getClassLoader(),
+      () -> scriptEngineFactory.getScriptEngine()));
     redirectOutputToLog(wrapper);
 
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(scriptEngineFactory.getClass());
