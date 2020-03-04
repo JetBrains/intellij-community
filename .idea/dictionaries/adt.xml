@@ -50,6 +50,7 @@
       <w>borderless</w>
       <w>bytecode</w>
       <w>calloc</w>
+      <w>canonicalize</w>
       <w>charsets</w>
       <w>checkable</w>
       <w>chksum</w>
@@ -104,6 +105,7 @@
       <w>filepath</w>
       <w>firebase</w>
       <w>fixme</w>
+      <w>focusable</w>
       <w>fqcn</w>
       <w>framebuffer</w>
       <w>frameworkdir</w>
