@@ -472,6 +472,12 @@ public class HelpTooltip {
            deriveHeaderFont(font);
   }
 
+  public static @NotNull String getShortcutAsHtml(@Nullable String shortcut) {
+    return StringUtil.isEmpty(shortcut)
+           ? ""
+           : String.format("&nbsp;&nbsp;<font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(SHORTCUT_COLOR), shortcut);
+  }
+
   private static class BoundWidthLabel extends JLabel {
     private static Collection<View> getRows(@NotNull View root) {
       Collection<View> rows = new ArrayList<>();
@@ -531,9 +537,7 @@ public class HelpTooltip {
     }
 
     private String getShortcutAsHTML() {
-      return StringUtil.isNotEmpty(shortcut) ?
-             String.format("&nbsp;&nbsp;<font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(SHORTCUT_COLOR), shortcut) :
-             "";
+      return getShortcutAsHtml(shortcut);
     }
   }
 
