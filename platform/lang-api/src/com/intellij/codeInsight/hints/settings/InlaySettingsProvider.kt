@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.lang.Language
+import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
@@ -21,6 +22,11 @@ interface InlaySettingsProvider {
    *  Returns list of supported languages. Every language must have a model in [createModels].
    */
   fun getSupportedLanguages(project: Project): Collection<Language>
+
+  @JvmDefault
+  fun getDependencies(): Collection<BaseExtensionPointName<*>> {
+    return emptyList()
+  }
 
   object EP {
     val EXTENSION_POINT_NAME =
