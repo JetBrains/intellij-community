@@ -593,7 +593,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
     actions.add(action);
 
-    if (modality != ModalityState.NON_MODAL) {
+    if (modality != ModalityState.NON_MODAL && TransactionGuard.getInstance().isWriteSafeModality(modality)) {
       // this client obviously expects all documents to be committed ASAP even inside modal dialog
       for (Document document : myUncommittedDocuments) {
         if (isEventSystemEnabled(document)) {
