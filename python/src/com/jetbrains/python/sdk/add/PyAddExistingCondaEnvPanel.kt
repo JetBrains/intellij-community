@@ -29,6 +29,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.associateWithModule
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.detectCondaEnvs
 import com.jetbrains.python.sdk.setupAssociated
 import icons.PythonIcons
@@ -65,6 +66,10 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
         val respectiveCondaExecutable = PyCondaPackageService.getCondaExecutable(sdkComboBox.selectedSdk?.homePath)
         condaPathField.text = respectiveCondaExecutable.orEmpty()
       }
+    }
+
+    if (PyCondaSdkCustomizer.instance.sharedEnvironmentsByDefault) {
+      makeSharedField.isSelected = true
     }
 
     layout = BorderLayout()
