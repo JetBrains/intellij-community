@@ -172,7 +172,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
           ReferenceType type = ContainerUtil.getOnlyItem(frame.virtualMachine().classesByName(name));
           if (type != null) {
             Field field = type.fieldByName(((PsiField)psi).getName());
-            if (field != null) {
+            if (field != null && field.isStatic()) {
               return wrap(type.getValue(field));
             }
           }
