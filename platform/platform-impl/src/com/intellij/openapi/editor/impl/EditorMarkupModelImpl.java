@@ -137,6 +137,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   private boolean myKeepHint;
 
   private final ActionToolbar statusToolbar;
+  private boolean hideToolbar;
   private final ComponentListener toolbarComponentListener;
   private Rectangle cachedToolbarBounds = new Rectangle();
   private final JLabel smallIconLabel;
@@ -277,23 +278,29 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private void updateToolbarVisibility() {
-    VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
-    Point point = myEditor.visualPositionToXY(pos);
-    point = SwingUtilities.convertPoint(myEditor.getContentComponent(), point, myEditor.getScrollPane());
-
-    JComponent stComponent = statusToolbar.getComponent();
-    if (stComponent.isVisible()) {
-      Rectangle bounds = SwingUtilities.convertRectangle(stComponent, stComponent.getBounds(), myEditor.getScrollPane());
-
-      if (!bounds.isEmpty() && bounds.contains(point)) {
-        cachedToolbarBounds = bounds;
-        stComponent.setVisible(false);
-        smallIconLabel.setVisible(true);
-      }
+    if (hideToolbar) {
+      statusToolbar.getComponent().setVisible(false);
+      smallIconLabel.setVisible(true);
     }
-    else if (!cachedToolbarBounds.contains(point)) {
-      stComponent.setVisible(true);
-      smallIconLabel.setVisible(false);
+    else {
+      VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
+      Point point = myEditor.visualPositionToXY(pos);
+      point = SwingUtilities.convertPoint(myEditor.getContentComponent(), point, myEditor.getScrollPane());
+
+      JComponent stComponent = statusToolbar.getComponent();
+      if (stComponent.isVisible()) {
+        Rectangle bounds = SwingUtilities.convertRectangle(stComponent, stComponent.getBounds(), myEditor.getScrollPane());
+
+        if (!bounds.isEmpty() && bounds.contains(point)) {
+          cachedToolbarBounds = bounds;
+          stComponent.setVisible(false);
+          smallIconLabel.setVisible(true);
+        }
+      }
+      else if (!cachedToolbarBounds.contains(point)) {
+        stComponent.setVisible(true);
+        smallIconLabel.setVisible(false);
+      }
     }
   }
 
@@ -1706,7 +1713,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       presentation.setIcon(AllIcons.Actions.More);
       presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
 
-      ActionButton menuButton = new ActionButton(controller.getActionMenu(),
+      ActionButton menuButton = new ActionButton(new MenuAction(controller.getActionMenu()),
                                                  presentation,
                                                  ActionPlaces.EDITOR_POPUP,
                                                  ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
@@ -1821,6 +1828,30 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       panel.setBackground(UIUtil.getToolTipActionBackground());
       panel.setBorder(JBUI.Borders.empty(4, 10));
       return panel;
+    }
+  }
+
+  private class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
+    private MenuAction(List<AnAction> actions) {
+      setPopup(true);
+      addAll(actions);
+      add(new ToggleAction(EditorBundle.message("iw.hide.toolbar")) {
+        @Override
+        public boolean isSelected(@NotNull AnActionEvent e) {
+          return hideToolbar;
+        }
+
+        @Override
+        public void setSelected(@NotNull AnActionEvent e, boolean state) {
+          hideToolbar = state;
+          updateToolbarVisibility();
+        }
+
+        @Override
+        public boolean isDumbAware() {
+          return true;
+        }
+      });
     }
   }
 }

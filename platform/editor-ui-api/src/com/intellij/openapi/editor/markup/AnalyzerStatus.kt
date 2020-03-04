@@ -34,7 +34,7 @@ typealias AvailableLevels = List<AHLevel>
 typealias PassStat = List<StatInfo>
 
 interface AnalyzerController {
-  fun getActionMenu() : AnAction
+  fun getActionMenu() : List<AnAction>
   fun getAvailableLevels() : AvailableLevels
   fun getHighlightLevels() : HighlightLevels
   fun setHighLightLevel(newLevels: LanguageHighlightLevel)
