@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ContentUtilEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgAbstractGlobalSingleRepoAction;
 import org.zmlx.hg4idea.action.HgActionUtil;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -33,9 +34,11 @@ public class HgShowUnAppliedPatchesAction extends HgAbstractGlobalSingleRepoActi
 
   public static void showUnAppliedPatches(@NotNull Project project, @NotNull HgRepository selectedRepo) {
     ToolWindow toolWindow = Objects.requireNonNull(ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS));
-    ContentUtilEx
-      .addTabbedContent(toolWindow.getContentManager(), new HgMqUnAppliedPatchesPanel(selectedRepo), "MQ", selectedRepo.getRoot().getName(),
-                        true);
+    String tabName = selectedRepo.getRoot().getName();
+    ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), new HgMqUnAppliedPatchesPanel(selectedRepo),
+                                   "MQ", tabName,
+                                   HgBundle.messagePointer("hg4idea.mq.tab.name"), () -> tabName,
+                                   true, null);
     toolWindow.activate(null);
   }
 }
