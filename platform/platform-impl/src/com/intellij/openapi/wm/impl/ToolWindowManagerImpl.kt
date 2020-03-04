@@ -394,7 +394,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         list.add(TaskAndBean(RegisterToolWindowTask(
           id = bean.id,
           icon = findIconFromBean(bean, factory),
-          anchor = ToolWindowAnchor.fromText(bean.anchor),
+          anchor = (factory as? ToolWindowFactoryEx)?.anchor ?: ToolWindowAnchor.fromText(bean.anchor),
           sideTool = bean.side,
           canCloseContent = bean.canCloseContents,
           canWorkInDumbMode = DumbService.isDumbAware(factory),
