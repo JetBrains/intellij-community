@@ -45,8 +45,8 @@ public class SSRSerializationTest extends LightPlatformTestCase {
       }
     };
     myProfile = new InspectionProfileImpl("test", supplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
-    myProfile.lockProfile(true);
     myProfile.enableTool(SSBasedInspection.SHORT_NAME, getProject());
+    myProfile.lockProfile(true);
     myProfile.initInspectionTools(getProject());
   }
 
