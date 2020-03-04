@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -54,7 +55,9 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.*;
 import gnu.trove.THashSet;
 import gnu.trove.TIntIntHashMap;
@@ -244,14 +247,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
     ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusPanel);
 
-    ApplicationManager.getApplication().getMessageBus().
-      connect(resourcesDisposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+    MessageBus bus = ApplicationManager.getApplication().getMessageBus();
+
+    bus.connect(resourcesDisposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         if (action instanceof HintManagerImpl.ActionToIgnore) return;
         myPopupManager.hidePopup();
       }
     });
+
+    bus.connect(resourcesDisposable).subscribe(LafManagerListener.TOPIC, source -> myPopupManager.updateUI());
   }
 
   @Override
@@ -1647,6 +1653,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
       myProgressBarMap = new HashMap<>();
       myProgressPanel = new NonOpaquePanel(new GridBagLayout());
+    }
+
+    private void updateUI() {
+      IJSwingUtilities.updateComponentTreeUI(myContent);
     }
 
     private void showPopup(InputEvent event) {
