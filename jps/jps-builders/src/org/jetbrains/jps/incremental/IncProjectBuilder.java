@@ -68,7 +68,7 @@ import java.util.function.Predicate;
 /**
  * @author Eugene Zhuravlev
  */
-public class IncProjectBuilder {
+public final class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance(IncProjectBuilder.class);
 
   private static final String CLASSPATH_INDEX_FILE_NAME = "classpath.index";
