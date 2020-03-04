@@ -1992,7 +1992,8 @@ private fun getStripeTitleSupplier(id: String, pluginDescriptor: PluginDescripto
 
   try {
     val bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
-    val label = BundleBase.messageOrDefault(bundle, "toolwindow.stripe.$id", id)
+    val key = "toolwindow.stripe.$id".replace(" ", "_")
+    val label = BundleBase.messageOrDefault(bundle, key, id)
     return Supplier { label }
   }
   catch (e: MissingResourceException) {
