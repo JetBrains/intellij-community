@@ -316,10 +316,7 @@ public class ProgressIndicatorUtils {
       try {
         return future.get(10, TimeUnit.MILLISECONDS);
       }
-      catch (TimeoutException ignore) {
-      }
-      catch (RejectedExecutionException e) {
-        throw new ProcessCanceledException(e);
+      catch (TimeoutException | RejectedExecutionException ignore) {
       }
       catch (Throwable e) {
         Throwable cause = e.getCause();
