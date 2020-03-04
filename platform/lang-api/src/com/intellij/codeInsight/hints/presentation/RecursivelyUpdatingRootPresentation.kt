@@ -27,12 +27,21 @@ class RecursivelyUpdatingRootPresentation(private var current: InlayPresentation
     editor: Editor,
     factory: InlayPresentationFactory
   ): Boolean {
-    val changed = newPresentationContent.updateState(current)
+    val previous = current
     current.removeListener(listener)
     current = newPresentationContent
     listener = MyPresentationListener()
     current.addListener(listener)
-    return changed
+    val previousDimension = Dimension(previous.width, previous.height)
+    val updated = newPresentationContent.updateState(previous)
+    if (updated) {
+      fireContentChanged(Rectangle(0, 0, width, height))
+      val currentDimension = Dimension(width, height)
+      if (previousDimension != currentDimension) {
+        fireSizeChanged(previousDimension, currentDimension)
+      }
+    }
+    return updated
   }
 
   override val content: InlayPresentation
