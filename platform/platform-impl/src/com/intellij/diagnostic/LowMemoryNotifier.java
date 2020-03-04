@@ -34,29 +34,30 @@ final class LowMemoryNotifier implements Disposable {
   private volatile long myPreviousLoggedUIResponse = 0;
 
   LowMemoryNotifier() {
-    if (!DebugAttachDetector.isDebugEnabled()) {
-      ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
-          @Override
-          public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
+    boolean isDebugEnabled = DebugAttachDetector.isDebugEnabled();
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
+        @Override
+        public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
+          if (!isDebugEnabled) {
             LifecycleUsageTriggerCollector.onFreeze(durationMs);
           }
+        }
 
-          @Override
-          public void uiResponded(long latencyMs) {
-            final long currentTime = System.currentTimeMillis();
-            if (currentTime - myPreviousLoggedUIResponse >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
-              myPreviousLoggedUIResponse = currentTime;
-              FUCounterUsageLogger.getInstance()
-                .logEvent(PERFORMANCE, "ui.latency", new FeatureUsageData().addData("duration_ms", latencyMs));
-            }
-            if (latencyMs >= TOLERABLE_UI_LATENCY) {
-              FUCounterUsageLogger.getInstance()
-                .logEvent(PERFORMANCE, "ui.lagging", new FeatureUsageData().addData("duration_ms", latencyMs));
-            }
+        @Override
+        public void uiResponded(long latencyMs) {
+          final long currentTime = System.currentTimeMillis();
+          if (currentTime - myPreviousLoggedUIResponse >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
+            myPreviousLoggedUIResponse = currentTime;
+            FUCounterUsageLogger.getInstance()
+              .logEvent(PERFORMANCE, "ui.latency", new FeatureUsageData().addData("duration_ms", latencyMs));
           }
-        });
-    }
+          if (latencyMs >= TOLERABLE_UI_LATENCY && !isDebugEnabled) {
+            FUCounterUsageLogger.getInstance()
+              .logEvent(PERFORMANCE, "ui.lagging", new FeatureUsageData().addData("duration_ms", latencyMs));
+          }
+        }
+      });
   }
 
   private void onLowMemorySignalReceived() {

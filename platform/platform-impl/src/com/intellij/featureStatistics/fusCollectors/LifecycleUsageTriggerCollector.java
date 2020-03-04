@@ -2,6 +2,7 @@
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
+import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -33,6 +34,7 @@ public final class LifecycleUsageTriggerCollector {
     addIfTrue(data, "command_line", app.isCommandLine());
     addIfTrue(data, "internal", app.isInternal());
     addIfTrue(data, "headless", app.isHeadlessEnvironment());
+    addIfTrue(data, "debug_agent", DebugAttachDetector.isDebugEnabled());
     FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "ide.start", data);
   }
 
