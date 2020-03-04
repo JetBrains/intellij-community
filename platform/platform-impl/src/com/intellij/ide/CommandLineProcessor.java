@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -49,7 +49,7 @@ public final class CommandLineProcessor {
     }
   }
 
-  private static @NotNull CommandLineProcessorResult doOpenFile(Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
+  private static @NotNull CommandLineProcessorResult doOpenFile(@NotNull Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
     assert file != null;
 
@@ -72,16 +72,19 @@ public final class CommandLineProcessor {
         Navigatable navigatable = line > 0
                                   ? new OpenFileDescriptor(project, file, line - 1, Math.max(column, 0))
                                   : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1);
-        navigatable.navigate(true);
+        AppUIExecutor.onUiThread().expireWith(project).execute(() -> {
+          navigatable.navigate(true);
+        });
       }
 
       return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : CliResult.OK_FUTURE);
     }
   }
 
-  private static @NotNull Project findBestProject(VirtualFile file, Project[] projects) {
+  private static @NotNull Project findBestProject(@NotNull VirtualFile file, @NotNull Project @NotNull[] projects) {
     for (Project project : projects) {
-      if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+      ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+      if (ReadAction.compute(() -> fileIndex.isInContent(file))) {
         return project;
       }
     }
@@ -89,17 +92,16 @@ public final class CommandLineProcessor {
     if (LightEditUtil.isLightEditEnabled()) {
       return LightEditUtil.getProject();
     }
-    else {
-      IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-      if (frame != null) {
-        Project project = frame.getProject();
-        if (project != null) {
-          return project;
-        }
-      }
 
-      return projects[0];
+    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+    if (frame != null) {
+      Project project = frame.getProject();
+      if (project != null) {
+        return project;
+      }
     }
+
+    return projects[0];
   }
 
   public static @NotNull CommandLineProcessorResult processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
