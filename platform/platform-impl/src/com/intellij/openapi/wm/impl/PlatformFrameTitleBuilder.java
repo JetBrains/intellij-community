@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,6 +58,10 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
         return pathWithLibrary;
       }
       return FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
+    }
+
+    if (PlatformUtils.isCidr() || PlatformUtils.isRider()) {
+      return fileTitle;
     }
 
     return ProjectUtilCore.appendModuleName(file, project, fileTitle, false);
