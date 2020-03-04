@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
@@ -97,7 +98,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     if (firstTime) {
       val suffix = if (hash != null) " (" + hash.toShortString() + ")" else ""
       fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_GROUP_ID, path.name + suffix,
-                                                   VcsLogBundle.messagePointer("file.history.tab.name"), Function { path.name + suffix },
+                                                   VcsBundle.messagePointer("file.history.tab.name"), Function { path.name + suffix },
                                                    FileHistoryUiFactory(path, root, hash), true)
     }
     consumer(fileHistoryUi!!, firstTime)
