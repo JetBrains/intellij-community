@@ -201,9 +201,10 @@ class EditorCoordinateMapper {
           delayedResult = new LogicalPosition(fragment.getEndLogicalLine(), fragment.getEndLogicalColumn(), true);
         }
         else {
-          return new LogicalPosition(column == maxColumn ? fragment.getEndLogicalLine() : fragment.getStartLogicalLine(),
+          return new LogicalPosition(column == maxColumn && minColumn != maxColumn ? fragment.getEndLogicalLine()
+                                                                                   : fragment.getStartLogicalLine(),
                                      fragment.visualToLogicalColumn(column),
-                                     fragment.isCollapsedFoldRegion() ? column < maxColumn :
+                                     fragment.isCollapsedFoldRegion() ? column < maxColumn || minColumn == maxColumn :
                                      fragment.getCurrentInlay() == null && fragment.isRtl() ^ pos.leansRight);
         }
       }
