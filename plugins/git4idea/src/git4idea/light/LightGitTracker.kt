@@ -149,7 +149,7 @@ class LightGitTracker : Disposable {
 
       val selectedFile = editorInfo?.file
       if (selectedFile != null && selectedFile.parent != null) {
-        singleTaskController.request(Request.Location(selectedFile))
+        singleTaskController.request(Request.Location(selectedFile), Request.Status(listOf(selectedFile)))
       }
       else {
         runInEdt(this@LightGitTracker) { eventDispatcher.multicaster.update() }
