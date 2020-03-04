@@ -61,7 +61,7 @@ public class JBCefBrowser implements JBCefDisposable {
 
     public void load(@NotNull CefBrowser browser) {
       // JCEF demands async loading.
-      ApplicationManager.getApplication().invokeLater(
+      SwingUtilities.invokeLater(
         myHtml == null ?
           () -> browser.loadURL(myUrl) :
           () -> browser.loadString(myHtml, myUrl));
