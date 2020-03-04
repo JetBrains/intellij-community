@@ -423,15 +423,10 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   public DefaultTreeModel build() {
-    collapseDirectories(myModel, myRoot);
-    sortNodes();
-    return myModel;
-  }
-
-  private void sortNodes() {
     TreeUtil.sort(myModel, BROWSER_NODE_COMPARATOR);
-
+    collapseDirectories(myModel, myRoot);
     myModel.nodeStructureChanged((TreeNode)myModel.getRoot());
+    return myModel;
   }
 
   private static void collapseDirectories(@NotNull DefaultTreeModel model, @NotNull ChangesBrowserNode<?> node) {
