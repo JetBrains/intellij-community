@@ -9,12 +9,15 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiUtilCore;
@@ -387,5 +390,19 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
     });
 
     assertEquals(" class Foo {}", file.getText());
+  }
+
+  public void testGenericLightMethodBuilderEquivalence() {
+    Factory<PsiMethod> createMethod = () -> {
+      LightMethodBuilder method = new LightMethodBuilder(getPsiManager(), "foo");
+      LightTypeParameterBuilder typeParam = new LightTypeParameterBuilder("T", method, 0);
+      method.addTypeParameter(typeParam);
+      PsiClassType tType = JavaPsiFacade.getElementFactory(getProject()).createType(typeParam);
+      method.setMethodReturnType(tType);
+      method.addParameter("p", tType);
+      return method;
+    };
+
+    assertTrue(getPsiManager().areElementsEquivalent(createMethod.create(), createMethod.create()));
   }
 }
