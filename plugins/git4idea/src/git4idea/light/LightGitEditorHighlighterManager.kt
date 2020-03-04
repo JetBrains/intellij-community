@@ -118,5 +118,9 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
   }
 
   private data class Request(val file: VirtualFile, val repositoryPath: String)
-  private data class BaseVersion(val file: VirtualFile, val text: String?)
+  private data class BaseVersion(val file: VirtualFile, val text: String?) {
+    override fun toString(): String {
+      return "BaseVersion(file=$file, text=${text?.take(10) ?: "null"}"
+    }
+  }
 }
