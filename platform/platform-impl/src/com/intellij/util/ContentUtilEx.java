@@ -30,14 +30,6 @@ public class ContentUtilEx extends ContentsUtil {
                                       @NotNull JComponent contentComponent,
                                       @NotNull @NonNls String groupPrefix,
                                       @NotNull @Nls String tabName,
-                                      boolean select) {
-    addTabbedContent(manager, contentComponent, groupPrefix, tabName, select, null);
-  }
-
-  public static void addTabbedContent(@NotNull ContentManager manager,
-                                      @NotNull JComponent contentComponent,
-                                      @NotNull @NonNls String groupPrefix,
-                                      @NotNull @Nls String tabName,
                                       boolean select,
                                       @Nullable Disposable childDisposable) {
     addTabbedContent(manager, new TabGroupId(groupPrefix, groupPrefix),
