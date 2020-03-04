@@ -6,12 +6,10 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.codeInspection.i18n.batch.I18nizeMultipleStringsDialog;
+import com.intellij.codeInspection.i18n.batch.I18nizedPropertyData;
 import com.intellij.java.i18n.JavaI18nBundle;
-import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,19 +18,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.*;
-import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.editor.UIFormEditor;
@@ -43,21 +35,13 @@ import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import com.intellij.util.ui.ItemRemovable;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 
 public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
@@ -68,15 +52,15 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
                        CommonProblemDescriptor @NotNull [] descriptors,
                        @NotNull List<PsiElement> psiElementsToIgnore,
                        @Nullable Runnable refreshViews) {
-    List<ReplacementBean> beans = new ArrayList<>();
-    HashSet<Module> contextModules = new HashSet<>();
+    List<I18nizedPropertyData<HardcodedStringInFormData>> dataList = new ArrayList<>();
+    HashSet<PsiFile> contextFiles = new HashSet<>();
     Map<VirtualFile, RadRootContainer> containerMap = new HashMap<>();
     UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
-    Map<String, List<ReplacementBean>> myDuplicates = new HashMap<>();
+    Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> myDuplicates = new HashMap<>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       FormElementProblemDescriptor formElementProblemDescriptor = (FormElementProblemDescriptor)descriptor;
       PsiFile containingFile = formElementProblemDescriptor.getPsiElement().getContainingFile();
-      ContainerUtil.addIfNotNull(contextModules, ModuleUtilCore.findModuleForFile(containingFile));
+      contextFiles.add(containingFile);
       VirtualFile virtualFile = containingFile.getVirtualFile();
 
       final RadRootContainer rootContainer = containerMap.computeIfAbsent(virtualFile, f -> {
@@ -110,20 +94,19 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
       String propertyName = formElementProblemDescriptor.getPropertyName();
       String value = getValue(component, propertyName);
       if (value == null) continue;
-      ReplacementBean bean = new ReplacementBean(uniqueNameGenerator.generateUniqueName(I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null)),
-                                                 component,
-                                                 propertyName,
-                                                 value);
+      String key = uniqueNameGenerator.generateUniqueName(I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null));
+      I18nizedPropertyData<HardcodedStringInFormData> data = new I18nizedPropertyData<HardcodedStringInFormData>(key, value,
+                                                                                                                 new HardcodedStringInFormData(component, propertyName));
       if (myDuplicates.containsKey(value)) {
-        myDuplicates.computeIfAbsent(value, k -> new ArrayList<>(1)).add(bean);
+        myDuplicates.computeIfAbsent(value, k -> new ArrayList<>(1)).add(data);
       }
       else {
-        beans.add(bean);
+        dataList.add(data);
         myDuplicates.put(value, null);
       }
     }
 
-    I18NBatchDialog dialog = new I18NBatchDialog(project, beans, contextModules);
+    I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog = new I18nizeMultipleStringsDialog<HardcodedStringInFormData>(project, dataList, contextFiles, data -> null);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       PsiManager manager = PsiManager.getInstance(project);
@@ -141,17 +124,17 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
         return;
       }
       WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
-        for (ReplacementBean bean : beans) {
+        for (I18nizedPropertyData<HardcodedStringInFormData> bean : dataList) {
           JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                         Collections.singletonList(propertiesFile),
-                                                                        bean.myKey,
-                                                                        bean.myValue,
+                                                                        bean.getKey(),
+                                                                        bean.getValue(),
                                                                         PsiExpression.EMPTY_ARRAY);
-          applyFix(bean.myComponent, bean.myPropertyName, bundleName, bean.myKey);
-          List<ReplacementBean> duplicates = myDuplicates.get(bean.myValue);
+          applyFix(bean.getContextData().getComponent(), bean.getContextData().getPropertyName(), bundleName, bean.getKey());
+          List<I18nizedPropertyData<HardcodedStringInFormData>> duplicates = myDuplicates.get(bean.getValue());
           if (duplicates != null) {
-            for (ReplacementBean duplicateBean : duplicates) {
-              applyFix(duplicateBean.myComponent, duplicateBean.myPropertyName, bundleName, bean.myKey);
+            for (I18nizedPropertyData<HardcodedStringInFormData> duplicateBean : duplicates) {
+              applyFix(duplicateBean.getContextData().getComponent(), duplicateBean.getContextData().getPropertyName(), bundleName, bean.getValue());
             }
           }
         }
@@ -239,145 +222,21 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
     return null;
   }
 
-  private static class ReplacementBean {
+  private static class HardcodedStringInFormData {
     private final RadComponent myComponent;
     private final String myPropertyName;
-    private String myKey;
-    private final String myValue;
 
-    private ReplacementBean(String key,
-                            RadComponent component,
-                            String propertyName,
-                            String value) {
+    private HardcodedStringInFormData(@NotNull RadComponent component, @NotNull String propertyName) {
       myComponent = component;
       myPropertyName = propertyName;
-      myKey = key;
-      myValue = value;
+    }
+
+    private RadComponent getComponent() {
+      return myComponent;
+    }
+
+    private String getPropertyName() {
+      return myPropertyName;
     }
   }
-
-  private static class I18NBatchDialog extends DialogWrapper {
-    private static final @NonNls String LAST_USED_PROPERTIES_FILE = "LAST_USED_PROPERTIES_FILE";
-
-    @NotNull private final Project myProject;
-    private final List<ReplacementBean> myBeans;
-    private final Set<Module> myContextModules;
-    private JComboBox<String> myPropertiesFile;
-
-    protected I18NBatchDialog(@NotNull Project project,
-                              List<ReplacementBean> beans,
-                              Set<Module> contextModules) {
-      super(project, true);
-      myProject = project;
-      myBeans = beans;
-      myContextModules = contextModules;
-      setTitle(PropertiesBundle.message("i18nize.dialog.title"));
-      init();
-    }
-
-    @Override
-    protected @Nullable String getDimensionServiceKey() {
-      return "i18nFormInBatch";
-    }
-
-    @Nullable
-    @Override
-    protected JComponent createNorthPanel() {
-      List<String> files = I18nUtil.defaultSuggestPropertiesFiles(myProject, myContextModules);
-      myPropertiesFile = new ComboBox<>(ArrayUtil.toStringArray(files));
-      new ComboboxSpeedSearch(myPropertiesFile);
-      LabeledComponent<JComboBox<String>> component = new LabeledComponent<>();
-      component.setText(JavaI18nBundle.message("property.file"));
-      component.setComponent(myPropertiesFile);
-      myPropertiesFile.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          PropertiesFile propertiesFile = getPropertiesFile();
-          if (propertiesFile != null) {
-            for (ReplacementBean bean : myBeans) {
-              bean.myKey = I18nizeQuickFixDialog.suggestUniquePropertyKey(bean.myValue, bean.myKey, propertiesFile);
-            }
-          }
-        }
-      });
-
-      if (!files.isEmpty()) {
-        myPropertiesFile.setSelectedItem(ObjectUtils.notNull(PropertiesComponent.getInstance(myProject).getValue(LAST_USED_PROPERTIES_FILE),
-                                                             files.get(0)));
-      }
-      return component;
-    }
-
-    protected PropertiesFile getPropertiesFile() {
-      Object selectedItem = myPropertiesFile.getSelectedItem();
-      if (selectedItem == null) return null;
-      String path = FileUtil.toSystemIndependentName((String)selectedItem);
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
-      return virtualFile != null
-             ? PropertiesImplUtil.getPropertiesFile(PsiManager.getInstance(myProject).findFile(virtualFile))
-             : null;
-    }
-
-    @Nullable
-    @Override
-    protected JComponent createCenterPanel() {
-      JBTable table = new JBTable(new  I18NBatchDialog.MyKeyValueModel());
-
-
-      return ToolbarDecorator.createDecorator(table).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          TableUtil.removeSelectedItems(table);
-          table.repaint();
-        }
-      }).createPanel();
-    }
-
-    @Override
-    protected void doOKAction() {
-      PropertiesComponent.getInstance(myProject).setValue(LAST_USED_PROPERTIES_FILE, (String)myPropertiesFile.getSelectedItem());
-      super.doOKAction();
-    }
-
-    private class MyKeyValueModel extends AbstractTableModel implements ItemRemovable {
-      @Override
-      public int getRowCount() {
-        return myBeans.size();
-      }
-
-      @Override
-      public String getColumnName(int column) {
-        return column == 0 ? "Key" : "Value";
-      }
-
-      @Override
-      public int getColumnCount() {
-        return 2;
-      }
-
-      @Override
-      public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return columnIndex == 0;
-      }
-
-      @Override
-      public Object getValueAt(int rowIndex, int columnIndex) {
-        ReplacementBean bean = myBeans.get(rowIndex);
-        return columnIndex == 0 ? bean.myKey : bean.myValue;
-      }
-
-      @Override
-      public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        if (columnIndex == 0) {
-          myBeans.get(rowIndex).myKey = (String)aValue;
-        }
-      }
-
-      @Override
-      public void removeRow(int idx) {
-        myBeans.remove(idx);
-      }
-    }
-  }
-
 }
