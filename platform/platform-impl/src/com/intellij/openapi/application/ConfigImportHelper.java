@@ -131,11 +131,11 @@ public final class ConfigImportHelper {
           }
         }
       }
-      else {
-        log.info("No configs imported, starting with clean configs at " + newConfigDir);
-      }
 
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+    }
+    else {
+      log.info("No configs imported, starting with clean configs at " + newConfigDir);
     }
   }
 
