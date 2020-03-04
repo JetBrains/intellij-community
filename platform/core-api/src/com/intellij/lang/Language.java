@@ -127,8 +127,13 @@ public abstract class Language extends UserDataHolderBase {
     }
     final Language baseLanguage = language.getBaseLanguage();
     if (baseLanguage != null) {
-      baseLanguage.myDialects.remove(language);
+      baseLanguage.unregisterDialect(language);
     }
+  }
+
+  @ApiStatus.Internal
+  public void unregisterDialect(Language language) {
+    myDialects.remove(language);
   }
 
   /**
