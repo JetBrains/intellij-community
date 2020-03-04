@@ -76,16 +76,19 @@ object Agreements {
   }
 
   private fun AgreementUi.applyDataSharing(): AgreementUi {
-    this.setText(prepareConsentsHtmlText(ConsentOptions.getInstance().consents.first[0]))
+    val dataSharingConsent = ConsentOptions.getInstance().consents.first[0]
+    this.setText(prepareConsentsHtmlText(dataSharingConsent))
       .setTitle(bundle.getString("dataSharing.dialog.title"))
       .clearBottomPanel()
       .focusToText()
       .setAcceptButton(bundle.getString("dataSharing.dialog.accept")) {
-        AppUIUtil.saveConsents(ConsentOptions.getInstance().consents.first);
+        val consentToSave = dataSharingConsent.derive(true)
+        AppUIUtil.saveConsents(listOf(consentToSave))
         it.close(DialogWrapper.OK_EXIT_CODE)
       }
       .setDeclineButton(bundle.getString("dataSharing.dialog.decline")) {
-        //AppUIUtil.saveConsents(ConsentOptions.getInstance().consents.first);
+        val consentToSave = dataSharingConsent.derive(false)
+        AppUIUtil.saveConsents(listOf(consentToSave))
         it.close(DialogWrapper.CANCEL_EXIT_CODE)
       }
     return this
