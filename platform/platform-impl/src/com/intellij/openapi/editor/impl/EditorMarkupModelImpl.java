@@ -79,7 +79,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class EditorMarkupModelImpl extends MarkupModelImpl
-      implements EditorMarkupModel, CaretListener, BulkAwareDocumentListener, VisibleAreaListener {
+      implements EditorMarkupModel, CaretListener, BulkAwareDocumentListener.Simple, VisibleAreaListener {
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
   private static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
 
@@ -260,7 +260,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   @Override
-  public void documentChangedNonBulk(@NotNull DocumentEvent event) {
+  public void afterDocumentChange(@NotNull Document document) {
     myPopupManager.hidePopup();
     updateToolbarVisibility();
   }
