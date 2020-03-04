@@ -285,7 +285,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       action.run();
       return true;
     }
-    if (myUncommittedDocuments.isEmpty()) {
+    if (!hasEventSystemEnabledUncommittedDocuments()) {
       if (!isCommitInProgress()) {
         // in case of fireWriteActionFinished() we didn't execute 'actionsWhenAllDocumentsAreCommitted' yet
         assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted;
@@ -541,7 +541,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     while (true) {
       boolean executed = ReadAction.compute(() -> {
-        if (myUncommittedDocuments.isEmpty()) {
+        if (!hasEventSystemEnabledUncommittedDocuments()) {
           runnable.run();
           return true;
         }
@@ -582,7 +582,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     checkWeAreOutsideAfterCommitHandler();
 
     assert !myProject.isDisposed() : "Already disposed: " + myProject;
-    if (myUncommittedDocuments.isEmpty()) {
+    if (!hasEventSystemEnabledUncommittedDocuments()) {
       action.run();
       return true;
     }
@@ -700,7 +700,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private boolean mayRunActionsWhenAllCommitted() {
     return myIsCommitInProgress.get() == null &&
            !actionsWhenAllDocumentsAreCommitted.isEmpty() &&
-           !ContainerUtil.exists(myUncommittedDocuments, this::isEventSystemEnabled);
+           !hasEventSystemEnabledUncommittedDocuments();
+  }
+
+  private boolean hasEventSystemEnabledUncommittedDocuments() {
+    return ContainerUtil.exists(myUncommittedDocuments, this::isEventSystemEnabled);
   }
 
   private void beforeCommitHandler() {

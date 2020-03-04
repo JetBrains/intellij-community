@@ -998,4 +998,14 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertTrue(called.get());
   }
 
+  public void test_performWhenAllCommitted_works_eventually_despite_nonPhysical_uncommitted() {
+    Document ftDocument = createFreeThreadedDocument();
+    CompletableFuture<Boolean> called = new CompletableFuture<>();
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      ftDocument.insertString(0, " ");
+      getPsiDocumentManager().performWhenAllCommitted(() -> called.complete(true));
+    });
+    assertTrue(PlatformTestUtil.waitForFuture(called, 10_000));
+  }
+
 }
