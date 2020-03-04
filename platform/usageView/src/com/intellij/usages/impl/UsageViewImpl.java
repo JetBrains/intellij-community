@@ -1317,7 +1317,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   private void queueUpdateBulk(@NotNull List<? extends Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
-    if (toUpdate.isEmpty()) return;
+    if (toUpdate.isEmpty() || isDisposed()) return;
     ReadAction
       .nonBlocking(() -> {
         for (Node node : toUpdate) {
