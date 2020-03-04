@@ -5,12 +5,13 @@ import com.intellij.psi.PsiType
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
-import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.getInvocationKind
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.computeInvocationKind
 
 
 class InitialTypeProvider(val start: GrControlFlowOwner, val initialState: InitialDFAState) {
@@ -26,10 +27,11 @@ class InitialTypeProvider(val start: GrControlFlowOwner, val initialState: Initi
   }
 
   private val invocationKind by lazyPub {
-    if (start is GrFunctionalExpression) {
-      return@lazyPub getInvocationKind(start)
+    when (start) {
+      is GrClosableBlock -> computeInvocationKind(start)
+      is GrLambdaBody -> computeInvocationKind(start.lambdaExpression)
+      else -> InvocationKind.UNKNOWN
     }
-    InvocationKind.UNKNOWN
   }
 
   fun initialType(descriptor: VariableDescriptor): PsiType? {

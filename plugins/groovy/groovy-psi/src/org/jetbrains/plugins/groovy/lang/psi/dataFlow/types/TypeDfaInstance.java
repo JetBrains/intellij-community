@@ -7,13 +7,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ClosureFlowUtil;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
@@ -22,7 +23,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -48,11 +52,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     myAcyclicInstructions = interesting.second;
     myCache = cache;
     myInitialTypeProvider = initialTypeProvider;
-    Stream<VariableDescriptor> dependentDescriptors =
-      Arrays
-        .stream(flow)
-        .filter(instruction -> instruction instanceof ReadWriteVariableInstruction)
-        .map(instruction -> ((ReadWriteVariableInstruction)instruction).getDescriptor());
+    Stream<VariableDescriptor> dependentDescriptors = myInteresting.stream()
+      .filter(instruction -> instruction instanceof ReadWriteVariableInstruction)
+      .map(instruction -> ((ReadWriteVariableInstruction)instruction).getDescriptor());
     interestingDescriptors = Stream.concat(dependentDescriptors, Stream.of(initialDescriptor)).collect(toSet());
     lastInterestingInstruction = myInteresting.stream().mapToInt(Instruction::num).max().orElse(0);
   }
@@ -71,8 +73,8 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     else if (instruction instanceof NegatingGotoInstruction) {
       handleNegation(state, (NegatingGotoInstruction)instruction);
     }
-    else if (instruction.getElement() instanceof GrClosableBlock) {
-      handleClosureBlock(state, instruction);
+    else if (instruction.getElement() instanceof GrFunctionalExpression) {
+      handleFunctionalExpression(state, instruction);
     }
   }
 
@@ -181,22 +183,26 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
   }
 
-  private void handleClosureBlock(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
-    GrClosableBlock block = Objects.requireNonNull((GrClosableBlock)instruction.getElement());
-    Set<String> foreignIdentifiers = ControlFlowUtils.getForeignVariableIdentifiers(block);
+  private void handleFunctionalExpression(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
+    GrFunctionalExpression block = Objects.requireNonNull((GrFunctionalExpression)instruction.getElement());
+    GrControlFlowOwner blockFlowOwner = FunctionalExpressionFlowUtil.getControlFlowOwner(block);
+    if (blockFlowOwner == null) {
+      return;
+    }
+    Set<String> foreignIdentifiers = ControlFlowUtils.getForeignVariableIdentifiers(blockFlowOwner);
     if (interestingDescriptors.stream().map(VariableDescriptor::getName).noneMatch(foreignIdentifiers::contains)) {
       return;
     }
     if (instruction.num() > lastInterestingInstruction) {
       return;
     }
-    InvocationKind kind = ClosureFlowUtil.getInvocationKind(block);
+    InvocationKind kind = FunctionalExpressionFlowUtil.computeInvocationKind(block);
     switch (kind) {
-      case EXACTLY_ONCE:
-        handleClosureDFAResult(state, block, state::putType);
+      case INVOKED_ONCE:
+        handleClosureDFAResult(state, blockFlowOwner, state::putType);
         break;
-      case INVOKED_INPLACE:
-        handleClosureDFAResult(state, block, (descriptor, dfaType) -> {
+      case MAYBE_INVOKED:
+        handleClosureDFAResult(state, blockFlowOwner, (descriptor, dfaType) -> {
           DFAType existingType = state.getVariableType(descriptor);
           if (existingType != null) {
             DFAType mergedType = DFAType.create(dfaType, existingType, block.getManager());
@@ -210,7 +216,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   }
 
   private void handleClosureDFAResult(@NotNull TypeDfaState state,
-                                      @NotNull GrClosableBlock block,
+                                      @NotNull GrControlFlowOwner block,
                                       @NotNull BiConsumer<? super VariableDescriptor, ? super DFAType> typeConsumer) {
     InferenceCache blockCache = TypeInferenceHelper.getInferenceCache(block);
     Instruction[] blockFlow = block.getControlFlow();

@@ -776,37 +776,31 @@ public final class ControlFlowUtils {
       return true;
     }
     else {
-      GrControlFlowOwner firstOpenBlock = getNearestControlFlowScope(expression);
-      if (!(firstOpenBlock instanceof GrFunctionalExpression)) {
+      GrFunctionalExpression firstEnclosingExpression = getNearestFunctionalExpression(expression);
+      if (firstEnclosingExpression == null) {
         return true;
       }
-      GrControlFlowOwner secondOpenBlock = getNearestControlFlowScope(definition);
-      return Objects.equals(firstOpenBlock, secondOpenBlock);
+      GrFunctionalExpression secondEnclosingExpression = getNearestFunctionalExpression(definition);
+      return Objects.equals(firstEnclosingExpression, secondEnclosingExpression);
     }
   }
 
-  @Nullable
-  private static GrControlFlowOwner getNearestControlFlowScope(@NotNull PsiElement element) {
+
+  private static @Nullable GrFunctionalExpression getNearestFunctionalExpression(@NotNull PsiElement element) {
     if (element instanceof ClosureSyntheticParameter) {
       return ((ClosureSyntheticParameter)element).getClosure();
     }
-    while (element != null && !(element instanceof GrControlFlowOwner)) {
-      element = element.getParent();
-    }
-    return (GrControlFlowOwner)element;
+    return PsiTreeUtil.getParentOfType(element, GrFunctionalExpression.class);
   }
 
   public static @NotNull Set<String> getForeignVariableIdentifiers(@NotNull GrControlFlowOwner owner) {
     Set<String> instructions = new LinkedHashSet<>();
     for (Instruction instruction : owner.getControlFlow()) {
       PsiElement element = instruction.getElement();
-      // The order of these ifs is important. For each closure, we insert all reads that happen within it before its invocation.
-      // GrClosableBlock may be an element for some ReadWriteVariableInstruction,
-      // so we should avoid running this function recursively for instructions that are not correspond directly to closable blocks.
-      if (instruction instanceof ReadWriteVariableInstruction) {
+      if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction)instruction).isWrite()) {
         instructions.add(((ReadWriteVariableInstruction)instruction).getDescriptor().getName());
       }
-      else if (element instanceof GrControlFlowOwner) {
+      if (!(instruction instanceof ReadWriteVariableInstruction) && element instanceof GrControlFlowOwner) {
         instructions.addAll(getForeignVariableIdentifiers((GrControlFlowOwner)element));
       }
     }

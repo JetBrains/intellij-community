@@ -349,4 +349,54 @@ class W {
 }
 ''', 'W'
   }
+
+  void 'test use parent DFA'() {
+    doTest '''
+  def foo(a) {
+    a = 1
+    1.with(x -> {
+      <caret>a
+    })
+  }
+''', 'java.lang.Integer'
+  }
+
+  void 'test detect changes from outside'() {
+    doTest '''
+class X {
+  def a
+  
+  def foo() {
+    a = 1
+    1.with {
+      <caret>a
+    }
+  }
+}''' , 'java.lang.Integer'
+  }
+
+  void 'test detect changes from inside'() {
+    doTest '''
+class X {
+  def a
+  
+  def foo() {
+    1.with {
+      a = 1
+    }
+    <caret>a
+  }
+}''' , 'java.lang.Integer'
+  }
+
+  void 'test do not use outer types inside unknown lambdas'() {
+    doTest '''
+def foo() {
+  def a = 1
+  lambda = x -> {
+    <caret>a
+  }
+}
+''', null
+  }
 }
