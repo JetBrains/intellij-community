@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public class BackgroundTaskGroup extends BackgroundTaskQueue {
   @NotNull protected final List<VcsException> myExceptions = createLockFreeCopyOnWriteList();
   @NotNull private final Project myProject;
 
-  public BackgroundTaskGroup(@NotNull Project project, @NotNull String title) {
+  public BackgroundTaskGroup(@NotNull Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
     super(project, title);
     myProject = project;
   }

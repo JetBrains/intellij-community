@@ -40,13 +40,13 @@ import static com.intellij.util.concurrency.QueueProcessor.ThreadToUse;
  */
 @SomeQueue
 public class BackgroundTaskQueue {
-  @NotNull protected final String myTitle;
+  @Nls(capitalization = Nls.Capitalization.Title) @NotNull protected final String myTitle;
   @NotNull protected final QueueProcessor<TaskData> myProcessor;
 
   @NotNull private final Object TEST_TASK_LOCK = new Object();
   private volatile boolean myForceAsyncInTests;
 
-  public BackgroundTaskQueue(@Nullable Project project, @NotNull String title) {
+  public BackgroundTaskQueue(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
     myTitle = title;
 
     Condition disposeCondition = project != null ? project.getDisposed() : ApplicationManager.getApplication().getDisposed();
