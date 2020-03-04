@@ -265,10 +265,10 @@ public class DefaultActionGroup extends ActionGroup {
   public final void remove(@NotNull AnAction action, @Nullable String id) {
     if (!mySortedChildren.remove(action) &&
         !mySortedChildren.removeIf(oldAction ->
-                                     oldAction instanceof ActionStub && ((ActionStub)oldAction).getId().equals(id))) {
+                                     oldAction instanceof ActionStubBase && ((ActionStubBase)oldAction).getId().equals(id))) {
       for (int i = 0; i < myPairs.size(); i++) {
         Pair<AnAction, Constraints> pair = myPairs.get(i);
-        if (pair.first.equals(action) || (pair.first instanceof ActionStub && ((ActionStub)pair.first).getId().equals(id))) {
+        if (pair.first.equals(action) || (pair.first instanceof ActionStubBase && ((ActionStubBase)pair.first).getId().equals(id))) {
           myPairs.remove(i);
           incrementModificationStamp();
           break;
