@@ -56,15 +56,26 @@ class NotificationGroup @JvmOverloads constructor(@param:NonNls val displayId: S
       get() = registeredGroups.values
   }
 
-  fun createNotification(@Nls content: String, type: MessageType): Notification {
+  fun createNotification(
+    @Nls(capitalization = Nls.Capitalization.Sentence) content: String,
+    type: MessageType
+  ): Notification {
     return createNotification(content, type.toNotificationType())
   }
 
-  fun createNotification(@Nls content: String, type: NotificationType): Notification {
+  fun createNotification(
+    @Nls(capitalization = Nls.Capitalization.Sentence) content: String,
+    type: NotificationType
+  ): Notification {
     return createNotification("", content, type)
   }
 
-  fun createNotification(@Nls title: String, @Nls content: String, type: NotificationType = NotificationType.INFORMATION, listener: NotificationListener? = null): Notification {
+  fun createNotification(
+    @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
+    @Nls(capitalization = Nls.Capitalization.Sentence) content: String,
+    type: NotificationType = NotificationType.INFORMATION,
+    listener: NotificationListener? = null
+  ): Notification {
     return Notification(displayId, title, content, type, listener)
   }
 
@@ -74,11 +85,13 @@ class NotificationGroup @JvmOverloads constructor(@param:NonNls val displayId: S
   }
 
   @JvmOverloads
-  fun createNotification(@Nls title: String?,
-                         @Nls subtitle: String?,
-                         @Nls content: String?,
-                         type: NotificationType = NotificationType.INFORMATION,
-                         listener: NotificationListener? = null): Notification {
+  fun createNotification(
+    @Nls(capitalization = Nls.Capitalization.Sentence) title: String?,
+    @Nls(capitalization = Nls.Capitalization.Sentence) subtitle: String?,
+    @Nls(capitalization = Nls.Capitalization.Sentence) content: String?,
+    type: NotificationType = NotificationType.INFORMATION,
+    listener: NotificationListener? = null
+  ): Notification {
     return Notification(displayId, icon, title, subtitle, content, type, listener)
   }
 
