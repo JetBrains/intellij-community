@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.lineMarker;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.execution.ExecutionBundle;
@@ -109,7 +108,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     private final DefaultActionGroup myActionGroup;
 
     RunLineMarkerInfo(PsiElement element, Icon icon, Function<PsiElement, String> tooltipProvider, DefaultActionGroup actionGroup) {
-      super(element, element.getTextRange(), icon, Pass.LINE_MARKERS, tooltipProvider, null, GutterIconRenderer.Alignment.CENTER);
+      super(element, element.getTextRange(), icon, tooltipProvider, null, GutterIconRenderer.Alignment.CENTER);
       myActionGroup = actionGroup;
     }
 

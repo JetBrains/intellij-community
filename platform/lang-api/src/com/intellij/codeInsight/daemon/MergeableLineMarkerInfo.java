@@ -34,7 +34,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   private static final Logger LOG = Logger.getInstance(MergeableLineMarkerInfo.class);
 
   /**
-   * @deprecated Use the overload without updatePass
+   * @deprecated Use {@link #MergeableLineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment)} instead
    */
   @Deprecated
   public MergeableLineMarkerInfo(@NotNull T element,
@@ -44,7 +44,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
                                  @Nullable Function<? super T, String> tooltipProvider,
                                  @Nullable GutterIconNavigationHandler<T> navHandler,
                                  @NotNull GutterIconRenderer.Alignment alignment) {
-    super(element, textRange, icon, updatePass, tooltipProvider, navHandler, alignment);
+    super(element, textRange, icon, tooltipProvider, navHandler, alignment);
   }
 
   public MergeableLineMarkerInfo(@NotNull T element,
@@ -133,13 +133,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
     private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers, @NotNull MergeableLineMarkerInfo<?> template) {
       //noinspection ConstantConditions
-      super(template.getElement(),
-            getCommonTextRange(markers),
-            template.getCommonIcon(markers),
-            template.getCommonUpdatePass(markers),
-            template.getCommonTooltip(markers),
-            getCommonNavigationHandler(markers),
-            template.getCommonIconAlignment(markers));
+      super(template.getElement(), getCommonTextRange(markers), template.getCommonIcon(markers), template.getCommonTooltip(markers),
+            getCommonNavigationHandler(markers), template.getCommonIconAlignment(markers));
     }
 
     @NotNull

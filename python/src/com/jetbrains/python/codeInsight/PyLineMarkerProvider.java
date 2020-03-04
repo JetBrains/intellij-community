@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
@@ -190,8 +189,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       }
       // TODO: show "implementing" instead of "overriding" icon for Python implementations of Java interface methods
       return new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridingMethod,
-                                  Pass.LINE_MARKERS,
-                                            superClass == null ? null : new TooltipProvider("Overrides method in " + superClass.getName()),
+                                  superClass == null ? null : new TooltipProvider("Overrides method in " + superClass.getName()),
                                   SUPER_METHOD_NAVIGATOR, GutterIconRenderer.Alignment.RIGHT);
     }
     return null;
@@ -211,10 +209,9 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       if (ancestorAttr != null) {
         PsiElement identifier = element.getNameIdentifier();
         if (identifier != null) {
-          return new LineMarkerInfo<>(identifier, identifier.getTextRange(),
-                                      AllIcons.Gutter.OverridingMethod, Pass.LINE_MARKERS,
-                                      new TooltipProvider("Overrides attribute in " + ancestor.getName()),
-                                      SUPER_ATTRIBUTE_NAVIGATOR, GutterIconRenderer.Alignment.RIGHT);
+          return new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridingMethod,
+                                      new TooltipProvider("Overrides attribute in " + ancestor.getName()), SUPER_ATTRIBUTE_NAVIGATOR,
+                                      GutterIconRenderer.Alignment.RIGHT);
         }
       }
     }
@@ -239,8 +236,8 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     if (PyClassInheritorsSearch.search(element, false).findFirst() != null) {
       PsiElement identifier = element.getNameIdentifier();
       if (identifier != null) {
-        result.add(new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridenMethod, Pass.LINE_MARKERS,
-                                    ourSubclassTooltipProvider, ourSubclassNavigator, GutterIconRenderer.Alignment.RIGHT));
+        result.add(new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridenMethod, ourSubclassTooltipProvider,
+                                        ourSubclassNavigator, GutterIconRenderer.Alignment.RIGHT));
       }
     }
   }
@@ -272,9 +269,9 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     for (PyFunction func : overridden) {
       PsiElement identifier = func.getNameIdentifier();
       if (identifier != null) {
-        result.add(new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridenMethod, Pass.LINE_MARKERS,
-                                        ourOverridingMethodTooltipProvider,
-                                        ourOverridingMethodNavigator, GutterIconRenderer.Alignment.RIGHT));
+        result.add(new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridenMethod,
+                                        ourOverridingMethodTooltipProvider, ourOverridingMethodNavigator,
+                                        GutterIconRenderer.Alignment.RIGHT));
       }
     }
   }

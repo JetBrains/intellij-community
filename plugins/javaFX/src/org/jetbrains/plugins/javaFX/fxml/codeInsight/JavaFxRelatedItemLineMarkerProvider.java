@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
@@ -70,9 +69,9 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
           if (targets.isEmpty()) return;
 
           result.add(new RelatedItemLineMarkerInfo<>((PsiIdentifier)element, element.getTextRange(),
-                                                     AllIcons.FileTypes.Xml, Pass.LINE_MARKERS, null,
+                                                     AllIcons.FileTypes.Xml, null,
                                                      new JavaFXIdIconNavigationHandler(), GutterIconRenderer.Alignment.LEFT,
-                                                     targets));
+                                                     ()->targets));
         }
       }
     }

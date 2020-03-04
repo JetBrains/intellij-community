@@ -31,7 +31,6 @@ class EditorConfigOverriddenKeyLineMarkerProvider : LineMarkerProvider {
         identifier,
         identifier.textRange,
         AllIcons.Gutter.OverridenMethod,
-        Pass.LINE_MARKERS,
         createTooltipProvider(children),
         createNavigationHandler(children, element),
         GutterIconRenderer.Alignment.RIGHT

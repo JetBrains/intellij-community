@@ -51,7 +51,6 @@ abstract class EditorConfigHeaderLineMarkerProviderBase : LineMarkerProvider {
       identifier,
       identifier.textRange,
       icon,
-      Pass.LINE_MARKERS,
       createTooltipProvider(searchResults),
       createNavigationHandler(searchResults),
       GutterIconRenderer.Alignment.RIGHT
