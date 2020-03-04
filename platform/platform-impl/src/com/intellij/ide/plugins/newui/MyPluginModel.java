@@ -939,13 +939,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   public static IdeaPluginDescriptor findPlugin(@NotNull PluginId id) {
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
     if (plugin == null && PluginManagerCore.isModuleDependency(id)) {
-      for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-        if (descriptor instanceof IdeaPluginDescriptorImpl) {
-          if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id)) {
-            return descriptor;
-          }
-        }
-      }
+      IdeaPluginDescriptor descriptor = PluginManagerCore.findPluginByModuleDependency(id);
+      if (descriptor != null) return descriptor;
     }
     return plugin;
   }

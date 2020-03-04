@@ -115,7 +115,7 @@ object DynamicPlugins {
       return false
     }
 
-    if (loadedPluginDescriptor != null && isPluginLoaded(loadedPluginDescriptor.pluginId)) {
+    if (loadedPluginDescriptor != null && isPluginOrModuleLoaded(loadedPluginDescriptor.pluginId)) {
       if (!descriptor.useIdeaClassLoader) {
         val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
         if (pluginClassLoader !is PluginClassLoader && !ApplicationManager.getApplication().isUnitTestMode) {
@@ -180,7 +180,7 @@ object DynamicPlugins {
     if (!((ActionManager.getInstance() as ActionManagerImpl).canUnloadActions(descriptor))) return false
 
     descriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
-      if (isPluginLoaded(pluginId) && optionalDescriptors.any { !allowLoadUnloadWithoutRestart(it, descriptor) }) return false
+      if (isPluginOrModuleLoaded(pluginId) && optionalDescriptors.any { !allowLoadUnloadWithoutRestart(it, descriptor) }) return false
     }
 
     var canUnload = true
@@ -314,7 +314,7 @@ object DynamicPlugins {
           }
 
           pluginDescriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
-            if (isPluginLoaded(pluginId)) {
+            if (isPluginOrModuleLoaded(pluginId)) {
               for (optionalDescriptor in optionalDescriptors) {
                 unloadPluginDescriptor(optionalDescriptor, loadedPluginDescriptor)
               }
@@ -505,7 +505,7 @@ object DynamicPlugins {
     val listenerCallbacks = arrayListOf<Runnable>()
     val pluginsToLoad = mutableListOf(DescriptorToLoad(fullyLoadedBaseDescriptor, baseDescriptor))
     fullyLoadedBaseDescriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
-      if (isPluginLoaded(pluginId)) {
+      if (isPluginOrModuleLoaded(pluginId)) {
         optionalDescriptors.mapTo(pluginsToLoad) {
           DescriptorToLoad(it, baseDescriptor)
         }
@@ -524,8 +524,12 @@ object DynamicPlugins {
     listenerCallbacks.forEach(Runnable::run)
   }
 
-  private fun isPluginLoaded(pluginId: PluginId?) =
-    PluginManagerCore.getLoadedPlugins().any { it.pluginId == pluginId }
+  private fun isPluginOrModuleLoaded(pluginId: PluginId?): Boolean {
+    if (pluginId != null && PluginManagerCore.isModuleDependency(pluginId)) {
+      return PluginManagerCore.findPluginByModuleDependency(pluginId) != null
+    }
+    return PluginManagerCore.getLoadedPlugins().any { it.pluginId == pluginId }
+  }
 
   @JvmStatic
   fun pluginDisposable(clazz: Class<*>): Disposable? {
