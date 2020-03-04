@@ -40,7 +40,7 @@ public abstract class Task implements TaskInfo, Progressive {
   private String myCancelText = CoreBundle.message("button.cancel");
   private String myCancelTooltipText = CoreBundle.message("button.cancel");
 
-  private Task(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
+  private Task(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title, boolean canBeCancelled) {
     myProject = project;
     myTitle = title;
     myCanBeCancelled = canBeCancelled;
@@ -116,7 +116,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @NotNull
-  public final Task setTitle(@Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
+  public final Task setTitle(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title) {
     myTitle = title;
     return this;
   }
@@ -127,7 +127,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @NotNull
-  public final Task setCancelText(@Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
+  public final Task setCancelText(@Nls(capitalization = Nls.Capitalization.Sentence) String cancelText) {
     myCancelText = cancelText;
     return this;
   }
@@ -183,16 +183,16 @@ public abstract class Task implements TaskInfo, Progressive {
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
     protected final PerformInBackgroundOption myBackgroundOption;
 
-    public Backgroundable(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
+    public Backgroundable(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title) {
       this(project, title, true);
     }
 
-    public Backgroundable(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
+    public Backgroundable(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title, boolean canBeCancelled) {
       this(project, title, canBeCancelled, null);
     }
 
     public Backgroundable(@Nullable Project project,
-                          @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
+                          @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
                           boolean canBeCancelled,
                           @Nullable PerformInBackgroundOption backgroundOption) {
       super(project, title, canBeCancelled);
@@ -226,7 +226,7 @@ public abstract class Task implements TaskInfo, Progressive {
  }
 
   public abstract static class Modal extends Task {
-    public Modal(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
+    public Modal(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title, boolean canBeCancelled) {
       super(project, title, canBeCancelled);
     }
 
@@ -238,7 +238,7 @@ public abstract class Task implements TaskInfo, Progressive {
 
   public abstract static class ConditionalModal extends Backgroundable {
     public ConditionalModal(@Nullable Project project,
-                            @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
+                            @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
                             boolean canBeCancelled,
                             @NotNull PerformInBackgroundOption backgroundOption) {
       super(project, title, canBeCancelled, backgroundOption);
