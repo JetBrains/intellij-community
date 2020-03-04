@@ -6,14 +6,15 @@ import com.intellij.openapi.util.EmptyRunnable;
 
 import java.util.concurrent.TimeUnit;
 
-public class TimingLog {
+public final class TimingLog {
   public static final Logger LOG = Logger.getInstance(TimingLog.class);
 
   public static Runnable startActivity(final String name) {
     if (!LOG.isDebugEnabled()) {
       return EmptyRunnable.INSTANCE;
     }
-    final long start = System.nanoTime();
+
+    long start = System.nanoTime();
     return () -> LOG.debug(name + " in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + "ms");
   }
 }
