@@ -244,10 +244,8 @@ object DynamicPlugins {
   fun allowLoadUnloadSynchronously(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
     val extensions = pluginDescriptor.extensions
     if (extensions != null && !extensions.all {
-        @Suppress("DEPRECATION")
         it.key == UIThemeProvider.EP_NAME.name ||
-        it.key == BundledKeymapBean.EP_NAME.name ||
-        it.key == com.intellij.openapi.keymap.impl.BundledKeymapProvider.EP_NAME.name}) {
+        it.key == BundledKeymapBean.EP_NAME.name}) {
       return false
     }
     return hasNoComponents(pluginDescriptor) && pluginDescriptor.actionDescriptionElements.isNullOrEmpty()
