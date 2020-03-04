@@ -1261,7 +1261,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           if (customActionSchema != null) {
             customActionSchema.invalidateCustomizedActionGroup(groupId);
           }
-          DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)getActionOrStub(groupId));
+          DefaultActionGroup group = (DefaultActionGroup)getActionOrStub(groupId);
+          if (group == null) {
+            LOG.error("Trying to remove action " + actionId + " from non-existing group " + groupId);
+            continue;
+          }
           group.remove(actionToRemove, actionId);
           if (!(group instanceof ActionGroupStub)) {
             //group can be used as a stub in other actions
