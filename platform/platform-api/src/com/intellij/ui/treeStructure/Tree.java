@@ -118,13 +118,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return 0 >= getRowCount();
   }
 
-  /** @deprecated not used */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  protected boolean isCustomUI() {
-    return false;
-  }
-
   protected boolean isWideSelection() {
     return true;
   }
