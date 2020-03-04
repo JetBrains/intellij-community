@@ -137,7 +137,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   private boolean myKeepHint;
 
   private final ActionToolbar statusToolbar;
-  private boolean hideToolbar;
+  private boolean hideToolbar = true;
   private final ComponentListener toolbarComponentListener;
   private Rectangle cachedToolbarBounds = new Rectangle();
   private final JLabel smallIconLabel;
