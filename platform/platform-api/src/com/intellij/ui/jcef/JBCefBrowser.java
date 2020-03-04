@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
 import org.cef.browser.CefBrowser;
@@ -51,12 +52,10 @@ public class JBCefBrowser implements JBCefDisposable {
 
     public void load(@NotNull CefBrowser browser) {
       // JCEF demands async loading.
-      if (myHtml == null) {
-        EventQueue.invokeLater(() -> browser.loadURL(myUrl));
-      }
-      else {
-        EventQueue.invokeLater(() -> browser.loadString(myHtml, myUrl));
-      }
+      ApplicationManager.getApplication().invokeLater(
+        myHtml == null ?
+          () -> browser.loadURL(myUrl) :
+          () -> browser.loadString(myHtml, myUrl));
     }
   }
 
