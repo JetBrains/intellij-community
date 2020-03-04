@@ -50,7 +50,7 @@ import java.util.*;
  */
 final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiNameIdentifierOwner) {
       if (parent instanceof GrField && element == ((GrField)parent).getNameIdentifierGroovy()) {
@@ -163,7 +163,7 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   }
 
   @Override
-  public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(final @NotNull List<? extends PsiElement> elements, final @NotNull Collection<? super LineMarkerInfo<?>> result) {
     Set<PsiMethod> methods = new HashSet<>();
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
@@ -186,7 +186,7 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     collectOverridingMethods(methods, result);
   }
 
-  private static void collectOverridingMethods(@NotNull final Set<PsiMethod> methods, @NotNull Collection<LineMarkerInfo> result) {
+  private static void collectOverridingMethods(final @NotNull Set<? extends PsiMethod> methods, @NotNull Collection<? super LineMarkerInfo<?>> result) {
     final Set<PsiElement> overridden = new HashSet<>();
 
     Set<PsiClass> classes = new THashSet<>();
@@ -221,7 +221,7 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
 
       final MarkerType type = element instanceof GrField ? GroovyMarkerTypes.OVERRIDEN_PROPERTY_TYPE
                                                          : GroovyMarkerTypes.GR_OVERRIDDEN_METHOD;
-      LineMarkerInfo info = new LineMarkerInfo<>(range, range.getTextRange(), icon, Pass.LINE_MARKERS, type.getTooltip(),
+      LineMarkerInfo<?> info = new LineMarkerInfo<>(range, range.getTextRange(), icon, Pass.LINE_MARKERS, type.getTooltip(),
                                                  type.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
       result.add(info);
     }

@@ -26,14 +26,13 @@ public class PyUserSkeletonsLineMarkerProvider implements LineMarkerProvider {
   // TODO: Create an icon for a related user skeleton
   public static final Icon ICON = AllIcons.Gutter.Unique;
 
-  @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     return null;
   }
 
   @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
     for (PsiElement element : elements) {
       final PyElement skeleton = getUserSkeleton(element);
       if (skeleton != null) {

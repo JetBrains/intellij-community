@@ -71,7 +71,7 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
   }
 
   @Override
-  public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
+  public Icon getCommonIcon(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
     return myIcon;
   }
 
@@ -81,7 +81,7 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
     }
 
     @Override
-    protected boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer renderer) {
+    protected boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer<?> renderer) {
       if (!(renderer instanceof RelatedItemLineMarkerGutterIconRenderer) || !super.looksTheSameAs(renderer)) {
         return false;
       }

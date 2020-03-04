@@ -43,13 +43,13 @@ import java.util.Set;
 public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     return null; //do nothing
   }
 
   @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements,
-                                     @NotNull Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
+                                     @NotNull Collection<? super LineMarkerInfo<?>> result) {
     final Set<PsiStatement> statements = new HashSet<>();
 
     for (PsiElement element : elements) {

@@ -155,7 +155,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
   };
 
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
     final ASTNode node = element.getNode();
     if (node != null && node.getElementType() == PyTokenTypes.IDENTIFIER && element.getParent() instanceof PyFunction) {
       final PyFunction function = (PyFunction)element.getParent();
@@ -222,7 +222,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
   }
 
   @Override
-  public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(final @NotNull List<? extends PsiElement> elements, final @NotNull Collection<? super LineMarkerInfo<?>> result) {
     Set<PyFunction> functions = new HashSet<>();
     for (PsiElement element : elements) {
       if (element instanceof PyClass) {
@@ -235,7 +235,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     collectOverridingMethods(functions, result);
   }
 
-  private static void collectInheritingClasses(final PyClass element, final Collection<LineMarkerInfo> result) {
+  private static void collectInheritingClasses(final PyClass element, final Collection<? super LineMarkerInfo<?>> result) {
     if (PyClassInheritorsSearch.search(element, false).findFirst() != null) {
       PsiElement identifier = element.getNameIdentifier();
       if (identifier != null) {
@@ -245,7 +245,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
   }
 
-  private static void collectOverridingMethods(final Set<PyFunction> functions, final Collection<LineMarkerInfo> result) {
+  private static void collectOverridingMethods(final Set<? extends PyFunction> functions, final Collection<? super LineMarkerInfo<?>> result) {
     Set<PyClass> classes = new HashSet<>();
     final MultiMap<PyClass, PyFunction> candidates = new MultiMap<>();
     for (PyFunction function : functions) {

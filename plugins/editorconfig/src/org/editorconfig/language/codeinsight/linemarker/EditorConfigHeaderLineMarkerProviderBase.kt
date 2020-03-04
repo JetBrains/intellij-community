@@ -18,7 +18,7 @@ import javax.swing.Icon
 
 abstract class EditorConfigHeaderLineMarkerProviderBase : LineMarkerProvider {
   final override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
-  final override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
+  final override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
     val headers = elements.mapNotNull { it as? EditorConfigHeader }
     if (headers.isEmpty()) return
 

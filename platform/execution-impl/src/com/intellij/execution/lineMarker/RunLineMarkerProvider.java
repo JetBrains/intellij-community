@@ -43,9 +43,8 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     return 0;
   };
 
-  @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage());
     Icon icon = null;
     List<Info> infos = null;

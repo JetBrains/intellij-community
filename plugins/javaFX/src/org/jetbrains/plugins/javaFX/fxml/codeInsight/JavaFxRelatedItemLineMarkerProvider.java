@@ -49,7 +49,7 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
   private static final Logger LOG = Logger.getInstance(JavaFxRelatedItemLineMarkerProvider.class);
 
   @Override
-  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull final Collection<? super RelatedItemLineMarkerInfo> result) {
+  protected void collectNavigationMarkers(@NotNull PsiElement element, final @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     PsiElement f;
     if (element instanceof PsiIdentifier && (f = element.getParent()) instanceof PsiField) {
       final PsiField field = (PsiField)f;
