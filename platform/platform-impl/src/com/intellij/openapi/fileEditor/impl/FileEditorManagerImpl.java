@@ -1807,13 +1807,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     @Override
     public void rootsChanged(@NotNull ModuleRootEvent event) {
-      List<EditorWithProviderComposite> allEditors = StreamEx.of(getWindows()).flatArray(EditorWindow::getEditors).toList();
-      ReadAction
-        .nonBlocking(() -> calcEditorReplacements(allEditors))
-        .inSmartMode(myProject)
-        .finishOnUiThread(ModalityState.defaultModalityState(), this::replaceEditors)
-        .coalesceBy(this)
-        .submit(AppExecutorUtil.getAppExecutorService());
+      AppUIExecutor
+        .onUiThread(ModalityState.any())
+        .expireWith(myProject)
+        .submit(() -> StreamEx.of(getWindows()).flatArray(EditorWindow::getEditors).toList())
+        .onSuccess(allEditors -> ReadAction
+          .nonBlocking(() -> calcEditorReplacements(allEditors))
+          .inSmartMode(myProject)
+          .finishOnUiThread(ModalityState.defaultModalityState(), this::replaceEditors)
+          .coalesceBy(this)
+          .submit(AppExecutorUtil.getAppExecutorService()));
     }
 
     private Map<EditorWithProviderComposite, Pair<VirtualFile, Integer>> calcEditorReplacements(List<EditorWithProviderComposite> allEditors) {
