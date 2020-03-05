@@ -30,6 +30,6 @@ public class CreatePythonFileAction extends CreateFileFromTemplateAction impleme
 
   @Override
   protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
-    return PyBundle.message("create.python.script.action", newName);
+    return PyBundle.message("create.python.file.script.action", newName);
   }
 }
