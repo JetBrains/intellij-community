@@ -475,6 +475,8 @@ public class AllIcons {
     /** 12x12 */ public static final Icon ImplementingFunctionalInterface = load("/gutter/implementingFunctionalInterface.svg");
     /** 12x12 */ public static final Icon ImplementingMethod = load("/gutter/implementingMethod.svg");
     /** 12x12 */ public static final Icon Java9Service = load("/gutter/java9Service.svg");
+    /** 12x12 */ public static final Icon JavadocEdit = load("/gutter/javadocEdit.svg");
+    /** 12x12 */ public static final Icon JavadocRead = load("/gutter/javadocRead.svg");
     /** 12x12 */ public static final Icon OverridenMethod = load("/gutter/overridenMethod.svg");
     /** 12x12 */ public static final Icon OverridingMethod = load("/gutter/overridingMethod.svg");
     /** 12x12 */ public static final Icon ReadAccess = load("/gutter/readAccess.svg");
