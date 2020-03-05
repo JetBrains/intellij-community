@@ -798,7 +798,8 @@
                          implementationClass="com.intellij.codeInsight.editorActions.BackspaceToWordStartHandler"/>
     <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.TypedHandler" order="first"/>
 
-    <editorActionHandler action="EditorDuplicate" implementationClass="com.intellij.openapi.editor.actions.NamedElementDuplicateHandler"/>
+    <editorActionHandler action="EditorDuplicate" id="namedElementDuplicate"
+                         implementationClass="com.intellij.openapi.editor.actions.NamedElementDuplicateHandler"/>
 
     <!-- TemplateManagerActions -->
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EscapeHandler"

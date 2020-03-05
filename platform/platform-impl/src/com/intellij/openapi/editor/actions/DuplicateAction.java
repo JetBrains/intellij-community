@@ -36,16 +36,16 @@ public class DuplicateAction extends EditorAction {
     }
   }
 
-  private static void duplicateLineOrSelectedBlockAtCaret(Editor editor) {
+  public static void duplicateLineOrSelectedBlockAtCaret(Editor editor) {
     Document document = editor.getDocument();
     CaretModel caretModel = editor.getCaretModel();
     ScrollingModel scrollingModel = editor.getScrollingModel();
-    if(editor.getSelectionModel().hasSelection()) {
+    if (editor.getSelectionModel().hasSelection()) {
       int start = editor.getSelectionModel().getSelectionStart();
       int end = editor.getSelectionModel().getSelectionEnd();
       String s = document.getCharsSequence().subSequence(start, end).toString();
       document.insertString(end, s);
-      caretModel.moveToOffset(end+s.length());
+      caretModel.moveToOffset(end + s.length());
       scrollingModel.scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
       editor.getSelectionModel().setSelection(end, end+s.length());
