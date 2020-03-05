@@ -93,7 +93,7 @@ public interface StatusBarWidgetWrapper {
       setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
       addMouseListener(new MouseAdapter() {
         @Override
-        public void mousePressed(final MouseEvent e) {
+        public void mouseClicked(final MouseEvent e) {
           if (myClickConsumer != null && !e.isPopupTrigger() && MouseEvent.BUTTON1 == e.getButton()) {
             myClickConsumer.consume(e);
           }
@@ -128,7 +128,7 @@ public interface StatusBarWidgetWrapper {
       setBorder(StatusBarWidget.WidgetBorder.ICON);
       addMouseListener(new MouseAdapter() {
         @Override
-        public void mousePressed(final MouseEvent e) {
+        public void mouseClicked(final MouseEvent e) {
           if (myClickConsumer != null && !e.isPopupTrigger() && MouseEvent.BUTTON1 == e.getButton()) {
             myClickConsumer.consume(e);
           }
