@@ -61,10 +61,7 @@ import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.*;
 
 public final class TerminalView {
@@ -221,7 +218,7 @@ public final class TerminalView {
       terminalWidget.setVirtualFile(null);
       terminalWidget.moveDisposable(content);
     }
-    setupTerminalWidget(toolWindow, terminalWidget, tabState, content);
+    setupTerminalWidget(toolWindow, terminalWidget, tabState, content, true);
 
     content.setCloseable(true);
     content.putUserData(TERMINAL_WIDGET_KEY, terminalWidget);
@@ -232,7 +229,7 @@ public final class TerminalView {
 
     panel.updateDFState();
 
-    content.setPreferredFocusableComponent(terminalWidget.getPreferredFocusableComponent());
+    updatePreferredFocusableComponent(content, terminalWidget);
 
     return content;
   }
@@ -240,7 +237,8 @@ public final class TerminalView {
   private void setupTerminalWidget(@NotNull ToolWindow toolWindow,
                                    @NotNull JBTerminalWidget terminalWidget,
                                    @Nullable TerminalTabState tabState,
-                                   @Nullable Content content) {
+                                   @NotNull Content content,
+                                   boolean updateContentDisplayName) {
     MoveTerminalToolWindowTabLeftAction moveTabLeftAction = new MoveTerminalToolWindowTabLeftAction();
     MoveTerminalToolWindowTabRightAction moveTabRightAction = new MoveTerminalToolWindowTabRightAction();
     terminalWidget.setListener(new JBTerminalWidgetListener() {
@@ -251,7 +249,7 @@ public final class TerminalView {
 
       @Override
       public void onTerminalStarted() {
-        if (content != null && (tabState == null || StringUtil.isEmpty(tabState.myTabName))) {
+        if (updateContentDisplayName && (tabState == null || StringUtil.isEmpty(tabState.myTabName))) {
           String name = terminalWidget.getSettingsProvider().tabName(terminalWidget.getTtyConnector(),
                                                                      terminalWidget.getSessionName());
           List<Content> contents = ContainerUtil.newArrayList(toolWindow.getContentManager().getContents());
@@ -329,6 +327,16 @@ public final class TerminalView {
         TerminalView.this.gotoNextSplitTerminal(terminalWidget, forward);
       }
     });
+    terminalWidget.getTerminalPanel().addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        updatePreferredFocusableComponent(content, terminalWidget);
+      }
+    });
+  }
+
+  private static void updatePreferredFocusableComponent(@NotNull Content content, @NotNull JBTerminalWidget terminalWidget) {
+    content.setPreferredFocusableComponent(terminalWidget.getPreferredFocusableComponent());
   }
 
   public boolean isSplitTerminal(@NotNull JBTerminalWidget widget) {
@@ -347,7 +355,7 @@ public final class TerminalView {
   public void split(@NotNull JBTerminalWidget widget, boolean vertically) {
     TerminalContainer container = Objects.requireNonNull(myContainerByWidgetMap.get(widget));
     JBTerminalWidget newWidget = myTerminalRunner.createTerminalWidget(container.getContent(), null);
-    setupTerminalWidget(myToolWindow, newWidget, null, null);
+    setupTerminalWidget(myToolWindow, newWidget, null, container.getContent(), false);
     container.split(!vertically, newWidget);
   }
 
