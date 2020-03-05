@@ -5,6 +5,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -72,7 +73,8 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   public void updateWidget(@NotNull StatusBarWidgetFactory factory) {
-    if (factory.isAvailable(myProject) && (!factory.isConfigurable() || myProject.getService(StatusBarWidgetSettings.class).isEnabled(factory))) {
+    if (factory.isAvailable(myProject) &&
+        (!factory.isConfigurable() || ServiceManager.getService(StatusBarWidgetSettings.class).isEnabled(factory))) {
       enableWidget(factory);
     }
     else {

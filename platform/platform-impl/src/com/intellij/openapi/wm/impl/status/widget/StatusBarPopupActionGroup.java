@@ -3,8 +3,10 @@ package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.psi.util.CachedValueProvider;
@@ -68,15 +70,15 @@ public class StatusBarPopupActionGroup extends ComputableActionGroup {
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-      return project.getService(StatusBarWidgetSettings.class).isEnabled(myWidgetFactory);
+      return ServiceManager.getService(StatusBarWidgetSettings.class).isEnabled(myWidgetFactory);
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-      project.getService(StatusBarWidgetSettings.class).setEnabled(myWidgetFactory, state);
-      myManager.updateWidget(myWidgetFactory);
+      ServiceManager.getService(StatusBarWidgetSettings.class).setEnabled(myWidgetFactory, state);
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        project.getService(StatusBarWidgetsManager.class).updateWidget(myWidgetFactory);
+      }
     }
   }
 }
