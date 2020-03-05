@@ -254,7 +254,7 @@ public class Restarter {
 
   private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
     String restarter = restarterFile.getPath();
-    boolean doNotLock = Boolean.parseBoolean(System.getProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY));
+    boolean doNotLock = SystemProperties.getBooleanProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, false);
     Path tempDir = null;
     if (doNotLock || restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS)) {
       tempDir = Paths.get(PathManager.getSystemPath(), "restart");
