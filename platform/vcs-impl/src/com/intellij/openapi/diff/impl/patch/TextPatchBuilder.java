@@ -122,7 +122,6 @@ public class TextPatchBuilder {
     if (beforeContent.equals(afterContent)) {
       if (beforeRevision.getPath().getPath().equals(afterRevision.getPath().getPath())) return null;
       // movement
-      patch.addHunk(new PatchHunk(0, 0, 0, 0));
       return patch;
     }
 
