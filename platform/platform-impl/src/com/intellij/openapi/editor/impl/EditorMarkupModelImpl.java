@@ -353,7 +353,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         analyzerStatus = newStatus;
         smallIconLabel.setIcon(analyzerStatus.getIcon());
 
-        myPopupManager.updateContent();
+        myPopupManager.updateVisiblePopup();
         ActivityTracker.getInstance().inc();
       }
     }
@@ -742,7 +742,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       repaintTrafficLightIcon();
       repaintVerticalScrollBar();
 
-      myPopupManager.updateContent();
+      myPopupManager.updateVisiblePopup();
     }
 
     @Override
@@ -1685,6 +1685,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     private void showPopup(InputEvent event) {
       hidePopup();
 
+      updateContentPanel(analyzerStatus.getController().invoke());
+
       myPopup = myPopupBuilder.createPopup();
       myPopup.addListener(myPopupListener);
       myEditor.getComponent().addAncestorListener(myAncestorListener);
@@ -1766,18 +1768,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
                        gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
     }
 
-    private void updateContent() {
-      AnalyzerController controller = analyzerStatus.getController().invoke();
-      updateContentPanel(controller);
-      revalidateAndResize(false);
-    }
-
-    private void revalidateAndResize(boolean revalidate) {
-      if (myPopup != null && !myPopup.isDisposed()) {
-
-        if (revalidate) {
-          myContent.revalidate();
-        }
+    private void updateVisiblePopup() {
+      if (myPopup != null && myPopup.isVisible()) {
+        updateContentPanel(analyzerStatus.getController().invoke());
 
         Dimension size = myContent.getPreferredSize();
         size.width = Math.max(size.width, JBUIScale.scale(296));
@@ -1832,7 +1825,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
                          controller.getAvailableLevels(),
                          l -> {
                            controller.setHighLightLevel(level.copy(level.getLanguage(), l));
-                           revalidateAndResize(true);
+
+                           myContent.revalidate();
+
+                           Dimension size = myContent.getPreferredSize();
+                           size.width = Math.max(size.width, JBUIScale.scale(296));
+                           myPopup.setSize(size);
                          }, true);
     }
   }
