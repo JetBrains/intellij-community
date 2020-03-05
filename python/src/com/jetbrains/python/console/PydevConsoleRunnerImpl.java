@@ -238,7 +238,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public void runSync(boolean requestEditorFocus) {
     try {
       if (mySdk == null) {
-        throw new ExecutionException(PyBundle.message("python.interpreter.is.not.selected"));
+        throw new ExecutionException(PyBundle.message("pydev.console.python.interpreter.is.not.selected"));
       }
       initAndRun(mySdk);
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("connecting.to.console.title"), false) {
@@ -253,7 +253,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       });
     }
     catch (ExecutionException e) {
-      LOG.warn("Error running console", e);
+      LOG.warn(PyBundle.message("pydev.console.error.running.console"), e);
       showErrorsInConsole(e);
     }
   }
@@ -270,7 +270,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           indicator.setText(PyBundle.message("connecting.to.console.progress"));
           try {
             if (mySdk == null) {
-              throw new ExecutionException(PyBundle.message("python.interpreter.is.not.selected"));
+              throw new ExecutionException(PyBundle.message("pydev.console.python.interpreter.is.not.selected"));
             }
             initAndRun(mySdk);
             connect(myStatementsToExecute);
