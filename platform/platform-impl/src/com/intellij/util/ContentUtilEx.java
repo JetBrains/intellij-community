@@ -151,13 +151,9 @@ public class ContentUtilEx extends ContentsUtil {
   @Nullable
   public static JComponent findContentComponent(@NotNull ContentManager manager, @NotNull Condition<? super JComponent> condition) {
     for (Content content : manager.getContents()) {
-      if (content instanceof TabbedContentImpl) {
-        List<Pair<String, JComponent>> tabs = ((TabbedContentImpl)content).getTabs();
-        for (Pair<String, JComponent> tab : tabs) {
-          if (condition.value(tab.second)) {
-            return tab.second;
-          }
-        }
+      if (content instanceof TabbedContent) {
+        JComponent component = findContentComponent((TabbedContent)content, condition);
+        if (component != null) return component;
       }
       else if (condition.value(content.getComponent())) {
         return content.getComponent();
