@@ -43,7 +43,7 @@ class FeatureUsageData {
   companion object {
     // don't list "version" as "platformDataKeys" because it format depends a lot on the tool
     val platformDataKeys: List<String> = listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place",
-                                                "file_path", "anonymous_id", "plugin_version")
+                                                "file_path", "anonymous_id")
   }
 
   /**
