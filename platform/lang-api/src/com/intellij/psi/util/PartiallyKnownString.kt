@@ -10,10 +10,9 @@ import com.intellij.util.containers.toHeadAndTail
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * A class for working with strings which value is only partially known
- * because of some variables concatenated with or interpolated into the string.
+ * Represents string which value is only partially known because of some variables concatenated with or interpolated into the string.
  *
- * for Uast languages could be retried from [UStringConcatenationsFacade.asPartiallyKnownString].
+ * For UAST languages it could be obtained from [UStringConcatenationsFacade.asPartiallyKnownString].
  *
  * The common use case is a search for a place in partially known content to inject a reference.
  */
