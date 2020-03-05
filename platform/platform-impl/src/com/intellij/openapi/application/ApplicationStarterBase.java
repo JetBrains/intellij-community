@@ -2,10 +2,12 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.CliResult;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +47,9 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
   @Override
   public Future<CliResult> processExternalCommandLineAsync(@NotNull List<String> args, @Nullable String currentDirectory) {
     if (!checkArguments(args)) {
-      Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
+      });
       return CliResult.error(1, getUsageMessage());
     }
     try {
@@ -53,17 +57,22 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     }
     catch (Exception e) {
       String message = String.format("Error executing %s: %s", getCommandName(), e.getMessage());
-      Messages.showMessageDialog(message, StringUtil.toTitleCase(getCommandName()), Messages.getErrorIcon());
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Messages.showMessageDialog(message, StringUtil.toTitleCase(getCommandName()), Messages.getErrorIcon());
+      });
       return CliResult.error(1, message);
-    }
-    finally {
-      saveAll();
     }
   }
 
   protected static void saveAll() {
     FileDocumentManager.getInstance().saveAllDocuments();
     ApplicationManager.getApplication().saveSettings();
+  }
+
+  protected static void saveIfNeeded(@Nullable VirtualFile file) {
+    if (file == null) return;
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    if (document != null) FileDocumentManager.getInstance().saveDocument(document);
   }
 
   private boolean checkArguments(@NotNull List<String> args) {
@@ -85,15 +94,21 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
   }
 
   @Override
-  public void main(String @NotNull [] args) {
-    int exitCode = 0;
+  public void main(@NotNull List<String> args) {
     try {
-      Future<CliResult> commandFuture = processCommand(Arrays.asList(args), null);
-      CliResult result = commandFuture.get();
-      if (result.message != null) {
-        System.out.println(result.message);
+      int exitCode;
+      try {
+        Future<CliResult> commandFuture = processCommand(args, null);
+        CliResult result = commandFuture.get();
+        if (result.message != null) {
+          System.out.println(result.message);
+        }
+        exitCode = result.exitCode;
       }
-      exitCode = result.exitCode;
+      finally {
+        ApplicationManager.getApplication().invokeAndWait(() -> saveAll());
+      }
+      System.exit(exitCode);
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -103,10 +118,5 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
       t.printStackTrace();
       System.exit(2);
     }
-    finally {
-      saveAll();
-    }
-
-    System.exit(exitCode);
   }
 }
