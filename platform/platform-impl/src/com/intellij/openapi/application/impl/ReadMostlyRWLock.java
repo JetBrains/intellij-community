@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +84,8 @@ class ReadMostlyRWLock {
     return status;
   });
 
-  void setWriteThread(Thread thread) {
+  @TestOnly
+  void setWriteThread(@NotNull Thread thread) {
     assert !writeAcquired;
     assert !writeRequested;
     assert writeThread == null;
