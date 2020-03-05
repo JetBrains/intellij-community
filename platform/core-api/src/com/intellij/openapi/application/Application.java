@@ -560,10 +560,4 @@ public interface Application extends ComponentManager {
   boolean isInternal();
 
   boolean isEAP();
-
-  /** DO NOT USE */
-  @ApiStatus.Internal
-  default boolean isInImpatientReader() {
-    return false;
-  }
 }

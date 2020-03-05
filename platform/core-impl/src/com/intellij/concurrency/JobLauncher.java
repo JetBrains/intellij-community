@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -45,7 +45,7 @@ public abstract class JobLauncher {
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                      ProgressIndicator progress,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
-    Application app = ApplicationManager.getApplication();
+    ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     return invokeConcurrentlyUnderProgress(things, progress, app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor);
   }
   /**
