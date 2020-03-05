@@ -25,7 +25,7 @@ internal class GitCheckoutActionGroup : GitSingleCommitActionGroup("Checkout", f
       actions.add(GitCheckoutAction(project, repository, refName, refName))
     }
 
-    val hasMultipleActions = !actions.isEmpty()
+    val hasMultipleActions = actions.isNotEmpty()
     
     val checkoutRevisionText = "${if (hasMultipleActions) "" else "Checkout "}Revision '${commit.hash.toShortString()}'"
     actions.add(GitCheckoutAction(project, repository, commit.hash.asString(), checkoutRevisionText))
