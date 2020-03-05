@@ -76,6 +76,10 @@ private fun bringOwnerToFront(toolWindow: ToolWindowImpl) {
 }
 
 internal fun getShowingComponentToRequestFocus(toolWindow: ToolWindowImpl): Component? {
+  val preferredFocusableComponent = toolWindow.contentManager.selectedContent?.preferredFocusableComponent
+  if (preferredFocusableComponent != null) {
+    return preferredFocusableComponent
+  }
   val container = toolWindow.getComponentIfInitialized()
   if (container == null || !container.isShowing) {
     LOG.debug { "tool window ${toolWindow.id} parent container is hidden: $container" }
