@@ -147,6 +147,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
           }
         }));
     }
+    setEditor(getEditor());
     update();
   }
 
