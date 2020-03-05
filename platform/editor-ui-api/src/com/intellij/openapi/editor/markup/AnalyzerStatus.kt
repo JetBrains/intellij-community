@@ -10,8 +10,7 @@ import java.util.*
 import javax.swing.Icon
 import kotlin.math.roundToInt
 
-// Analyzer Highlight Level
-enum class AHLevel(val type: String) {
+enum class InspectionsLevel(val type: String) {
   NONE("None"),
   ERRORS("Errors Only"),
   ALL("All Problems");
@@ -19,7 +18,7 @@ enum class AHLevel(val type: String) {
   override fun toString(): String = type
 }
 
-data class LanguageHighlightLevel(val language: Language, val level: AHLevel)
+data class LanguageHighlightLevel(val language: Language, val level: InspectionsLevel)
 
 data class StatInfo(val presentableName: String, val progress: Double, val finished: Boolean) {
   fun toPercent() : Int {
@@ -28,25 +27,24 @@ data class StatInfo(val presentableName: String, val progress: Double, val finis
   }
 }
 
-// Result in a callable controller
-typealias HighlightLevels = List<LanguageHighlightLevel>
-typealias AvailableLevels = List<AHLevel>
+typealias AvailableLevels = List<InspectionsLevel>
 typealias PassStat = List<StatInfo>
 
 interface AnalyzerController {
   fun getActionMenu() : List<AnAction>
   fun getAvailableLevels() : AvailableLevels
-  fun getHighlightLevels() : HighlightLevels
+  fun getHighlightLevels() : List<LanguageHighlightLevel>
   fun setHighLightLevel(newLevels: LanguageHighlightLevel)
 
   fun fillHectorPanels(container: Container, gc: GridBag)
-  fun onClose() : Boolean
+  fun canClosePopup() : Boolean
+  fun onClosePopup()
 }
 
 // Status
-class AnalyzerStatus(val icon: Icon, title: String, details: String?, val controller: () -> AnalyzerController) {
+class AnalyzerStatus(val icon: Icon, title: String, details: String, val controller: () -> AnalyzerController) {
   val title = XmlStringUtil.wrapInHtml(title)
-  val details = if (details != null) XmlStringUtil.wrapInHtml(details) else ""
+  val details = if (details.isNotEmpty()) XmlStringUtil.wrapInHtml(details) else ""
   var showNavigation = false
   var expandedIcon: Icon = icon
   var passStat : PassStat = Collections.emptyList()
@@ -66,12 +64,17 @@ class AnalyzerStatus(val icon: Icon, title: String, details: String?, val contro
     return this
   }
 
-  override fun equals(other: Any?): Boolean {
-    if (other !is AnalyzerStatus) return false
-
-    return icon == other.icon &&
-           expandedIcon == other.expandedIcon &&
-           title == other.title && details == other.details &&
-           showNavigation == other.showNavigation
+  companion object {
+    @JvmStatic
+    fun equals(a: AnalyzerStatus?, b: AnalyzerStatus?): Boolean {
+      if (a == null && b == null) return true
+      else if (a!= null && b != null) {
+        return a.icon == b.icon &&
+               a.expandedIcon == b.expandedIcon &&
+               a.title == b.title && a.details == b.details &&
+               a.showNavigation == b.showNavigation
+      }
+      else return false
+    }
   }
 }

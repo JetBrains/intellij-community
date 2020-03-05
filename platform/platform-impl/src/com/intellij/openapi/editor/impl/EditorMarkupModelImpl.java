@@ -35,10 +35,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ProperTextRange;
@@ -66,6 +63,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.plaf.ScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
@@ -351,7 +349,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   public void repaintTrafficLightIcon() {
     if (myErrorStripeRenderer != null) {
       AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus(myEditor);
-      if (!Objects.equals(newStatus, analyzerStatus)) {
+      if (!AnalyzerStatus.equals(newStatus, analyzerStatus)) {
         analyzerStatus = newStatus;
         smallIconLabel.setIcon(analyzerStatus.getIcon());
 
@@ -1645,8 +1643,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   private class InspectionPopupManager {
     private final JPanel myContent;
     private final ComponentPopupBuilder myPopupBuilder;
-    private final Map<String, JProgressBar> myProgressBarMap;
+    private final Map<String, JProgressBar> myProgressBarMap = new HashMap<>();
     private final JPanel myProgressPanel;
+    private final AncestorListener myAncestorListener;
+    private final JBPopupListener myPopupListener;
 
     private JBPopup myPopup;
 
@@ -1656,9 +1656,25 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       myContent.setBackground(UIUtil.getToolTipBackground());
 
       myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null).
-        setCancelOnClickOutside(true);
+        setCancelOnClickOutside(true).
+        setCancelCallback(() -> analyzerStatus == null || analyzerStatus.getController().invoke().canClosePopup());
 
-      myProgressBarMap = new HashMap<>();
+      myAncestorListener = new AncestorListenerAdapter() {
+        @Override
+        public void ancestorMoved(AncestorEvent event) {
+          hidePopup();
+        }
+      };
+
+      myPopupListener = new JBPopupListener() {
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          if (analyzerStatus != null) {
+            analyzerStatus.getController().invoke().onClosePopup();
+          }
+        }
+      };
+
       myProgressPanel = new NonOpaquePanel(new GridBagLayout());
     }
 
@@ -1669,31 +1685,27 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     private void showPopup(InputEvent event) {
       hidePopup();
 
-      if (myPopupBuilder != null) {
-        myPopup = myPopupBuilder.createPopup();
-        myEditor.getComponent().addAncestorListener(new AncestorListenerAdapter() {
-          @Override
-          public void ancestorMoved(AncestorEvent event) {
-            hidePopup();
-          }
-        });
+      myPopup = myPopupBuilder.createPopup();
+      myPopup.addListener(myPopupListener);
+      myEditor.getComponent().addAncestorListener(myAncestorListener);
 
-        JComponent owner = (JComponent)event.getComponent();
-        Dimension size = myContent.getPreferredSize();
-        size.width = Math.max(size.width, JBUIScale.scale(296));
+      JComponent owner = (JComponent)event.getComponent();
+      Dimension size = myContent.getPreferredSize();
+      size.width = Math.max(size.width, JBUIScale.scale(296));
 
-        RelativePoint point = new RelativePoint(owner,
-                                                new Point(owner.getWidth() - owner.getInsets().right + JBUIScale.scale(DELTA_X) - size.width,
-                                                          owner.getHeight() + JBUIScale.scale(DELTA_Y)));
+      RelativePoint point = new RelativePoint(owner,
+                  new Point(owner.getWidth() - owner.getInsets().right + JBUIScale.scale(DELTA_X) - size.width,
+                            owner.getHeight() + JBUIScale.scale(DELTA_Y)));
 
-        myPopup.setSize(size);
-        myPopup.show(point);
-      }
+      myPopup.setSize(size);
+      myPopup.show(point);
     }
 
     private void hidePopup() {
       if (myPopup != null && !myPopup.isDisposed()) {
         myPopup.cancel();
+        myPopup.removeListener(myPopupListener);
+        myEditor.getComponent().removeAncestorListener(myAncestorListener);
       }
       myPopup = null;
     }
@@ -1728,7 +1740,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         myProgressPanel.removeAll();
         GridBag progressGC = new GridBag();
         analyzerStatus.getPassStat().forEach(s -> {
-          myProgressPanel.add(new JLabel(s.getPresentableName() + ":"),
+          myProgressPanel.add(new JLabel(s.getPresentableName() + ": "),
                         progressGC.nextLine().next().anchor(GridBagConstraints.LINE_START).weightx(0).insets(0, 10, 0, 6));
 
           JProgressBar pb = new JProgressBar(0, 100);
@@ -1757,8 +1769,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     private void updateContent() {
       AnalyzerController controller = analyzerStatus.getController().invoke();
       updateContentPanel(controller);
-      myPopupBuilder.setCancelCallback(controller::onClose);
-
       revalidateAndResize(false);
     }
 
@@ -1780,7 +1790,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       GridBag gc = new GridBag().nextLine();
 
       if (PowerSaveMode.isEnabled()) {
-        LinkLabel<String> powerMode = new LinkLabel<>("Disable power save mode", null,
+        LinkLabel<String> powerMode = new LinkLabel<>(EditorBundle.message("iw.disable.powersave"), null,
           (__, ___) -> {
             PowerSaveMode.setEnabled(false);
             hidePopup();
@@ -1791,32 +1801,19 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         List<LanguageHighlightLevel> levels = controller.getHighlightLevels();
 
         if (levels.size() == 1) {
-          JLabel highlightLabel = new JLabel("Highlight: ");
+          JLabel highlightLabel = new JLabel(EditorBundle.message("iw.highlight.label") + " ");
           highlightLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
+
           panel.add(highlightLabel, gc.next().anchor(GridBagConstraints.LINE_START));
-
-          LanguageHighlightLevel level = levels.get(0);
-          DropDownLink<AHLevel> levelLink = new DropDownLink<>(level.getLevel(), controller.getAvailableLevels(),
-                                                               l -> {
-                                                                 controller.setHighLightLevel(level.copy(level.getLanguage(), l));
-                                                                 revalidateAndResize(true);
-                                                               }, true);
-
-          panel.add(levelLink, gc.next());
+          panel.add(createDropDownLink(levels.get(0), controller), gc.next());
         }
         else if (levels.size() > 1) {
           for(LanguageHighlightLevel level: levels) {
             JLabel highlightLabel = new JLabel(level.getLanguage().getDisplayName() + ": ");
             highlightLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
+
             panel.add(highlightLabel, gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc);
-
-            DropDownLink<AHLevel> levelLink = new DropDownLink<>(level.getLevel(), controller.getAvailableLevels(),
-                                                                 l -> {
-                                                                   controller.setHighLightLevel(level.copy(level.getLanguage(), l));
-                                                                   revalidateAndResize(true);
-                                                                 }, true);
-
-            panel.add(levelLink, gc.next());
+            panel.add(createDropDownLink(level, controller), gc.next());
           }
         }
       }
@@ -1828,6 +1825,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       panel.setBackground(UIUtil.getToolTipActionBackground());
       panel.setBorder(JBUI.Borders.empty(4, 10));
       return panel;
+    }
+
+    private DropDownLink<InspectionsLevel> createDropDownLink(LanguageHighlightLevel level, AnalyzerController controller) {
+      return new DropDownLink<>(level.getLevel(),
+                         controller.getAvailableLevels(),
+                         l -> {
+                           controller.setHighLightLevel(level.copy(level.getLanguage(), l));
+                           revalidateAndResize(true);
+                         }, true);
     }
   }
 
