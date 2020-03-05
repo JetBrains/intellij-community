@@ -118,6 +118,7 @@ public class ContentUtilEx extends ContentsUtil {
 
   @NotNull
   public static String getFullName(@NotNull String groupPrefix, @NotNull String tabName) {
+    if (tabName.isEmpty()) return groupPrefix;
     return groupPrefix + ": " + tabName;
   }
 

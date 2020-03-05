@@ -46,7 +46,10 @@ class TabGroupId(@NonNls val id: String, private val displayNamePointer: Supplie
   constructor(@NonNls id: String, @Nls displayName: String) : this(id, Supplier { displayName })
 
   @Nls
-  fun getDisplayName(tab: TabDescriptor): String = displayName + ": " + tab.displayName
+  fun getDisplayName(tab: TabDescriptor): String {
+    if (tab.displayName.isBlank()) return displayName
+    return displayName + ": " + tab.displayName
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

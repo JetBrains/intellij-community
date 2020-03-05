@@ -94,7 +94,7 @@ public class VcsLogTabsManager {
   @NotNull
   private static String generateShortDisplayName(@NotNull VcsLogUi ui) {
     VcsLogFilterCollection filters = ui.getFilterUi().getFilters();
-    if (filters.isEmpty()) return VcsLogBundle.message("vcs.log.tab.suffix.no.filters");
+    if (filters.isEmpty()) return "";
     return StringUtil.shortenTextWithEllipsis(VcsLogFiltersKt.getPresentation(filters), 150, 20);
   }
 
