@@ -19,7 +19,7 @@ internal open class GitRebaseEntry(var action: Action, val commit: String, val s
     object FIXUP : Action("fixup", GitBundle.messagePointer("rebase.entry.action.name.fixup"))
     class Other(command: String) : Action(command, GitBundle.messagePointer("rebase.entry.action.name.unknown"))
 
-    val mnemonic: Int = command.first().toInt()
+    val mnemonic: Int = command.capitalize().first().toInt()
 
     override fun toString(): String = command
 
