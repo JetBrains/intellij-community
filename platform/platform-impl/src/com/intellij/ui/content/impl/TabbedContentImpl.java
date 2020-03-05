@@ -154,7 +154,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   @NotNull
   @Override
   public List<Pair<String, JComponent>> getTabs() {
-    return ContainerUtil.map2List(myTabs, tab -> Pair.create(myId.getDisplayName(tab), tab.getComponent()));
+    return ContainerUtil.map2List(myTabs, tab -> Pair.create(tab.getDisplayName(), tab.getComponent()));
   }
 
   @Override
