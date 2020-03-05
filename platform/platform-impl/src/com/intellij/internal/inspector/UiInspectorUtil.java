@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -27,11 +26,11 @@ public class UiInspectorUtil {
   }
 
   public static UiInspectorContextProvider getProvider(@NotNull Object component) {
-    if (component instanceof JComponent) {
-      return ObjectUtils.tryCast(((JComponent)component).getClientProperty(PROPERTY_KEY), UiInspectorContextProvider.class);
-    }
     if (component instanceof UiInspectorContextProvider) {
       return ((UiInspectorContextProvider)component);
+    }
+    if (component instanceof JComponent) {
+      return ObjectUtils.tryCast(((JComponent)component).getClientProperty(PROPERTY_KEY), UiInspectorContextProvider.class);
     }
     return null;
   }
