@@ -14,15 +14,12 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,7 +29,6 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.inspections.FormElementProblemDescriptor;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -161,14 +157,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
           try {
             final XmlWriter writer = new XmlWriter();
             entry.getValue().write(writer);
-            FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(entry.getKey()), writer.getText());
-
-            FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors(entry.getKey());
-            for (FileEditor editor : editors) {
-              if (editor instanceof UIFormEditor) {
-                ((UIFormEditor)editor).getEditor().refresh();
-              }
-            }
+            VfsUtil.saveText(entry.getKey(), writer.getText());
           }
           catch (Exception e) {
             LOG.error(e);
