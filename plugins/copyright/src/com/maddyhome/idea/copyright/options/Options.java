@@ -18,12 +18,12 @@ package com.maddyhome.idea.copyright.options;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
-import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,11 +35,10 @@ import java.util.TreeMap;
  */
 public class Options implements Cloneable {
   public LanguageOptions getOptions(String name) {
-    String lang = FileTypeUtil.getInstance().getFileTypeNameByName(name);
-    LanguageOptions res = options.get(lang);
+    LanguageOptions res = options.get(name);
     if (res == null) {
       // NOTE: If any change is made here you need to update ConfigTabFactory and UpdateCopyrightFactory too.
-      final FileType fileType = FileTypeUtil.getInstance().getFileTypeByName(name);
+      final FileType fileType = FileTypeManager.getInstance().findFileTypeByName(name);
       if (fileType != null) {
         final UpdateCopyrightsProvider provider = CopyrightUpdaters.INSTANCE.forFileType(fileType);
         if (provider != null) return provider.getDefaultOptions();
@@ -55,8 +54,7 @@ public class Options implements Cloneable {
   }
 
   public void setOptions(String name, LanguageOptions options) {
-    String lang = FileTypeUtil.getInstance().getFileTypeNameByName(name);
-    this.options.put(lang, options);
+    this.options.put(name, options);
   }
 
   public void setTemplateOptions(LanguageOptions options) {
@@ -91,7 +89,7 @@ public class Options implements Cloneable {
   public void readExternal(Element element) throws InvalidDataException {
     logger.debug("readExternal()");
     List<Element> languageOptions = element.getChildren("LanguageOptions");
-    if (languageOptions != null && !languageOptions.isEmpty()) {
+    if (!languageOptions.isEmpty()) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < languageOptions.size(); i++) {
         Element languageOption = languageOptions.get(i);

@@ -28,7 +28,9 @@
 
   <extensions defaultExtensionNs="com.intellij.copyright">
     <updater filetype="XML" implementationClass="com.maddyhome.idea.copyright.psi.UpdateXmlCopyrightsProvider"/>
+    <updater filetype="DTD" implementationClass="com.maddyhome.idea.copyright.psi.UpdateXmlCopyrightsProvider"/>
     <updater filetype="HTML" implementationClass="com.maddyhome.idea.copyright.psi.UpdateXmlCopyrightsProvider"/>
+    <updater filetype="XHTML" implementationClass="com.maddyhome.idea.copyright.psi.UpdateXmlCopyrightsProvider"/>
   </extensions>
   <extensionPoints>
     <extensionPoint name="updater" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">

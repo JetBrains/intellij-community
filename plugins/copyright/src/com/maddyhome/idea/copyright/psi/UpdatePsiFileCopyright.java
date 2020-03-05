@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
-import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -55,7 +54,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
     PsiManager manager = PsiManager.getInstance(project);
     file = manager.findFile(root);
-    FileType type = FileTypeUtil.getInstance().getFileTypeByFile(root);
+    FileType type = root.getFileType();
     langOpts = CopyrightManager.getInstance(project).getOptions().getMergedOptions(type.getName());
   }
 
