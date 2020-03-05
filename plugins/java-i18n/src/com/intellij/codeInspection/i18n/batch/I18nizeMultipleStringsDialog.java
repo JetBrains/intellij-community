@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.batch;
 
-import com.intellij.codeInspection.i18n.I18nizeBatchQuickFix;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.PropertiesBundle;
@@ -10,6 +9,8 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -19,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,6 +43,9 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -59,11 +64,12 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   private JComboBox<String> myPropertiesFile;
   private UsagePreviewPanel myUsagePreviewPanel;
   private JBTable myTable;
+  private final Icon myMarkAsNonNlsButtonIcon;
 
   public I18nizeMultipleStringsDialog(@NotNull Project project,
                                       @NotNull List<I18nizedPropertyData<D>> keyValuePairs,
                                       @NotNull Set<PsiFile> contextFiles,
-                                      @NotNull Function<D, List<UsageInfo>> usagePreviewProvider) {
+                                      @NotNull Function<D, List<UsageInfo>> usagePreviewProvider, Icon markAsNonNlsButtonIcon) {
     super(project, true);
     myProject = project;
     myKeyValuePairs = keyValuePairs;
@@ -77,6 +83,7 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
       resourceBundleManager = null;
     }
     myResourceBundleManager = resourceBundleManager;
+    myMarkAsNonNlsButtonIcon = markAsNonNlsButtonIcon;
     myContextModules = contextFiles.stream().map(ModuleUtilCore::findModuleForFile).filter(Objects::nonNull).collect(Collectors.toSet());
     setTitle(PropertiesBundle.message("i18nize.dialog.title"));
     init();
@@ -143,16 +150,60 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
       updateUsagePreview(myTable);
     });
 
-    splitter.setFirstComponent(ToolbarDecorator.createDecorator(myTable).setRemoveAction(new AnActionButtonRunnable() {
+    AnActionButtonRunnable removeAction = new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
         TableUtil.removeSelectedItems(myTable);
         myTable.repaint();
         updateUsagePreview(myTable);
       }
-    }).createPanel());
+    };
+
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable).setRemoveAction(removeAction);
+    if (myMarkAsNonNlsButtonIcon != null) {
+      AnActionButton markAsNonNls = new AnActionButton(JavaI18nBundle.message("action.text.mark.as.nonnls"), myMarkAsNonNlsButtonIcon) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          TableUtil.stopEditing(myTable);
+          List<Pair<Integer, I18nizedPropertyData<D>>> selection = getSelectedDataWithIndices();
+          boolean mark = shouldMarkAsNonNls(selection);
+          for (Pair<Integer, I18nizedPropertyData<D>> dataWithIndex : selection) {
+            myKeyValuePairs.set(dataWithIndex.first, dataWithIndex.second.setMarkAsNonNls(mark));
+          }
+          myTable.repaint();
+        }
+
+        @Override
+        public void updateButton(@NotNull AnActionEvent e) {
+          List<Pair<Integer, I18nizedPropertyData<D>>> selection = getSelectedDataWithIndices();
+          e.getPresentation().setEnabled(!selection.isEmpty());
+          e.getPresentation().setText(shouldMarkAsNonNls(selection)
+                                      ? JavaI18nBundle.message("action.text.mark.as.nonnls")
+                                      : JavaI18nBundle.message("action.text.unmark.as.nonnls"));
+        }
+
+        private boolean shouldMarkAsNonNls(List<Pair<Integer, I18nizedPropertyData<D>>> selection) {
+          return !selection.stream().allMatch(data -> data.second.isMarkAsNonNls());
+        }
+      };
+      markAsNonNls.setShortcut(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_DOWN_MASK)));
+      decorator.addExtraAction(markAsNonNls);
+    }
+    splitter.setFirstComponent(decorator.createPanel());
     splitter.setSecondComponent(myUsagePreviewPanel);
     return splitter;
+  }
+
+  @NotNull
+  private List<Pair<Integer, I18nizedPropertyData<D>>> getSelectedDataWithIndices() {
+    int[] rows = myTable.getSelectedRows();
+    List<Pair<Integer, I18nizedPropertyData<D>>> selection = new ArrayList<>(rows.length);
+    for (int row : rows) {
+      if (0 <= row && row < myKeyValuePairs.size()) {
+        selection.add(Pair.create(row, myKeyValuePairs.get(row)));
+      }
+    }
+    return selection;
   }
 
   private void updateUsagePreview(JBTable table) {
@@ -201,13 +252,16 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return columnIndex == 0;
+      return columnIndex == 0 && 0 <= rowIndex && rowIndex < myKeyValuePairs.size() && !myKeyValuePairs.get(rowIndex).isMarkAsNonNls();
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      I18nizedPropertyData<?> pair = myKeyValuePairs.get(rowIndex);
-      return columnIndex == 0 ? pair.getKey() : pair.getValue();
+      I18nizedPropertyData<?> data = myKeyValuePairs.get(rowIndex);
+      if (columnIndex == 0) {
+        return data.isMarkAsNonNls() ? "will be marked as NonNls" : data.getKey();
+      }
+      return data.getValue();
     }
 
     @Override

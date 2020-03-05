@@ -98,7 +98,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     I18nizeMultipleStringsDialog dialog = new I18nizeMultipleStringsDialog<>(project, replacements, contextFiles, data -> {
       List<PsiElement> elements = data.getPsiElements();
       return ContainerUtil.map(elements, element -> new UsageInfo(element.getParent()));
-    });
+    }, null);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       Set<PsiFile> files = new HashSet<>();

@@ -39,7 +39,7 @@ import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import com.intellij.util.ui.ThreeStateCheckBox;
+import icons.UIDesignerIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -120,7 +120,8 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
       }
     }
 
-    I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog = new I18nizeMultipleStringsDialog<HardcodedStringInFormData>(project, dataList, contextFiles, this::createUsageInfo);
+    I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog = new I18nizeMultipleStringsDialog<HardcodedStringInFormData>(project, dataList, contextFiles, this::createUsageInfo,
+                                                                                                                                 UIDesignerIcons.InspectionSuppression);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       PsiManager manager = PsiManager.getInstance(project);
@@ -139,16 +140,26 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
       }
       WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
         for (I18nizedPropertyData<HardcodedStringInFormData> bean : dataList) {
-          JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
-                                                                        Collections.singletonList(propertiesFile),
-                                                                        bean.getKey(),
-                                                                        bean.getValue(),
-                                                                        PsiExpression.EMPTY_ARRAY);
-          applyFix(bean.getContextData().getComponent(), bean.getContextData().getPropertyName(), bundleName, bean.getKey());
+          StringDescriptor valueDescriptor;
+          if (!bean.isMarkAsNonNls()) {
+            JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
+                                                                          Collections.singletonList(propertiesFile),
+                                                                          bean.getKey(),
+                                                                          bean.getValue(),
+                                                                          PsiExpression.EMPTY_ARRAY);
+            valueDescriptor = new StringDescriptor(bundleName, bean.getKey());
+          }
+          else {
+            valueDescriptor = StringDescriptor.create(bean.getValue());
+            valueDescriptor.setNoI18n(true);
+          }
+
+          setPropertyValue(bean.getContextData().getComponent(), bean.getContextData().getPropertyName(), valueDescriptor);
           List<I18nizedPropertyData<HardcodedStringInFormData>> duplicates = myDuplicates.get(bean.getValue());
           if (duplicates != null) {
             for (I18nizedPropertyData<HardcodedStringInFormData> duplicateBean : duplicates) {
-              applyFix(duplicateBean.getContextData().getComponent(), duplicateBean.getContextData().getPropertyName(), bundleName, bean.getValue());
+              setPropertyValue(duplicateBean.getContextData().getComponent(), duplicateBean.getContextData().getPropertyName(),
+                               valueDescriptor);
             }
           }
         }
@@ -203,8 +214,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
     return componentTag != null ? componentTag.getTextRange() : null;
   }
 
-  private static void applyFix(RadComponent component, String propertyName, String resourceBundle, String key) {
-    StringDescriptor stringDescriptor = new StringDescriptor(resourceBundle, key);
+  private static void setPropertyValue(RadComponent component, String propertyName, StringDescriptor stringDescriptor) {
     if (BorderProperty.NAME.equals(propertyName)) {
       ((RadContainer)component).setBorderTitle(stringDescriptor);
     }

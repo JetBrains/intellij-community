@@ -6,12 +6,18 @@ import org.jetbrains.annotations.NotNull;
 public class I18nizedPropertyData<D> {
   private final String myKey;
   private final String myValue;
+  private final boolean myMarkAsNonNls;
   private final D myContextData;
 
   public I18nizedPropertyData(@NotNull String key, @NotNull String value, @NotNull D contextData) {
+    this(key, value, contextData, false);
+  }
+
+  private I18nizedPropertyData(@NotNull String key, @NotNull String value, @NotNull D contextData, boolean markAsNonNls) {
     myKey = key;
     myValue = value;
     myContextData = contextData;
+    myMarkAsNonNls = markAsNonNls;
   }
 
   public String getKey() {
@@ -26,7 +32,15 @@ public class I18nizedPropertyData<D> {
     return myContextData;
   }
 
+  public boolean isMarkAsNonNls() {
+    return myMarkAsNonNls;
+  }
+
   public I18nizedPropertyData<D> changeKey(@NotNull String newKey) {
-    return new I18nizedPropertyData<>(newKey, myValue, myContextData);
+    return new I18nizedPropertyData<>(newKey, myValue, myContextData, myMarkAsNonNls);
+  }
+
+  public I18nizedPropertyData<D> setMarkAsNonNls(boolean markAsNonNls) {
+    return new I18nizedPropertyData<>(myKey, myValue, myContextData, markAsNonNls);
   }
 }
