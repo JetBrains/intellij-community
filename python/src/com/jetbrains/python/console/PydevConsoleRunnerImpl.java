@@ -253,7 +253,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       });
     }
     catch (ExecutionException e) {
-      LOG.warn(PyBundle.message("pydev.console.error.running.console"), e);
+      LOG.warn("Error running console", e);
       showErrorsInConsole(e);
     }
   }
@@ -508,7 +508,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         );
       }
       else {
-        LOG.error(PyBundle.message("pydev.console.create.remote.console.process.handler"));
+        LOG.error("Can't create remote console process handler");
       }
     }
     else {
