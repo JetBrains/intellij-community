@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -21,6 +21,10 @@ public abstract class ClickListener {
   public abstract boolean onClick(@NotNull MouseEvent event, int clickCount);
 
   public void installOn(@NotNull Component c) {
+    installOn(c, false);
+  }
+
+  public void installOn(@NotNull Component c, boolean allowDragWhileClicking) {
     myListener = new MouseAdapter() {
       private Point pressPoint;
       private Point lastClickPoint;
@@ -56,7 +60,7 @@ public abstract class ClickListener {
           return;
         }
 
-        if (isWithinEps(releasedAt, clickedAt) && onClick(e, clickCount)) {
+        if ((allowDragWhileClicking || isWithinEps(releasedAt, clickedAt)) && onClick(e, clickCount)) {
           e.consume();
         }
       }
