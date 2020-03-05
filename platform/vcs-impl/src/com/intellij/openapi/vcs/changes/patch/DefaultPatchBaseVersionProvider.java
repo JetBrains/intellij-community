@@ -46,6 +46,9 @@ import static com.intellij.openapi.vcs.VcsBundle.message;
 
 public class DefaultPatchBaseVersionProvider {
   private static final Logger LOG = Logger.getInstance(DefaultPatchBaseVersionProvider.class);
+  /**
+   * @see com.intellij.openapi.diff.impl.patch.TextPatchBuilder
+   */
   private static final Pattern ourTsPattern = Pattern.compile("\\(date ([0-9]+)\\)");
   private static final String ourRevisionPatternTemplate = "\\(revision (%s)\\)";
 

@@ -40,6 +40,9 @@ import static java.util.Collections.singletonList;
 
 public class TextPatchBuilder {
   private static final int CONTEXT_LINES = 3;
+  /**
+   * @see com.intellij.openapi.vcs.changes.patch.DefaultPatchBaseVersionProvider
+   */
   @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
   @NonNls private static final String DATE_NAME_TEMPLATE = "(date {0})";
 
