@@ -8,6 +8,7 @@ import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
@@ -333,6 +334,7 @@ object DynamicPlugins {
           BeanBinding.clearSerializationCaches()
           TypeFactory.defaultInstance().clearCache()
           DefaultJDOMExternalizer.clearFieldCache()
+          TopHitCache.getInstance().clear()
           Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
 
           if (disable) {
