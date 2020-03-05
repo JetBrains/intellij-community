@@ -158,6 +158,11 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   }
 
   @Override
+  public boolean hasMultipleTabs() {
+    return myTabs.size() > 1;
+  }
+
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     if (key.equals(TAB_GROUP_ID_KEY)) return (T)myId;
     if (key.equals(TAB_DESCRIPTOR_KEY)) return (T)selectedTab();
