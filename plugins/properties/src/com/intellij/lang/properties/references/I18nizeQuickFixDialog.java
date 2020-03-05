@@ -217,36 +217,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
   public static String suggestUniquePropertyKey(String value, String defaultKey, PropertiesFile propertiesFile) {
     // suggest property key not existing in this file
-    value = PATTERN.matcher(Normalizer.normalize(value, Normalizer.Form.NFD)).replaceAll("");
     if (defaultKey == null) {
-      final StringBuilder result = new StringBuilder();
-      boolean insertDotBeforeNextWord = false;
-      for (int i = 0; i < value.length(); i++) {
-        final char c = value.charAt(i);
-        if (Character.isLetterOrDigit(c)) {
-          if (insertDotBeforeNextWord) {
-            result.append('.');
-          }
-          result.append(Character.toLowerCase(c));
-          insertDotBeforeNextWord = false;
-        }
-        else if (c == '&') {   //do not insert dot if there is letter after the amp
-          if (insertDotBeforeNextWord) continue;
-          if (i == value.length() - 1) {
-            continue;
-          }
-          if (Character.isLetter(value.charAt(i + 1))) {
-            continue;
-          }
-          insertDotBeforeNextWord = true;
-        }
-        else {
-          if (result.length() > 0) {
-            insertDotBeforeNextWord = true;
-          }
-        }
-      }
-      defaultKey = result.toString();
+      defaultKey = generateDefaultPropertyKey(value);
     }
 
     if (propertiesFile != null) {
@@ -261,6 +233,41 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     else {
       return defaultKey;
     }
+  }
+
+  @NotNull
+  public static String generateDefaultPropertyKey(@NotNull String rawValue) {
+    String value = PATTERN.matcher(Normalizer.normalize(rawValue, Normalizer.Form.NFD)).replaceAll("");
+    String defaultKey;
+    final StringBuilder result = new StringBuilder();
+    boolean insertDotBeforeNextWord = false;
+    for (int i = 0; i < value.length(); i++) {
+      final char c = value.charAt(i);
+      if (Character.isLetterOrDigit(c)) {
+        if (insertDotBeforeNextWord) {
+          result.append('.');
+        }
+        result.append(Character.toLowerCase(c));
+        insertDotBeforeNextWord = false;
+      }
+      else if (c == '&') {   //do not insert dot if there is letter after the amp
+        if (insertDotBeforeNextWord) continue;
+        if (i == value.length() - 1) {
+          continue;
+        }
+        if (Character.isLetter(value.charAt(i + 1))) {
+          continue;
+        }
+        insertDotBeforeNextWord = true;
+      }
+      else {
+        if (result.length() > 0) {
+          insertDotBeforeNextWord = true;
+        }
+      }
+    }
+    defaultKey = result.toString();
+    return defaultKey;
   }
 
   protected String defaultSuggestPropertyKey(String value) {

@@ -28,6 +28,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.editor.UIFormEditor;
@@ -41,15 +43,26 @@ import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
   private static final Logger LOG = Logger.getInstance(I18nizeFormBatchFix.class);
+  private static final List<DefaultPrefixSuggestion> PREFIX_SUGGESTIONS = Arrays.asList(
+    new DefaultPrefixSuggestion(LinkLabel.class, "text", "link"),
+    new DefaultPrefixSuggestion(JLabel.class, "text", "label"),
+    new DefaultPrefixSuggestion(JLabel.class, "toolTipText", "tooltip"),
+    new DefaultPrefixSuggestion(JRadioButton.class, "text", "radio.button"),
+    new DefaultPrefixSuggestion(JCheckBox.class, "text", "checkbox"),
+    new DefaultPrefixSuggestion(JButton.class, "text", "button"),
+    new DefaultPrefixSuggestion(TitledSeparator.class, "text", "separator.title")
+  );
 
   @Override
   public void applyFix(@NotNull Project project,
@@ -98,7 +111,9 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
       String propertyName = formElementProblemDescriptor.getPropertyName();
       String value = getValue(component, propertyName);
       if (value == null) continue;
-      String key = uniqueNameGenerator.generateUniqueName(I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null));
+      String keyPrefix = suggestPropertyKeyPrefix(component, propertyName);
+      String defaultKey = keyPrefix != null ? keyPrefix + "." + I18nizeQuickFixDialog.generateDefaultPropertyKey(value) : null;
+      String key = uniqueNameGenerator.generateUniqueName(I18nizeQuickFixDialog.suggestUniquePropertyKey(value, defaultKey, null));
       I18nizedPropertyData<HardcodedStringInFormData> data = new I18nizedPropertyData<HardcodedStringInFormData>(key, value, new HardcodedStringInFormData(component, propertyName, containingFile));
       if (myDuplicates.containsKey(value)) {
         myDuplicates.computeIfAbsent(value, k -> new ArrayList<>(1)).add(data);
@@ -161,6 +176,20 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
         }
       }, files.toArray(PsiFile.EMPTY_ARRAY));
     }
+  }
+
+  @Nullable
+  private String suggestPropertyKeyPrefix(@NotNull RadComponent component, @NotNull String propertyName) {
+    Class componentClass = component.getComponentClass();
+    for (DefaultPrefixSuggestion suggestion : PREFIX_SUGGESTIONS) {
+      if (suggestion.getPropertyName().equals(propertyName) && suggestion.getComponentClass().isAssignableFrom(componentClass)) {
+        return suggestion.getDefaultPrefix();
+      }
+    }
+    if (BorderProperty.NAME.equals(propertyName)) {
+      return "border.title";
+    }
+    return null;
   }
 
   private List<UsageInfo> createUsageInfo(HardcodedStringInFormData data) {
@@ -267,6 +296,30 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
 
     private PsiFile getContainingFile() {
       return myContainingFile;
+    }
+  }
+
+  private static class DefaultPrefixSuggestion {
+    private final Class<?> myComponentClass;
+    private final String myPropertyName;
+    private final String myDefaultPrefix;
+
+    private DefaultPrefixSuggestion(Class<?> componentClass, String propertyName, String defaultPrefix) {
+      myComponentClass = componentClass;
+      myPropertyName = propertyName;
+      myDefaultPrefix = defaultPrefix;
+    }
+
+    private Class<?> getComponentClass() {
+      return myComponentClass;
+    }
+
+    private String getPropertyName() {
+      return myPropertyName;
+    }
+
+    private String getDefaultPrefix() {
+      return myDefaultPrefix;
     }
   }
 }
