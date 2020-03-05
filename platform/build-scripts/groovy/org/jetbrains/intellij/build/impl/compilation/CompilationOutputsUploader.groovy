@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit
 @CompileStatic
 class CompilationOutputsUploader {
   private final String commitHistoryFile = "commit_history.json"
+  private final int commitsLimit = 200
   private final String agentPersistentStorage
   private final CompilationContext context
   private final BuildMessages messages
@@ -157,7 +158,7 @@ class CompilationOutputsUploader {
       }
       else {
         listOfCommits.add(value)
-        if (listOfCommits.size() > 50) commitHistory.put(key, listOfCommits.takeRight(50))
+        if (listOfCommits.size() > commitsLimit) commitHistory.put(key, listOfCommits.takeRight(commitsLimit))
       }
     }
 
