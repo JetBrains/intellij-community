@@ -167,6 +167,27 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun unloadGroupWithActionReferences() {
+    ActionManager.getInstance()
+    val disposable = loadPluginWithText("""
+      <idea-plugin>
+        <id>foo</id>
+        <actions>
+          <action id="foo.bar" class="${MyAction::class.java.name}"/>
+          <action id="foo.bar2" class="${MyAction2::class.java.name}"/>
+          <group id="Foo">
+            <reference ref="foo.bar"/>
+            <reference ref="foo.bar2"/>
+          </group>
+        </actions>
+      </idea-plugin>
+    """.trimIndent(), DynamicPlugins::class.java.classLoader)
+    assertThat(ActionManager.getInstance().getAction("foo.bar")).isNotNull()
+    Disposer.dispose(disposable)
+    assertThat(ActionManager.getInstance().getAction("foo.bar")).isNull()
+  }
+
+  @Test
   fun unloadNestedGroupWithActions() {
     val disposable = loadPluginWithText("""
       <idea-plugin>
@@ -534,6 +555,11 @@ class DynamicPluginsTest {
   }
 
   private class MyAction : AnAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+    }
+  }
+
+  private class MyAction2 : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
     }
   }
