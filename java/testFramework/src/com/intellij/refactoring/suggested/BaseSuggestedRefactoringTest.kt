@@ -74,7 +74,7 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
     myFixture.configureByText(fileType, initialText)
 
     if (!ignoreErrorsBefore) {
-      myFixture.checkHighlighting(false, false, false)
+      myFixture.testHighlighting(false, false, false, myFixture.file.virtualFile)
     }
 
     executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)
@@ -85,7 +85,7 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult(textAfterRefactoring)
 
     if (!ignoreErrorsAfter) {
-      myFixture.checkHighlighting(false, false, false)
+      myFixture.testHighlighting(false, false, false, myFixture.file.virtualFile)
     }
   }
 }
