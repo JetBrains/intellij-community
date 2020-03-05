@@ -421,7 +421,6 @@
       <module fileurl="file://$PROJECT_DIR$/../swing-testing/fest-swing/fest-swing.iml" filepath="$PROJECT_DIR$/../swing-testing/fest-swing/fest-swing.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/firebase/firebase.iml" filepath="$PROJECT_DIR$/../vendor/google/firebase/firebase.iml" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/cloud/testing/firebase-testing/firebase-testing.iml" filepath="$PROJECT_DIR$/../studio/google/cloud/testing/firebase-testing/firebase-testing.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/google/games/games.iml" filepath="$PROJECT_DIR$/../vendor/google/games/games.iml" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/appindexing/google-appindexing.iml" filepath="$PROJECT_DIR$/../studio/google/appindexing/google-appindexing.iml" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/cloud/tools/android-studio-plugin/google-cloud-tools-as.iml" filepath="$PROJECT_DIR$/../studio/google/cloud/tools/android-studio-plugin/google-cloud-tools-as.iml" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/cloud/tools/core-plugin/google-cloud-tools-core-as.iml" filepath="$PROJECT_DIR$/../studio/google/cloud/tools/core-plugin/google-cloud-tools-core-as.iml" />

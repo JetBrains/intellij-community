@@ -117,7 +117,6 @@
     <orderEntry type="module" module-name="intellij.android.sdkUpdates" />
     <orderEntry type="module" module-name="android-ndk" />
     <orderEntry type="module" module-name="android-apk" />
-    <orderEntry type="module" module-name="games" />
     <orderEntry type="module" module-name="firebase" />
     <orderEntry type="module" module-name="intellij.android.core" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.tests" scope="TEST" />
