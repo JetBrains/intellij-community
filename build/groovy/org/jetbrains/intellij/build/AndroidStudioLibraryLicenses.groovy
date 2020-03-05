@@ -27,6 +27,8 @@ class AndroidStudioLibraryLicenses {
                        license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Emulator gRPC API", libraryName: "emulator-proto", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+    // for game-tools-protos module library in android.game-tools.main
+    new LibraryLicense(name: "Android Game Tools Protos", libraryName: "game-tools-protos", license: "Apache 2.0", url: "http://source.android.com/"),
     // for instantapps-api module library in intellij.android.core
     new LibraryLicense(name: "Android Instant Apps SDK API", libraryName: "instantapps-api", license: "Apache 2.0"),
     // for jetifier-core module library in db-compilerCommon

@@ -87,7 +87,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                            "android-ndk",
                                            "firebase",
                                            "firebase-testing",
-                                           "games",
                                            "google-appindexing",
                                            "google-login-as",
                                            "google-cloud-tools-as",
@@ -206,6 +205,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("android.sdktools.sdklib", "sdklib.jar")
       withModule("android.sdktools.sdk-common", "sdk-common.jar")
       withModule("intellij.android.layoutlib-loader", "layoutlib-loader.jar")
+      withModule("android.game-tools.main", "game-tools.jar")
       withModule("android.sdktools.manifest-merger", "manifest-merger.jar")
       withModule("android.sdktools.chunkio", "pixelprobe.jar")
       withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
