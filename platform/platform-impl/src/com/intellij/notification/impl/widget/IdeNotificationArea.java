@@ -59,7 +59,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
           }
           return true;
         }
-      }.installOn(this);
+      }.installOn(this, true);
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED, () ->
         ApplicationManager.getApplication().invokeLater(() -> updateStatus(project)));
       updateStatus(project);
