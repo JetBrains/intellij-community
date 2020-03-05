@@ -32,6 +32,8 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageType;
@@ -135,7 +137,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   private boolean myKeepHint;
 
   private final ActionToolbar statusToolbar;
-  private boolean hideToolbar = true;
+  private boolean showToolbar;
   private final ComponentListener toolbarComponentListener;
   private Rectangle cachedToolbarBounds = new Rectangle();
   private final JLabel smallIconLabel;
@@ -148,6 +150,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     myEditor = editor;
     myEditorFragmentRenderer = new EditorFragmentRenderer();
     setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
+
+    showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget();
 
     AnAction nextErrorAction = findAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatches);
     AnAction prevErrorAction = findAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatches);
@@ -257,6 +261,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     });
 
     bus.connect(resourcesDisposable).subscribe(LafManagerListener.TOPIC, source -> myPopupManager.updateUI());
+    bus.connect(resourcesDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget();
+        updateToolbarVisibility();
+      }
+    });
   }
 
   @Override
@@ -276,11 +287,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private void updateToolbarVisibility() {
-    if (hideToolbar) {
-      statusToolbar.getComponent().setVisible(false);
-      smallIconLabel.setVisible(true);
-    }
-    else {
+    if (showToolbar) {
       VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
       Point point = myEditor.visualPositionToXY(pos);
       point = SwingUtilities.convertPoint(myEditor.getContentComponent(), point, myEditor.getScrollPane());
@@ -299,6 +306,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         stComponent.setVisible(true);
         smallIconLabel.setVisible(false);
       }
+    }
+    else {
+      statusToolbar.getComponent().setVisible(false);
+      smallIconLabel.setVisible(true);
     }
   }
 
@@ -1705,9 +1716,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
     private void hidePopup() {
       if (myPopup != null && !myPopup.isDisposed()) {
-        myPopup.cancel();
         myPopup.removeListener(myPopupListener);
         myEditor.getComponent().removeAncestorListener(myAncestorListener);
+        myPopup.cancel();
       }
       myPopup = null;
     }
@@ -1839,15 +1850,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     private MenuAction(List<AnAction> actions) {
       setPopup(true);
       addAll(actions);
-      add(new ToggleAction(EditorBundle.message("iw.hide.toolbar")) {
+      add(new ToggleAction(EditorBundle.message("iw.show.toolbar")) {
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {
-          return hideToolbar;
+          return showToolbar;
         }
 
         @Override
         public void setSelected(@NotNull AnActionEvent e, boolean state) {
-          hideToolbar = state;
+          showToolbar = state;
+          EditorSettingsExternalizable.getInstance().setShowInspectionWidget(state);
           updateToolbarVisibility();
         }
 
