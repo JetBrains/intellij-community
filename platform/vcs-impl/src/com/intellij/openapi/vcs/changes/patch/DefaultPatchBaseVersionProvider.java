@@ -77,8 +77,8 @@ public class DefaultPatchBaseVersionProvider {
         }
         else {
           DiffProvider diffProvider = vcs.getDiffProvider();
-          if (diffProvider != null && pathBeforeRename.getVirtualFile() != null) {
-            ContentRevision fileContent = diffProvider.createFileContent(revision, pathBeforeRename.getVirtualFile());
+          if (diffProvider != null) {
+            ContentRevision fileContent = diffProvider.createFileContent(revision, file);
             loadedExactRevision = fileContent != null && !processor.process(fileContent.getContent());
           }
         }
