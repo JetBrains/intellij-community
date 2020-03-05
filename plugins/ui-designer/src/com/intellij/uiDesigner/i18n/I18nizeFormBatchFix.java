@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.codeInspection.i18n.batch.I18nizeMultipleStringsDialog;
 import com.intellij.codeInspection.i18n.batch.I18nizedPropertyData;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
@@ -18,13 +19,15 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.editor.UIFormEditor;
@@ -35,6 +38,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
@@ -95,8 +99,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
       String value = getValue(component, propertyName);
       if (value == null) continue;
       String key = uniqueNameGenerator.generateUniqueName(I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null));
-      I18nizedPropertyData<HardcodedStringInFormData> data = new I18nizedPropertyData<HardcodedStringInFormData>(key, value,
-                                                                                                                 new HardcodedStringInFormData(component, propertyName));
+      I18nizedPropertyData<HardcodedStringInFormData> data = new I18nizedPropertyData<HardcodedStringInFormData>(key, value, new HardcodedStringInFormData(component, propertyName, containingFile));
       if (myDuplicates.containsKey(value)) {
         myDuplicates.computeIfAbsent(value, k -> new ArrayList<>(1)).add(data);
       }
@@ -106,7 +109,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
       }
     }
 
-    I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog = new I18nizeMultipleStringsDialog<HardcodedStringInFormData>(project, dataList, contextFiles, data -> null);
+    I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog = new I18nizeMultipleStringsDialog<HardcodedStringInFormData>(project, dataList, contextFiles, this::createUsageInfo);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       PsiManager manager = PsiManager.getInstance(project);
@@ -158,6 +161,25 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
         }
       }, files.toArray(PsiFile.EMPTY_ARRAY));
     }
+  }
+
+  private List<UsageInfo> createUsageInfo(HardcodedStringInFormData data) {
+    RadComponent component = data.getComponent();
+    PsiFile file = data.getContainingFile();
+    TextRange range = getComponentRange(component, file);
+    UsageInfo usageInfo = range != null ? new UsageInfo(file, range.getStartOffset(), range.getEndOffset()) : new UsageInfo(file);
+    return Collections.singletonList(usageInfo);
+  }
+
+  private TextRange getComponentRange(RadComponent component, PsiFile file) {
+    CharSequence contents = file.getViewProvider().getContents();
+    int componentId = StringUtil.indexOf(contents, "id=\"" + component.getId() + "\"");
+    if (componentId == -1) return null;
+
+    PsiFileFactory fileFactory = PsiFileFactory.getInstance(file.getProject());
+    XmlFile xmlFile = (XmlFile)fileFactory.createFileFromText("form.xml", XmlFileType.INSTANCE, contents);
+    XmlTag componentTag = PsiTreeUtil.getParentOfType(xmlFile.findElementAt(componentId), XmlTag.class);
+    return componentTag != null ? componentTag.getTextRange() : null;
   }
 
   private static void applyFix(RadComponent component, String propertyName, String resourceBundle, String key) {
@@ -225,10 +247,14 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
   private static class HardcodedStringInFormData {
     private final RadComponent myComponent;
     private final String myPropertyName;
+    private final PsiFile myContainingFile;
 
-    private HardcodedStringInFormData(@NotNull RadComponent component, @NotNull String propertyName) {
+    private HardcodedStringInFormData(@NotNull RadComponent component,
+                                      @NotNull String propertyName,
+                                      @NotNull PsiFile containingFile) {
       myComponent = component;
       myPropertyName = propertyName;
+      myContainingFile = containingFile;
     }
 
     private RadComponent getComponent() {
@@ -237,6 +263,10 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
 
     private String getPropertyName() {
       return myPropertyName;
+    }
+
+    private PsiFile getContainingFile() {
+      return myContainingFile;
     }
   }
 }
