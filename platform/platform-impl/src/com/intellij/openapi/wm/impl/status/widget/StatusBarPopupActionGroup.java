@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class StatusBarPopupActionGroup extends ComputableActionGroup {
@@ -33,7 +34,7 @@ public class StatusBarPopupActionGroup extends ComputableActionGroup {
   @Override
   protected CachedValueProvider<AnAction[]> createChildrenProvider(@NotNull ActionManager actionManager) {
     return () -> {
-      Collection<AnAction> toggleActions = ContainerUtil.map(myManager.getWidgetFactories(), ToggleWidgetAction::new);
+      Collection<AnAction> toggleActions = new ArrayList<>(ContainerUtil.map(myManager.getWidgetFactories(), ToggleWidgetAction::new));
       toggleActions.add(new MemoryIndicatorToggleAction());
       toggleActions.add(Separator.getInstance());
       toggleActions.add(new HideCurrentWidgetAction());
