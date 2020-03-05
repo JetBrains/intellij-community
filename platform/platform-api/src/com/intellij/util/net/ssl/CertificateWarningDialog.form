@@ -26,7 +26,7 @@
             <properties>
               <font style="1"/>
               <requestFocusEnabled value="true"/>
-              <text value="Certificate details"/>
+              <text resource-bundle="messages/IdeBundle" key="label.ssl.certificate.details"/>
             </properties>
           </component>
         </children>
