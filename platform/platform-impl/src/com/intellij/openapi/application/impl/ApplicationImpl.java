@@ -589,9 +589,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       doExit(flags, restart, beforeRestart);
     }
     else {
-      invokeLater(() -> {
-        doExit(flags, restart, beforeRestart);
-      }, ModalityState.NON_MODAL);
+      invokeLater(() -> doExit(flags, restart, beforeRestart), ModalityState.NON_MODAL);
     }
   }
 
@@ -952,7 +950,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       .submitAndGet();
 
     if (result.getThrowable() instanceof RuntimeException) {
-      throw ((RuntimeException)result.getThrowable());
+      throw (RuntimeException)result.getThrowable();
     }
 
     return !(result.getThrowable() instanceof ProcessCanceledException);
@@ -1258,11 +1256,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     private String id() {
       Class<?> aClass = getClass();
       String name = aClass.getName();
-      while (name == null) {
-        aClass = aClass.getSuperclass();
-        name = aClass.getName();
-      }
-
       name = name.substring(name.lastIndexOf('.') + 1);
       name = name.substring(name.lastIndexOf('$') + 1);
       if (!name.equals("AccessToken")) {

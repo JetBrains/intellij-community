@@ -42,8 +42,8 @@ import java.util.concurrent.locks.LockSupport;
  * Write lock: sets global {@link #writeRequested} bit and waits for all readers (in global {@link #readers} list) to release their locks by checking {@link Reader#readRequested} for all readers.
  */
 class ReadMostlyRWLock {
-  volatile Thread writeThread = null;
-  private volatile Thread writeIntendedThread = null;
+  volatile Thread writeThread;
+  private volatile Thread writeIntendedThread;
   volatile boolean writeRequested;  // this writer is requesting or obtained the write access
   private final AtomicBoolean writeIntent = new AtomicBoolean(false);
   private volatile boolean writeAcquired;   // this writer obtained the write lock
