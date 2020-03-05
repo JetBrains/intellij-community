@@ -301,8 +301,11 @@ object DynamicPlugins {
 
       application.runWriteAction {
         try {
-          processOptionalDependenciesOnPlugin(pluginDescriptor) { _, dependencyDescriptor ->
+          processOptionalDependenciesOnPlugin(pluginDescriptor) { loadedDescriptorOfDependency, dependencyDescriptor ->
             unloadPluginDescriptor(dependencyDescriptor, dependencyDescriptor)
+            if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
+              (loadedDescriptorOfDependency.pluginClassLoader as? PluginClassLoader)?.detachParent(loadedPluginDescriptor.pluginClassLoader)
+            }
             true
           }
 

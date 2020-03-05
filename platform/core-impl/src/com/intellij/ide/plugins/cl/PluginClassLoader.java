@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
@@ -40,7 +41,7 @@ public final class PluginClassLoader extends UrlClassLoader {
     }
   }
 
-  private final ClassLoader[] myParents;
+  private ClassLoader[] myParents;
   private final PluginId myPluginId;
   private final IdeaPluginDescriptor myPluginDescriptor;
   private final String myPluginVersion;
@@ -442,5 +443,10 @@ public final class PluginClassLoader extends UrlClassLoader {
   public List<ClassLoader> _getParents() {
     //noinspection SSBasedInspection
     return Collections.unmodifiableList(Arrays.asList(myParents));
+  }
+
+  @ApiStatus.Internal
+  public void detachParent(ClassLoader classLoader) {
+    myParents = ArrayUtil.remove(myParents, classLoader);
   }
 }
