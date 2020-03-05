@@ -100,7 +100,7 @@ internal class GitInteractiveRebaseDialog(
   private val rewordAction = RewordAction(commitsTable)
   private val fixupAction = FixupAction(commitsTable)
   private val squashAction = SquashAction(commitsTable)
-  private val dropAction = ChangeEntryStateButtonAction(GitRebaseEntry.Action.DROP, commitsTable)
+  private val dropAction = DropAction(commitsTable)
 
   private val contextMenuOnlyActions = listOf<AnAction>(ShowGitRebaseCommandsDialog(project, commitsTable))
   private var modified = false

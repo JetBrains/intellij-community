@@ -4,6 +4,7 @@ package git4idea.rebase.interactive.dialog
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -19,25 +20,33 @@ import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.KeyStroke
 
+private fun getActionShortcutList(actionId: String): List<Shortcut> = KeymapUtil.getActiveKeymapShortcuts(actionId).shortcuts.toList()
+
 internal open class ChangeEntryStateSimpleAction(
   protected val action: GitRebaseEntry.Action,
   title: Supplier<String>,
   description: Supplier<String>,
   icon: Icon?,
-  protected val table: GitRebaseCommitsTableView
+  protected val table: GitRebaseCommitsTableView,
+  additionalShortcuts: List<Shortcut> = listOf()
 ) : AnActionButton(title, description, icon), DumbAware {
 
   protected open val disableIfAlreadySet = true
 
-  constructor(action: GitRebaseEntry.Action, icon: Icon?, table: GitRebaseCommitsTableView) :
-    this(action, action.visibleName, action.visibleName, icon, table)
+  constructor(
+    action: GitRebaseEntry.Action,
+    icon: Icon?,
+    table: GitRebaseCommitsTableView,
+    additionalShortcuts: List<Shortcut> = listOf()
+  ) : this(action, action.visibleName, action.visibleName, icon, table, additionalShortcuts)
 
   init {
     val keyStroke = KeyStroke.getKeyStroke(
       KeyEvent.getExtendedKeyCodeForChar(action.mnemonic),
       InputEvent.ALT_MASK
     )
-    shortcutSet = CustomShortcutSet(KeyboardShortcut(keyStroke, null))
+    val shortcuts = additionalShortcuts + KeyboardShortcut(keyStroke, null)
+    shortcutSet = CustomShortcutSet(*shortcuts.toTypedArray())
     this.registerCustomShortcutSet(table, null)
   }
 
@@ -66,8 +75,9 @@ internal open class ChangeEntryStateSimpleAction(
 
 internal open class ChangeEntryStateButtonAction(
   action: GitRebaseEntry.Action,
-  table: GitRebaseCommitsTableView
-) : ChangeEntryStateSimpleAction(action, null, table), CustomComponentAction, DumbAware {
+  table: GitRebaseCommitsTableView,
+  additionalShortcuts: List<Shortcut> = listOf()
+) : ChangeEntryStateSimpleAction(action, null, table, additionalShortcuts), CustomComponentAction, DumbAware {
   protected val button = object : JButton(action.visibleName.get()) {
     init {
       adjustForToolbar()
@@ -138,7 +148,9 @@ internal class SquashAction(table: GitRebaseCommitsTableView) : UniteCommitsActi
   }
 }
 
-internal class RewordAction(table: GitRebaseCommitsTableView) : ChangeEntryStateButtonAction(GitRebaseEntry.Action.REWORD, table) {
+internal class RewordAction(table: GitRebaseCommitsTableView) :
+  ChangeEntryStateButtonAction(GitRebaseEntry.Action.REWORD, table, getActionShortcutList("Git.Reword.Commit")) {
+
   override val disableIfAlreadySet = false
 
   override fun updateButton(e: AnActionEvent) {
@@ -152,6 +164,9 @@ internal class RewordAction(table: GitRebaseCommitsTableView) : ChangeEntryState
     TableUtil.editCellAt(table, table.selectedRows.single(), GitRebaseCommitsTableModel.SUBJECT_COLUMN)
   }
 }
+
+internal class DropAction(table: GitRebaseCommitsTableView) :
+  ChangeEntryStateButtonAction(GitRebaseEntry.Action.DROP, table, getActionShortcutList(IdeActions.ACTION_DELETE))
 
 internal class ShowGitRebaseCommandsDialog(private val project: Project, private val table: GitRebaseCommitsTableView) :
   DumbAwareAction(GitBundle.getString("rebase.interactive.dialog.view.git.commands.text")) {
