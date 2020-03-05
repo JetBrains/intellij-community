@@ -106,6 +106,26 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS));
   }
 
+  private void updateFractionalMetrics() {
+    if (SystemInfo.isMacOSCatalina) {
+      Object value = hasSearchMatch()
+                     ? RenderingHints.VALUE_FRACTIONALMETRICS_OFF
+                     : UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
+      putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
+    }
+  }
+
+  private boolean hasSearchMatch() {
+    synchronized (myFragments) {
+      for (ColoredFragment fragment : myFragments) {
+        if (SimpleTextAttributes.STYLE_SEARCH_MATCH == fragment.attributes.getStyle()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   @NotNull
   public ColoredIterator iterator() {
     return new MyIterator();
@@ -370,6 +390,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   @NotNull
   public final Dimension computePreferredSize(final boolean mainTextOnly) {
+    updateFractionalMetrics();
     synchronized (myFragments) {
       // Calculate width
       float width = myIpad.left;
@@ -528,6 +549,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * @return the index of the fragment, {@link #FRAGMENT_ICON} if the icon is at the offset, or -1 if nothing is there.
    */
   public int findFragmentAt(int x) {
+    updateFractionalMetrics();
     float curX = myIpad.left;
     if (myBorder != null) {
       curX += myBorder.getBorderInsets(this).left;
@@ -727,6 +749,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected int doPaintText(Graphics2D g, int textStart, boolean focusAroundIcon) {
+    updateFractionalMetrics();
     synchronized (myFragments) {
       // If there is no icon, then we have to add left internal padding
       if (textStart == 0) {
@@ -976,18 +999,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   protected void applyAdditionalHints(@NotNull Graphics2D g) {
     UISettings.setupAntialiasing(g);
-    if (SystemInfo.isMacOSCatalina) {
-      for (ColoredFragment fragment : myFragments) {
-        if (fragment.attributes.getStyle() == SimpleTextAttributes.STYLE_SEARCH_MATCH) {
-          g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
-          break;
-        }
-      }
-    }
+    g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, getClientProperty(RenderingHints.KEY_FRACTIONALMETRICS));
   }
 
   @Override
   public int getBaseline(int width, int height) {
+    updateFractionalMetrics();
     super.getBaseline(width, height);
     return getTextBaseLine(getFontMetrics(getFont()), height);
   }
