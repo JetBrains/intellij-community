@@ -22,9 +22,10 @@ public class DeprecatedMethodException extends RuntimeException {
     }
   }
 
-  public static void reportDefaultImplementation(@NotNull String message) {
-    String text = "The default implementation of this method is deprecated, you need to override it in '" +
-                  ReflectionUtil.findCallerClass(2) + "'. " + message;
+  public static void reportDefaultImplementation(@NotNull Class<?> thisClass, @NotNull String methodName, @NotNull String message) {
+    Class<?> superClass = ReflectionUtil.findCallerClass(2);
+    String text = "The default implementation of method '" +superClass.getName()+"."+methodName+"' is deprecated, you need to override it in '" +
+                  thisClass + "'. " + message;
     if (BEAT_DEAD_HORSE.add(text)) {
       LOG.warn(new DeprecatedMethodException(text));
     }
