@@ -42,10 +42,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -80,7 +77,6 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-
 public class UsageViewImpl implements UsageViewEx {
   private static final Logger LOG = Logger.getInstance(UsageViewImpl.class);
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
@@ -98,7 +94,13 @@ public class UsageViewImpl implements UsageViewEx {
 
   private volatile boolean mySearchInProgress = true;
   private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this, getUsageViewSettings());
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> {
+    if (isDisposed()) {
+      return;
+    }
+    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject());
+    documentManager.cancelAndRunWhenAllCommitted("UpdateUsageView", this::updateImmediately);
+  }, 300);
 
   private final ExclusionHandlerEx<DefaultMutableTreeNode> myExclusionHandler;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();
@@ -108,6 +110,7 @@ public class UsageViewImpl implements UsageViewEx {
   private final JComponent myAdditionalComponent = new JPanel(new BorderLayout());
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected;
+
   public static final Comparator<Usage> USAGE_COMPARATOR = (o1, o2) -> {
     if (o1 == o2) return 0;
     if (o1 == NullUsage.INSTANCE) return -1;
@@ -158,7 +161,7 @@ public class UsageViewImpl implements UsageViewEx {
   private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("Usage View Update Requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
 
-  public UsageViewImpl(@NotNull final Project project,
+  public UsageViewImpl(@NotNull Project project,
                        @NotNull UsageViewPresentation presentation,
                        UsageTarget @NotNull [] targets,
                        Factory<UsageSearcher> usageSearcherFactory) {
@@ -1396,12 +1399,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   void updateLater() {
-    myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(() -> {
-      if (isDisposed()) return;
-      PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
-      documentManager.cancelAndRunWhenAllCommitted("UpdateUsageView", this::updateImmediately);
-    }, 300);
+    myUpdateAlarm.cancelAndRequest();
   }
 
   @Override
@@ -1423,12 +1421,13 @@ public class UsageViewImpl implements UsageViewEx {
     disposeUsageContextPanels();
     synchronized (lock) {
       isDisposed = true;
+      myUpdateAlarm.cancelAllRequests();
+
       cancelCurrentSearch();
       myRerunAction = null;
       if (myTree != null) {
         ToolTipManager.sharedInstance().unregisterComponent(myTree);
       }
-      myUpdateAlarm.cancelAllRequests();
     }
     if (myDisposeSmartPointersOnClose) {
       disposeSmartPointers();
@@ -1797,7 +1796,7 @@ public class UsageViewImpl implements UsageViewEx {
     return myModel.areTargetsValid();
   }
 
-  private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator, Disposable{
+  private final class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator, Disposable {
     @Nullable private OccurenceNavigatorSupport mySupport;
     private final CopyProvider myCopyProvider;
 

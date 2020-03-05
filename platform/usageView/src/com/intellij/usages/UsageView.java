@@ -91,7 +91,6 @@ public interface UsageView extends Disposable {
     return getComponent();
   }
 
-
   int getUsagesCount();
 
   /**

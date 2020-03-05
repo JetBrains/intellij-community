@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
@@ -18,10 +18,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvider {
+public final class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvider {
   @Override
   public UsageFilteringRule @NotNull [] getActiveRules(@NotNull final Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<>();
@@ -32,32 +29,33 @@ public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvi
   }
 
   @Override
-  public AnAction @NotNull [] createFilteringActions(@NotNull final UsageView view) {
-    final UsageViewImpl impl = (UsageViewImpl)view;
+  public AnAction @NotNull [] createFilteringActions(@NotNull UsageView view) {
     if (view.getPresentation().isCodeUsages()) {
-      final JComponent component = view.getComponent();
-      final ShowImportsAction showImportsAction = new ShowImportsAction(impl);
-      showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK)), component, view);
-      return new AnAction[] { showImportsAction };
+      JComponent component = view.getComponent();
+      UsageViewImpl impl = (UsageViewImpl)view;
+      ShowImportsAction showImportsAction = new ShowImportsAction(impl);
+      CustomShortcutSet shortcutSet = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK));
+      showImportsAction.registerCustomShortcutSet(shortcutSet, component, impl);
+      return new AnAction[]{showImportsAction};
     }
     else {
       return AnAction.EMPTY_ARRAY;
     }
   }
+}
 
-  private static class ShowImportsAction extends RuleAction {
-    private ShowImportsAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.messagePointer("action.show.import.statements"), AllIcons.Actions.ShowImportStatements);
-    }
+final class ShowImportsAction extends RuleAction {
+  ShowImportsAction(@NotNull UsageViewImpl view) {
+    super(view, UsageViewBundle.messagePointer("action.show.import.statements"), AllIcons.Actions.ShowImportStatements);
+  }
 
-    @Override
-    protected boolean getOptionValue() {
-      return ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS;
-    }
+  @Override
+  protected boolean getOptionValue() {
+    return ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS;
+  }
 
-    @Override
-    protected void setOptionValue(boolean value) {
-      ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS = value;
-    }
+  @Override
+  protected void setOptionValue(boolean value) {
+    ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS = value;
   }
 }

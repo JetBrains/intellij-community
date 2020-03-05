@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 
-public class UsageViewTreeModelBuilder extends DefaultTreeModel {
+public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final GroupNode.Root myRootNode;
 
   private final @Nullable TargetsRootNode myTargetsNode;
