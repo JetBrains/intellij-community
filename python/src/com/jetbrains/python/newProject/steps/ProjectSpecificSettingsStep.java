@@ -234,19 +234,15 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     boolean installFramework = false;
     if (!generator.isFrameworkInstalled(sdk)) {
       final String frameworkName = generator.getFrameworkTitle();
+      String messageId = "python.package.installation.notification.message";
       if (PyPackageUtil.packageManagementEnabled(sdk)) {
         installFramework = true;
         final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
         if (!PyPackageUtil.hasManagement(packages)) {
-          warnings.add("Python packaging tools and " + frameworkName + " will be installed on the selected interpreter");
-        }
-        else {
-          warnings.add(frameworkName + " will be installed on the selected interpreter");
+          messageId = "python.package.and.packaging.tools.installation.notification.message";
         }
       }
-      else {
-        warnings.add(frameworkName + " is not installed on the selected interpreter");
-      }
+      warnings.add(PyBundle.message(messageId, frameworkName));
     }
     return Pair.create(installFramework, warnings);
   }
