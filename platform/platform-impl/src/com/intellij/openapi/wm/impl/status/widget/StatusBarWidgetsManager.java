@@ -16,16 +16,15 @@ import com.intellij.openapi.wm.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public final class StatusBarWidgetsManager extends SimpleModificationTracker implements Disposable {
   private static final @NotNull Logger LOG = Logger.getInstance(StatusBar.class);
 
   private final Map<StatusBarWidgetFactory, StatusBarWidget> myWidgetFactories = new LinkedHashMap<>();
+  private final Map<String, StatusBarWidgetFactory> myWidgetIdsMap = new HashMap<>();
+  
   private final Project myProject;
 
   public StatusBarWidgetsManager(@NotNull Project project) {
@@ -96,6 +95,12 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     myWidgetFactories.clear();
   }
 
+  @Nullable
+  public StatusBarWidgetFactory findWidgetFactory(@NotNull String widgetId) {
+    return myWidgetIdsMap.get(widgetId);
+  }
+
+  @NotNull
   public Set<StatusBarWidgetFactory> getWidgetFactories() {
     return myWidgetFactories.keySet();
   }
@@ -119,10 +124,8 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     }
 
     StatusBarWidget widget = factory.createWidget(myProject);
-    if (!widget.ID().equals(factory.getId())) {
-      LOG.warn("Factory id doesn't match widget id. It may affect ordering: " + factory.getId());
-    }
     myWidgetFactories.put(factory, widget);
+    myWidgetIdsMap.put(widget.ID(), factory);
     statusBar.addWidget(widget, getAnchor(factory), this);
     Disposer.register(this, () -> disableWidget(factory));
   }
@@ -136,14 +139,16 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     int indexOf = factories.indexOf(factory);
     for (int i = indexOf + 1; i < factories.size(); i++) {
       StatusBarWidgetFactory nextFactory = factories.get(i);
-      if (myWidgetFactories.get(nextFactory) != null) {
-        return StatusBar.Anchors.before(nextFactory.getId());
+      StatusBarWidget widget = myWidgetFactories.get(nextFactory);
+      if (widget != null) {
+        return StatusBar.Anchors.before(widget.ID());
       }
     }
     for (int i = indexOf - 1; i >= 0; i--) {
       StatusBarWidgetFactory prevFactory = factories.get(i);
-      if (myWidgetFactories.get(prevFactory) != null) {
-        return StatusBar.Anchors.after(prevFactory.getId());
+      StatusBarWidget widget = myWidgetFactories.get(prevFactory);
+      if (widget != null) {
+        return StatusBar.Anchors.after(widget.ID());
       }
     }
     return StatusBar.Anchors.DEFAULT_ANCHOR;
@@ -152,6 +157,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   private void disableWidget(@NotNull StatusBarWidgetFactory factory) {
     StatusBarWidget createdWidget = myWidgetFactories.put(factory, null);
     if (createdWidget != null) {
+      myWidgetIdsMap.remove(createdWidget.ID());
       factory.disposeWidget(createdWidget);
       StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
       if (statusBar != null) {

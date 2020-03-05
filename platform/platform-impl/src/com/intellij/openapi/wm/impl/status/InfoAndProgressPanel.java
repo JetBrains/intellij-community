@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -57,7 +56,6 @@ import java.util.*;
 import static com.intellij.icons.AllIcons.Process.*;
 
 public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
-  private static final Logger LOG = Logger.getInstance(InfoAndProgressPanel.class);
   private final ProcessPopup myPopup;
 
   private final StatusPanel myInfoPanel = new StatusPanel();
