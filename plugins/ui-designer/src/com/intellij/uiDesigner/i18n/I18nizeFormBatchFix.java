@@ -44,7 +44,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import icons.UIDesignerIcons;
-import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +72,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
     HashSet<PsiFile> contextFiles = new HashSet<>();
     Map<VirtualFile, RadRootContainer> containerMap = new HashMap<>();
     UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
-    Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> myDuplicates = new HashMap<>();
+    Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates = new HashMap<>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       FormElementProblemDescriptor formElementProblemDescriptor = (FormElementProblemDescriptor)descriptor;
       PsiFile containingFile = formElementProblemDescriptor.getPsiElement().getContainingFile();
@@ -114,18 +113,19 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
       String keyPrefix = suggestPropertyKeyPrefix(component, propertyName);
       String defaultKey = keyPrefix != null ? keyPrefix + "." + I18nizeQuickFixDialog.generateDefaultPropertyKey(value) : null;
       String key = uniqueNameGenerator.generateUniqueName(I18nizeQuickFixDialog.suggestUniquePropertyKey(value, defaultKey, null));
-      I18nizedPropertyData<HardcodedStringInFormData> data = new I18nizedPropertyData<HardcodedStringInFormData>(key, value, new HardcodedStringInFormData(component, propertyName, containingFile));
-      if (myDuplicates.containsKey(value)) {
-        myDuplicates.computeIfAbsent(value, k -> new ArrayList<>(1)).add(data);
+      I18nizedPropertyData<HardcodedStringInFormData> data = new I18nizedPropertyData<>(key, value, new HardcodedStringInFormData(component, propertyName, containingFile));
+      if (duplicates.containsKey(value)) {
+        duplicates.computeIfAbsent(value, k -> new ArrayList<>(1)).add(data);
       }
       else {
         dataList.add(data);
-        myDuplicates.put(value, null);
+        duplicates.put(value, null);
       }
     }
 
-    I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog = new I18nizeMultipleStringsDialog<HardcodedStringInFormData>(project, dataList, contextFiles, this::createUsageInfo,
-                                                                                                                                 UIDesignerIcons.InspectionSuppression);
+    I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog = new I18nizeMultipleStringsDialog<>(project, dataList, contextFiles,
+                                                                                                        I18nizeFormBatchFix::createUsageInfo,
+                                                                                                        UIDesignerIcons.InspectionSuppression);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       PsiManager manager = PsiManager.getInstance(project);
@@ -143,25 +143,25 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
         return;
       }
       WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
-        for (I18nizedPropertyData<HardcodedStringInFormData> bean : dataList) {
+        for (I18nizedPropertyData<HardcodedStringInFormData> data : dataList) {
           StringDescriptor valueDescriptor;
-          if (!bean.isMarkAsNonNls()) {
+          if (!data.isMarkAsNonNls()) {
             JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                           Collections.singletonList(propertiesFile),
-                                                                          bean.getKey(),
-                                                                          bean.getValue(),
+                                                                          data.getKey(),
+                                                                          data.getValue(),
                                                                           PsiExpression.EMPTY_ARRAY);
-            valueDescriptor = new StringDescriptor(bundleName, bean.getKey());
+            valueDescriptor = new StringDescriptor(bundleName, data.getKey());
           }
           else {
-            valueDescriptor = StringDescriptor.create(bean.getValue());
+            valueDescriptor = StringDescriptor.create(data.getValue());
             valueDescriptor.setNoI18n(true);
           }
 
-          setPropertyValue(bean.getContextData().getComponent(), bean.getContextData().getPropertyName(), valueDescriptor);
-          List<I18nizedPropertyData<HardcodedStringInFormData>> duplicates = myDuplicates.get(bean.getValue());
-          if (duplicates != null) {
-            for (I18nizedPropertyData<HardcodedStringInFormData> duplicateBean : duplicates) {
+          setPropertyValue(data.getContextData().getComponent(), data.getContextData().getPropertyName(), valueDescriptor);
+          List<I18nizedPropertyData<HardcodedStringInFormData>> duplicateValues = duplicates.get(data.getValue());
+          if (duplicateValues != null) {
+            for (I18nizedPropertyData<HardcodedStringInFormData> duplicateBean : duplicateValues) {
               setPropertyValue(duplicateBean.getContextData().getComponent(), duplicateBean.getContextData().getPropertyName(),
                                valueDescriptor);
             }
@@ -190,8 +190,8 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
   }
 
   @Nullable
-  private String suggestPropertyKeyPrefix(@NotNull RadComponent component, @NotNull String propertyName) {
-    Class componentClass = component.getComponentClass();
+  private static String suggestPropertyKeyPrefix(@NotNull RadComponent component, @NotNull String propertyName) {
+    Class<?> componentClass = component.getComponentClass();
     for (DefaultPrefixSuggestion suggestion : PREFIX_SUGGESTIONS) {
       if (suggestion.getPropertyName().equals(propertyName) && suggestion.getComponentClass().isAssignableFrom(componentClass)) {
         return suggestion.getDefaultPrefix();
@@ -203,7 +203,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
     return null;
   }
 
-  private List<UsageInfo> createUsageInfo(HardcodedStringInFormData data) {
+  private static List<UsageInfo> createUsageInfo(HardcodedStringInFormData data) {
     RadComponent component = data.getComponent();
     PsiFile file = data.getContainingFile();
     TextRange range = getComponentRange(component, file);
@@ -211,7 +211,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
     return Collections.singletonList(usageInfo);
   }
 
-  private TextRange getComponentRange(RadComponent component, PsiFile file) {
+  private static TextRange getComponentRange(RadComponent component, PsiFile file) {
     CharSequence contents = file.getViewProvider().getContents();
     int componentId = StringUtil.indexOf(contents, "id=\"" + component.getId() + "\"");
     if (componentId == -1) return null;
@@ -235,17 +235,18 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
       }
     }
     else {
-      Arrays.stream(component.getModifiedProperties())
-        .filter(p -> propertyName.equals(p.getName()))
-        .findFirst()
-        .ifPresent(p -> {
+      IProperty property = ContainerUtil.find(component.getModifiedProperties(), p -> propertyName.equals(p.getName()));
+      if (property != null) {
         try {
-          new FormPropertyStringDescriptorAccessor(component, (IntrospectedProperty)p).setStringDescriptorValue(stringDescriptor);
+          new FormPropertyStringDescriptorAccessor(component, (IntrospectedProperty<?>)property).setStringDescriptorValue(stringDescriptor);
         }
         catch (Exception e) {
           LOG.error(e);
         }
-      });
+      }
+      else {
+        LOG.error("Property '" + propertyName + "' not found in modified properties for component " + component.getId());
+      }
     }
   }
 
@@ -271,17 +272,6 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) { }
-
-  public static Element findElementById(String id, Element rootElement) {
-    if (id.equals(rootElement.getAttributeValue("id"))) {
-      return rootElement;
-    }
-    for (Element child : rootElement.getChildren()) {
-      Element elementById = findElementById(id, child);
-      if (elementById != null) return elementById;
-    }
-    return null;
-  }
 
   private static class HardcodedStringInFormData {
     private final RadComponent myComponent;
