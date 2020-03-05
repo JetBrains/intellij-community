@@ -80,7 +80,9 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
     executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)
     checkPresentation()
 
-    val intention = myFixture.findSingleIntention(actionName)
+    val intention = myFixture.availableIntentions.firstOrNull { it.familyName == "Suggested Refactoring" }
+    assertNotNull("No refactoring available", intention)
+    assertEquals("Action name", actionName, intention!!.text)
     myFixture.launchAction(intention)
     myFixture.checkResult(textAfterRefactoring)
 
