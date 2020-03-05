@@ -7,6 +7,7 @@ public enum RedundantModifiersInfoType {
   CLASS(PsiClass.class),
   FIELD(PsiField.class),
   METHOD(PsiMethod.class),
+  VARIABLE(PsiVariable.class),
   INNER_CLASS(PsiClass.class);
 
   private final Class<? extends PsiModifierListOwner> supportedClass;

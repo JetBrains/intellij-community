@@ -5,10 +5,9 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.impl.source.JavaVarTypeUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import lombok.val;
@@ -20,7 +19,7 @@ import java.util.Collections;
 
 public class ValProcessor extends AbstractProcessor {
 
-  private static final String LOMBOK_VAL_NANE = "val";
+  private static final String LOMBOK_VAL_NAME = "val";
   private static final String LOMBOK_VAR_NAME = "var";
   private static final String LOMBOK_VAL_FQN = "lombok.val";
   private static final String LOMBOK_VAR_FQN = "lombok.var";
@@ -31,6 +30,36 @@ public class ValProcessor extends AbstractProcessor {
     super(PsiElement.class, val.class, lombok.experimental.var.class, lombok.var.class);
   }
 
+  public static boolean isVal(@NotNull PsiVariable psiVariable) {
+    if (psiVariable instanceof PsiLocalVariable) {
+      return isVal((PsiLocalVariable) psiVariable);
+    }
+    if (!(psiVariable instanceof PsiParameter)) {
+      return false;
+    }
+    PsiParameter psiParameter = (PsiParameter) psiVariable;
+    PsiTypeElement typeElement = psiParameter.getTypeElement();
+    if (typeElement == null) {
+      return false;
+    }
+    return isPossibleVal(typeElement.getText()) && isVal(resolveQualifiedName(typeElement));
+  }
+
+  public static boolean isVar(@NotNull PsiVariable psiVariable) {
+    if (psiVariable instanceof PsiLocalVariable) {
+      return isVar((PsiLocalVariable) psiVariable);
+    }
+    if (!(psiVariable instanceof PsiParameter)) {
+      return false;
+    }
+    PsiParameter psiParameter = (PsiParameter) psiVariable;
+    PsiTypeElement typeElement = psiParameter.getTypeElement();
+    if (typeElement == null) {
+      return false;
+    }
+    return isPossibleVar(typeElement.getText()) && isVar(resolveQualifiedName(typeElement));
+  }
+
   public static boolean isVal(@NotNull PsiLocalVariable psiLocalVariable) {
     if (psiLocalVariable.getInitializer() != null) {
       final PsiTypeElement typeElement = psiLocalVariable.getTypeElement();
@@ -39,7 +68,15 @@ public class ValProcessor extends AbstractProcessor {
     return false;
   }
 
-  private boolean isValOrVar(@NotNull PsiLocalVariable psiLocalVariable) {
+  public static boolean isVar(@NotNull PsiLocalVariable psiLocalVariable) {
+    if (psiLocalVariable.getInitializer() != null) {
+      final PsiTypeElement typeElement = psiLocalVariable.getTypeElement();
+      return isPossibleVar(typeElement.getText()) && isVar(resolveQualifiedName(typeElement));
+    }
+    return false;
+  }
+
+  private static boolean isValOrVar(@NotNull PsiLocalVariable psiLocalVariable) {
     if (psiLocalVariable.getInitializer() != null) {
       final PsiTypeElement typeElement = psiLocalVariable.getTypeElement();
       return isPossibleValOrVar(typeElement.getText()) && isValOrVar(resolveQualifiedName(typeElement));
@@ -55,27 +92,27 @@ public class ValProcessor extends AbstractProcessor {
     return false;
   }
 
-  private boolean isValOrVar(@Nullable String fullQualifiedName) {
+  private static boolean isValOrVar(@Nullable String fullQualifiedName) {
     return isVal(fullQualifiedName) || isVar(fullQualifiedName);
   }
 
-  private boolean isPossibleValOrVar(@Nullable String shortName) {
+  private static boolean isPossibleValOrVar(@Nullable String shortName) {
     return isPossibleVal(shortName) || isPossibleVar(shortName);
   }
 
   private static boolean isPossibleVal(@Nullable String shortName) {
-    return LOMBOK_VAL_NANE.equals(shortName);
+    return LOMBOK_VAL_NAME.equals(shortName);
   }
 
   private static boolean isVal(@Nullable String fullQualifiedName) {
     return LOMBOK_VAL_FQN.equals(fullQualifiedName);
   }
 
-  private boolean isPossibleVar(@Nullable String shortName) {
+  private static boolean isPossibleVar(@Nullable String shortName) {
     return LOMBOK_VAR_NAME.equals(shortName);
   }
 
-  private boolean isVar(@Nullable String fullQualifiedName) {
+  private static boolean isVar(@Nullable String fullQualifiedName) {
     return LOMBOK_VAR_FQN.equals(fullQualifiedName) || LOMBOK_VAR_EXPERIMENTAL_FQN.equals(fullQualifiedName);
   }
 
@@ -174,42 +211,22 @@ public class ValProcessor extends AbstractProcessor {
   private PsiType processLocalVariableInitializer(final PsiExpression psiExpression) {
     PsiType result = null;
     if (null != psiExpression && !(psiExpression instanceof PsiArrayInitializerExpression)) {
-
-      if (psiExpression instanceof PsiConditionalExpression) {
-        result = RecursionManager.doPreventingRecursion(psiExpression, true, new Computable<PsiType>() {
-          @Override
-          public PsiType compute() {
-            final PsiExpression thenExpression = ((PsiConditionalExpression) psiExpression).getThenExpression();
-            final PsiExpression elseExpression = ((PsiConditionalExpression) psiExpression).getElseExpression();
-
-            final PsiType thenType = null != thenExpression ? thenExpression.getType() : null;
-            final PsiType elseType = null != elseExpression ? elseExpression.getType() : null;
-
-            if (thenType == null) {
-              return elseType;
+        result = RecursionManager.doPreventingRecursion(psiExpression, true, () -> {
+          PsiType type = psiExpression.getType();
+          // This is how Lombok resolves intersection types.
+          // This way auto-completion won't show unavailable methods.
+          if (type instanceof PsiIntersectionType) {
+            PsiType[] conjuncts = ((PsiIntersectionType) type).getConjuncts();
+            if (conjuncts.length > 0) {
+              return conjuncts[0];
             }
-            if (elseType == null) {
-              return thenType;
-            }
-
-            if (TypeConversionUtil.isAssignable(thenType, elseType, false)) {
-              return thenType;
-            }
-            if (TypeConversionUtil.isAssignable(elseType, thenType, false)) {
-              return elseType;
-            }
-            return thenType;
           }
-        });
-      } else {
-        result = RecursionManager.doPreventingRecursion(psiExpression, true, new Computable<PsiType>() {
-          @Override
-          public PsiType compute() {
-            return psiExpression.getType();
+          if (type != null) {
+            return JavaVarTypeUtil.getUpwardProjection(type); //Get upward projection so you don't get types with missing diamonds.
           }
+          return null;
         });
       }
-    }
 
     return result;
   }

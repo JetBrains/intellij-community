@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.inspection.modifiers;
 
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,11 @@ public class RedundantModifiersInfo {
     return dontRunOnModifier;
   }
 
-  public RedundantModifiersInfoType getRedundantModifiersInfoType() {
+  public RedundantModifiersInfoType getType() {
     return redundantModifiersInfoType;
+  }
+
+  public boolean shouldCheck(PsiModifierListOwner psiModifierListOwner) {
+    return true;
   }
 }

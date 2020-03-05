@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -18,7 +19,7 @@ public abstract class LombokRedundantModifierInspection extends AbstractBaseJava
   private final Class<?> supportedAnnotation;
   private final RedundantModifiersInfo[] redundantModifiersInfo;
 
-  public LombokRedundantModifierInspection(Class<?> supportedAnnotation, RedundantModifiersInfo... redundantModifiersInfo) {
+  public LombokRedundantModifierInspection(@Nullable Class<?> supportedAnnotation, RedundantModifiersInfo... redundantModifiersInfo) {
     this.supportedAnnotation = supportedAnnotation;
     this.redundantModifiersInfo = redundantModifiersInfo;
   }
@@ -58,17 +59,40 @@ public abstract class LombokRedundantModifierInspection extends AbstractBaseJava
       this.visit(method);
     }
 
+    @Override
+    public void visitLocalVariable(PsiLocalVariable variable) {
+      super.visitLocalVariable(variable);
+
+      this.visit(variable);
+    }
+
+    @Override
+    public void visitParameter(PsiParameter parameter) {
+      super.visitParameter(parameter);
+
+      this.visit(parameter);
+    }
+
     private void visit(PsiModifierListOwner psiModifierListOwner) {
       for (RedundantModifiersInfo redundantModifiersInfo : redundantModifiersInfo) {
-        PsiClass containingClass = PsiTreeUtil.getParentOfType(psiModifierListOwner, PsiClass.class, redundantModifiersInfo.getRedundantModifiersInfoType() == INNER_CLASS);
-        if (containingClass == null) {
+        RedundantModifiersInfoType infoType = redundantModifiersInfo.getType();
+        PsiModifierListOwner parentModifierListOwner = PsiTreeUtil.getParentOfType(psiModifierListOwner,
+          PsiModifierListOwner.class, infoType != CLASS && infoType != VARIABLE);
+        if (parentModifierListOwner == null) {
           continue;
         }
-        if (containingClass.hasAnnotation(supportedAnnotation.getName()) &&
-          redundantModifiersInfo.getRedundantModifiersInfoType().getSupportedClass().isAssignableFrom(psiModifierListOwner.getClass())) {
+        if (infoType == VARIABLE && !(parentModifierListOwner instanceof PsiLocalVariable || parentModifierListOwner instanceof PsiParameter)
+        || (infoType != VARIABLE && !(parentModifierListOwner instanceof PsiClass))) {
+          continue;
+        }
+        if ((supportedAnnotation == null || parentModifierListOwner.hasAnnotation(supportedAnnotation.getName())) &&
+          redundantModifiersInfo.getType().getSupportedClass().isAssignableFrom(psiModifierListOwner.getClass())) {
           PsiModifierList psiModifierList = psiModifierListOwner.getModifierList();
           if (psiModifierList == null ||
             (redundantModifiersInfo.getDontRunOnModifier() != null && psiModifierList.hasExplicitModifier(redundantModifiersInfo.getDontRunOnModifier()))) {
+            continue;
+          }
+          if (!redundantModifiersInfo.shouldCheck(psiModifierListOwner)) {
             continue;
           }
           for (String modifier : redundantModifiersInfo.getModifiers()) {
