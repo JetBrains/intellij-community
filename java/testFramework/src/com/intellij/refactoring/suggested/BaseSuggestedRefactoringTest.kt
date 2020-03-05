@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.RefactoringBundle
 import kotlin.test.assertNotEquals
 
@@ -78,11 +81,33 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
     }
 
     executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)
+
+    val intention = myFixture.availableIntentions.firstOrNull { it.familyName == "Suggested Refactoring" }
+    assertNotNull("No refactoring available", intention)
+
+    assertEquals("Action name", actionName, intention!!.text)
+
     checkPresentation()
 
-    val intention = myFixture.findSingleIntention(actionName)
-    myFixture.launchAction(intention)
-    myFixture.checkResult(textAfterRefactoring)
+    executeCommand {
+      intention.invoke(project, editor, file)
+
+      runWriteAction {
+        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
+      }
+    }
+
+    val index = textAfterRefactoring.indexOf("<caret>")
+    if (index >= 0) {
+      val text = textAfterRefactoring.substring(0, index) +
+                 textAfterRefactoring.substring(index + "<caret>".length)
+      assertEquals(text, editor.document.text)
+
+      assertEquals("Caret position", index, editor.caretModel.offset)
+    }
+    else {
+      assertEquals(textAfterRefactoring, editor.document.text)
+    }
 
     if (!ignoreErrorsAfter) {
       myFixture.testHighlighting(false, false, false, myFixture.file.virtualFile)
