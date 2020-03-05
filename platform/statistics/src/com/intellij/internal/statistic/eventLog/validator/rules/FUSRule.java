@@ -33,4 +33,8 @@ public interface FUSRule {
      */
     @NotNull
     ValidationResultType validate(@NotNull String data, @NotNull EventContext context);
+
+    default boolean isValidRule() {
+        return true;
+    }
 }

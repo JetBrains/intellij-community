@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
+import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence
 import com.intellij.internal.statistic.eventLog.validator.persistence.WhitelistPathSettings
@@ -15,7 +16,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.components.dialog
 
-class ConfigureWhitelistAction(private var myRecorderId: String = "FUS")
+class ConfigureWhitelistAction(private var myRecorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
   : DumbAwareAction(ActionsBundle.message("action.ConfigureWhitelistAction.text"),
                     ActionsBundle.message("action.ConfigureWhitelistAction.description"),
                     null) {

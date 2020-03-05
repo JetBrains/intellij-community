@@ -114,7 +114,7 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
   }
 
   @Nullable
-  private static PsiFile createTempFile(@NotNull Project project, @NotNull String filename, @NotNull String request) {
+  public static PsiFile createTempFile(@NotNull Project project, @NotNull String filename, @NotNull String request) {
     final String fileName = PathUtil.makeFileName(filename, "json");
     try {
       final ThrowableComputable<PsiFile, Exception> computable = () -> {
