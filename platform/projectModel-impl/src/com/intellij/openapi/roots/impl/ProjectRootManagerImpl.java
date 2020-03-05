@@ -231,13 +231,18 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     projectJdkChanged();
   }
 
-  private void projectJdkChanged() {
+  protected void projectJdkChanged() {
     incModificationCount();
-    mergeRootsChangesDuring(() -> myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged());
+    mergeRootsChangesDuring(getRootsChangeRunnable());
     Sdk sdk = getProjectSdk();
     for (ProjectExtension extension : ProjectExtension.EP_NAME.getExtensions(myProject)) {
       extension.projectSdkChanged(sdk);
     }
+  }
+
+  @NotNull
+  protected Runnable getRootsChangeRunnable(){
+    return () -> myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged();
   }
 
   @Override
