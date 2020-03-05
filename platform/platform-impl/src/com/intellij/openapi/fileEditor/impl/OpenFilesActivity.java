@@ -38,12 +38,11 @@ final class OpenFilesActivity implements StartupActivity {
     FileEditorManagerImpl manager = (FileEditorManagerImpl)fileEditorManager;
     EditorsSplitters editorSplitters = manager.getMainSplitters();
     Ref<JPanel> panelRef = editorSplitters.restoreEditors();
-    if (panelRef == null) {
-      return;
-    }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      editorSplitters.doOpenFiles(panelRef.get());
+      if (panelRef != null) {
+        editorSplitters.doOpenFiles(panelRef.get());
+      }
       manager.initDockableContentFactory();
       if (!manager.hasOpenFiles()) {
         EditorsSplitters.stopOpenFilesActivity(project);
