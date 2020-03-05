@@ -23,7 +23,8 @@ public class GitPatchParser {
   @NonNls private static final Pattern ourGitHeaderLinePattern = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*");
   @NonNls private static final Pattern ourIndexHeaderLinePattern =
     Pattern.compile("index\\s+(" + HASH_PATTERN + ")..(" + HASH_PATTERN + ").*");
-  // need to extend with rename/copy
+  @NonNls private static final Pattern ourRenameFromPattern = Pattern.compile("\\s*rename from\\s+(\\S+)\\s*");
+  @NonNls private static final Pattern ourRenameToPattern = Pattern.compile("\\s*rename to\\s+(\\S+)\\s*");
   @NonNls private static final Pattern ourFileStatusPattern = Pattern.compile("\\s*(new|deleted)\\s+file\\s+mode\\s*(\\d*)\\s*");
   @NonNls private static final Pattern ourNewFileModePattern = Pattern.compile("\\s*new\\s+mode\\s*(\\d+)\\s*");
 
@@ -74,6 +75,7 @@ public class GitPatchParser {
       Matcher indexMatcher = ourIndexHeaderLinePattern.matcher(next);
       Matcher fileStatusMatcher = ourFileStatusPattern.matcher(next);
       Matcher fileModeMatcher = ourNewFileModePattern.matcher(next);
+      Matcher fileRenameFromMatcher = ourRenameFromPattern.matcher(next);
       try {
         if (fileStatusMatcher.matches()) {
           parsedStatus = parseFileStatus(fileStatusMatcher.group(1));
@@ -87,6 +89,15 @@ public class GitPatchParser {
         }
         else if (indexMatcher.matches()) {
           sha1Indexes = Couple.of(indexMatcher.group(1), indexMatcher.group(2));
+        }
+        else if (fileRenameFromMatcher.matches() && iterator.hasNext()) {
+          Matcher fileRenameToMatcher = ourRenameToPattern.matcher(iterator.next());
+          if (fileRenameToMatcher.matches()) {
+            beforeAfterName = Couple.of(fileRenameFromMatcher.group(1), fileRenameToMatcher.group(1));
+          }
+          else {
+            iterator.previous();
+          }
         }
         else if (contentParser.testIsStart(next) || next.startsWith(ourGitBinaryContentStart)) {
           iterator.previous();
