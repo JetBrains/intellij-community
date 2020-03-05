@@ -80,6 +80,7 @@ public class ThreadTracker {
     "JobScheduler FJ pool ",
     "JPS thread pool",
     "Keep-Alive-Timer",
+    "LowMemoryWatcherManager",
     "main",
     "Monitor Ctrl-Break",
     "Netty ",
