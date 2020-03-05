@@ -349,8 +349,6 @@ class CommunityRepositoryModules {
 
       // here go some differences from original Android Studio layout
       withResource("../tools-base/layoutlib","lib/layoutlib") // todo replace this with runtime downloading
-      withResource("../tools-base/templates", "lib/templates")
-
 
       withProjectLibrary("studio-profiler-grpc-1.0-jarjar")
       // Profiler downloader will download all the other profiler libraries: profilers-transform.jar, perfa_okhttp.dex, perfa, perfd, simpleperf

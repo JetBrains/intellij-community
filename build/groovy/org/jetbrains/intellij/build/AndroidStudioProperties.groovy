@@ -300,14 +300,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       }
     }
 
-    // TODO: This extra copying is unfortunate, but our TemplateManager doesn't seem to handle the default resources.jar packaging (which
-    // works out just fine for the rest of Intellij, see lib/resources.jar).
-    buildContext.ant.copy(todir: "$androidPluginLib/templates") {
-      fileset(dir: "$root/tools/base/templates") {
-        exclude(name: "BUILD")
-      }
-    }
-
     // Profiler prebuilt binaries:
     buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
       fileset(file: "$root/bazel-bin/tools/base/profiler/transform/profilers-transform.jar")
