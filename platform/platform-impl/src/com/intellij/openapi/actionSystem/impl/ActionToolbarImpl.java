@@ -904,7 +904,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
       final Insets i = getInsets();
-      if (myForceShowFirstComponent && getComponentCount() > 0) {
+      if (myForceShowFirstComponent && getComponentCount() > 0 && getComponent(0).isShowing()) {
         Component c = getComponent(0);
         Dimension firstSize = c.getPreferredSize();
         if (myOrientation == SwingConstants.HORIZONTAL) {
