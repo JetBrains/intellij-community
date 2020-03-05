@@ -1291,7 +1291,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         }
       }
       if (actionToRemove instanceof ActionGroup) {
-        myId2GroupId.values().remove(actionId);
+        for (Map.Entry<String, Collection<String>> entry : myId2GroupId.entrySet()) {
+          entry.getValue().remove(actionId);
+        }
       }
     }
   }
