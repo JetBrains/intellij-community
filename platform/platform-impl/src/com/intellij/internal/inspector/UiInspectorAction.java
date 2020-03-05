@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
@@ -21,6 +22,7 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -1419,7 +1421,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       } else if (component instanceof JComponent) {
         if (component instanceof ActionMenuItem) {
           action = ((ActionMenuItem)component).getAnAction();
-        } else {
+        }
+        else if (component instanceof ActionMenu) {
+          action = ((ActionMenu)component).getAnAction();
+        }
+        else {
           action = getAction(
             ComponentUtil.findParentByCondition((Component)component, c -> getAction(c) != null)
           );
@@ -1427,8 +1433,23 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       }
 
       if (action != null) {
-        myProperties.add(new PropertyBean("action", action.getClass().getName(), true));
+        myProperties.addAll(collectAnActionInfo(action));
       }
+    }
+
+    @NotNull
+    private static List<PropertyBean> collectAnActionInfo(@NotNull AnAction action) {
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Action", action.getClass().getName(), true));
+
+      boolean isGroup = action instanceof ActionGroup;
+      result.add(new PropertyBean("Action" + (isGroup ? " Group" : "") + " ID", getActionId(action), true));
+
+      final ClassLoader classLoader = action.getClass().getClassLoader();
+      if (classLoader instanceof PluginClassLoader) {
+        result.add(new PropertyBean("Action Plugin ID", ((PluginClassLoader)classLoader).getPluginIdString(), true));
+      }
+      return result;
     }
 
     private void addToolbarInfo(Object component) {
@@ -1437,7 +1458,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         myProperties.add(new PropertyBean("Toolbar Place", toolbar.getPlace()));
 
         ActionGroup group = toolbar.getActionGroup();
-        String toolbarId = getActionGroupId(group);
+        String toolbarId = getActionId(group);
         myProperties.add(new PropertyBean("Toolbar Group", toolbarId));
 
         Set<String> ids = new HashSet<>();
@@ -1454,13 +1475,13 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       for (AnAction action : group.getChildren(null)) {
         if (action instanceof ActionGroup) {
           ActionGroup child = (ActionGroup)action;
-          ContainerUtil.addIfNotNull(result, getActionGroupId(child));
+          ContainerUtil.addIfNotNull(result, getActionId(child));
           recursiveCollectGroupIds(child, result);
         }
       }
     }
 
-    private static String getActionGroupId(@NotNull ActionGroup action) {
+    private static String getActionId(@NotNull AnAction action) {
       if (action instanceof CustomisedActionGroup) {
         action = ((CustomisedActionGroup)action).getOrigin();
       }
@@ -1954,7 +1975,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     private static List<PropertyBean> findActionsFor(Object object) {
       if (object instanceof PopupFactoryImpl.ActionItem) {
         AnAction action = ((PopupFactoryImpl.ActionItem)object).getAction();
-        return Collections.singletonList(new PropertyBean("action", action.getClass().getName(), true));
+        return InspectorTableModel.collectAnActionInfo(action);
       }
       if (object instanceof QuickFixWrapper) {
         return findActionsFor(((QuickFixWrapper)object).getFix());
