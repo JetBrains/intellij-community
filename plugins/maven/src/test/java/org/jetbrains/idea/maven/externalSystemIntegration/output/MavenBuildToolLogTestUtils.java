@@ -162,7 +162,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
       Map<Object, String> result = new LinkedHashMap<>();
       for (BuildEvent event : events) {
         if (event instanceof FinishEvent) {
-          Integer value = levelMap.remove(event.getId());
+          Integer value = levelMap.get(event.getId());
           if (value == null) {
             fail("Finish event for non-registered start event" + event);
           }
@@ -195,7 +195,8 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
       StringBuilder builder = new StringBuilder();
       for (Map.Entry<Object, String> entry : result.entrySet()) {
-        builder.append(StringUtil.repeatSymbol(' ', levelMap.get(entry.getKey()))).append(entry.getValue());
+        Integer indent = levelMap.get(entry.getKey());
+        builder.append(StringUtil.repeatSymbol(' ', indent == null ? 0 : indent.intValue())).append(entry.getValue());
         if(!entry.getValue().endsWith("\n")) {
           builder.append("\n");
         }
