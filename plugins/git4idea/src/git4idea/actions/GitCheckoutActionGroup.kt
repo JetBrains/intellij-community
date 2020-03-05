@@ -12,11 +12,13 @@ import com.intellij.vcs.log.VcsLog
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.VcsRef
 import git4idea.branch.GitBrancher
+import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager.LOCAL_BRANCH
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
 import java.util.*
 
-internal class GitCheckoutActionGroup : GitSingleCommitActionGroup("Checkout", false) {
+internal class GitCheckoutActionGroup : GitSingleCommitActionGroup(GitBundle.message("git.log.action.checkout.group"), false) {
 
   override fun getChildren(e: AnActionEvent, project: Project, log: VcsLog, repository: GitRepository, commit: CommitId): Array<AnAction> {
     val refNames = getRefNames(e, log, repository)
@@ -26,11 +28,17 @@ internal class GitCheckoutActionGroup : GitSingleCommitActionGroup("Checkout", f
     }
 
     val hasMultipleActions = actions.isNotEmpty()
-    
-    val checkoutRevisionText = "${if (hasMultipleActions) "" else "Checkout "}Revision '${commit.hash.toShortString()}'"
+
+    val hashString = commit.hash.toShortString()
+    val checkoutRevisionText = if (hasMultipleActions) {
+      GitBundle.message("git.log.action.checkout.revision.short.text", hashString)
+    }
+    else {
+      GitBundle.message("git.log.action.checkout.revision.full.text", hashString)
+    }
     actions.add(GitCheckoutAction(project, repository, commit.hash.asString(), checkoutRevisionText))
 
-    val mainGroup = DefaultActionGroup("Checkout", actions)
+    val mainGroup = DefaultActionGroup(GitBundle.message("git.log.action.checkout.group"), actions)
     mainGroup.isPopup = hasMultipleActions
     return arrayOf(mainGroup)
   }
@@ -51,7 +59,7 @@ internal class GitCheckoutActionGroup : GitSingleCommitActionGroup("Checkout", f
 private class GitCheckoutAction(private val project: Project,
                                 private val repository: GitRepository,
                                 private val hashOrRefName: String,
-                                actionText: String) : DumbAwareAction() {
+                                actionText: @Nls String) : DumbAwareAction() {
   init {
     templatePresentation.setText(actionText, false)
   }
