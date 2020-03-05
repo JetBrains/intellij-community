@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
@@ -56,4 +56,6 @@ class GroovyHighlightUsagesTest extends LightGroovyTestCase {
   void 'test class usages 1'() { doTest() }
 
   void 'test class usages 2'() { doTest() }
+
+  void 'test binding variable'() { doTest() }
 }
