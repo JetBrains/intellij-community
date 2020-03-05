@@ -1994,7 +1994,7 @@ public final class UIUtil {
   @NotNull
   @Language("HTML")
   public static String getCssFontDeclaration(@NotNull Font font) {
-    return getCssFontDeclaration(font, null, null, null);
+    return getCssFontDeclaration(font, getLabelForeground(), JBUI.CurrentTheme.Link.linkColor(), null);
   }
 
   @NotNull
