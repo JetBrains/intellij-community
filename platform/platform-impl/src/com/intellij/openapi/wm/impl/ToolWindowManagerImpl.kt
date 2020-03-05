@@ -568,7 +568,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       // when the user switched to another application. So we just need to bring
       // tool window's window to front.
       if (autoFocusContents && !entry.toolWindow.hasFocus) {
-        requestFocusInToolWindow(entry.toolWindow)
+        entry.toolWindow.requestFocusInToolWindow()
       }
 
       return
@@ -579,7 +579,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     if (autoFocusContents && ApplicationManager.getApplication().isActive) {
-      requestFocusInToolWindow(entry.toolWindow)
+      entry.toolWindow.requestFocusInToolWindow()
     }
     else {
       activeStack.push(entry)
@@ -991,7 +991,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
         // do not activate tool window that is the part of project frame - default component should be focused
         if (info.isActiveOnStart && (info.type == ToolWindowType.WINDOWED || info.type == ToolWindowType.FLOATING) && ApplicationManager.getApplication().isActive) {
-          requestFocusInToolWindow(entry.toolWindow)
+          entry.toolWindow.requestFocusInToolWindow()
         }
       }
 
@@ -1345,7 +1345,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
       showToolWindowImpl(entry, layoutInfo, false)
       if (wasFocused) {
-        requestFocusInToolWindow(entry.toolWindow)
+        entry.toolWindow.requestFocusInToolWindow()
       }
     }
   }
@@ -1494,7 +1494,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     doShowWindow(entry, newInfo, dirtyMode)
 
     if (ApplicationManager.getApplication().isActive) {
-      requestFocusInToolWindow(entry.toolWindow)
+      entry.toolWindow.requestFocusInToolWindow()
     }
 
     val frame = frame!!
