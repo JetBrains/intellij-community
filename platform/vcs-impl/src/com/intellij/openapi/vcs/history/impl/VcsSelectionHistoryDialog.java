@@ -61,10 +61,11 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
   private static final DataKey<VcsSelectionHistoryDialog> SELECTION_HISTORY_DIALOG_KEY = DataKey.create("VCS_SELECTION_HISTORY_DIALOG");
 
   private static final VcsRevisionNumber LOCAL_REVISION_NUMBER = new VcsRevisionNumber() {
+    @Nls
     @NotNull
     @Override
     public String asString() {
-      return "Local Changes";
+      return VcsBundle.message("selection.history.local.revision.text");
     }
 
     @Override
@@ -72,9 +73,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       return 0;
     }
 
+    @NonNls
     @Override
     public String toString() {
-      return asString();
+      return "Local Changes";
     }
   };
 
@@ -229,9 +231,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     updateDiff();
   }
 
+  @Nls
   @NotNull
   private static String canNoLoadMessage(@Nullable VcsException e) {
-    return "Can not load revision contents" + (e != null ? ": " + e.getMessage() : "");
+    return VcsBundle.message("selection.history.can.not.load.message") + (e != null ? ": " + e.getLocalizedMessage() : "");
   }
 
   @CalledInAwt
@@ -291,7 +294,8 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     if (data.isLoading()) {
       VcsFileRevision revision = data.getCurrentLoadingRevision();
       String message = revision != null
-                       ? String.format("Loading revision <tt>%s</tt>...", VcsUtil.getShortRevisionString(revision.getRevisionNumber()))
+                       ? VcsBundle.message("selection.history.loading.revision.status",
+                                           String.format("<tt>%s</tt>", VcsUtil.getShortRevisionString(revision.getRevisionNumber())))
                        : CommonBundle.getLoadingTreeNodeText();
       int totalRevisions = data.getRevisions().size();
       if (totalRevisions != 0) {
@@ -442,7 +446,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
   private JComponent createComments() {
     JPanel panel = new JPanel(new BorderLayout(4, 4));
-    panel.add(new JLabel("Commit Message:"), BorderLayout.NORTH);
+    panel.add(new JLabel(VcsBundle.message("selection.history.commit.message.label")), BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(myComments), BorderLayout.CENTER);
 
     final Splitter splitter = new Splitter(false);
