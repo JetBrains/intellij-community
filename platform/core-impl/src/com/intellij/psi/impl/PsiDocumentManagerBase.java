@@ -613,7 +613,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public void performLaterWhenAllCommitted(@NotNull final Runnable runnable, final ModalityState modalityState) {
     final Runnable whenAllCommitted = () -> ApplicationManager.getApplication().invokeLater(() -> {
-      if (hasUncommitedDocuments()) {
+      if (hasEventSystemEnabledUncommittedDocuments()) {
         // no luck, will try later
         performLaterWhenAllCommitted(runnable);
       }
