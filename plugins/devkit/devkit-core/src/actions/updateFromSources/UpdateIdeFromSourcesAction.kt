@@ -19,6 +19,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.ProjectRootManager
@@ -337,7 +339,15 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = PsiUtil.isIdeaProject(e.project)
+    val project = e.project
+    e.presentation.isEnabledAndVisible = project != null && isIdeaProject(project)
+  }
+
+  private fun isIdeaProject(project: Project) = try {
+    DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, RuntimeException> { PsiUtil.isIdeaProject(project) }
+  }
+  catch (e: IndexNotReadyException) {
+    false
   }
 }
 
