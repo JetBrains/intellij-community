@@ -73,7 +73,7 @@ class CompilationOutputsDownloader {
       executor.waitForAllComplete(context.messages)
     }
     else {
-      context.messages.error("Unable to find cache for any of last $COMMITS_COUNT commits.")
+      context.messages.warning("Unable to find cache for any of last $COMMITS_COUNT commits.")
     }
   }
 
