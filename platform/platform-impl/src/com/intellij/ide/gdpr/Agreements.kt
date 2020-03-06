@@ -95,7 +95,7 @@ object Agreements {
   }
 
   private fun prepareConsentsHtmlText(consent: Consent): String {
-    val allProductHint = if (!ConsentOptions.getInstance().isEAP) "<p><hint>${bundle.getString("dataSharing.applyToAll.hint")}</hint></p>"
+    val allProductHint = if (!ConsentOptions.getInstance().isEAP) "<p><hint>${bundle.getString("dataSharing.applyToAll.hint")}</hint></p>".replace("{0}", ApplicationInfoImpl.getShadowInstance().shortCompanyName)
     else ""
     val preferencesHint = "<p><hint>${bundle.getString("dataSharing.revoke.hint").replace("{0}", ShowSettingsUtil.getSettingsMenuName())}</hint></p>"
     return ("<html><body> <h1>${bundle.getString("dataSharing.consents.title")}</h1>"
