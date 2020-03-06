@@ -1,22 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.ide.ui.AntialiasingType;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
-import java.awt.font.GlyphVector;
+import java.awt.font.TextLayout;
 import java.util.Objects;
 
-import static com.intellij.ide.ui.UISettings.setupAntialiasing;
 import static com.intellij.ui.paint.RectanglePainter.FILL;
-import static java.awt.RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
 
 public final class TextIcon implements Icon {
-  private static final FontRenderContext CONTEXT =
-    new FontRenderContext(null, AntialiasingType.getKeyForCurrentScope(false), VALUE_FRACTIONALMETRICS_OFF);
-
   @SuppressWarnings("UseDPIAwareInsets")
   private final Insets myInsets = new Insets(0, 0, 0, 0);
   private Integer myRound;
@@ -25,11 +18,14 @@ public final class TextIcon implements Icon {
   private Font myFont;
   private String myText;
   private Rectangle myTextBounds;
+  private FontRenderContext myContext;
 
   private Rectangle getTextBounds() {
     if (myTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
-      GlyphVector vector = myFont.createGlyphVector(CONTEXT, myText);
-      myTextBounds = vector.getPixelBounds(CONTEXT, 0, 0);
+      myContext = new FontRenderContext(null,
+                                        UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING),
+                                        UIManager.get(RenderingHints.KEY_FRACTIONALMETRICS));
+      myTextBounds = getPixelBounds(myFont, myText, myContext);
     }
     return myTextBounds;
   }
@@ -92,15 +88,17 @@ public final class TextIcon implements Icon {
     }
     Rectangle bounds = getTextBounds();
     if (myForeground != null && bounds != null) {
-      g = g.create();
+      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x, myInsets.top + y, bounds.width, bounds.height);
       try {
-        g.setColor(myForeground);
-        g.setFont(myFont);
-        setupAntialiasing(g);
-        g.drawString(myText, myInsets.left + x - bounds.x, myInsets.top + y - bounds.y);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, myContext.getAntiAliasingHint());
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST));
+        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myContext.getFractionalMetricsHint());
+        g2d.setColor(myForeground);
+        g2d.setFont(myFont);
+        g2d.drawString(myText, -bounds.x, -bounds.y);
       }
       finally {
-        g.dispose();
+        g2d.dispose();
       }
     }
   }
@@ -122,5 +120,11 @@ public final class TextIcon implements Icon {
   @Override
   public int hashCode() {
     return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds);
+  }
+
+  private static Rectangle getPixelBounds(Font font, String text, FontRenderContext context) {
+    return font.hasLayoutAttributes()
+           ? new TextLayout(text, font, context).getPixelBounds(context, 0, 0)
+           : font.createGlyphVector(context, text).getPixelBounds(context, 0, 0);
   }
 }
