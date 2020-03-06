@@ -125,7 +125,7 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
         addedToC1 = true;
         if (distinct < 0) {
           if (pc1 == c1Index && myData.contains(createPair(pc2, c2Index, true)) ||
-              pc2 == c2Index && myData.contains(createPair(c2Index, pc1, true))) {
+              pc2 == c1Index && myData.contains(createPair(c2Index, pc1, true))) {
             return false;
           }
         }
