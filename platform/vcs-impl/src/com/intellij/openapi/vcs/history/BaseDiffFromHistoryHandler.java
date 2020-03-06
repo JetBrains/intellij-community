@@ -140,8 +140,11 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
   @NotNull
   protected String getChangesBetweenRevisionsDialogTitle(@NotNull final FilePath path, @NotNull final T rev1, @Nullable final T rev2) {
     String rev1Title = getPresentableName(rev1);
-    String rev2Title = rev2 == null ? VcsBundle.message("file.history.diff.handler.local.version.name") : getPresentableName(rev2);
-
+    if (rev2 == null) {
+      return VcsBundle.message("file.history.diff.handler.paths.diff.with.local.title", rev1Title, path.getName());
+    }
+    
+    String rev2Title = getPresentableName(rev2);
     return VcsBundle.message("file.history.diff.handler.paths.diff.title", rev1Title, rev2Title, path.getName());
   }
 
