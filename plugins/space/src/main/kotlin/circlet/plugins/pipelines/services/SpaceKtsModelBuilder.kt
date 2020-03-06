@@ -13,6 +13,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
+import kotlinx.coroutines.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
 import org.slf4j.event.*
@@ -137,7 +138,8 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
                         allowNotReadyDsl = false)
 
                     val scriptResolveResult = ScriptResolveResult.readFromFileOrEmpty(resolveResultPath)
-                    val config = DslScriptExecutor().evaluateModel(targetJar, scriptResolveResult.classpath)
+                    val classpath = runBlocking { scriptResolveResult.resolveClasspath() }
+                    val config = DslScriptExecutor().evaluateModel(targetJar, classpath)
 
                     _error.value = null
                     _config.value = config
@@ -154,6 +156,9 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
 
         }
 
+        private suspend fun ScriptResolveResult.resolveClasspath(): List<String> {
+            return classpath + AttributeResolver().resolve(metadata.attributesMetadata).map { it.absolutePath }
+        }
     }
 
 

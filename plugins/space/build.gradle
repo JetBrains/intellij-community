@@ -37,9 +37,12 @@ dependencies {
     compile "nl.komponents.kovenant:kovenant:3.3.0"
     compile "commons-io:commons-io:$apache_commons_io_version"
 
+    compile "org.jetbrains.kotlin:kotlin-main-kts:$kotlin_version" // dep for pipelines-config-dsl-dependencies-resolve
+
     compile project(':plugins:pipelines:pipelines-config:pipelines-config-dsl-compile')
     compile project(':plugins:pipelines:pipelines-config:pipelines-config-dsl-script-exec')
     compile project(':plugins:pipelines:pipelines-config:pipelines-config-utils')
+    compile project(":plugins:pipelines:pipelines-config:pipelines-config-dsl-dependencies-resolve")
     compile project(':plugins:pipelines:pipelines-common')
 
     compile project(':plugins:pipelines:pipelines-engine')
