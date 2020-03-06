@@ -204,9 +204,7 @@ public class TerminalContainer {
     return component;
   }
 
-  private void requestFocus(@NotNull JBTerminalWidget terminal) {
-    IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() -> {
-      terminal.getTerminalPanel().requestFocusInWindow();
-    });
+  public void requestFocus(@NotNull JBTerminalWidget terminal) {
+    IdeFocusManager.getInstance(myProject).requestFocus(terminal.getTerminalPanel(), true);
   }
 }

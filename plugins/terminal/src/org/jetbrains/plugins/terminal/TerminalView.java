@@ -340,7 +340,7 @@ public final class TerminalView {
     TerminalContainer container = Objects.requireNonNull(myContainerByWidgetMap.get(widget));
     JBTerminalWidget next = container.getNextSplitTerminal(forward);
     if (next != null) {
-      next.getTerminalPanel().requestFocusInWindow();
+      container.requestFocus(next);
     }
   }
 
