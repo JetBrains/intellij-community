@@ -241,6 +241,24 @@
     <registryKey key="maven.spy.events.debug" defaultValue="false"
                  description="Enable Maven spy events to be printed in Build Tool Window console"/>
 
+    <registryKey key="maven.packagesearch.enabled" defaultValue="true"
+                 description="Enable package search dependency via https://package-search.services.jetbrains.com" restartRequired="true"/>
+
+    <registryKey key="packagesearch.config.url" defaultValue="https://resources.jetbrains.com/package-search/config/config.json"
+                 description="package search service config url" restartRequired="true"/>
+
+    <registryKey key="packagesearch.timeout.multiplier" defaultValue="1.2"
+                 description="Exponential backoff multiplyer when package search service request failed" restartRequired="true"/>
+
+    <registryKey key="packagesearch.timeout.initial" defaultValue="10000"
+                 description="initial backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
+
+    <registryKey key="packagesearch.timeout.initial" defaultValue="10000"
+                 description="initial backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
+
+    <registryKey key="packagesearch.timeout.max" defaultValue="86400000"
+                 description="maximum backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
+
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
     </intentionAction>
@@ -390,7 +408,7 @@
       implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
-    <provider implementation="org.jetbrains.idea.kpmsearch.KpmSearchFactoryProvider"/>
+    <provider implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>
   </extensions>
 
   <project-components>

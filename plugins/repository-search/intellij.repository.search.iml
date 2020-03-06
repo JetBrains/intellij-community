@@ -13,7 +13,5 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.maven.model" exported="" />
-    <orderEntry type="library" name="gson" level="project" />
   </component>
 </module>

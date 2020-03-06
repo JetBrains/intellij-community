@@ -1,14 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.kpmsearch;
+package org.jetbrains.idea.maven.onlinecompletion.intellij;
 
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.function.Consumer;
 
-import static org.jetbrains.idea.kpmsearch.PackageServiceConfig.BACKOFF_MULTIPLIER;
-import static org.jetbrains.idea.kpmsearch.PackageServiceConfig.INITIAL_TIMEOUT;
-import static org.jetbrains.idea.kpmsearch.PackageServiceConfig.MAX_TIMEOUT;
+import static org.jetbrains.idea.maven.onlinecompletion.intellij.PackageServiceConfig.BACKOFF_MULTIPLIER;
+import static org.jetbrains.idea.maven.onlinecompletion.intellij.PackageServiceConfig.INITIAL_TIMEOUT;
+import static org.jetbrains.idea.maven.onlinecompletion.intellij.PackageServiceConfig.MAX_TIMEOUT;
 
 class MyErrorHandler<T> implements Consumer<Throwable> {
   private long myLastFailureTime = -1;
