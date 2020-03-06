@@ -2,6 +2,7 @@
 package git4idea.rebase.interactive
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -146,6 +147,11 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
       if (!generatedEntry.equalsWithReal(realEntry)) {
         myRebaseEditorShown = false
         rebaseFailed = true
+        LOG.error(
+          "Incorrect git-rebase-todo file was generated",
+          Attachment("generated.txt", entriesGeneratedUsingLog.joinToString("\n")),
+          Attachment("expected.txt", entries.joinToString("\n"))
+        )
         throw VcsException("Couldn't start Rebase using Log")
       }
     }
