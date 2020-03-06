@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
@@ -298,11 +298,12 @@ public abstract class DumbService {
   public abstract void showDumbModeNotification(@NotNull @Nls String message);
 
   /**
-   * Show modal progress about indexing blocking those actions until it is cancelled or indexing stops.
-   *
-   * @return true if indexing stopped, and the dialog was not cancelled.
+   * Shows balloon about indexing blocking those actions until it is hidden (by key input, mouse event, etc.) or indexing stops.
+   * @param balloonText
+   * @param runWhenSmartAndBalloonUnhidden — will be executed in smart mode on EDT, balloon won't be dismissed by user's actions
    */
-  public abstract boolean showDumbModeDialog(@NotNull List<String> actionNames);
+  public abstract void showDumbModeActionBalloon(@NotNull String balloonText,
+                                                 @NotNull Runnable runWhenSmartAndBalloonUnhidden);
 
   public abstract Project getProject();
 
