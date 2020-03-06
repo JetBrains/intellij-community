@@ -64,6 +64,18 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
   }
 
   @Override
+  public void setTitleAt(int index, String title) {
+    super.setTitleAt(index, title);
+    Component tabComponent = getTabComponentAt(index);
+    if (tabComponent instanceof JLabel) {
+      JLabel label = (JLabel) tabComponent;
+      if (Boolean.TRUE.equals(label.getClientProperty(LABEL_FROM_TABBED_PANE))) {
+        label.setText(title);
+      }
+    }
+  }
+
+  @Override
   public void setSelectedIndex(int index) {
     super.setSelectedIndex(index);
     revalidate();
