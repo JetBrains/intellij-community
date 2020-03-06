@@ -40,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.expressions.UInjectionHost;
+import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
 import org.jetbrains.uast.util.UastExpressionUtils;
 
 import javax.swing.*;
@@ -497,16 +499,16 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     public void visitElement(@NotNull PsiElement element) {
       super.visitElement(element);
 
-      if (element instanceof PsiMember && ((PsiMember)element).getName() != null || 
+      if (element instanceof PsiMember && ((PsiMember)element).getName() != null ||
           element instanceof PsiClassInitializer) {
         return;
       }
 
       UElement uElement =
-        UastContextKt.toUElementOfExpectedTypes(element, ULiteralExpression.class, UAnnotation.class);
+        UastContextKt.toUElementOfExpectedTypes(element, UInjectionHost.class, UAnnotation.class);
 
-      if (uElement instanceof ULiteralExpression) {
-        visitLiteralExpression(element, (ULiteralExpression)uElement);
+      if (uElement instanceof UInjectionHost) {
+        visitLiteralExpression(element, (UInjectionHost)uElement);
         return;
       }
 
@@ -519,13 +521,11 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
       element.acceptChildren(this);
     }
-    
+
     private void visitLiteralExpression(@NotNull PsiElement sourcePsi,
-                                        @NotNull ULiteralExpression expression) {
-      Object value = expression.getValue();
-      if (!(value instanceof String)) return;
-      String stringValue = (String)value;
-      if (stringValue.trim().isEmpty()) {
+                                        @NotNull UInjectionHost expression) {
+      String stringValue = getStringValueOfKnownPart(expression);
+      if (StringUtil.isEmptyOrSpaces(stringValue)) {
         return;
       }
 
@@ -589,8 +589,18 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
   }
 
+  private static String getStringValueOfKnownPart(@NotNull UInjectionHost expression) {
+    UStringConcatenationsFacade concatenationsFacade = UStringConcatenationsFacade.createFromUExpression(expression);
+    if (concatenationsFacade != null) {
+      return concatenationsFacade.asPartiallyKnownString().getConcatenationOfKnown();
+    }
+    else {
+      return expression.evaluateToString();
+    }
+  }
+
   private boolean canBeI18ned(@NotNull Project project,
-                              @NotNull ULiteralExpression expression,
+                              @NotNull UInjectionHost expression,
                               @NotNull String value,
                               @NotNull Set<? super PsiModifierListOwner> nonNlsTargets) {
     if (ignoreForNonAlpha && !StringUtil.containsAlphaCharacters(value)) {
@@ -672,7 +682,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return true;
   }
 
-  private static boolean isArgOfEnumConstant(ULiteralExpression expression) {
+  private static boolean isArgOfEnumConstant(UInjectionHost expression) {
     return expression.getUastParent() instanceof UEnumConstant;
   }
 
@@ -680,8 +690,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     myCachedNonNlsPattern = nonNlsCommentPattern.trim().isEmpty() ? null : Pattern.compile(nonNlsCommentPattern);
   }
 
-  private static boolean isClassRef(final ULiteralExpression expression, String value) {
-    if (StringUtil.startsWithChar(value,'#')) {
+  private static boolean isClassRef(final UInjectionHost expression, String value) {
+    if (StringUtil.startsWithChar(value, '#')) {
       value = value.substring(1); // A favor for JetBrains team to catch common Logger usage practice.
     }
 
@@ -705,7 +715,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
            || isPackageNonNls(psiPackage.getParentPackage());
   }
 
-  private boolean isPassedToNonNlsVariable(@NotNull ULiteralExpression expression,
+  private boolean isPassedToNonNlsVariable(@NotNull UInjectionHost expression,
                                            final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UExpression toplevel = JavaI18nUtil.getTopLevelExpression(expression);
     PsiModifierListOwner var = null;
@@ -773,7 +783,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return AnnotationUtil.isAnnotated(parent, AnnotationUtil.NON_NLS, CHECK_EXTERNAL);
   }
 
-  private static boolean isInNonNlsEquals(ULiteralExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
+  private static boolean isInNonNlsEquals(UInjectionHost expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
     if (!(parent instanceof UQualifiedReferenceExpression)) return false;
     UExpression selector = ((UQualifiedReferenceExpression)parent).getSelector();
@@ -845,7 +855,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return false;
   }
 
-  private static boolean isReturnedFromAnnotatedMethod(final ULiteralExpression expression,
+  private static boolean isReturnedFromAnnotatedMethod(final UInjectionHost expression,
                                                        final String fqn,
                                                        final @Nullable Set<? super PsiModifierListOwner> nonNlsTargets) {
     PsiMethod method;
@@ -902,7 +912,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return false;
   }
 
-  private static boolean isToString(final ULiteralExpression expression) {
+  private static boolean isToString(final UInjectionHost expression) {
     final UMethod method = UastUtils.getParentOfType(expression, UMethod.class);
     if (method == null) return false;
     final PsiType returnType = method.getReturnType();
@@ -912,7 +922,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
            && "java.lang.String".equals(returnType.getCanonicalText());
   }
 
-  private static boolean isArgOfJUnitAssertion(ULiteralExpression expression) {
+  private static boolean isArgOfJUnitAssertion(UInjectionHost expression) {
     final UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
     if (parent == null || !UastExpressionUtils.isMethodCall(parent)) {
       return false;
@@ -938,7 +948,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
            InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert");
   }
 
-  private static boolean isArgOfSpecifiedExceptionConstructor(ULiteralExpression expression, 
+  private static boolean isArgOfSpecifiedExceptionConstructor(UInjectionHost expression,
                                                               String[] specifiedExceptions) {
     if (specifiedExceptions.length == 0) return false;
 

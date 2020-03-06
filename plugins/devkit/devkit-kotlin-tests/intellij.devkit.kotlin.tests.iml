@@ -12,5 +12,6 @@
     <orderEntry type="library" scope="RUNTIME" name="KotlinPlugin" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.devkit.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.i18n" scope="TEST" />
   </component>
 </module>
