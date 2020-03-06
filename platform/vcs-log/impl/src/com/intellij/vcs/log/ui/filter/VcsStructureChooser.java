@@ -30,6 +30,7 @@ import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -236,7 +237,10 @@ public class VcsStructureChooser extends DialogWrapper {
           selectedLabel.setText("");
         }
         else {
-          selectedLabel.setText(VcsLogBundle.message("vcs.log.filters.max.folders.selected", MAX_FOLDERS));
+          String errorText = "<font color=red>(" +
+                             VcsLogBundle.message("vcs.log.filters.structure.max.selected.error.message", MAX_FOLDERS) +
+                             ")</font>";
+          selectedLabel.setText(XmlStringUtil.wrapInHtml(VcsLogBundle.message("vcs.log.filters.structure.label", errorText)));
         }
         selectedLabel.revalidate();
       }

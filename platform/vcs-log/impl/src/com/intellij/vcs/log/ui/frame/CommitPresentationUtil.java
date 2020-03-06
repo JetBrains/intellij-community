@@ -15,6 +15,7 @@ import com.intellij.vcs.commit.message.SubjectLimitInspection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,14 +61,13 @@ public class CommitPresentationUtil {
   @Nls
   public static String getShortSummary(@NotNull VcsShortCommitDetails details, boolean useHtml, int maxMessageLength) {
     long time = details.getAuthorTime();
-    return VcsLogBundle
-      .message(useHtml ?
-               "vcs.log.details.html.commit.by.author.on.date.at.time" :
-               "vcs.log.details.commit.by.author.on.date.at.time",
-               StringUtil.shortenTextWithEllipsis(details.getSubject(), maxMessageLength, 0, "..."),
-               getAuthorPresentation(details),
-               DateFormatUtil.formatDate(time),
-               DateFormatUtil.formatTime(time));
+    String commitMessage = "\"" + StringUtil.shortenTextWithEllipsis(details.getSubject(), maxMessageLength, 0, "...") + "\"";
+    if (useHtml) commitMessage = XmlStringUtil.wrapInHtmlTag(commitMessage, "b");
+    return VcsLogBundle.message("vcs.log.details.short.commit.summary",
+                                commitMessage,
+                                getAuthorPresentation(details),
+                                DateFormatUtil.formatDate(time),
+                                DateFormatUtil.formatTime(time));
   }
 
   @NotNull
