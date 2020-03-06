@@ -339,8 +339,8 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
   if (stopAt is PsiErrorElement) return true
 
   fun PsiElement.isInsideErrorElement(): Boolean {
-    var element = this
-    while (element != stopAt) {
+    var element: PsiElement? = this
+    while (element != null && element != stopAt) {
       if (element is PsiErrorElement) return true
       element = element.parent
     }
