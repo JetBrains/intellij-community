@@ -4,6 +4,7 @@ package com.intellij.openapi.keymap.impl;
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
@@ -51,6 +52,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.KeyboardLayoutUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -680,40 +682,57 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       IdeEventQueue.getInstance().flushDelayedKeyEvents();
 
-      showDumbModeDialogLaterIfNobodyConsumesEvent(project, e, processor, actions, presentationFactory,
-                                                   nonDumbAwareAction.toArray(new AnActionEvent[0]));
+      showDumbModeBalloonLaterIfNobodyConsumesEvent(project, e, processor, actions, presentationFactory,
+                                                    nonDumbAwareAction.toArray(new AnActionEvent[0]));
     }
 
     IdeEventQueue.getInstance().flushDelayedKeyEvents();
     return false;
   }
 
-  private static void showDumbModeDialogLaterIfNobodyConsumesEvent(@Nullable Project project,
-                                                                   InputEvent e,
-                                                                   ActionProcessor processor,
-                                                                   AnAction[] actions,
-                                                                   PresentationFactory presentationFactory,
-                                                                   AnActionEvent... actionEvents) {
+  private static void showDumbModeBalloonLaterIfNobodyConsumesEvent(@Nullable Project project,
+                                                                    InputEvent e,
+                                                                    ActionProcessor processor,
+                                                                    AnAction[] actions,
+                                                                    PresentationFactory presentationFactory,
+                                                                    AnActionEvent... actionEvents) {
     if (project == null) return;
     ApplicationManager.getApplication().invokeLater(() -> {
       if (e.isConsumed()) return;
-
-      List<String> actionNames = new ArrayList<>();
-      for (final AnActionEvent event : actionEvents) {
-        final String s = event.getPresentation().getText();
-        if (StringUtil.isNotEmpty(s)) {
-          actionNames.add(s);
-        }
-      }
-      if (DumbService.getInstance(project).showDumbModeDialog(actionNames)) {
+      DumbService.getInstance(project).showDumbModeActionBalloon(getActionUnavailableMessage(actionEvents), () -> {
         //invokeLater to make sure correct dataContext is taken from focus
         ApplicationManager.getApplication().invokeLater(() -> {
           DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
             processAction(e, processor, context, actions, presentationFactory);
           });
         });
-      }
+      });
     });
+  }
+
+  private static @NotNull @Nls String getActionUnavailableMessage(AnActionEvent... actionEvents) {
+    List<String> actionNames = new ArrayList<>();
+    for (final AnActionEvent event : actionEvents) {
+      final String s = event.getPresentation().getText();
+      if (StringUtil.isNotEmpty(s)) {
+        actionNames.add(s);
+      }
+    }
+    if (actionNames.isEmpty()) {
+      return getUnavailableMessage(IdeBundle.message("this.action"), false);
+    }
+    else if (actionNames.size() == 1) {
+      return getUnavailableMessage("'" + actionNames.get(0) + "'", false);
+    }
+    else {
+      return getUnavailableMessage(IdeBundle.message("none.of.the.following.actions"), true) +
+             ": " + StringUtil.join(actionNames, ", ");
+    }
+  }
+
+  public static @NotNull @Nls String getUnavailableMessage(@NotNull @Nls String action, boolean plural) {
+    return plural ? IdeBundle.message("0.are.not.available.while.indexing", action) :
+           IdeBundle.message("0.is.not.available.while.indexing", action);
   }
 
   private static DumbModeWarningListener dumbModeWarningListener  = null;
