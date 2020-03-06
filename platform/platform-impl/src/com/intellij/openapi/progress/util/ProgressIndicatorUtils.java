@@ -311,6 +311,10 @@ public class ProgressIndicatorUtils {
 
   public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    return awaitWithCheckCanceled(future, indicator);
+  }
+
+  public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future, @Nullable ProgressIndicator indicator) {
     while (true) {
       checkCancelledEvenWithPCEDisabled(indicator);
       try {
