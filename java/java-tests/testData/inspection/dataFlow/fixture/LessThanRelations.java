@@ -2,6 +2,10 @@ import java.util.*;
 
 class LessThanRelations {
   void test(int a, int b, int c, int d) {
+    if ((a >= c && b <= d) ||
+        (b >= c && a <= d)) {
+      if (<warning descr="Condition 'b > d && a > d' is always 'false'">b > d && <warning descr="Condition 'a > d' is always 'false' when reached">a > d</warning></warning>) {}
+    }
     if (a > b) {
       if (c < d) {
         if (<warning descr="Condition 'a == c && b == d' is always 'false'">a == c && <warning descr="Condition 'b == d' is always 'false' when reached">b == d</warning></warning>) {
@@ -78,6 +82,27 @@ class LessThanRelations {
     } else if(index > 0 && <warning descr="Condition '!list.isEmpty()' is always 'true' when reached">!<warning descr="Result of 'list.isEmpty()' is always 'false'">list.isEmpty()</warning></warning>) {
       System.out.println("ok");
     }
+  }
+
+  int test2(int a, int b, int c, int d) {
+    assert a <= b;
+    assert c <= d;
+
+    int r = 1;
+    if (b < c) {
+      r = 2;
+    } else if (d < a) {
+      r = 3;
+    } else if (b == c || a == d) {
+      if (a < d) {
+        r = 4;
+      } else if (b > c) {
+        r = 5;
+      } else {
+        r = 6;
+      }
+    }
+    return r;
   }
 }
 final class Range {
