@@ -146,10 +146,12 @@ public class BatchEvaluator {
 
       ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size(), evaluationContext);
       argArray.setValues(values);
-      Value value = evaluationContext.computeAndKeep(() -> debugProcess.invokeMethod(
-        evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray)));
-      if (value instanceof StringReference) {
-        byte[] bytes = ((StringReference)value).value().getBytes(StandardCharsets.ISO_8859_1);
+      String value = DebuggerUtils.processCollectibleValue(
+        () -> debugProcess.invokeMethod(evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray)),
+        result -> result instanceof StringReference ? ((StringReference)result).value() : null
+      );
+      if (value != null) {
+        byte[] bytes = value.getBytes(StandardCharsets.ISO_8859_1);
         int pos = 0;
         Iterator<ToStringCommand> iterator = requests.iterator();
         while (pos < bytes.length) {
