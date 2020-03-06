@@ -22,8 +22,6 @@ public class MavenSpyOutputParser {
   private final Set<String> downloadingMap = new HashSet<>();
   private final MavenParsingContext myContext;
 
-  private final MultiMap<MavenParsingContext.MavenExecutionEntry, FinishEvent> errorsToWarnings = new MultiMap<>();
-
   public static boolean isSpyLog(String s) {
     return s != null && s.startsWith(PREFIX);
   }
@@ -95,7 +93,6 @@ public class MavenSpyOutputParser {
       case "MojoSucceeded": {
         stopFakeDownloadNode(threadId, parameters, messageConsumer);
         MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, false);
-        //makeChildNodesSucceed(mojoExecution, messageConsumer);
         doComplete(messageConsumer, mojoExecution);
         return;
       }
@@ -198,7 +195,7 @@ public class MavenSpyOutputParser {
           messageConsumer
             .accept(new StartEventImpl(eventId, parent.getId(), System.currentTimeMillis(), error));
           messageConsumer
-            .accept(new FinishEventImpl(eventId, parent.getId(), System.currentTimeMillis(), error, new FailureResultImpl(null, null)));
+            .accept(new FinishEventImpl(eventId, parent.getId(), System.currentTimeMillis(), error, new FailureResultImpl()));
         }
       }
       else {
