@@ -12,6 +12,7 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.legacyBridge.intellij.toLibraryTableId
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
+import org.jdom.Attribute
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
@@ -209,6 +210,7 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
       val element = JDOMUtil.load(StringReader(customImlData.rootManagerTagCustomData))
       JDOMUtil.merge(rootManagerElement, element)
     }
+    rootManagerElement.attributes.sortWith(knownAttributesComparator)
     //todo ensure that custom data is written in proper order
 
     val contentEntities = module.contentRoots.filter { it.entitySource == module.entitySource }.sortedBy { it.url.url }
@@ -385,6 +387,21 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
 
   override val additionalEntityTypes: List<Class<out TypedEntity>>
     get() = listOf(SourceRootOrderEntity::class.java)
+
+  companion object {
+    // The comparator has reversed priority. So, the last entry of this list will be printed as a first attribute in the xml tag.
+    private val orderOfKnownAttributes = listOf(
+      INHERIT_COMPILER_OUTPUT_ATTRIBUTE,
+      MODULE_LANGUAGE_LEVEL_ATTRIBUTE,
+      URL_ATTRIBUTE,
+      "name"
+    )
+
+    // Reversed comparator for attributes. Unknown attributes will be pushed to the end (since they return -1 in the [indexOf]).
+    private val knownAttributesComparator = Comparator<Attribute> { o1, o2 ->
+      orderOfKnownAttributes.indexOf(o1.name).compareTo(orderOfKnownAttributes.indexOf(o2.name))
+    }.reversed()
+  }
 }
 
 private const val MODULE_MANAGER_COMPONENT_NAME = "ProjectModuleManager"
