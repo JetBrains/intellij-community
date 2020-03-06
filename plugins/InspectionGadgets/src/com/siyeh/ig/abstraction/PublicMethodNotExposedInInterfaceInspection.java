@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
-public class PublicMethodNotExposedInInterfaceInspection
-  extends BaseInspection {
+public class PublicMethodNotExposedInInterfaceInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
-  public final ExternalizableStringSet ignorableAnnotations =
-    new ExternalizableStringSet();
+  public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
   @SuppressWarnings("PublicField")
   public boolean onlyWarnIfContainingClassImplementsAnInterface = false;
 
@@ -83,8 +83,7 @@ public class PublicMethodNotExposedInInterfaceInspection
     return new PublicMethodNotExposedInInterfaceVisitor();
   }
 
-  private class PublicMethodNotExposedInInterfaceVisitor
-    extends BaseInspectionVisitor {
+  private class PublicMethodNotExposedInInterfaceVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -105,8 +104,7 @@ public class PublicMethodNotExposedInInterfaceInspection
       if (containingClass == null) {
         return;
       }
-      if (containingClass.isInterface() ||
-          containingClass.isAnnotationType()) {
+      if (containingClass.isInterface() || containingClass.isAnnotationType()) {
         return;
       }
       if (!containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -119,8 +117,7 @@ public class PublicMethodNotExposedInInterfaceInspection
         final PsiClass[] superClasses = containingClass.getSupers();
         boolean implementsInterface = false;
         for (PsiClass superClass : superClasses) {
-          if (superClass.isInterface() &&
-              !LibraryUtil.classIsInLibrary(superClass)) {
+          if (superClass.isInterface() && !LibraryUtil.classIsInLibrary(superClass)) {
             implementsInterface = true;
             break;
           }
@@ -129,7 +126,7 @@ public class PublicMethodNotExposedInInterfaceInspection
           return;
         }
       }
-      if (exposedInInterface(method)) {
+      if (exposedInInterface(method, new HashSet<>())) {
         return;
       }
       if (TestUtils.isJUnitTestMethod(method)) {
@@ -138,9 +135,12 @@ public class PublicMethodNotExposedInInterfaceInspection
       registerMethodError(method, method);
     }
 
-    private boolean exposedInInterface(PsiMethod method) {
+    private boolean exposedInInterface(PsiMethod method, Set<PsiMethod> seen) {
+      if (!seen.add(method)) {
+        return true;
+      }
       PsiMethod[] superMethods = method.findSuperMethods();
-      PsiMethod siblingInherited = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
+      final PsiMethod siblingInherited = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
       if (siblingInherited != null && !ArrayUtil.contains(siblingInherited, superMethods)) {
         superMethods = ArrayUtil.append(superMethods, siblingInherited);
       }
@@ -156,7 +156,7 @@ public class PublicMethodNotExposedInInterfaceInspection
         if (CommonClassNames.JAVA_LANG_OBJECT.equals(superclassName)) {
           return true;
         }
-        if (exposedInInterface(superMethod)) {
+        if (exposedInInterface(superMethod, seen)) {
           return true;
         }
       }
