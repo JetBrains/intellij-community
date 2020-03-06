@@ -1,15 +1,12 @@
 <html>
 <body>
-Reports conditional expressions of the following form
-<pre><code>  condition ? true : foo</code></pre>
-<pre><code>  condition ? false : foo</code></pre>
-<pre><code>  condition ? foo : !foo</code></pre>
-<pre><code>  condition ? !foo : foo</code></pre>
-These expressions may respectively be safely simplified to
-<pre><code>  condition || foo</code></pre>
-<pre><code>  !condition && foo</code></pre>
-<pre><code>  condition == foo</code></pre>
-<pre><code>  condition != foo</code></pre>
+Reports conditional expressions that could be simplified. Examples:
+<pre>condition ? true : foo &rarr; condition || foo</pre>
+<pre>condition ? false : foo &rarr; !condition && foo</pre>
+<pre>condition ? foo : !foo &rarr; condition == foo</pre>
+<pre>condition ? true : false &rarr; condition</pre>
+<pre>a == b ? b : a &rarr; a</pre>
+<pre>result != null ? result : null &rarr; result</pre>
 <!-- tooltip end -->
 <p>
 

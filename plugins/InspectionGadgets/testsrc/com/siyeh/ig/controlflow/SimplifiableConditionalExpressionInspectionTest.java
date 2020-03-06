@@ -22,15 +22,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryConditionalExpressionInspectionTest extends LightJavaInspectionTestCase {
+public class SimplifiableConditionalExpressionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnnecessaryConditionalExpression() {
     doTest();
   }
 
-  @Nullable
   @Override
-  protected InspectionProfileEntry getInspection() {
-    return new UnnecessaryConditionalExpressionInspection();
+  protected @Nullable InspectionProfileEntry getInspection() {
+    return new SimplifiableConditionalExpressionInspection();
   }
 }
