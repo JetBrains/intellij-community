@@ -198,6 +198,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           selectedConfiguration?.let {
             iconCache.remove(it.uniqueID)
           }
+
+          deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
         }
       })
     }
@@ -318,7 +320,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     return template
   }
 
-  internal fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
+  private fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
     lock.write {
       val deletedConfigs = rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent()
       removeConfigurations(deletedConfigs)
