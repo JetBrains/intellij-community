@@ -56,4 +56,6 @@ class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
   }
 
   override fun requiresReadAccess() = true
+
+  override fun getVersion(): Int = 2
 }
