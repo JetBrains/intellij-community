@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ui.AntialiasingType;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.EngravedTextGraphics;
@@ -65,12 +64,8 @@ public class BaseLabel extends JLabel {
   }
 
   public static Font getLabelFont() {
-    UISettings uiSettings = UISettings.getInstance();
     Font font = JBUI.CurrentTheme.ToolWindow.headerFont();
-    if (uiSettings.getOverrideLafFonts()) {
-      return font.deriveFont(uiSettings.getFontSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
-    }
-    return font;
+    return font.deriveFont(font.getSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
   }
 
   public void setActiveFg(final Color fg) {
