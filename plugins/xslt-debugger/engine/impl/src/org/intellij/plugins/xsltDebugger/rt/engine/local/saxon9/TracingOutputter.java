@@ -1,8 +1,14 @@
 package org.intellij.plugins.xsltDebugger.rt.engine.local.saxon9;
 
 import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.expr.parser.Location;
+import net.sf.saxon.om.NamespaceBindingSet;
+import net.sf.saxon.om.NodeName;
 import net.sf.saxon.serialize.Emitter;
+import net.sf.saxon.serialize.XMLEmitter;
 import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.type.SchemaType;
+import net.sf.saxon.type.SimpleType;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.OutputEventQueueImpl;
 
 import javax.xml.transform.stream.StreamResult;
@@ -10,7 +16,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Properties;
 
-final class TracingOutputter extends Emitter {
+final class TracingOutputter extends XMLEmitter {
   private final OutputEventQueueImpl myEventQueue;
   private final Emitter myEmitter;
 
@@ -55,19 +61,23 @@ final class TracingOutputter extends Emitter {
     myEmitter.setUnparsedEntity(name, uri, publicId);
   }
 
+  @Override
   public void open() throws XPathException {
     myEmitter.open();
   }
 
+  @Override
   public void startDocument(int properties) throws XPathException {
     myEmitter.startDocument(properties);
   }
 
+  @Override
   public void endDocument() throws XPathException {
     myEmitter.endDocument();
   }
 
-  public void namespace(int namespaceCode, int properties) throws XPathException {
+  @Override
+  public void namespace(NamespaceBindingSet namespaceCode, int properties) throws XPathException {
     myEmitter.namespace(namespaceCode, properties);
   }
 
@@ -76,48 +86,52 @@ final class TracingOutputter extends Emitter {
     myEmitter.close();
   }
 
-  public void startElement(int nameCode, int typeCode, int locationId, int properties) throws XPathException {
+  @Override
+  public void startElement(NodeName nodeName, SchemaType schemaType, Location location, int properties) throws XPathException {
     if (myEventQueue.isEnabled()) {
-      final String localName = namePool.getLocalName(nameCode);
-      final String prefix = namePool.getPrefix(nameCode);
-      myEventQueue.startElement(prefix, localName, namePool.getURI(nameCode));
+      myEventQueue.startElement(nodeName.getPrefix(), nodeName.getLocalPart(), nodeName.getURI());
     }
-    myEmitter.startElement(nameCode, typeCode, locationId, properties);
+    myEmitter.startElement(nodeName, schemaType, location, properties);
   }
 
 
-  public void attribute(int nameCode, int typeCode, CharSequence value, int locationId, int properties) throws XPathException {
+  @Override
+  public void attribute(NodeName nodeName, SimpleType type, CharSequence value, Location location, int properties) throws XPathException {
     if (myEventQueue.isEnabled()) {
-      final String localName = namePool.getLocalName(nameCode);
-      final String prefix = namePool.getPrefix(nameCode);
-      myEventQueue.attribute(prefix, localName, namePool.getURI(nameCode), value.toString());
+      myEventQueue.attribute(nodeName.getPrefix(), nodeName.getLocalPart(), nodeName.getURI(), value.toString());
     }
-    myEmitter.attribute(nameCode, typeCode, value, locationId, properties);
+    myEmitter.attribute(nodeName, type, value, location, properties);
   }
 
-  public void startContent() throws XPathException {
+  @Override
+  public void startContent() {
   }
 
+  @Override
   public void endElement() throws XPathException {
     myEventQueue.endElement();
     myEmitter.endElement();
   }
 
-  public void characters(CharSequence chars, int locationId, int properties) throws XPathException {
+  @Override
+  public void characters(CharSequence chars, Location location, int properties) throws XPathException {
     myEventQueue.characters(chars.toString());
-    myEmitter.characters(chars, locationId, properties);
+    myEmitter.characters(chars, location, properties);
   }
 
-  public void processingInstruction(String name, CharSequence data, int locationId, int properties) throws XPathException {
+  @Override
+  public void processingInstruction(String name, CharSequence data, Location location, int properties) throws XPathException {
     myEventQueue.pi(name, data.toString());
-    myEmitter.processingInstruction(name, data, locationId, properties);
+    myEmitter.processingInstruction(name, data, location, properties);
   }
 
-  public void comment(CharSequence content, int locationId, int properties) throws XPathException {
+  @Override
+  public void comment(CharSequence content, Location location, int properties) throws XPathException {
     myEventQueue.comment(content.toString());
-    myEmitter.comment(content, locationId, properties);
+    myEmitter.comment(content, location, properties);
   }
 
+  @Override
   public boolean usesTypeAnnotations() {
     return false;
   }
