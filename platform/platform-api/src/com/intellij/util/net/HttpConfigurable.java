@@ -377,8 +377,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
         if (frame != null) {
           USE_PROXY_PAC = false;
-          Messages.showMessageDialog(frame.getComponent(), IdeBundle.message(
-            "message.text.proxy.both.use.proxy.and.autodetect.proxy.settings.were.set.only.one.of.these.options.should.be.selected.please.re.configure"),
+          Messages.showMessageDialog(frame.getComponent(), IdeBundle.message("message.text.proxy.both.use.proxy.and.autodetect.proxy.set"),
                                      IdeBundle.message("dialog.title.proxy.setup"), Messages.getWarningIcon());
           editConfigurable(frame.getComponent());
         }
