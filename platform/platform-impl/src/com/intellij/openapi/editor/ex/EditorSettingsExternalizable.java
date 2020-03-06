@@ -57,6 +57,7 @@ public final class EditorSettingsExternalizable implements PersistentStateCompon
     public boolean IS_FOLDING_OUTLINE_SHOWN = true;
     public boolean SHOW_BREADCRUMBS_ABOVE = false;
     public boolean SHOW_BREADCRUMBS = true;
+    public boolean ENABLE_RENDERED_DOC = false;
 
     public boolean SMART_HOME = true;
 
@@ -339,6 +340,14 @@ public final class EditorSettingsExternalizable implements PersistentStateCompon
   public boolean setBreadcrumbsShownFor(String languageID, boolean value) {
     Boolean visible = myOptions.mapLanguageBreadcrumbs.put(languageID, value);
     return (visible == null || visible) != value;
+  }
+
+  public boolean isDocCommentRenderingEnabled() {
+    return myOptions.ENABLE_RENDERED_DOC;
+  }
+
+  public void setDocCommentRenderingEnabled(boolean value) {
+    myOptions.ENABLE_RENDERED_DOC = value;
   }
 
   public boolean isBlockCursor() {
