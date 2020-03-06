@@ -22,6 +22,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -47,7 +48,7 @@ public class GrHighlightOverridingMethodsHandler extends HighlightOverridingMeth
 
 
   @Override
-  public List<PsiClass> getTargets() {
+  public @NotNull List<PsiClass> getTargets() {
     GrReferenceList list =
       GroovyTokenTypes.kEXTENDS == myTarget.getNode().getElementType() ? myClass.getExtendsClause() : myClass.getImplementsClause();
     if (list == null) return Collections.emptyList();

@@ -61,7 +61,7 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
   }
 
   @Override
-  public List<PsiLiteralExpression> getTargets() {
+  public @NotNull List<PsiLiteralExpression> getTargets() {
     final List<PsiLiteralExpression> result = new ArrayList<>();
     if (mySuppressedExpression != null) {
       result.add(mySuppressedExpression);
@@ -84,7 +84,7 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
   }
 
   @Override
-  protected void selectTargets(List<PsiLiteralExpression> targets, final Consumer<List<PsiLiteralExpression>> selectionConsumer) {
+  protected void selectTargets(@NotNull List<? extends PsiLiteralExpression> targets, final @NotNull Consumer<? super List<? extends PsiLiteralExpression>> selectionConsumer) {
     if (targets.size() == 1) {
       selectionConsumer.consume(targets);
     } else {
@@ -107,7 +107,7 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
   }
 
   @Override
-  public void computeUsages(List<PsiLiteralExpression> targets) {
+  public void computeUsages(@NotNull List<? extends PsiLiteralExpression> targets) {
     final Project project = myTarget.getProject();
     final PsiElement parent = myTarget.getParent().getParent();
     final LocalInspectionsPass pass = new LocalInspectionsPass(myFile, myFile.getViewProvider().getDocument(),

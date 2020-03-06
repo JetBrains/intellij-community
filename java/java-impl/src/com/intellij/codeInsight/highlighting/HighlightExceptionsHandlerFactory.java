@@ -49,7 +49,7 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
   }
 
   @Nullable
-  private static HighlightUsagesHandlerBase createHighlightTryHandler(Editor editor, PsiFile file, PsiElement target, PsiElement parent) {
+  private static HighlightUsagesHandlerBase createHighlightTryHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target, @NotNull PsiElement parent) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
 
     PsiCodeBlock tryBlock = ((PsiTryStatement)parent).getTryBlock();
@@ -61,7 +61,7 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
   }
 
   @Nullable
-  private static HighlightUsagesHandlerBase createHighlightCatchHandler(Editor editor, PsiFile file, PsiElement target, PsiElement parent) {
+  private static HighlightUsagesHandlerBase createHighlightCatchHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target, @NotNull PsiElement parent) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
 
     PsiTryStatement tryStatement = ((PsiCatchSection)parent).getTryStatement();
@@ -89,7 +89,7 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
   }
 
   @Nullable
-  private static HighlightUsagesHandlerBase createThrowsHandler(Editor editor, PsiFile file, PsiElement target) {
+  private static HighlightUsagesHandlerBase createThrowsHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
 
     PsiElement grand = target.getParent().getParent();
