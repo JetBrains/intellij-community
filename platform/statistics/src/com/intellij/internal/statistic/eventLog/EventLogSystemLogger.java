@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,12 +19,27 @@ public class EventLogSystemLogger {
     logEvent(recorderId, "whitelist.updated", data);
   }
 
-  public static void logFilesSend(@NotNull String recorderId, int total, int succeed, int failed) {
+  public static void logFilesSend(@NotNull String recorderId, int total, int succeed, int failed, boolean external) {
     final FeatureUsageData data = new FeatureUsageData().
       addData("total", total).
       addData("send", succeed + failed).
-      addData("failed", failed);
+      addData("failed", failed).
+      addData("external", external);
     logEvent(recorderId, "logs.send", data);
+  }
+
+  public static void logStartingExternalSend(@NotNull String recorderId, long time) {
+    FeatureUsageData data = new FeatureUsageData().addData("send_ts", time);
+    logEvent(recorderId, "external.send.started", data);
+  }
+
+  public static void logFinishedExternalSend(@NotNull String recorderId, @Nullable String error, long time) {
+    boolean succeed = StringUtil.isEmpty(error);
+    FeatureUsageData data = new FeatureUsageData().addData("succeed", succeed).addData("send_ts", time);
+    if (!succeed) {
+      data.addData("error", error);
+    }
+    logEvent(recorderId, "external.send.finished", data);
   }
 
   public static void logCreatingExternalSendCommand(@NotNull String recorderId) {
