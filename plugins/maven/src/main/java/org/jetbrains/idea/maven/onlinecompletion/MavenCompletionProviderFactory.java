@@ -6,13 +6,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.indices.MavenRepositoryProvider;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
-import org.jetbrains.idea.maven.onlinecompletion.intellij.PackageSearchService;
+import org.jetbrains.idea.kpmsearch.PackageSearchService;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.reposearch.DependencySearchProvider;
 import org.jetbrains.idea.reposearch.DependencySearchProvidersFactory;
@@ -39,16 +38,10 @@ public class MavenCompletionProviderFactory implements DependencySearchProviders
     addLocalIndex(project, result);
     addRemoteIndices(project, result);
 
-    if (Registry.is("maven.packagesearch.enabled")) {
-      addPackageSearchService(result);
-    }
+
 
 
     return result;
-  }
-
-  private static void addPackageSearchService(List<DependencySearchProvider> result) {
-    result.add(new PackageSearchService());
   }
 
   private static void addRemoteIndices(Project project, List<DependencySearchProvider> result) {

@@ -40,7 +40,7 @@ class MavenRepositoryArtifactInfo(private val groupId: String,
 
     other as MavenRepositoryArtifactInfo
 
-    return key == other.key;
+    return key == other.key
   }
 
 
