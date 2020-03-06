@@ -104,7 +104,10 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
-    myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
+    if (myState.CHECK_INCOMING_OUTGOING != checkIncomingOutgoing) {
+      myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
+      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).updateVisibility();
+    }
   }
 
   @NotNull

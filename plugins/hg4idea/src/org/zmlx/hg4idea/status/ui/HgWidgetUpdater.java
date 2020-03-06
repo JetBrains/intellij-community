@@ -19,11 +19,8 @@ package org.zmlx.hg4idea.status.ui;
  * Interface for {@link HgIncomingOutgoingWidget} that allows it to show/hide or update itself depending on the situation:
  * if incoming/outgoing changes need to be checked or not ({@link org.zmlx.hg4idea.HgVcs#INCOMING_OUTGOING_CHECK_TOPIC}).
  */
-public interface HgHideableWidget {
+public interface HgWidgetUpdater {
+  default void updateVisibility() {}
 
-  void show();
-
-  void hide();
-
-  void update();
+  default void update() {}
 }

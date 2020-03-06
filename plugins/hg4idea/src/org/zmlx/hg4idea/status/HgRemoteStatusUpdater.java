@@ -17,6 +17,8 @@ import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgIncomingCommand;
 import org.zmlx.hg4idea.command.HgOutgoingCommand;
+import org.zmlx.hg4idea.status.ui.HgWidgetUpdater;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -41,10 +43,16 @@ public class HgRemoteStatusUpdater {
     myVcs = vcs;
 
     busConnection = myVcs.getProject().getMessageBus().connect();
-    busConnection.subscribe(HgVcs.REMOTE_TOPIC, (project, root) -> update(root));
+    busConnection.subscribe(HgVcs.REMOTE_TOPIC, (project, root) -> updateInBackground(root));
+    busConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, new HgWidgetUpdater() {
+      @Override
+      public void updateVisibility() {
+        updateInBackground(null);
+      }
+    });
 
     int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
-    changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> update(null), 5,
+    changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateInBackground(null), 5,
                                                                                        checkIntervalSeconds, TimeUnit.SECONDS);
   }
 
@@ -52,11 +60,9 @@ public class HgRemoteStatusUpdater {
     return isIncoming ? myIncomingStatus : myOutgoingStatus;
   }
 
-  private void update(@Nullable VirtualFile root) {
-    if (!isCheckingEnabled() || myUpdateStarted.get()) {
-      return;
-    }
-    myUpdateStarted.set(true);
+  private void updateInBackground(@Nullable VirtualFile root) {
+    if (!isCheckingEnabled(myProject)) return;
+    if (!myUpdateStarted.compareAndSet(false, true)) return;
     new Task.Backgroundable(myProject, getProgressTitle(), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -67,8 +73,10 @@ public class HgRemoteStatusUpdater {
         updateChangesStatusSynchronously(myProject, roots, myOutgoingStatus, false);
 
         BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).update();
+      }
 
-        indicator.stop();
+      @Override
+      public void onFinished() {
         myUpdateStarted.set(false);
       }
     }.queue();
@@ -82,8 +90,8 @@ public class HgRemoteStatusUpdater {
     }
   }
 
-  private void updateChangesStatusSynchronously(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {
-    if (!isCheckingEnabled()) return;
+  private static void updateChangesStatusSynchronously(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {
+    if (!isCheckingEnabled(project)) return;
     final List<HgRevisionNumber> changesets = new LinkedList<>();
     for (VirtualFile root : roots) {
       if (incoming) {
@@ -100,8 +108,11 @@ public class HgRemoteStatusUpdater {
     return "Checking Incoming and Outgoing Changes";
   }
 
-  private boolean isCheckingEnabled() {
-    return myVcs.getProjectSettings().isCheckIncomingOutgoing();
+  public static boolean isCheckingEnabled(@NotNull Project project) {
+    HgVcs hgVcs = HgVcs.getInstance(project);
+    if (hgVcs == null) return false;
+    if (HgUtil.getRepositoryManager(project).getRepositories().isEmpty()) return false;
+    return hgVcs.getProjectSettings().isCheckIncomingOutgoing();
   }
 
   private static final class ChangesetFormatter implements HgChangesetStatus.ChangesetWriter {
