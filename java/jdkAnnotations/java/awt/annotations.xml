@@ -257,6 +257,11 @@
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
+  <item name="java.awt.Toolkit int getMenuShortcutKeyMaskEx()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
+    </annotation>
+  </item>
   <item name='java.awt.Toolkit java.awt.Cursor createCustomCursor(java.awt.Image, java.awt.Point, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

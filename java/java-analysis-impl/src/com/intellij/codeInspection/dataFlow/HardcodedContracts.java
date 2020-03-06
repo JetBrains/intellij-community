@@ -141,16 +141,6 @@ public class HardcodedContracts {
                 StandardMethodContract.fromText("!null,null->false")
               ))
     .register(enumValues(), ContractProvider.of(StandardMethodContract.fromText("->new")))
-    // Convert the following to external annotation once we support Java 9+ external annotations (IDEA-198249)
-    .register(staticCall(JAVA_UTIL_OBJECTS, "requireNonNullElse").parameterCount(2),
-              ContractProvider.of(
-                StandardMethodContract.fromText("!null,_->param1"),
-                StandardMethodContract.fromText("null,!null->param2"),
-                StandardMethodContract.fromText("null,null->fail")))
-    .register(staticCall(JAVA_UTIL_OBJECTS, "requireNonNullElseGet").parameterCount(2),
-              ContractProvider.of(
-                StandardMethodContract.fromText("!null,_->param1"),
-                StandardMethodContract.fromText("null,_->!null")))
     .register(staticCall("java.lang.System", "arraycopy"), expression -> getArraycopyContract());
 
   @NotNull
