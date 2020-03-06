@@ -33,10 +33,27 @@ public abstract class DaemonAction {
       layout.setGradleUserHomeDir(new File(myServiceDirectoryPath));
     }
     DaemonParameters daemonParameters = getDaemonParameters(layout);
-    return daemonClientFactory.createStopDaemonServices(new OutputEventListener() {
+    // Android Studio: b/150790550 drop in favor of commit c5aeb64
+    OutputEventListener listener = new OutputEventListener() {
       @Override
       public void onOutput(OutputEvent event) { }
-    }, daemonParameters);
+    };
+    GradleVersion currentVersion = GradleVersion.current();
+    boolean isGradle6Dot1OrNewer = currentVersion.getBaseVersion().compareTo(GradleVersion.version("6.1")) >= 0;
+    if (isGradle6Dot1OrNewer) {
+      try {
+        //noinspection JavaReflectionMemberAccess
+        return (ServiceRegistry)DaemonClientFactory.class.getMethod("createMessageDaemonServices", OutputEventListener.class,
+                                                                    DaemonParameters.class)
+          .invoke(daemonClientFactory, listener, daemonParameters);
+      }
+      catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+        throw new RuntimeException("Cannot create ServiceRegistry by reflection, gradle version " + currentVersion, e);
+      }
+    }
+    else {
+      return daemonClientFactory.createStopDaemonServices(listener, daemonParameters);
+    }
   }
 
   @NotNull
@@ -50,7 +67,7 @@ public abstract class DaemonAction {
       try {
         //noinspection JavaReflectionMemberAccess
         daemonParameters = DaemonParameters.class.getConstructor(BuildLayoutParameters.class, FileCollectionFactory.class)
-          .newInstance(layout, new DefaultFileCollectionFactory());
+          .newInstance(layout, null);  // Android Studio: b/150790550 drop in favor of commit c5aeb64
       }
       catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
         throw new RuntimeException("Cannot create DaemonParameters by reflection, gradle version " + GradleVersion.current(), e);
