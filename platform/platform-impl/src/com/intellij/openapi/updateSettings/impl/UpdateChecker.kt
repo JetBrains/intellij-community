@@ -6,6 +6,7 @@ import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.*
+import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.*
@@ -456,7 +457,7 @@ object UpdateChecker {
 
       ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
 
-      if (showDialog) {
+      if (showDialog || !canEnableNotifications()) {
         PluginUpdateDialog(updatedPlugins).show()
       }
       else {
@@ -521,6 +522,14 @@ object UpdateChecker {
         showNotification(project, title, "", {}, { notification -> notification.actions.clear()}, NotificationUniqueType.PLUGINS)
       }
     }
+  }
+
+  private fun canEnableNotifications(): Boolean {
+    if (WelcomeFrame.getInstance() is WelcomeFrameUpdater) {
+      return true
+    }
+    return NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS && NotificationsConfigurationImpl.getSettings(
+      getNotificationGroup().displayId).displayType != NotificationDisplayType.NONE
   }
 
   private fun showNotification(project: Project?,
