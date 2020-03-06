@@ -1017,6 +1017,16 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertTrue(PlatformTestUtil.waitForFuture(called, 10_000));
   }
 
+  public void test_AppUIExecutor_withDocumentsCommitted_works_eventually_despite_nonPhysical_uncommitted() {
+    Document ftDocument = createFreeThreadedDocument();
+    CompletableFuture<Boolean> called = new CompletableFuture<>();
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      ftDocument.insertString(0, " ");
+      AppUIExecutor.onUiThread().withDocumentsCommitted(myProject).submit(() -> called.complete(true));
+    });
+    assertTrue(PlatformTestUtil.waitForFuture(called, 10_000));
+  }
+
   public void test_performWhenAllCommitted_may_be_invoked_from_writeUnsafe_modality() {
     Document document = getDocument(findFile(createFile()));
 
