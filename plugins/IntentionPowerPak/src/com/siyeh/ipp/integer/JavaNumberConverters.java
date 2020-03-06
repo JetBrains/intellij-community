@@ -130,7 +130,13 @@ public class JavaNumberConverters {
     public String getConvertedText(@NotNull String text, @NotNull Number number) {
       if (!(number instanceof Float) && !(number instanceof Double)) return null;
       if (!text.contains("e") && !text.contains("E")) return null;
-      String result = new BigDecimal(number.toString()).stripTrailingZeros().toPlainString();
+      String result;
+      try {
+        result = new BigDecimal(number.toString()).stripTrailingZeros().toPlainString();
+      }
+      catch (NumberFormatException ignored) {
+        return null;
+      }
       if (number instanceof Float) result += "f";
       else if (!result.contains(".")) {
         try {
