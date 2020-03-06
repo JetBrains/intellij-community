@@ -43,6 +43,7 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -295,13 +296,13 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       VcsFileRevision revision = data.getCurrentLoadingRevision();
       String message = revision != null
                        ? VcsBundle.message("selection.history.loading.revision.status",
-                                           String.format("<tt>%s</tt>", VcsUtil.getShortRevisionString(revision.getRevisionNumber())))
+                                           XmlStringUtil.wrapInHtmlTag(VcsUtil.getShortRevisionString(revision.getRevisionNumber()), "tt"))
                        : CommonBundle.getLoadingTreeNodeText();
       int totalRevisions = data.getRevisions().size();
       if (totalRevisions != 0) {
         message += String.format(" (%s/%s)", data.myBlocks.size(), totalRevisions);
       }
-      myStatusLabel.setText(String.format("<html>%s</html>", message));
+      myStatusLabel.setText(XmlStringUtil.wrapInHtml(message));
 
       myStatusSpinner.resume();
       myStatusSpinner.setVisible(true);
