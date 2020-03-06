@@ -187,6 +187,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("intellij.android.projectSystem", "android.jar")
       withModule("intellij.android.projectSystem.gradle", "android.jar")
       withModule("intellij.android.projectSystem.gradle.psd", "android.jar")
+      withModule("intellij.android.projectSystem.gradle.sync", "android.jar")
       withModule("intellij.android.gradle-tooling.api", "android.jar")
       withModule("intellij.android.gradle-tooling.impl", "android.jar")
       withModule("intellij.android.resources-base", "android.jar")

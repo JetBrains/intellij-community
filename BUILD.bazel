@@ -169,6 +169,8 @@ iml_project(
         "//tools/adt/idea/profilers:intellij.android.profilers",
         "//tools/adt/idea/project-system-gradle-psd:intellij.android.projectSystem.gradle.psd",
         "//tools/adt/idea/project-system-gradle-psd:intellij.android.projectSystem.gradle.psd.tests",
+        "//tools/adt/idea/project-system-gradle-sync:intellij.android.projectSystem.gradle.sync",
+        "//tools/adt/idea/project-system-gradle-sync:intellij.android.projectSystem.gradle.sync.tests",
         "//tools/adt/idea/project-system-gradle:intellij.android.projectSystem.gradle",
         "//tools/adt/idea/project-system-gradle:intellij.android.projectSystem.gradle.tests",
         "//tools/adt/idea/project-system:intellij.android.projectSystem",
