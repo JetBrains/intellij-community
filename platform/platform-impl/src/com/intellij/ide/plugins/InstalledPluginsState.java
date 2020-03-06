@@ -35,6 +35,8 @@ public final class InstalledPluginsState {
   private final Set<String> myOutdatedPlugins = new SmartHashSet<>();
   private boolean myInstallationInProgress = false;
 
+  private Runnable myShutdownCallback;
+
   @NotNull
   public Collection<IdeaPluginDescriptor> getInstalledPlugins() {
     synchronized (myLock) {
@@ -149,6 +151,23 @@ public final class InstalledPluginsState {
     }
     finally {
       myInstallationInProgress = false;
+    }
+  }
+
+  public void setShutdownCallback(Runnable runnable) {
+    if (myShutdownCallback == null) {
+      myShutdownCallback = runnable;
+    }
+  }
+
+  public void clearShutdownCallback() {
+    myShutdownCallback = null;
+  }
+
+  public void runShutdownCallback() {
+    if (myShutdownCallback != null) {
+      myShutdownCallback.run();
+      myShutdownCallback = null;
     }
   }
 }

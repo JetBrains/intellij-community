@@ -118,8 +118,6 @@ public class PluginManagerConfigurable
     }
   };
 
-  private Runnable myShutdownCallback;
-
   private PluginUpdatesService myPluginUpdatesService;
 
   private List<IdeaPluginDescriptor> myAllRepositoryPluginsList;
@@ -754,7 +752,6 @@ public class PluginManagerConfigurable
     }
 
     myInstalledTab = new PluginsTab() {
-      @SuppressWarnings("HardCodedStringLiteral")
       @Override
       protected void createSearchTextField(int flyDelay) {
         super.createSearchTextField(flyDelay);
@@ -1623,7 +1620,7 @@ public class PluginManagerConfigurable
   public void disposeUIResources() {
     if (myPluginModel.toBackground()) {
       InstallPluginInfo.showRestart();
-      myShutdownCallback = null;
+      InstalledPluginsState.getInstance().clearShutdownCallback();
     }
 
     myMarketplaceTab.dispose();
@@ -1639,10 +1636,7 @@ public class PluginManagerConfigurable
     myPluginUpdatesService.dispose();
     PluginPriceService.cancel();
 
-    if (myShutdownCallback != null) {
-      myShutdownCallback.run();
-      myShutdownCallback = null;
-    }
+    InstalledPluginsState.getInstance().runShutdownCallback();
 
     InstalledPluginsState.getInstance().resetChangesAppliedWithoutRestart();
   }
@@ -1661,8 +1655,8 @@ public class PluginManagerConfigurable
   public void apply() throws ConfigurationException {
     if (myPluginModel.apply(myCardPanel)) return;
 
-    if (myShutdownCallback == null && myPluginModel.createShutdownCallback) {
-      myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(() -> shutdownOrRestartApp());
+    if (myPluginModel.createShutdownCallback) {
+      InstalledPluginsState.getInstance().setShutdownCallback(() -> ApplicationManager.getApplication().invokeLater(() -> shutdownOrRestartApp()));
     }
   }
 
