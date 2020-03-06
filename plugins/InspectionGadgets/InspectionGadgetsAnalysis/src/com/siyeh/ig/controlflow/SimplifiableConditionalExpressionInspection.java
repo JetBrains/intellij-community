@@ -41,8 +41,7 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiConditionalExpression expression = (PsiConditionalExpression)infos[0];
     return InspectionGadgetsBundle.message("simplifiable.conditional.expression.problem.descriptor",
                                            calculateReplacementExpression(expression, new CommentTracker()));
@@ -56,8 +55,7 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
   private static class SimplifiableConditionalFix extends InspectionGadgetsFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 

@@ -51,14 +51,12 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "RedundantIfStatement";
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
+  public @Nullable JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("trivial.if.option.ignore.chained"), this, "ignoreChainedIf");
   }
 
@@ -68,8 +66,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("trivial.if.problem.descriptor");
   }
 
@@ -86,8 +83,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     return new InspectionGadgetsFix[]{new TrivialIfFix()};
   }
 
-  @Nullable
-  private static String getReplacementText(ConditionalModel model, CommentTracker ct) {
+  private static @Nullable String getReplacementText(ConditionalModel model, CommentTracker ct) {
     PsiLiteralExpression thenLiteral = ExpressionUtils.getLiteral(model.getThenExpression());
     PsiLiteralExpression elseLiteral = ExpressionUtils.getLiteral(model.getElseExpression());
     if (thenLiteral != null && elseLiteral != null) {
@@ -132,8 +128,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   private static class TrivialIfFix extends InspectionGadgetsFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("trivial.if.fix.family.name");
     }
 

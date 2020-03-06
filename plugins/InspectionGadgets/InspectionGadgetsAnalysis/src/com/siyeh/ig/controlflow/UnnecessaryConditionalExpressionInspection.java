@@ -34,8 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessaryConditionalExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "RedundantConditionalExpression";
   }
 
@@ -50,8 +49,7 @@ public class UnnecessaryConditionalExpressionInspection extends BaseInspection i
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final String replacement = (String)infos[0];
     return InspectionGadgetsBundle.message("simplifiable.conditional.expression.problem.descriptor", replacement);
   }
@@ -71,8 +69,7 @@ public class UnnecessaryConditionalExpressionInspection extends BaseInspection i
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "constant.conditional.expression.simplify.quickfix");
     }

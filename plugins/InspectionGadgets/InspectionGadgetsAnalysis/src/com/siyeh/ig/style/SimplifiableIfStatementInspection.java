@@ -25,9 +25,8 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
   public boolean DONT_WARN_ON_TERNARY = true;
   public boolean DONT_WARN_ON_CHAINED_ID = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
+  public @Nullable JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message(
       "inspection.simplifiable.if.statement.option.dont.warn.on.ternary"), "DONT_WARN_ON_TERNARY");
@@ -35,9 +34,8 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
     return panel;
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitIfStatement(PsiIfStatement ifStatement) {
@@ -58,8 +56,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
     };
   }
 
-  @NotNull
-  private static String getTargetOperator(@NotNull ConditionalModel model) {
+  private static @NotNull String getTargetOperator(@NotNull ConditionalModel model) {
     if (PsiType.BOOLEAN.equals(model.getType())) {
       PsiLiteralExpression thenLiteral = ExpressionUtils.getLiteral(model.getThenExpression());
       PsiLiteralExpression elseLiteral = ExpressionUtils.getLiteral(model.getElseExpression());
@@ -172,8 +169,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
     return thenValue;
   }
 
-  @NotNull
-  private static String joinConditions(PsiExpression left, PsiExpression right, boolean isAnd, CommentTracker ct) {
+  private static @NotNull String joinConditions(PsiExpression left, PsiExpression right, boolean isAnd, CommentTracker ct) {
     int precedence;
     String token;
     IElementType tokenType;
@@ -213,17 +209,13 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
       myOperator = operator;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return InspectionGadgetsBundle.message("inspection.simplifiable.if.statement.fix.name", myOperator);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.simplifiable.if.statement.fix.family.name");
     }
 
