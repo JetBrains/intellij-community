@@ -135,10 +135,17 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
   private val entriesGeneratedUsingLog: List<GitRebaseEntryGeneratedUsingLog>,
   private val newEntries: List<GitRebaseEntryWithEditedMessage>
 ) : GitInteractiveRebaseEditorHandler(repository.project, repository.root) {
-  override fun collectNewEntries(entries: List<GitRebaseEntry>): List<GitRebaseEntry> {
+  private var rebaseFailed = false
+
+  override fun collectNewEntries(entries: List<GitRebaseEntry>): List<GitRebaseEntry>? {
+    if (rebaseFailed) {
+      return super.collectNewEntries(entries)
+    }
     entriesGeneratedUsingLog.forEachIndexed { i, generatedEntry ->
       val realEntry = entries[i]
       if (!generatedEntry.equalsWithReal(realEntry)) {
+        myRebaseEditorShown = false
+        rebaseFailed = true
         throw VcsException("Couldn't start Rebase using Log")
       }
     }
