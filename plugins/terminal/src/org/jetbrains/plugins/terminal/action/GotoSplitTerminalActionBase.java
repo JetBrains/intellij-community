@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -19,18 +20,24 @@ public class GotoSplitTerminalActionBase extends TerminalSessionContextMenuActio
 
   private GotoSplitTerminalActionBase(boolean forward) {
     myForward = forward;
-    getTemplatePresentation().setText(JBTerminalSystemSettingsProviderBase.getGotoNextSplitTerminalActionText(forward));
+    getTemplatePresentation().setText(() -> {
+      return JBTerminalSystemSettingsProviderBase.getGotoNextSplitTerminalActionText(forward);
+    });
   }
 
   @Override
   public void update(@NotNull AnActionEvent e, @NotNull ToolWindow activeToolWindow, @Nullable Content content) {
-    JBTerminalWidget terminalWidget = TerminalView.getWidgetByContent(Objects.requireNonNull(content));
-    if (terminalWidget == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
+    super.update(e, activeToolWindow, content);
+    Presentation presentation = e.getPresentation();
+    if (presentation.isEnabledAndVisible()) {
+      JBTerminalWidget terminalWidget = TerminalView.getWidgetByContent(Objects.requireNonNull(content));
+      if (terminalWidget == null) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+      Project project = Objects.requireNonNull(e.getProject());
+      presentation.setEnabledAndVisible(TerminalView.getInstance(project).isSplitTerminal(terminalWidget));
     }
-    Project project = Objects.requireNonNull(e.getProject());
-    e.getPresentation().setEnabledAndVisible(TerminalView.getInstance(project).isSplitTerminal(terminalWidget));
   }
 
   @Override
