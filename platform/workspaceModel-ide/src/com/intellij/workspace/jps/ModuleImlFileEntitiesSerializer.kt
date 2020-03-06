@@ -86,17 +86,19 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
         .let { VirtualFileUrlManager.fromUrl(it) }
       val contentRootEntity = builder.addContentRootEntity(contentRootUrl, excludeRootsUrls, excludePatterns, moduleEntity, entitySource)
 
-      // Save the order in which sourceRoots appear in the module
-      val orderingEntity = contentRootEntity.getSourceRootOrder()
-      if (orderingEntity == null) {
-        builder.addEntity(SourceRootOrderEntity::class.java, entitySource) {
-          this.contentRootEntity = contentRootEntity
-          this.orderOfSourceRoots = orderOfItems
+      if (orderOfItems.size > 1) {
+        // Save the order in which sourceRoots appear in the module
+        val orderingEntity = contentRootEntity.getSourceRootOrder()
+        if (orderingEntity == null) {
+          builder.addEntity(SourceRootOrderEntity::class.java, entitySource) {
+            this.contentRootEntity = contentRootEntity
+            this.orderOfSourceRoots = orderOfItems
+          }
         }
-      }
-      else {
-        builder.modifyEntity(SourceRootOrderEntity::class.java, orderingEntity) {
-          orderOfSourceRoots = orderOfItems
+        else {
+          builder.modifyEntity(SourceRootOrderEntity::class.java, orderingEntity) {
+            orderOfSourceRoots = orderOfItems
+          }
         }
       }
     }
@@ -221,9 +223,9 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
       val contentRootTag = Element(CONTENT_TAG)
       contentRootTag.setAttribute(URL_ATTRIBUTE, contentEntry.url.url)
 
-      // Save the source roots where the order is known
       val sourceRoots = contentUrlToSourceRoots[contentEntry.url.url]
       if (sourceRoots != null) {
+        // Save the source roots where the order is known
         contentEntry.getSourceRootOrder()?.orderOfSourceRoots?.forEach {
           sourceRoots.remove(it)?.forEach { sourceRoot ->
             contentRootTag.addContent(saveSourceRoot(sourceRoot, savedEntities))
