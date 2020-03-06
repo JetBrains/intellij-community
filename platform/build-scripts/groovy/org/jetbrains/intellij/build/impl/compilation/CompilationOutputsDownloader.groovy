@@ -58,7 +58,7 @@ class CompilationOutputsDownloader {
 
     if (depth != -1) {
       String lastCachedCommit = commits[depth]
-      context.messages.info("Using cahe for commit $lastCachedCommit ($depth behind last commit).")
+      context.messages.info("Using cache for commit $lastCachedCommit ($depth behind last commit).")
 
       executor.submit {
         saveCache(lastCachedCommit)
