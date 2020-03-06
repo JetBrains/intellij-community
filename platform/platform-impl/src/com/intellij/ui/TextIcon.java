@@ -22,9 +22,11 @@ public final class TextIcon implements Icon {
 
   private Rectangle getTextBounds() {
     if (myTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
-      myContext = new FontRenderContext(null,
-                                        UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING),
-                                        UIManager.get(RenderingHints.KEY_FRACTIONALMETRICS));
+      Object aaHint = UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING);
+      if (aaHint == null) aaHint = RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT;
+      Object fmHint = UIManager.get(RenderingHints.KEY_FRACTIONALMETRICS);
+      if (fmHint == null) fmHint = RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT;
+      myContext = new FontRenderContext(null, aaHint, fmHint);
       myTextBounds = getPixelBounds(myFont, myText, myContext);
     }
     return myTextBounds;
