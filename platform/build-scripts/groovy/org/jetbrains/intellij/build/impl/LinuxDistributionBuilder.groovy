@@ -111,6 +111,44 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     buildContext.ant.fixcrlf(srcdir: "${unixDistPath}/bin", includes: "*.sh", eol: "unix")
+
+    // Android Studio: build game tools entry points (go/project-aplos)
+    buildGameToolsScripts(classPath, unixDistPath, fullName, vmOptionsFileName)
+  }
+
+  // Android Studio: build game tools entry points (go/project-aplos)
+  private void buildGameToolsScripts(String classPath, String unixDistPath, String fullName, String vmOptionsFileName) {
+    // We manually set the classpath to include everything the game tools need and disable all plugin loading at runtime with
+    // `-Didea.load.plugins=false`. This change on classpath is needed since AndroidStudioGameToolsPlugin.xml, the starting plugin XML, is
+    // located in plugins/android/lib/game-tools.jar, which is not in classpath by default. In addition, AndroidStudioGameToolsPlugin.xml
+    // directly references all needed Intellij platform components so that the unneeded ones (for example, shift-shift to find everything)
+    // are ignored. See go/project-aplos-design for more details.
+    String gameToolsClassPath = classPath + "\n" + [
+      "plugins/android/lib/*",
+      "plugins/android/resources/*",
+      "plugins/java/lib/java-api.jar",
+      "plugins/java/lib/java-impl.jar",
+      "plugins/java/lib/java_resources_en.jar"].
+      collect { "CLASSPATH=\"\$CLASSPATH:\$IDE_HOME/${it}\"" }.join("\n")
+
+    buildContext.ant.copy(todir: "${unixDistPath}/bin") {
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
+
+      filterset(begintoken: "__", endtoken: "__") {
+        filter(token: "product_full", value: fullName + "GameTools")
+        filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
+        filter(token: "vm_options", value: vmOptionsFileName)
+        filter(token: "system_selector", value: "AndroidStudioGameTools")
+        // Here we overwrite idea.platform.prefix to start the distinct entry point of game tools.
+        filter(token: "ide_jvm_args", value:
+          buildContext.additionalJvmArguments + " -Didea.platform.prefix=AndroidStudioGameTools -Didea.load.plugins=false")
+        filter(token: "class_path", value: gameToolsClassPath)
+        filter(token: "script_name", value: "game-tools.sh")
+      }
+    }
+
+    buildContext.ant.move(file: "${unixDistPath}/bin/executable-template.sh", tofile: "${unixDistPath}/bin/game-tools.sh")
+    buildContext.ant.move(file: "${unixDistPath}/bin/profiler.sh", tofile: "${unixDistPath}/bin/profiler.sh")
   }
 
   private void generateVMOptions(String unixDistPath) {

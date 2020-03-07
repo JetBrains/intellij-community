@@ -95,6 +95,32 @@ class StudioTests(unittest.TestCase):
           self.assertFalse(f.filename.endswith("/BUILD") or f.filename.endswith("/BUILD.bazel"),
               "Unexpected BUILD file in zip " + file_name + ": " + f.filename)
 
+  def test_game_tools_artifacts_are_present(self):
+    all_required = [
+      "plugins/android/lib/game-tools.jar",
+      "plugins/android/lib/game-tools-protos.jar",
+    ];
+
+    archive_files_required = {
+      # Linux
+      ".tar.gz": [
+        "bin/game-tools.sh",
+        "bin/profiler.sh",
+      ],
+      # Windows
+      ".win.zip": [
+        "bin/game-tools.bat",
+        "bin/profiler.bat",
+      ],
+    }
+
+    for target in archive_files_required.keys():
+      name = os.path.join(dist_dir, self.artifact_prefix() + build + target)
+      files = self.filenames_from_archive(name)
+      for req in all_required + archive_files_required[target]:
+        if not any(file_name.endswith(req) for file_name in files):
+          self.fail("Required file " + req + " not found in " + target  + " distribution.")
+
   def test_profiler_artifacts_are_present(self):
     all_required = [
         "plugins/android/resources/perfa.jar",

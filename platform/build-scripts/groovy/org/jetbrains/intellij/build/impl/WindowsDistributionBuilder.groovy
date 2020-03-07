@@ -157,8 +157,50 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.patchInspectScript(targetPath)
     }
 
+    // Android Studio: build game tools entry points (go/project-aplos)
+    buildGameToolsScripts(classPath, winDistPath, fullName, vmOptionsFileName)
 
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.bat", eol: "dos")
+  }
+
+  // Android Studio: build game tools entry points (go/project-aplos)
+  private void buildGameToolsScripts(String classPath, String winDistPath, String fullName, String vmOptionsFileName) {
+    // We manually set the classpath to include everything the game tools need and disable all plugin loading at runtime with
+    // `-Didea.load.plugins=false`. This change on classpath is needed since AndroidStudioGameToolsPlugin.xml, the starting plugin XML, is
+    // located in plugins/android/lib/game-tools.jar, which is not in classpath by default. In addition, AndroidStudioGameToolsPlugin.xml
+    // directly references all needed Intellij platform components so that the unneeded ones (for example, shift-shift to find everything)
+    // are ignored. See go/project-aplos-design for more details.
+    String gameToolsClassPath = classPath + "\n" + [
+      "plugins/android/lib/*",
+      "plugins/android/resources/*",
+      "plugins/java/lib/java-api.jar",
+      "plugins/java/lib/java-impl.jar",
+      "plugins/java/lib/java_resources_en.jar"].
+      collect { "SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\$it" }.join("\n")
+
+    buildContext.ant.copy(todir: "$winDistPath/bin") {
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/win/scripts")
+
+      filterset(begintoken: "@@", endtoken: "@@") {
+        filter(token: "product_full", value: fullName + "GameTools")
+        filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
+        filter(token: "vm_options", value: vmOptionsFileName)
+        filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
+        filter(token: "system_selector", value: "AndroidStudioGameTools")
+        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments + " -Didea.platform.prefix=AndroidStudioGameTools -Didea.load.plugins=false")
+        filter(token: "class_path", value: gameToolsClassPath)
+        filter(token: "script_name", value: "game-tools.bat")
+      }
+    }
+
+    buildContext.ant.move(file: "$winDistPath/bin/executable-template.bat", tofile: "$winDistPath/bin/game-tools.bat")
+    buildContext.ant.move(file: "$winDistPath/bin/profiler.bat", tofile: "$winDistPath/bin/profiler.bat")
+
+    // Copy the profiler launcher executable.
+    buildContext.ant.copy(todir: "$winDistPath/bin") {
+      fileset(dir: "$buildContext.paths.communityHome/../vendor/google/game-tools/native/GameToolsWinLauncher/x64/Release")
+    }
+    buildContext.ant.move(file: "$winDistPath/bin/ProfilerWinLauncher.exe", tofile: "$winDistPath/bin/profiler.exe")
   }
 
   private void generateVMOptions(String winDistPath, Collection<JvmArchitecture> architectures) {
