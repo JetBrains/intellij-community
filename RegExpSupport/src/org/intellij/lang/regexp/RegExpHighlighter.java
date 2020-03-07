@@ -44,7 +44,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
   static final TextAttributesKey BRACES = createTextAttributesKey("REGEXP.BRACES", DefaultLanguageHighlighterColors.BRACES);
   static final TextAttributesKey BRACKETS = createTextAttributesKey("REGEXP.BRACKETS", DefaultLanguageHighlighterColors.BRACKETS);
   static final TextAttributesKey COMMA = createTextAttributesKey("REGEXP.COMMA", DefaultLanguageHighlighterColors.COMMA);
-  static final TextAttributesKey ESC_CHARACTER = createTextAttributesKey("REGEXP.ESC_CHARACTER", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
+  public static final TextAttributesKey ESC_CHARACTER = createTextAttributesKey("REGEXP.ESC_CHARACTER", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
   static final TextAttributesKey CHAR_CLASS = createTextAttributesKey("REGEXP.CHAR_CLASS", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
   static final TextAttributesKey QUOTE_CHARACTER = createTextAttributesKey("REGEXP.QUOTE_CHARACTER", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
   static final TextAttributesKey COMMENT = createTextAttributesKey("REGEXP.COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);

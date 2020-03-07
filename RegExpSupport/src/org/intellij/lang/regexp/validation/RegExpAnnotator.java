@@ -157,8 +157,16 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   public void visitRegExpChar(final RegExpChar ch) {
     final PsiElement child = ch.getFirstChild();
     final IElementType type = child.getNode().getElementType();
-    if (type == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) {
-      myHolder.newAnnotation(HighlightSeverity.ERROR, "Illegal/unsupported escape sequence").create();
+    if (type == RegExpTT.CHARACTER) {
+      if (ch.getTextLength() > 1) {
+        myHolder.newSilentAnnotation(HighlightInfoType.SYMBOL_TYPE_SEVERITY)
+          .range(ch)
+          .textAttributes(RegExpHighlighter.ESC_CHARACTER)
+          .create();
+      }
+    }
+    else if (type == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) {
+      myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.illegal.unsupported.escape.sequence")).create();
       return;
     }
     else if (type == RegExpTT.BAD_HEX_VALUE) {
