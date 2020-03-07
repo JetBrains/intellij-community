@@ -176,19 +176,19 @@ public class CheckRegExpForm {
     mySampleText.setBackground(result == RegExpMatchResult.MATCHES ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
     switch (result) {
       case MATCHES:
-        myMessage.setText("Matches!");
+        myMessage.setText(RegExpBundle.message("intention.balloon.matches"));
         break;
       case NO_MATCH:
-        myMessage.setText("No match");
+        myMessage.setText(RegExpBundle.message("intention.balloon.no.match"));
         break;
       case TIMEOUT:
-        myMessage.setText("Pattern is too complex");
+        myMessage.setText(RegExpBundle.message("intention.balloon.pattern.is.too.complex"));
         break;
       case BAD_REGEXP:
-        myMessage.setText("Bad pattern");
+        myMessage.setText(RegExpBundle.message("intention.balloon.bad.pattern"));
         break;
       case INCOMPLETE:
-        myMessage.setText("More input expected");
+        myMessage.setText(RegExpBundle.message("intention.balloon.more.input.expected"));
         break;
       default:
         throw new AssertionError();

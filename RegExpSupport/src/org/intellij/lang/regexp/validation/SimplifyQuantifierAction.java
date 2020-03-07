@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpFileType;
 import org.intellij.lang.regexp.inspection.RegExpReplacementUtil;
 import org.intellij.lang.regexp.psi.RegExpClosure;
@@ -52,7 +53,7 @@ class SimplifyQuantifierAction implements IntentionAction {
     @Override
     @NotNull
     public String getFamilyName() {
-        return "Simplify quantifier";
+        return RegExpBundle.message("intention.name.simplify.quantifier");
     }
 
     @Override
