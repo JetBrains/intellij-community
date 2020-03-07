@@ -23,5 +23,16 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  fun testConstructorParameter() {
+    myFixture.configureByText("Foo.kt", """
+      import org.jetbrains.annotations.Nls
+      
+      class B1: A(<warning descr="Hardcoded string literal: \"Text for i18n\"">"Text for i18n"</warning>)
+      class B2(a: Int): A(<warning descr="Hardcoded string literal: \"Text for i18n\"">"Text for i18n"</warning> + a)
+      open class A(@Nls val text: String)
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
 }
 

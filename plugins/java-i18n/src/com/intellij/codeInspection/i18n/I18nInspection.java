@@ -373,18 +373,35 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return null;
     }
     List<ProblemDescriptor> results = new ArrayList<>();
-    final UExpression body = method.getUastBody();
-    if (body != null) {
-      ProblemDescriptor[] descriptors = checkElement(body, manager, isOnTheFly);
-      if (descriptors != null) {
-        ContainerUtil.addAll(results, descriptors);
-      }
-    }
+    checkMethodBody(method, manager, isOnTheFly, results);
     checkAnnotations(method, manager, isOnTheFly, results);
     for (UParameter parameter : method.getUastParameters()) {
       checkAnnotations(parameter, manager, isOnTheFly, results);
     }
     return results.isEmpty() ? null : results.toArray(ProblemDescriptor.EMPTY_ARRAY);
+  }
+
+  private void checkMethodBody(@NotNull UMethod method,
+                               @NotNull InspectionManager manager,
+                               boolean isOnTheFly,
+                               @NotNull List<ProblemDescriptor> results) {
+    final UExpression body = method.getUastBody();
+    if (body != null) {
+      if (body.getSourcePsi() != null) {
+        addAll(results, checkElement(body, manager, isOnTheFly));
+      }
+      else if (body instanceof UBlockExpression) { // fake blocks are popular in Kotlin
+        for (UExpression expression : ((UBlockExpression)body).getExpressions()) {
+          addAll(results, checkElement(expression, manager, isOnTheFly));
+        }
+      }
+    }
+  }
+
+  private static void addAll(List<? super ProblemDescriptor> results, ProblemDescriptor[] descriptors) {
+    if (descriptors != null) {
+      ContainerUtil.addAll(results, descriptors);
+    }
   }
 
   @Override
@@ -394,11 +411,15 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
     final UClassInitializer[] initializers = aClass.getInitializers();
     List<ProblemDescriptor> result = new ArrayList<>();
-    for (UClassInitializer initializer : initializers) {
-      final ProblemDescriptor[] descriptors = checkElement(initializer.getUastBody(), manager, isOnTheFly);
-      if (descriptors != null) {
-        ContainerUtil.addAll(result, descriptors);
+
+    for (UMethod method : aClass.getMethods()) {
+      if (method.getSourcePsi() == aClass.getSourcePsi()) { // primary constructor that will not be proccsed other way
+        checkMethodBody(method, manager, isOnTheFly, result);
       }
+    }
+
+    for (UClassInitializer initializer : initializers) {
+      addAll(result, checkElement(initializer.getUastBody(), manager, isOnTheFly));
     }
     checkAnnotations(aClass, manager, isOnTheFly, result);
 
@@ -410,10 +431,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
                                 @NotNull InspectionManager manager,
                                 boolean isOnTheFly, List<? super ProblemDescriptor> result) {
     for (UAnnotation annotation : member.getUAnnotations()) {
-      final ProblemDescriptor[] descriptors = checkElement(annotation, manager, isOnTheFly);
-      if (descriptors != null) {
-        ContainerUtil.addAll(result, descriptors);
-      }
+      addAll(result, checkElement(annotation, manager, isOnTheFly));
     }
   }
 
@@ -428,17 +446,11 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     List<ProblemDescriptor> result = new ArrayList<>();
     final UExpression initializer = field.getUastInitializer();
     if (initializer != null) {
-      ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
-      if (descriptors != null) {
-        ContainerUtil.addAll(result, descriptors);
-      }
+      addAll(result, checkElement(initializer, manager, isOnTheFly));
     } else if (field instanceof UEnumConstant) {
       List<UExpression> arguments = ((UEnumConstant)field).getValueArguments();
       for (UExpression argument : arguments) {
-        ProblemDescriptor[] descriptors = checkElement(argument, manager, isOnTheFly);
-        if (descriptors != null) {
-          ContainerUtil.addAll(result, descriptors);
-        }
+        addAll(result, checkElement(argument, manager, isOnTheFly));
       }
     }
     checkAnnotations(field, manager, isOnTheFly, result);
