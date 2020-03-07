@@ -41,8 +41,12 @@ public class RepeatedSpaceInspectionTest extends RegExpInspectionTestCase {
                  new RegExpFileType(EcmaScriptRegexpLanguage.INSTANCE));
   }
 
-  public void testError() {
+  public void testNoStringIndexOutOfBoundsException() {
     highlightTest("<error descr=\"Illegal/unsupported escape sequence\">\\</error>");
+  }
+
+  public void testNoStringIndexOutOfBoundsException2() {
+    highlightTest("<error descr=\"Illegal/unsupported escape sequence\">\\c</error>");
   }
 
   @Override

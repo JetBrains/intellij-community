@@ -95,16 +95,13 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             case 'b':
                 return '\b';
             case 'c':
+                if (length != 3) return -1;
                 return s.codePointAt(2) ^ 64; // control character
             case 'N':
                 if (length < 4 || s.charAt(2) != '{' || s.charAt(length - 1) != '}') {
                     return -1;
                 }
-                final int value = UnicodeCharacterNames.getCodePoint(s.substring(3, length - 1));
-                if (value == -1) {
-                    return -1;
-                }
-                return value;
+                return UnicodeCharacterNames.getCodePoint(s.substring(3, length - 1));
             case 'x':
                 if (length <= 2) return -1;
                 if (s.charAt(2) == '{') {
@@ -119,10 +116,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                 if (s.charAt(2) == '{') {
                     return (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
                 }
-                if (length != 6) {
-                    return -1;
-                }
-                return parseNumber(s, 2, 16);
+                return length != 6 ? -1 : parseNumber(s, 2, 16);
             case '0':
             case '1':
             case '2':
