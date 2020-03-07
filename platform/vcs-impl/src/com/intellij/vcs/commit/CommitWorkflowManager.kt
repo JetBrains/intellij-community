@@ -94,6 +94,8 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
       appSettings.COMMIT_FROM_LOCAL_CHANGES = value
       getApplication().messageBus.syncPublisher(SETTINGS).settingsChanged()
     }
+
+    internal fun isNonModalInSettings(): Boolean = isForceNonModalCommit.asBoolean() || appSettings.COMMIT_FROM_LOCAL_CHANGES
   }
 
   interface SettingsListener : EventListener {
