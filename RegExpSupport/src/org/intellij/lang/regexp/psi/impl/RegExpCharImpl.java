@@ -64,7 +64,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             return -1;
         }
         final String text = getUnescapedText();
-        if (text.length() == 1 && type == RegExpTT.CHARACTER) {
+        if (text.length() == 1 && (type == RegExpTT.CHARACTER ||  type == RegExpTT.CTRL_CHARACTER)) {
             return text.codePointAt(0);
         }
         else if (type == RegExpTT.UNICODE_CHAR) {
@@ -76,9 +76,9 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
 
     public static int unescapeChar(String s) {
         final int c = s.codePointAt(0);
-        if (c != '\\') return c;
+        final int length = s.length();
+        if (length == 1 || c != '\\') return -1;
         final int codePoint = s.codePointAt(1);
-        final int length;
         switch (codePoint) {
             case 'n':
                 return '\n';
@@ -97,7 +97,6 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             case 'c':
                 return s.codePointAt(2) ^ 64; // control character
             case 'N':
-                length = s.length();
                 if (length < 4 || s.charAt(2) != '{' || s.charAt(length - 1) != '}') {
                     return -1;
                 }
@@ -107,7 +106,6 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                 }
                 return value;
             case 'x':
-                length = s.length();
                 if (length <= 2) return -1;
                 if (s.charAt(2) == '{') {
                     return (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
@@ -117,7 +115,6 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                 }
                 return length == 4 ? parseNumber(s, 2, 16) : -1;
             case 'u':
-                length = s.length();
                 if (length <= 2) return 'u';
                 if (s.charAt(2) == '{') {
                     return (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
