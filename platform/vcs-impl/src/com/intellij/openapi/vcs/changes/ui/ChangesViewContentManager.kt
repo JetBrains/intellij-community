@@ -32,6 +32,11 @@ private val COMMIT_TOOL_WINDOW_CONTENT_FILTER: (String) -> Boolean = { it == LOC
 internal val Project.isCommitToolWindow: Boolean
   get() = ChangesViewContentManager.getInstanceImpl(this)?.isCommitToolWindow == true
 
+internal fun ContentManager.selectFirstContent() {
+  val firstContent = getContent(0)
+  if (firstContent != null) setSelectedContent(firstContent)
+}
+
 class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
   private val LOG: Logger = Logger.getInstance(ChangesViewContentManager::class.java)
 
@@ -95,8 +100,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     addedContents.removeAll(contents)
 
     // Ensure that first tab is selected after tabs reordering
-    val firstContent = contentManager.getContent(0)
-    if (firstContent != null) contentManager.setSelectedContent(firstContent)
+    contentManager.selectFirstContent()
   }
 
   override fun dispose() {

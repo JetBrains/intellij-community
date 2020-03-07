@@ -38,7 +38,10 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       }
     })
     connection.subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
-      override fun toolWindowMappingChanged() = updateState(project, window)
+      override fun toolWindowMappingChanged() {
+        updateState(project, window)
+        window.contentManagerIfCreated?.selectFirstContent()
+      }
     })
   }
 
