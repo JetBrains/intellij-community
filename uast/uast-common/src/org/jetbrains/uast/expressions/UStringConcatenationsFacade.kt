@@ -21,7 +21,7 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
   @Deprecated("use factory method `UStringConcatenationsFacade.createFromUExpression`",
               ReplaceWith("UStringConcatenationsFacade.createFromUExpression"))
   @ApiStatus.Experimental
-  constructor(uContext: UExpression) : this(uContext, buildLazyUastOperands(uContext) ?: emptySequence())
+  constructor(uContext: UExpression) : this(uContext, buildLazyUastOperands(uContext, false) ?: emptySequence())
 
   @get:ApiStatus.Experimental
   val rootUExpression: UExpression
@@ -100,8 +100,15 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
 
   companion object {
 
-    private fun buildLazyUastOperands(uContext: UExpression?): Sequence<UExpression>? = when {
-      uContext is UPolyadicExpression && isConcatenation(uContext) -> uContext.operands.asSequence()
+    private fun buildLazyUastOperands(uContext: UExpression?, flatten: Boolean): Sequence<UExpression>? = when {
+      uContext is UPolyadicExpression && isConcatenation(uContext) -> {
+        val concatenationOperands = uContext.operands.asSequence()
+        if (flatten)
+          concatenationOperands.flatMap { operand -> buildLazyUastOperands(operand, true) ?: sequenceOf(operand) }
+        else
+          concatenationOperands
+      }
+
       uContext is ULiteralExpression && !isConcatenation(uContext.uastParent) -> {
         val host = uContext.sourceInjectionHost
         if (host == null || !host.isValidHost) emptySequence() else sequenceOf(uContext)
@@ -111,8 +118,17 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
 
     @JvmStatic
     fun createFromUExpression(uContext: UExpression?): UStringConcatenationsFacade? {
-      val operands = buildLazyUastOperands(uContext) ?: return null
+      val operands = buildLazyUastOperands(uContext, false) ?: return null
       return UStringConcatenationsFacade(uContext!!, operands)
+    }
+
+    @JvmStatic
+    fun createFromTopConcatenation(member: UExpression?): UStringConcatenationsFacade? {
+      val topConcatenation = generateSequence(member?.uastParent, UElement::uastParent).takeWhile { isConcatenation(it) }
+                               .lastOrNull() as? UExpression ?: member ?: return null
+
+      val operands = buildLazyUastOperands(topConcatenation, true) ?: return null
+      return UStringConcatenationsFacade(topConcatenation, operands)
     }
 
     @JvmStatic

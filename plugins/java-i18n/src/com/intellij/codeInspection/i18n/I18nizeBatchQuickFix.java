@@ -17,15 +17,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PartiallyKnownString;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.text.UniqueNameGenerator;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.expressions.UInjectionHost;
+import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 import org.jetbrains.uast.generate.UastElementFactory;
 
@@ -50,43 +54,43 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     Set<PsiFile> contextFiles = new LinkedHashSet<>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
-      ULiteralExpression literalExpression = UastUtils.findContaining(psiElement, ULiteralExpression.class);
-      if (literalExpression != null) {
-        PsiPolyadicExpression concatenation = I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(psiElement);
-        if (concatenation == null) {
-          Object val = literalExpression.getValue();
-          if (distinct.add(psiElement) && val instanceof String) {
-            String value = (String)val;
+      UStringConcatenationsFacade concatenation = UStringConcatenationsFacade.createFromTopConcatenation(
+        UastContextKt.toUElement(psiElement, UInjectionHost.class)
+      );
+      if (concatenation != null) {
+        PartiallyKnownString pks = concatenation.asPartiallyKnownString();
+        if (pks.getSegments().size() == 1) {
+          String value = pks.getValueIfKnown();
+          if (distinct.add(psiElement) && value != null) {
             I18nizedPropertyData<HardcodedStringContextData> data = keyValuePairs.get(value);
             if (data != null) {
               data.getContextData().getPsiElements().add(psiElement);
-              data.getContextData().getExpressions().add(literalExpression);
+              data.getContextData().getExpressions().add(concatenation.getRootUExpression());
             }
             else {
-              String key = ObjectUtils.notNull(suggestKeyByPlace(literalExpression),
+              String key = ObjectUtils.notNull(suggestKeyByPlace(concatenation.getRootUExpression()),
                                                I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null));
               ArrayList<PsiElement> elements = new ArrayList<>();
               elements.add(psiElement);
               List<UExpression> uExpressions = new ArrayList<>();
-              uExpressions.add(literalExpression);
+              uExpressions.add(concatenation.getRootUExpression());
               HardcodedStringContextData contextData = new HardcodedStringContextData(uExpressions, elements, Collections.emptyList());
-              keyValuePairs.put(value, new I18nizedPropertyData<HardcodedStringContextData>(uniqueNameGenerator.generateUniqueName(key), value,
-                                                                                            contextData));
+              keyValuePairs.put(value, new I18nizedPropertyData<>(uniqueNameGenerator.generateUniqueName(key), value, contextData));
             }
             ContainerUtil.addIfNotNull(contextFiles, psiElement.getContainingFile());
           }
         }
-        else if (distinct.add(concatenation)) {
-          ArrayList<PsiExpression> args = new ArrayList<>();
-          String value = I18nizeConcatenationQuickFix.getValueString(concatenation, args);
-          String key = ObjectUtils.notNull(suggestKeyByPlace(literalExpression),
+        else if (distinct.add(concatenation.getRootUExpression().getSourcePsi())) {
+          ArrayList<UExpression> args = new ArrayList<>();
+          String value = buildUnescapedFormatString(concatenation, args);
+          String key = ObjectUtils.notNull(suggestKeyByPlace(concatenation.getRootUExpression()),
                                            I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null));
           HardcodedStringContextData contextData = new HardcodedStringContextData(
-            Collections.singletonList(UastUtils.findContaining(concatenation, UPolyadicExpression.class)),
-            Collections.singletonList(concatenation),
-            ContainerUtil.map(args, arg -> UastUtils.findContaining(arg, UExpression.class)));
+            Collections.singletonList(concatenation.getRootUExpression()),
+            Collections.singletonList(concatenation.getRootUExpression().getSourcePsi()),
+            args);
           keyValuePairs.put(value + concatenation.hashCode(),
-                            new I18nizedPropertyData<HardcodedStringContextData>(uniqueNameGenerator.generateUniqueName(key), value, contextData));
+                            new I18nizedPropertyData<>(uniqueNameGenerator.generateUniqueName(key), value, contextData));
           ContainerUtil.addIfNotNull(contextFiles, psiElement.getContainingFile());
         }
       }
@@ -158,6 +162,41 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         }
       }, files.toArray(PsiFile.EMPTY_ARRAY));
     }
+  }
+
+  private static String buildUnescapedFormatString(UStringConcatenationsFacade cf, List<? super UExpression> formatParameters) {
+    PsiElement sourceRootPsi = cf.getRootUExpression().getSourcePsi();
+    // `I18nizeConcatenationQuickFix.getValueString` inside uses a very complicated logic.
+    // Though the generic UAST code of this method should handle Java code properly,
+    // as long as there is no tests I still fallback to old Java code here for safety.
+    // But probably there is no real need for this `if`
+    if (sourceRootPsi instanceof PsiPolyadicExpression) {
+      List<PsiExpression> args = new ArrayList<>();
+      String result = I18nizeConcatenationQuickFix.getValueString((PsiPolyadicExpression)sourceRootPsi, args);
+      for (PsiExpression psiExpression : args) {
+        UExpression expression = UastContextKt.toUElement(psiExpression, UExpression.class);
+        ContainerUtil.addIfNotNull(formatParameters, expression);
+      }
+      return result;
+    }
+
+    // Generic UAST version
+    StringBuilder result = new StringBuilder();
+    int elIndex = 0;
+    for (UExpression expression : SequencesKt.asIterable(cf.getUastOperands())) {
+      if (expression instanceof ULiteralExpression) {
+        Object value = ((ULiteralExpression)expression).getValue();
+        if (value != null) {
+          result.append(value.toString());
+        }
+      }
+      else {
+        result.append("{").append(elIndex++).append("}");
+        formatParameters.add(expression);
+      }
+    }
+
+    return result.toString();
   }
 
   /**
