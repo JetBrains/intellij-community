@@ -243,6 +243,8 @@ private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): 
       PathUtil.getFileName(venvRoot)
     condaRoot != null && (associatedPath == null || !FileUtil.isAncestor(associatedPath, condaRoot, true)) ->
       PathUtil.getFileName(condaRoot)
+    PythonSdkUtil.isBaseConda(sdkHome) ->
+      "base"
     else ->
       associatedPath?.let { PathUtil.getFileName(associatedPath) } ?: return null
   }
