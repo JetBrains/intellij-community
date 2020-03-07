@@ -22,6 +22,7 @@ import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.reporting.ReportEntry;
+import org.junit.platform.engine.support.descriptor.ClasspathResourceSource;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.CompositeTestSource;
 import org.junit.platform.engine.support.descriptor.FileSource;
@@ -73,9 +74,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       myIdSuffix = String.valueOf(System.currentTimeMillis());
     }
   }
-  
+
   public void initializeIdSuffix(int i) {
-    myIdSuffix = i + "th"; 
+    myIdSuffix = i + "th";
   }
 
   @Override
@@ -234,7 +235,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private void testStarted(TestIdentifier testIdentifier) {
     myPrintStream.println("\n##teamcity[testStarted" + idAndName(testIdentifier) + " " + getLocationHint(testIdentifier) + "]");
   }
-  
+
   private void testFinished(TestIdentifier testIdentifier, long duration) {
     myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? " duration=\'" + duration + "\'" : "") + "]");
   }
@@ -342,7 +343,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       .orElse("0");
   }
 
-  
+
   private String getLocationHint(TestIdentifier root) {
     return getLocationHint(root, myTestPlan.getParent(root).orElse(null));
   }
@@ -361,7 +362,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       .map(testSource -> " metainfo=\'" + ((MethodSource)testSource).getMethodParameterTypes() + "\'")
       .orElse(NO_LOCATION_HINT);
   }
-  
+
   static String getLocationHintValue(TestSource testSource, TestSource parentSource) {
 
     if (testSource instanceof CompositeTestSource) {
@@ -392,6 +393,15 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     if (testSource instanceof ClassSource) {
       String className = ((ClassSource)testSource).getClassName();
       return javaLocation(className, null, false);
+    }
+
+    if (testSource instanceof ClasspathResourceSource) {
+      ClasspathResourceSource classpathResourceSource = ((ClasspathResourceSource)testSource);
+      String classPathName =classpathResourceSource.getClasspathResourceName();
+      String line =classpathResourceSource.getPosition()
+        .map(fp -> ":" +fp.getLine())
+        .orElse("");
+      return "classpath:" + classPathName + line;
     }
 
     if (parentSource != null) {
@@ -432,7 +442,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       return null;
     }).orElse(null);
   }
-  
+
   static String getMethodSignature(TestIdentifier testIdentifier) {
     return testIdentifier.getSource().map((source) -> {
       if (source instanceof MethodSource) {
