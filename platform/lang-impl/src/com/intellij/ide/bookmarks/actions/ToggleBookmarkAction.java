@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,8 @@ public class ToggleBookmarkAction extends BookmarksAction implements DumbAware, 
     final BookmarkInContextInfo info = getBookmarkInfo(e);
     if (info == null) return;
 
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+
     final boolean selected = info.getBookmarkAtPlace() != null;
     Toggleable.setSelected(e.getPresentation(), selected);
 
@@ -52,7 +55,12 @@ public class ToggleBookmarkAction extends BookmarksAction implements DumbAware, 
       BookmarkManager.getInstance(project).removeBookmark(info.getBookmarkAtPlace());
     }
     else {
-      BookmarkManager.getInstance(project).addTextBookmark(info.getFile(), info.getLine(), "");
+      if (editor != null) {
+        BookmarkManager.getInstance(project).addEditorBookmark(editor, info.getLine());
+      }
+      else {
+        BookmarkManager.getInstance(project).addTextBookmark(info.getFile(), info.getLine(), "");
+      }
     }
   }
 
