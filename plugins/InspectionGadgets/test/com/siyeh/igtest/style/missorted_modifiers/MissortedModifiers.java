@@ -7,7 +7,7 @@ import java.util.Hashtable;
 
 
 class MissortedModifiers {
-  <warning descr="Missorted modifiers 'private native static'">private</warning> native static int foo2();
+  private <warning descr="Missorted modifiers 'native static'">native</warning> static int foo2();
 
   <warning descr="Missorted modifiers 'static private'">static</warning> private int m_bar = 4;
   <warning descr="Missorted modifiers 'static public'">static</warning> public int m_baz = 4;
@@ -24,7 +24,7 @@ class MissortedModifiers {
   <warning descr="Missorted modifiers 'public @Deprecated'">public</warning> @Deprecated void foo3(){};
   private @ReadOnly int [] nums;
 
-  <warning descr="Missorted modifiers 'private transient static'">private</warning> transient static Hashtable mAttributeMeta;
+  private <warning descr="Missorted modifiers 'transient static'">transient</warning> static Hashtable mAttributeMeta;
 
   interface A {
 
@@ -35,10 +35,10 @@ class MissortedModifiers {
 
   <warning descr="Missorted modifiers 'final public'">final</warning> public class TestQuickFix
   {
-    <warning descr="Missorted modifiers 'protected final static'">protected</warning> final static String A = "a";
-    <warning descr="Missorted modifiers 'protected final static'">protected</warning> final static String B = "b";
-    <warning descr="Missorted modifiers 'protected final static'">protected</warning> final static String C = "c";
-    <warning descr="Missorted modifiers 'protected final static'">protected</warning> final static String D = "d";
+    protected <warning descr="Missorted modifiers 'final static'">final</warning> static String A = "a";
+    protected <warning descr="Missorted modifiers 'final static'">final</warning> static String B = "b";
+    protected <warning descr="Missorted modifiers 'final static'">final</warning> static String C = "c";
+    protected <warning descr="Missorted modifiers 'final static'">final</warning> static String D = "d";
   }
 
   //@Type(type = "org.joda.time.contrib.hibernate.PersistentYearMonthDay")
