@@ -57,7 +57,7 @@ public class StatisticsUploadAssistant {
     EventLogSendListener listener = new EventLogSendListener() {
       @Override
       public void onLogsSend(int succeed, int failed, int totalLocalFiles) {
-        EventLogSystemLogger.logFilesSend(recorderId, totalLocalFiles, succeed, failed);
+        EventLogSystemLogger.logFilesSend(recorderId, totalLocalFiles, succeed, failed, false);
       }
     };
 

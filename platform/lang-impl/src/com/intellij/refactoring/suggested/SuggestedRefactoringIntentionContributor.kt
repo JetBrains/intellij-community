@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
+import org.jetbrains.annotations.NonNls
 
 class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
   private val icon = AllIcons.Actions.SuggestedRefactoringBulb
@@ -31,7 +33,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     if (state == null) return
 
     val declaration = state.declaration
-    if (!declaration.isValid) return
+    if (!declaration.isValid || state.errorLevel == ErrorLevel.INCONSISTENT) return
     if (hostFile != declaration.containingFile) return
 
     val refactoringSupport = state.refactoringSupport
@@ -44,11 +46,11 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
       return
     }
 
-    if (state.syntaxError) return
+    if (state.errorLevel != ErrorLevel.NO_ERRORS) return
 
     state = refactoringSupport.availability.refineSignaturesWithResolve(state)
 
-    if (state.syntaxError || state.oldSignature == state.newSignature) {
+    if (state.errorLevel == ErrorLevel.SYNTAX_ERROR || state.oldSignature == state.newSignature) {
       val document = PsiDocumentManager.getInstance(project).getDocument(hostFile)!!
       val modificationStamp = document.modificationStamp
       ApplicationManager.getApplication().invokeLater {
@@ -101,6 +103,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
   ) : IntentionAction, PriorityAction {
     override fun getPriority() = PriorityAction.Priority.TOP
 
+    @NonNls
     override fun getFamilyName() = "Suggested Refactoring"
 
     override fun getText() = text

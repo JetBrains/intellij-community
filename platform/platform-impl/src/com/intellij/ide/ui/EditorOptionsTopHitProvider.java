@@ -4,6 +4,7 @@ package com.intellij.ide.ui;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -42,23 +43,23 @@ public final class EditorOptionsTopHitProvider implements OptionsTopHitProvider.
     return ID;
   }
 
-  static BooleanOptionDescription editor(String option, String field) {
+  static BooleanOptionDescription editor(String option, @NonNls String field) {
     return option(option, field, "preferences.editor");
   }
 
-  static BooleanOptionDescription editorTabs(String option, String field) {
+  static BooleanOptionDescription editorTabs(String option, @NonNls String field) {
     return AppearanceOptionsTopHitProvider.option(option, field, "editor.preferences.tabs");
   }
 
-  static BooleanOptionDescription option(String option, String field, String configurableId) {
+  static BooleanOptionDescription option(String option, @NonNls String field, @NonNls String configurableId) {
     return new EditorOptionDescription(field, option, configurableId);
   }
 
-  static BooleanOptionDescription editorApp(String option, String field) {
+  static BooleanOptionDescription editorApp(String option, @NonNls String field) {
     return option(option, field, "editor.preferences.appearance");
   }
 
-  static BooleanOptionDescription editorCode(String option, String field) {
+  static BooleanOptionDescription editorCode(String option, @NonNls String field) {
     return new DaemonCodeAnalyzerOptionDescription(field, option, "editor.preferences.appearance");
   }
 

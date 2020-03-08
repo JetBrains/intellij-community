@@ -28,13 +28,18 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.impl.VcsLogContentProvider;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutableManager;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryImpl;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +86,8 @@ public class GitShowExternalLogAction extends DumbAwareAction {
       MyContentComponent component = createManagerAndContent(project, vcs, roots, true);
       Content content = ContentFactory.SERVICE.getInstance().createContent(component, tabName, false);
       content.setDisposer(component.myDisposable);
-      content.setDescription("Log for " + StringUtil.join(roots, VirtualFile::getPath, "\n"));
+      content.setDescription(GitBundle.message("git.log.external.tab.description",
+                                               StringUtil.join(roots, VirtualFile::getPath, "\n")));
       content.setCloseable(true);
       cm.addContent(content);
       cm.setSelectedContent(content);
@@ -125,7 +131,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
 
   @NotNull
   private static String calcTabName(@NotNull ContentManager cm, @NotNull List<? extends VirtualFile> roots) {
-    String name = VcsLogContentProvider.TAB_NAME + " (" + roots.get(0).getName();
+    String name = VcsLogBundle.message("vcs.log.tab.name") + " (" + roots.get(0).getName();
     if (roots.size() > 1) {
       name += "+";
     }
@@ -165,14 +171,13 @@ public class GitShowExternalLogAction extends DumbAwareAction {
                                                   @NotNull GitVcs vcs,
                                                   @NotNull ContentManager cm,
                                                   @NotNull List<VirtualFile> requestedRoots) {
-    VirtualFile[] projectRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
-    if (Comparing.haveEqualElements(requestedRoots, Arrays.asList(projectRoots))) {
-      Content[] contents = cm.getContents();
-      for (Content content : contents) {
-        if (VcsLogContentProvider.TAB_NAME.equals(content.getDisplayName())) {
-          cm.setSelectedContent(content);
-          return true;
-        }
+    List<VirtualFile> projectRoots = Arrays.asList(ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs));
+    if (projectRoots.containsAll(requestedRoots)) {
+      if (requestedRoots.containsAll(projectRoots)) {
+        return VcsLogContentUtil.selectMainLog(cm);
+      } else {
+        VcsLogFilterCollection filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromRoots(requestedRoots));
+        return VcsProjectLog.getInstance(project).openLogTab(filters) != null;
       }
     }
     return false;
@@ -209,7 +214,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     @NotNull private final GitVcs myVcs;
 
     private ShowLogInDialogTask(@NotNull Project project, @NotNull List<VirtualFile> roots, @NotNull GitVcs vcs) {
-      super(project, "Loading Git Log...", true);
+      super(project, GitBundle.message("git.log.external.loading.process"), true);
       myProject = project;
       myRoots = roots;
       myVcs = vcs;
@@ -228,7 +233,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
         MyContentComponent content = createManagerAndContent(myProject, myVcs, myRoots, false);
         WindowWrapper window = new WindowWrapperBuilder(WindowWrapper.Mode.FRAME, content)
           .setProject(myProject)
-          .setTitle("Git Log")
+          .setTitle(GitBundle.message("git.log.external.window.title"))
           .setPreferredFocusedComponent(content)
           .setDimensionServiceKey(GitShowExternalLogAction.class.getName())
           .build();

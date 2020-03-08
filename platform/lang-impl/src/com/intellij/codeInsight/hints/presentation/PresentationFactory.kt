@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import java.awt.*
 import java.awt.event.MouseEvent
@@ -34,8 +35,9 @@ import kotlin.math.ceil
 import kotlin.math.max
 
 /**
- * Users of InlayHintsFactory should use interface instead
+ * Contains non-stable and not well-designed API. Will be changed in 2020.2
  */
+@ApiStatus.Experimental
 class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFactory {
   @Contract(pure = true)
   override fun smallText(text: String): InlayPresentation {
@@ -63,13 +65,28 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
   }
 
 
+  override fun mouseHandling(base: InlayPresentation, clickListener: ClickListener?, hoverListener: HoverListener?): InlayPresentation {
+    return MouseHandlingPresentation(base, clickListener, hoverListener)
+  }
+
   @Contract(pure = true)
-  override fun mouseHandling(
+  @Deprecated(message = "Bad API for Java, use mouseHandling with ClickListener")
+  fun mouseHandling(
     base: InlayPresentation,
     clickListener: ((MouseEvent, Point) -> Unit)?,
     hoverListener: HoverListener?
   ): InlayPresentation {
-    return MouseHandlingPresentation(base, clickListener, hoverListener)
+    val adapter = if (clickListener != null) {
+      object : ClickListener {
+        override fun onClick(event: MouseEvent, translated: Point) {
+          clickListener.invoke(event, translated)
+        }
+      }
+    }
+    else {
+      null
+    }
+    return mouseHandling(base, adapter, hoverListener)
   }
 
   @Contract(pure = true)
@@ -95,7 +112,6 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
    * Intended to be used with [smallText]
    */
   @Contract(pure = true)
-  @Deprecated(message = "", replaceWith = ReplaceWith("container"))
   fun roundWithBackground(base: InlayPresentation): InlayPresentation {
     val rounding = withInlayAttributes(RoundWithBackgroundPresentation(
       InsetPresentation(
@@ -255,22 +271,26 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
 
   @Contract(pure = true)
   fun referenceOnHover(base: InlayPresentation, clickListener: ClickListener): InlayPresentation {
-    return object: ChangeOnHoverPresentation(base, hover = {
-      val handCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      editor.setCustomCursor(this@PresentationFactory, handCursor)
-      onClick(
-        base = withReferenceAttributes(base),
-        buttons = EnumSet.of(MouseButton.Left, MouseButton.Middle),
-        onClick = { e, p ->
-          clickListener.onClick(e, p)
-        }
-      )
-    }, onHoverPredicate = { true }) {
-      override fun mouseExited() {
-        super.mouseExited()
+    val delegate = DynamicDelegatePresentation(base)
+    val hovered = onClick(
+      base = withReferenceAttributes(base),
+      buttons = EnumSet.of(MouseButton.Left, MouseButton.Middle),
+      onClick = { e, p ->
+        clickListener.onClick(e, p)
+      }
+    )
+    return OnHoverPresentation(delegate, object : HoverListener {
+      override fun onHover(event: MouseEvent, translated: Point) {
+        val handCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+        editor.setCustomCursor(this@PresentationFactory, handCursor)
+        delegate.delegate = hovered
+      }
+
+      override fun onHoverFinished() {
+        delegate.delegate = base
         editor.setCustomCursor(this@PresentationFactory, null)
       }
-    }
+    })
   }
 
   @Contract(pure = true)

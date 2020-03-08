@@ -69,7 +69,8 @@ public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata>
         performAction(project, ui, Objects.requireNonNull(getFirstItem(details)), e);
       }
     }, t -> VcsBalloonProblemNotifier.showOverChangesView(project,
-                                                          VcsLogBundle.message("vcs.log.file.history.could.not.load.selected.commits", t.getMessage()),
+                                                          VcsLogBundle.message(
+                                                            "file.history.action.could.not.load.selected.commits.message", t.getMessage()),
                                                           MessageType.ERROR), null);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.conflicts
 
 import com.intellij.ide.util.PropertiesComponent
@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
+import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil.spaceAndThinSpace
 import com.intellij.util.ui.tree.TreeUtil
@@ -69,7 +70,19 @@ class GitConflictsPanel(
       add(ScrollPaneFactory.createScrollPane(conflictsTree), BorderLayout.CENTER)
     }
 
-    conflictsTree.setDoubleClickHandler { showMergeWindowForSelection() }
+    conflictsTree.setDoubleClickHandler { e ->
+      when {
+        EditSourceOnDoubleClickHandler.isToggleEvent(conflictsTree, e) -> false
+        else -> {
+          showMergeWindowForSelection()
+          true
+        }
+      }
+    }
+    conflictsTree.setEnterKeyHandler {
+      showMergeWindowForSelection()
+      true
+    }
 
     val connection = project.messageBus.connect(this)
     connection.subscribe(GitConflictsHolder.CONFLICTS_CHANGE, GitConflictsHolder.ConflictsListener { updateConflicts() })
@@ -278,4 +291,6 @@ private class MyChangesTree(project: Project)
     })
     return groupingSupport
   }
+
+  override fun getToggleClickCount(): Int = 2
 }

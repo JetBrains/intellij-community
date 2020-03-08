@@ -909,7 +909,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myDuplicates = new ArrayList<>();
   }
 
-  private int estimateDuplicatesCount() {
+  protected int estimateDuplicatesCount() {
     PsiElement[] elements = getFilteredElements();
 
     ReturnValue value;

@@ -292,7 +292,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   @Override
   public void loadState(@NotNull final SvnMappingSavedPart state) {
     ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).addInitializationRequest(
-      VcsInitObject.AFTER_COMMON, (DumbAwareRunnable)() -> getApplication().executeOnPooledThread(() -> {
+      VcsInitObject.AFTER_COMMON, () -> getApplication().executeOnPooledThread(() -> {
         SvnMapping mapping = new SvnMapping();
         SvnMapping realMapping = new SvnMapping();
         try {

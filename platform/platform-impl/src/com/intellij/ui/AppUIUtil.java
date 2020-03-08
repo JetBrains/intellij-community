@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.ConsentSettingsUi;
@@ -368,12 +369,12 @@ public final class AppUIUtil {
       protected Action @NotNull [] createActions() {
         if (consents.size() > 1) {
           Action[] actions = super.createActions();
-          setOKButtonText("Save");
-          setCancelButtonText("Skip");
+          setOKButtonText(IdeBundle.message("button.save"));
+          setCancelButtonText(IdeBundle.message("button.skip"));
           return actions;
         }
         setOKButtonText(consents.iterator().next().getName());
-        return new Action[]{getOKAction(), new DialogWrapperAction("Don't send") {
+        return new Action[]{getOKAction(), new DialogWrapperAction(IdeBundle.message("button.don.t.send")) {
           @Override
           protected void doAction(ActionEvent e) {
             close(NEXT_USER_EXIT_CODE);
@@ -391,7 +392,7 @@ public final class AppUIUtil {
     };
     ui.reset(consents);
     dialog.setModal(true);
-    dialog.setTitle("Data Sharing");
+    dialog.setTitle(IdeBundle.message("dialog.title.data.sharing"));
     dialog.pack();
     if (consents.size() < 2) {
       dialog.setSize(dialog.getWindow().getWidth(), dialog.getWindow().getHeight() + JBUIScale.scale(75));

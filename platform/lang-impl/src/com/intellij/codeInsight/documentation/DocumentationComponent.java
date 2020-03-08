@@ -122,8 +122,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private SmartPsiElementPointer<PsiElement> myElement;
   private long myModificationCount;
 
-  private static final String QUICK_DOC_FONT_SIZE_OLD_PROPERTY = "quick.doc.font.size";
-  private static final String QUICK_DOC_FONT_SIZE_PROPERTY = "quick.doc.font.size.v2";
+  private static final String QUICK_DOC_FONT_SIZE_V1_PROPERTY = "quick.doc.font.size"; // 2019.3 or earlier versions
+  private static final String QUICK_DOC_FONT_SIZE_V2_PROPERTY = "quick.doc.font.size.v2"; // 2020.1 EAP
+  private static final String QUICK_DOC_FONT_SIZE_V3_PROPERTY = "quick.doc.font.size.v3"; // 2020.1 or later versions
 
   private final Stack<Context> myBackStack = new Stack<>();
   private final Stack<Context> myForwardStack = new Stack<>();
@@ -619,25 +620,38 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   @NotNull
   public static FontSize getQuickDocFontSize() {
-    FontSize fontSize = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_PROPERTY);
-    if (fontSize != null) return fontSize;
-    FontSize oldFontSize = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_OLD_PROPERTY);
-    if (oldFontSize != null) {
-      // migrate old-scale setting
-      PropertiesComponent.getInstance().unsetValue(QUICK_DOC_FONT_SIZE_OLD_PROPERTY);
-      FontSize newFontSize = oldFontSize == FontSize.X_LARGE ? FontSize.XX_LARGE
-                                                             : oldFontSize == FontSize.LARGE ? FontSize.X_LARGE
-                                                                                             : oldFontSize;
-      setQuickDocFontSize(newFontSize);
-      return newFontSize;
+    FontSize v1 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V1_PROPERTY, true);
+    FontSize v2 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V2_PROPERTY, true);
+    FontSize v3 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V3_PROPERTY, false);
+    if (v3 != null) {
+      return v3;
+    }
+    if (v2 != null) {
+      v3 = migrateV2ToV3(v2);
+      setQuickDocFontSize(v3);
+      return v3;
+    }
+    if (v1 != null) {
+      v3 = migrateV2ToV3(migrateV1ToV2(v1));
+      setQuickDocFontSize(v3);
+      return v3;
     }
     return FontSize.SMALL;
   }
 
+  private static @NotNull FontSize migrateV1ToV2(@NotNull FontSize size) {
+    return size == FontSize.X_LARGE ? FontSize.XX_LARGE : size == FontSize.LARGE ? FontSize.X_LARGE : size;
+  }
+
+  private static @NotNull FontSize migrateV2ToV3(@NotNull FontSize size) {
+    return size == FontSize.X_SMALL ? FontSize.XX_SMALL : size == FontSize.SMALL ? FontSize.X_SMALL : size;
+  }
+
   @Nullable
-  private static FontSize readFontSizeFromSettings(@NotNull String propertyName) {
+  private static FontSize readFontSizeFromSettings(@NotNull String propertyName, boolean unsetAfterReading) {
     String strValue = PropertiesComponent.getInstance().getValue(propertyName);
     if (strValue != null) {
+      if (unsetAfterReading) PropertiesComponent.getInstance().unsetValue(propertyName);
       try {
         return FontSize.valueOf(strValue);
       }
@@ -647,7 +661,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public static void setQuickDocFontSize(@NotNull FontSize fontSize) {
-    PropertiesComponent.getInstance().setValue(QUICK_DOC_FONT_SIZE_PROPERTY, fontSize.toString());
+    PropertiesComponent.getInstance().setValue(QUICK_DOC_FONT_SIZE_V3_PROPERTY, fontSize.toString());
   }
 
   public boolean isEmpty() {
@@ -1243,7 +1257,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     BackAction() {
-      super(CodeInsightBundle.lazyMessage("javadoc.action.back"), AllIcons.Actions.Back);
+      super(CodeInsightBundle.messagePointer("javadoc.action.back"), AllIcons.Actions.Back);
     }
 
     @Override
@@ -1263,7 +1277,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ForwardAction() {
-      super(CodeInsightBundle.lazyMessage("javadoc.action.forward"), AllIcons.Actions.Forward);
+      super(CodeInsightBundle.messagePointer("javadoc.action.forward"), AllIcons.Actions.Forward);
     }
 
     @Override
@@ -1286,7 +1300,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     private EditDocumentationSourceAction() {
       super(true);
       getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
-      getTemplatePresentation().setText(CodeInsightBundle.lazyMessage("action.presentation.DocumentationComponent.text"));
+      getTemplatePresentation().setText(CodeInsightBundle.messagePointer("action.presentation.DocumentationComponent.text"));
     }
 
     @Override
@@ -1577,7 +1591,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         applyFontProps();
         // resize popup according to new font size, if user didn't set popup size manually
         if (!myManuallyResized && myHint != null && myHint.getDimensionServiceKey() == null) showHint();
-      });
+      }, DocumentationComponent.this);
     }
   }
 
@@ -1663,7 +1677,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowToolbarAction() {
-      super(CodeInsightBundle.lazyMessage("javadoc.show.toolbar"));
+      super(CodeInsightBundle.messagePointer("javadoc.show.toolbar"));
     }
 
     @Override
@@ -1752,7 +1766,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ShowAsToolwindowAction() {
-      super(CodeInsightBundle.lazyMessage("javadoc.open.as.tool.window"));
+      super(CodeInsightBundle.messagePointer("javadoc.open.as.tool.window"));
     }
 
     @Override
@@ -1775,7 +1789,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     RestoreDefaultSizeAction() {
-      super(CodeInsightBundle.lazyMessage("javadoc.restore.size"));
+      super(CodeInsightBundle.messagePointer("javadoc.restore.size"));
     }
 
     @Override

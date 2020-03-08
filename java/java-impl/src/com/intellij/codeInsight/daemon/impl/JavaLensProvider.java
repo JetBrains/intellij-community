@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaLensSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaTelescope;
@@ -9,6 +8,8 @@ import com.intellij.codeInsight.hints.*;
 import com.intellij.codeInsight.hints.presentation.*;
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
@@ -30,6 +31,10 @@ import java.util.List;
 
 public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
   private static final SettingsKey<JavaLensSettings> KEY = new SettingsKey<>("JavaLens");
+  private static final String FUS_GROUP_ID = "java.lens";
+  private static final String USAGES_CLICKED_EVENT_ID = "usages.clicked";
+  private static final String IMPLEMENTATIONS_CLICKED_EVENT_ID = "implementations.clicked";
+  private static final String SETTING_CLICKED_EVENT_ID = "setting.clicked";
 
   public interface InlResult {
     void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event);
@@ -48,6 +53,8 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
       @Override
       public boolean collect(@NotNull PsiElement element, @NotNull Editor editor, @NotNull InlayHintsSink sink) {
         if (!(element instanceof PsiMember) || element instanceof PsiTypeParameter) return true;
+        PsiElement prevSibling = element.getPrevSibling();
+        if (!(prevSibling instanceof PsiWhiteSpace && prevSibling.textContains('\n'))) return true;
         PsiMember member = (PsiMember)element;
         if (member.getName() == null) return true;
 
@@ -58,6 +65,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
             hints.add(new InlResult() {
               @Override
               public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
+                FUCounterUsageLogger.getInstance().logEvent(file.getProject(), FUS_GROUP_ID, USAGES_CLICKED_EVENT_ID);
                 GotoDeclarationAction.startFindUsages(editor, file.getProject(), element, new RelativePoint(event));
               }
 
@@ -76,6 +84,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
               hints.add(new InlResult() {
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
+                  FUCounterUsageLogger.getInstance().logEvent(file.getProject(), FUS_GROUP_ID, IMPLEMENTATIONS_CLICKED_EVENT_ID);
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.SUBCLASSED_CLASS.getNavigationHandler();
                   navigationHandler.navigate(event, ((PsiClass)element).getNameIdentifier());
                 }
@@ -95,6 +104,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
               hints.add(new InlResult() {
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
+                  FUCounterUsageLogger.getInstance().logEvent(file.getProject(), FUS_GROUP_ID, IMPLEMENTATIONS_CLICKED_EVENT_ID);
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.OVERRIDDEN_METHOD.getNavigationHandler();
                   navigationHandler.navigate(event, ((PsiMethod)element).getNameIdentifier());
                 }
@@ -200,6 +210,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
       @Override
       public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
         Project project = element.getProject();
+        FUCounterUsageLogger.getInstance().logEvent(project, FUS_GROUP_ID, SETTING_CLICKED_EVENT_ID);
         InlayHintsConfigurable.showSettingsDialogForLanguage(project, element.getLanguage());
       }
 
@@ -222,7 +233,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
   @NotNull
   @Override
   public String getName() {
-    return CommonBundle.message("title.lenses");
+    return JavaBundle.message("title.lenses");
   }
 
   @NotNull

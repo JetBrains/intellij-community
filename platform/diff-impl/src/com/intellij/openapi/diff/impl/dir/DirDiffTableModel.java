@@ -58,10 +58,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private static final Logger LOG = Logger.getInstance(DirDiffTableModel.class);
 
   public static final Key<JBLoadingPanel> DECORATOR_KEY = Key.create("DIFF_TABLE_DECORATOR");
-  public static final String COLUMN_OPERATION = "*";
-  public static final String COLUMN_NAME = "Name";
-  public static final String COLUMN_SIZE = "Size";
-  public static final String COLUMN_DATE = "Date";
+
+  public enum ColumnType {OPERATION, NAME, SIZE, DATE}
+
   public static final String EMPTY_STRING = StringUtil.repeatSymbol(' ', 50);
 
   @Nullable private final Project myProject;
@@ -210,7 +209,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     else {
       right = "..." + text.substring(text.length() - LEN + 2);
     }
-    return "Loading... " + right;
+    return DiffBundle.message("label.dirdiff.loading.file", right);
   }
 
   void fireUpdateStarted() {
@@ -433,7 +432,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public String getTitle() {
-    if (myDisposed) return "Diff";
+    if (myDisposed) return DiffBundle.message("diff.files.dialog.title");
     if (mySource instanceof VirtualFileDiffElement &&
         myTarget instanceof VirtualFileDiffElement) {
       VirtualFile srcFile = ((VirtualFileDiffElement)mySource).getValue();
@@ -498,13 +497,15 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         return columnIndex == 0 ? element.getName() : null;
       }
 
-      final String name = getColumnName(columnIndex);
+      final ColumnType columnType = getColumnType(columnIndex);
       boolean isSrc = columnIndex < getColumnCount() / 2;
-      if (name.equals(COLUMN_NAME)) {
+      if (columnType == ColumnType.NAME) {
         return isSrc ? element.getSourcePresentableName() : element.getTargetPresentableName();
-      } else if (name.equals(COLUMN_SIZE)) {
+      }
+      else if (columnType == ColumnType.SIZE) {
         return isSrc ? element.getSourceSize() : element.getTargetSize();
-      } else  if (name.equals(COLUMN_DATE)) {
+      }
+      else if (columnType == ColumnType.DATE) {
         return isSrc ? element.getSourceModificationDate() : element.getTargetModificationDate();
       }
       return "";
@@ -533,19 +534,40 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return elements;
   }
 
-  @Override
-  public String getColumnName(int column) {
+  @NotNull
+  public ColumnType getColumnType(int column) {
     final int count = (getColumnCount() - 1) / 2;
-    if (column == count) return COLUMN_OPERATION;
+    if (column == count) return ColumnType.OPERATION;
     if (column > count) {
       column = getColumnCount() - 1 - column;
     }
     switch (column) {
-      case 0: return COLUMN_NAME;
-      case 1: return mySettings.showSize ? COLUMN_SIZE : COLUMN_DATE;
-      case 2: return COLUMN_DATE;
+      case 0:
+        return ColumnType.NAME;
+      case 1:
+        return mySettings.showSize ? ColumnType.SIZE : ColumnType.DATE;
+      case 2:
+        return ColumnType.DATE;
+      default:
+        throw new IllegalArgumentException(String.valueOf(column));
     }
-    return "";
+  }
+
+  @Override
+  public String getColumnName(int column) {
+    ColumnType type = getColumnType(column);
+    switch (type) {
+      case OPERATION:
+        return "*"; // NON-NLS
+      case NAME:
+        return DiffBundle.message("column.dirdiff.name");
+      case SIZE:
+        return DiffBundle.message("column.dirdiff.size");
+      case DATE:
+        return DiffBundle.message("column.dirdiff.date");
+      default:
+        return type.name();
+    }
   }
 
   @Nullable

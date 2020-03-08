@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.execution;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,22 +48,21 @@ public class ParametersListUtil {
    */
   @NotNull
   public static String join(@NotNull final List<? extends CharSequence> parameters) {
-    return encode(parameters);
+    return join(parameters, ParametersListUtil::escape);
   }
 
   /**
+   * @param escapeFunction defines how to handle (quote/escape) special characters in each command line argument
    * @see ParametersListUtil#join(List)
-   * @param commandLineArgumentEncoder used to handle (quote or escape) special characters in command line argument
    */
-  @NotNull
-  public static String join(@NotNull final List<? extends CharSequence> parameters,
-                            @NotNull CommandLineArgumentEncoder commandLineArgumentEncoder) {
-    return encode(parameters, commandLineArgumentEncoder);
+  public static <T extends CharSequence> @NotNull String join(@NotNull List<? extends T> parameters,
+                                                              @NotNull Function<? super T, ? extends CharSequence> escapeFunction) {
+    return StringUtil.join(parameters, escapeFunction, " ");
   }
 
   @NotNull
   public static String join(final String... parameters) {
-    return encode(Arrays.asList(parameters));
+    return join(Arrays.asList(parameters));
   }
 
   /**
@@ -181,30 +180,23 @@ public class ParametersListUtil {
     return params;
   }
 
-  @NotNull
-  private static String encode(@NotNull final List<? extends CharSequence> parameters) {
-    return encode(parameters, CommandLineArgumentEncoder.DEFAULT_ENCODER);
-  }
-
-  @NotNull
-  private static String encode(@NotNull final List<? extends CharSequence> parameters,
-                               @NotNull CommandLineArgumentEncoder commandLineArgumentEncoder) {
-    if (parameters.isEmpty()) {
-      return "";
+  /**
+   * Escapes a single argument. The escaping strategy conforms to the implementation of {@link #parse}
+   * so that the following invariants are held:
+   * <pre>
+   *   assert parse(escape(arg)).size() == 1;
+   *   assert parse(escape(arg)).get(0).equals(arg);
+   * </pre>
+   */
+  public static @NotNull String escape(@NotNull CharSequence argument) {
+    final StringBuilder builder = new StringBuilder(argument);
+    StringUtil.escapeQuotes(builder);
+    if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0 || StringUtil.indexOf(builder, '|') >= 0) {
+      // don't let a trailing backslash (if any) unintentionally escape the closing quote
+      int numTrailingBackslashes = builder.length() - StringUtil.trimTrailing(builder, '\\').length();
+      StringUtil.quote(builder);
+      StringUtil.repeatSymbol(builder, '\\', numTrailingBackslashes);
     }
-
-    final StringBuilder buffer = new StringBuilder();
-    final StringBuilder paramBuilder = new StringBuilder();
-    for (CharSequence parameter : parameters) {
-      if (buffer.length() > 0) {
-        buffer.append(' ');
-      }
-
-      paramBuilder.append(parameter);
-      commandLineArgumentEncoder.encodeArgument(paramBuilder);
-      buffer.append(paramBuilder);
-      paramBuilder.setLength(0);
-    }
-    return buffer.toString();
+    return builder.toString();
   }
 }

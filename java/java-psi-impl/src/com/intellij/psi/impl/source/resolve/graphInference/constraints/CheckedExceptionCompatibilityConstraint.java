@@ -39,7 +39,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
   }
 
   @Override
-  public boolean reduce(final InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(final InferenceSession session, List<? super ConstraintFormula> constraints) {
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
       return true;
     }
@@ -164,8 +164,8 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
   @Override
   protected void collectReturnTypeVariables(InferenceSession session,
                                             PsiExpression psiExpression,
-                                            PsiType returnType, 
-                                            Set<InferenceVariable> result) {
+                                            PsiType returnType,
+                                            Set<? super InferenceVariable> result) {
     session.collectDependencies(returnType, result);
   }
 }

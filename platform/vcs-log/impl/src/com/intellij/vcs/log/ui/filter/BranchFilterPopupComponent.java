@@ -36,7 +36,7 @@ public class BranchFilterPopupComponent
 
   public BranchFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                                     @NotNull VcsLogClassicFilterUi.BranchFilterModel filterModel) {
-    super("Branch", VcsLogBundle.lazyMessage("vcs.log.branch.filter.label"), uiProperties, filterModel);
+    super("Branch", VcsLogBundle.messagePointer("vcs.log.branch.filter.label"), uiProperties, filterModel);
     myBranchFilterModel = filterModel;
   }
 
@@ -142,7 +142,7 @@ public class BranchFilterPopupComponent
 
     @Override
     protected void createFavoritesAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> favorites) {
-      actionGroup.add(new PredefinedValueAction(favorites, VcsLogBundle.lazyMessage("vcs.log.branch.filter.favorites"), false));
+      actionGroup.add(new PredefinedValueAction(favorites, VcsLogBundle.messagePointer("vcs.log.branch.filter.favorites"), false));
     }
 
     private class BranchFilterAction extends PredefinedValueAction {

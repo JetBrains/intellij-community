@@ -243,11 +243,6 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   }
 
   @Override
-  public boolean isFresh() {
-    return getCurrentRevision() == null;
-  }
-
-  @Override
   public void update() {
     if (ApplicationManager.getApplication().isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error("Reading Git repository information should not be done on the EDT");

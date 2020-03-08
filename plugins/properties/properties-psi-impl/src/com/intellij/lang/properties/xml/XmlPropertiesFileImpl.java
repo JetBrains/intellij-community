@@ -20,6 +20,7 @@ import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.PropertyKeyValueFormat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -155,9 +156,8 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
     return new XmlProperty(addedEntry, this);
   }
 
-  @NotNull
   @Override
-  public IProperty addProperty(@NotNull String key, @NotNull String value) {
+  public @NotNull IProperty addProperty(@NotNull String key, @NotNull String value, @NotNull PropertyKeyValueFormat format) {
     final XmlTag entry = createPropertyTag(key, value);
     synchronized (myLock) {
       ensurePropertiesLoaded();

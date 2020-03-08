@@ -2,6 +2,7 @@
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,7 +27,7 @@ public class AnalyzeDependenciesOnSpecifiedTargetAction extends AnAction {
     final Presentation presentation = e.getPresentation();
     if (module != null && scope != null) {
       presentation.setVisible(true);
-      presentation.setText("Analyze Dependencies of Module '" + module.getName() + "' on " + scope.getDisplayName());
+      presentation.setText(CodeInsightBundle.message("analyze.dependencies.on.scope.action.text", module.getName(), scope.getDisplayName()));
     }
     else {
       presentation.setVisible(false);

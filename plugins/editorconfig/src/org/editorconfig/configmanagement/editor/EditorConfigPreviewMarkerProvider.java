@@ -42,9 +42,8 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
     return "Code preview";
   }
 
-  @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     if (element instanceof EditorConfigHeader) {
       ActionGroup actionGroup = createActions((EditorConfigHeader)element);
       PsiElement child = element.getFirstChild();

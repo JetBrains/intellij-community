@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import com.intellij.util.ui.UIUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -73,7 +74,19 @@ fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: String): Gi
     val gitStatusOutput = parseGitStatusOutput(output)
     return gitStatusOutput.firstOrNull() ?: GitFileStatus.Blank
   }
-  return GitFileStatus.Blank
+  
+  val repositoryPath = getFilePath(root, filePath, executable) ?: return GitFileStatus.Blank
+  return GitFileStatus.NotChanged(repositoryPath)
+}
+
+@Throws(VcsException::class)
+fun getFilePath(root: VirtualFile, filePath: FilePath, executable: String): String? {
+  val handler = GitLineHandler(null, VfsUtilCore.virtualToIoFile(root),
+                               executable, GitCommand.LS_FILES, emptyList())
+  handler.addParameters("--full-name")
+  handler.addRelativePaths(filePath)
+  handler.setSilent(true)
+  return Git.getInstance().runCommand(handler).getOutputOrThrow().lines().firstOrNull()
 }
 
 @Throws(VcsException::class)
@@ -121,6 +134,10 @@ sealed class GitFileStatus {
     override fun getFileStatus(): FileStatus = FileStatus.NOT_CHANGED
   }
 
+  data class NotChanged(val path: String) : GitFileStatus() {
+    override fun getFileStatus(): FileStatus = FileStatus.NOT_CHANGED
+  }
+
   data class StatusRecord(val index: StatusCode,
                           val workTree: StatusCode,
                           val path: String,
@@ -141,6 +158,7 @@ sealed class GitFileStatus {
 fun GitFileStatus.isTracked(): Boolean {
   return when (this) {
     GitFileStatus.Blank -> false
+    is GitFileStatus.NotChanged -> true
     is GitFileStatus.StatusRecord -> !setOf('?', '!').contains(index)
   }
 }
@@ -148,6 +166,7 @@ fun GitFileStatus.isTracked(): Boolean {
 val GitFileStatus.repositoryPath: String?
   get() = when (this) {
     GitFileStatus.Blank -> null
+    is GitFileStatus.NotChanged -> path
     is GitFileStatus.StatusRecord -> if (!isTracked() || index == 'A' || workTree == 'A') null else origPath ?: path
   }
 
@@ -157,7 +176,7 @@ val GitFileStatus.color: Color?
 @Nls
 fun GitFileStatus.getPresentation(): String {
   return when (this) {
-    GitFileStatus.Blank -> ""
+    GitFileStatus.Blank, is GitFileStatus.NotChanged -> ""
     is GitFileStatus.StatusRecord -> getPresentation()
   }
 }
@@ -187,7 +206,7 @@ private fun GitFileStatus.StatusRecord.getPresentation(): String {
   val workTreePresentation = if (workTree == ' ') "" else GitBundle.message("git.status.work.tree", getPresentation(workTree))
   if (indexPresentation.isBlank()) return "$fileName: $workTreePresentation"
   if (workTreePresentation.isBlank()) return "$fileName: $indexPresentation"
-  return "$fileName:<br/>$indexPresentation<br/>$workTreePresentation"
+  return "$fileName:${UIUtil.BR}$indexPresentation${UIUtil.BR}$workTreePresentation"
 }
 
 @Nls

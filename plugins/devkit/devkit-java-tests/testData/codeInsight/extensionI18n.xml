@@ -53,8 +53,9 @@
     <generalOptionsProvider key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
                             bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
-    <typeName resourceKey="my.key"/>
-    <typeName resourceKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+    <typeName className="java.lang.String" resourceKey="my.key"/>
+    <typeName className="java.lang.String"
+              resourceKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
               resourceBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
     <intentionAction>

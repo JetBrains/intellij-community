@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -207,9 +207,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Eclipse JDT Core", attachedTo: "intellij.platform.jps.build", version: "4.2.1", license: "CPL 1.0",
                        url: "http://www.eclipse.org/jdt/core/index.php"),
     new LibraryLicense(name: "Eclipse Layout Kernel", libraryName: "eclipse-layout-kernel", license: "Eclipse Public License 1.0"),
-    new LibraryLicense(name: "EdDSA-Java", libraryName: "trilead-ssh2", transitiveDependency: true, version: "0.2.0", license: "CC0 1.0 Universal",
-                       licenseUrl: "https://github.com/str4d/ed25519-java/blob/master/LICENSE.txt",
-                       url: "https://github.com/str4d/ed25519-java"),
     new LibraryLicense(name: "EditorConfig Java Core", libraryName: "editorconfig-core-java.jar", version: "1.0", license: "Apache 2.0",
                        url: "https://github.com/editorconfig/editorconfig-core-java/",
                        licenseUrl: "https://github.com/editorconfig/editorconfig-core-java/blob/master/LICENSE"),
@@ -315,8 +312,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://github.com/jaxen-xpath/jaxen/blob/master/LICENSE.txt"),
     new LibraryLicense(libraryName: "jb-jdi", license: "GPL 2.0 + Classpath", url: "https://github.com/JetBrains/intellij-deps-jdi",
                        licenseUrl: "https://raw.githubusercontent.com/JetBrains/intellij-deps-jdi/master/LICENSE.txt"),
-    new LibraryLicense(name: "JBcrypt", libraryName: "trilead-ssh2", transitiveDependency: true, version: "1.0.0", license: "ISC License",
-                       licenseUrl: "https://github.com/jeremyh/jBCrypt/blob/master/LICENSE", url: "https://github.com/jeremyh/jBCrypt"),
     new LibraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License",
                        url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5"),
     new LibraryLicense(name: "JCodings", libraryName: "joni", transitiveDependency: true, version: "1.0.44", license: "MIT",
@@ -553,9 +548,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://thrift.apache.org/"),
     new LibraryLicense(name: "Transport Pipeline", libraryName: "transport-proto", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2", license: "BSD style",
-                       licenseUrl: "https://github.com/jenkinsci/trilead-ssh2/blob/master/LICENSE.txt",
-                       url: "https://github.com/jenkinsci/trilead-ssh2"),
     new LibraryLicense(name: "Trilead SSH build213", libraryName: "trilead-ssh2-build213", version: "build213",
                        license: "BSD style (see LICENSE.txt in trilead-ssh2-build213.jar)", url: "http://www.trilead.com/SSH_Library/"),
     new LibraryLicense(name: "Trove4j (JetBrains's fork)", libraryName: "Trove4j", license: "LGPL", url: "https://github.com/JetBrains/intellij-deps-trove4j",
@@ -616,6 +608,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlin-stdlib-jdk8"),
     jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlinx-coroutines-jdk8"),
+    jetbrainsLibrary("ml-completion-prev-exprs-models"),
     jetbrainsLibrary("precompiled_jshell-frontend"),
     jetbrainsLibrary("rd-core"),
     jetbrainsLibrary("rd-framework"),
@@ -623,5 +616,6 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("rd-text"),
     jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("tips-idea-ce"),
+    jetbrainsLibrary("tips-pycharm-community"),
   ] as List<LibraryLicense>
 }

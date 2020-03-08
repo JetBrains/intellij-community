@@ -13,10 +13,8 @@ import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyCallableParameter;
-import com.jetbrains.python.psi.types.PyCallableParameterImpl;
-import com.jetbrains.python.psi.types.PyStructuralType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,18 +37,17 @@ public final class PyParameterInfoUtils {
     return argumentList;
   }
 
-  public static List<Pair<PyCallExpression, PyCallExpression.PyMarkedCallee>> findCallCandidates(PyArgumentList argumentList) {
+  public static List<Pair<PyCallExpression, PyCallableType>> findCallCandidates(PyArgumentList argumentList) {
     if (argumentList != null) {
       final PyCallExpression call = argumentList.getCallExpression();
       if (call != null) {
         final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argumentList.getProject(), argumentList.getContainingFile());
         final PyResolveContext resolveContext = PyResolveContext.defaultContext().withRemote().withTypeEvalContext(typeEvalContext);
 
-        return PyUtil
-          .filterTopPriorityResults(call.multiResolveCallee(resolveContext))
+        return call.multiResolveCallee(resolveContext)
           .stream()
-          .filter(markedCallee -> markedCallee.getCallableType().getParameters(typeEvalContext) != null)
-          .map(markedCallee -> Pair.createNonNull(call, markedCallee))
+          .filter(callableType -> callableType.getParameters(typeEvalContext) != null)
+          .map(callableType -> Pair.createNonNull(call, callableType))
           .collect(Collectors.toList());
       }
     }
@@ -159,9 +156,9 @@ public final class PyParameterInfoUtils {
                                       @NotNull final Map<Integer, EnumSet<ParameterFlag>> hintFlags,
                                       @NotNull final List<PyExpression> flatArgs,
                                       int currentParamOffset) {
-    final PyCallExpression.PyMarkedCallee callee = mapping.getMarkedCallee();
-    assert callee != null;
-    int lastParamIndex = callee.getImplicitOffset();
+    final PyCallableType callableType = mapping.getCallableType();
+    assert callableType != null;
+    int lastParamIndex = callableType.getImplicitOffset();
     final Map<PyExpression, PyCallableParameter> mappedParameters = mapping.getMappedParameters();
     final Map<PyExpression, PyCallableParameter> mappedTupleParameters = mapping.getMappedTupleParameters();
     for (PyExpression arg : flatArgs) {
@@ -208,7 +205,7 @@ public final class PyParameterInfoUtils {
     return lastParamIndex;
   }
 
-  public static void highlightNext(@NotNull final PyCallExpression.PyMarkedCallee marked,
+  public static void highlightNext(@NotNull final PyCallableType callableType,
                                    @NotNull final List<PyCallableParameter> parameterList,
                                    @NotNull final Map<Integer, PyCallableParameter> indexToNamedParameter,
                                    @NotNull final Map<PyCallableParameter, Integer> parameterToHintIndex,
@@ -225,7 +222,7 @@ public final class PyParameterInfoUtils {
     if (canOfferNext) {
       int highlightIndex = Integer.MAX_VALUE; // initially beyond reason = no highlight
       if (isArgsEmpty) {
-        highlightIndex = marked.getImplicitOffset(); // no args, highlight first (PY-3690)
+        highlightIndex = callableType.getImplicitOffset(); // no args, highlight first (PY-3690)
       }
       else if (lastParamIndex < parameterList.size() - 1) { // lastParamIndex not at end, or no args
         if (!indexToNamedParameter.containsKey(lastParamIndex) || indexToNamedParameter.get(lastParamIndex).isPositionalContainer()) {
@@ -248,7 +245,7 @@ public final class PyParameterInfoUtils {
   }
 
   public static void highlightParameters(PyCallExpression callExpression,
-                                         PyCallExpression.PyMarkedCallee markedCallee,
+                                         PyCallableType callableType,
                                          List<PyCallableParameter> parameters,
                                          PyCallExpression.PyArgumentsMapping mapping,
                                          Map<Integer, PyCallableParameter> indexToNamedParameter,
@@ -256,7 +253,7 @@ public final class PyParameterInfoUtils {
                                          Map<Integer, EnumSet<ParameterFlag>> hintFlags,
                                          int currentParamOffset) {
     // gray out enough first parameters as implicit (self, cls, ...)
-    for (int i = 0; i < markedCallee.getImplicitOffset(); i++) {
+    for (int i = 0; i < callableType.getImplicitOffset(); i++) {
       if (indexToNamedParameter.containsKey(i)) {
         final PyCallableParameter parameter = indexToNamedParameter.get(i);
         hintFlags.get(parameterToHintIndex.get(parameter)).add(ParameterFlag.DISABLE); // show but mark as absent
@@ -267,7 +264,7 @@ public final class PyParameterInfoUtils {
     final int lastParamIndex =
       collectHighlights(mapping, parameters, parameterToHintIndex, hintFlags, flattenedArguments, currentParamOffset);
 
-    highlightNext(markedCallee, parameters, indexToNamedParameter, parameterToHintIndex, hintFlags, flattenedArguments.isEmpty(),
+    highlightNext(callableType, parameters, indexToNamedParameter, parameterToHintIndex, hintFlags, flattenedArguments.isEmpty(),
                   lastParamIndex);
   }
 
@@ -295,19 +292,19 @@ public final class PyParameterInfoUtils {
   }
 
   @Nullable
-  public static ParameterHints buildParameterHints(@NotNull Pair<PyCallExpression, PyCallExpression.PyMarkedCallee> callAndCallee,
+  public static ParameterHints buildParameterHints(@NotNull Pair<PyCallExpression, PyCallableType> callAndCallee,
                                                    int currentParamOffset) {
     final PyCallExpression callExpression = callAndCallee.getFirst();
     PyPsiUtils.assertValid(callExpression);
 
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(callExpression.getProject(), callExpression.getContainingFile());
-    final PyCallExpression.PyMarkedCallee markedCallee = callAndCallee.getSecond();
+    final PyCallableType callableType = callAndCallee.getSecond();
 
-    final List<PyCallableParameter> parameters = markedCallee.getCallableType().getParameters(typeEvalContext);
+    final List<PyCallableParameter> parameters = callableType.getParameters(typeEvalContext);
     if (parameters == null) return null;
 
-    final PyCallExpression.PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(callExpression, markedCallee, typeEvalContext);
-    if (mapping.getMarkedCallee() == null) return null;
+    final PyCallExpression.PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(callExpression, callableType, typeEvalContext);
+    if (mapping.getCallableType() == null) return null;
 
     final Map<Integer, PyCallableParameter> indexToNamedParameter = new HashMap<>(parameters.size());
 
@@ -319,7 +316,7 @@ public final class PyParameterInfoUtils {
     final List<String> hintsList =
       buildParameterListHint(parameters, indexToNamedParameter, parameterToHintIndex, hintFlags, typeEvalContext);
 
-    highlightParameters(callExpression, markedCallee, parameters, mapping, indexToNamedParameter, parameterToHintIndex, hintFlags,
+    highlightParameters(callExpression, callableType, parameters, mapping, indexToNamedParameter, parameterToHintIndex, hintFlags,
                         currentParamOffset);
 
     return new ParameterHints(hintsList, hintFlags);

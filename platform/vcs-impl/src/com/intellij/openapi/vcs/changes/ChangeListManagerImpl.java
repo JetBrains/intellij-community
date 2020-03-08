@@ -59,10 +59,7 @@ import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -324,7 +321,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     }
     else {
       ProjectLevelVcsManagerImpl.getInstanceImpl(myProject)
-        .addInitializationRequest(VcsInitObject.CHANGE_LIST_MANAGER, (DumbAwareRunnable)() -> {
+        .addInitializationRequest(VcsInitObject.CHANGE_LIST_MANAGER, () -> {
           myUpdater.initialized();
           broadcastStateAfterLoad();
           myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
@@ -433,11 +430,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
 
   @Override
   public void scheduleUpdate() {
-    myUpdater.schedule();
-  }
-
-  @Override
-  public void scheduleUpdate(boolean updateUnversionedFiles) {
     myUpdater.schedule();
   }
 
@@ -1513,7 +1505,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   @Override
-  public boolean isFreezedWithNotification(@Nullable String modalTitle) {
+  public boolean isFreezedWithNotification(@Nls @Nullable String modalTitle) {
     final String freezeReason = isFreezed();
     if (freezeReason == null) return false;
 

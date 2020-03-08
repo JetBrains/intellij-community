@@ -186,7 +186,7 @@ public final class Switcher extends AnAction implements DumbAware {
     return createAndShowSwitcher(e, title, "RecentFiles", pinned, vFiles != null);
   }
 
-  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned) {
+  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, @NonNls @NotNull String actionId, boolean onlyEdited, boolean pinned) {
     if (SWITCHER != null && Comparing.equal(SWITCHER.myTitle, title)) return null;
 
     Project project = e.getProject();
@@ -629,7 +629,7 @@ public final class Switcher extends AnAction implements DumbAware {
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), this, myPopup);
       }
       if (!myPinned) {
-        new DumbAwareAction(IdeBundle.lazyMessage("action.AnActionButton.text.suppress.all.actions.to.activate.a.toolwindow")) {
+        new DumbAwareAction(IdeBundle.messagePointer("action.AnActionButton.text.suppress.all.actions.to.activate.a.toolwindow")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             //suppress all actions to activate a toolwindow : IDEA-71277
@@ -884,11 +884,11 @@ public final class Switcher extends AnAction implements DumbAware {
     }
 
     @NotNull
-    private Map<String, ToolWindow> createShortcuts(@NotNull List<ToolWindow> windows) {
+    private static Map<String, ToolWindow> createShortcuts(@NotNull List<ToolWindow> windows) {
       final Map<String, ToolWindow> keymap = new HashMap<>(windows.size());
       final List<ToolWindow> otherTW = new ArrayList<>();
       for (ToolWindow window : windows) {
-        int index = ActivateToolWindowAction.getMnemonicForToolWindow(project, window.getId());
+        int index = ActivateToolWindowAction.getMnemonicForToolWindow(window.getId());
         if (index >= '0' && index <= '9') {
           keymap.put(getIndexShortcut(index - '0'), window);
         }
@@ -1365,7 +1365,7 @@ public final class Switcher extends AnAction implements DumbAware {
         ((NameFilteringListModel)myComponent.toolWindows.getModel()).refilter();
         if (myComponent.files.getModel().getSize() + myComponent.toolWindows.getModel().getSize() == 0) {
           myComponent.toolWindows.getEmptyText().setText("");
-          myComponent.files.getEmptyText().setText("Press 'Enter' to search in Project");
+          myComponent.files.getEmptyText().setText(IdeBundle.message("empty.text.press.enter.to.search.in.project"));
         }
         else {
           myComponent.files.getEmptyText().setText(StatusText.getDefaultEmptyText());

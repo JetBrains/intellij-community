@@ -1,21 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
-import com.intellij.openapi.application.Application
+import com.intellij.ide.plugins.PluginRepositoryRequests
+import com.intellij.ide.plugins.PluginsMetaLoader
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
-import com.intellij.util.Urls
-import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.origin
 import com.intellij.util.net.NetUtils
 import com.intellij.util.text.nullize
@@ -49,25 +48,13 @@ internal class InstallPluginService : RestService() {
     }
   }
 
-  //TODO: replace with `PluginDownloader.getLastCompatiblePluginUpdate` from IDEA-CR-56320
-  private fun getBuildNumberForDownload(): String {
-    val app: Application? = ApplicationManager.getApplication()
-    val appInfo = ApplicationInfoImpl.getShadowInstance()
-    return if (app != null) ApplicationInfo.getInstance().apiVersion else appInfo.build.asString()
-  }
-
   private fun checkCompatibility(request: FullHttpRequest,
                                  context: ChannelHandlerContext,
                                  pluginId: String): Nothing? {
-    //check if there is an update for this IDE with this ID. TODO: replace with `getLastCompatiblePluginUpdate` from IDEA-CR-56320
-    val url = Urls
-      .newFromEncoded(ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/') + "/api/getCompatibleUpdates")
-      .addParameters(mapOf(
-        "build" to getBuildNumberForDownload(),
-        "pluginXmlId" to pluginId,
-        "max" to "1"
-      ))
-    val compatibleUpdateExists = HttpRequests.request(url).readString() != "[]"
+    //check if there is an update for this IDE with this ID.
+    val buildNumber = PluginRepositoryRequests.getBuildForPluginRepositoryRequests()
+    PluginsMetaLoader.getLastCompatiblePluginUpdate(listOf(pluginId), BuildNumber.fromString(buildNumber))
+    val compatibleUpdateExists = PluginsMetaLoader.getLastCompatiblePluginUpdate(listOf(pluginId), BuildNumber.fromString(buildNumber)).isNotEmpty()
 
     val out = BufferExposingByteArrayOutputStream()
 

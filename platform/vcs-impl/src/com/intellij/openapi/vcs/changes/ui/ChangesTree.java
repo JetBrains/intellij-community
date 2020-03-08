@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CommonActionsManager;
@@ -15,7 +15,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
@@ -25,11 +24,14 @@ import com.intellij.openapi.vcs.changes.InclusionModel;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SmartExpander;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
@@ -45,7 +47,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
@@ -75,7 +78,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   };
   @Nullable private Runnable myTreeInclusionListener;
 
-  @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
+  @NotNull private final ChangesTreeHandlers myHandlers;
   private boolean myKeepTreeState = false;
 
   @Deprecated @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
@@ -100,6 +103,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myShowCheckboxes = showCheckboxes;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
     myInclusionModel.addInclusionListener(myInclusionModelListener);
+    myHandlers = new ChangesTreeHandlers(this);
 
     setRootVisible(false);
     setShowsRootHandles(true);
@@ -112,8 +116,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
     showCheckboxesChanged();
 
-    installEnterKeyHandler();
-    installDoubleClickHandler();
     installTreeLinkHandler(nodeRenderer);
     SmartExpander.installOn(this);
 
@@ -149,7 +151,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   @Nullable
-  private TreePath getPathIfCheckBoxClicked(@NotNull Point p) {
+  TreePath getPathIfCheckBoxClicked(@NotNull Point p) {
     if (!myShowCheckboxes || !isEnabled()) return null;
 
     TreePath path = getPathForLocation(p.x, p.y);
@@ -161,51 +163,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     Rectangle checkBoxBounds = pathBounds.getBounds();
     checkBoxBounds.setSize(myCheckboxWidth, checkBoxBounds.height);
     return checkBoxBounds.contains(p) && isIncludable(path) ? path : null;
-  }
-
-  protected void installEnterKeyHandler() {
-    registerKeyboardAction(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myDoubleClickHandler.run();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
-    addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (KeyEvent.VK_ENTER == e.getKeyCode() && e.getModifiers() == 0) {
-          if (getSelectionCount() <= 1) {
-            Object lastPathComponent = getLastSelectedPathComponent();
-            if (!(lastPathComponent instanceof DefaultMutableTreeNode)) {
-              return;
-            }
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
-            if (!node.isLeaf()) {
-              return;
-            }
-          }
-          myDoubleClickHandler.run();
-          e.consume();
-        }
-      }
-    });
-  }
-
-  protected void installDoubleClickHandler() {
-    new DoubleClickListener() {
-      @Override
-      protected boolean onDoubleClick(MouseEvent e) {
-        TreePath clickPath = WideSelectionTreeUI.isWideSelection(ChangesTree.this)
-                             ? getClosestPathForLocation(e.getX(), e.getY())
-                             : getPathForLocation(e.getX(), e.getY());
-        if (clickPath == null) return false;
-        if (getPathIfCheckBoxClicked(e.getPoint()) != null) return false;
-
-        myDoubleClickHandler.run();
-        return true;
-      }
-    }.installOn(this);
   }
 
   protected void installTreeLinkHandler(@NotNull ChangesBrowserNodeRenderer nodeRenderer) {
@@ -267,8 +224,41 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     if (parent != null) Disposer.register(parent, () -> removeTreeSelectionListener(listener));
   }
 
-  public void setDoubleClickHandler(@NotNull final Runnable doubleClickHandler) {
-    myDoubleClickHandler = doubleClickHandler;
+  /**
+   * @deprecated Use {@link #setDoubleClickAndEnterKeyHandler(Runnable)}
+   */
+  @Deprecated
+  public void setDoubleClickHandler(@NotNull Runnable doubleClickHandler) {
+    setDoubleClickAndEnterKeyHandler(doubleClickHandler);
+  }
+
+  public void setDoubleClickAndEnterKeyHandler(@NotNull Runnable handler) {
+    setDoubleClickHandler(e -> {
+      handler.run();
+      return true;
+    });
+    setEnterKeyHandler(e -> {
+      handler.run();
+      return true;
+    });
+  }
+
+  @Nullable
+  public Processor<MouseEvent> getDoubleClickHandler() {
+    return myHandlers.getDoubleClickHandler();
+  }
+
+  public void setDoubleClickHandler(@Nullable Processor<MouseEvent> handler) {
+    myHandlers.setDoubleClickHandler(handler);
+  }
+
+  @Nullable
+  public Processor<KeyEvent> getEnterKeyHandler() {
+    return myHandlers.getEnterKeyHandler();
+  }
+
+  public void setEnterKeyHandler(@Nullable Processor<KeyEvent> handler) {
+    myHandlers.setEnterKeyHandler(handler);
   }
 
   public void installPopupHandler(ActionGroup group) {

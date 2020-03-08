@@ -41,16 +41,16 @@ class DebuggerDfaRunner extends DataFlowRunner {
                                CommonClassNames.JAVA_UTIL_HASH_MAP,
                                "java.util.TreeMap");
   private final @NotNull PsiElement myBody;
-  private final @NotNull PsiStatement myStatement;
+  private final @NotNull PsiElement myAnchor;
   private final @NotNull Project myProject;
   private final @Nullable ControlFlow myFlow;
   private final @Nullable DfaInstructionState myStartingState;
   private final long myModificationStamp;
 
-  DebuggerDfaRunner(@NotNull PsiElement body, @NotNull PsiStatement statement, @NotNull StackFrame frame) {
+  DebuggerDfaRunner(@NotNull PsiElement body, @NotNull PsiElement anchor, @NotNull StackFrame frame) {
     super(body.getProject(), body.getParent() instanceof PsiClassInitializer ? ((PsiClassInitializer)body.getParent()).getContainingClass() : body);
     myBody = body;
-    myStatement = statement;
+    myAnchor = anchor;
     myProject = body.getProject();
     myFlow = buildFlow(myBody);
     myStartingState = getStartingState(frame);
@@ -72,7 +72,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
   @Nullable
   private DfaInstructionState getStartingState(StackFrame frame) {
     if (myFlow == null) return null;
-    int offset = myFlow.getStartOffset(myStatement).getInstructionOffset();
+    int offset = myFlow.getStartOffset(myAnchor).getInstructionOffset();
     if (offset < 0) return null;
     DfaMemoryState state = super.createMemoryState();
     StateBuilder builder = new StateBuilder(frame, state);
@@ -172,7 +172,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
           ReferenceType type = ContainerUtil.getOnlyItem(frame.virtualMachine().classesByName(name));
           if (type != null) {
             Field field = type.fieldByName(((PsiField)psi).getName());
-            if (field != null) {
+            if (field != null && field.isStatic()) {
               return wrap(type.getValue(field));
             }
           }

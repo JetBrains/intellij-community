@@ -479,7 +479,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       super("", PyBundle.message("debugger.watch.return.values.description"), null);
       myWatchesReturnValues = PyDebuggerSettings.getInstance().isWatchReturnValues();
       myProcess = debugProcess;
-      myText = "Show Return Values";
+      myText = PyBundle.message("debugger.watch.show.return.values");
     }
 
     @Override

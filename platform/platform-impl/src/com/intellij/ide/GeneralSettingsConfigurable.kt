@@ -52,7 +52,7 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
 
   override fun createPanel(): DialogPanel {
     return panel {
-      titledRow("Startup/Shutdown") {
+      titledRow(IdeBundle.message("general.settings.row.startup.shutdown")) {
         row {
           checkBox(myChkReopenLastProject)
         }

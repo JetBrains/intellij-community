@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementsAroundOffsetUp
+import com.intellij.psi.util.leavesAroundOffset
 import com.intellij.util.SmartList
 
 /**
@@ -26,11 +27,11 @@ fun PsiFile.allDeclarationsAround(offsetInFile: Int): Collection<PsiSymbolDeclar
   }
 
   // fall back
-  val leaf: PsiElement? = findElementAt(offsetInFile)
-  if (leaf != null) {
+  for ((leaf, _) in leavesAroundOffset(offsetInFile)) {
     val namedElement: PsiElement? = TargetElementUtil.getNamedElement(leaf)
     if (namedElement != null) {
-      return listOf(PsiElement2Declaration.createFromPsi(namedElement, leaf))
+      val declaration = PsiElement2Declaration.createFromDeclaredPsiElement(namedElement, leaf)
+      return listOf(declaration)
     }
   }
   return emptyList()

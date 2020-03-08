@@ -34,4 +34,19 @@ class MavenRepositoryArtifactInfo(private val groupId: String,
     return "maven(" + groupId + ':' + artifactId + ":" + version + " " + items.size + " total)"
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as MavenRepositoryArtifactInfo
+
+    return key == other.key;
+  }
+
+
+  override fun hashCode(): Int {
+    return key.hashCode()
+  }
+
+
 }

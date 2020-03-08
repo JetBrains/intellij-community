@@ -23,8 +23,8 @@ import java.util.List;
 
 public class UpdateRunningApplicationAction extends AnAction {
   UpdateRunningApplicationAction() {
-    super(ExecutionBundle.lazyMessage("action.AnAction.text.update.running.application"),
-          ExecutionBundle.lazyMessage("action.AnAction.description.update.running.application"), AllIcons.Javaee.UpdateRunningApplication);
+    super(ExecutionBundle.messagePointer("action.AnAction.text.update.running.application"),
+          ExecutionBundle.messagePointer("action.AnAction.description.update.running.application"), AllIcons.Javaee.UpdateRunningApplication);
   }
 
   @Override
@@ -54,7 +54,7 @@ public class UpdateRunningApplicationAction extends AnAction {
       presentation.setText(updaters.get(0).getDescription());
     }
     else {
-      presentation.setText(ExecutionBundle.lazyMessage("action.presentation.UpdateRunningApplicationAction.text"));
+      presentation.setText(ExecutionBundle.messagePointer("action.presentation.UpdateRunningApplicationAction.text"));
     }
   }
 

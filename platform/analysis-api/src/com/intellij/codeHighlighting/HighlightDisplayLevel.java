@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeHighlighting;
 
 import com.intellij.icons.AllIcons;
@@ -26,19 +26,12 @@ public class HighlightDisplayLevel {
 
   public static final HighlightDisplayLevel GENERIC_SERVER_ERROR_OR_WARNING = new HighlightDisplayLevel(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
                                                                                                         createIconByKey(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
-  public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createErrorIcon());
+  public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR,
+                                                       new ColorizedIcon(CodeInsightColors.ERRORS_ATTRIBUTES, AllIcons.General.InspectionsError));
 
-  @NotNull
-  private static Icon createErrorIcon() {
-    return new SingleColorIcon(CodeInsightColors.ERRORS_ATTRIBUTES) {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        IconManager.getInstance().colorize((Graphics2D)g, AllIcons.General.InspectionsError, getColor()).paintIcon(c, g, x, y);
-      }
-    };
-  }
+  public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING,
+                                                        new ColorizedIcon(CodeInsightColors.WARNINGS_ATTRIBUTES, AllIcons.General.InspectionsWarning));
 
-  public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByKey(CodeInsightColors.WARNINGS_ATTRIBUTES));
   private static final TextAttributesKey DO_NOT_SHOW_KEY = TextAttributesKey.createTextAttributesKey("DO_NOT_SHOW");
   public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(JBColor.gray));
   /**
@@ -66,6 +59,8 @@ public class HighlightDisplayLevel {
 
   @Nullable
   public static HighlightDisplayLevel find(String name) {
+    if ("NON_SWITCHABLE_ERROR".equals(name)) return NON_SWITCHABLE_ERROR;
+    if ("NON_SWITCHABLE_WARNING".equals(name)) return NON_SWITCHABLE_WARNING;
     for (Map.Entry<HighlightSeverity, HighlightDisplayLevel> entry : ourMap.entrySet()) {
       HighlightSeverity severity = entry.getKey();
       HighlightDisplayLevel displayLevel = entry.getValue();
@@ -206,6 +201,30 @@ public class HighlightDisplayLevel {
     @Override
     public int getIconHeight() {
       return getEmptyIconDim();
+    }
+  }
+
+  private static class ColorizedIcon extends SingleColorIcon {
+    private final Icon baseIcon;
+
+    private ColorizedIcon(@NotNull TextAttributesKey key, @NotNull Icon baseIcon) {
+      super(key);
+      this.baseIcon = baseIcon;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      IconManager.getInstance().colorize((Graphics2D)g, baseIcon, getColor()).paintIcon(c, g, x, y);
+    }
+
+    @Override
+    public int getIconWidth() {
+      return baseIcon.getIconWidth();
+    }
+
+    @Override
+    public int getIconHeight() {
+      return baseIcon.getIconHeight();
     }
   }
 }

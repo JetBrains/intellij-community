@@ -4,6 +4,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CompositeShortcutSet;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -27,7 +28,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.util.Collection;
 
 class RunConfigurationStorageUi {
@@ -45,8 +45,9 @@ class RunConfigurationStorageUi {
     myDotIdeaStoragePath = dotIdeaStoragePath;
     myPathComboBox = createPathComboBox(project, uiDisposable);
 
+    ComponentValidator validator = new ComponentValidator(uiDisposable);
     JTextComponent comboBoxEditorComponent = (JTextComponent)myPathComboBox.getEditor().getEditorComponent();
-    new ComponentValidator(uiDisposable).withValidator(() -> {
+    validator.withValidator(() -> {
       String errorMessage = pathToErrorMessage.fun(getPath());
       return errorMessage != null ? new ValidationInfo(errorMessage, myPathComboBox) : null;
     })
@@ -73,23 +74,25 @@ class RunConfigurationStorageUi {
       .addComponent(doneButtonPanel)
       .getPanel();
 
+    myMainPanel.setFocusCycleRoot(true);
+    myMainPanel.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+
     // need to handle Enter keypress, otherwise Enter closes the main Run Configurations dialog.
+    // Escape should also be handled manually because setHideOnKeyOutside(false) is set for this balloon.
     DumbAwareAction.create(e -> {
       if (myPathComboBox.isPopupVisible()) {
         myPathComboBox.setPopupVisible(false);
       }
       else {
+        validator.updateInfo(null);
         myClosePopupAction.run();
       }
-    }).registerCustomShortcutSet(CommonShortcuts.ENTER, myMainPanel, uiDisposable);
-
-    myMainPanel.addMouseListener(new MouseAdapter() {
-    });
+    }).registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.ESCAPE), myMainPanel, uiDisposable);
   }
 
   @NotNull
   private ComboBox<String> createPathComboBox(@NotNull Project project, @NotNull Disposable uiDisposable) {
-    ComboBox<String> comboBox = new ComboBox<>(JBUI.scale(480));
+    ComboBox<String> comboBox = new ComboBox<>(JBUI.scale(500));
     comboBox.setEditable(true);
 
     // choosefiles is set to true to be able to select project.ipr file in IPR-based projects. Other files are not visible/selectable in the chooser
@@ -139,11 +142,6 @@ class RunConfigurationStorageUi {
 
   JPanel getMainPanel() {
     return myMainPanel;
-  }
-
-  @NotNull
-  JComponent getPreferredFocusedComponent() {
-    return myPathComboBox;
   }
 
   void reset(@NotNull @SystemIndependent String folderPath, Collection<String> pathsToSuggest, @NotNull Runnable closePopupAction) {

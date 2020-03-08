@@ -95,7 +95,7 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
   @NotNull
   @Override
   public String getDisplayName() {
-    return JsonBundle.message("json");
+    return JsonBundle.message("settings.display.name.json");
   }
 
   @Override

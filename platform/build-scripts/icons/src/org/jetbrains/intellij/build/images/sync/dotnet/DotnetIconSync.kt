@@ -4,13 +4,10 @@ package org.jetbrains.intellij.build.images.sync.dotnet
 import org.jetbrains.intellij.build.images.generateIconsClasses
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.sync.*
-import java.io.File
-import java.nio.file.Path
 import java.util.*
 
 fun main() = DotnetIconSync.sync()
 
-@Suppress("unused")
 internal object DotnetIconSync {
   private class SyncPath(val iconsPath: String, val devPath: String)
 

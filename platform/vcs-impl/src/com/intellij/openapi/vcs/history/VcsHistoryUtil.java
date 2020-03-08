@@ -184,7 +184,7 @@ public class VcsHistoryUtil {
                                                  @NotNull final FilePath filePath,
                                                  @NotNull final VcsFileRevision older,
                                                  @NotNull final VcsFileRevision newer) {
-    new Task.Backgroundable(project, "Comparing Revisions...") {
+    new Task.Backgroundable(project, VcsBundle.message("file.history.diff.revisions.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

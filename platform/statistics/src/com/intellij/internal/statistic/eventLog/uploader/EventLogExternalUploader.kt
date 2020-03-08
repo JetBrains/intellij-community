@@ -2,18 +2,52 @@
 package com.intellij.internal.statistic.eventLog.uploader
 
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType.*
 import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.*
+import com.intellij.internal.statistic.uploader.events.*
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ArrayUtil
 import com.intellij.util.io.exists
 import java.io.File
+import java.lang.Exception
 import java.nio.file.Paths
 
 object EventLogExternalUploader {
   private val LOG = Logger.getInstance(EventLogExternalUploader.javaClass)
   private const val UPLOADER_MAIN_CLASS = "com.intellij.internal.statistic.uploader.EventLogUploader"
+
+  fun logPreviousExternalUploadResult(recorderId: String) {
+    val recorder = EventLogInternalRecorderConfig(recorderId)
+    if (!recorder.isSendEnabled()) {
+      return
+    }
+
+    try {
+      val tempDir = getTempFile()
+      if (tempDir.exists()) {
+        val events = ExternalEventsLogger.parseEvents(tempDir)
+        for (event in events) {
+          when (event) {
+            is ExternalUploadStartedEvent -> {
+              EventLogSystemLogger.logStartingExternalSend(recorderId, event.timestamp)
+            }
+            is ExternalUploadSendEvent -> {
+              EventLogSystemLogger.logFilesSend(recorderId, event.total, event.succeed, event.failed, true)
+            }
+            is ExternalUploadFinishedEvent -> {
+              EventLogSystemLogger.logFinishedExternalSend(recorderId, event.error, event.timestamp)
+            }
+          }
+        }
+      }
+      tempDir.deleteRecursively()
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed reading previous upload result: " + e.message)
+    }
+  }
 
   fun startExternalUpload(recorderId: String, isTest: Boolean) {
     val recorder = EventLogInternalRecorderConfig(recorderId)
@@ -22,14 +56,17 @@ object EventLogExternalUploader {
       return
     }
 
+    EventLogSystemLogger.logCreatingExternalSendCommand(recorderId)
     val device = DeviceConfiguration(EventLogConfiguration.deviceId, EventLogConfiguration.bucket)
     val application = EventLogInternalApplicationInfo(isTest)
     try {
       val command = prepareUploadCommand(device, recorder, application)
+      EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderId, null)
       Runtime.getRuntime().exec(command)
       LOG.info("Started external process for uploading event log")
     }
     catch (e: EventLogUploadException) {
+      EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderId, e.errorType)
       LOG.info(e)
     }
   }
@@ -39,10 +76,10 @@ object EventLogExternalUploader {
                                    applicationInfo: EventLogApplicationInfo): Array<out String> {
     val logFiles = logsToSend(recorder)
     if (logFiles.isEmpty()) {
-      throw EventLogUploadException("No available logs to send")
+      throw EventLogUploadException("No available logs to send", NO_LOGS)
     }
 
-    val tempDir = getTempDir()
+    val tempDir = getOrCreateTempDir()
     val uploader = findUploader()
     val libs = findLibsByPrefixes(
       "kotlin-stdlib", "gson", "commons-logging", "log4j.jar", "httpclient", "httpcore", "httpmime", "jdom.jar", "annotations.jar"
@@ -111,7 +148,7 @@ object EventLogExternalUploader {
     if (localBuild.exists() && !localBuild.isDirectory) {
       return localBuild
     }
-    throw EventLogUploadException("Cannot find uploader jar")
+    throw EventLogUploadException("Cannot find uploader jar", NO_UPLOADER)
   }
 
   private fun findJavaHome(): String {
@@ -122,7 +159,7 @@ object EventLogExternalUploader {
     val lib = PathManager.getLibPath()
     val libFiles = File(lib).listFiles { file -> startsWithAny(file.name, prefixes) }
     if (libFiles == null || libFiles.isEmpty()) {
-      throw EventLogUploadException("Cannot find libraries from dependency for event log uploader")
+      throw EventLogUploadException("Cannot find libraries from dependency for event log uploader", NO_LIBRARIES)
     }
     return libFiles
   }
@@ -134,11 +171,15 @@ object EventLogExternalUploader {
     return false
   }
 
-  private fun getTempDir(): File {
-    val tempDir = File(PathManager.getTempPath(), "statistics-uploader")
+  private fun getOrCreateTempDir(): File {
+    val tempDir = getTempFile()
     if (!(tempDir.exists() || tempDir.mkdirs())) {
-      throw EventLogUploadException("Cannot create temp directory: $tempDir")
+      throw EventLogUploadException("Cannot create temp directory: $tempDir", NO_TEMP_FOLDER)
     }
     return tempDir
+  }
+
+  private fun getTempFile(): File {
+    return File(PathManager.getTempPath(), "statistics-uploader")
   }
 }

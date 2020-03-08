@@ -68,7 +68,8 @@ public class PyExceptionBreakpointType
 
   @Override
   public XBreakpoint<PyExceptionBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
-    final PyClassTreeChooserDialog dialog = new PyClassTreeChooserDialog("Select Exception Class",
+    final PyClassTreeChooserDialog dialog = new PyClassTreeChooserDialog(PyBundle.message(
+      "debugger.exception.breakpoint.select.exception.class"),
                                                                          project,
                                                                          GlobalSearchScope.allScope(project),
                                                                          new PyExceptionCachingFilter(), null);

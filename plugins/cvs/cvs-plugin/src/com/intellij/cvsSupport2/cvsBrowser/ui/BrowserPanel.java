@@ -105,7 +105,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
   private class MyCheckoutAction extends AnAction implements DumbAware {
     MyCheckoutAction() {
-      super(CvsBundle.lazyMessage("operation.name.check.out"), AllIcons.Actions.CheckOut);
+      super(CvsBundle.messagePointer("operation.name.check.out"), AllIcons.Actions.CheckOut);
     }
 
     @Override
@@ -147,8 +147,8 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
   private class MyHistoryAction extends AnAction implements DumbAware {
     MyHistoryAction() {
-      super(CvsBundle.lazyMessage("operation.name.show.file.history"),
-            CvsBundle.lazyMessage("operation.name.show.file.history.description"), AllIcons.Vcs.History);
+      super(CvsBundle.messagePointer("operation.name.show.file.history"),
+            CvsBundle.messagePointer("operation.name.show.file.history.description"), AllIcons.Vcs.History);
     }
 
     @Override
@@ -177,7 +177,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
   private class MyAnnotateAction extends AnAction implements DumbAware {
     MyAnnotateAction() {
-      super(CvsBundle.lazyMessage("operation.name.annotate"), AllIcons.Actions.Annotate);
+      super(CvsBundle.messagePointer("operation.name.annotate"), AllIcons.Actions.Annotate);
     }
 
     @Override
@@ -210,7 +210,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
   private class BrowseCommittedChangesAction extends AnAction implements DumbAware {
     BrowseCommittedChangesAction() {
-      super(VcsBundle.lazyMessage("browse.changes.action"), () -> "", AllIcons.Actions.Preview);
+      super(VcsBundle.messagePointer("browse.changes.action"), () -> "", AllIcons.Actions.Preview);
     }
 
     @Override

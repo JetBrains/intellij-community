@@ -116,7 +116,7 @@ public class AnnotationsPanel {
     }
 
     final AnActionButton selectButton =
-      new AnActionButton(JavaBundle.lazyMessage("action.AnActionButton.text.select.annotation.used.for.code.generation"),
+      new AnActionButton(JavaBundle.messagePointer("action.AnActionButton.text.select.annotation.used.for.code.generation"),
                          AllIcons.Actions.Checked) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {

@@ -99,4 +99,12 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
       assertPreference("*" + s, s.substring(0, 10), s);
     }).assertTiming();
   }
+
+  public void testPropertyWithTypoAtTheEnd() {
+    PlatformTestUtil.startPerformanceTest(getName(), 30, () -> {
+      assertDoesntMatch("tip.how.to.select.a.thing.and.that.selected.things.are.shown.as.bold",
+                        "tip.how.to.select.a.thing.and.that.selected.things.are.shown.as.bolid");
+    }).assertTiming();
+  }
+
 }

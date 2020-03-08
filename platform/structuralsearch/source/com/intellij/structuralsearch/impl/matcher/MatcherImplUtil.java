@@ -5,7 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.structuralsearch.PatternContext;
+import com.intellij.structuralsearch.PatternContextInfo;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 
@@ -15,7 +15,7 @@ import com.intellij.structuralsearch.StructuralSearchUtil;
 public class MatcherImplUtil {
 
   public static PsiElement[] createTreeFromText(String text, PatternTreeContext context, LanguageFileType fileType, Project project) {
-    return createTreeFromText(text, context, fileType, null, null, project, false);
+    return createTreeFromText(text, new PatternContextInfo(context), fileType, null, project, false);
   }
 
   public static PsiElement[] createSourceTreeFromText(String text,
@@ -31,10 +31,9 @@ public class MatcherImplUtil {
   }
 
   public static PsiElement[] createTreeFromText(String text,
-                                                PatternTreeContext context,
+                                                PatternContextInfo contextInfo,
                                                 LanguageFileType fileType,
                                                 Language language,
-                                                PatternContext patternContext,
                                                 Project project,
                                                 boolean physical) {
     if (language == null) {
@@ -42,8 +41,7 @@ public class MatcherImplUtil {
     }
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
     if (profile != null) {
-      final String contextId = patternContext == null ? null : patternContext.getId();
-      return profile.createPatternTree(text, context, fileType, language, contextId, project, physical);
+      return profile.createPatternTree(text, contextInfo, fileType, language, project, physical);
     }
     return PsiElement.EMPTY_ARRAY;
   }

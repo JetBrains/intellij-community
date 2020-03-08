@@ -141,7 +141,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       if (myState.equals(State.CREATED)) {
         myState = State.INITIALIZED;
         StopWatch stopWatch = StopWatch.start("initialize");
-        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, VcsLogBundle.message("vcs.log.loading.history.process"), false) {
+        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, VcsLogBundle.message("vcs.log.initial.loading.process"), false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             indicator.setIndeterminate(true);

@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
+import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -19,7 +20,7 @@ class CleanupLocalWhitelistActionTest : BasePlatformTestCase() {
     val recorderId = "FUS"
 
     SensitiveDataValidator.getInstance(recorderId)
-    WhitelistTestGroupStorage.getTestStorage(recorderId)!!.addTestGroup(groupId)
+    WhitelistTestGroupStorage.getTestStorage(recorderId)!!.addTestGroup(LocalWhitelistGroup("groupId", false))
     val dataContext = getProjectContext(myFixture.project)
     val e = AnActionEvent(null, dataContext, "test", Presentation(), ActionManager.getInstance(), 0)
     CleanupLocalWhitelistAction(recorderId).actionPerformed(e)

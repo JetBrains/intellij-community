@@ -231,15 +231,8 @@
   <action id="ActivateServicesToolWindow">
     <keyboard-shortcut first-keystroke="meta 8"/>
   </action>
-  <action id="ActivateCommitToolWindow">
-    <keyboard-shortcut first-keystroke="meta 9"/>
-  </action>
   <action id="ActivateVersionControlToolWindow">
-    <keyboard-shortcut first-keystroke="meta shift 9"/>
     <keyboard-shortcut first-keystroke="meta 9"/>
-  </action>
-  <action id="Vcs.Show.Log">
-    <keyboard-shortcut first-keystroke="meta control 9"/>
   </action>
   <action id="NextWindow">
     <keyboard-shortcut first-keystroke="meta BACK_QUOTE"/>
@@ -275,6 +268,11 @@
   </action>
   <action id="Exit">
     <keyboard-shortcut first-keystroke="meta Q"/>
+  </action>
+  <action id="GotoDeclaration">
+    <keyboard-shortcut first-keystroke="meta B"/>
+    <mouse-shortcut keystroke="meta button1"/>
+    <mouse-shortcut keystroke="Force touch" />
   </action>
   <action id="GotoTypeDeclaration">
     <keyboard-shortcut first-keystroke="control shift B"/>
@@ -492,5 +490,8 @@
   </action>
   <action id="ToggleFindInSelection">
     <keyboard-shortcut first-keystroke="control alt E"/>
+  </action>
+  <action id="ToggleRenderedDocPresentation">
+    <keyboard-shortcut first-keystroke="control alt Q"/>
   </action>
 </keymap>

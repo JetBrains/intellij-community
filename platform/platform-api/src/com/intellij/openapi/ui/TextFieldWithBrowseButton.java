@@ -46,8 +46,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   }
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener, Disposable parent) {
-    // to prevent field to be infinitely resized in grid-box layouts
-    this(ComponentWithBrowseButton.isUseInlineBrowserButton() ? new ExtendableTextField(10) : new JBTextField(10),
+    this(new ExtendableTextField(10), // to prevent field to be infinitely resized in grid-box layouts
          browseActionListener, parent);
   }
 

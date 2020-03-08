@@ -4,11 +4,13 @@ package com.intellij.codeInsight.hints;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -18,7 +20,14 @@ public interface InlayParameterHintsProvider {
    * Hints for params to be shown, hints offsets should be located within element's text range.
    */
   @NotNull
-  List<InlayInfo> getParameterHints(@NotNull PsiElement element);
+  default List<InlayInfo> getParameterHints(@NotNull PsiElement element) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  default List<InlayInfo> getParameterHints(@NotNull PsiElement element, @NotNull PsiFile file) {
+    return getParameterHints(element);
+  }
 
   /**
    * Provides hint info, for alt-enter action (can be {@link HintInfo.MethodInfo} or {@link HintInfo.OptionInfo}).
@@ -29,7 +38,14 @@ public interface InlayParameterHintsProvider {
    * OptionInfo: provides option to disable/enable by alt-enter
    */
   @Nullable
-  HintInfo getHintInfo(@NotNull PsiElement element);
+  default HintInfo getHintInfo(@NotNull PsiElement element) {
+    return null;
+  }
+
+  @Nullable
+  default HintInfo getHintInfo(@NotNull PsiElement element, @NotNull PsiFile file) {
+    return getHintInfo(element);
+  }
 
   /**
    * Default list of patterns for which hints should not be shown.

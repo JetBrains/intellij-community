@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 public abstract class DebuggerUtils {
   private static final Logger LOG = Logger.getInstance(DebuggerUtils.class);
@@ -104,19 +106,39 @@ public abstract class DebuggerUtils {
             JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
         Method finalToStringMethod = toStringMethod;
-        final Value result = evaluationContext.computeAndKeep(
-          () -> debugProcess.invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0));
-        // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
-        // it is a plain com.sun.tools.jdi.ObjectReferenceImpl
-        if (result == null) {
-          return "null";
-        }
-        return result instanceof StringReference ? ((StringReference)result).value() : result.toString();
+        return processCollectibleValue(
+          () -> debugProcess.invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0),
+          result -> {
+            // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
+            // it is a plain com.sun.tools.jdi.ObjectReferenceImpl
+            if (result == null) {
+              return "null";
+            }
+            return result instanceof StringReference ? ((StringReference)result).value() : result.toString();
+          }
+        );
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.unsupported.expression.type"));
     }
     catch (ObjectCollectedException ignored) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
+    }
+  }
+
+  public static <R, T extends Value> R processCollectibleValue(
+    @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
+    @NotNull Function<T, R> processor) throws EvaluateException {
+    int retries = 10;
+    while (true) {
+      T result = valueComputable.compute();
+      try {
+        return processor.apply(result);
+      }
+      catch (ObjectCollectedException oce) {
+        if (--retries < 0) {
+          throw oce;
+        }
+      }
     }
   }
 

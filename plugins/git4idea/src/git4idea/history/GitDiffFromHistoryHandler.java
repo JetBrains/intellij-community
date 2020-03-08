@@ -35,6 +35,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,7 +146,7 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
                                                                @Nullable final List<? extends VcsFileRevision> revisions,
                                                                @NotNull final Consumer<? super MergeCommitPreCheckInfo> resultHandler) {
     Project project = myProject;
-    new Task.Backgroundable(project, "Loading Changes...", true) {
+    new Task.Backgroundable(project, GitBundle.message("git.history.diff.handler.load.changes.process"), true) {
       private MergeCommitPreCheckInfo myInfo;
 
       @Override
@@ -157,8 +158,7 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
           myInfo = new MergeCommitPreCheckInfo(fileTouched, parents);
         }
         catch (VcsException e) {
-          String logMessage = "Error happened while executing git show " + rev + ":" + filePath;
-          showError(e, logMessage);
+          showError(e, GitBundle.message("git.history.diff.handler.git.show.error", rev, filePath));
         }
       }
 
@@ -226,7 +226,8 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
                          @NotNull Collection<? extends GitFileRevision> parents) {
     ActionGroup parentActions = createActionGroup(rev, filePath, parents);
     DataContext dataContext = SimpleDataContext.getProjectContext(myProject);
-    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Choose Parent to Compare", parentActions, dataContext,
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(GitBundle.message("git.history.diff.handler.choose.parent.popup"),
+                                                                          parentActions, dataContext,
                                                                           JBPopupFactory.ActionSelectionAid.NUMBERING, true);
     showPopupInBestPosition(popup, event, dataContext);
   }

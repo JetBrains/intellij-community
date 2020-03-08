@@ -224,6 +224,7 @@ fun walkUp(start: PsiElement, offsetInStart: Int, stopAfter: PsiElement): Iterat
  *
  * @return returns pairs of (element, offset relative to element)
  * @see elementsAtOffsetUp
+ * @see leavesAroundOffset
  */
 @ApiStatus.Experimental
 fun PsiFile.elementsAroundOffsetUp(offsetInFile: Int): Iterator<ElementAndOffset> {
@@ -292,6 +293,23 @@ private suspend fun SequenceScope<ElementAndOffset>.elementsAtOffsetUp(element: 
   }
 }
 
+/**
+ * @return iterable of elements without children at a given [offsetInFile].
+ * Returned elements are the same bottom elements from which walk up is started in [elementsAroundOffsetUp]
+ */
+@ApiStatus.Experimental
+fun PsiFile.leavesAroundOffset(offsetInFile: Int): Iterable<ElementAndOffset> {
+  val leaf = findElementAt(offsetInFile) ?: return emptyList()
+  val offsetInLeaf = offsetInFile - leaf.textRange.startOffset
+  if (offsetInLeaf == 0) {
+    val prefLeaf = PsiTreeUtil.prevLeaf(leaf)
+    if (prefLeaf != null) {
+      return listOf(ElementAndOffset(leaf, 0), ElementAndOffset(prefLeaf, prefLeaf.textLength))
+    }
+  }
+  return listOf(ElementAndOffset(leaf, offsetInLeaf))
+}
+
 inline fun <reified T : PsiElement> PsiElement.contextOfType(): T? = contextOfType(T::class)
 
 fun <T : PsiElement> PsiElement.contextOfType(vararg classes: KClass<out T>): T? {
@@ -321,8 +339,8 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
   if (stopAt is PsiErrorElement) return true
 
   fun PsiElement.isInsideErrorElement(): Boolean {
-    var element = this
-    while (element != stopAt) {
+    var element: PsiElement? = this
+    while (element != null && element != stopAt) {
       if (element is PsiErrorElement) return true
       element = element.parent
     }

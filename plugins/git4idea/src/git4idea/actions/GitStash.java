@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -22,7 +22,9 @@ public class GitStash extends GitRepositoryAction {
 
   @Override
   protected void perform(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not stash changes now")) return;
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(GitBundle.message("stash.error.can.not.stash.changes.now"))) {
+      return;
+    }
     GitStashDialog d = new GitStashDialog(project, gitRoots, defaultRoot);
     if (!d.showAndGet()) {
       return;

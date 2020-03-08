@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -14,9 +14,11 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -38,11 +40,15 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   // low  32 bits: number of tasks running (or trying to run)
   // high 32 bits: myTaskQueue modification stamp
   private final AtomicLong myStatus = new AtomicLong();
-  private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<>();
+  private final BlockingQueue<Runnable> myTaskQueue;
 
   private final boolean myChangeThreadName;
 
   BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName) {
+    this(name, backendExecutor, maxThreads, changeThreadName, null);
+  }
+
+  public BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName, @Nullable Comparator<Runnable> comparator) {
     myName = StringUtil.capitalize(name);
     myBackendExecutor = backendExecutor;
     if (maxThreads < 1) {
@@ -53,6 +59,11 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     }
     myMaxThreads = maxThreads;
     myChangeThreadName = changeThreadName;
+    if (comparator != null) {
+      myTaskQueue = new PriorityBlockingQueue<>(11, comparator);
+    } else {
+      myTaskQueue = new LinkedBlockingQueue<>();
+    }
   }
 
   /** @deprecated use {@link AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int)} instead */

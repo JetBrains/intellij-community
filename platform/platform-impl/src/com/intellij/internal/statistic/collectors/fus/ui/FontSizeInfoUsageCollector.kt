@@ -33,7 +33,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     if (!scheme.isUseEditorFontPreferencesInConsole) {
       usages += newFontMetric("Console", scheme.consoleFontName, scheme.consoleFontSize)
     }
-    val quickDocFontSize = PropertiesComponent.getInstance().getValue("quick.doc.font.size.v2")
+    val quickDocFontSize = PropertiesComponent.getInstance().getValue("quick.doc.font.size.v3")
     if (quickDocFontSize != null) {
       usages += newMetric("QuickDoc", FeatureUsageData().addData("font_size", quickDocFontSize))
     }

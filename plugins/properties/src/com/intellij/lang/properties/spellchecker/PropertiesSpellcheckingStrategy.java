@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.spellchecker;
 
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.psi.PsiElement;
@@ -39,6 +40,9 @@ public class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy {
     }
     if (element instanceof PropertyKeyImpl) {
       return myPropertyTokenizer;
+    }
+    if (element instanceof Property) {
+      return EMPTY_TOKENIZER;
     }
     return super.getTokenizer(element);
   }

@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.util.Alarm
 import java.awt.Component
 import java.awt.KeyboardFocusManager
 import java.awt.Window
@@ -12,38 +11,37 @@ import javax.swing.SwingUtilities
 
 private val LOG = logger<ToolWindowManagerImpl>()
 
-internal fun requestFocusInToolWindow(toolWindow: ToolWindowImpl) {
-  requestFocusInToolWindow(toolWindow, Alarm(toolWindow.disposable), 0)
-}
+internal class FocusTask(private val toolWindow: ToolWindowImpl) : Runnable {
+  var startTime = System.currentTimeMillis()
 
-private fun requestFocusInToolWindow(toolWindow: ToolWindowImpl, checkerAlarm: Alarm, delay: Int) {
-  checkerAlarm.addRequest(object : Runnable {
-    val startTime = System.currentTimeMillis()
+  override fun run() {
+    if (System.currentTimeMillis() - startTime > 10000) {
+      LOG.debug { "tool window ${toolWindow.id} - cannot wait for showing component" }
+      return
+    }
 
-    override fun run() {
-      if (System.currentTimeMillis() - startTime > 10000) {
-        LOG.debug { "tool window ${toolWindow.id} - cannot wait for showing component" }
-        return
+    val component = getShowingComponentToRequestFocus(toolWindow)
+    if (component == null) {
+      toolWindow.focusAlarm.cancelAllRequests()
+      resetStartTime()
+      toolWindow.focusAlarm.request(delay = 100)
+    }
+    else {
+      val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().permanentFocusOwner
+      val manager = toolWindow.toolWindowManager
+      if (owner !== component) {
+        manager.focusManager.requestFocusInProject(component, manager.project)
+        bringOwnerToFront(toolWindow)
       }
-
-      val component = getShowingComponentToRequestFocus(toolWindow)
-      if (component == null) {
-        checkerAlarm.cancelAllRequests()
-        requestFocusInToolWindow(toolWindow, checkerAlarm, 100)
-      }
-      else {
-        val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().permanentFocusOwner
-        val manager = toolWindow.toolWindowManager
-        if (owner !== component) {
-          manager.focusManager.requestFocusInProject(component, manager.project)
-          bringOwnerToFront(toolWindow)
-        }
-        manager.focusManager.doWhenFocusSettlesDown {
-          updateToolWindow(toolWindow, component)
-        }
+      manager.focusManager.doWhenFocusSettlesDown {
+        updateToolWindow(toolWindow, component)
       }
     }
-  }, delay)
+  }
+
+  fun resetStartTime() {
+    startTime = System.currentTimeMillis()
+  }
 }
 
 private fun bringOwnerToFront(toolWindow: ToolWindowImpl) {
@@ -78,6 +76,7 @@ private fun bringOwnerToFront(toolWindow: ToolWindowImpl) {
 }
 
 internal fun getShowingComponentToRequestFocus(toolWindow: ToolWindowImpl): Component? {
+  toolWindow.contentManager.selectedContent?.preferredFocusableComponent?.let { return it }
   val container = toolWindow.getComponentIfInitialized()
   if (container == null || !container.isShowing) {
     LOG.debug { "tool window ${toolWindow.id} parent container is hidden: $container" }

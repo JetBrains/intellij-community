@@ -538,29 +538,30 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     }
   }
 
-  private static Dimension getPreferredScrollableViewportSize(@NotNull JList list) {
+  private static Dimension getPreferredScrollableViewportSize(@NotNull JList<?> list) {
     if (JList.class != getPreferredScrollableViewportSizeDeclaringClass(list)) {
       return list.getPreferredScrollableViewportSize(); // may be null
     }
     Dimension size = getPreferredSizeWithoutScrollBars(list);
-    if (size == null) return new Dimension();
     if (JList.VERTICAL != list.getLayoutOrientation()) return size;
 
     int fixedWidth = list.getFixedCellWidth();
     int fixedHeight = list.getFixedCellHeight();
 
-    ListModel model = list.getModel();
+    ListModel<?> model = list.getModel();
     int modelRows = model == null ? 0 : model.getSize();
     if (modelRows <= 0) {
       if (fixedWidth <= 0) fixedWidth = Registry.intValue("ide.preferred.scrollable.viewport.fixed.width");
       if (fixedWidth <= 0) fixedWidth = JBUIScale.scale(256); // scaled value from JDK
       if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
+      if (fixedHeight <= 0) fixedHeight = UIManager.getInt("List.rowHeight");
       if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16); // scaled value from JDK
     }
     int visibleRows = list.getVisibleRowCount();
     if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
 
-    boolean addExtraSpace = 0 < visibleRows && visibleRows < modelRows && Registry.is("ide.preferred.scrollable.viewport.extra.space");
+    boolean addExtraSpace = (modelRows == 0 || 0 < visibleRows && visibleRows < modelRows)
+                            && Registry.is("ide.preferred.scrollable.viewport.extra.space");
     Insets insets = getInnerInsets(list);
     size.height = insets != null ? insets.top + insets.bottom : 0;
     if (0 < fixedWidth && 0 < fixedHeight) {
@@ -588,13 +589,13 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       return tree.getPreferredScrollableViewportSize(); // may be null
     }
     Dimension size = getPreferredSizeWithoutScrollBars(tree);
-    if (size == null) return new Dimension();
 
     int fixedHeight = tree.getRowHeight();
 
     int modelRows = tree.getRowCount();
     if (modelRows <= 0) {
       if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
+      if (fixedHeight <= 0) fixedHeight = UIManager.getInt("Tree.rowHeight");
       if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16);
     }
     int visibleRows = tree.getVisibleRowCount();

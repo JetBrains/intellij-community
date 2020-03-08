@@ -29,6 +29,7 @@ import com.intellij.diff.tools.util.text.SimpleThreesideTextDiffProvider;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -37,10 +38,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledWithWriteLock;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -64,9 +62,9 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   protected List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<>();
 
-    DefaultActionGroup diffGroup = DefaultActionGroup.createPopupGroup(() -> "Compare Contents");
+    DefaultActionGroup diffGroup = DefaultActionGroup.createPopupGroup(() -> DiffBundle.message("group.compare.contents.text"));
     diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
-    diffGroup.add(Separator.create("Compare Contents"));
+    diffGroup.add(Separator.create(DiffBundle.message("group.compare.contents.text")));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_LEFT, false));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_RIGHT, false));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT, false));
@@ -353,7 +351,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     @NotNull
     @Override
     protected String getText(@NotNull ThreeSide side) {
-      return "Accept";
+      return DiffBundle.message("action.presentation.diff.accept.text");
     }
 
     @Nullable
@@ -368,7 +366,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     protected void doPerform(@NotNull AnActionEvent e, @NotNull ThreeSide side, @NotNull List<SimpleThreesideDiffChange> changes) {
       if (!isEditable(myModifiedSide)) return;
 
-      String title = "Accept selected changes";
+      String title = DiffBundle.message("message.use.selected.changes.command", e.getPresentation().getText());
       DiffUtil.executeWriteCommand(getEditor(myModifiedSide).getDocument(), e.getProject(), title, () -> {
         for (SimpleThreesideDiffChange change : changes) {
           replaceChange(change, mySourceSide, myModifiedSide);
@@ -414,6 +412,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
     protected abstract boolean isVisible(@NotNull ThreeSide side);
 
+    @Nls
     @NotNull
     protected abstract String getText(@NotNull ThreeSide side);
 

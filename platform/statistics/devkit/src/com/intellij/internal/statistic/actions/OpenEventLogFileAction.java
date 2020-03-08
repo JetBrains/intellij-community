@@ -51,7 +51,7 @@ public class OpenEventLogFileAction extends DumbAwareAction {
     String title = StatisticsBundle.message("stats.feature.usage.statistics");
     final Notification notification = new Notification("FeatureUsageStatistics", title, message, type);
     notification.addAction(NotificationAction.createSimple(
-      StatisticsBundle.lazyMessage("stats.enable.data.sharing"), () -> {
+      StatisticsBundle.messagePointer("stats.enable.data.sharing"), () -> {
       final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, new ConsentConfigurable());
       editor.show();
     }));

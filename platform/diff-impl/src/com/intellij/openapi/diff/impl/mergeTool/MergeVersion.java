@@ -63,7 +63,7 @@ public interface MergeVersion {
       final DocumentReference ref = DocumentReferenceManager.getInstance().create(workingDocument);
       myTextBeforeMerge = myDocument.getText();
       ApplicationManager.getApplication().runWriteAction(() -> {
-        setDocumentText(workingDocument, myOriginalText, DiffBundle.message("merge.init.merge.content.command.name"), project);
+        setDocumentText(workingDocument, myOriginalText, DiffBundle.message("message.init.merge.content.command"), project);
         if (project != null) {
           final UndoManager undoManager = UndoManager.getInstance(project);
           if (undoManager != null) { //idea.sh merge command
@@ -76,7 +76,8 @@ public interface MergeVersion {
 
     @Override
     public void applyText(@NotNull final String text, final Project project) {
-      ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> doApplyText(text, project), "Merge changes", null));
+      ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () ->
+        doApplyText(text, project), DiffBundle.message("message.finish.merge.content.command"), null));
     }
 
     protected void doApplyText(@NotNull String text, Project project) {

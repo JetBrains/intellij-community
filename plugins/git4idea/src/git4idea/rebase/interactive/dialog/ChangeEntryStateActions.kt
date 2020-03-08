@@ -27,6 +27,8 @@ internal open class ChangeEntryStateSimpleAction(
   protected val table: GitRebaseCommitsTableView
 ) : AnActionButton(title, description, icon), DumbAware {
 
+  protected open val disableIfAlreadySet = true
+
   constructor(action: GitRebaseEntry.Action, icon: Icon?, table: GitRebaseCommitsTableView) :
     this(action, action.visibleName, action.visibleName, icon, table)
 
@@ -51,6 +53,10 @@ internal open class ChangeEntryStateSimpleAction(
     if (table.editingRow != -1 || table.selectedRowCount == 0) {
       actionIsEnabled(e, false)
     }
+    if (disableIfAlreadySet) {
+      val selectedRows = table.selectedRows
+      actionIsEnabled(e, selectedRows.any { table.model.getEntryAction(it) != action })
+    }
   }
 
   protected open fun actionIsEnabled(e: AnActionEvent, isEnabled: Boolean) {
@@ -62,7 +68,7 @@ internal open class ChangeEntryStateButtonAction(
   action: GitRebaseEntry.Action,
   table: GitRebaseCommitsTableView
 ) : ChangeEntryStateSimpleAction(action, null, table), CustomComponentAction, DumbAware {
-  protected val button = object : JButton(action.name.capitalize()) {
+  protected val button = object : JButton(action.visibleName.get()) {
     init {
       adjustForToolbar()
       addActionListener {
@@ -113,6 +119,8 @@ internal open class UniteCommitsAction(action: GitRebaseEntry.Action, table: Git
     commitRows.forEach { row ->
       table.setValueAt(GitRebaseEntry.Action.FIXUP, row, GitRebaseCommitsTableModel.COMMIT_ICON_COLUMN)
     }
+    table.model.moveRowsToFirst(listOf(fixupRootRow) + commitRows)
+    TableUtil.selectRows(table, (fixupRootRow..fixupRootRow + commitRows.size).toList().toIntArray())
   }
 }
 
@@ -122,14 +130,17 @@ internal class FixupAction(table: GitRebaseCommitsTableView) : UniteCommitsActio
 internal class SquashAction(table: GitRebaseCommitsTableView) : UniteCommitsAction(GitRebaseEntry.Action.SQUASH, table) {
   override fun fixupCommits(fixupRootRow: Int, commitRows: List<Int>) {
     super.fixupCommits(fixupRootRow, commitRows)
+    val selectedRows = table.selectedRows
     val model = table.model
-    model.setValueAt(model.uniteCommitMessages(listOf(fixupRootRow) + commitRows), fixupRootRow, GitRebaseCommitsTableModel.SUBJECT_COLUMN)
+    model.setValueAt(model.uniteCommitMessages(selectedRows.toList()), fixupRootRow, GitRebaseCommitsTableModel.SUBJECT_COLUMN)
     TableUtil.selectRows(table, intArrayOf(fixupRootRow))
     TableUtil.editCellAt(table, fixupRootRow, GitRebaseCommitsTableModel.SUBJECT_COLUMN)
   }
 }
 
 internal class RewordAction(table: GitRebaseCommitsTableView) : ChangeEntryStateButtonAction(GitRebaseEntry.Action.REWORD, table) {
+  override val disableIfAlreadySet = false
+
   override fun updateButton(e: AnActionEvent) {
     super.updateButton(e)
     if (table.selectedRowCount != 1) {

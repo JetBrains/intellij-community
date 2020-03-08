@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -140,7 +141,7 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
             return createDfaRunner(frame, pointer.getElement());
           }
           catch (VMDisconnectedException | VMOutOfMemoryException | InternalException | 
-            EvaluateException | InconsistentDebugInfoException ignore) {
+            EvaluateException | InconsistentDebugInfoException | InvalidStackFrameException ignore) {
             return null;
           }
         };
@@ -220,11 +221,11 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
     if (element == null || !element.isValid() || DumbService.isDumb(element.getProject())) return null;
 
     if (!locationMatches(element, frame.location())) return null;
-    PsiStatement statement = getAnchorStatement(element);
-    if (statement == null) return null;
-    PsiElement body = getCodeBlock(statement);
+    PsiElement anchor = getAnchor(element);
+    if (anchor == null) return null;
+    PsiElement body = getCodeBlock(anchor);
     if (body == null) return null;
-    DebuggerDfaRunner runner = new DebuggerDfaRunner(body, statement, frame);
+    DebuggerDfaRunner runner = new DebuggerDfaRunner(body, anchor, frame);
     return runner.isValid() ? runner : null;
   }
 
@@ -257,22 +258,49 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
     return false;
   }
 
-  private static @Nullable PsiStatement getAnchorStatement(@NotNull PsiElement element) {
+  private static PsiElement getAnchor(@NotNull PsiElement element) {
     while (element instanceof PsiWhiteSpace || element instanceof PsiComment) {
       element = element.getNextSibling();
     }
-    PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false, PsiLambdaExpression.class, PsiMethod.class);
-    if (statement instanceof PsiBlockStatement && ((PsiBlockStatement)statement).getCodeBlock().getRBrace() == element) {
-      statement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
+    while (!(element instanceof PsiStatement)) {
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiStatement) && (parent == null || element.getTextRangeInParent().getStartOffset() > 0)) {
+        if (parent instanceof PsiCodeBlock && ((PsiCodeBlock)parent).getRBrace() == element) {
+          PsiElement grandParent = parent.getParent();
+          if (grandParent instanceof PsiBlockStatement) {
+            return PsiTreeUtil.getNextSiblingOfType(grandParent, PsiStatement.class);
+          }
+        }
+        if (parent instanceof PsiPolyadicExpression) {
+          // If we are inside the expression we can position only at locations where the stack is empty
+          // currently only && and || chains inside if/return/yield are allowed
+          IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+          if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
+            PsiElement grandParent = parent.getParent();
+            if (grandParent instanceof PsiIfStatement || grandParent instanceof PsiYieldStatement ||
+                grandParent instanceof PsiReturnStatement) {
+              if (element instanceof PsiExpression) {
+                return element;
+              }
+              return PsiTreeUtil.getNextSiblingOfType(element, PsiExpression.class);
+            }
+          }
+        }
+        return null;
+      }
+      element = parent;
     }
-    return statement;
+    if (element instanceof PsiBlockStatement && ((PsiBlockStatement)element).getCodeBlock().getRBrace() == element) {
+      element = PsiTreeUtil.getNextSiblingOfType(element, PsiStatement.class);
+    }
+    return element;
   }
 
-  private static @Nullable PsiElement getCodeBlock(@NotNull PsiStatement statement) {
-    if (statement instanceof PsiWhileStatement || statement instanceof PsiDoWhileStatement) {
-      return statement;
+  private static @Nullable PsiElement getCodeBlock(@NotNull PsiElement anchor) {
+    if (anchor instanceof PsiWhileStatement || anchor instanceof PsiDoWhileStatement) {
+      return anchor;
     }
-    PsiElement e = statement;
+    PsiElement e = anchor;
     while (e != null && !(e instanceof PsiClass) && !(e instanceof PsiFileSystemItem)) {
       e = e.getParent();
       if (e instanceof PsiCodeBlock) {

@@ -26,7 +26,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     @Property val enabledLanguages: Set<Lang> = hashSetOf(Lang.AMERICAN_ENGLISH),
     @Property val nativeLanguage: Lang = enabledLanguages.first(),
     @Property val enabledProgrammingLanguages: Set<String> = defaultEnabledProgrammingLanguages,
-    @Property val enabledGrammarStrategies: Set<String> = HashSet(),
+    @Property val enabledGrammarStrategies: Set<String> = defaultEnabledStrategies,
     @Property val disabledGrammarStrategies: Set<String> = HashSet(),
     @Property val enabledCommitIntegration: Boolean = false,
     @Property val userDisabledRules: Set<String> = HashSet(),
@@ -57,6 +57,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
   }
 
   companion object {
+    private val defaultEnabledStrategies = hashSetOf("nl.rubensten.texifyidea:Latex", "org.asciidoctor.intellij.asciidoc:AsciiDoc")
     private val defaultEnabledProgrammingLanguages by lazy {
       when {
         GraziePlugin.isBundled && ApplicationManager.getApplication()?.isUnitTestMode?.not().orTrue() -> {
@@ -98,8 +99,8 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
   override fun loadState(state: State) {
     when (state.version) {
       0 -> {
-        val enabledStrategies = HashSet<String>()
-        val disabledStrategies = HashSet<String>()
+        val enabledStrategies = state.enabledGrammarStrategies.toMutableSet()
+        val disabledStrategies = state.disabledGrammarStrategies.toMutableSet()
 
         LanguageGrammarChecking.getLanguageExtensionPoints().forEach {
           val instance = it.instance
@@ -107,11 +108,13 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
           if (it.language in defaultEnabledProgrammingLanguages) {
             if (it.language !in state.enabledProgrammingLanguages) {
               disabledStrategies.add(instance.getID())
+              enabledStrategies.remove(instance.getID())
             }
           }
           else {
             if (it.language in state.enabledProgrammingLanguages) {
               enabledStrategies.add(instance.getID())
+              disabledStrategies.remove(instance.getID())
             }
           }
         }

@@ -69,21 +69,23 @@ public interface StatusBar extends StatusBarInfo, Disposable {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor);
+  void addWidget(@NotNull StatusBarWidget widget, @NonNls @NotNull String anchor);
 
   /**
-   * @deprecated Use {@link StatusBarWidgetFactory}
+   * Adds the given widget on the right.
+   * <p>
+   * For external usages use {@link StatusBarWidgetFactory}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.Internal
   void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable);
 
   /**
-   * @deprecated Use {@link StatusBarWidgetFactory}
+   * Adds the given widget positioned according to given anchor (see {@link Anchors}).
+   * <p>
+   * For external usages use {@link StatusBarWidgetFactory}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable);
+  @ApiStatus.Internal
+  void addWidget(@NotNull StatusBarWidget widget, @NonNls @NotNull String anchor, @NotNull Disposable parentDisposable);
 
   /**
    * @deprecated Use {@link StatusBarWidgetFactory}
@@ -100,13 +102,12 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   void removeCustomIndicationComponent(@NotNull JComponent c);
 
   /**
-   * @deprecated Use {@link StatusBarWidgetFactory}
+   * For external usages use {@link StatusBarWidgetFactory}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  void removeWidget(@NotNull String id);
+  @ApiStatus.Internal
+  void removeWidget(@NonNls @NotNull String id);
 
-  void updateWidget(@NotNull String id);
+  void updateWidget(@NonNls @NotNull String id);
 
   @Nullable
   StatusBarWidget getWidget(@NonNls String id);

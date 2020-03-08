@@ -83,6 +83,7 @@ public final class UIUtil {
   }
 
   public static final String BORDER_LINE = "<hr size=1 noshade>";
+  public static final @NonNls String BR = "<br/>";
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
   public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
@@ -1965,16 +1966,25 @@ public final class UIUtil {
   @Nullable
   public static Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {
     Component component = SwingUtilities.getDeepestComponentAt(parent, x, y);
-    if (component != null && component.getParent() instanceof JRootPane) {//GlassPane case
+    if (component != null && component.getParent() instanceof JRootPane) { // GlassPane case
       JRootPane rootPane = (JRootPane)component.getParent();
-      Point point = SwingUtilities.convertPoint(parent, new Point(x, y), rootPane.getLayeredPane());
-      component = SwingUtilities.getDeepestComponentAt(rootPane.getLayeredPane(), point.x, point.y);
+      component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getLayeredPane());
       if (component == null) {
-        point = SwingUtilities.convertPoint(parent, new Point(x, y), rootPane.getContentPane());
-        component = SwingUtilities.getDeepestComponentAt(rootPane.getContentPane(), point.x, point.y);
+        component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getContentPane());
+      }
+    }
+    if (component != null && component.getParent() instanceof JLayeredPane) { // Handle LoadingDecorator
+      Component[] components = ((JLayeredPane)component.getParent()).getComponentsInLayer(JLayeredPane.DEFAULT_LAYER);
+      if (components.length == 1 && ArrayUtil.indexOf(components, component) == -1) {
+        component = getDeepestComponentAtForComponent(parent, x, y, components[0]);
       }
     }
     return component;
+  }
+
+  private static Component getDeepestComponentAtForComponent(@NotNull Component parent, int x, int y, @NotNull Component component) {
+    Point point = SwingUtilities.convertPoint(parent, new Point(x, y), component);
+    return SwingUtilities.getDeepestComponentAt(component, point.x, point.y);
   }
 
   public static void layoutRecursively(@NotNull Component component) {
@@ -1989,7 +1999,7 @@ public final class UIUtil {
   @NotNull
   @Language("HTML")
   public static String getCssFontDeclaration(@NotNull Font font) {
-    return getCssFontDeclaration(font, null, null, null);
+    return getCssFontDeclaration(font, getLabelForeground(), JBUI.CurrentTheme.Link.linkColor(), null);
   }
 
   @NotNull
@@ -2227,13 +2237,16 @@ public final class UIUtil {
     return toRender;
   }
 
+  /**
+   * @deprecated This method is a hack. Please avoid it and create borderless {@code JScrollPane} manually using
+   * {@link com.intellij.ui.ScrollPaneFactory#createScrollPane(Component, boolean)}.
+   */
+  @Deprecated
   public static void removeScrollBorder(final Component c) {
-    for (JScrollPane scrollPane : uiTraverser(c).filter(JScrollPane.class)) {
-      if (!uiParents(scrollPane, true)
-        .takeWhile(Conditions.notEqualTo(c))
-        .filter(Conditions.not(Conditions.instanceOf(JPanel.class, JLayeredPane.class)))
-        .isEmpty()) continue;
-
+    JBIterable<JScrollPane> scrollPanes = uiTraverser(c)
+      .expand(o -> o == c || o instanceof JPanel || o instanceof JLayeredPane)
+      .filter(JScrollPane.class);
+    for (JScrollPane scrollPane : scrollPanes) {
       Integer keepBorderSides = ComponentUtil.getClientProperty(scrollPane, KEEP_BORDER_SIDES);
       if (keepBorderSides != null) {
         if (scrollPane.getBorder() instanceof LineBorder) {
@@ -3297,13 +3310,6 @@ public final class UIUtil {
   // background
 
   @NotNull
-  public static Color getListBackground(@NotNull JList<?> list, boolean selected) {
-    if (selected) return getListSelectionBackground(list.hasFocus());
-    Color background = list.getBackground();
-    return background != null ? background : getListBackground();
-  }
-
-  @NotNull
   public static Color getListBackground() {
     return LIST_BACKGROUND;
   }
@@ -3360,13 +3366,6 @@ public final class UIUtil {
   // foreground
 
   @NotNull
-  public static Color getListForeground(@NotNull JList<?> list, boolean selected) {
-    if (selected) return getListSelectionForeground(list.hasFocus());
-    Color foreground = list.getForeground();
-    return foreground != null ? foreground : getListForeground();
-  }
-
-  @NotNull
   public static Color getListForeground() {
     return UIManager.getColor("List.foreground");
   }
@@ -3413,13 +3412,6 @@ public final class UIUtil {
   // background
 
   @NotNull
-  public static Color getTreeBackground(@NotNull JTree tree, boolean selected) {
-    if (selected) return getTreeSelectionBackground(tree.hasFocus());
-    Color background = tree.getBackground();
-    return background != null ? background : getTreeBackground();
-  }
-
-  @NotNull
   public static Color getTreeBackground() {
     return TREE_BACKGROUND;
   }
@@ -3453,13 +3445,6 @@ public final class UIUtil {
   }
 
   // foreground
-
-  @NotNull
-  public static Color getTreeForeground(@NotNull JTree tree, boolean selected) {
-    if (selected) return getTreeSelectionForeground(tree.hasFocus());
-    Color foreground = tree.getForeground();
-    return foreground != null ? foreground : getTreeForeground();
-  }
 
   @NotNull
   public static Color getTreeForeground() {

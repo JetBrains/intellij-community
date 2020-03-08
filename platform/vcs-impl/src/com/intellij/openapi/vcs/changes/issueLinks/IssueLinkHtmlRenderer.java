@@ -20,6 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -36,7 +37,8 @@ public class IssueLinkHtmlRenderer {
 
   @NotNull
   public static String formatTextIntoHtml(@NotNull Project project, @NotNull String c) {
-    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" +
+    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), UIUtil.getLabelForeground(),
+                                                         JBUI.CurrentTheme.Link.linkColor(), null) + "</head><body>" +
            formatTextWithLinks(project, c) + "</body></html>";
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -15,6 +15,7 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,7 +40,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
   public MoveInstanceMethodDialog(final PsiMethod method,
                                   final PsiVariable[] variables) {
-    super(method, variables, MoveInstanceMethodHandler.getRefactoringName());
+    super(method, variables, MoveInstanceMethodHandler.getRefactoringName(), true);
     init();
   }
 
@@ -78,9 +79,6 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
       mainPanel.add(parametersPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                             JBUI.emptyInsets(), 0, 0));
     }
-
-    mainPanel.add(initOpenInEditorCb(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL,
-                                                               JBUI.emptyInsets(), 0, 0));
 
     separator.setLabelFor(myList);
     validateTextFields(myList.getSelectedIndex());
@@ -149,7 +147,6 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
                                                                                   isOpenInEditor(),
                                                                                   parameterNames);
     if (!verifyTargetClass(processor.getTargetClass())) return;
-    saveOpenInEditorOption();
     invokeRefactoring(processor);
   }
 
@@ -170,12 +167,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   }
 
   @Override
-  protected String getMovePropertySuffix() {
-    return "Instance";
-  }
-
-  @Override
-  protected String getCbTitle() {
-    return "Open moved method in editor";
+  protected @NotNull String getRefactoringId() {
+    return "MoveInstance";
   }
 }

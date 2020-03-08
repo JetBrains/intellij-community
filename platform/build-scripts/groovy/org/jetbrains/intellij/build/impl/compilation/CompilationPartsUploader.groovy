@@ -21,19 +21,9 @@ import org.jetbrains.intellij.build.BuildMessages
 
 @CompileStatic
 class CompilationPartsUploader implements Closeable {
-  private final String myServerUrl
   private final BuildMessages myMessages
-  private final CloseableHttpClient myHttpClient
-
-  static class UploadException extends Exception {
-    UploadException(String message) {
-      super(message)
-    }
-
-    UploadException(String message, Throwable cause) {
-      super(message, cause)
-    }
-  }
+  protected final String myServerUrl
+  protected final CloseableHttpClient myHttpClient
 
   CompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
     myServerUrl = fixServerUrl(serverUrl)

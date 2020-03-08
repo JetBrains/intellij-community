@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.ui.MessageType;
@@ -16,7 +15,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
@@ -35,9 +33,6 @@ import com.intellij.util.Functions;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashMap;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -63,7 +58,7 @@ public class NewMappings implements Disposable {
   @NotNull private Disposable myFilePointerDisposable = Disposer.newDisposable();
   private volatile List<VcsDirectoryMapping> myMappings = Collections.emptyList(); // sorted by MAPPINGS_COMPARATOR
   private volatile List<MappedRoot> myMappedRoots = Collections.emptyList(); // sorted by ROOT_COMPARATOR
-  private volatile FilePathMapping myMappedRootsMapping = new FilePathMapping(Collections.emptyList());
+  private volatile RootMapping myMappedRootsMapping = new RootMapping(Collections.emptyList());
   private volatile List<AbstractVcs> myActiveVcses = Collections.emptyList();
   private volatile boolean myActivated = false;
 
@@ -79,7 +74,7 @@ public class NewMappings implements Disposable {
     myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
       .usePassThroughInUnitTestMode();
 
-    vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, (DumbAwareRunnable)() -> {
+    vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, () -> {
       if (!myProject.isDisposed()) {
         activateActiveVcses();
       }
@@ -192,7 +187,7 @@ public class NewMappings implements Disposable {
       mappedRootsChanged = !myMappedRoots.equals(newMappedRoots.mappedRoots);
       if (mappedRootsChanged) {
         myMappedRoots = newMappedRoots.mappedRoots;
-        myMappedRootsMapping = new FilePathMapping(newMappedRoots.mappedRoots);
+        myMappedRootsMapping = new RootMapping(newMappedRoots.mappedRoots);
 
         dumpMappedRootsToLog();
       }
@@ -597,18 +592,14 @@ public class NewMappings implements Disposable {
     }
   }
 
-  private static class FilePathMapping {
+  private static class RootMapping {
     private final Map<VirtualFile, MappedRoot> myVFMap = new HashMap<>();
-    private final Map<String, MappedRoot> myPathMap = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
-    private final TIntHashSet myPathHashSet = new TIntHashSet();
+    private final FilePathMapping<MappedRoot> myPathMapping = new FilePathMapping<>(SystemInfo.isFileSystemCaseSensitive);
 
-    private FilePathMapping(@NotNull List<MappedRoot> mappedRoots) {
+    private RootMapping(@NotNull List<MappedRoot> mappedRoots) {
       for (MappedRoot root : mappedRoots) {
         myVFMap.put(root.root, root);
-
-        String path = StringUtil.trimTrailing(root.root.getPath(), '/');
-        myPathMap.put(path, root);
-        myPathHashSet.add(pathHashCode(path));
+        myPathMapping.add(root.root.getPath(), root);
       }
     }
 
@@ -624,50 +615,7 @@ public class NewMappings implements Disposable {
 
     @Nullable
     public MappedRoot getRootFor(@NotNull FilePath filePath) {
-      String path = filePath.getPath();
-
-      int index = 0;
-      int prefixHash = 0;
-      TIntArrayList matches = new TIntArrayList();
-
-      // check empty string for FS root
-      if (myPathHashSet.contains(prefixHash)) {
-        matches.add(index);
-      }
-
-      while (index < path.length()) {
-        int nextIndex = path.indexOf('/', index + 1);
-        if (nextIndex == -1) nextIndex = path.length();
-
-        prefixHash = pathHashCode(path, index, nextIndex, prefixHash);
-
-        if (myPathHashSet.contains(prefixHash)) {
-          matches.add(nextIndex);
-        }
-
-        index = nextIndex;
-      }
-
-      for (int i = matches.size() - 1; i >= 0; i--) {
-        String prefix = path.substring(0, matches.get(i));
-        MappedRoot root = myPathMap.get(prefix);
-        if (root != null) return root;
-      }
-
-      return null;
-    }
-
-    private static int pathHashCode(@NotNull String path) {
-      return pathHashCode(path, 0, path.length(), 0);
-    }
-
-    private static int pathHashCode(@NotNull String path, int offset1, int offset2, int prefixHash) {
-      if (SystemInfo.isFileSystemCaseSensitive) {
-        return StringUtil.stringHashCode(path, offset1, offset2, prefixHash);
-      }
-      else {
-        return StringUtil.stringHashCodeInsensitive(path, offset1, offset2, prefixHash);
-      }
+      return myPathMapping.getMappingFor(filePath);
     }
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
@@ -24,7 +25,7 @@ internal fun CommitOptions.changeListChanged(changeList: LocalChangeList) = chan
 
 internal fun CommitOptions.saveChangeListSpecificOptions() = changeListSpecificOptions.forEach { it.saveState() }
 
-internal fun String.removeEllipsisSuffix() = removeSuffix("...").removeSuffix("\u2026")
+internal fun String.removeEllipsisSuffix() = StringUtil.removeEllipsisSuffix(this)
 internal fun CommitExecutor.getPresentableText() = removeMnemonic(actionText).removeEllipsisSuffix()
 
 open class SingleChangeListCommitWorkflow(

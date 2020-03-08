@@ -13,6 +13,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.impl.PsiDocumentManagerBase
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -191,8 +192,10 @@ fun AppUIExecutor.coroutineDispatchingContext(): ContinuationInterceptor =
 
 
 internal class WithDocumentsCommitted(private val project: Project, private val modality: ModalityState) : ContextConstraint {
-  override fun isCorrectContext(): Boolean =
-    !PsiDocumentManager.getInstance(project).hasUncommitedDocuments()
+  override fun isCorrectContext(): Boolean {
+    val manager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+    return !manager.isCommitInProgress && !manager.hasEventSystemEnabledUncommittedDocuments()
+  }
 
   override fun schedule(runnable: Runnable) {
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, modality)

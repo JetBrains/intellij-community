@@ -6,6 +6,7 @@ import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Activities;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.ProjectLoadListener;
@@ -120,8 +121,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   public final void projectOpened(@Nullable ProgressIndicator indicator) {
     if (indicator != null && ApplicationManager.getApplication().isInternal()) {
-      //noinspection HardCodedStringLiteral
-      indicator.setText("Running startup activities...");
+      indicator.setText(IdeBundle.message("startup.indicator.text.running.startup.activities"));
     }
 
     doRunStartUpActivities(indicator);
@@ -171,7 +171,10 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
 
       PluginId id = pluginDescriptor.getPluginId();
-      if (!(id == PluginManagerCore.CORE_ID || id == PluginManagerCore.JAVA_PLUGIN_ID || id.getIdString().equals("com.jetbrains.performancePlugin"))) {
+      if (!(id == PluginManagerCore.CORE_ID ||
+            id == PluginManagerCore.JAVA_PLUGIN_ID ||
+            id.getIdString().equals("com.jetbrains.performancePlugin") ||
+            id.getIdString().equals("com.intellij.kotlinNative.platformDeps"))) {
         LOG.error("Only bundled plugin can define " + extensionPoint.getName() + ": " + pluginDescriptor);
         return;
       }

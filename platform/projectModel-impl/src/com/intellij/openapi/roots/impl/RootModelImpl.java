@@ -626,10 +626,16 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
                       && Comparing.equal(libraryOrderEntry1.getLibraryLevel(), libraryOrderEntry2.getLibraryLevel());
       if (!equal) return false;
 
-      Library library1 = libraryOrderEntry1.getLibrary();
-      Library library2 = libraryOrderEntry2.getLibrary();
+      LibraryEx library1 = (LibraryEx) libraryOrderEntry1.getLibrary();
+      LibraryEx library2 = (LibraryEx) libraryOrderEntry2.getLibrary();
       if (library1 != null && library2 != null) {
-        if (!Arrays.equals(((LibraryEx)library1).getExcludedRootUrls(), ((LibraryEx)library2).getExcludedRootUrls())) {
+        if (!Arrays.equals(library1.getExcludedRootUrls(), library2.getExcludedRootUrls())) {
+          return false;
+        }
+        if (!Comparing.equal(library1.getKind(), library2.getKind())) {
+          return false;
+        }
+        if (!Comparing.equal(library1.getProperties(), library2.getProperties())) {
           return false;
         }
       }

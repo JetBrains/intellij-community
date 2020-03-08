@@ -63,7 +63,8 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : SettingsSavin
 
     val projectConfigDirPath = project.stateStore.projectConfigDir ?: return
     val projectConfigDirVFile = LocalFileSystem.getInstance().findFileByPath(projectConfigDirPath)
-    if (projectConfigDirVFile == null) { // store dir (.idea) not created yet
+    val projectFile = project.projectFile
+    if (projectConfigDirVFile == null || projectFile == null || !projectFile.exists()) { //store dir (.idea) or project file (.idea/misc.xml) not created yet
       needGenerate.set(true)
       return
     }
@@ -130,7 +131,7 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : SettingsSavin
       Git.getInstance().untrackedFilePaths(project, vcsRootForProjectFile, listOf(projectFilePath)).isEmpty()
     }
     catch (e: VcsException) {
-      LOG.warn("Cannot check $projectFilePathStr for being unversioned", e)
+      LOG.debug("Cannot check $projectFilePathStr for being unversioned", e)
       false
     }
   }

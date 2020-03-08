@@ -158,7 +158,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   @Nls
   protected String getListEmptyText() {
-    return "No entries";
+    return IdeBundle.message("empty.text.no.entries");
   }
 
   @NotNull
@@ -208,7 +208,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   @Nullable
   protected JComponent createDefaultRightComponent() {
-    return new JBPanelWithEmptyText().withEmptyText("Nothing selected");
+    return new JBPanelWithEmptyText().withEmptyText(IdeBundle.message("empty.text.nothing.selected"));
   }
 
   protected JComponent createLeftComponent() {
@@ -265,7 +265,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   }
 
   private void installListActions(JBList list) {
-    AnAction previousPanelAction = new AnAction(IdeBundle.lazyMessage("action.FinderRecursivePanel.text.previous"), AllIcons.Actions.Back) {
+    AnAction previousPanelAction = new AnAction(IdeBundle.messagePointer("action.FinderRecursivePanel.text.previous"), AllIcons.Actions.Back) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!isRootPanel());
@@ -279,7 +279,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     };
     previousPanelAction.registerCustomShortcutSet(KeyEvent.VK_LEFT, 0, list);
 
-    AnAction nextPanelAction = new AnAction(IdeBundle.lazyMessage("action.FinderRecursivePanel.text.next"), AllIcons.Actions.Forward) {
+    AnAction nextPanelAction = new AnAction(IdeBundle.messagePointer("action.FinderRecursivePanel.text.next"), AllIcons.Actions.Forward) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         final T value = getSelectedValue();
@@ -296,7 +296,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     };
     nextPanelAction.registerCustomShortcutSet(KeyEvent.VK_RIGHT, 0, list);
 
-    AnAction editAction = new AnAction(IdeBundle.lazyMessage("action.FinderRecursivePanel.text.edit"), AllIcons.Actions.Edit) {
+    AnAction editAction = new AnAction(IdeBundle.messagePointer("action.FinderRecursivePanel.text.edit"), AllIcons.Actions.Edit) {
 
       @Override
       public void update(@NotNull AnActionEvent e) {

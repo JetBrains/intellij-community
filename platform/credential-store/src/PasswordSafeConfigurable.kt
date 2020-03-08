@@ -272,7 +272,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
 
   private fun getNewPgpKey() = pgpKeyCombo.selectedItem as? PgpKey
 
-  private inner class ClearKeePassDatabaseAction : DumbAwareAction("Clear") {
+  private inner class ClearKeePassDatabaseAction : DumbAwareAction(CredentialStoreBundle.message("action.text.password.safe.clear")) {
     override fun actionPerformed(event: AnActionEvent) {
       if (!MessageDialogBuilder.yesNo(CredentialStoreBundle.message("passwordSafeConfigurable.clear.passwords"),
                                       CredentialStoreBundle.message("passwordSafeConfigurable.are.you.sure")).yesText(
@@ -291,7 +291,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
     }
   }
 
-  private inner class ImportKeePassDatabaseAction : DumbAwareAction("Import") {
+  private inner class ImportKeePassDatabaseAction : DumbAwareAction(CredentialStoreBundle.message("action.text.password.safe.import")) {
     override fun actionPerformed(event: AnActionEvent) {
       closeCurrentStore()
 

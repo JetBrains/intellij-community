@@ -383,13 +383,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     if (parent instanceof IdeFrame) {
       return ((IdeFrame)parent).getStatusBar().findChild(c);
     }
-
     IdeFrame frame = findFrameFor(project);
     if (frame != null) {
       return frame.getStatusBar().findChild(c);
     }
-
-    assert false : "Cannot find status bar for " + c;
     return null;
   }
 

@@ -614,4 +614,26 @@ public class EditorImplTest extends AbstractEditorTest {
     mouse().pressAtXY(2 * TEST_CHAR_WIDTH, 0).dragToXY(4 * TEST_CHAR_WIDTH, 0).release();
     checkResultByText("<caret>text");
   }
+
+  public void testDragBeyondEditorTopWithBlockInlay() {
+    initText("text");
+    addBlockInlay(0, true);
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
+    mouse().pressAtXY(2 * TEST_CHAR_WIDTH, (int)(getEditor().getLineHeight() * 1.5)).dragToXY(-1, -1).release();
+    checkResultByText("<selection><caret>te</selection>xt");
+  }
+
+  public void testCaretMovementAtFoldRegionWithEmptyPlaceholder() {
+    initText("<caret>abc");
+    addCollapsedFoldRegion(1, 2, "");
+    right();
+    Caret caret = getEditor().getCaretModel().getPrimaryCaret();
+    assertEquals(1, caret.getOffset());
+    assertEquals(new LogicalPosition(0, 1), caret.getLogicalPosition());
+    assertEquals(new VisualPosition(0, 1), caret.getVisualPosition());
+    right();
+    assertEquals(3, caret.getOffset());
+    assertEquals(new LogicalPosition(0, 3), caret.getLogicalPosition());
+    assertEquals(new VisualPosition(0, 2), caret.getVisualPosition());
+  }
 }

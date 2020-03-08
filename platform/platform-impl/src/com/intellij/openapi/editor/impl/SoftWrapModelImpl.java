@@ -240,6 +240,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
    * @return    total number of soft wrap-introduced new visual lines
    */
   int getSoftWrapsIntroducedLinesNumber() {
+    prepareToMapping();
     return myStorage.getSoftWraps().size(); // Assuming that soft wrap has single line feed all the time
   }
 

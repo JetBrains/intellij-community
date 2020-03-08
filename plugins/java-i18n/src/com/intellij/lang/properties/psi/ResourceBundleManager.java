@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +31,7 @@ public abstract class ResourceBundleManager {
   @Nullable
   public abstract PsiClass getResourceBundle();
 
-  public List<String> suggestPropertiesFiles(Set<Module> contextModules){
+  public List<String> suggestPropertiesFiles(@NotNull Set<Module> contextModules){
     return I18nUtil.defaultSuggestPropertiesFiles(myProject, contextModules);
   }
 
@@ -44,20 +46,39 @@ public abstract class ResourceBundleManager {
   @Nullable @NonNls
   public abstract String getConcatenationTemplateName();
 
-  public abstract boolean isActive(PsiFile context) throws ResourceBundleNotFoundException;
+  /**
+   * @deprecated override {@link #isActive(Collection)} instead
+   */
+  @Deprecated
+  public boolean isActive(@NotNull PsiFile context) throws ResourceBundleNotFoundException {
+    throw new AbstractMethodError();
+  }
+
+  public boolean isActive(@NotNull Collection<PsiFile> contexts) throws ResourceBundleNotFoundException {
+    for (PsiFile context : contexts) {
+      if (isActive(context)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   public abstract boolean canShowJavaCodeInfo();
 
   @Nullable
-  public static ResourceBundleManager getManager(PsiFile context) throws ResourceBundleNotFoundException {
-    final Project project = context.getProject();
+  public static ResourceBundleManager getManager(@NotNull PsiFile context) throws ResourceBundleNotFoundException {
+    return getManager(Collections.singletonList(context), context.getProject());
+  }
+
+  @Nullable
+  public static ResourceBundleManager getManager(@NotNull Collection<PsiFile> contexts, @NotNull Project project) throws ResourceBundleNotFoundException {
     for (ResourceBundleManager manager : RESOURCE_BUNDLE_MANAGER.getExtensions(project)) {
-      if (manager.isActive(context)) {
+      if (manager.isActive(contexts)) {
         return manager;
       }
     }
     final DefaultResourceBundleManager manager = new DefaultResourceBundleManager(project);
-    return manager.isActive(context) ? manager : null;
+    return manager.isActive(contexts) ? manager : null;
   }
 
   @Nullable

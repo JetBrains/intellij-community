@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-class AnalysisProblemBundle extends DynamicBundle {
+public class AnalysisProblemBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.AnalysisProblemBundle";
   private static final AnalysisProblemBundle INSTANCE = new AnalysisProblemBundle();
 
@@ -20,7 +20,7 @@ class AnalysisProblemBundle extends DynamicBundle {
   }
 
   @NotNull
-  public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

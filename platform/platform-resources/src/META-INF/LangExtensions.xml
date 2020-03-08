@@ -118,9 +118,6 @@
     <projectService serviceInterface="com.intellij.psi.PsiDocumentManager"
                     serviceImplementation="com.intellij.psi.impl.PsiDocumentManagerImpl" preload="await"/>
 
-    <projectService serviceInterface="com.intellij.util.indexing.FileBasedIndexScanRunnableCollector"
-                    serviceImplementation="com.intellij.util.indexing.FileBasedIndexScanRunnableCollectorImpl"/>
-
     <projectService serviceInterface="com.intellij.pom.references.PomService"
                     serviceImplementation="com.intellij.pom.references.PomServiceImpl"/>
 
@@ -657,7 +654,7 @@
     <filePropertyPusher implementation="com.intellij.psi.templateLanguages.TemplateDataLanguagePusher"/>
 
     <!-- execution -->
-    <experimentalFeature id="runtime.environments" percentOfUsers="0">
+    <experimentalFeature id="run.targets" percentOfUsers="0">
       <description>Makes available running on remote runtime environments (Java on Docker or SSH server)</description>
     </experimentalFeature>
     <applicationService serviceImplementation="com.intellij.execution.target.TargetEnvironmentsManager"/>
@@ -928,8 +925,6 @@
     <applicationService serviceImplementation="com.intellij.codeInsight.documentation.QuickDocOnMouseOverManager"/>
     <postStartupActivity implementation="com.intellij.codeInsight.documentation.QuickDocOnMouseOverStartupActivity"/>
 
-    <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.PowerSaveHectorProvider"/>
-
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>
 
@@ -966,6 +961,7 @@
     <statistics.counterUsagesCollector groupId="surround.with" version="2"/>
     <statistics.counterUsagesCollector groupId="find" version="3"/>
     <statistics.counterUsagesCollector groupId="create.directory.dialog" version="1"/>
+    <statistics.counterUsagesCollector groupId="refactoring.dialog" version="1"/>
 
     <applicationService serviceImplementation="com.intellij.internal.statistic.persistence.ApprovedGroupsCacheConfigurable" />
     <applicationService serviceImplementation="com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence" />
@@ -1035,9 +1031,6 @@
 
     <actionPromoter implementation="com.intellij.ui.EditorTextFieldActionPromoter"/>
     <actionPromoter implementation="com.intellij.codeInsight.editorActions.TabActionsPromoter"/>
-
-    <projectService serviceImplementation="com.intellij.util.indexing.hash.building.IndexesExporter"/>
-    <projectService serviceImplementation="com.intellij.util.indexing.hash.building.ProjectIndexesExporter"/>
 
     <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
 
@@ -1258,16 +1251,9 @@
 
     <applicationService serviceImplementation="com.intellij.util.indexing.IndexableSetContributorModificationTracker"/>
 
-    <applicationService serviceInterface="com.intellij.util.indexing.hash.SharedIndexChunkConfiguration"
-                        serviceImplementation="com.intellij.util.indexing.hash.SharedIndexChunkConfigurationImpl"/>
-    <sharedIndexChunkLocator implementation="com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator"/>
-    <sharedIndexLoader implementation="com.intellij.util.indexing.provided.OnDiskSharedIndexChunkLocator"/>
-
-    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.General.Warning" doNotActivateOnStart="true" canCloseContents="false"
+    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.Problems" doNotActivateOnStart="true" canCloseContents="false"
                 factoryClass="com.intellij.analysis.problemsView.inspection.ProblemsViewToolWindowFactory"/>
     <projectService serviceImplementation="com.intellij.analysis.problemsView.inspection.InspectionProblemsView"/>
-
-    <projectService serviceImplementation="com.intellij.psi.impl.source.PostprocessReformattingAspect" preload="await"/>
   </extensions>
 </idea-plugin>
 

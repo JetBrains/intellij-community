@@ -33,7 +33,7 @@
         <properties>
           <horizontalAlignment value="2"/>
           <selected value="false"/>
-          <text value="Always do smart step into"/>
+          <text resource-bundle="messages/PyBundle" key="form.debugger.stepping.always.do.smart.step.into"/>
         </properties>
       </component>
       <hspacer id="1eb52">

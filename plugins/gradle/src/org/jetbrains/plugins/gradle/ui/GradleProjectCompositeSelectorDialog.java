@@ -14,7 +14,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,8 +67,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree).
       addExtraAction(new SelectAllButton()).
       addExtraAction(new UnselectAllButton()).
-      setToolbarPosition(ActionToolbarPosition.BOTTOM).
-      setToolbarBorder(JBUI.Borders.empty());
+      setToolbarPosition(ActionToolbarPosition.BOTTOM);
     contentPanel.add(decorator.createPanel());
     return mainPanel;
   }
@@ -170,7 +168,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
 
   private class SelectAllButton extends AnActionButton {
     SelectAllButton() {
-      super(GradleBundle.lazyMessage("gradle.settings.composite.select.all"), AllIcons.Actions.Selectall);
+      super(GradleBundle.messagePointer("gradle.settings.composite.select.all"), AllIcons.Actions.Selectall);
     }
 
     @Override
@@ -182,7 +180,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
 
   private class UnselectAllButton extends AnActionButton {
     UnselectAllButton() {
-      super(GradleBundle.lazyMessage("gradle.settings.composite.unselect.all"), AllIcons.Actions.Unselectall);
+      super(GradleBundle.messagePointer("gradle.settings.composite.unselect.all"), AllIcons.Actions.Unselectall);
     }
 
     @Override

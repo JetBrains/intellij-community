@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -20,6 +21,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import static org.junit.Assert.*;
@@ -145,10 +147,22 @@ public class PluginManagerTest {
     throws IOException, JDOMException {
     Path file = Paths.get(getTestDataPath(), testDataName);
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), true));
-    DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* doesn't matter */ false,
-                                                                    PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
 
-    Element root = JDOMUtil.load(file, context.parentContext.getXmlFactory());
+    Element root = JDOMUtil.load(file, parentContext.getXmlFactory());
+    DescriptorLoadingContext context = new DescriptorLoadingContext(
+      parentContext, isBundled, /* doesn't matter */ false,
+      new BasePathResolver() {
+        @Override
+        public @NotNull Element resolvePath(@NotNull Path basePath,
+                                            @NotNull String relativePath,
+                                            @NotNull SafeJdomFactory jdomFactory) {
+          for (Element child : root.getChildren("config-file-idea-plugin")) {
+            String url = Objects.requireNonNull(child.getAttributeValue("url"));
+            if (url.endsWith("/" + relativePath)) return child;
+          }
+          throw new AssertionError("Unexpected: " + relativePath);
+        }
+      });
 
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");

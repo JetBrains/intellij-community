@@ -186,18 +186,18 @@ class PyDataclassInspection : PyInspection() {
 
       if (node != null) {
         val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
-        val markedCallee = node.multiResolveCallee(resolveContext).singleOrNull()
-        val callee = markedCallee?.element
+        val callableType = node.multiResolveCallee(resolveContext).singleOrNull()
+        val callee = callableType?.callable
         val calleeQName = callee?.qualifiedName
 
-        if (markedCallee != null && callee != null) {
+        if (callableType != null && callee != null) {
           val dataclassType = when {
             DATACLASSES_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.STD
             ATTRS_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.ATTRS
             else -> return
           }
 
-          val mapping = PyCallExpressionHelper.mapArguments(node, markedCallee, myTypeEvalContext)
+          val mapping = PyCallExpressionHelper.mapArguments(node, callableType, myTypeEvalContext)
 
           val dataclassParameter = callee.getParameters(myTypeEvalContext).firstOrNull()
           val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key

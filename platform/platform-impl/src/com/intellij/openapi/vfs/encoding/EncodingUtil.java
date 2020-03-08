@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.AppTopics;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -122,7 +123,9 @@ public class EncodingUtil {
     documentManager.saveDocument(document);
     boolean writable = ReadonlyStatusHandler.ensureFilesWritable(project, virtualFile);
     if (!writable) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot save the file " + virtualFile.getPresentableUrl(), "Unable to Save", null);
+      CommonRefactoringUtil.showErrorHint(project, editor,
+                                          IdeBundle.message("dialog.message.cannot.save.the.file.0", virtualFile.getPresentableUrl()),
+                                          IdeBundle.message("dialog.title.unable.to.save"), null);
       return;
     }
 
@@ -136,7 +139,7 @@ public class EncodingUtil {
         });
       }
       catch (IOException io) {
-        Messages.showErrorDialog(project, io.getMessage(), "Error Writing File");
+        Messages.showErrorDialog(project, io.getMessage(), IdeBundle.message("dialog.title.error.writing.file"));
       }
     });
   }

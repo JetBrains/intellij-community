@@ -24,6 +24,7 @@
       <option name="VISUAL_INDENT_GUIDE" value="eeeeee"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="add9c7"/>
       <option name="RECENT_LOCATIONS_SELECTION" value="e9eef5"/>
+      <option name="DEFAULT_DOC_COMMENT_GUIDE" value="EBEBEB"/>
 
       <option name="ADDED_LINES_COLOR" value="c9dec1" deuteranopia="99ca90" protanopia="99ca90"/>
       <option name="MODIFIED_LINES_COLOR" value="c3d6e8" deuteranopia="9ca9bf" protanopia="9ca9bf"/>
@@ -90,6 +91,8 @@
       <option name="ScrollBar.Mac.Transparent.hoverTrackColor" value="8080801A"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbColor" value="00000080"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="00000080"/>
+      <option name="ActionButton.hoverBackground" value="dfdfdf"/>
+      <option name="ActionButton.pressedBackground" value="cfcfcf"/>
     </colors>
 
     <attributes>
@@ -1263,6 +1266,7 @@
       <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="43474a"/>
       <option name="RECENT_LOCATIONS_SELECTION" value="383838"/>
+      <option name="DEFAULT_DOC_COMMENT_GUIDE" value="404142"/>
 
       <option name="VCS_ANNOTATIONS_COLOR_1" value="464c43"/>
       <option name="VCS_ANNOTATIONS_COLOR_2" value="444342"/>
@@ -1295,6 +1299,8 @@
       <option name="ScrollBar.Mac.Transparent.hoverTrackColor" value="8080801A"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbColor" value="8080808C"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="2626268C"/>
+      <option name="ActionButton.hoverBackground" value="4c5052"/>
+      <option name="ActionButton.pressedBackground" value="5c6164"/>
     </colors>
     <attributes>
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">

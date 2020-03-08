@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.copy;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
@@ -14,6 +14,7 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RecentsManager;
@@ -22,21 +23,21 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-class CopyClassDialog extends DialogWrapper{
+class CopyClassDialog extends RefactoringDialog implements DumbAware {
+  private static final String COPY_CLASS = "CopyClass";
   private static final String RECENTS_KEY = "CopyClassDialog.RECENTS_KEY";
 
   private final JLabel myInformationLabel = new JLabel();
   private EditorTextField myNameField;
   private final JLabel myPackageLabel = new JLabel();
   private ReferenceEditorComboWithBrowseButton myTfPackage;
-  private final Project myProject;
   private final boolean myDoClone;
   private final PsiDirectory myDefaultTargetDirectory;
-  private final JCheckBox myOpenInEditorCb = CopyFilesOrDirectoriesDialog.createOpenInEditorCB();
   private final DestinationFolderComboBox myDestinationCB = new DestinationFolderComboBox() {
     @Override
     public String getTargetPackage() {
@@ -51,8 +52,7 @@ class CopyClassDialog extends DialogWrapper{
   protected MoveDestination myDestination;
 
   CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
-    super(project, true);
-    myProject = project;
+    super(project, true, true);
     myDefaultTargetDirectory = defaultTargetDirectory;
     myDoClone = doClone;
     String text = myDoClone ? JavaRefactoringBundle.message("copy.class.clone.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass)) :
@@ -69,6 +69,16 @@ class CopyClassDialog extends DialogWrapper{
                             }, myTfPackage.getChildComponent());
     myNameField.setText(UsageViewUtil.getShortName(aClass));
     myNameField.selectAll();
+  }
+
+  @Override
+  protected boolean hasPreviewButton() {
+    return false;
+  }
+
+  @Override
+  protected @NotNull String getRefactoringId() {
+    return COPY_CLASS;
   }
 
   @Override
@@ -107,7 +117,6 @@ class CopyClassDialog extends DialogWrapper{
     label.setLabelFor(myDestinationCB);
 
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(myOpenInEditorCb, BorderLayout.EAST);
     return FormBuilder.createFormBuilder()
       .addComponent(myInformationLabel)
       .addLabeledComponent(RefactoringBundle.message("copy.files.new.name.label"), myNameField, UIUtil.LARGE_VGAP)
@@ -136,12 +145,8 @@ class CopyClassDialog extends DialogWrapper{
     return myNameField.getText();
   }
 
-  public boolean openInEditor() {
-    return myOpenInEditorCb.isSelected();
-  }
-
   @Override
-  protected void doOKAction(){
+  protected void doAction() {
     final String packageName = myTfPackage.getText();
     final String className = getClassName();
 
@@ -176,7 +181,6 @@ class CopyClassDialog extends DialogWrapper{
       myNameField.requestFocusInWindow();
       return;
     }
-    CopyFilesOrDirectoriesDialog.saveOpenInEditorState(myOpenInEditorCb.isSelected());
-    super.doOKAction();
+    closeOKAction();
   }
 }

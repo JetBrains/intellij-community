@@ -79,7 +79,9 @@ public final class GitVcs extends AbstractVcs {
 
   @NotNull
   public static GitVcs getInstance(@NotNull Project project) {
-    return Objects.requireNonNull((GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME));
+    GitVcs gitVcs = (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
+    ProgressManager.checkCanceled();
+    return Objects.requireNonNull(gitVcs);
   }
 
   public GitVcs(@NotNull Project project) {

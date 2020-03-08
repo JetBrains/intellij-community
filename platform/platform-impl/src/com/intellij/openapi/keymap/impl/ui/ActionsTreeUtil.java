@@ -629,7 +629,7 @@ public class ActionsTreeUtil {
     }
   }
 
-  public static AnAction[] getActions(String actionGroup) {
+  public static AnAction[] getActions(@NonNls String actionGroup) {
     return getActions((ActionGroup)ActionManager.getInstance().getActionOrStub(actionGroup));
   }
 

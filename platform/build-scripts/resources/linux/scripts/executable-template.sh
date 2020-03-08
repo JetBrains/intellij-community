@@ -183,7 +183,7 @@ fi
 VM_OPTIONS=""
 if [ -r "$VM_OPTIONS_FILE" ]; then
   VM_OPTIONS=$("$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*")
-  if { echo "$VM_OPTIONS" | "$GREP" -q "agentlib:yjpagent" - ; }; then
+  if { echo "$VM_OPTIONS" | "$GREP" -q "agentlib:yjpagent"; }; then
     if [ "$OS_TYPE" = "Linux" ]; then
       VM_OPTIONS=$(echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent\(-linux\)\?\([^=]*\)|-agentpath:$IDE_BIN_HOME/libyjpagent-linux\2.so|")
     else

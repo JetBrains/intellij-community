@@ -44,7 +44,7 @@ import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.i18n.GitBundle.message
-import git4idea.i18n.GitBundleExtensions.lazyMessage
+import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.GroupByDirectoryAction
@@ -79,6 +79,12 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val ui = logUi
     val branchNames = tree.getSelectedBranchNames()
     ui.filterUi.setFilter(if (branchNames.isNotEmpty()) VcsLogFilterObject.fromBranches(branchNames) else null)
+  }
+
+  private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
+    override fun getOrderedComponents(): List<Component> = listOf(tree.component, logUi.table,
+                                                                  logUi.mainFrame.changesBrowser.preferredFocusedComponent,
+                                                                  logUi.mainFrame.filterUi.textFilterComponent.textEditor)
   }
 
   init {
@@ -153,7 +159,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val toolbar = ActionManager.getInstance().createActionToolbar("Git.Log.Branches", group, false)
     toolbar.setTargetComponent(branchesTreePanel)
 
-    val branchesButton = ExpandStripeButton(lazyMessage("action.Git.Log.Show.Branches.text"), AllIcons.Actions.ArrowExpand)
+    val branchesButton = ExpandStripeButton(messagePointer("action.Git.Log.Show.Branches.text"), AllIcons.Actions.ArrowExpand)
       .apply {
         border = createBorder(JBColor.border(), SideBorder.RIGHT)
         addActionListener {
@@ -201,12 +207,6 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
       }
       return null
     }
-  }
-
-  private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
-    override fun getOrderedComponents(): List<Component> = listOf(tree.component, logUi.table,
-                                                                  logUi.mainFrame.changesBrowser.preferredFocusedComponent,
-                                                                  logUi.mainFrame.filterUi.textFilterComponent.textEditor)
   }
 
   fun getMainComponent(): JComponent {

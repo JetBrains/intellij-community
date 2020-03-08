@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.eclipse.util.PathUtil;
+import org.junit.Assume;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -52,15 +52,6 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     public Sdk getSdk() {
       Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       Sdk sdk = PsiTestUtil.addJdkAnnotations(jdk);
-      if (jdk.getVersionString().matches("java version \"1\\.8\\..+\"")) {
-        String home = jdk.getHomeDirectory().getPath();
-        VfsRootAccess.allowRootAccess(getTestRootDisposable(), home);
-        String toolsPath = home + "/lib/tools.jar!/";
-        VirtualFile toolsJar = JarFileSystem.getInstance().findFileByPath(toolsPath);
-        assertNotNull("tools.jar not found: " + toolsPath, toolsJar);
-
-        sdk = PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, toolsJar);
-      }
 
       Collection<String> utilClassPath = PathManager.getUtilClassPath();
       VirtualFile[] files = StreamEx.of(utilClassPath)
@@ -83,13 +74,15 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     }
   };
 
-  @NotNull
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return myDescriptor;
   }
 
   public void testBundledAnnotationXmlSyntax() {
+    String version = getProjectDescriptor().getSdk().getVersionString();
+    Assume.assumeTrue("This test requires boot JDK 11; actual: "+version,
+                       version.startsWith("java version \"11"));
     String root = PathManagerEx.getCommunityHomePath() + "/java/jdkAnnotations";
     findAnnotationsXmlAndCheckSyntax(root);
   }

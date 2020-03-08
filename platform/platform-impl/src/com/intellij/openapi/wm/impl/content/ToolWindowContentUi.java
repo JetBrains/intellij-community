@@ -1,20 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -42,7 +40,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class ToolWindowContentUi implements ContentUI, DataProvider {
@@ -454,9 +451,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     }
 
     if (Boolean.TRUE == content.getUserData(Content.TABBED_CONTENT_KEY)) {
-      final String groupName = content.getUserData(Content.TAB_GROUP_NAME_KEY);
-      if (groupName != null) {
-        group.addAction(createMergeTabsAction(contentManager, groupName));
+      TabGroupId groupId = content.getUserData(Content.TAB_GROUP_ID_KEY);
+      if (groupId != null) {
+        group.addAction(createMergeTabsAction(contentManager, groupId));
       }
     }
 
@@ -485,7 +482,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   @NotNull
   private static AnAction createSplitTabsAction(@NotNull TabbedContent content) {
-    return new DumbAwareAction("Split '" + content.getTitlePrefix() + "' group") {
+    return new DumbAwareAction(IdeBundle.message("action.text.split.0.group", content.getTitlePrefix())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         content.split();
@@ -494,34 +491,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   @NotNull
-  private static AnAction createMergeTabsAction(@NotNull ContentManager manager, String tabPrefix) {
-    return new DumbAwareAction("Merge tabs to '" + tabPrefix + "' group") {
+  private static AnAction createMergeTabsAction(@NotNull ContentManager manager, @NotNull TabGroupId groupId) {
+    return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.0.group", groupId.getDisplayName())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        final Content selectedContent = manager.getSelectedContent();
-        final List<Pair<String, JComponent>> tabs = new ArrayList<>();
-        int selectedTab = -1;
-        List<Content> mergedContent = new ArrayList<>();
-        for (Content content : manager.getContents()) {
-          if (tabPrefix.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY))) {
-            final String label = content.getTabName().substring(tabPrefix.length() + 2);
-            final JComponent component = content.getComponent();
-            if (content == selectedContent) {
-              selectedTab = tabs.size();
-            }
-            tabs.add(Pair.create(label, component));
-            manager.removeContent(content, false);
-            content.setComponent(null);
-            content.setShouldDisposeContent(false);
-            mergedContent.add(content);
-          }
-        }
-        PropertiesComponent.getInstance().unsetValue(TabbedContent.SPLIT_PROPERTY_PREFIX + tabPrefix);
-        for (int i = 0; i < tabs.size(); i++) {
-          final Pair<String, JComponent> tab = tabs.get(i);
-          ContentUtilEx.addTabbedContent(manager, tab.second, tabPrefix, tab.first, i == selectedTab);
-        }
-        mergedContent.forEach(Disposer::dispose);
+        ContentUtilEx.mergeTabs(manager, groupId);
       }
     };
   }

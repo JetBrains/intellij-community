@@ -23,7 +23,6 @@ import java.awt.*;
  */
 @ApiStatus.Experimental
 public class JBCefBrowser implements JBCefDisposable {
-  @SuppressWarnings("HardCodedStringLiteral")
   private static final String BLANK_URI = "about:blank";
 
   @NotNull private final JBCefClient myCefClient;
@@ -52,12 +51,10 @@ public class JBCefBrowser implements JBCefDisposable {
 
     public void load(@NotNull CefBrowser browser) {
       // JCEF demands async loading.
-      if (myHtml == null) {
-        EventQueue.invokeLater(() -> browser.loadURL(myUrl));
-      }
-      else {
-        EventQueue.invokeLater(() -> browser.loadString(myHtml, myUrl));
-      }
+      SwingUtilities.invokeLater(
+        myHtml == null ?
+          () -> browser.loadURL(myUrl) :
+          () -> browser.loadString(myHtml, myUrl));
     }
   }
 

@@ -2,18 +2,24 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ESCAPE
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
+import com.intellij.util.Processor
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
 abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor) : ChangesViewPreview {
@@ -23,22 +29,15 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
     MergingUpdateQueue("updatePreviewQueue", 100, true, null, diffProcessor).apply {
       setRestartTimerOnAdd(true)
     }
+  private val updatePreviewProcessor: DiffPreviewUpdateProcessor? get() = diffProcessor as? DiffPreviewUpdateProcessor
 
   var escapeHandler: Runnable? = null
 
-  fun installOn(tree: ChangesTree) =
-    //do not open file aggressively on start up, do it later
-    DumbService.getInstance(project).smartInvokeLater {
-      tree.addSelectionListener(
-        Runnable {
-          updatePreviewQueue.queue(Update.create(this) {
-            if (skipPreviewUpdate()) return@create
-            setPreviewVisible(true)
-          })
-        },
-        updatePreviewQueue
-      )
-    }
+  fun installOn(tree: ChangesTree) {
+    installDoubleClickHandler(tree)
+    installEnterKeyHandler(tree)
+    installSelectionChangedHandler(tree)
+  }
 
   fun installNextDiffActionOn(component: JComponent) {
     DumbAwareAction.create { openPreview(true) }.apply {
@@ -47,6 +46,39 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
     }
   }
 
+  private fun installDoubleClickHandler(tree: ChangesTree) {
+    val oldDoubleClickHandler = tree.doubleClickHandler
+    val newDoubleClickHandler = Processor<MouseEvent> { e ->
+      if (isToggleEvent(tree, e)) return@Processor false
+
+      openPreview(true) || oldDoubleClickHandler?.process(e) == true
+    }
+
+    tree.doubleClickHandler = newDoubleClickHandler
+    Disposer.register(diffProcessor, Disposable { tree.doubleClickHandler = oldDoubleClickHandler })
+  }
+
+  private fun installEnterKeyHandler(tree: ChangesTree) {
+    val oldEnterKeyHandler = tree.enterKeyHandler
+    val newEnterKeyHandler = Processor<KeyEvent> { e ->
+      openPreview(false) || oldEnterKeyHandler?.process(e) == true
+    }
+
+    tree.enterKeyHandler = newEnterKeyHandler
+    Disposer.register(diffProcessor, Disposable { tree.enterKeyHandler = oldEnterKeyHandler })
+  }
+
+  private fun installSelectionChangedHandler(tree: ChangesTree) =
+    tree.addSelectionListener(
+      Runnable {
+        updatePreviewQueue.queue(Update.create(this) {
+          if (skipPreviewUpdate()) return@create
+          updatePreview(false)
+        })
+      },
+      updatePreviewQueue
+    )
+
   protected abstract fun getCurrentName(): String?
 
   protected abstract fun hasContent(): Boolean
@@ -54,12 +86,10 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
   protected open fun skipPreviewUpdate(): Boolean = ToolWindowManager.getInstance(project).isEditorComponentActive
 
   override fun updatePreview(fromModelRefresh: Boolean) {
-    (diffProcessor as? DiffPreviewUpdateProcessor)?.refresh(false)
-    if (!hasContent()) closePreview()
+    updatePreviewProcessor?.run { if (isPreviewOpen()) refresh(false) else clear() }
   }
 
   override fun setPreviewVisible(isPreviewVisible: Boolean) {
-    updatePreview(false)
     if (isPreviewVisible) openPreview(false) else closePreview()
   }
 
@@ -68,12 +98,19 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
     diffProcessor.updateRequest(true)
   }
 
-  fun closePreview() = FileEditorManager.getInstance(project).closeFile(previewFile)
+  private fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpen(previewFile)
 
-  fun openPreview(focusEditor: Boolean) {
-    if (!hasContent()) return
+  fun closePreview() {
+    FileEditorManager.getInstance(project).closeFile(previewFile)
+    updatePreviewProcessor?.clear()
+  }
+
+  fun openPreview(focusEditor: Boolean): Boolean {
+    updatePreviewProcessor?.refresh(false)
+    if (!hasContent()) return false
 
     openPreview(project, previewFile, focusEditor, escapeHandler)
+    return true
   }
 
   companion object {
@@ -81,10 +118,14 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
       val wasAlreadyOpen = FileEditorManager.getInstance(project).isFileOpen(file)
       val editor = FileEditorManager.getInstance(project).openFile(file, focusEditor, true).singleOrNull() ?: return
 
-      if (wasAlreadyOpen) return
-      escapeHandler?.let { r -> DumbAwareAction.create { r.run() }.registerCustomShortcutSet(ESCAPE, editor.component, editor) }
+      if (wasAlreadyOpen || escapeHandler == null) return
+      EditorTabPreviewEscapeAction(escapeHandler).registerCustomShortcutSet(ESCAPE, editor.component, editor)
     }
   }
+}
+
+internal class EditorTabPreviewEscapeAction(private val escapeHandler: Runnable) : DumbAwareAction() {
+  override fun actionPerformed(e: AnActionEvent) = escapeHandler.run()
 }
 
 private class EditorTabDiffPreviewProvider(

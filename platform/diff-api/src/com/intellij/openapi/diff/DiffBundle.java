@@ -23,7 +23,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class DiffBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.DiffBundle";
+  @NonNls public static final String BUNDLE = "messages.DiffBundle";
 
   private static final DiffBundle INSTANCE = new DiffBundle();
 
@@ -35,7 +35,7 @@ public class DiffBundle extends DynamicBundle {
   }
 
   @NotNull
-  public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

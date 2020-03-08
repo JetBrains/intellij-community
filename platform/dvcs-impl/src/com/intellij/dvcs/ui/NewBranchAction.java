@@ -27,15 +27,14 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class NewBranchAction<T extends Repository> extends DumbAwareAction {
-  public static final String text = "New Branch";
-  public static final String description = "Create and checkout new branch";
   public static final Icon icon = AllIcons.General.Add;
 
   protected final List<T> myRepositories;
   protected final Project myProject;
 
   public NewBranchAction(@NotNull Project project, @NotNull List<T> repositories) {
-    super(text, description, icon);
+    super(DvcsBundle.messagePointer("new.branch.action.text"),
+          DvcsBundle.messagePointer("new.branch.action.description"), icon);
     myRepositories = repositories;
     myProject = project;
   }
@@ -49,7 +48,7 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
   public static <T extends Repository> void checkIfAnyRepositoryIsFresh(@NotNull AnActionEvent e, @NotNull List<T> repositories) {
     if (DvcsUtil.anyRepositoryIsFresh(repositories)) {
       e.getPresentation().setEnabled(false);
-      e.getPresentation().setDescription(DvcsBundle.lazyMessage("action.presentation.NewBranchAction.description"));
+      e.getPresentation().setDescription(DvcsBundle.messagePointer("action.presentation.NewBranchAction.description"));
     }
   }
 

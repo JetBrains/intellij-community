@@ -813,7 +813,7 @@ class TimeoutExpired(SubprocessError):
     stderr: Any
 
 
-class CalledProcessError(Exception):
+class CalledProcessError(SubprocessError):
     returncode: int
     # morally: _CMD
     cmd: Any

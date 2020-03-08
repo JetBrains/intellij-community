@@ -381,6 +381,7 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
 }
 
 {ESCAPE}  [A-Za-z]            { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+{ESCAPE} "#"                  { return commentMode ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 {ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
 {ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 

@@ -13,10 +13,12 @@
 // limitations under the License.
 package com.intellij.util.net.ssl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,21 +45,23 @@ public class CertificateInfoPanel extends JPanel {
     FormBuilder builder = FormBuilder.createFormBuilder();
 
     // I'm not using separate panels and form builders to preserve alignment of labels
-    updateBuilderWithTitle(builder, "Issued To");
+    updateBuilderWithTitle(builder, IdeBundle.message("section.title.issued.to"));
     updateBuilderWithPrincipalData(builder, myCertificateWrapper.getSubjectFields());
-    updateBuilderWithTitle(builder, "Issued By");
+    updateBuilderWithTitle(builder, IdeBundle.message("section.title.issued.by"));
     updateBuilderWithPrincipalData(builder, myCertificateWrapper.getIssuerFields());
-    updateBuilderWithTitle(builder, "Validity Period");
+    updateBuilderWithTitle(builder, IdeBundle.message("section.title.validity.period"));
     String notBefore = DATE_FORMAT.format(myCertificateWrapper.getNotBefore());
     String notAfter = DATE_FORMAT.format(myCertificateWrapper.getNotAfter());
     builder = builder
       .setFormLeftIndent(IdeBorderFactory.TITLED_BORDER_INDENT)
-      .addLabeledComponent("Valid from:", createColoredComponent(notBefore, "not yet valid", myCertificateWrapper.isNotYetValid()))
-      .addLabeledComponent("Valid until:", createColoredComponent(notAfter, "expired", myCertificateWrapper.isExpired()));
+      .addLabeledComponent(IdeBundle.message("label.valid.from"), createColoredComponent(notBefore, "not yet valid", myCertificateWrapper.isNotYetValid()))
+      .addLabeledComponent(IdeBundle.message("label.valid.until"), createColoredComponent(notAfter, "expired", myCertificateWrapper.isExpired()));
     builder.setFormLeftIndent(0);
-    updateBuilderWithTitle(builder, "Fingerprints");
+    updateBuilderWithTitle(builder, IdeBundle.message("section.title.fingerprints"));
     builder.setFormLeftIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
+    //noinspection HardCodedStringLiteral
     builder.addLabeledComponent("SHA-256:", getTextPane(formatHex(myCertificateWrapper.getSha256Fingerprint(), true)));
+    //noinspection HardCodedStringLiteral
     builder.addLabeledComponent("SHA-1:", getTextPane(formatHex(myCertificateWrapper.getSha1Fingerprint(), true)));
     add(builder.getPanel(), BorderLayout.NORTH);
   }
@@ -98,7 +102,7 @@ public class CertificateInfoPanel extends JPanel {
     builder.setFormLeftIndent(0);
   }
 
-  private static void updateBuilderWithTitle(FormBuilder builder, String title) {
+  private static void updateBuilderWithTitle(FormBuilder builder, @Nls String title) {
     builder.addComponent(new TitledSeparator(title), IdeBorderFactory.TITLED_BORDER_TOP_INSET);
   }
 

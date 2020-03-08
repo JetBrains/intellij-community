@@ -19,7 +19,7 @@
         </constraints>
         <properties>
           <labelFor value="b8838"/>
-          <text value="Public SSH key file:"/>
+          <text resource-bundle="messages/CloudBundle" key="label.public.ssh.key.file"/>
         </properties>
       </component>
       <component id="856a6" class="com.intellij.ui.HyperlinkLabel" binding="myPublicSshKeyTooltipHyperlink" custom-create="true">

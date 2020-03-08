@@ -357,10 +357,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       try {
         factory.createFileTypes(consumer);
       }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (StartupAbortedException e) {
+      catch (ProcessCanceledException | StartupAbortedException e) {
         throw e;
       }
       catch (Throwable e) {
@@ -518,7 +515,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return toLog;
   }
 
-  private static void log(String message) {
+  private static void log(@NonNls String message) {
     LOG.debug(message + " - "+Thread.currentThread());
   }
 
@@ -743,7 +740,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public FileType getFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
-    FileType overriddenFileType = FileTypeOverrider.EP_NAME.computeSafeIfAny((overrider) -> overrider.getOverriddenFileType(file));
+    FileType overriddenFileType = FileTypeOverrider.EP_NAME.computeSafeIfAny(overrider -> overrider.getOverriddenFileType(file));
     if (overriddenFileType != null) {
       return overriddenFileType;
     }
@@ -1020,8 +1017,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         int fileLength = (int)file.getLength();
 
         int bufferLength = StreamSupport.stream(detectors.spliterator(), false)
-          .map(FileTypeDetector::getDesiredContentPrefixLength)
-          .max(Comparator.naturalOrder())
+          .mapToInt(FileTypeDetector::getDesiredContentPrefixLength)
+          .max()
           .orElse(FileUtilRt.getUserContentLoadLimit());
         byte[] buffer = fileLength <= FileUtilRt.THREAD_LOCAL_BUFFER_LENGTH
                         ? FileUtilRt.getThreadLocalBuffer()
@@ -1096,6 +1093,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   // for diagnostics
+  @NonNls 
   @SuppressWarnings("ConstantConditions")
   private static Object streamInfo(@NotNull InputStream stream) throws IOException {
     if (stream instanceof BufferedInputStream) {
@@ -1274,7 +1272,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     fireFileTypesChanged(null, null);
   }
 
-  public void fireFileTypesChanged(@Nullable FileType addedFileType, @Nullable FileType removedFileType) {
+  private void fireFileTypesChanged(@Nullable FileType addedFileType, @Nullable FileType removedFileType) {
     clearCaches();
     clearPersistentAttributes();
     myMessageBus.syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this, addedFileType, removedFileType));
@@ -1376,7 +1374,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private void unignoreMask(@NotNull final String maskToRemove) {
+  private void unignoreMask(@NonNls @NotNull final String maskToRemove) {
     final Set<String> masks = new LinkedHashSet<>(myIgnoredPatterns.getIgnoreMasks());
     masks.remove(maskToRemove);
 
@@ -1475,7 +1473,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     if (!notExternalizableFileTypes.isEmpty()) {
-      Collections.sort(notExternalizableFileTypes, Comparator.comparing(FileType::getName));
+      notExternalizableFileTypes.sort(Comparator.comparing(FileType::getName));
       for (FileType type : notExternalizableFileTypes) {
         writeExtensionsMap(map, type, true);
       }
@@ -1655,7 +1653,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return builder == null ? null : builder.toString();
   }
 
-  private static void setFileTypeAttributes(@NotNull UserFileType fileType, @Nullable String name, @Nullable String description, @Nullable String iconPath) {
+  private static void setFileTypeAttributes(@NotNull UserFileType<?> fileType, @Nullable String name, @Nullable String description, @Nullable String iconPath) {
     if (!StringUtil.isEmptyOrSpaces(iconPath)) {
       fileType.setIconPath(iconPath);
     }

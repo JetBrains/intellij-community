@@ -2216,16 +2216,16 @@ public class PyRequirementTest extends PyTestCase {
     final List<PyRequirementVersionSpec> versionSpecs = singletonList(pyRequirementVersionSpec(GTE, release(version)));
 
     final List<String> installOptions1 = Arrays.asList(linePrefix,
-                                                       "--global-option", "--no-user-cfg",
-                                                       "--install-option", "--prefix='/usr/local'",
-                                                       "--install-option", "--no-compile");
+                                                       "--global-option=\"--no-user-cfg\"",
+                                                       "--install-option=\"--prefix='/usr/local'\"",
+                                                       "--install-option=\"--no-compile\"");
     final String line1 = linePrefix + " " +
                          "--global-option=\"--no-user-cfg\" " +
                          "--install-option=\"--prefix='/usr/local'\" " +
                          "--install-option=\"--no-compile\"";
     assertEquals(new PyRequirementImpl(name, versionSpecs, installOptions1, ""), fromLine(line1));
 
-    final List<String> installOptions2 = Arrays.asList(linePrefix, "--install-option", "--install-scripts=/usr/local/bin");
+    final List<String> installOptions2 = Arrays.asList(linePrefix, "--install-option=\"--install-scripts=/usr/local/bin\"");
     final String line2 = linePrefix + " --install-option=\"--install-scripts=/usr/local/bin\"";
     assertEquals(new PyRequirementImpl(name, versionSpecs, installOptions2, ""), fromLine(line2));
   }
@@ -2243,9 +2243,9 @@ public class PyRequirementTest extends PyTestCase {
                         "--install-option=\"--no-compile\"";
 
     final List<String> installOptions = Arrays.asList(textPrefix,
-                                                      "--global-option", "--no-user-cfg",
-                                                      "--install-option", "--prefix='/usr/local'",
-                                                      "--install-option", "--no-compile");
+                                                      "--global-option=\"--no-user-cfg\"",
+                                                      "--install-option=\"--prefix='/usr/local'\"",
+                                                      "--install-option=\"--no-compile\"");
 
     assertEquals(singletonList(new PyRequirementImpl(name, versionSpecs, installOptions, "")), PyRequirementParser.fromText(text));
   }
@@ -2435,7 +2435,7 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(new PyRequirementImpl(name, emptyList(), singletonList(name + "[PDF]"), "[PDF]"),
                  fromLine(name + "[PDF] # comment"));
 
-    final PyRequirement requirement = new PyRequirementImpl(name, emptyList(), Arrays.asList(name, "--install-option", "option"), "");
+    final PyRequirement requirement = new PyRequirementImpl(name, emptyList(), Arrays.asList(name, "--install-option=\"option\""), "");
 
     assertEquals(requirement, fromLine(name + " --install-option=\"option\" # comment"));
     assertEquals(singletonList(requirement), PyRequirementParser.fromText(name + " \\\n--install-option=\"option\" # comment"));

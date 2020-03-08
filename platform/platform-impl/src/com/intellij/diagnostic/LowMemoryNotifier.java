@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.hprof.action.HeapDumpSnapshotRunnable;
 import com.intellij.diagnostic.report.MemoryReportReason;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
+import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.notification.Notification;
@@ -33,24 +34,30 @@ final class LowMemoryNotifier implements Disposable {
   private volatile long myPreviousLoggedUIResponse = 0;
 
   LowMemoryNotifier() {
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
-      @Override
-      public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
-        LifecycleUsageTriggerCollector.onFreeze(durationMs);
-      }
+    boolean isDebugEnabled = DebugAttachDetector.isDebugEnabled();
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
+        @Override
+        public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
+          if (!isDebugEnabled) {
+            LifecycleUsageTriggerCollector.onFreeze(durationMs);
+          }
+        }
 
-      @Override
-      public void uiResponded(long latencyMs) {
-        final long currentTime = System.currentTimeMillis();
-        if (currentTime - myPreviousLoggedUIResponse >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
-          myPreviousLoggedUIResponse = currentTime;
-          FUCounterUsageLogger.getInstance().logEvent(PERFORMANCE, "ui.latency", new FeatureUsageData().addData("duration_ms", latencyMs));
+        @Override
+        public void uiResponded(long latencyMs) {
+          final long currentTime = System.currentTimeMillis();
+          if (currentTime - myPreviousLoggedUIResponse >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
+            myPreviousLoggedUIResponse = currentTime;
+            FUCounterUsageLogger.getInstance()
+              .logEvent(PERFORMANCE, "ui.latency", new FeatureUsageData().addData("duration_ms", latencyMs));
+          }
+          if (latencyMs >= TOLERABLE_UI_LATENCY && !isDebugEnabled) {
+            FUCounterUsageLogger.getInstance()
+              .logEvent(PERFORMANCE, "ui.lagging", new FeatureUsageData().addData("duration_ms", latencyMs));
+          }
         }
-        if (latencyMs >= TOLERABLE_UI_LATENCY) {
-          FUCounterUsageLogger.getInstance().logEvent(PERFORMANCE, "ui.lagging", new FeatureUsageData().addData("duration_ms", latencyMs));
-        }
-      }
-    });
+      });
   }
 
   private void onLowMemorySignalReceived() {

@@ -31,13 +31,13 @@ import java.util.List;
 
 public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
   @Override
-  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
+  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     if (element instanceof PsiField) {
       process((PsiField)element, result);
     }
   }
 
-  private static void process(PsiField psiField, Collection<? super RelatedItemLineMarkerInfo> result) {
+  private static void process(PsiField psiField, Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     if (!isExtensionPointNameDeclarationField(psiField)) return;
 
     final PsiClass epClass = resolveExtensionPointClass(psiField);

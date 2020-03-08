@@ -59,8 +59,9 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
 
     val project = context.project!!
     val actionName = getActionName(context) ?: templatePresentation.text
-    val cleanedActionName = removeMnemonic(actionName).removeEllipsisSuffix().toLowerCase()
-    val isFreezedDialogTitle = VcsBundle.message("commit.error.cant.commit.now", cleanedActionName)
+    val isFreezedDialogTitle = actionName?.let {
+      VcsBundle.message("error.cant.perform.operation.now", removeMnemonic(actionName).removeEllipsisSuffix().toLowerCase())
+    }
 
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(isFreezedDialogTitle)) {
       LOG.debug("ChangeListManager is freezed. returning.")

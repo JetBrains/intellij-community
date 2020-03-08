@@ -4,6 +4,7 @@ package com.intellij.internal.statistics.whitelist
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules
 import com.intellij.internal.statistic.eventLog.whitelist.InMemoryWhitelistStorage
+import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
 import org.assertj.core.api.Assertions.assertThat
 
@@ -17,15 +18,16 @@ internal class CompositeWhitelistStorageTest : WhitelistBaseStorageTest() {
   fun testGetGroupRulesFromTest() {
     val storage = SensitiveDataValidator.getInstance(recorderId).whiteListStorage
     WhitelistTestGroupStorage.getTestStorage(recorderId)!!
-      .addGroupWithCustomRules(
+      .addTestGroup(LocalWhitelistGroup(
         groupId,
+        true,
         "{\n" +
         "      \"event_id\" : [ \"{enum:RunSelectedBuild|RunTargetAction}\" ],\n" +
         "      \"event_data\" : {\n" +
         "        \"context_menu\" : [ \"{enum#boolean}\" ]\n" +
         "      }\n" +
         "    }"
-      )
+      ))
     InMemoryWhitelistStorage.eventsValidators[groupId] = WhiteListGroupRules.EMPTY
 
     val groupRules = storage.getGroupRules(groupId)

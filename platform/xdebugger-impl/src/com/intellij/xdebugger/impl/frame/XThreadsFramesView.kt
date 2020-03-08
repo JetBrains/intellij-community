@@ -6,9 +6,10 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -17,6 +18,7 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JList
@@ -29,7 +31,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     private val myThreadsList = XDebuggerThreadsList.createDefault()
     private val myFramesList = XDebuggerFramesList(project)
 
-    private val mySplitter: Splitter
+    private val mySplitter: NonProportionalOnePixelSplitter
 
     private var myListenersEnabled = false
 
@@ -65,14 +67,24 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         }
     }
 
+    fun setThreadsVisible(visible: Boolean) {
+        if (mySplitter.firstComponent.isVisible == visible) return
+
+        mySplitter.firstComponent.isVisible = visible
+        mySplitter.revalidate()
+        mySplitter.repaint()
+    }
+
     init {
         val disposable = myPauseDisposables.next()
         myFramesManager = FramesManager(myFramesList, disposable)
         myThreadsContainer = ThreadsContainer(myThreadsList, null, disposable)
         myPauseDisposables.terminateCurrent()
 
-        mySplitter = OnePixelSplitter(splitterProportionKey, splitterProportionDefaultValue).apply {
-            firstComponent = myThreadsList.withSpeedSearch().toScrollPane()
+        mySplitter = NonProportionalOnePixelSplitter(false, splitterProportionKey, splitterProportionDefaultValue, this, project).apply {
+            firstComponent = myThreadsList.withSpeedSearch().toScrollPane().apply {
+                minimumSize = Dimension(JBUI.scale(26), 0)
+            }
             secondComponent = myFramesList.toScrollPane()
         }
 
@@ -85,6 +97,14 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
             val session = getSession(e) ?: return@addListSelectionListener
             stack.setActive(session)
         }
+
+        myThreadsList.addMouseListener(object : PopupHandler() {
+            override fun invokePopup(comp: Component, x: Int, y: Int) {
+                val actionManager = ActionManager.getInstance()
+                val group = actionManager.getAction(XDebuggerActions.THREADS_TREE_POPUP_GROUP) as? ActionGroup ?: return
+                actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).component.show(comp, x, y)
+            }
+        })
 
         myFramesList.addListSelectionListener {
             if (it.valueIsAdjusting || !myListenersEnabled) return@addListSelectionListener
@@ -105,6 +125,11 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         })
     }
 
+    fun saveUiState() {
+        if (mySplitter.width < mySplitter.minimumSize.width) return
+        mySplitter.saveProportion()
+    }
+
     override fun processSessionEvent(event: SessionEvent, session: XDebugSession) {
         if (event == SessionEvent.BEFORE_RESUME) {
             return
@@ -122,7 +147,6 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
                 clear()
 
                 start(session)
-                mySplitter.dividerPositionStrategy = Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE
                 return@invokeLaterIfNeeded
             }
 

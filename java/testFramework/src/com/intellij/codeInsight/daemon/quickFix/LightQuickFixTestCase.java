@@ -142,7 +142,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   protected void invoke(@NotNull IntentionAction action) throws IncorrectOperationException {
-    CodeInsightTestFixtureImpl.invokeIntention(action, getFile(), getEditor(), action.getText());
+    CodeInsightTestFixtureImpl.invokeIntention(action, getFile(), getEditor());
   }
 
   protected IntentionAction findActionAndCheck(@NotNull ActionHint hint, String testFullPath) {

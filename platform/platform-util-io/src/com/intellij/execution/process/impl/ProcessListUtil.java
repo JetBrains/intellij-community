@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class ProcessListUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.impl.ProcessListUtil");
+  private static final Logger LOG = Logger.getInstance(ProcessListUtil.class);
   private static final String WIN_PROCESS_LIST_HELPER_FILENAME = "WinProcessListHelper.exe";
 
   public static ProcessInfo @NotNull [] getProcessList() {
@@ -120,7 +120,6 @@ public final class ProcessListUtil {
 
       List<String> cmdline;
       try (FileInputStream stream = new FileInputStream(new File(each, "cmdline"))) {
-        //noinspection SSBasedInspection - no better candidate for system encoding anyways
         String cmdlineString = new String(FileUtil.loadBytes(stream), StandardCharsets.UTF_8);
         cmdline = StringUtil.split(cmdlineString, "\0");
       }

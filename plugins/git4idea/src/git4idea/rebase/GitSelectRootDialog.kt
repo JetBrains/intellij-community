@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
 import com.intellij.openapi.project.Project
@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
 import git4idea.branch.GitBranchUtil
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitUIUtil
 import javax.swing.JComponent
@@ -41,7 +42,7 @@ class GitSelectRootDialog(project: Project,
       row {
         label(description)
       }
-      row("Git Root:") {
+      row(GitBundle.message("common.git.root")) {
         rootComboBox()
       }
     }

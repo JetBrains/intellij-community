@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.vcs.changes.EditorTabPreviewEscapeAction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.commit.ChangesViewCommitPanel;
 
@@ -13,6 +14,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.util.containers.ContainerUtil.filter;
+
 public class VcsActionPromoter implements ActionPromoter {
   @Override
   public List<AnAction> promote(List<AnAction> actions, DataContext context) {
@@ -20,16 +23,20 @@ public class VcsActionPromoter implements ActionPromoter {
     List<AnAction> reorderedActions = new ArrayList<>(actions);
     List<String> reorderedIds = ContainerUtil.map(reorderedActions, it -> am.getId(it));
 
-    reorderActionPair(reorderedActions, reorderedIds, "ActivateCommitToolWindow", "ActivateVersionControlToolWindow");
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.MoveChangedLinesToChangelist", "ChangesView.Move");
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.RollbackChangedLines", "ChangesView.Revert");
 
-    Set<AnAction> promoted = new HashSet<>(ContainerUtil.filter(actions,
-      action -> action instanceof ShowMessageHistoryAction ||
-                action instanceof ChangesViewCommitPanel.DefaultCommitAction));
+    Set<AnAction> promoted = new HashSet<>(filter(actions, action ->
+      action instanceof ShowMessageHistoryAction || action instanceof ChangesViewCommitPanel.DefaultCommitAction
+    ));
+    Set<AnAction> demoted = new HashSet<>(filter(actions, action ->
+      action instanceof EditorTabPreviewEscapeAction
+    ));
 
     reorderedActions.removeAll(promoted);
+    reorderedActions.removeAll(demoted);
     reorderedActions.addAll(0, promoted);
+    reorderedActions.addAll(demoted);
 
     return reorderedActions;
   }

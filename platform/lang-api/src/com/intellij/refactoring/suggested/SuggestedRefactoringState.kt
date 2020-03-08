@@ -17,7 +17,7 @@ private var nextFeatureUsageId = 0
 data class SuggestedRefactoringState(
   val declaration: PsiElement,
   val refactoringSupport: SuggestedRefactoringSupport,
-  val syntaxError: Boolean,
+  val errorLevel: ErrorLevel,
   val oldDeclarationText: String,
   val oldImportsText: String?,
   val oldSignature: Signature,
@@ -29,25 +29,25 @@ data class SuggestedRefactoringState(
 ) {
   fun withDeclaration(declaration: PsiElement): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
     return state
   }
 
-  fun withSyntaxError(syntaxError: Boolean): SuggestedRefactoringState {
+  fun withErrorLevel(errorLevel: ErrorLevel): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
     return state
   }
-
+  
   fun withOldSignature(oldSignature: Signature): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
@@ -56,7 +56,7 @@ data class SuggestedRefactoringState(
 
   fun withNewSignature(newSignature: Signature): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
@@ -65,7 +65,7 @@ data class SuggestedRefactoringState(
 
   fun withParameterMarkers(parameterMarkers: List<RangeMarker?>): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
@@ -74,7 +74,7 @@ data class SuggestedRefactoringState(
 
   fun withDisappearedParameters(disappearedParameters: Map<String, Any>): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData
     )
     copyRestoredDeclaration(state)
@@ -83,7 +83,7 @@ data class SuggestedRefactoringState(
 
   fun <T : Any> withAdditionalData(key: Key<T>, value: T): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
-      declaration, refactoringSupport, syntaxError, oldDeclarationText, oldImportsText,
+      declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId,
       additionalData.withData(key, value)
     )
@@ -101,6 +101,7 @@ data class SuggestedRefactoringState(
   private var restoredDeclarationCopy: PsiElement? = null
 
   fun restoredDeclarationCopy(): PsiElement {
+    require(errorLevel != ErrorLevel.INCONSISTENT) { "restoredDeclarationCopy() should not be invoked for inconsistent state" }
     if (restoredDeclarationCopy == null) {
       restoredDeclarationCopy = createRestoredDeclarationCopy()
     }
@@ -152,6 +153,15 @@ data class SuggestedRefactoringState(
     companion object {
       val Empty: AdditionalData = AdditionalData(emptyMap())
     }
+  }
+
+  enum class ErrorLevel {
+    /** No syntax errors and refactoring may be suggested (if it makes sense) */
+    NO_ERRORS,
+    /** There is a syntax error in the signature or duplicated parameter names in the signature */
+    SYNTAX_ERROR,
+    /** The state is inconsistent: declaration is invalid or signature range marker does not match signature range anymore */
+    INCONSISTENT
   }
 }
 

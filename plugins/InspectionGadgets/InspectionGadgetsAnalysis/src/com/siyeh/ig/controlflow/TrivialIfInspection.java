@@ -23,18 +23,15 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
-import com.siyeh.ig.style.ConditionalModel;
+import com.siyeh.ig.style.ConditionalExpressionGenerator;
 import com.siyeh.ig.style.IfConditionalModel;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
@@ -43,22 +40,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.tryCast;
-
 public class TrivialIfInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean ignoreChainedIf = false;
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "RedundantIfStatement";
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
+  public @Nullable JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("trivial.if.option.ignore.chained"), this, "ignoreChainedIf");
   }
 
@@ -68,8 +61,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("trivial.if.problem.descriptor");
   }
 
@@ -86,54 +78,10 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     return new InspectionGadgetsFix[]{new TrivialIfFix()};
   }
 
-  @Nullable
-  private static String getReplacementText(ConditionalModel model, CommentTracker ct) {
-    PsiLiteralExpression thenLiteral = ExpressionUtils.getLiteral(model.getThenExpression());
-    PsiLiteralExpression elseLiteral = ExpressionUtils.getLiteral(model.getElseExpression());
-    if (thenLiteral != null && elseLiteral != null) {
-      if (Boolean.TRUE.equals(thenLiteral.getValue()) && Boolean.FALSE.equals(elseLiteral.getValue())) {
-        return ct.text(model.getCondition());
-      }
-      if (Boolean.FALSE.equals(thenLiteral.getValue()) && Boolean.TRUE.equals(elseLiteral.getValue())) {
-        return BoolUtils.getNegatedExpressionText(model.getCondition(), ct);
-      }
-    }
-    PsiExpression replacement = getRedundantComparisonReplacement(model);
-    if (replacement != null) {
-      return ct.text(replacement);
-    }
-    return null;
-  }
-
-  private static PsiExpression getRedundantComparisonReplacement(@NotNull ConditionalModel model) {
-    @NotNull PsiExpression thenExpression = model.getThenExpression();
-    @NotNull PsiExpression elseExpression = model.getElseExpression();
-    PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(model.getCondition()), PsiBinaryExpression.class);
-    if (binOp == null) return null;
-    IElementType tokenType = binOp.getOperationTokenType();
-    boolean equals = tokenType.equals(JavaTokenType.EQEQ);
-    if (!equals && !tokenType.equals(JavaTokenType.NE)) return null;
-    PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
-    PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
-    if (!ExpressionUtils.isSafelyRecomputableExpression(left) || !ExpressionUtils.isSafelyRecomputableExpression(right)) return null;
-    if (TypeConversionUtil.isFloatOrDoubleType(left.getType()) && TypeConversionUtil.isFloatOrDoubleType(right.getType())) {
-      // Simplifying the comparison of two floats/doubles like "if(a == 0.0) return 0.0; else return a;" 
-      // will cause a semantics change for "a == -0.0" 
-      return null;
-    }
-    EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
-    if (equivalence.expressionsAreEquivalent(left, thenExpression) && equivalence.expressionsAreEquivalent(right, elseExpression) ||
-        equivalence.expressionsAreEquivalent(right, thenExpression) && equivalence.expressionsAreEquivalent(left, elseExpression)) {
-      return equals ? elseExpression : thenExpression;
-    }
-    return null;
-  }
-
   private static class TrivialIfFix extends InspectionGadgetsFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("trivial.if.fix.family.name");
     }
 
@@ -148,9 +96,10 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   private static void simplify(PsiIfStatement statement) {
     IfConditionalModel model = IfConditionalModel.from(statement, true);
     if (model != null) {
-      CommentTracker ct = new CommentTracker();
-      String text = getReplacementText(model, ct);
-      if (text != null) {
+      ConditionalExpressionGenerator generator = ConditionalExpressionGenerator.from(model);
+      if (generator != null) {
+        CommentTracker ct = new CommentTracker();
+        String text = generator.generate(ct);
         if (model.getElseExpression().textMatches(text) && !PsiTreeUtil.isAncestor(statement, model.getElseBranch(), false)) {
           ct.deleteAndRestoreComments(statement);
         } else {
@@ -227,8 +176,9 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       return false;
     }
     IfConditionalModel model = IfConditionalModel.from(ifStatement, true);
-    if (model != null && getReplacementText(model, new CommentTracker()) != null) {
-      return true;
+    if (model != null) {
+      ConditionalExpressionGenerator generator = ConditionalExpressionGenerator.from(model);
+      if (generator != null && generator.getTokenType().isEmpty()) return true;
     }
 
     return isSimplifiableAssert(ifStatement);

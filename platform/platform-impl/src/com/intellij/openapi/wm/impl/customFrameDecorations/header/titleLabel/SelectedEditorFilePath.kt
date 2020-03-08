@@ -193,7 +193,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       })
 
       it.messageBus.connect(disp).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-        override fun after(events: MutableList<out VFileEvent>) {
+        override fun after(events: List<VFileEvent>) {
           updatePathLater()
         }
       })

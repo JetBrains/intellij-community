@@ -169,7 +169,7 @@ public class JavaI18nUtil extends I18nUtil {
         break;
       }
       if (parent instanceof UIfExpression &&
-          ((UIfExpression)parent).getCondition() == expression) {
+          UastUtils.isPsiAncestor(((UIfExpression)parent).getCondition(), expression)) {
         break;
       }
       expression = parent;

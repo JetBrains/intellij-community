@@ -232,8 +232,6 @@ public class LocalDebugger implements Debugger {
   }
 
   public void enter(StyleFrame frame) {
-    assert Thread.currentThread() == myThread;
-
     myFrames.addFirst(frame);
     final String uri = frame.getURI();
 
@@ -310,8 +308,6 @@ public class LocalDebugger implements Debugger {
   }
 
   public void leave() {
-    assert Thread.currentThread() == myThread;
-
     if (isStopped()) {
       throw new DebuggerStoppedException();
 //        } else if (myBreakpointManager.isBreakpoint(uri, lineNumber)) {

@@ -299,6 +299,11 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
   @Nullable
   @Override
   public Inlay getElementAt(@NotNull Point point) {
+    Insets insets = myEditor.getContentComponent().getInsets();
+    if (point.y < insets.top) return null; // can happen for mouse drag events
+    int relX = point.x - insets.left;
+    if (relX < 0) return null;
+
     boolean hasInlineElements = hasInlineElements();
     boolean hasBlockElements = hasBlockElements();
     boolean hasAfterLineEndElements = hasAfterLineEndElements();
@@ -306,7 +311,6 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
 
     VisualPosition visualPosition = myEditor.xyToVisualPosition(point);
     if (hasBlockElements) {
-      int startX = myEditor.getContentComponent().getInsets().left;
       int visualLine = visualPosition.line;
       int baseY = myEditor.visualLineToY(visualLine);
       if (point.y < baseY) {
@@ -316,8 +320,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
           Inlay inlay = inlays.get(i);
           int height = inlay.getHeightInPixels();
           if (yDiff <= height) {
-            int relX = point.x - startX;
-            return relX >= 0 && relX < inlay.getWidthInPixels() ? inlay : null;
+            return relX < inlay.getWidthInPixels() ? inlay : null;
           }
           yDiff -= height;
         }
@@ -332,8 +335,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
           for (Inlay inlay : inlays) {
             int height = inlay.getHeightInPixels();
             if (yDiff < height) {
-              int relX = point.x - startX;
-              return relX >= 0 && relX < inlay.getWidthInPixels() ? inlay : null;
+              return relX < inlay.getWidthInPixels() ? inlay : null;
             }
             yDiff -= height;
           }
@@ -349,7 +351,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
       if (!inlays.isEmpty()) {
         VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
         int x = myEditor.visualPositionToXY(startVisualPosition).x;
-        Inlay inlay = findInlay(inlays, point, x);
+        Inlay inlay = findInlay(inlays, point.x, x);
         if (inlay != null) return inlay;
       }
     }
@@ -361,7 +363,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
         if (!inlays.isEmpty()) {
           Rectangle bounds = inlays.get(0).getBounds();
           assert bounds != null;
-          Inlay inlay = findInlay(inlays, point, bounds.x);
+          Inlay inlay = findInlay(inlays, point.x, bounds.x);
           if (inlay != null) return inlay;
         }
       }
@@ -369,10 +371,10 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
     return null;
   }
 
-  private static Inlay findInlay(List<? extends Inlay> inlays, @NotNull Point point, int startX) {
+  private static Inlay findInlay(List<? extends Inlay> inlays, int x, int startX) {
     for (Inlay inlay : inlays) {
       int endX = startX + inlay.getWidthInPixels();
-      if (point.x >= startX && point.x < endX) return inlay;
+      if (x >= startX && x < endX) return inlay;
       startX = endX;
     }
     return null;

@@ -107,7 +107,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     this(project, new UserDataHolderBase());
   }
 
-  public DiffRequestProcessor(@Nullable Project project, @NotNull String place) {
+  public DiffRequestProcessor(@Nullable Project project, @NonNls @NotNull String place) {
     this(project, DiffUtil.createUserDataHolder(DiffUserDataKeys.PLACE, place));
   }
 
@@ -510,7 +510,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   private void setTitle(@Nullable String title) {
     if (getContextUserData(DiffUserDataKeys.DO_NOT_CHANGE_WINDOW_TITLE) == Boolean.TRUE) return;
-    if (title == null) title = "Diff";
+    if (title == null) title = DiffBundle.message("diff.files.dialog.title");
     setWindowTitle(title);
   }
 
@@ -785,8 +785,10 @@ public abstract class DiffRequestProcessor implements Disposable {
     Editor editor = e.getData(DiffDataKeys.CURRENT_EDITOR);
 
     // TODO: provide "change" word in chain UserData - for tests/etc
-    String message = DiffUtil.createNotificationText(next ? "Press again to go to the next file" : "Press again to go to the previous file",
-                                                     "You can disable this feature in " + DiffUtil.getSettingsConfigurablePath());
+    String message = DiffUtil.createNotificationText(next ? DiffBundle.message("press.again.to.go.to.the.next.file")
+                                                          : DiffBundle.message("press.again.to.go.to.the.previous.file"),
+                                                     DiffBundle.message("notification.you.can.disable.this.feature.in.0",
+                                                                        DiffUtil.getSettingsConfigurablePath()));
 
     final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
     Point point = new Point(myContentPanel.getWidth() / 2, next ? myContentPanel.getHeight() - JBUIScale.scale(40) : JBUIScale.scale(40));
@@ -895,8 +897,8 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   protected static void patchShortcutSet(@NotNull AnAction action,
-                                         @NotNull String originalActionId,
-                                         @Nullable String replacementActionId) {
+                                         @NotNull @NonNls String originalActionId,
+                                         @Nullable @NonNls String replacementActionId) {
     //noinspection ConstantConditions
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut[] originalShortcuts = keymap.getShortcuts(originalActionId);

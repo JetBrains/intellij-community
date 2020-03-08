@@ -63,7 +63,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
         showPopup(e);
         return true;
       }
-    }.installOn(myComponent);
+    }.installOn(myComponent, true);
     myComponent.setBorder(WidgetBorder.WIDE);
   }
 
@@ -147,6 +147,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
           }
         }));
     }
+    setEditor(getEditor());
     update();
   }
 
@@ -255,7 +256,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
       myComponent.setVisible(true);
 
-      actionEnabled = state.actionEnabled && file != null && (!myWriteableFileRequired || file.isWritable());
+      actionEnabled = state.actionEnabled && isEnabledForFile(file);
 
       String widgetText = state.text;
       String toolTipText = state.toolTip;
@@ -330,6 +331,15 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
   @NotNull
   protected abstract WidgetState getWidgetState(@Nullable VirtualFile file);
+
+  /**
+   * @param file result of {@link EditorBasedStatusBarPopup#getSelectedFile()}
+   * @return false if widget should be disabled for {@code file}
+   * even if {@link EditorBasedStatusBarPopup#getWidgetState(VirtualFile)} returned {@link WidgetState#actionEnabled}.
+   */
+  protected boolean isEnabledForFile(@Nullable VirtualFile file) {
+    return file == null || !myWriteableFileRequired || file.isWritable();
+  }
 
   @Nullable
   protected abstract ListPopup createPopup(DataContext context);

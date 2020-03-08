@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -21,7 +22,7 @@ import java.awt.event.MouseEvent;
  */
 public class ChangeNotesPanel {
   private final JPanel myPanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
-  private final JLabel myTitle = new JLabel("Change Notes", AllIcons.General.ArrowRight, SwingConstants.LEFT) {
+  private final JLabel myTitle = new JLabel(IdeBundle.message("label.plugin.change.notes"), AllIcons.General.ArrowRight, SwingConstants.LEFT) {
     @Override
     public void setBounds(int x, int y, int width, int height) {
       super.setBounds(x, y, Math.min(width, getPreferredSize().width), height);
@@ -29,6 +30,7 @@ public class ChangeNotesPanel {
   };
   private final JEditorPane myEditorPane = PluginDetailsPageComponent.createDescriptionComponent(null);
   private final JEditorPane myDescriptionPane;
+  private String myText;
 
   public ChangeNotesPanel(@NotNull JPanel parent, @Nullable Object constraints, @NotNull JEditorPane descriptionPane) {
     myDescriptionPane = descriptionPane;
@@ -54,7 +56,8 @@ public class ChangeNotesPanel {
     if (text == null) {
       myPanel.setVisible(false);
     }
-    else {
+    else if (!text.equals(myText)) {
+      myText = text;
       myEditorPane.setText(XmlStringUtil.wrapInHtml(text));
       if (myEditorPane.getCaret() != null) {
         myEditorPane.setCaretPosition(0);

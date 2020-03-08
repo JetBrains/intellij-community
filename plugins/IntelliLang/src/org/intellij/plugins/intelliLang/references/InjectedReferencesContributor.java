@@ -36,6 +36,7 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
   }
 
   public static PsiReference @Nullable [] getInjectedReferences(PsiElement element) {
+    element.putUserData(INJECTED_REFERENCES, null);
     element.getReferences();
     return element.getUserData(INJECTED_REFERENCES);
   }

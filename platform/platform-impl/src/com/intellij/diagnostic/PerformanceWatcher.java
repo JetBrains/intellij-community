@@ -9,12 +9,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,10 +98,43 @@ public final class PerformanceWatcher implements Disposable {
         break;
       }
     }
+
+    reportCrashesIfAny();
     cleanOldFiles(myLogDir, 0);
 
     myThread =
       myExecutor.scheduleWithFixedDelay(this::samplePerformance, getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
+  }
+
+  private static void reportCrashesIfAny() {
+    try {
+      File systemDir = new File(PathManager.getSystemPath());
+      File appInfoFile = new File(systemDir, IdeaFreezeReporter.APPINFO_FILE_NAME);
+      if (appInfoFile.isFile()) {
+        File[] crashFiles = new File(SystemProperties.getUserHome())
+          .listFiles(file -> file.getName().startsWith("java_error_in") && !file.getName().endsWith("hprof") && file.isFile());
+        for (File file : crashFiles) {
+          if (file.lastModified() > appInfoFile.lastModified()) {
+            if (file.length() > 5 * FileUtilRt.MEGABYTE) {
+              LOG.info("Crash file " + file + " is too big to report");
+              break;
+            }
+            String content = FileUtil.loadFile(file);
+            Attachment attachment = new Attachment("crash.txt", content);
+            attachment.setIncluded(true);
+            String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
+            IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachment);
+            IdeaFreezeReporter.setAppInfo(event, FileUtil.loadFile(appInfoFile));
+            IdeaFreezeReporter.report(event);
+            break;
+          }
+        }
+      }
+      IdeaFreezeReporter.saveAppInfo(systemDir, true);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
   }
 
   @NotNull
@@ -365,7 +403,7 @@ public final class PerformanceWatcher implements Disposable {
     private Snapshot() {
     }
 
-    public void logResponsivenessSinceCreation(@NotNull String activityName) {
+    public void logResponsivenessSinceCreation(@NonNls @NotNull String activityName) {
       LOG.info(activityName + " took " + (System.currentTimeMillis() - myStartMillis) + "ms" +
                "; general responsiveness: " + myGeneralApdex.summarizePerformanceSince(myStartGeneralSnapshot) +
                "; EDT responsiveness: " + mySwingApdex.summarizePerformanceSince(myStartSwingSnapshot));

@@ -16,12 +16,14 @@
 
 package org.intellij.plugins.xsltDebugger.rt.engine.local.saxon9;
 
+import net.sf.saxon.Controller;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.expr.instruct.InstructionDetails;
+import net.sf.saxon.expr.instruct.TraceExpression;
+import net.sf.saxon.lib.Logger;
 import net.sf.saxon.lib.TraceListener;
 import net.sf.saxon.om.Item;
 import net.sf.saxon.om.NodeInfo;
-import net.sf.saxon.style.StyleElement;
 import net.sf.saxon.trace.InstructionInfo;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.Value;
@@ -51,28 +53,25 @@ public class Saxon9TraceListener implements TraceListener {
     }
   }
 
-  public void open() {
+  public void open(Controller controller) {
     myDebugger.getEventQueue().startDocument();
-    if (TRACE) {
-      trace("<trace>");
-    }
+    trace("<trace>");
+  }
+
+  public void setOutputDestination(Logger logger) {
+
   }
 
   public void close() {
     myDebugger.getEventQueue().endDocument();
-
-    if (TRACE) {
-      trace("</trace>");
-    }
+    trace("</trace>");
   }
 
   public void enter(InstructionInfo instructionInfo, XPathContext xPathContext) {
     if (MUTED) return;
-    if (TRACE) {
-      trace("<" + instructionInfo + ">");
-    }
-    if (instructionInfo instanceof StyleElement) {
-      myDebugger.enter(new Saxon9StyleFrame(myDebugger.getCurrentFrame(), (StyleElement)instructionInfo, xPathContext));
+    trace("<" + instructionInfo + ">");
+    if (instructionInfo instanceof TraceExpression) {
+      myDebugger.enter(new Saxon9StyleFrame(myDebugger.getCurrentFrame(), (TraceExpression)instructionInfo, xPathContext));
     } else if (instructionInfo instanceof InstructionDetails) {
       myDebugger.enter(new VirtualFrame(myDebugger.getCurrentFrame(), (InstructionDetails)instructionInfo));
     }
@@ -80,10 +79,8 @@ public class Saxon9TraceListener implements TraceListener {
 
   public void leave(InstructionInfo instructionInfo) {
     if (MUTED) return;
-    if (TRACE) {
-      trace("</>");
-    }
-    if (instructionInfo instanceof StyleElement || instructionInfo instanceof InstructionDetails) {
+    trace("</>");
+    if (instructionInfo instanceof TraceExpression || instructionInfo instanceof InstructionDetails) {
       myDebugger.leave();
     }
   }
@@ -91,9 +88,7 @@ public class Saxon9TraceListener implements TraceListener {
   public void startCurrentItem(Item item) {
     if (MUTED) return;
     if (item instanceof NodeInfo) {
-      if (TRACE) {
-        trace("<" + ((NodeInfo)item).getDisplayName() + ">");
-      }
+      trace("<" + ((NodeInfo)item).getDisplayName() + ">");
       myDebugger.pushSource(new Saxon9SourceFrame(myDebugger.getSourceFrame(), (NodeInfo)item));
     }
   }
@@ -105,7 +100,7 @@ public class Saxon9TraceListener implements TraceListener {
     }
   }
 
-  private static class VirtualFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, Source> implements Debugger.StyleFrame {
+  private static class VirtualFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, SourceLocator> implements Debugger.StyleFrame {
 
     VirtualFrame(Debugger.StyleFrame previous, InstructionDetails instr) {
       super(previous, new MySource(instr));

@@ -27,6 +27,7 @@ import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsCount
 import com.intellij.diagnostic.hprof.util.PartialProgressIndicator
 import com.intellij.diagnostic.hprof.visitors.RemapIDsVisitor
 import com.intellij.openapi.progress.ProgressIndicator
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -55,7 +56,7 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
     includeMetaInfo = value
   }
 
-  private fun openTempEmptyFileChannel(type: String): FileChannel {
+  private fun openTempEmptyFileChannel(@NonNls type: String): FileChannel {
     val tempPath = tempFilenameSupplier.getTempFilePath(type)
 
     val tempChannel = FileChannel.open(tempPath,

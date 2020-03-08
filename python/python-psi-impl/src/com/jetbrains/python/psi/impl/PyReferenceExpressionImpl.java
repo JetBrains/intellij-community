@@ -19,6 +19,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
@@ -31,8 +32,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 
 /**
  * Implements reference expression PSI.
@@ -240,11 +243,48 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (descriptorType != null) {
         return descriptorType.get();
       }
+
+      final PyType callableType = getCallableType(context);
+      if (callableType != null) {
+        return callableType;
+      }
+
       return typeFromTargets;
     }
     finally {
       TypeEvalStack.evaluated(this);
     }
+  }
+
+  @Nullable
+  private PyType getCallableType(@NotNull TypeEvalContext context) {
+    PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(this);
+    if (callExpression != null) {
+      List<PyCallableType> callableTypes = new ArrayList<>();
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+
+      for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(this, resolveContext)) {
+        for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(callExpression, resolveResult, resolveContext)) {
+          final PyCallableType callableType = markResolveResult(clarifiedResolveResult, context, 0);
+          if (callableType == null) continue;
+
+          callableTypes.add(callableType);
+        }
+      }
+
+      PyType resolvedType =
+        PyUnionType.union(forEveryScopeTakeOverloadsOtherwiseImplementations(callableTypes, PyCallableType::getCallable, context)
+                            .collect(Collectors.toList())
+        );
+
+      if (PyTypeUtil
+            .toStream(resolvedType)
+            .noneMatch(type -> type instanceof PyCallableType && ((PyCallableType)type).getCallable() == null) &&
+          resolvedType != null) {
+        return resolvedType;
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -487,7 +527,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                    @NotNull TypeEvalContext context,
                                                    @NotNull PyReferenceExpression anchor) {
     if (type instanceof PyFunctionType && context.maySwitchToAST(anchor) && anchor.getQualifier() != null) {
-       return ((PyFunctionType)type).dropSelf(context);
+      return ((PyFunctionType)type).dropSelf(context);
     }
 
     return type;

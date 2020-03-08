@@ -137,17 +137,17 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     }
 
     if (getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
-      String text = VcsLogBundle.message("vcs.log.file.history.commit.does.not.exist.in.history.in.current.branch",
+      String text = VcsLogBundle.message("file.history.commit.not.found.in.branch",
                                          getCommitPresentation(commitId), myPath.getName());
-      showWarningWithLink(text, VcsLogBundle.message("vcs.log.file.history.view.and.show.all.branches.link"), () -> {
+      showWarningWithLink(text, VcsLogBundle.message("file.history.commit.not.found.view.and.show.all.branches.link"), () -> {
         myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
         invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false));
       });
     }
     else {
-      String text = VcsLogBundle.message("vcs.log.file.history..commit.does.not.exist.in.history",
+      String text = VcsLogBundle.message("file.history.commit.not.found",
                                          getCommitPresentation(commitId), myPath.getName());
-      showWarningWithLink(text, VcsLogBundle.message("vcs.log.file.history.view.in.log.link"), () -> {
+      showWarningWithLink(text, VcsLogBundle.message("file.history.commit.not.found.view.in.log.link"), () -> {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
           if (commitId instanceof Hash) {
             ui.jumpToCommit((Hash)commitId, myRoot);

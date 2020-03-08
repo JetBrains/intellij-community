@@ -42,7 +42,6 @@ import com.intellij.util.CachedValueImpl;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -145,8 +144,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       addExtraAction(new UnselectAllButton()).
       addExtraAction(new ShowSelectedOnlyButton()).
       addExtraAction(new SelectRequiredButton()).
-      setToolbarPosition(ActionToolbarPosition.BOTTOM).
-      setToolbarBorder(JBUI.Borders.empty());
+      setToolbarPosition(ActionToolbarPosition.BOTTOM);
 
     contentPanel.add(decorator.createPanel());
     loadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable());
@@ -692,7 +690,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   private class SelectAllButton extends AnActionButton {
     SelectAllButton() {
-      super(ExternalSystemBundle.lazyMessage("action.text.select.all"), AllIcons.Actions.Selectall);
+      super(ExternalSystemBundle.messagePointer("action.text.select.all"), AllIcons.Actions.Selectall);
     }
 
     @Override
@@ -715,7 +713,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   private class UnselectAllButton extends AnActionButton {
     UnselectAllButton() {
-      super(ExternalSystemBundle.lazyMessage("action.text.unselect.all"), AllIcons.Actions.Unselectall);
+      super(ExternalSystemBundle.messagePointer("action.text.unselect.all"), AllIcons.Actions.Unselectall);
     }
 
     @Override
@@ -740,7 +738,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private class ShowSelectedOnlyButton extends ToggleActionButton {
 
     ShowSelectedOnlyButton() {
-      super(ExternalSystemBundle.lazyMessage("show.selected.only"), AllIcons.Actions.ShowHiddens);
+      super(ExternalSystemBundle.messagePointer("show.selected.only"), AllIcons.Actions.ShowHiddens);
     }
 
     @Override

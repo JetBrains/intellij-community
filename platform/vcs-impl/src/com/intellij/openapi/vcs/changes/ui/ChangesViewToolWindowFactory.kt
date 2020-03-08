@@ -1,16 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.ide.actions.ActivateToolWindowAction
-import com.intellij.ide.actions.ActivateToolWindowAction.getActionIdForToolWindow
-import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.keymap.impl.ui.ActionsTree.isShortcutCustomized
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions.ACTION_CHECKIN_PROJECT
+import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.COMMIT_TOOLWINDOW_ID
+import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi.HIDE_ID_LABEL
+import com.intellij.vcs.commit.CommitWorkflowManager.Companion.setCommitFromLocalChanges
 
 private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
   override fun updateState(project: Project, toolWindow: ToolWindow) {
@@ -20,6 +23,13 @@ private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
 }
 
 private class CommitToolWindowFactory : VcsToolWindowFactory() {
+  override fun init(window: ToolWindow) {
+    super.init(window)
+
+    window as ToolWindowEx
+    window.setAdditionalGearActions(DefaultActionGroup(SwitchToCommitDialogAction()))
+  }
+
   override fun shouldBeAvailable(project: Project): Boolean {
     return super.shouldBeAvailable(project) && project.isCommitToolWindow
   }
@@ -30,18 +40,15 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   }
 }
 
-private class ActivateVersionControlToolWindowAction : ActivateToolWindowAction(ToolWindowId.VCS) {
+private class SwitchToCommitDialogAction : DumbAwareAction() {
   init {
-    templatePresentation.text = toolWindowId
+    templatePresentation.text = message("action.switch.to.commit.dialog.text")
   }
 
-  override fun useMnemonicFromShortcuts(project: Project): Boolean {
-    return ToolWindowManager.getInstance(project).getToolWindow(COMMIT_TOOLWINDOW_ID)?.isAvailable != true ||
-           isShortcutCustomized(toolWindowId) ||
-           isShortcutCustomized(COMMIT_TOOLWINDOW_ID)
-  }
-}
+  override fun actionPerformed(e: AnActionEvent) {
+    setCommitFromLocalChanges(false)
 
-private fun isShortcutCustomized(toolWindowId: String): Boolean {
-  return isShortcutCustomized(getActionIdForToolWindow(toolWindowId), KeymapManager.getInstance().activeKeymap)
+    val commitAction = ActionManager.getInstance().getAction(ACTION_CHECKIN_PROJECT) ?: return
+    invokeAction(commitAction, e.dataContext, e.place, e.inputEvent, null)
+  }
 }

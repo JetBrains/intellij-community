@@ -61,8 +61,8 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
       return callExpr.multiResolveCallee(resolveContext)
         .asSequence()
         // Fail-fast check
-        .filter { markedCallee ->
-          val parameters = markedCallee.callableType.getParameters(typeEvalContext)
+        .filter { callableType ->
+          val parameters = callableType.getParameters(typeEvalContext)
           val parameterNames = parameters?.mapNotNull { it.name } ?: emptyList()
           parameterNames.any(::matchesPathNamePattern)
         }

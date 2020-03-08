@@ -42,7 +42,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
 
   final static Key<Boolean> NO_IMPLICIT_SAVE = Key.create("light.edit.no.implicit.save");
 
-  private final static String DEFAULT_FILE_NAME = "Untitled";
+  private final static String DEFAULT_FILE_NAME = "untitled_";
 
   public LightEditorManagerImpl(LightEditServiceImpl service) {
     myLightEditService = service;
@@ -92,18 +92,21 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   }
 
   @Override
-  @Nullable
+  @NotNull
   public LightEditorInfo createEditor(@NotNull VirtualFile file) {
     LightEditFileTypeOverrider.markUnknownFileTypeAsPlainText(file);
+    disableImplicitSave(file);
+    LightEditorInfo editorInfo = doCreateEditor(file);
+    Editor editor = LightEditorInfoImpl.getEditor(editorInfo);
+    if (editor instanceof EditorEx) ((EditorEx)editor).setHighlighter(getHighlighter(file, editor));
+    return editorInfo;
+  }
+
+  private static void disableImplicitSave(@NotNull VirtualFile file) {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
       document.putUserData(NO_IMPLICIT_SAVE, true);
-      LightEditorInfo editorInfo = doCreateEditor(file);
-      Editor editor = LightEditorInfoImpl.getEditor(editorInfo);
-      if (editor instanceof EditorEx) ((EditorEx)editor).setHighlighter(getHighlighter(file, editor));
-      return editorInfo;
     }
-    return null;
   }
 
   @Override
@@ -186,8 +189,8 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   }
 
   private String getUniqueName() {
-    for (int i = 0; ; i++) {
-      String candidate = DEFAULT_FILE_NAME + (i > 0 ? " (" + i + ")" : "");
+    for (int i = 1; ; i++) {
+      String candidate = DEFAULT_FILE_NAME + i;
       if (myEditors.stream().noneMatch(editorInfo -> editorInfo.getFile().getName().equals(candidate))) {
         return candidate;
       }

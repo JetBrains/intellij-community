@@ -36,7 +36,7 @@ internal class UastReferenceByUsageAdapter(private val usagePattern: UElementPat
     }
 
     val usage = getDirectVariableUsages(parentVariable).find { usage ->
-      val refExpression = getUsageReferenceExpression(usage, context)
+      val refExpression = getUsageReferenceExpressionWithCache(usage, context)
       refExpression != null && usagePattern.accepts(refExpression, context)
     } ?: return PsiReference.EMPTY_ARRAY
 
@@ -62,18 +62,18 @@ fun uExpressionInVariable() = injectionHostUExpression().filter {
 
 private val USAGE_REFERENCE_EXPRESSIONS = Key.create<MutableMap<PsiElement, UReferenceExpression>>("uast.referenceExpressions.byUsage")
 
-private fun getUsageReferenceExpression(usage: PsiElement, context: ProcessingContext): UReferenceExpression? {
-  var map = context.get(USAGE_REFERENCE_EXPRESSIONS)
-  if (map == null) {
-    map = THashMap()
-    context.put(USAGE_REFERENCE_EXPRESSIONS, map)
+private fun getUsageReferenceExpressionWithCache(usage: PsiElement, context: ProcessingContext): UReferenceExpression? {
+  var cache = context.get(USAGE_REFERENCE_EXPRESSIONS)
+  if (cache == null) {
+    cache = THashMap()
+    context.put(USAGE_REFERENCE_EXPRESSIONS, cache)
   }
-  val cachedElement = map[usage]
+  val cachedElement = cache[usage]
   if (cachedElement != null) return cachedElement
 
   val newElement = usage.toUElementOfType<UReferenceExpression>()
   if (newElement != null) {
-    map[usage] = newElement
+    cache[usage] = newElement
   }
   return newElement
 }
@@ -105,7 +105,7 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): Collection<PsiEle
       val uRef = occurrencePsi.parent.findContaining(UReferenceExpression::class.java)
       val expressionType = uRef?.getExpressionType()
       if (expressionType != null && expressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        val occurrenceResolved = uRef.tryResolve().toUElement()?.sourcePsi
+        val occurrenceResolved = uRef.tryResolve()
         if (occurrenceResolved != null
             && PsiManager.getInstance(occurrencePsi.project).areElementsEquivalent(occurrenceResolved, variablePsi)) {
           return@buildQuery listOfNotNull(uRef.sourcePsi)

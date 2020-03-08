@@ -2,6 +2,7 @@
 package com.intellij.analysis.problemsView.inspection;
 
 import com.intellij.analysis.problemsView.AnalysisProblem;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.*;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -48,7 +50,7 @@ public class InspectionProblemsView implements PersistentStateComponent<Inspecti
 
   @NotNull
   private Icon myCurrentIcon = AllIcons.Toolwindows.NoEvents;
-  private boolean myAnalysisIsBusy;
+  private volatile boolean myAnalysisIsBusy;
 
   private Notification myNotification;
   private boolean myDisabledForSession;
@@ -75,6 +77,31 @@ public class InspectionProblemsView implements PersistentStateComponent<Inspecti
         updateCurrentFile();
       }
     });
+    Alarm updateIcon = new Alarm(project);
+    myProject.getMessageBus().connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+      @Override
+      public void daemonStarting(@NotNull Collection<? extends FileEditor> fileEditors) {
+        myAnalysisIsBusy = true;
+        updateIcon.cancelAllRequests();
+        updateIcon.addRequest(()->updateIcon(), 200);
+      }
+
+      @Override
+      public void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
+        myAnalysisIsBusy = false;
+        updateIcon.cancelAllRequests();
+        // replace all problems in the table with current file highlightings. needed to get rid of "stuck" stale problems, disappearance of which was not fired for some reason
+        updateIcon.addRequest(()->setCurrentFile(getCurrentFile()), 0);
+      }
+
+      @Override
+      public void daemonCancelEventOccurred(@NotNull String reason) {
+        myAnalysisIsBusy = false;
+        updateIcon.cancelAllRequests();
+        updateIcon.addRequest(()->updateIcon(), 200);
+      }
+    });
+
     ApplicationManager.getApplication().invokeLater(this::updateCurrentFile, project.getDisposed());
   }
 

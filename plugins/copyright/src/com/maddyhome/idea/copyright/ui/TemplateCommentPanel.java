@@ -24,6 +24,7 @@ import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -33,7 +34,7 @@ import java.awt.event.ActionListener;
 
 public class TemplateCommentPanel implements SearchableConfigurable {
 
-  private final FileType fileType;
+  private final @Nullable FileType fileType;
   private final TemplateCommentPanel parentPanel;
   private final Project myProject;
   private JRadioButton[] fileLocations = null;
@@ -356,6 +357,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
   }
 
   @Override
+  @NotNull
   public String getHelpTopic() {
     return "copyright.filetypes";
   }
@@ -444,14 +446,13 @@ public class TemplateCommentPanel implements SearchableConfigurable {
   @Override
   @NotNull
   public String getId() {
-    return getHelpTopic() + "." + fileType.getName();
+    return fileType != null ? getHelpTopic() + "." + fileType.getName() : getHelpTopic();
   }
 
   @NotNull
   @Override
   public Class<?> getOriginalClass() {
-    final FileType type = FileTypeUtil.getInstance().getFileTypeByType(fileType);
-    final UpdateCopyrightsProvider provider = type != null ? CopyrightUpdaters.INSTANCE.forFileType(type) : null;
+    final UpdateCopyrightsProvider provider = fileType != null ? CopyrightUpdaters.INSTANCE.forFileType(fileType) : null;
     return provider != null ? provider.getClass() : super.getClass();
   }
 }

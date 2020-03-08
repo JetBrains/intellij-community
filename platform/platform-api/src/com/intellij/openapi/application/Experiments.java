@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +52,7 @@ public final class Experiments {
     return ApplicationManager.getApplication().getService(Experiments.class);
   }
 
-  public boolean isFeatureEnabled(@NotNull String featureId) {
+  public boolean isFeatureEnabled(@NonNls @NotNull String featureId) {
     if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       return false;
     }

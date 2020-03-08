@@ -15,8 +15,12 @@
  */
 package com.intellij.openapi.editor.markup;
 
+import com.intellij.openapi.editor.Editor;
+
 import java.awt.*;
 
 public interface ErrorStripeRenderer {
   void paint(Component c, Graphics g, Rectangle r);
+
+  default AnalyzerStatus getStatus(Editor editor) { return null; }
 }

@@ -2,12 +2,12 @@
 package com.intellij.remote;
 
 import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.process.BaseProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,8 +19,12 @@ import java.util.concurrent.Future;
 public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProcessHandler<T> {
   private static final Logger LOG = Logger.getInstance(BaseRemoteProcessHandler.class);
 
+  @NotNull
+  private final ModalityState myModality;
+
   public BaseRemoteProcessHandler(@NotNull T process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
+    myModality = OSProcessHandler.getDefaultModality();
   }
 
   /**
@@ -36,6 +40,16 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
   protected void destroyProcessImpl() {
     if (!myProcess.killProcessTree()) {
       super.destroyProcessImpl();
+    }
+  }
+
+  @Override
+  protected void onOSProcessTerminated(int exitCode) {
+    if (myModality != ModalityState.NON_MODAL) {
+      ProgressManager.getInstance().runProcess(() -> super.onOSProcessTerminated(exitCode), new EmptyProgressIndicator(myModality));
+    }
+    else {
+      super.onOSProcessTerminated(exitCode);
     }
   }
 

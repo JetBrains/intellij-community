@@ -35,8 +35,8 @@ import org.jetbrains.annotations.NotNull;
 public class ShowOtherBranchesAction extends BooleanPropertyToggleAction {
 
   public ShowOtherBranchesAction() {
-    super(VcsLogBundle.lazyMessage("vcs.log.action.show.all.branches"),
-          VcsLogBundle.lazyMessage("vcs.log.action.description.show.all.branches"), AllIcons.Vcs.Branch);
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.all.branches"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.all.branches"), AllIcons.Vcs.Branch);
   }
 
   @Override

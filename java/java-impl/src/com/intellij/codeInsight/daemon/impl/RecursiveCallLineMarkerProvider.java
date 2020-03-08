@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.icons.AllIcons;
@@ -43,13 +42,13 @@ import java.util.Set;
 public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     return null; //do nothing
   }
 
   @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements,
-                                     @NotNull Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
+                                     @NotNull Collection<? super LineMarkerInfo<?>> result) {
     final Set<PsiStatement> statements = new HashSet<>();
 
     for (PsiElement element : elements) {
@@ -101,14 +100,8 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
     }
 
     private RecursiveMethodCallMarkerInfo(@NotNull PsiElement name) {
-      super(name,
-            name.getTextRange(),
-            AllIcons.Gutter.RecursiveMethod,
-            Pass.LINE_MARKERS,
-            FunctionUtil.constant("Recursive call"),
-            null,
-            GutterIconRenderer.Alignment.RIGHT
-      );
+      super(name, name.getTextRange(), AllIcons.Gutter.RecursiveMethod, FunctionUtil.constant("Recursive call"), null,
+            GutterIconRenderer.Alignment.RIGHT);
     }
 
     @Override

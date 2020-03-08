@@ -95,7 +95,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     myTestPatch = patchFile;
     if (project != null) {
-      myWhatsNewAction = new AbstractAction("What's new") {
+      myWhatsNewAction = new AbstractAction(IdeBundle.message("button.what.s.new")) {
         @Override
         public void actionPerformed(ActionEvent e) {
           String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());

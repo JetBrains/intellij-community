@@ -6,7 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.value.TargetValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.execution.CommandLineArgumentEncoder;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -52,17 +52,16 @@ public final class TargetedCommandLine {
    * {@link GeneralCommandLine#getPreparedCommandLine()}
    */
   public String getCommandPresentation(@NotNull TargetEnvironment target) throws ExecutionException {
-    String command = resolvePromise(myExePath.getTargetValue(), "exe path");
-    if (command == null) {
+    String exePath = resolvePromise(myExePath.getTargetValue(), "exe path");
+    if (exePath == null) {
       throw new ExecutionException("Resolved value for exe path is null");
     }
     List<String> parameters = new ArrayList<>();
     for (TargetValue<String> parameter : myParameters) {
       parameters.add(resolvePromise(parameter.getTargetValue(), "parameter"));
     }
-    StringBuilder escapedCommand = new StringBuilder(command);
-    CommandLineArgumentEncoder.DEFAULT_ENCODER.encodeArgument(escapedCommand);
-    return StringUtil.join(CommandLineUtil.toCommandLine(escapedCommand.toString(), parameters, target.getRemotePlatform().getPlatform()), " ");
+    return StringUtil.join(CommandLineUtil.toCommandLine(ParametersListUtil.escape(exePath), parameters,
+                                                         target.getRemotePlatform().getPlatform()), " ");
   }
 
   public List<String> collectCommandsSynchronously() throws ExecutionException {

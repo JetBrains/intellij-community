@@ -97,7 +97,7 @@ public class ReferencesPanel extends JPanel {
 
   @NotNull
   protected JBLabel createRestLabel(int restSize) {
-    return createLabel(VcsLogBundle.message("vcs.log.references.more.label", restSize), null);
+    return createLabel(VcsLogBundle.message("vcs.log.details.references.more.label", restSize), null);
   }
 
   @Nullable

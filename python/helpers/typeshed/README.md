@@ -86,24 +86,22 @@ requests. If you have questions related to contributing, drop by the [typing Git
 ## Running the tests
 
 The tests are automatically run by Travis CI on every PR and push to
-the repo.  There are several sets of tests: `tests/mypy_test.py`
-runs tests against [mypy](https://github.com/python/mypy/), while
-`tests/pytype_test.py` runs tests against
+the repo. Note that it can be useful to enable Travis CI on your own fork of
+typeshed.
+
+There are several tests:
+- `tests/mypy_test.py`
+runs tests against [mypy](https://github.com/python/mypy/)
+- `tests/pytype_test.py` runs tests against
 [pytype](https://github.com/google/pytype/).
+- `tests/mypy_selftest.py` runs mypy's test suite using this version of
+typeshed.
+- `tests/check_consistent.py` checks certain files in typeshed remain
+consistent with each other.
+- `tests/stubtest_test.py` checks stubs against the objects at runtime.
+- `flake8` enforces a style guide.
 
-Both sets of tests are shallow -- they verify that all stubs can be
-imported but they don't check whether stubs match their implementation
-(in the Python standard library or a third-party package).  Also note
-that each set of tests has a blacklist of modules that are not tested
-at all.  The blacklists also live in the tests directory.
-
-In addition, you can run `tests/mypy_selftest.py` to run mypy's own
-test suite using the typeshed code in your repo. This will sometimes
-catch issues with incorrectly typed stubs, but is much slower than the
-other tests.
-
-To manually run the mypy tests, you need to have Python 3.5 or higher;
-Python 3.6.1 or higher is recommended.
+### Setup
 
 Run:
 ```
@@ -112,31 +110,74 @@ $ source .venv3/bin/activate
 (.venv3)$ pip3 install -r requirements-tests-py3.txt
 ```
 This will install mypy (you need the latest master branch from GitHub),
-typed-ast, flake8, and pytype. You can then run mypy, flake8, and pytype tests
-by invoking:
-```
-(.venv3)$ python3 tests/mypy_test.py
-...
-(.venv3)$ python3 tests/mypy_selftest.py
-...
-(.venv3)$ flake8
-...
-(.venv3)$ python3 tests/pytype_test.py
-...
-```
-Note that flake8 only works with Python 3.6 or higher, and that to run the
-pytype tests, you will need Python 2.7 and Python 3.6 interpreters. Pytype will
-find these automatically if they're in `PATH`, but otherwise you must point to
-them with the `--python27-exe` and `--python36-exe` arguments, respectively.
+typed-ast, flake8 (and plugins), pytype, black and isort.
 
-For mypy, if you are in the typeshed repo that is submodule of the
+### mypy_test.py
+
+This test requires Python 3.5 or higher; Python 3.6.1 or higher is recommended.
+Run using:`(.venv3)$ python3 tests/mypy_test.py`
+
+This test is shallow — it verifies that all stubs can be
+imported but doesn't check whether stubs match their implementation
+(in the Python standard library or a third-party package). It has a blacklist of
+modules that are not tested at all, which also lives in the tests directory.
+
+If you are in the typeshed repo that is submodule of the
 mypy repo (so `..` refers to the mypy repo), there's a shortcut to run
 the mypy tests that avoids installing mypy:
 ```bash
 $ PYTHONPATH=../.. python3 tests/mypy_test.py
 ```
-You can mypy tests to a single version by passing `-p2` or `-p3.5` e.g.
+You can restrict mypy tests to a single version by passing `-p2` or `-p3.5`:
 ```bash
 $ PYTHONPATH=../.. python3 tests/mypy_test.py -p3.5
 running mypy --python-version 3.5 --strict-optional # with 342 files
 ```
+
+### pytype_test.py
+
+This test requires Python 2.7 and Python 3.6. Pytype will
+find these automatically if they're in `PATH`, but otherwise you must point to
+them with the `--python27-exe` and `--python36-exe` arguments, respectively.
+Run using: `(.venv3)$ python3 tests/pytype_test.py`
+
+This test works similarly to `mypy_test.py`, except it uses `pytype`.
+
+### mypy_selftest.py
+
+This test requires Python 3.5 or higher; Python 3.6.1 or higher is recommended.
+Run using: `(.venv3)$ python3 tests/mypy_selftest.py`
+
+This test runs mypy's own test suite using the typeshed code in your repo. This
+will sometimes catch issues with incorrectly typed stubs, but is much slower
+than the other tests.
+
+### check_consistent.py
+
+Run using: `python3 tests/check_consistent.py`
+
+### stubtest_test.py
+
+This test requires Python 3.5 or higher.
+Run using `(.venv3)$ python3 tests/stubtest_test.py`
+
+This test compares the stdlib stubs against the objects at runtime. Because of
+this, the output depends on which version of Python it is run with.
+If you need a specific version of Python to repro a CI failure,
+[pyenv](https://github.com/pyenv/pyenv) can help (as can enabling Travis CI on
+your fork).
+
+Due to its dynamic nature, you may run into false positives. In this case, you
+can add to the whitelists for each affected Python version in
+`tests/stubtest_whitelists`. Please file issues for stubtest false positives
+at [mypy](https://github.com/python/mypy/issues).
+
+To run stubtest against third party stubs, it's easiest to use stubtest
+directly. stubtest can also help you find things missing from the stubs.
+
+
+### flake8
+
+flake8 requires Python 3.6 or higher. Run using: `(.venv3)$ flake8`
+
+Note typeshed uses the `flake8-pyi` and `flake8-bugbear` plugins.

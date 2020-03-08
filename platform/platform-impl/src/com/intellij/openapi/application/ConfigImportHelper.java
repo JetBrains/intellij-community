@@ -77,14 +77,12 @@ public final class ConfigImportHelper {
     ConfigImportSettings settings = null;
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
-      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass =
-        (Class<ConfigImportSettings>)Class.forName(customProviderName);
+      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass = (Class<ConfigImportSettings>)Class.forName(customProviderName);
       if (ConfigImportSettings.class.isAssignableFrom(customProviderClass)) {
         settings = ReflectionUtil.newInstance(customProviderClass);
       }
     }
-    catch (Exception ignored) {
-    }
+    catch (Exception ignored) { }
 
     List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
 
@@ -98,15 +96,14 @@ public final class ConfigImportHelper {
       if (configProvider != null) {
         importedFromCloud = configProvider.importSettingsSilently(newConfigDir);
       }
-
       if (!importedFromCloud && !veryFirstStartOnThisComputer) {
         oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
       }
     }
-     else {
-       Path bestConfigGuess = guessedOldConfigDirs.get(0);
-       oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess); // todo maybe integrate into findConfigDirectories
-     }
+    else {
+      Path bestConfigGuess = guessedOldConfigDirs.get(0);
+      oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess); // todo maybe integrate into findConfigDirectories
+    }
 
     if (oldConfigDirAndOldIdePath != null) {
       doImport(oldConfigDirAndOldIdePath.first, newConfigDir, oldConfigDirAndOldIdePath.second, log);
@@ -136,6 +133,9 @@ public final class ConfigImportHelper {
       }
 
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+    }
+    else {
+      log.info("No configs imported, starting with clean configs at " + newConfigDir);
     }
   }
 
@@ -412,6 +412,7 @@ public final class ConfigImportHelper {
 
   private static void doImport(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @Nullable Path oldIdeHome, @NotNull Logger log) {
     if (oldConfigDir.equals(newConfigDir)) {
+      log.info("New config directory is the same as the old one, no import needed.");
       return;
     }
 
@@ -434,6 +435,9 @@ public final class ConfigImportHelper {
     Path newPluginsDir = newConfigDir.getFileSystem().getPath(PathManager.getPluginsPath());
 
     try {
+      log.info(String.format(
+        "Importing configs: oldConfigDir=[%s], newConfigDir=[%s], oldIdeHome=[%s], oldPluginsDir=[%s], newPluginsDir=[%s]",
+        oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir));
       doImport(oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir, log);
     }
     catch (Exception e) {

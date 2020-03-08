@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.sm.runner.history;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -56,7 +57,7 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
     catch (IOException e) {
       final String message = e.getMessage();
       ApplicationManager.getApplication().invokeLater(
-        () -> Messages.showErrorDialog(myConsoleProperties.getProject(), message, "Failed to Parse " + myFile.getName()));
+        () -> Messages.showErrorDialog(myConsoleProperties.getProject(), message, SmRunnerBundle.message("sm.test.runner.imported.to.general.failed.to.parse.error.title", myFile.getName())));
     }
   }
 

@@ -514,7 +514,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     DefaultActionGroup tabOptionsGroup = new DefaultActionGroup() {{
       Presentation presentation = getTemplatePresentation();
-      presentation.setText(FindBundle.lazyMessage("find.popup.show.tab.options"));
+      presentation.setText(FindBundle.messagePointer("find.popup.show.tab.options"));
       presentation.setIcon(AllIcons.General.GearPlain);
       setPopup(true);
       setShortcutSet(CustomShortcutSet.fromString("alt ctrl DOWN"));
@@ -829,7 +829,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     else {
       add(myFilterContextButton, "wrap");
     }
+    mySearchTextArea.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0));
     add(mySearchTextArea, "pushx, growx, sx 10, pad 0 -4 0 4, gaptop 4, wrap");
+    myReplaceTextArea.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
     add(myReplaceTextArea, "pushx, growx, sx 10, pad 0 -4 0 4, gaptop 1, wrap");
     add(scopesPanel, "sx 10, pushx, growx, ax left, wrap, gaptop 4, gapbottom 4");
     add(splitter, "pushx, growx, growy, pushy, sx 10, wrap, pad -4 -4 4 4");
@@ -839,11 +841,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     List<Component> focusOrder = new ArrayList<>();
     focusOrder.add(mySearchComponent);
-    focusOrder.addAll(searchExtraButtons);
     focusOrder.add(myReplaceComponent);
+    focusOrder.addAll(searchExtraButtons);
     focusOrder.addAll(replaceExtraButtons);
-    ContainerUtil.addAll(focusOrder, focusableComponents(myScopeDetailsPanel));
     focusOrder.add(myCbFileFilter);
+    ContainerUtil.addAll(focusOrder, focusableComponents(myScopeDetailsPanel));
     focusOrder.add(editorComponent);
     ContainerUtil.addAll(focusOrder, focusableComponents(bottomPanel));
     setFocusCycleRoot(true);
@@ -1057,7 +1059,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         String findNextText = KeymapUtil.getFirstKeyboardShortcutText("FindNext");
         String findPreviousText = KeymapUtil.getFirstKeyboardShortcutText("FindPrevious");
         if (!StringUtil.isEmpty(findNextText) &&  !StringUtil.isEmpty(findPreviousText)) {
-          myNavigationHintLabel.setText("Use " + findNextText + " and " + findPreviousText + " to select usages");
+          myNavigationHintLabel.setText(FindBundle.message("label.use.0.and.1.to.select.usages", findNextText, findPreviousText));
         }
       }
     }
@@ -1322,7 +1324,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private void onStart(int hash) {
     myLoadingHash = hash;
     myLoadingDecorator.startLoading(false);
-    myResultsPreviewTable.getEmptyText().setText("Searching...");
+    myResultsPreviewTable.getEmptyText().setText(FindBundle.message("empty.text.searching"));
   }
 
 
@@ -1406,7 +1408,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       }
 
       if (mask.contains(";")) {
-        return new ValidationInfo("File masks should be comma-separated", myFileMaskField);
+        return new ValidationInfo(FindBundle.message("message.file.masks.should.be.comma.separated"), myFileMaskField);
       }
       try {
         createFileMaskRegExp(mask);   // verify that the regexp compiles
@@ -1576,7 +1578,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
   private static class MyOpenResultsInNewTabAction extends ToggleAction {
     private MyOpenResultsInNewTabAction() {
-      super(FindBundle.lazyMessage("find.open.in.new.tab.action"));
+      super(FindBundle.messagePointer("find.open.in.new.tab.action"));
     }
 
     @Override
@@ -1649,7 +1651,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     private final DefaultActionGroup mySwitchContextGroup;
 
     MyShowFilterPopupAction() {
-      super(FindBundle.lazyMessage("find.popup.show.filter.popup"), Presentation.NULL_STRING, AllIcons.General.Filter);
+      super(FindBundle.messagePointer("find.popup.show.filter.popup"), Presentation.NULL_STRING, AllIcons.General.Filter);
       LayeredIcon icon = JBUI.scale(new LayeredIcon(2));
       icon.setIcon(AllIcons.General.Filter, 0);
       icon.setIcon(AllIcons.General.Dropdown, 1, 3, 0);
@@ -1771,8 +1773,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   }
 
   private class MyPinAction extends ToggleAction {
-    private MyPinAction() {super(IdeBundle.lazyMessage("action.ToggleAction.text.pin.window"),
-                                 IdeBundle.lazyMessage("action.ToggleAction.description.pin.window"), AllIcons.General.Pin_tab);}
+    private MyPinAction() {super(IdeBundle.messagePointer("action.ToggleAction.text.pin.window"),
+                                 IdeBundle.messagePointer("action.ToggleAction.description.pin.window"), AllIcons.General.Pin_tab);}
 
     @Override
     public boolean isDumbAware() {
@@ -1797,7 +1799,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
   private class MySkipTabWithOneUsageAction extends ToggleAction {
     private MySkipTabWithOneUsageAction() {
-      super(FindBundle.lazyMessage("find.options.skip.results.tab.with.one.usage.action"));
+      super(FindBundle.messagePointer("find.options.skip.results.tab.with.one.usage.action"));
     }
 
     @Override

@@ -49,7 +49,7 @@ import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_PACKAGE_I
  */
 public class CreatePackageInfoAction extends CreateFromTemplateActionBase {
   public CreatePackageInfoAction() {
-    super(JavaBundle.lazyMessage("action.create.new.package-info.title"), JavaBundle.lazyMessage("action.create.new.package-info.description"), AllIcons.FileTypes.Java);
+    super(JavaBundle.messagePointer("action.create.new.package-info.title"), JavaBundle.messagePointer("action.create.new.package-info.description"), AllIcons.FileTypes.Java);
   }
 
   @Nullable

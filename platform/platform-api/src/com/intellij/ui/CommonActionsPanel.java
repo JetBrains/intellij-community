@@ -5,8 +5,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,6 +20,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -33,6 +34,15 @@ public class CommonActionsPanel extends JPanel {
 
     public static final Buttons[] ALL = {ADD, REMOVE, EDIT,  UP, DOWN};
 
+    @NotNull
+    private static final Map<Buttons, Supplier<String>> ourPresentableNamesMap = ContainerUtil.newHashMap(
+      new Pair<>(ADD, UIBundle.messagePointer("button.text.add")),
+      new Pair<>(REMOVE, UIBundle.messagePointer("button.text.remove")),
+      new Pair<>(EDIT, UIBundle.messagePointer("button.text.edit")),
+      new Pair<>(UP, UIBundle.messagePointer("button.text.up")),
+      new Pair<>(DOWN, UIBundle.messagePointer("button.text.down"))
+    );
+
     public Icon getIcon() {
       switch (this) {
         case ADD:    return IconUtil.getAddIcon();
@@ -45,7 +55,7 @@ public class CommonActionsPanel extends JPanel {
     }
 
     MyActionButton createButton(final Listener listener, String name, Icon icon) {
-      String buttonName = name == null ? StringUtil.capitalize(StringUtil.toLowerCase(name())) : name;
+      String buttonName = name == null ? getText() : name;
       switch (this) {
         case ADD: return new AddButton(listener, buttonName, icon);
         case REMOVE: return new RemoveButton(listener, buttonName, icon);
@@ -57,7 +67,7 @@ public class CommonActionsPanel extends JPanel {
     }
 
     public String getText() {
-      return StringUtil.capitalize(StringUtil.toLowerCase(name()));
+      return ourPresentableNamesMap.get(this).get();
     }
   }
 
@@ -179,7 +189,7 @@ public class CommonActionsPanel extends JPanel {
   }
 
   private static void registerDeleteHook(final MyActionButton removeButton) {
-    new AnAction(IdeBundle.lazyMessage("action.Anonymous.text.delete.hook")) {
+    new AnAction(IdeBundle.messagePointer("action.Anonymous.text.delete.hook")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeButton.actionPerformed(e);

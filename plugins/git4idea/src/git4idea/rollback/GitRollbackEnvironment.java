@@ -18,9 +18,11 @@ import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitUntrackedFilesHolder;
 import git4idea.util.GitFileUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -35,9 +37,10 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
   }
 
   @Override
+  @Nls(capitalization = Nls.Capitalization.Title)
   @NotNull
   public String getRollbackOperationName() {
-    return "&Rollback";
+    return GitBundle.message("git.rollback");
   }
 
   @Override
@@ -183,7 +186,7 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
    * @throws VcsException if there is a problem with running git
    */
   private void unindex(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files, boolean toUnversioned) throws VcsException {
-    GitFileUtils.deletePaths(myProject, root, files, "--cached", "-f");
+    GitFileUtils.deletePaths(myProject, root, files, "--cached", "-f"); //NON-NLS
 
     if (toUnversioned) {
       GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);

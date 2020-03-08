@@ -3,6 +3,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -138,7 +139,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     else {
       fillCharsetActions(group, myVirtualFile, favorites, charsetFilter);
 
-      DefaultActionGroup more = DefaultActionGroup.createPopupGroup(() -> "more");
+      DefaultActionGroup more = DefaultActionGroup.createPopupGroup(() -> IdeBundle.message("action.text.more"));
       group.add(more);
       fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), charsetFilter);
     }

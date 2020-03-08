@@ -250,7 +250,7 @@ public class VcsProjectLog implements Disposable {
     }
     else { // schedule showing the log, wait its initialization, and then open the tab
       Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
-      new Task.Backgroundable(project, VcsLogBundle.message("vcs.log.loading.commits")) {
+      new Task.Backgroundable(project, VcsLogBundle.message("vcs.log.creating.process")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {

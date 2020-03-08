@@ -492,8 +492,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
           //some settings were read for the tool, so it must be initialized,
           //otherwise no dynamic tools are expected
           toolWrapper.isInitialized()) {
-        final boolean parentEnabled = myTools.get(toolWrapper.getShortName()).isEnabled();
-        List<LocalInspectionToolWrapper> children = ((DynamicGroupTool)toolWrapper.getTool()).getChildren(parentEnabled);
+        final ToolsImpl parent = myTools.get(toolWrapper.getShortName());
+        if (!parent.isEnabled()) continue;
+        List<LocalInspectionToolWrapper> children = ((DynamicGroupTool)toolWrapper.getTool()).getChildren();
         if (tools.stream().noneMatch(i -> children.stream().anyMatch(l -> i.getShortName().equals(l.getShortName())))) {
           boolean isLocked = myLockedProfile;
           myLockedProfile = false;

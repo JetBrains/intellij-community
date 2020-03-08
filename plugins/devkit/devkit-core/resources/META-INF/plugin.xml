@@ -15,7 +15,8 @@
   <depends>com.intellij.properties</depends>
   <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.json</depends>
-  <depends>com.intellij.platform.images</depends>
+  <depends config-file="i18n-devkit.xml" optional="true">com.intellij.java-i18n</depends>
+  <depends config-file="images-devkit.xml" optional="true">com.intellij.platform.images</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
   <depends config-file="groovy-devkit.xml" optional="true">org.intellij.groovy</depends>
   <depends config-file="uidesigner-devkit.xml" optional="true">com.intellij.uiDesigner</depends>
@@ -292,11 +293,6 @@
 
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
 
-    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultThemeFilter"/>
-    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultHiDPIThemeFilter"/>
-    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaThemeFilter"/>
-    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaHiDPIThemeFilter"/>
-
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdater"/>
     <postStartupActivity
@@ -403,6 +399,8 @@
       <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" icon="AllIcons.Actions.Execute"/>
       <action class="org.jetbrains.idea.devkit.themes.RollbackThemeAction" id="DevKit.RollbackTheme" icon="AllIcons.Actions.Suspend"/>
       <action class="org.jetbrains.idea.devkit.themes.EditThemeEditorColorSchemeAction" id="DevKit.EditThemeEditorColorScheme" icon="AllIcons.Actions.EditScheme"/>
+      <separator/>
+      <action class="org.jetbrains.idea.devkit.themes.OpenThemeReferenceDocsAction" id="DevKit.OpenThemeReferenceDocs" icon="AllIcons.Actions.Help"/>
     </group>
 
   </actions>

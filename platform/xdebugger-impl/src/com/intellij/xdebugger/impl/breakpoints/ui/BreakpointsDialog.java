@@ -286,7 +286,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }, ActionPlaces.UNKNOWN, ActionManager.getInstance());
 
-    new AnAction(XDebuggerBundle.lazyMessage("action.Anonymous.text.breakpointdialog.gotosource")) {
+    new AnAction(XDebuggerBundle.messagePointer("action.Anonymous.text.breakpointdialog.gotosource")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);
@@ -294,7 +294,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(CommonShortcuts.ENTER, tree, myDisposable);
 
-    new AnAction(XDebuggerBundle.lazyMessage("action.Anonymous.text.breakpointdialog.showsource")) {
+    new AnAction(XDebuggerBundle.messagePointer("action.Anonymous.text.breakpointdialog.showsource")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);
@@ -308,6 +308,8 @@ public class BreakpointsDialog extends DialogWrapper {
       .toListAndThen(DefaultActionGroup::new);
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tree).
+      setToolbarPosition(ActionToolbarPosition.TOP).
+      setPanelBorder(JBUI.Borders.empty()).
       setAddAction(button -> JBPopupFactory.getInstance()
         .createActionGroupPopup(null, breakpointTypes, DataManager.getInstance().getDataContext(button.getContextComponent()),
                                 JBPopupFactory.ActionSelectionAid.NUMBERING, false)
@@ -320,17 +322,9 @@ public class BreakpointsDialog extends DialogWrapper {
           }
         }
         return false;
-      }).
-      setToolbarPosition(ActionToolbarPosition.TOP).
-      setToolbarBorder(JBUI.Borders.empty());
-
+      });
+    JPanel decoratorPanel = decorator.createPanel();
     myToggleRuleActions.forEach(decorator::addExtraAction);
-
-    JPanel decoratedTree = decorator.createPanel();
-    decoratedTree.setBorder(JBUI.Borders.empty());
-
-    JScrollPane pane = ComponentUtil.getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, (Component)tree);
-    if (pane != null) pane.setBorder(IdeBorderFactory.createBorder());
 
     myTreeController.setTreeView(tree);
 
@@ -340,7 +334,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
     myBreakpointsPanelProviders.forEach(provider -> provider.addListener(myRebuildAlarm::cancelAndRequest, myProject, myListenerDisposable));
 
-    return decoratedTree;
+    return decoratorPanel;
   }
 
   private void navigate(final boolean requestFocus) {

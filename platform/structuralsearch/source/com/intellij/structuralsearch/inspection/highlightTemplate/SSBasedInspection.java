@@ -13,7 +13,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -35,10 +34,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -78,9 +75,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   @Override
   public void initialize(@NotNull GlobalInspectionContext context) {
     super.initialize(context);
-    if (Registry.is("ssr.separate.inspections")) {
-      mySessionProfile = ((GlobalInspectionContextBase)context).getCurrentProfile();
-    }
+    mySessionProfile = ((GlobalInspectionContextBase)context).getCurrentProfile();
   }
 
   @Override
@@ -97,18 +92,12 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
     final List<Configuration> configurations;
     final InspectionProfileImpl profile;
-    if (Registry.is("ssr.separate.inspections")) {
-      for (Configuration configuration : myConfigurations) {
-        configuration.initialize();
-      }
-      profile = (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
-      configurations = ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
-      if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
+    for (Configuration configuration : myConfigurations) {
+      configuration.initialize();
     }
-    else {
-      profile = null;
-      configurations = myConfigurations;
-    }
+    profile = (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
+    configurations = ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
+    if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
     final Map<Configuration, Matcher> compiledOptions =
       SSBasedInspectionCompiledPatternsCache.getCompiledOptions(configurations, project);
@@ -116,16 +105,12 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
     final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
       final PsiElement element = matchResult.getMatch();
+      if (holder.getFile() != element.getContainingFile()) return false;
       final String name = ObjectUtils.notNull(configuration.getProblemDescriptor(), configuration.getName());
       final LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
       final ProblemDescriptor descriptor =
         holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-      if (Registry.is("ssr.separate.inspections")) {
-        holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, configuration.getUuid().toString()));
-      }
-      else {
-        holder.registerProblem(descriptor);
-      }
+      holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, configuration.getUuid().toString()));
       return true;
     };
     for (Map.Entry<Configuration, Matcher> entry : compiledOptions.entrySet()) {
@@ -147,7 +132,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
             if (matcher == null) continue;
 
             if (matcher.checkIfShouldAttemptToMatch(matchedNodes) &&
-                (profile == null || profile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element))) {
+                profile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element)) {
               final int nodeCount = matcher.getMatchContext().getPattern().getNodeCount();
               try {
                 matcher.processMatchesInElement(new CountingNodeIterator(nodeCount, matchedNodes));
@@ -170,14 +155,11 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   @Override
-  public List<LocalInspectionToolWrapper> getChildren(boolean parentIsEnabled) {
-    if (Registry.is("ssr.separate.inspections")) {
-      return getConfigurations().stream()
-        .filter(configuration -> configuration.getOrder() == 0)
-        .map(configuration -> new StructuralSearchInspectionToolWrapper(configuration, parentIsEnabled))
-        .collect(Collectors.toList());
-    }
-    return Collections.emptyList();
+  public List<LocalInspectionToolWrapper> getChildren() {
+    return getConfigurations().stream()
+      .filter(configuration -> configuration.getOrder() == 0)
+      .map(configuration -> new StructuralSearchInspectionToolWrapper(configuration))
+      .collect(Collectors.toList());
   }
 
   static LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {
@@ -208,12 +190,6 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
         return SSRBundle.message("SSRInspection.family.name");
       }
     };
-  }
-
-  @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SSBasedInspectionOptions(myConfigurations).getComponent();
   }
 
   @TestOnly

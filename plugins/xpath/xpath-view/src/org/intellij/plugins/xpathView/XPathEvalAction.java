@@ -15,7 +15,6 @@
  */
 package org.intellij.plugins.xpathView;
 
-import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.Language;
@@ -299,7 +298,6 @@ public class XPathEvalAction extends XPathAction {
         presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
 
         final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
-        processPresentation.setProgressIndicatorFactory(() -> new FindProgressIndicator(project, "XML Document(s)"));
         processPresentation.setShowPanelIfOnlyOneUsage(true);
         processPresentation.setShowNotFoundMessage(true);
         final UsageTarget[] usageTargets = { usageTarget };

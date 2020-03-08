@@ -39,6 +39,7 @@ import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.filter.BranchPopupBuilder;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -106,8 +107,11 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
         };
       }
     }.build();
-    ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup("Select Source Branch", actionGroup, event.getDataContext(), false, false, false, null, -1, null);
+    ListPopup popup =
+      JBPopupFactory.getInstance().createActionGroupPopup(GitBundle.message("git.log.cherry.picked.highlighter.select.branch.popup"),
+                                                          actionGroup, event.getDataContext(),
+                                                          false, false, false,
+                                                          null, -1, null);
     InputEvent inputEvent = event.getInputEvent();
     if (inputEvent instanceof MouseEvent) {
       popup.show(new RelativePoint((MouseEvent)inputEvent));

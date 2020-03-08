@@ -24,7 +24,10 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public class DefaultResourceBundleManager extends ResourceBundleManager {
   public DefaultResourceBundleManager(final Project project) {
@@ -48,7 +51,7 @@ public class DefaultResourceBundleManager extends ResourceBundleManager {
   }
 
   @Override
-  public boolean isActive(PsiFile context) throws ResourceBundleNotFoundException{
+  public boolean isActive(@NotNull Collection<PsiFile> contexts) throws ResourceBundleNotFoundException {
     if (getResourceBundle() != null) {
       return true;
     }

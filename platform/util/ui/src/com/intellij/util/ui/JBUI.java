@@ -954,6 +954,11 @@ public class JBUI {
       public static Color linkVisitedColor() {
         return JBColor.namedColor("Link.visitedForeground", JBColor.namedColor("link.visited.foreground", new JBColor(0x800080, 0x9776a9)));
       }
+
+      @NotNull
+      public static Color linkSecondaryColor() {
+        return JBColor.namedColor("Link.secondaryForeground", new JBColor(0x779dbd, 0x5676a0));
+      }
     }
 
     public static class Arrow {

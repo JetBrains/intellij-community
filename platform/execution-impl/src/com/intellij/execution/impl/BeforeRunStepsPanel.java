@@ -17,8 +17,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
@@ -33,8 +31,10 @@ import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Vassiliy Kudryashov
@@ -78,9 +78,6 @@ final class BeforeRunStepsPanel extends JPanel {
     });
 
     ToolbarDecorator myDecorator = ToolbarDecorator.createDecorator(myList);
-    if (!SystemInfo.isMac) {
-      myDecorator.setAsUsualTopToolbar();
-    }
 
     myDecorator.setEditAction(new AnActionButtonRunnable() {
       @Override
@@ -156,6 +153,12 @@ final class BeforeRunStepsPanel extends JPanel {
     add(checkboxPanel, BorderLayout.SOUTH);
   }
 
+  @Override
+  public void setVisible(boolean aFlag) {
+    super.setVisible(aFlag);
+    updateText();
+  }
+
   @Nullable
   private BeforeRunTaskAndProvider getSelection() {
     final int index = myList.getSelectedIndex();
@@ -185,51 +188,12 @@ final class BeforeRunStepsPanel extends JPanel {
   }
 
   private void updateText() {
-    StringBuilder sb = new StringBuilder();
-
-    if (myShowSettingsBeforeRunCheckBox.isSelected()) {
-      sb.append(ExecutionBundle.message("configuration.edit.before.run"));
-    }
-
-    List<BeforeRunTask<?>> tasks = myModel.getItems();
-    if (!tasks.isEmpty()) {
-      LinkedHashMap<BeforeRunTaskProvider<?>, Integer> counter = new LinkedHashMap<>();
-      for (BeforeRunTask<?> task : tasks) {
-        //noinspection unchecked
-        BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myRunConfiguration.getProject(), (Key<BeforeRunTask>)task.getProviderId());
-        if (provider != null) {
-          Integer count = counter.get(provider);
-          if (count == null) {
-            count = task.getItemsCount();
-          }
-          else {
-            count += task.getItemsCount();
-          }
-          counter.put(provider, count);
-        }
-      }
-      for (Map.Entry<BeforeRunTaskProvider<?>, Integer> entry : counter.entrySet()) {
-        BeforeRunTaskProvider provider = entry.getKey();
-        String name = provider.getName();
-        name = StringUtil.trimStart(name, "Run ");
-        if (sb.length() > 0) {
-          sb.append(", ");
-        }
-        sb.append(name);
-        if (entry.getValue() > 1) {
-          sb.append(" (").append(entry.getValue().intValue()).append(")");
-        }
-      }
-    }
-
-    if (myActivateToolWindowBeforeRunCheckBox.isSelected()) {
-      sb.append(sb.length() > 0 ? ", " : "").append(ExecutionBundle.message("configuration.activate.toolwindow.before.run"));
-    }
-    if (sb.length() > 0) {
-      sb.insert(0, ": ");
-    }
-    sb.insert(0, ExecutionBundle.message("before.launch.panel.title"));
-    myListener.titleChanged(sb.toString());
+    int count = (myShowSettingsBeforeRunCheckBox.isSelected() ? 1 : 0)
+      + (myActivateToolWindowBeforeRunCheckBox.isSelected() ? 1 : 0)
+      + myModel.getSize();
+    String title = ExecutionBundle.message("before.launch.panel.title");
+    String suffix = count == 0 || isVisible() ? "" : ExecutionBundle.message("before.launch.panel.title.suffix", count);
+    myListener.titleChanged(title + suffix);
   }
 
   @NotNull

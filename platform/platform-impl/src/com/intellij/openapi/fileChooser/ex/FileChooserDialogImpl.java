@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.SaveAndSyncHandler;
@@ -190,7 +191,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   private JComponent createHistoryButton() {
     JLabel label = new JLabel(AllIcons.Actions.Download);
-    label.setToolTipText("Recent files");
+    label.setToolTipText(IdeBundle.message("tooltip.recent.files"));
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -375,7 +376,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       final String text = myPathTextField.getTextFieldText();
       final LookupFile file = myPathTextField.getFile();
       if (text == null || file == null || !file.exists()) {
-        setErrorText("Specified path cannot be found", myPathTextField.getField());
+        setErrorText(IdeBundle.message("dialog.message.specified.path.cannot.be.found"), myPathTextField.getField());
         return;
       }
     }

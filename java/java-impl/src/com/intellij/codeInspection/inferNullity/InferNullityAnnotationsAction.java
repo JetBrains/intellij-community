@@ -76,7 +76,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   private JCheckBox myAnnotateLocalVariablesCb;
 
   public InferNullityAnnotationsAction() {
-    super(JavaBundle.lazyMessage("dialog.title.infer.nullity"), JavaPsiBundle.lazyMessage("action.description.infer.nullity.annotations"));
+    super(JavaBundle.messagePointer("dialog.title.infer.nullity"), JavaPsiBundle.messagePointer("action.description.infer.nullity.annotations"));
   }
 
   @Override

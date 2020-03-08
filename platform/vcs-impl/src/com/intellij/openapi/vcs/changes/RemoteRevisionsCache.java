@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -54,9 +53,6 @@ public class RemoteRevisionsCache implements VcsListener {
 
     ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
     myVcsManager = vcsManager;
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
     myKinds = new HashMap<>();
 
     final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
@@ -72,6 +68,10 @@ public class RemoteRevisionsCache implements VcsListener {
       }
       return shouldBeDone;
     }, "Finishing \"changed on server\" update", DEFAULT_REFRESH_INTERVAL);
+
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
 
     updateRoots();
 
@@ -117,13 +117,14 @@ public class RemoteRevisionsCache implements VcsListener {
     if (! VcsConfiguration.getInstance(myProject).isChangedOnServerEnabled()) {
       manageAlarm();
     } else {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
         try {
           updateRoots();
           myRemoteRevisionsNumbersCache.directoryMappingChanged();
           myRemoteRevisionsStateCache.directoryMappingChanged();
           manageAlarm();
-        } catch (ProcessCanceledException ignore) {
+        }
+        catch (ProcessCanceledException ignore) {
         }
       });
     }

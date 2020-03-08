@@ -41,6 +41,7 @@ public class VfsUtilCore {
 
   public static final String LOCALHOST_URI_PATH_PREFIX = "localhost/";
   public static final char VFS_SEPARATOR_CHAR = '/';
+  public static final String VFS_SEPARATOR = "/";
 
   private static final String PROTOCOL_DELIMITER = ":";
 
@@ -271,7 +272,14 @@ public class VfsUtilCore {
   public static boolean iterateChildrenRecursively(@NotNull final VirtualFile root,
                                                    @Nullable final VirtualFileFilter filter,
                                                    @NotNull final ContentIterator iterator) {
-    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
+    return iterateChildrenRecursively(root, filter, iterator, new VirtualFileVisitor.Option[0]);
+  }
+
+  public static boolean iterateChildrenRecursively(@NotNull final VirtualFile root,
+                                                   @Nullable final VirtualFileFilter filter,
+                                                   @NotNull final ContentIterator iterator,
+                                                   VirtualFileVisitor.@NotNull Option... options) {
+    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor<Void>(options) {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {

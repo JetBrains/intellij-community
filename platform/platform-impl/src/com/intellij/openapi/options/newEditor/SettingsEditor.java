@@ -325,6 +325,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
 
   @Override
   void disposeOnce() {
+    if (myProperties == null || mySplitter == null) return; // if constructor failed
     myProperties.setValue(SPLITTER_PROPORTION, mySplitter.getProportion(), SPLITTER_PROPORTION_DEFAULT_VALUE);
   }
 

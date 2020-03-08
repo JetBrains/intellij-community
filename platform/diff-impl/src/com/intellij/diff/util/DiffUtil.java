@@ -117,7 +117,7 @@ public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
-  @NotNull public static final String DIFF_CONFIG = "diff.xml";
+  @NotNull @NonNls public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUIScale.scale(2);
 
   public static class Lazy {
@@ -247,7 +247,7 @@ public class DiffUtil {
 
   public static void configureEditor(@NotNull EditorEx editor, @NotNull DocumentContent content, @Nullable Project project) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(content.getDocument());
-    if (virtualFile != null && Registry.is("diff.enable.psi.highlighting")) {
+    if (virtualFile != null) {
       editor.setFile(virtualFile);
     }
 
@@ -397,7 +397,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static JPanel createMessagePanel(@NotNull String message) {
+  public static JPanel createMessagePanel(@NotNull @Nls String message) {
     String text = StringUtil.replace(message, "\n", "<br>");
     JLabel label = new JBLabel(text) {
       @Override
@@ -450,14 +450,12 @@ public class DiffUtil {
 
   @NotNull
   public static String getSettingsConfigurablePath() {
-    if (SystemInfo.isMac) {
-      return "Preferences | Tools | Diff & Merge";
-    }
-    return "Settings | Tools | Diff & Merge";
+    return SystemInfo.isMac ? DiffBundle.message("label.diff.settings.path.macos")
+                            : DiffBundle.message("label.diff.settings.path");
   }
 
   @NotNull
-  public static String createTooltipText(@NotNull String text, @Nullable String appendix) {
+  public static String createTooltipText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
     StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(text);
@@ -471,7 +469,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static String createNotificationText(@NotNull String text, @Nullable String appendix) {
+  public static String createNotificationText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
     StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(text);
@@ -569,7 +567,7 @@ public class DiffUtil {
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();
       if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
-        notifications.add(DiffNotifications.createNotification("File is too large. Only preview is loaded."));
+        notifications.add(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded")));
       }
     }
 
@@ -625,19 +623,18 @@ public class DiffUtil {
       labelWithIcon.addToLeft(new JBLabel(AllIcons.Ide.Readonly));
     }
     panel.add(labelWithIcon, BorderLayout.CENTER);
-    if (charset != null && separator != null) {
+    if (charset != null || separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
-      panel2.add(createCharsetPanel(charset, bom));
-      panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
-      panel2.add(createSeparatorPanel(separator));
+      if (charset != null) {
+        panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
+        panel2.add(createCharsetPanel(charset, bom));
+      }
+      if (separator != null) {
+        panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
+        panel2.add(createSeparatorPanel(separator));
+      }
       panel.add(panel2, BorderLayout.EAST);
-    }
-    else if (charset != null) {
-      panel.add(createCharsetPanel(charset, bom), BorderLayout.EAST);
-    }
-    else if (separator != null) {
-      panel.add(createSeparatorPanel(separator), BorderLayout.EAST);
     }
     return panel;
   }
@@ -1480,7 +1477,7 @@ public class DiffUtil {
   @CalledInAwt
   public static boolean executeWriteCommand(@NotNull final Document document,
                                             @Nullable final Project project,
-                                            @Nullable final String commandName,
+                                            @Nullable @Nls final String commandName,
                                             @NotNull final Runnable task) {
     return executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false, task);
   }

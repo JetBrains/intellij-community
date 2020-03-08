@@ -14,7 +14,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.InspectionTestUtil;
-import com.siyeh.ig.controlflow.UnnecessaryConditionalExpressionInspection;
+import com.siyeh.ig.controlflow.SimplifiableConditionalExpressionInspection;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +72,7 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     assertSize(2, resultFiles);
 
     Element dfaResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("ConstantConditions.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
-    Element unnCondResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("UnnecessaryConditionalExpression.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
+    Element unnCondResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("SimplifiableConditionalExpression.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
 
     Element expectedDfaResults = JDOMUtil.load("<problems>" +
                                                "<problem>\n" +
@@ -158,6 +158,6 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
 
   @NotNull
   private static Stream<InspectionToolWrapper> getTools() {
-    return Stream.of(new DataFlowInspection(), new UnnecessaryConditionalExpressionInspection()).map(LocalInspectionToolWrapper::new);
+    return Stream.of(new DataFlowInspection(), new SimplifiableConditionalExpressionInspection()).map(LocalInspectionToolWrapper::new);
   }
 }

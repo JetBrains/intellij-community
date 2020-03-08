@@ -104,7 +104,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   private void initChangesTree(JComponent root) {
     myChangesTree = new ChangesTreeImpl.Changes(myProject, false, false);
-    myChangesTree.setDoubleClickHandler(() -> new ShowDifferenceAction().performIfEnabled());
+    myChangesTree.setDoubleClickAndEnterKeyHandler(() -> new ShowDifferenceAction().performIfEnabled());
 
     new ShowDifferenceAction().registerCustomShortcutSet(root, null);
 

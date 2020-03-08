@@ -28,7 +28,7 @@ public final class ExtensionDeclarationRelatedItemLineMarkerProvider extends Dev
   @Override
   protected void process(@NotNull PsiElement identifier,
                          @NotNull PsiClass psiClass,
-                         @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
+                         @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     List<ExtensionCandidate> targets = ExtensionLocatorKt.locateExtensionsByPsiClass(psiClass);
     if (targets.isEmpty()) {
       return;

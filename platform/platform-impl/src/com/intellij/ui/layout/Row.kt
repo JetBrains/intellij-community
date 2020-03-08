@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.noteComponent
+import org.jetbrains.annotations.Nls
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -29,21 +30,21 @@ interface RowBuilder : BaseBuilder {
   fun createChildRow(label: JLabel? = null,
                      isSeparated: Boolean = false,
                      noGrid: Boolean = false,
-                     title: String? = null): Row
+                     @Nls title: String? = null): Row
 
   fun createNoteOrCommentRow(component: JComponent): Row
 
-  fun checkBoxGroup(title: String?, body: () -> Unit)
+  fun checkBoxGroup(@Nls title: String?, body: () -> Unit)
 
   fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
     return createChildRow(label = label, isSeparated = separated).apply(init)
   }
 
-  fun row(label: String?, separated: Boolean = false, init: Row.() -> Unit): Row {
+  fun row(@Nls label: String?, separated: Boolean = false, init: Row.() -> Unit): Row {
     return createChildRow(label?.let { Label(it) }, isSeparated = separated).apply(init)
   }
 
-  fun titledRow(title: String, init: Row.() -> Unit): Row
+  fun titledRow(@Nls title: String, init: Row.() -> Unit): Row
 
   /**
    * Creates row with a huge gap after it, that can be used to group related components.
@@ -55,16 +56,16 @@ interface RowBuilder : BaseBuilder {
    * Creates row with hideable decorator.
    * It allows to hide some information under the titled decorator
    */
-  fun hideableRow(title: String, init: Row.() -> Unit): Row
+  fun hideableRow(@Nls title: String, init: Row.() -> Unit): Row
 
   /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and `<br>` are supported only if no links (file issue if need).
    */
-  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null) {
+  fun noteRow(@Nls text: String, linkHandler: ((url: String) -> Unit)? = null) {
     createNoteOrCommentRow(noteComponent(text, linkHandler))
   }
 
-  fun commentRow(text: String) {
+  fun commentRow(@Nls text: String) {
     createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1))
   }
 

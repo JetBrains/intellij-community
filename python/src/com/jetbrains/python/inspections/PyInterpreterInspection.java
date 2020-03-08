@@ -12,7 +12,9 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
@@ -82,6 +84,9 @@ public class PyInterpreterInspection extends PyInspection {
       }
       if (pyCharm) {
         fixes.add(new ConfigureInterpreterFix());
+      }
+      else {
+        fixes.add(new ConfigureProjectOrModuleFix(module));
       }
 
       final String product = pyCharm ? "PyCharm" : "Python plugin";
@@ -291,6 +296,40 @@ public class PyInterpreterInspection extends PyInspection {
       if (module == null) return;
 
       PySdkPopupFactory.Companion.createAndShow(project, module);
+    }
+  }
+
+  private static final class ConfigureProjectOrModuleFix implements LocalQuickFix {
+
+    @NotNull
+    private final Module myModule;
+
+    private ConfigureProjectOrModuleFix(@NotNull Module module) {
+      myModule = module;
+    }
+
+    @Override
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+      return PyBundle.message("INSP.interpreter.configure.python.interpreter");
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final ProjectSettingsService settingsService = ProjectSettingsService.getInstance(project);
+
+      if (ProjectRootManager.getInstance(project).getProjectSdk() == null &&
+          ModuleRootManager.getInstance(myModule).isSdkInherited() &&
+          ModuleManager.getInstance(project).getModules().length < 2) {
+        settingsService.openProjectSettings();
+      }
+      else {
+        settingsService.openModuleSettings(myModule);
+      }
     }
   }
 

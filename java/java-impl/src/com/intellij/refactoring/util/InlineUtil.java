@@ -196,7 +196,7 @@ public class InlineUtil {
         final PsiExpressionList exprList = (PsiExpressionList)expr.getParent();
         if (exprList.getParent() instanceof PsiCall) {
           if (isSafeToInlineVarargsArgument((PsiCall)exprList.getParent())) {
-            inlineArrayCreationForVarargs(((PsiNewExpression)expr));
+            inlineArrayCreationForVarargs((PsiNewExpression)expr);
           }
         }
       }
@@ -267,9 +267,7 @@ public class InlineUtil {
             if (lastArgType != null && substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType()).isAssignableFrom(lastArgType)) {
               PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)lastArg).getArrayInitializer();
               PsiExpression[] initializers = arrayInitializer != null ? arrayInitializer.getInitializers() : PsiExpression.EMPTY_ARRAY;
-              if (isSafeToFlatten(expression, method, initializers)) {
-                return true;
-              }
+              return isSafeToFlatten(expression, method, initializers);
             }
           }
         }
@@ -454,7 +452,6 @@ public class InlineUtil {
    *
    * @param conflicts map for found conflicts
    * @param initializer variable initializer
-   * @return found changes and errors
    */
   public static void checkChangedBeforeLastAccessConflicts(@NotNull MultiMap<PsiElement, String> conflicts,
                                                            @NotNull PsiExpression initializer,
@@ -596,7 +593,7 @@ public class InlineUtil {
                                                           boolean isAccessedForWriting) {
     if (strictlyFinal) {
       class CanAllLocalsBeDeclaredFinal extends JavaRecursiveElementWalkingVisitor {
-        boolean success = true;
+        private boolean success = true;
 
         @Override
         public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -714,11 +711,8 @@ public class InlineUtil {
     else if (initializer instanceof PsiThisExpression) {
       return true;
     }
-    else if (initializer instanceof PsiSuperExpression) {
-      return true;
-    }
     else {
-      return false;
+      return initializer instanceof PsiSuperExpression;
     }
   }
 
@@ -727,10 +721,8 @@ public class InlineUtil {
    *
    * @param variable      variable to inline
    * @param strictlyFinal whether the variable is referenced in the places where final variable is required
-   * @throws IncorrectOperationException
    */
-  public static void tryInlineGeneratedLocal(PsiLocalVariable variable, boolean strictlyFinal)
-    throws IncorrectOperationException {
+  public static void tryInlineGeneratedLocal(PsiLocalVariable variable, boolean strictlyFinal) throws IncorrectOperationException {
     PsiElement scope = PsiUtil.getVariableCodeBlock(variable, null);
     if (scope == null) return;
     List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, scope);
@@ -775,7 +767,7 @@ public class InlineUtil {
       PsiElement refElement = ((PsiReferenceExpression)expr).resolve();
       if (refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter) {
         if (strictlyFinal || RefactoringUtil.canBeDeclaredFinal((PsiVariable)refElement)) {
-          PsiUtil.setModifierProperty(((PsiVariable)refElement), PsiModifier.FINAL, true);
+          PsiUtil.setModifierProperty((PsiVariable)refElement, PsiModifier.FINAL, true);
         }
       }
     }
@@ -790,7 +782,6 @@ public class InlineUtil {
    *
    * @param resultVar   variable to inline
    * @param resultUsage variable usage
-   * @throws IncorrectOperationException
    */
   public static void tryInlineResultVariable(@NotNull PsiLocalVariable resultVar, @NotNull PsiReferenceExpression resultUsage)
     throws IncorrectOperationException {
@@ -825,7 +816,7 @@ public class InlineUtil {
   private static void tryReplaceWithTarget(@NotNull PsiLocalVariable variable,
                                            @NotNull PsiReferenceExpression usage,
                                            PsiElement context,
-                                           List<PsiReferenceExpression> references) {
+                                           List<? extends PsiReferenceExpression> references) {
     PsiLocalVariable target = tryCast(PsiUtil.skipParenthesizedExprUp(usage.getParent()), PsiLocalVariable.class);
     if (target == null) return;
     String name = target.getName();

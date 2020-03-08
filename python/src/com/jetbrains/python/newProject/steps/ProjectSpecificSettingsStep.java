@@ -293,7 +293,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     myInterpretersDecorator.setContentComponent(container);
 
     final List<PyAddSdkPanel> panels = Arrays.asList(newEnvironmentPanel, existingSdkPanel);
-    myInterpreterPanel = new PyAddSdkGroupPanel(PyBundle.lazyMessage("python.add.sdk.panel.name.new.project.interpreter"),
+    myInterpreterPanel = new PyAddSdkGroupPanel(PyBundle.messagePointer("python.add.sdk.panel.name.new.project.interpreter"),
                                                 getIcon(), panels, defaultPanel);
     myInterpreterPanel.addChangeListener(() -> {
       myInterpretersDecorator.setTitle(getProjectInterpreterTitle(myInterpreterPanel.getSelectedPanel()));

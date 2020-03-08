@@ -346,7 +346,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
            "'.\nAvailable actions: [" +StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", ")+ "]\n" +
            "HighlightInfos: [" +StringUtil.join(infos, ", ")+"]");
     }
-    CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor, intentionActionName);
+    CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor);
   }
 
   @Nullable

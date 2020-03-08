@@ -57,7 +57,12 @@ public class FilterPanel implements FilterTable {
   final Header myHeader = new Header();
   private final ScriptFilter myScriptFilter = new ScriptFilter(this);
   private final List<FilterAction> myFilters =
-    Arrays.asList(new TextFilter(this), new CountFilter(this), new TypeFilter(this), new ReferenceFilter(this), myScriptFilter);
+    Arrays.asList(new TextFilter(this),
+                  new CountFilter(this),
+                  new TypeFilter(this),
+                  new ReferenceFilter(this),
+                  new ContextFilter(this),
+                  myScriptFilter);
   private Runnable myConstraintChangedCallback;
   boolean myValid;
 
@@ -236,10 +241,10 @@ public class FilterPanel implements FilterTable {
     if (constraint instanceof MatchVariableConstraint) {
       message = Configuration.CONTEXT_VAR_NAME.equals(varName)
                 ? SSRBundle.message("no.filters.whole.template.label")
-                : SSRBundle.message("no.filters.for.label", varName);
+                : SSRBundle.message("no.filters.for.0.label", varName);
     }
     else {
-      message = SSRBundle.message("no.script.for.label", varName);
+      message = SSRBundle.message("no.script.for.0.label", varName);
     }
     final StatusText statusText = myFilterTable.getTable().getEmptyText();
     statusText.setText(message);
@@ -280,8 +285,8 @@ public class FilterPanel implements FilterTable {
       myLabel.clear();
       final String varName = myConstraint.getName();
       myLabel.append(Configuration.CONTEXT_VAR_NAME.equals(varName)
-                     ? SSRBundle.message("filters.whole.template.title")
-                     : SSRBundle.message("no.filters.for.label", varName),
+                     ? SSRBundle.message("filters.for.whole.template.title")
+                     : SSRBundle.message("filters.for.0.title", varName),
                      SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return myLabel;
     }

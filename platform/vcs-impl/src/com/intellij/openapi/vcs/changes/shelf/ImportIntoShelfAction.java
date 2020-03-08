@@ -35,8 +35,8 @@ import java.util.List;
 
 public class ImportIntoShelfAction extends DumbAwareAction {
   public ImportIntoShelfAction() {
-    super(VcsBundle.lazyMessage("action.ImportIntoShelfAction.text"),
-          VcsBundle.lazyMessage("action.ImportIntoShelfAction.description"), null);
+    super(VcsBundle.messagePointer("action.ImportIntoShelfAction.text"),
+          VcsBundle.messagePointer("action.ImportIntoShelfAction.description"), null);
   }
 
   @Override

@@ -2,6 +2,7 @@
 package com.intellij.util.net;
 
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -376,9 +377,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
         if (frame != null) {
           USE_PROXY_PAC = false;
-          Messages.showMessageDialog(frame.getComponent(), "Proxy: both 'use proxy' and 'autodetect proxy' settings were set." +
-                                                           "\nOnly one of these options should be selected.\nPlease re-configure.",
-                                     "Proxy Setup", Messages.getWarningIcon());
+          Messages.showMessageDialog(frame.getComponent(), IdeBundle.message(
+            "message.text.proxy.both.use.proxy.and.autodetect.proxy.settings.were.set.only.one.of.these.options.should.be.selected.please.re.configure"),
+                                     IdeBundle.message("dialog.title.proxy.setup"), Messages.getWarningIcon());
           editConfigurable(frame.getComponent());
         }
       }, ModalityState.NON_MODAL);

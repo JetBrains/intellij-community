@@ -4,19 +4,20 @@ package com.intellij.terminal
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.NonNls
 
 interface TerminalShellCommandHandler {
   /**
    * Returns true if handler allows to launch the {@param #command} in a smart way.
    * E.g. open a particular UI in IDE and use parameters fetched from the {@param #command}
    */
-  fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean
+  fun matches(project: Project, workingDirectory: String?, localSession: Boolean, @NonNls command: String): Boolean
 
   /**
    * Launches matched command, see {@see #matches}.
    * Returns true if command has been successfully executed, false if failed.
    */
-  fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean
+  fun execute(project: Project, workingDirectory: String?, localSession: Boolean, @NonNls command: String): Boolean
 
   companion object {
     private val LOG = Logger.getInstance(TerminalShellCommandHandler::class.java)

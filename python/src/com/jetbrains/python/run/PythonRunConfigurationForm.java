@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.execution.ui.CommonProgramParametersPanel;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -30,12 +30,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.PySymbolFieldWithBrowseButton;
 import com.jetbrains.PySymbolFieldWithBrowseButtonKt;
-import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.extensions.ContextAnchor;
 import com.jetbrains.extensions.ModuleBasedContextAnchor;
 import com.jetbrains.extensions.ProjectSdkContextAnchor;
+import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,8 +52,6 @@ import java.util.Objects;
  * @author yole
  */
 public class PythonRunConfigurationForm implements PythonRunConfigurationParams, PanelWithAnchor {
-  public static final String SCRIPT_PATH = "Script path";
-  public static final String MODULE_NAME = "Module name";
   private JPanel myRootPanel;
   private TextFieldWithBrowseButton myScriptTextField;
   private RawCommandLineEditor myScriptParametersTextField;
@@ -125,7 +124,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     //myTargetComboBox.addActionListener(e -> updateRunModuleMode());
 
     myInputFileTextFieldWithBrowseButton.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor(), myProject));
-    HideableDecorator executionOptionsDecorator = new HideableDecorator(myExecutionOptionsPlaceholder, "Execution", false);
+    HideableDecorator executionOptionsDecorator = new HideableDecorator(myExecutionOptionsPlaceholder, PyBundle.message("runcfg.labels.execution"), false);
     myExecutionOptionsPanel.setBorder(JBUI.Borders.empty(5, 0));
     executionOptionsDecorator.setOn(true);
     executionOptionsDecorator.setContentComponent(myExecutionOptionsPanel);
@@ -146,11 +145,11 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     group.add(myRedirectInputCheckBox);
     group.add(myShowCommandLineCheckbox);
 
-    ProgramParametersConfigurator.addMacroSupport(myScriptParametersTextField.getEditorField());
+    CommonProgramParametersPanel.addMacroSupport(myScriptParametersTextField.getEditorField());
   }
 
   private void updateRunModuleMode() {
-    boolean mode = (MODULE_NAME + ":").equals(myTargetComboBox.getText());
+    boolean mode = (getModuleNameText() + ":").equals(myTargetComboBox.getText());
     checkTargetComboConsistency(mode);
     setModuleModeInternal(mode);
   }
@@ -243,6 +242,14 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   public void setMultiprocessMode(boolean multiprocess) {
   }
 
+  @Nls public static String getScriptPathText() {
+    return PyBundle.message("runcfg.labels.script.path");
+  }
+
+  @Nls public static String getModuleNameText() {
+    return PyBundle.message("runcfg.labels.module.name");
+  }
+
   @Override
   @NotNull
   public String getInputFile() {
@@ -275,7 +282,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   @Override
   public void setModuleMode(boolean moduleMode) {
-    setTargetComboBoxValue(moduleMode ? MODULE_NAME : SCRIPT_PATH);
+    setTargetComboBoxValue(moduleMode ? getModuleNameText() : getScriptPathText());
     updateRunModuleMode();
     checkTargetComboConsistency(moduleMode);
   }
@@ -303,7 +310,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
         @Override
         public void mouseClicked(MouseEvent e) {
           JBPopupFactory.getInstance().createListPopup(
-            new BaseListPopupStep<String>("Choose target to run", Lists.newArrayList(SCRIPT_PATH, MODULE_NAME)) {
+            new BaseListPopupStep<String>("Choose target to run", Lists.newArrayList(getScriptPathText(), getModuleNameText())) {
               @Override
               public PopupStep onChosen(String selectedValue, boolean finalChoice) {
                 setTargetComboBoxValue(selectedValue);

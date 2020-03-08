@@ -26,7 +26,7 @@
             <properties>
               <font style="1"/>
               <requestFocusEnabled value="true"/>
-              <text value="Certificate details"/>
+              <text resource-bundle="messages/IdeBundle" key="label.ssl.certificate.details"/>
             </properties>
           </component>
         </children>
@@ -48,7 +48,7 @@
             <properties>
               <contentType value="text/html"/>
               <opaque value="false"/>
-              <text value="&lt;html&gt;&#10;  &lt;head&gt;&#10;&#10;  &lt;/head&gt;&#10;  &lt;body&gt;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#10;      &#10;    &lt;/p&gt;&#10;  &lt;/body&gt;&#10;&lt;/html&gt;&#10;"/>
+              <text value="&lt;html&gt;&#10;  &lt;head&gt;&#10;    &#10;  &lt;/head&gt;&#10;  &lt;body&gt;&#10;  &lt;/body&gt;&#10;&lt;/html&gt;&#10;" noi18n="true"/>
             </properties>
           </component>
         </children>

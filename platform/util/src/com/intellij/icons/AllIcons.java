@@ -367,8 +367,8 @@ public class AllIcons {
     /** 16x16 */ public static final Icon BalloonWarning = load("/general/balloonWarning.svg");
     /** 12x12 */ public static final Icon BalloonWarning12 = load("/general/balloonWarning12.svg");
     /** 8x4 */ public static final Icon ButtonDropTriangle = load("/general/buttonDropTriangle.svg");
-    /** 12x12 */ public static final Icon CollapseComponent = load("/general/collapseComponent.svg");
-    /** 12x12 */ public static final Icon CollapseComponentHover = load("/general/collapseComponentHover.svg");
+    /** 16x16 */ public static final Icon CollapseComponent = load("/general/collapseComponent.svg");
+    /** 16x16 */ public static final Icon CollapseComponentHover = load("/general/collapseComponentHover.svg");
     /** 16x16 */ public static final Icon ContextHelp = load("/general/contextHelp.svg");
     /** 16x16 */ public static final Icon CopyHovered = load("/general/copyHovered.svg");
     /** 2x19 */ public static final Icon Divider = load("/general/divider.svg");
@@ -378,8 +378,8 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Error = load("/general/error.svg");
     /** 32x32 */ public static final Icon ErrorDialog = load("/general/errorDialog.svg");
     /** 16x16 */ public static final Icon ExclMark = load("/general/exclMark.svg");
-    /** 12x12 */ public static final Icon ExpandComponent = load("/general/expandComponent.svg");
-    /** 12x12 */ public static final Icon ExpandComponentHover = load("/general/expandComponentHover.svg");
+    /** 16x16 */ public static final Icon ExpandComponent = load("/general/expandComponent.svg");
+    /** 16x16 */ public static final Icon ExpandComponentHover = load("/general/expandComponentHover.svg");
     /** 16x16 */ public static final Icon ExternalTools = load("/general/externalTools.svg");
     /** 16x16 */ public static final Icon Filter = load("/general/filter.svg");
     /** 16x16 */ public static final Icon FitContent = load("/general/fitContent.svg");
@@ -395,12 +395,14 @@ public class AllIcons {
     /** 16x16 */ public static final Icon InlineAddHover = load("/general/inlineAddHover.svg");
     /** 16x16 */ public static final Icon InlineVariables = load("/general/inlineVariables.svg");
     /** 16x16 */ public static final Icon InlineVariablesHover = load("/general/inlineVariablesHover.svg");
-    /** 14x14 */ public static final Icon InspectionsError = load("/general/inspectionsError.svg");
-    /** 14x14 */ public static final Icon InspectionsEye = load("/general/inspectionsEye.svg");
-    /** 14x14 */ public static final Icon InspectionsOK = load("/general/inspectionsOK.svg");
-    /** 14x14 */ public static final Icon InspectionsPause = load("/general/inspectionsPause.svg");
-    /** 14x14 */ public static final Icon InspectionsTrafficOff = load("/general/inspectionsTrafficOff.svg");
-    /** 14x14 */ public static final Icon InspectionsTypos = load("/general/inspectionsTypos.svg");
+    /** 16x16 */ public static final Icon InspectionsError = load("/general/inspectionsError.svg");
+    /** 16x16 */ public static final Icon InspectionsEye = load("/general/inspectionsEye.svg");
+    /** 16x16 */ public static final Icon InspectionsOK = load("/general/inspectionsOK.svg");
+    /** 16x16 */ public static final Icon InspectionsPause = load("/general/inspectionsPause.svg");
+    /** 16x16 */ public static final Icon InspectionsPowerSaveMode = load("/general/inspectionsPowerSaveMode.svg");
+    /** 16x16 */ public static final Icon InspectionsTrafficOff = load("/general/inspectionsTrafficOff.svg");
+    /** 16x16 */ public static final Icon InspectionsTypos = load("/general/inspectionsTypos.svg");
+    /** 16x16 */ public static final Icon InspectionsWarning = load("/general/inspectionsWarning.svg");
     /** 16x16 */ public static final Icon Layout = load("/general/layout.svg");
     /** 16x16 */ public static final Icon LayoutEditorOnly = load("/general/layoutEditorOnly.svg");
     /** 16x16 */ public static final Icon LayoutEditorPreview = load("/general/layoutEditorPreview.svg");
@@ -473,6 +475,8 @@ public class AllIcons {
     /** 12x12 */ public static final Icon ImplementingFunctionalInterface = load("/gutter/implementingFunctionalInterface.svg");
     /** 12x12 */ public static final Icon ImplementingMethod = load("/gutter/implementingMethod.svg");
     /** 12x12 */ public static final Icon Java9Service = load("/gutter/java9Service.svg");
+    /** 12x12 */ public static final Icon JavadocEdit = load("/gutter/javadocEdit.svg");
+    /** 12x12 */ public static final Icon JavadocRead = load("/gutter/javadocRead.svg");
     /** 12x12 */ public static final Icon OverridenMethod = load("/gutter/overridenMethod.svg");
     /** 12x12 */ public static final Icon OverridingMethod = load("/gutter/overridingMethod.svg");
     /** 12x12 */ public static final Icon ReadAccess = load("/gutter/readAccess.svg");
@@ -510,6 +514,7 @@ public class AllIcons {
     /** 14x14 */ public static final Icon External_link_arrow = load("/ide/external_link_arrow.svg");
     /** 16x16 */ public static final Icon FatalError_read = load("/ide/fatalError-read.svg");
     /** 16x16 */ public static final Icon FatalError = load("/ide/fatalError.svg");
+    /** 16x16 */ public static final Icon Gift = load("/ide/gift.svg");
     /** 16x16 */ public static final Icon HectorOff = load("/ide/hectorOff.svg");
     /** 16x16 */ public static final Icon HectorOn = load("/ide/hectorOn.svg");
     /** 16x16 */ public static final Icon HectorSyntax = load("/ide/hectorSyntax.svg");
@@ -545,6 +550,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon OutgoingChangesOn = load("/ide/outgoingChangesOn.svg");
     /** 16x16 */ public static final Icon Pipette = load("/ide/pipette.svg");
     /** 16x16 */ public static final Icon Pipette_rollover = load("/ide/pipette_rollover.svg");
+    /** 16x16 */ public static final Icon PowerSaveMode = load("/ide/powerSaveMode.svg");
     /** 11x11 */ public static final Icon Rating = load("/ide/rating.svg");
     /** 11x11 */ public static final Icon Rating1 = load("/ide/rating1.svg");
     /** 11x11 */ public static final Icon Rating2 = load("/ide/rating2.svg");

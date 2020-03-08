@@ -80,9 +80,8 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     return myName;
   }
 
-  @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
     PsiModifierListOwner owner = getAnnotationOwner(element);
     if (owner == null) return null;
 

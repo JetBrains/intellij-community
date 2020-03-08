@@ -82,13 +82,11 @@ public class HardcodedContracts {
                     instanceCall(JAVA_UTIL_LIST, "equals").parameterTypes(JAVA_LANG_OBJECT),
                     instanceCall(JAVA_UTIL_MAP, "equals").parameterTypes(JAVA_LANG_OBJECT)),
               ContractProvider.of(SpecialField.COLLECTION_SIZE.getEqualsContracts()))
-    .register(instanceCall(JAVA_UTIL_COLLECTION, "contains").parameterCount(1),
+    .register(anyOf(instanceCall(JAVA_UTIL_COLLECTION, "contains").parameterCount(1),
+                    instanceCall(JAVA_UTIL_MAP, "containsKey", "containsValue").parameterCount(1)),
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(),
                 returnFalse())))
-    .register(instanceCall(JAVA_UTIL_MAP, "containsKey", "containsValue").parameterCount(1),
-              ContractProvider.of(singleConditionContract(
-                ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(), returnFalse())))
     .register(instanceCall(JAVA_UTIL_LIST, "get", "remove").parameterTypes("int"),
               ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
     .register(anyOf(
@@ -143,20 +141,9 @@ public class HardcodedContracts {
                 StandardMethodContract.fromText("!null,null->false")
               ))
     .register(enumValues(), ContractProvider.of(StandardMethodContract.fromText("->new")))
-    // Convert the following to external annotation once we support Java 9+ external annotations (IDEA-198249)
-    .register(staticCall(JAVA_UTIL_OBJECTS, "requireNonNullElse").parameterCount(2),
-              ContractProvider.of(
-                StandardMethodContract.fromText("!null,_->param1"),
-                StandardMethodContract.fromText("null,!null->param2"),
-                StandardMethodContract.fromText("null,null->fail")))
-    .register(staticCall(JAVA_UTIL_OBJECTS, "requireNonNullElseGet").parameterCount(2),
-              ContractProvider.of(
-                StandardMethodContract.fromText("!null,_->param1"),
-                StandardMethodContract.fromText("null,_->!null")))
     .register(staticCall("java.lang.System", "arraycopy"), expression -> getArraycopyContract());
 
-  @NotNull
-  private static ContractProvider getArraycopyContract() {
+  private static @NotNull ContractProvider getArraycopyContract() {
     ContractValue src = ContractValue.argument(0);
     ContractValue srcPos = ContractValue.argument(1);
     ContractValue dest = ContractValue.argument(2);
@@ -240,8 +227,7 @@ public class HardcodedContracts {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static List<MethodContract> getSubstringContracts(boolean endLimited) {
+  private static @NotNull List<MethodContract> getSubstringContracts(boolean endLimited) {
     List<MethodContract> contracts = new ArrayList<>(3);
     contracts.add(specialFieldRangeContract(0, RelationType.LE, SpecialField.STRING_LENGTH));
     if (endLimited) {
@@ -343,8 +329,7 @@ public class HardcodedContracts {
     return Collections.emptyList();
   }
 
-  @Nullable
-  private static ValueConstraint constraintFromMatcher(PsiExpression expr, boolean negate) {
+  private static @Nullable ValueConstraint constraintFromMatcher(PsiExpression expr, boolean negate) {
     if (expr instanceof PsiMethodCallExpression) {
       String calledName = ((PsiMethodCallExpression)expr).getMethodExpression().getReferenceName();
       PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
@@ -400,8 +385,7 @@ public class HardcodedContracts {
     return null;
   }
 
-  @Nullable
-  private static ValueConstraint constraintFromLiteral(PsiExpression arg, boolean negate) {
+  private static @Nullable ValueConstraint constraintFromLiteral(PsiExpression arg, boolean negate) {
     arg = PsiUtil.skipParenthesizedExprDown(arg);
     if (!(arg instanceof PsiLiteralExpression)) return null;
     Object value = ((PsiLiteralExpression)arg).getValue();
@@ -411,8 +395,7 @@ public class HardcodedContracts {
     return null;
   }
 
-  @NotNull
-  private static List<MethodContract> handleAssertThat(int paramCount, @NotNull PsiMethodCallExpression call) {
+  private static @NotNull List<MethodContract> handleAssertThat(int paramCount, @NotNull PsiMethodCallExpression call) {
     PsiExpression[] args = call.getArgumentList().getExpressions();
     if (args.length == paramCount) {
       for (int i = 1; i < args.length; i++) {
@@ -436,8 +419,7 @@ public class HardcodedContracts {
     return Collections.emptyList();
   }
 
-  @Nullable
-  private static MethodContract constraintFromAssertJMatcher(PsiType type, PsiMethodCallExpression call) {
+  private static @Nullable MethodContract constraintFromAssertJMatcher(PsiType type, PsiMethodCallExpression call) {
     if (!call.getArgumentList().isEmpty()) return null;
     String name = call.getMethodExpression().getReferenceName();
     if (name == null) return null;
@@ -460,16 +442,14 @@ public class HardcodedContracts {
     return null;
   }
 
-  @Nullable
-  private static MethodContract emptyCheck(PsiType type, boolean isEmpty) {
+  private static @Nullable MethodContract emptyCheck(PsiType type, boolean isEmpty) {
     SpecialField field = SpecialField.fromQualifierType(type);
     if (field == null) return null;
     return singleConditionContract(ContractValue.argument(0).specialField(field), isEmpty ? RelationType.NE : RelationType.EQ,
                                    field == SpecialField.OPTIONAL_VALUE ? ContractValue.nullValue() : ContractValue.zero(), fail());
   }
 
-  @NotNull
-  private static List<MethodContract> failIfNull(int argIndex, int argCount, boolean returnArg) {
+  private static @NotNull List<MethodContract> failIfNull(int argIndex, int argCount, boolean returnArg) {
     ValueConstraint[] constraints = createConstraintArray(argCount);
     constraints[argIndex] = NULL_VALUE;
     StandardMethodContract failContract = new StandardMethodContract(constraints, fail());

@@ -1470,7 +1470,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static <T> String join(@NotNull Iterable<? extends T> items,
-                                @NotNull Function<? super T, String> f,
+                                @NotNull Function<? super T, ? extends CharSequence> f,
                                 @NotNull String separator) {
     StringBuilder result = new StringBuilder();
     join(items, f, separator, result);
@@ -1478,12 +1478,12 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static <T> void join(@NotNull Iterable<? extends T> items,
-                              @NotNull Function<? super T, String> f,
+                              @NotNull Function<? super T, ? extends CharSequence> f,
                               @NotNull String separator,
                               @NotNull StringBuilder result) {
     boolean isFirst = true;
     for (T item : items) {
-      String string = f.fun(item);
+      CharSequence string = f.fun(item);
       if (!isEmpty(string)) {
         if (isFirst) {
           isFirst = false;
@@ -2330,6 +2330,19 @@ public class StringUtil extends StringUtilRt {
       LOG.error(e);
     }
     return parser.getText();
+  }
+
+  @Contract(pure=true)
+  @NotNull
+  public static String removeEllipsisSuffix(@NotNull String s) {
+    String THREE_DOTS = "...";
+    if (s.endsWith(THREE_DOTS)) {
+      return s.substring(0, s.length() - THREE_DOTS.length());
+    }
+    if (s.endsWith(ELLIPSIS)) {
+      return s.substring(0, s.length() - ELLIPSIS.length());
+    }
+    return s;
   }
 
   private static final List<String> MN_QUOTED = Arrays.asList("&&", "__");

@@ -44,7 +44,6 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   @NotNull
   final PluginLoadingResult result;
 
-  @NotNull
   final Set<PluginId> disabledPlugins;
 
   private volatile String defaultVersion;

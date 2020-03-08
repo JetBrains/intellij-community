@@ -13,7 +13,10 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.*
+import com.intellij.ui.AnActionButton
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBDimension
@@ -88,8 +91,8 @@ internal class GitInteractiveRebaseDialog(
     ChangeEntryStateSimpleAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, commitsTable),
     ChangeEntryStateSimpleAction(
       GitRebaseEntry.Action.EDIT,
-      GitBundle.lazyMessage("rebase.interactive.dialog.stop.to.edit.text"),
-      GitBundle.lazyMessage("rebase.interactive.dialog.stop.to.edit.text"),
+      GitBundle.messagePointer("rebase.interactive.dialog.stop.to.edit.text"),
+      GitBundle.messagePointer("rebase.interactive.dialog.stop.to.edit.text"),
       AllIcons.Actions.Pause,
       commitsTable
     )
@@ -125,8 +128,8 @@ internal class GitInteractiveRebaseDialog(
       ActionManager.getInstance()
     )
 
-    title = GitBundle.getString("rebase.editor.title")
-    setOKButtonText(GitBundle.getString("rebase.editor.button"))
+    title = GitBundle.getString("rebase.interactive.dialog.title")
+    setOKButtonText(GitBundle.getString("rebase.interactive.dialog.start.rebase"))
     init()
   }
 
@@ -134,8 +137,9 @@ internal class GitInteractiveRebaseDialog(
 
   override fun createCenterPanel() = BorderLayoutPanel().apply {
     val decorator = ToolbarDecorator.createDecorator(commitsTable)
-      .setAsUsualTopToolbar()
-      .setPanelBorder(IdeBorderFactory.createBorder(SideBorder.TOP))
+      .setToolbarPosition(ActionToolbarPosition.TOP)
+      .setPanelBorder(JBUI.Borders.empty())
+      .setScrollPaneBorder(JBUI.Borders.empty())
       .disableAddAction()
       .disableRemoveAction()
       .addExtraActions(*iconActions.toTypedArray())
@@ -186,7 +190,7 @@ internal class GitInteractiveRebaseDialog(
     super.doCancelAction()
   }
 
-  private class AnActionButtonSeparator : AnActionButton("Separator"), CustomComponentAction, DumbAware {
+  private class AnActionButtonSeparator : AnActionButton(), CustomComponentAction, DumbAware {
     companion object {
       private val SEPARATOR_HEIGHT = JBUI.scale(20)
     }

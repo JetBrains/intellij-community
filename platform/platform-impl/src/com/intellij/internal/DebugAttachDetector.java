@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
-import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -9,7 +8,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +19,7 @@ import java.util.Properties;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public final class DebugAttachDetector implements ApplicationInitializedListener {
+public final class DebugAttachDetector {
   private static final Logger LOG = Logger.getInstance(DebugAttachDetector.class);
   private Properties myAgentProperties = null;
 
@@ -30,13 +28,6 @@ public final class DebugAttachDetector implements ApplicationInitializedListener
   private boolean myReady;
 
   public DebugAttachDetector() {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      throw ExtensionNotApplicableException.INSTANCE;
-    }
-  }
-
-  @Override
-  public void componentsInitialized() {
     Class<?> vmSupportClass;
     try {
       vmSupportClass = Class.forName("jdk.internal.vm.VMSupport");
@@ -116,7 +107,7 @@ public final class DebugAttachDetector implements ApplicationInitializedListener
     if (!isDebugServer()) {
       return true;
     }
-    Properties properties = ApplicationManager.getApplication().getComponent(DebugAttachDetector.class).myAgentProperties;
+    Properties properties = ApplicationManager.getApplication().getService(DebugAttachDetector.class).myAgentProperties;
     if (properties == null) { // For now return true if can not detect
       return true;
     }

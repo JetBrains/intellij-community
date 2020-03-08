@@ -34,6 +34,7 @@ import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import gnu.trove.TIntHashSet
@@ -147,13 +148,14 @@ class DeepComparator(private val project: Project,
     return providers.keys.mapNotNull { repositoryManager.getRepositoryForRootQuick(it) }.filter { repository ->
       repository.currentBranch != null &&
       repository.branches.findBranchByName(branchToCompare) != null
-    }.associate { Pair(it, it.currentBranch!!) }
+    }.associateWith { it.currentBranch!! }
   }
 
   private fun notifyUnhighlight() {
     if (ui is VcsLogUiEx) {
-      val balloon = JBPopupFactory.getInstance()
-        .createHtmlTextBalloonBuilder(HIGHLIGHTING_CANCELLED, null, MessageType.INFO.popupBackground, null)
+      val message = GitBundle.message("git.log.cherry.picked.highlighter.cancelled.message")
+      val balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, null,
+                                                                              MessageType.INFO.popupBackground, null)
         .setFadeoutTime(5000)
         .createBalloon()
       val component = ui.table
@@ -169,7 +171,7 @@ class DeepComparator(private val project: Project,
   private inner class MyTask(private val repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>,
                              vcsLogDataPack: VcsLogDataPack,
                              private val comparedBranch: String) :
-    Task.Backgroundable(project, "Comparing Branches...") {
+    Task.Backgroundable(project, GitBundle.message("git.log.cherry.picked.highlighter.process")) {
 
     private val dataPack = (vcsLogDataPack as? VisiblePack)?.dataPack as? DataPack
     private val collectedNonPickedCommits = TIntHashSet()
@@ -177,7 +179,7 @@ class DeepComparator(private val project: Project,
 
     override fun run(indicator: ProgressIndicator) {
       try {
-        repositoriesWithCurrentBranches.forEach { repo, currentBranch ->
+        repositoriesWithCurrentBranches.forEach { (repo, currentBranch) ->
           val commits = if (Registry.`is`("git.log.use.index.for.picked.commits.highlighting")) {
             if (Registry.`is`("git.log.fast.picked.commits.highlighting")) {
               getCommitsByIndexFast(repo.root, comparedBranch) ?: getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch.name)
@@ -205,7 +207,8 @@ class DeepComparator(private val project: Project,
     override fun onSuccess() {
       if (exception != null) {
         nonPickedCommits = null
-        VcsNotifier.getInstance(project).notifyError("Couldn't compare with branch $comparedBranch", exception!!.message)
+        VcsNotifier.getInstance(project).notifyError(GitBundle.message("git.log.cherry.picked.highlighter.error.message", comparedBranch),
+                                                     exception!!.message)
         return
       }
       nonPickedCommits = collectedNonPickedCommits
@@ -313,7 +316,8 @@ class DeepComparator(private val project: Project,
     }
 
     override fun getTitle(): String {
-      return "Cherry Picked Commits"
+      // this method is not used as there is a separate action and showMenuItem returns false
+      return GitBundle.message("action.Git.Log.DeepCompare.text")
     }
 
     override fun showMenuItem(): Boolean {
@@ -323,7 +327,6 @@ class DeepComparator(private val project: Project,
 
   companion object {
     private val LOG = Logger.getInstance(DeepComparator::class.java)
-    private const val HIGHLIGHTING_CANCELLED = "Highlighting of non-picked commits has been cancelled"
 
     @JvmStatic
     fun getInstance(project: Project, dataProvider: VcsLogData, logUi: VcsLogUi): DeepComparator {

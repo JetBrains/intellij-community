@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -128,8 +128,8 @@ public class GitRebaseDialog extends DialogWrapper {
    */
   public GitRebaseDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
-    setTitle(GitBundle.getString("rebase.title"));
-    setOKButtonText(GitBundle.getString("rebase.button"));
+    setTitle(GitBundle.getString("rebase.dialog.title"));
+    setOKButtonText(GitBundle.getString("rebase.dialog.start.rebase"));
     init();
     myProject = project;
     mySettings = ServiceManager.getService(myProject, GitRebaseSettings.class);
@@ -217,17 +217,17 @@ public class GitRebaseDialog extends DialogWrapper {
       return;
     }
     else if (myOntoValidator.isInvalid()) {
-      setErrorText(GitBundle.getString("rebase.invalid.onto"), myOntoComboBox);
+      setErrorText(GitBundle.getString("rebase.dialog.error.invalid.onto"), myOntoComboBox);
       setOKActionEnabled(false);
       return;
     }
     if (GitUIUtil.getTextField(myFromComboBox).getText().length() != 0 && myFromValidator.isInvalid()) {
-      setErrorText(GitBundle.getString("rebase.invalid.from"), myFromComboBox);
+      setErrorText(GitBundle.getString("rebase.dialog.error.invalid.from"), myFromComboBox);
       setOKActionEnabled(false);
       return;
     }
     if (GitRebaseUtils.isRebaseInTheProgress(myProject, gitRoot())) {
-      setErrorText(GitBundle.getString("rebase.in.progress"));
+      setErrorText(GitBundle.getString("rebase.dialog.error.rebase.in.progress"));
       setOKActionEnabled(false);
       return;
     }
@@ -336,7 +336,7 @@ public class GitRebaseDialog extends DialogWrapper {
       catch (VcsException e) {
         LOG.warn(e);
       }
-    }, "Loading Tags...", true, myProject);
+    }, GitBundle.getString("rebase.dialog.progress.loading.tags"), true, myProject);
   }
 
   /**
@@ -352,7 +352,7 @@ public class GitRebaseDialog extends DialogWrapper {
           String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
           String mergeBranch = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
           return Pair.create(remote, mergeBranch);
-        }, "Loading Branch Configuration...", true, myProject);
+        }, GitBundle.getString("rebase.dialog.progress.loading.branch.info"), true, myProject);
         String remote = remoteAndMerge.first;
         String mergeBranch = remoteAndMerge.second;
         GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRootQuick(root);

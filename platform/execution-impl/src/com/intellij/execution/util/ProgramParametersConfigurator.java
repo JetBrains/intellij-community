@@ -1,13 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.macro.*;
+import com.intellij.ide.macro.Macro;
+import com.intellij.ide.macro.MacroManager;
+import com.intellij.ide.macro.PromptingMacro;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -19,17 +22,19 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.fields.ExpandableTextField;
-import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ProgramParametersConfigurator {
@@ -43,7 +48,8 @@ public class ProgramParametersConfigurator {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
 
-    parameters.getProgramParametersList().addParametersString(expandMacros(expandPath(configuration.getProgramParameters(), module, project)));
+    final String parametersString = expandPathAndMacros(configuration.getProgramParameters(), module, project);
+    parameters.getProgramParametersList().addParametersString(parametersString);
 
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
 
@@ -57,19 +63,45 @@ public class ProgramParametersConfigurator {
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 
-  public static void addMacroSupport(@NotNull ExpandableTextField expandableTextField) {
-    if (Registry.is("allow.macros.for.run.configurations")) {
-      expandableTextField.addExtension(ExtendableTextComponent.Extension.create(AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover,
-                                                                                ExecutionBundle.message("insert.macros"), ()
-        -> MacrosDialog.show(expandableTextField, macro -> {
-        if (macro instanceof PromptMacro) return true;
-        return !(macro instanceof PromptingMacro) && !(macro instanceof EditorMacro);
-      })));
-    }
+  @Contract("!null, _, _ -> !null")
+  public @Nullable String expandPathAndMacros(String s, Module module, Project project) {
+    final String path = expandPath(s, module, project);
+    if (path == null) return null;
+    return expandMacros(path, projectContext(project, module), false);
   }
 
+  private static @NotNull DataContext projectContext(Project project, Module module) {
+    return dataId -> {
+      if (CommonDataKeys.PROJECT.is(dataId)) return project;
+      if (LangDataKeys.MODULE.is(dataId) || LangDataKeys.MODULE_CONTEXT.is(dataId)) return module;
+      return null;
+    };
+  }
+
+  /**
+   * Unless expanding macros in a generic value that doesn't represent a path of some kind, or a parameter string,
+   * consider using the following specialized methods instead:
+   *
+   * @see #expandMacrosAndParseParameters For values representing parameters: program arguments, VM options
+   * @see #expandPathAndMacros For paths: working directory, input file, etc.
+   */
   public static String expandMacros(@Nullable String path) {
-    if (path == null || !Registry.is("allow.macros.for.run.configurations")) {
+    if (StringUtil.isEmpty(path)) {
+      return path;
+    }
+    return expandMacros(path, DataContext.EMPTY_CONTEXT, false);
+  }
+
+  public static @NotNull List<String> expandMacrosAndParseParameters(@Nullable String parametersStringWithMacros) {
+    if (StringUtil.isEmpty(parametersStringWithMacros)) {
+      return Collections.emptyList();
+    }
+    final String expandedParametersString = expandMacros(parametersStringWithMacros, DataContext.EMPTY_CONTEXT, true);
+    return ParametersListUtil.parse(expandedParametersString);
+  }
+
+  private static @NotNull String expandMacros(@NotNull String path, @NotNull DataContext dataContext, boolean applyParameterEscaping) {
+    if (!Registry.is("allow.macros.for.run.configurations")) {
       return path;
     }
 
@@ -78,10 +110,9 @@ public class ProgramParametersConfigurator {
       for (int index = path.indexOf(template);
            index != -1 && index < path.length() + template.length();
            index = path.indexOf(template, index)) {
-        String value = StringUtil.notNullize(macro instanceof PromptMacro ? ((PromptMacro)macro).promptUser() :
-                                             macro.preview());
-        if (StringUtil.containsWhitespaces(value)) {
-          value = "\"" + value + "\"";
+        String value = StringUtil.notNullize(previewOrExpandMacro(macro, dataContext));
+        if (applyParameterEscaping) {
+          value = ParametersListUtil.escape(value);
         }
         path = path.substring(0, index) + value + path.substring(index + template.length());
         //noinspection AssignmentToForLoopParameter
@@ -89,6 +120,18 @@ public class ProgramParametersConfigurator {
       }
     }
     return path;
+  }
+
+  private static @Nullable String previewOrExpandMacro(@NotNull Macro macro,
+                                                       @NotNull DataContext dataContext) {
+    try {
+      return macro instanceof PromptingMacro
+             ? ((PromptingMacro)macro).expand(dataContext)
+             : macro.preview();
+    }
+    catch (Macro.ExecutionCancelledException e) {
+      return null;
+    }
   }
 
   @Nullable
@@ -101,7 +144,7 @@ public class ProgramParametersConfigurator {
         return null;
       }
     }
-    workingDirectory = expandPath(workingDirectory, module, project);
+    workingDirectory = expandPathAndMacros(workingDirectory, module, project);
     if (!FileUtil.isAbsolutePlatformIndependent(workingDirectory) && defaultWorkingDir != null) {
       if (PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory)) {
         return defaultWorkingDir;

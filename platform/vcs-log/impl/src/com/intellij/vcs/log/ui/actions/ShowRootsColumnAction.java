@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class ShowRootsColumnAction extends BooleanPropertyToggleAction {
 
   public ShowRootsColumnAction() {
-    super(VcsLogBundle.lazyMessage("vcs.log.action.show.root.names"));
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.root.names"));
   }
 
   @Override

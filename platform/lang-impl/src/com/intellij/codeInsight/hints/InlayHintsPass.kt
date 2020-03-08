@@ -9,6 +9,7 @@ import com.intellij.concurrency.JobLauncher
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
@@ -18,7 +19,6 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.Processor
 import gnu.trove.TIntHashSet
 import gnu.trove.TIntObjectHashMap
-import org.jetbrains.annotations.NotNull
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -61,7 +61,10 @@ class InlayHintsPass(
   }
 
   override fun doApplyInformationToEditor() {
+    val positionKeeper = EditorScrollingPositionKeeper(editor)
+    positionKeeper.savePosition()
     applyCollected(allHints, rootElement, editor)
+    positionKeeper.restorePosition(false)
     if (rootElement === myFile) {
       InlayHintsPassFactory.putCurrentModificationStamp(myEditor, myFile)
     }
@@ -125,7 +128,7 @@ class InlayHintsPass(
 
 
     private fun addInlineHints(hints: HintsBuffer,
-                               inlayModel: @NotNull InlayModel) {
+                               inlayModel: InlayModel) {
       hints.inlineHints.forEachEntry { offset, presentations ->
         val renderer = InlineInlayRenderer(presentations)
         val inlay = inlayModel.addInlineElement(offset, renderer) ?: return@forEachEntry false
@@ -134,7 +137,7 @@ class InlayHintsPass(
       }
     }
 
-    private fun addBlockHints(inlayModel: @NotNull InlayModel,
+    private fun addBlockHints(inlayModel: InlayModel,
                               map: TIntObjectHashMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
                               showAbove: Boolean
     ) {

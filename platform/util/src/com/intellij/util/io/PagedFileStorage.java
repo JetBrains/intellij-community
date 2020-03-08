@@ -93,7 +93,7 @@ public class PagedFileStorage implements Forceable {
   protected final int myPageSize;
   protected final boolean myValuesAreBufferAligned;
 
-  public PagedFileStorage(Path file, StorageLock lock) throws IOException {
+  public PagedFileStorage(Path file, StorageLock lock) {
     this(file, lock.myDefaultStorageLockContext, BUFFER_SIZE, false, false);
   }
 
@@ -101,7 +101,7 @@ public class PagedFileStorage implements Forceable {
                           @Nullable StorageLockContext storageLockContext,
                           int pageSize,
                           boolean valuesAreBufferAligned,
-                          boolean nativeBytesOrder) throws IOException {
+                          boolean nativeBytesOrder) {
     myFile = file;
     myStorageLockContext = storageLockContext != null ? storageLockContext : ourLock.myDefaultStorageLockContext;
     myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, Page.PAGE_SIZE);
@@ -192,7 +192,7 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   public void putByte(final long addr, final byte b) {
     put(addr, b);
   }
@@ -610,7 +610,7 @@ public class PagedFileStorage implements Forceable {
     }
 
     @NotNull
-    private ByteBufferWrapper createValue(Integer key) throws IOException {
+    private ByteBufferWrapper createValue(Integer key) {
       final int storageIndex = key & FILE_INDEX_MASK;
       PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(storageIndex);
       assert owner != null: "No storage for index " + storageIndex;

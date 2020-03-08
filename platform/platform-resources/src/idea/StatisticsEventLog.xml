@@ -4,7 +4,9 @@
       <action internal="true" id="RecordStateCollectors"
               class="com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction"/>
       <action internal="true" id="AddTestGroupToLocalWhitelistAction"
-              class="com.intellij.internal.statistic.actions.AddTestGroupToLocalWhitelistAction"/>
+              class="com.intellij.internal.statistic.actions.localWhitelist.AddTestGroupToLocalWhitelistAction"/>
+      <action internal="true" id="EditLocalWhitelistAction"
+              class="com.intellij.internal.statistic.actions.localWhitelist.EditLocalWhitelistAction"/>
       <action internal="true" id="CleanupLocalWhitelistAction"
               class="com.intellij.internal.statistic.actions.CleanupLocalWhitelistAction"/>
       <add-to-group group-id="Internal" anchor="last"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui.tabs;
 
@@ -57,6 +57,9 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     myProjectViewEnabledCheckBox.setMnemonic('P');
     topPanel.add(myProjectViewEnabledCheckBox);
 
+    updateCheckBoxes();
+    myEnabledCheckBox.addChangeListener(event -> updateCheckBoxes());
+
     topPanel.add(Box.createHorizontalGlue());
 
     add(topPanel, BorderLayout.NORTH);
@@ -81,7 +84,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     };
 
     final JPanel panel = ToolbarDecorator.createDecorator(myLocalTable)
-      .addExtraAction(new AnActionButton(IdeBundle.lazyMessage("action.AnActionButton.text.share"), AllIcons.Actions.Share) {
+      .addExtraAction(new AnActionButton(IdeBundle.messagePointer("action.AnActionButton.text.share"), AllIcons.Actions.Share) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           share();
@@ -117,7 +120,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     final JPanel sharedPanel = new JPanel(new BorderLayout());
     sharedPanel.setBorder(IdeBorderFactory.createTitledBorder(EditorBundle.message("file.colors.shared.colors"), false, JBUI.insetsTop(8)).setShowLine(false));
     final JPanel shared = ToolbarDecorator.createDecorator(mySharedTable)
-      .addExtraAction(new AnActionButton(IdeBundle.lazyMessage("action.AnActionButton.text.unshare"), AllIcons.Actions.Unshare) {
+      .addExtraAction(new AnActionButton(IdeBundle.messagePointer("action.AnActionButton.text.unshare"), AllIcons.Actions.Unshare) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           unshare();
@@ -149,6 +152,11 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
 
     myLocalTable.getEmptyText().setText(EditorBundle.message("file.colors.no.local.colors"));
     mySharedTable.getEmptyText().setText(EditorBundle.message("file.colors.no.shared.colors"));
+  }
+
+  private void updateCheckBoxes() {
+    myTabsEnabledCheckBox.setEnabled(myEnabledCheckBox.isSelected());
+    myProjectViewEnabledCheckBox.setEnabled(myEnabledCheckBox.isSelected());
   }
 
   private void unshare() {

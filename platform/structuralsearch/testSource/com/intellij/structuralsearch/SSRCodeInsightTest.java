@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
@@ -8,6 +10,8 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -64,6 +68,18 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     doTest("@'Anno:[regex( Nullable|NotNull )] '_Type:[regex( .*(\\[\\])+ )] '_x;", "report annotation only once");
   }
 
+  public void testElementOutsideOfFile() {
+    doTest("class '_ { \n  '_ReturnType 'Method+:* ('_ParameterType '_Parameter*);\n}", "all methods of the class within hierarchy");
+  }
+
+  public void testDeclaration() {
+    doTest("int i;", "int declaration");
+  }
+
+  public void testMethodCall() {
+    doTest("f();", "method call");
+  }
+
   private void doTest(final String searchPattern, final String patternName) {
     final SearchConfiguration configuration = new SearchConfiguration();
     //display name
@@ -74,6 +90,9 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     options.fillSearchCriteria(searchPattern);
 
     myInspection.setConfigurations(Collections.singletonList(configuration));
+    final InspectionProfileEntry @NotNull [] children =
+      ContainerUtil.map2Array(myInspection.getChildren(), InspectionProfileEntry.class, InspectionToolWrapper::getTool);
+    myFixture.enableInspections(children);
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
   }
 

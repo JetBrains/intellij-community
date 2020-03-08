@@ -85,12 +85,11 @@ public class Replacer {
     final Matcher matcher = new Matcher(project, matchOptions);
     try {
       final PsiElement firstElement, lastElement, parent;
-
       if (matchOptions.getScope() == null) {
         final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
           in,
-          sourceIsFile ? PatternTreeContext.File : PatternTreeContext.Block,
-          sourceFileType, sourceDialect, null,
+          new PatternContextInfo(sourceIsFile ? PatternTreeContext.File : PatternTreeContext.Block),
+          sourceFileType, sourceDialect,
           project,
           createPhysicalFile
         );

@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -530,7 +531,7 @@ public class PyPackageUtil {
         final Set<VirtualFile> roots = getPackagingAwareSdkRoots(sdk);
         allEvents:
         for (VFileEvent event : events) {
-          if (event instanceof VFileContentChangeEvent) continue;
+          if (event instanceof VFileContentChangeEvent || event instanceof VFilePropertyChangeEvent) continue;
           // In case of create event getFile() returns null as the file hasn't been created yet
           VirtualFile parent = null;
           if (event instanceof VFileCreateEvent) {

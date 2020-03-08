@@ -148,6 +148,7 @@ return yylength()-s.length();
 }
 
 [\ ]                        { return PyTokenTypes.SPACE; }
+[\u000b]                    { return PyTokenTypes.BAD_CHARACTER; }
 [\t]                        { return PyTokenTypes.TAB; }
 [\f]                        { return PyTokenTypes.FORMFEED; }
 "\\"                        { return PyTokenTypes.BACKSLASH; }

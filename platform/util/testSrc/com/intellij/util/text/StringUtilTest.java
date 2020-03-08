@@ -25,6 +25,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
+import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 
@@ -895,5 +897,13 @@ public class StringUtilTest {
     assertEquals("a\\nb", StringUtil.escapeToRegexp("a\nb"));
     assertEquals("a\\&\\%\\$b", StringUtil.escapeToRegexp("a&%$b"));
     assertEquals("\uD83D\uDE80", StringUtil.escapeToRegexp("\uD83D\uDE80"));
+  }
+
+  @Test
+  public void testRemoveEllipsisSuffix() {
+    assertEquals("a", removeEllipsisSuffix("a..."));
+    assertEquals("a", removeEllipsisSuffix("a"));
+    assertEquals("a", removeEllipsisSuffix("a" + ELLIPSIS));
+    assertEquals("a...", removeEllipsisSuffix("a..." + ELLIPSIS));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -14,7 +14,6 @@ import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -27,7 +26,6 @@ import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -118,21 +116,7 @@ public class AntUIUtil {
       button.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          MacrosDialog dialog = new MacrosDialog(getChildComponent());
-          if (dialog.showAndGet() && dialog.getSelectedMacro() != null) {
-            JTextField textField = getChildComponent();
-
-            String macro = dialog.getSelectedMacro().getName();
-            int position = textField.getCaretPosition();
-            try {
-              textField.getDocument().insertString(position, "$" + macro + "$", null);
-              textField.setCaretPosition(position + macro.length() + 2);
-            }
-            catch (BadLocationException ex) {
-              LOG.error(ex);
-            }
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(textField, true));
-          }
+          MacrosDialog.show(getChildComponent());
         }
       });
     }

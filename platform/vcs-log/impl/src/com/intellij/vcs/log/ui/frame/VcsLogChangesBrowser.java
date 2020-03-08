@@ -208,7 +208,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
           if (myChanges.isEmpty() && detail.getParents().size() > 1) {
             myViewer.getEmptyText().setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).
-              appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status"), VcsLogUiUtil.getLinkAttributes(),
+              appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"), VcsLogUiUtil.getLinkAttributes(),
                                   e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
           }
           else {
@@ -229,7 +229,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     }
     else {
       myViewer.getEmptyText().setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.filters.status")).
-        appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.changes.status"), VcsLogUiUtil.getLinkAttributes(),
+        appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.changes.status.action"), VcsLogUiUtil.getLinkAttributes(),
                             e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
     }
   }
@@ -254,7 +254,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
     if (isShowChangesFromParents() && !changesToParents.isEmpty()) {
       if (changes.isEmpty()) {
-        builder.addEmptyTextNode(VcsLogBundle.message("no.merged.conflicts"));
+        builder.addEmptyTextNode(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.node"));
       }
       for (CommitId commitId : changesToParents.keySet()) {
         Collection<Change> changesFromParent = changesToParents.get(commitId);
@@ -465,7 +465,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @NotNull
   @Nls
   private String getText(@NotNull CommitId commitId) {
-    String text = VcsLogBundle.message("vcs.log.changes.browser.changes.to", commitId.getHash().toShortString());
+    String text = VcsLogBundle.message("vcs.log.changes.changes.to.parent.node", commitId.getHash().toShortString());
     VcsShortCommitDetails detail = myDataGetter.fun(commitId);
     if (!(detail instanceof LoadingDetails) || (detail instanceof IndexedDetails)) {
       text += " " + StringUtil.shortenTextWithEllipsis(detail.getSubject(), 50, 0);

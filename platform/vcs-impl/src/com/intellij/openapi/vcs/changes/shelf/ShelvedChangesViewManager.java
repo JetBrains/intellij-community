@@ -343,6 +343,8 @@ public class ShelvedChangesViewManager implements Disposable {
     private ShelfTree(@NotNull Project project) {
       super(project, false, false, true);
       setKeepTreeState(true);
+      setDoubleClickHandler(e -> showShelvedChangesDiff());
+      setEnterKeyHandler(e -> showShelvedChangesDiff());
     }
 
     public void setLoadedLists(@NotNull List<ShelvedChangeList> lists) {
@@ -365,16 +367,10 @@ public class ShelvedChangesViewManager implements Disposable {
       return 2;
     }
 
-    @Override
-    protected void installDoubleClickHandler() {
-      new DoubleClickListener() {
-        @Override
-        protected boolean onDoubleClick(MouseEvent e) {
-          if (!hasExactlySelectedChanges()) return false;
-          DiffShelvedChangesActionProvider.showShelvedChangesDiff(DataManager.getInstance().getDataContext(ShelfTree.this));
-          return true;
-        }
-      }.installOn(this);
+    private boolean showShelvedChangesDiff() {
+      if (!hasExactlySelectedChanges()) return false;
+      DiffShelvedChangesActionProvider.showShelvedChangesDiff(DataManager.getInstance().getDataContext(this));
+      return true;
     }
 
     private boolean hasExactlySelectedChanges() {
@@ -543,7 +539,7 @@ public class ShelvedChangesViewManager implements Disposable {
       @NotNull private final Map<ShelvedChangeList, Date> myListDateMap;
 
       private UndoShelfDeletionAction(@NotNull Project project, @NotNull Map<ShelvedChangeList, Date> listDateMap) {
-        super(IdeBundle.lazyMessage("undo.dialog.title"));
+        super(IdeBundle.messagePointer("undo.dialog.title"));
         myProject = project;
         myListDateMap = listDateMap;
       }
@@ -719,7 +715,7 @@ public class ShelvedChangesViewManager implements Disposable {
     private void setDiffPreview() {
       boolean isEditorPreview = isCommitToolWindow(myProject) || isEditorDiffPreview.asBoolean();
       if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
-      if (!isEditorPreview && myDiffPreview instanceof PreviewDiffSplitterComponent) return;
+      if (!isEditorPreview && isSplitterPreview()) return;
 
       if (myChangeProcessor != null) Disposer.dispose(myChangeProcessor);
 
@@ -745,13 +741,12 @@ public class ShelvedChangesViewManager implements Disposable {
 
         @Override
         protected boolean skipPreviewUpdate() {
-          if (super.skipPreviewUpdate()) return true;
-          if (!myTree.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
-
-          return !myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
+          return super.skipPreviewUpdate() || !myTree.equals(IdeFocusManager.getInstance(myProject).getFocusOwner());
         }
       };
       editorPreview.setEscapeHandler(() -> {
+        editorPreview.closePreview();
+
         ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
         if (toolWindow != null) toolWindow.activate(null);
       });
@@ -782,6 +777,10 @@ public class ShelvedChangesViewManager implements Disposable {
       return previewSplitter;
     }
 
+    private boolean isSplitterPreview() {
+      return myDiffPreview instanceof PreviewDiffSplitterComponent;
+    }
+
     @Nullable
     private DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
       if (info.isMove()) {
@@ -799,6 +798,12 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private class MyToggleDetailsAction extends ShowDiffPreviewAction {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabledAndVisible(isSplitterPreview());
+      }
+
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myDiffPreview.setPreviewVisible(state);

@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
@@ -43,7 +44,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
     if (!doNotShowDialog) {
       Messages.showIdeaMessageDialog(
-        project, "Included logs and settings may contain sensitive data.", "Sensitive Data",
+        project, IdeBundle.message("message.included.logs.and.settings.may.contain.sensitive.data"),
+        IdeBundle.message("dialog.title.sensitive.data"),
         new String[]{"Show in " + RevealFileAction.getFileManagerName()}, 1, Messages.getWarningIcon(),
         new DialogWrapper.DoNotAskOption.Adapter() {
           @Override
@@ -65,7 +67,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
         else {
           final Notification logNotification = new Notification(Holder.NOTIFICATION_GROUP.getDisplayId(),
                                                                 "",
-                                                                "Log file is created: " + zippedLogsFile.getAbsolutePath(),
+                                                                IdeBundle.message("notification.content.log.file.is.created.0",
+                                                                                  zippedLogsFile.getAbsolutePath()),
                                                                 NotificationType.INFORMATION);
           Notifications.Bus.notify(logNotification);
         }
@@ -73,11 +76,12 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
       catch (final IOException exception) {
         final Notification errorNotification = new Notification(Holder.NOTIFICATION_GROUP.getDisplayId(),
                                                                 "",
-                                                                "Can't create zip file with logs: " + exception.getLocalizedMessage(),
+                                                                IdeBundle.message("notification.content.can.t.create.zip.file.with.logs.0",
+                                                                                  exception.getLocalizedMessage()),
                                                                 NotificationType.ERROR);
         Notifications.Bus.notify(errorNotification);
       }
-    }, "Collecting Logs", false, project);
+    }, IdeBundle.message("progress.title.collecting.logs"), false, project);
   }
 
   @NotNull

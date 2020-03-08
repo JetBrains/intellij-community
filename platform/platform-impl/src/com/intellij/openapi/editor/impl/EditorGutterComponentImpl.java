@@ -8,6 +8,7 @@ import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.ui.UISettings;
@@ -831,7 +832,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   void clearLineToGutterRenderersCache() {
-    EditorImpl.assertIsDispatchThread();
     myLineToGutterRenderers = null;
   }
 
@@ -1705,7 +1705,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                                                                                          : Balloon.Position.atRight;
     AtomicReference<String> tooltip = new AtomicReference<>();
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myEditor.getProject(),
-                                                                                               "Constructing Tooltip") {
+                                                                                               IdeBundle.message("progress.title.constructing.tooltip")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         tooltip.set(ReadAction.compute(() -> renderer.getTooltipText()));
@@ -1902,7 +1902,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void notifyNotDumbAware() {
     Project project = myEditor.getProject();
     if (project != null) {
-      DumbService.getInstance(project).showDumbModeNotification("This functionality is not available during indexing");
+      DumbService.getInstance(project).showDumbModeNotification(
+        IdeBundle.message("message.this.functionality.is.not.available.during.indexing"));
     }
   }
 
@@ -1984,7 +1985,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private class CloseAnnotationsAction extends DumbAwareAction {
     CloseAnnotationsAction() {
-      super(EditorBundle.lazyMessage("close.editor.annotations.action.name"));
+      super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
     }
 
     @Override
@@ -2085,7 +2086,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
       if (!addActions.isEmpty()) {
-        DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(EditorBundle.lazyMessage("editor.annotations.action.group.name"));
+        DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(EditorBundle.messagePointer("editor.annotations.action.group.name"));
         for (AnAction addAction : addActions) {
           actionGroup.add(addAction);
         }

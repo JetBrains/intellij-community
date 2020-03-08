@@ -85,6 +85,9 @@ public class RecentProjectPanel extends JPanel {
       }
     }
 
+    myList = createList(recentProjectActions.toArray(AnAction.EMPTY_ARRAY), getPreferredScrollableViewportSize());
+    myList.setCellRenderer(createRenderer(myPathShortener));
+
     if (Registry.is("autocheck.availability.welcome.screen.projects")) {
       myChecker = new FilePathChecker(new Runnable() {
         @Override
@@ -97,9 +100,6 @@ public class RecentProjectPanel extends JPanel {
       }, pathsToCheck);
       Disposer.register(parentDisposable, myChecker);
     }
-
-    myList = createList(recentProjectActions.toArray(AnAction.EMPTY_ARRAY), getPreferredScrollableViewportSize());
-    myList.setCellRenderer(createRenderer(myPathShortener));
 
     new ClickListener(){
       @Override
@@ -205,8 +205,9 @@ public class RecentProjectPanel extends JPanel {
 
     int rc = Messages.showOkCancelDialog(
       this,
-      "Remove '" + StringUtil.join(selection, action -> action.getTemplatePresentation().getText(), "'\n'") + "' from recent projects list?",
-      "Remove Recent Project",
+      IdeBundle.message("dialog.message.remove.0.from.recent.projects.list",
+                        StringUtil.join(selection, action -> action.getTemplatePresentation().getText(), "'\n'")),
+      IdeBundle.message("dialog.title.remove.recent.project"),
       CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
     if (rc == Messages.OK) {
       for (AnAction projectAction : selection) {
@@ -318,7 +319,7 @@ public class RecentProjectPanel extends JPanel {
       super(listData);
       mySize = size;
       setExpandableItemsEnabled(false);
-      setEmptyText("  No Project Open Yet  ");
+      setEmptyText(IdeBundle.message("empty.text.no.project.open.yet"));
       setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       getAccessibleContext().setAccessibleName(RECENT_PROJECTS_LABEL);
       final MouseHandler handler = new MouseHandler();
@@ -417,7 +418,7 @@ public class RecentProjectPanel extends JPanel {
         ApplicationManager.getApplication().invokeLater(() -> {
           String title = "Tutorials have been removed from the recent list";
           String content = "You can still find them in the Help menu";
-          Notifications.Bus.notify(new Notification("Tutorials", title, content, NotificationType.INFORMATION));
+          Notifications.Bus.notify(new Notification(IdeBundle.message("notification.group.tutorials"), title, content, NotificationType.INFORMATION));
         });
       }
     }

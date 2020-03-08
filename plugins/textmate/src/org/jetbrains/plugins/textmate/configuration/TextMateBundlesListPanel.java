@@ -89,9 +89,8 @@ public class TextMateBundlesListPanel implements Disposable {
         if (bundlesToDelete.isEmpty()) {
           return;
         }
-        String title = bundlesToDelete.size() > 1 ? "Remove Bundles?" : "Remove Bundle?";
         String message = StringUtil.join(bundlesToDelete, JCheckBox::getText, "\n");
-        if (Messages.showYesNoDialog(message, title, "Remove", CommonBundle.getCancelButtonText(), null) != Messages.YES) {
+        if (Messages.showYesNoDialog(message, TextMateBundle.message("textmate.remove.title", bundlesToDelete.size()), CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(), null) != Messages.YES) {
           return;
         }
         ListUtil.removeSelectedItems(myBundlesList);

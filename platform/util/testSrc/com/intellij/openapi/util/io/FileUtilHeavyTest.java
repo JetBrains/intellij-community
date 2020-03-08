@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
@@ -237,6 +237,30 @@ public class FileUtilHeavyTest {
     assertThat(directDirLink).doesNotExist();
     assertThat(linkParentDir).doesNotExist();
     assertThat(targetFile).exists();
+  }
+
+  @Test
+  public void testRecursiveDeletionWithSymlink() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
+
+    File top = tempDir.newFolder("top");
+    tempDir.newFile("top/a-dir/file");
+    Files.createSymbolicLink(top.toPath().resolve("z-link"), top.toPath().resolve("a-dir"));
+
+    FileUtil.delete(top);
+    assertThat(top).doesNotExist();
+  }
+
+  @Test
+  public void testRecursiveDeletionWithJunction() throws IOException {
+    IoTestUtil.assumeWindows();
+
+    File top = tempDir.newFolder("top");
+    tempDir.newFile("top/a-dir/file");
+    IoTestUtil.createJunction(top + "/a-dir", top + "/z-link");
+
+    FileUtil.delete(top);
+    assertThat(top).doesNotExist();
   }
 
   @Test

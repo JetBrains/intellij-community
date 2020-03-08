@@ -39,6 +39,9 @@ public abstract class DiffContentFactory {
     return ServiceManager.getService(DiffContentFactory.class);
   }
 
+  /**
+   * Content for the 'missing' side of addition/deletion diff request.
+   */
   @NotNull
   public abstract EmptyContent createEmpty();
 

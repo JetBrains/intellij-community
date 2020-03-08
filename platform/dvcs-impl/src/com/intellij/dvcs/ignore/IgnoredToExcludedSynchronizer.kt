@@ -23,8 +23,10 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.NonNls
 import java.util.*
 
+@NonNls
 private const val ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY = "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED"
 
 private val LOG = logger<IgnoredToExcludedSynchronizer>()

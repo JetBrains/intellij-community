@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SizedIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,18 +24,11 @@ import java.awt.event.KeyEvent;
  * Usually shown in View|Tool-windows sub-menu.
  * Dynamically registered in Settings|Keymap for each newly-registered tool window.
  */
-@SuppressWarnings("ComponentNotRegistered")
 public class ActivateToolWindowAction extends DumbAwareAction {
   private final String myToolWindowId;
 
-  @ApiStatus.Internal
-  protected ActivateToolWindowAction(@NotNull String toolWindowId) {
+  private ActivateToolWindowAction(@NotNull String toolWindowId) {
     myToolWindowId = toolWindowId;
-  }
-
-  @ApiStatus.Internal
-  protected boolean useMnemonicFromShortcuts(@NotNull Project project) {
-    return true;
   }
 
   @NotNull
@@ -85,7 +77,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
   private void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
     String title = toolWindow.getStripeTitle();
     presentation.setText(title);
-    presentation.setDescription(IdeBundle.lazyMessage("action.activate.tool.window", title));
+    presentation.setDescription(IdeBundle.messagePointer("action.activate.tool.window", title));
     Icon icon = toolWindow.getIcon();
     if (EventLog.LOG_TOOL_WINDOW_ID.equals(myToolWindowId)) {
       icon = AllIcons.Ide.Notification.InfoEvents;
@@ -129,15 +121,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
    * Mac OS X user, because Alt+digit types strange characters into the
    * editor.
    */
-  public static int getMnemonicForToolWindow(@NotNull Project project, @NotNull String toolWindowId) {
-    AnAction action = ActionManager.getInstance().getAction(getActionIdForToolWindow(toolWindowId));
-    boolean useMnemonicFromShortcuts =
-      !(action instanceof ActivateToolWindowAction) || ((ActivateToolWindowAction)action).useMnemonicFromShortcuts(project);
-
-    return useMnemonicFromShortcuts ? getMnemonicFromShortcuts(toolWindowId) : -1;
-  }
-
-  private static int getMnemonicFromShortcuts(@NotNull String toolWindowId) {
+  public static int getMnemonicForToolWindow(@NotNull String toolWindowId) {
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     for (Shortcut shortcut : activeKeymap.getShortcuts(getActionIdForToolWindow(toolWindowId))) {
       if (!(shortcut instanceof KeyboardShortcut)) {

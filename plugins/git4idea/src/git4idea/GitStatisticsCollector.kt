@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea
 
 import com.google.common.collect.HashMultiset
@@ -36,7 +36,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     addEnumIfDiffers(set, settings, defaultSettings, { it.syncSetting }, "repo.sync")
     addEnumIfDiffers(set, settings, defaultSettings, { it.updateMethod }, "update.type")
     addEnumIfDiffers(set, settings, defaultSettings, { it.saveChangesPolicy }, "save.policy")
-    addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isUseIdeaSsh }, "use.builtin.ssh")
 
     addBoolIfDiffers(set, settings, defaultSettings, { it.autoUpdateIfPushRejected() }, "push.autoupdate")
     addBoolIfDiffers(set, settings, defaultSettings, { it.shouldUpdateAllRootsIfPushRejected() }, "push.update.all.roots")

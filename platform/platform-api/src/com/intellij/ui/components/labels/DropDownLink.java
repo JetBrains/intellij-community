@@ -45,14 +45,14 @@ public class DropDownLink<T> extends LinkLabel<Object> {
       IPopupChooserBuilder<T> popupBuilder = JBPopupFactory.getInstance().createPopupChooserBuilder(items).
         setRenderer(new LinkCellRenderer<>(linkLabel)).
         setItemChosenCallback(t -> {
-          linkLabel.chosenItem = t;
           if (updateLabel) {
             linkLabel.setText(t.toString());
           }
 
-          if (itemChosenAction != null) {
+          if (itemChosenAction != null && !linkLabel.chosenItem.equals(t)) {
             itemChosenAction.consume(t);
           }
+          linkLabel.chosenItem = t;
         });
       return popupBuilder.createPopup();
     });

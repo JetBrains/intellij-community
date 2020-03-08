@@ -1061,6 +1061,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         remove(prevContent);
       }
       add(itemContent, BorderLayout.CENTER);
+      accessibleContext = itemContent.getAccessibleContext();
+
       return this;
     }
   }
@@ -1332,8 +1334,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   private class ShowInFindToolWindowAction extends DumbAwareAction {
 
     ShowInFindToolWindowAction() {
-      super(IdeBundle.lazyMessage("show.in.find.window.button.name"),
-            IdeBundle.lazyMessage("show.in.find.window.button.description"), AllIcons.General.Pin_tab);
+      super(IdeBundle.messagePointer("show.in.find.window.button.name"),
+            IdeBundle.messagePointer("show.in.find.window.button.description"), AllIcons.General.Pin_tab);
     }
 
     @Override

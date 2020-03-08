@@ -32,7 +32,9 @@ public interface Content extends UserDataHolder, ComponentContainer {
   String PROP_ALERT = "alerting";
 
   Key<Boolean> TABBED_CONTENT_KEY = Key.create("tabbedContent");
-  Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
+  @Deprecated Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
+  Key<TabGroupId> TAB_GROUP_ID_KEY = Key.create("tabbedGroupId");
+  Key<TabDescriptor> TAB_DESCRIPTOR_KEY = Key.create("tabDescriptor");
   Key<ComponentOrientation> TAB_LABEL_ORIENTATION_KEY = Key.create("tabLabelComponentOrientation");
   Key<DnDTarget> TAB_DND_TARGET_KEY = Key.create("tabDndTarget");
 

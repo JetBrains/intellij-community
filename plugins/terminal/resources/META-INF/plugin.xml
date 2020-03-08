@@ -23,6 +23,18 @@
     <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
+    <action class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Vertical">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Horizontal">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action class="org.jetbrains.plugins.terminal.action.GotoSplitTerminalActionBase$Next">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action class="org.jetbrains.plugins.terminal.action.GotoSplitTerminalActionBase$Prev">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
     <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction">
       <keyboard-shortcut first-keystroke="control alt shift LEFT" keymap="$default"/>
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>

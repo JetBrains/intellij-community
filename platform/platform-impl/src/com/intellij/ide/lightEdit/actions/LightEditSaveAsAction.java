@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("ComponentNotRegistered")
 public class LightEditSaveAsAction extends DumbAwareAction implements LightEditCompatible {
   public LightEditSaveAsAction() {
-    super(ActionsBundle.lazyMessage("action.SaveAs.text"));
+    super(ActionsBundle.messagePointer("action.SaveAs.text"));
   }
 
   @Override

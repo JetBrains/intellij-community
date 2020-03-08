@@ -80,7 +80,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     try {
       Throwable throwable = event.getThrowable();
       MemoryKind kind = getOOMErrorKind(throwable);
-      if (kind != null) {
+      if (kind != null && System.getProperty("testscript.filename") == null) {
         ourOomOccurred = true;
         SwingUtilities.invokeAndWait(() -> new OutOfMemoryDialog(kind).show());
       }
@@ -122,10 +122,9 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     if (!ourMappingFailedNotificationPosted && SystemInfo.isWindows && SystemInfo.is32Bit) {
       ourMappingFailedNotificationPosted = true;
       String exceptionMessage = event.getThrowable().getMessage();
-      String text = exceptionMessage +
-        "<br>Possible cause: unable to allocate continuous memory chunk of necessary size.<br>" +
-        "Reducing JVM maximum heap size (-Xmx) may help.";
-      Notifications.Bus.notify(new Notification("Memory", "Memory Mapping Failed", text, NotificationType.WARNING), null);
+      String text = DiagnosticBundle.message("notification.content.0.br.possible.cause.unable.to.allocate.memory", exceptionMessage);
+      Notifications.Bus.notify(new Notification(DiagnosticBundle.message("notification.group.memory"),
+                                                DiagnosticBundle.message("notification.title.memory.mapping.failed"), text, NotificationType.WARNING), null);
     }
   }
 }

@@ -261,13 +261,13 @@ class ApplyPatchChange {
 
   @Nullable
   private GutterIconRenderer createApplyRenderer() {
-    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), DiffUtil.getArrowIcon(Side.RIGHT), () -> myViewer.executeCommand(
+    return createIconRenderer(DiffBundle.message("action.presentation.diff.accept.text"), DiffUtil.getArrowIcon(Side.RIGHT), () -> myViewer.executeCommand(
       DiffBundle.message("merge.dialog.accept.change.command"), () -> myViewer.replaceChange(this)));
   }
 
   @Nullable
   private GutterIconRenderer createIgnoreRenderer() {
-    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, () -> myViewer.executeCommand(
+    return createIconRenderer(DiffBundle.message("action.presentation.merge.ignore.text"), AllIcons.Diff.Remove, () -> myViewer.executeCommand(
       DiffBundle.message("merge.dialog.ignore.change.command"), () -> myViewer.markChangeResolved(this)));
   }
 

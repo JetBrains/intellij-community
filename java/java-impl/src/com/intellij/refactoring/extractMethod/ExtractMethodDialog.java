@@ -52,7 +52,7 @@ import java.util.function.Supplier;
  */
 public class ExtractMethodDialog extends RefactoringDialog implements AbstractExtractDialog {
   static final String EXTRACT_METHOD_DEFAULT_VISIBILITY = "extract.method.default.visibility";
-  static final String EXTRACT_METHOD_GENERATE_ANNOTATIONS = "extractMethod.generateAnnotations";
+  public static final String EXTRACT_METHOD_GENERATE_ANNOTATIONS = "extractMethod.generateAnnotations";
 
   private final Project myProject;
   private final PsiType myReturnType;

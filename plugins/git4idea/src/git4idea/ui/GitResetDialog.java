@@ -62,7 +62,7 @@ public class GitResetDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     setTitle(GitBundle.getString("reset.title"));
-    setOKButtonText(GitBundle.getString("reset.button"));
+    setOKButtonText(GitBundle.message("git.reset.button"));
     myResetTypeComboBox.addItem(getMixed());
     myResetTypeComboBox.addItem(getSoft());
     myResetTypeComboBox.addItem(getHard());
@@ -149,20 +149,20 @@ public class GitResetDialog extends DialogWrapper {
    * The --soft reset type
    */
   static String getSoft() {
-    return GitBundle.getString("reset.type.soft");
+    return GitBundle.getString("git.reset.mode.soft");
   }
 
   /**
    * The --mixed reset type
    */
   static String getMixed() {
-    return GitBundle.getString("reset.type.mixed");
+    return GitBundle.getString("git.reset.mode.mixed");
   }
 
   /**
    * The --hard reset type
    */
   static String getHard() {
-    return GitBundle.getString("reset.type.hard");
+    return GitBundle.getString("git.reset.mode.hard");
   }
 }

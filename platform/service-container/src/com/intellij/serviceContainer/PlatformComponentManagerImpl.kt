@@ -325,7 +325,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     val adapter = picoContainer.getComponentAdapter(interfaceClass) ?: return null
 
     if (adapter is ServiceComponentAdapter) {
-      LOG.error("$interfaceClass it is service, use getService instead of getComponent")
+      LOG.error("$interfaceClass it is a service, use getService instead of getComponent")
     }
 
     @Suppress("UNCHECKED_CAST")

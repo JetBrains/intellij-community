@@ -30,6 +30,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+/**
+ * Unless stated otherwise, all paths are {@link org.jetbrains.annotations.SystemDependent @SystemDependent}.
+ */
 public final class FileWatcher {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
 
@@ -77,7 +80,7 @@ public final class FileWatcher {
   private final ExecutorService myFileWatcherExecutor = executor();
   private final AtomicReference<Future<?>> myLastTask = new AtomicReference<>(null);
 
-  private volatile CanonicalPathMap myPathMap = new CanonicalPathMap();
+  private volatile CanonicalPathMap myPathMap = CanonicalPathMap.empty();
   private volatile List<Collection<String>> myManualWatchRoots = Collections.emptyList();
 
   FileWatcher(@NotNull ManagingFS managingFS) {
@@ -160,16 +163,15 @@ public final class FileWatcher {
   /**
    * Clients should take care of not calling this method in parallel.
    */
-  void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
+  void setWatchRoots(@NotNull CanonicalPathMap pathMap) {
     Future<?> prevTask = myLastTask.getAndSet(myFileWatcherExecutor.submit(() -> {
       try {
-        CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
-
         myPathMap = pathMap;
         myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
 
+        Pair<List<String>, List<String>> roots = pathMap.getCanonicalWatchRoots();
         for (PluggableFileWatcher watcher : myWatchers) {
-          watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
+          watcher.setWatchRoots(roots.first, roots.second);
         }
       }
       catch (RuntimeException | Error e) {
@@ -230,7 +232,7 @@ public final class FileWatcher {
 
     @Override
     public void notifyDirtyPath(@NotNull String path) {
-      Collection<String> paths = myPathMap.getWatchedPaths(path, true);
+      Collection<String> paths = myPathMap.mapToOriginalWatchRoots(path, true);
       if (!paths.isEmpty()) {
         synchronized (myLock) {
           for (String eachPath : paths) {
@@ -243,7 +245,7 @@ public final class FileWatcher {
 
     @Override
     public void notifyPathCreatedOrDeleted(@NotNull String path) {
-      Collection<String> paths = myPathMap.getWatchedPaths(path, true);
+      Collection<String> paths = myPathMap.mapToOriginalWatchRoots(path, true);
       if (!paths.isEmpty()) {
         synchronized (myLock) {
           for (String p : paths) {
@@ -260,7 +262,7 @@ public final class FileWatcher {
 
     @Override
     public void notifyDirtyDirectory(@NotNull String path) {
-      Collection<String> paths = myPathMap.getWatchedPaths(path, false);
+      Collection<String> paths = myPathMap.mapToOriginalWatchRoots(path, false);
       if (!paths.isEmpty()) {
         synchronized (myLock) {
           myDirtyPaths.dirtyDirectories.addAll(paths);
@@ -271,7 +273,7 @@ public final class FileWatcher {
 
     @Override
     public void notifyDirtyPathRecursive(@NotNull String path) {
-      Collection<String> paths = myPathMap.getWatchedPaths(path, false);
+      Collection<String> paths = myPathMap.mapToOriginalWatchRoots(path, false);
       if (!paths.isEmpty()) {
         synchronized (myLock) {
           for (String each : paths) {

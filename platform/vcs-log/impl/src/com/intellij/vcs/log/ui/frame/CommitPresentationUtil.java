@@ -15,6 +15,7 @@ import com.intellij.vcs.commit.message.SubjectLimitInspection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,14 +61,13 @@ public class CommitPresentationUtil {
   @Nls
   public static String getShortSummary(@NotNull VcsShortCommitDetails details, boolean useHtml, int maxMessageLength) {
     long time = details.getAuthorTime();
-    return VcsLogBundle
-      .message(useHtml ?
-               "vcs.log.details.html.commit.by.author.on.date.at.time" :
-               "vcs.log.details.commit.by.author.on.date.at.time",
-               StringUtil.shortenTextWithEllipsis(details.getSubject(), maxMessageLength, 0, "..."),
-               getAuthorPresentation(details),
-               DateFormatUtil.formatDate(time),
-               DateFormatUtil.formatTime(time));
+    String commitMessage = "\"" + StringUtil.shortenTextWithEllipsis(details.getSubject(), maxMessageLength, 0, "...") + "\"";
+    if (useHtml) commitMessage = XmlStringUtil.wrapInHtmlTag(commitMessage, "b");
+    return VcsLogBundle.message("vcs.log.details.short.commit.summary",
+                                commitMessage,
+                                getAuthorPresentation(details),
+                                DateFormatUtil.formatDate(time),
+                                DateFormatUtil.formatTime(time));
   }
 
   @NotNull
@@ -280,17 +280,17 @@ public class CommitPresentationUtil {
     if (branches == null) {
       return VcsLogBundle.message("vcs.log.details.in.branches.loading");
     }
-    if (branches.isEmpty()) return VcsLogBundle.message("vcs.log.details.not.in.any.branch");
+    if (branches.isEmpty()) return VcsLogBundle.message("vcs.log.details.in.branches.empty");
 
-    String head = VcsLogBundle.message("vcs.log.details.in.branches", branches.size());
+    String head = VcsLogBundle.message("vcs.log.details.in.branches", branches.size()) + " ";
 
     if (expanded) {
-      String hide = VcsLogBundle.message("vcs.log.details.hide");
+      String hide = VcsLogBundle.message("vcs.log.details.in.branches.hide");
       //noinspection HardCodedStringLiteral
       return head + "<a href=\"" + SHOW_HIDE_BRANCHES + "\">" + hide + "</a><br/>" + StringUtil.join(branches, "<br/>");
     }
 
-    String showAll = VcsLogBundle.message("vcs.log.details.show.all");
+    String showAll = VcsLogBundle.message("vcs.log.details.in.branches.show.all");
     String tail = "… <a href=\"" + SHOW_HIDE_BRANCHES + "\">" + showAll + "</a>";
     int headWidth = metrics.stringWidth(head);
     int tailWidth = metrics.stringWidth(StringUtil.removeHtmlTags(tail));

@@ -33,6 +33,7 @@ import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRange
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRoot
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import java.util.*
 
@@ -56,7 +57,10 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
     val logUi = logManager.createLogUi(logUiFactory, VcsLogManager.LogWindowKind.TOOL_WINDOW)
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
-    ContentUtilEx.addTabbedContent(contentManager, panel, "Compare", "$branchName and $currentRef", true, panel.getUi())
+    ContentUtilEx.addTabbedContent(contentManager, panel, "Compare",
+                                   GitBundle.messagePointer("git.compare.branches.tab.name"),
+                                   GitBundle.messagePointer("git.compare.branches.tab.suffix", branchName, currentRef),
+                                   true, panel.getUi())
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.activate(null)
   }
 
@@ -103,7 +107,7 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
 
     override fun createBranchComponent(): FilterActionComponent {
       return FilterActionComponent {
-        LinkLabel.create("Swap Branches") {
+        LinkLabel.create(GitBundle.message("git.compare.branches.swap.link")) {
           setFilter(rangeFilter.asReversed())
         }
       }
@@ -116,8 +120,8 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
       }
       else {
         val (start, end) = rangeFilter.getRange()
-        text.text = "$start contains all commits from $end"
-        text.appendSecondaryText("Swap Branches", getLinkAttributes()) {
+        text.text = GitBundle.message("git.compare.branches.empty.status", start, end)
+        text.appendSecondaryText(GitBundle.message("git.compare.branches.swap.link"), getLinkAttributes()) {
           setFilter(rangeFilter.asReversed())
         }
       }
@@ -170,4 +174,5 @@ private fun VcsLogRangeFilter.asReversed(): VcsLogRangeFilter {
 }
 
 private fun getExplanationText(dontExist: String, existIn: String): String =
-  "<html>Commits that exist in <code><b>$existIn</b></code> but don't exist in <code><b>$dontExist</b></code></html>"
+  "<html>${GitBundle.message("git.compare.branches.explanation.message",
+                             "<code><b>$existIn</b></code>", "<code><b>$dontExist</b></code>")}</html>"

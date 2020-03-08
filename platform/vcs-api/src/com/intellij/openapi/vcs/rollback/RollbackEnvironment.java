@@ -26,6 +26,7 @@ public interface RollbackEnvironment {
    * @return the user-readable name of operation (for example, "Rollback" or "Revert").
    */
   @Nls(capitalization = Nls.Capitalization.Title)
+  @NotNull
   String getRollbackOperationName();
 
   /**

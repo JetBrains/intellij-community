@@ -128,7 +128,6 @@ public abstract class JBCefApp {
   @NotNull
   protected abstract CefAppConfig getCefAppConfig();
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private static class JBCefAppMac extends JBCefApp {
     @NotNull
     @Override
@@ -161,7 +160,6 @@ public abstract class JBCefApp {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private static class JBCefAppWindows extends JBCefApp {
     @NotNull
     @Override
@@ -175,7 +173,6 @@ public abstract class JBCefApp {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private static class JBCefAppLinux extends JBCefApp {
     @NotNull
     @Override
@@ -214,8 +211,8 @@ public abstract class JBCefApp {
      * A callback to register the scheme handler via calling:
      * {@link CefSchemeRegistrar#addCustomScheme(String, boolean, boolean, boolean, boolean, boolean, boolean, boolean)}.
      */
-
     void registerCustomScheme(@NotNull CefSchemeRegistrar registrar);
+
     /**
      * Returns the custom scheme name.
      */

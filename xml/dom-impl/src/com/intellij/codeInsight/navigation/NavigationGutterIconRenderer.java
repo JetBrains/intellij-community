@@ -21,19 +21,22 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +44,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author peter
@@ -51,10 +56,10 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   protected final String myPopupTitle;
   private final String myEmptyText;
   protected final Computable<? extends PsiElementListCellRenderer> myCellRenderer;
-  private final NotNullLazyValue<? extends List<SmartPsiElementPointer>> myPointers;
+  private final NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> myPointers;
 
   protected NavigationGutterIconRenderer(final String popupTitle, final String emptyText, @NotNull Computable<? extends PsiElementListCellRenderer<?>> cellRenderer,
-    @NotNull NotNullLazyValue<? extends List<SmartPsiElementPointer>> pointers) {
+                                         @NotNull NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> pointers) {
     myPopupTitle = popupTitle;
     myEmptyText = emptyText;
     myCellRenderer = cellRenderer;
@@ -66,8 +71,13 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
     return true;
   }
 
+  @NotNull
   public List<PsiElement> getTargetElements() {
-    return ContainerUtil.mapNotNull(myPointers.getValue(), (NullableFunction<SmartPsiElementPointer, PsiElement>)smartPsiElementPointer -> smartPsiElementPointer.getElement());
+    List<SmartPsiElementPointer<?>> pointers = myPointers.getValue();
+    if (pointers.isEmpty()) return Collections.emptyList();
+    Project project = pointers.get(0).getProject();
+    DumbService dumbService = DumbService.getInstance(project);
+    return dumbService.computeWithAlternativeResolveEnabled(() -> ContainerUtil.mapNotNull(pointers, smartPsiElementPointer -> smartPsiElementPointer.getElement()));
   }
 
   public boolean equals(final Object o) {
@@ -85,7 +95,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
 
   public int hashCode() {
     int result;
-    result = (myPopupTitle != null ? myPopupTitle.hashCode() : 0);
+    result = myPopupTitle != null ? myPopupTitle.hashCode() : 0;
     result = 31 * result + (myEmptyText != null ? myEmptyText.hashCode() : 0);
     result = 31 * result + myPointers.getValue().hashCode();
     return result;
@@ -97,23 +107,14 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        navigate(e == null ? null : (MouseEvent)e.getInputEvent(), null);
+        navigate((MouseEvent)e.getInputEvent(), null);
       }
     };
   }
 
   @Override
   public void navigate(@Nullable final MouseEvent event, @Nullable final PsiElement elt) {
-    final List<PsiElement> list;
-
-    DumbService dumbService = elt != null ? DumbService.getInstance(elt.getProject()) : null;
-    if (dumbService != null) {
-      list = dumbService.computeWithAlternativeResolveEnabled(() -> getTargetElements());
-    }
-    else {
-      list = getTargetElements();
-    }
-
+    List<PsiElement> list = getTargetElements();
     if (list.isEmpty()) {
       if (myEmptyText != null) {
         if (event != null) {
@@ -126,20 +127,29 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
             .show(new RelativePoint(event), Balloon.Position.above);
         }
       }
-      return;
-    }
-    navigateToItems(event, list);
-  }
-
-  protected void navigateToItems(@Nullable MouseEvent event, @NotNull List<PsiElement> list) {
-    if (list.size() == 1) {
-      PsiNavigateUtil.navigate(list.iterator().next());
     }
     else {
-      if (event != null) {
-        JBPopup popup = NavigationUtil.getPsiElementPopup(PsiUtilCore.toPsiElementArray(list), myCellRenderer.compute(), myPopupTitle);
-        popup.show(new RelativePoint(event));
-      }
+      navigateToItems(event);
+    }
+  }
+
+  protected void navigateToItems(@Nullable MouseEvent event) {
+    List<Pair<VirtualFile, Segment>> list = myPointers.getValue()
+      .stream()
+      .map(p -> Pair.create(p.getVirtualFile(), p.getRange()))
+      .filter(pair -> pair.getFirst() != null && pair.getFirst().isValid())
+      .filter(pair -> pair.getSecond() != null)
+      .collect(Collectors.toList());
+    if (list.size() == 1) {
+      Project project = myPointers.getValue().get(0).getProject();
+      VirtualFile virtualFile = list.get(0).getFirst();
+      Segment range = list.get(0).getSecond();
+      new OpenFileDescriptor(project, virtualFile, range.getStartOffset()).navigate(true);
+    }
+    else if (event != null) {
+      PsiElement[] elements = PsiUtilCore.toPsiElementArray(getTargetElements());
+      JBPopup popup = NavigationUtil.getPsiElementPopup(elements, myCellRenderer.compute(), myPopupTitle);
+      popup.show(new RelativePoint(event));
     }
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
@@ -115,13 +116,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   public boolean isEmpty() {
     return 0 >= getRowCount();
-  }
-
-  /** @deprecated not used */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  protected boolean isCustomUI() {
-    return false;
   }
 
   protected boolean isWideSelection() {
@@ -283,7 +277,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (myBusy) {
         if (shouldShowBusyIconIfNeeded()) {
           myBusyIcon.resume();
-          myBusyIcon.setToolTipText("Update is in progress. Click to cancel");
+          myBusyIcon.setToolTipText(IdeBundle.message("tooltip.text.update.is.in.progress.click.to.cancel"));
         }
       }
       else {

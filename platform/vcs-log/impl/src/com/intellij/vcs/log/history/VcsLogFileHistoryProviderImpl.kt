@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
@@ -18,8 +19,11 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.matches
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.NonNls
+import java.util.function.Function
 
-private const val TAB_NAME = "History"
+@NonNls
+private const val TAB_GROUP_ID = "History"
 
 class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
 
@@ -93,7 +97,8 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     val firstTime = fileHistoryUi == null
     if (firstTime) {
       val suffix = if (hash != null) " (" + hash.toShortString() + ")" else ""
-      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, path.name + suffix,
+      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_GROUP_ID,
+                                                   VcsBundle.messagePointer("file.history.tab.name"), Function { path.name + suffix },
                                                    FileHistoryUiFactory(path, root, hash), true)
     }
     consumer(fileHistoryUi!!, firstTime)

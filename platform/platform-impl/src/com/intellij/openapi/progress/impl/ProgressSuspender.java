@@ -164,8 +164,8 @@ public class ProgressSuspender implements AutoCloseable {
       return true;
     }
 
-    ThreadInfo info = ManagementFactory.getThreadMXBean().getThreadInfo(Thread.currentThread().getId());
-    if (info != null && info.getLockedSynchronizers().length > 0) {
+    ThreadInfo[] infos = ManagementFactory.getThreadMXBean().getThreadInfo(new long[]{Thread.currentThread().getId()}, true, false);
+    if (infos.length > 0 && infos[0].getLockedMonitors().length > 0) {
       return true;
     }
     return false;

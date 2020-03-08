@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
@@ -81,7 +82,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       init();
     }
     else {
-      setText("loading...");
+      setText(IdeBundle.message("menu.item.loading"));
     }
   }
 

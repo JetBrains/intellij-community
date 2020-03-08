@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -43,7 +45,7 @@ public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbA
     ContentManager contentManager = toolWindow.getContentManager();
     Content generalContent = contentManager.getContent(0);
     if (generalContent != null && contentManager.getContentCount() == 1) {
-      generalContent.setDisplayName("General");
+      generalContent.setDisplayName(CommonBundle.message("tab.title.general"));
     }
 
     Editor editor = console.getConsoleEditor();
@@ -103,7 +105,7 @@ public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbA
     private final Project myProject;
 
     EditNotificationSettings(Project project) {
-      super("Settings", "Edit notification settings", AllIcons.General.Settings);
+      super(IdeBundle.message("action.text.settings"), IdeBundle.message("action.description.edit.notification.settings"), AllIcons.General.Settings);
       myProject = project;
     }
 

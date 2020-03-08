@@ -68,9 +68,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
         // prevent previous action context affecting next action.
         // E.g. previous action may have called callback.setDone from inside write action, while
         // next action may not expect that
-
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(runnable);
+        ApplicationManager.getApplication().invokeLater(runnable);
       }
       else {
         ApplicationManager.getApplication().executeOnPooledThread(runnable);

@@ -35,7 +35,10 @@ import static java.util.Collections.unmodifiableMap;
 public final class EnvironmentUtil {
   private static final Logger LOG = Logger.getInstance(EnvironmentUtil.class);
 
-  private static final int SHELL_ENV_READING_TIMEOUT = 20000;
+  /**
+   * The default time-out to read the environment, in milliseconds.
+   */
+  private static final long DEFAULT_SHELL_ENV_READING_TIMEOUT_MILLIS = 20_000L;
 
   private static final String LANG = "LANG";
   private static final String LC_ALL = "LC_ALL";
@@ -191,6 +194,25 @@ public final class EnvironmentUtil {
   }
 
   public static class ShellEnvReader {
+    private final long myTimeoutMillis;
+
+    /**
+     * Creates an instance with the default time-out value of {@value #DEFAULT_SHELL_ENV_READING_TIMEOUT_MILLIS} milliseconds.
+     *
+     * @see #ShellEnvReader(long)
+     */
+    public ShellEnvReader() {
+      this(DEFAULT_SHELL_ENV_READING_TIMEOUT_MILLIS);
+    }
+
+    /**
+     * @param timeoutMillis the time-out (in milliseconds) for reading environment variables.
+     * @see #ShellEnvReader()
+     */
+    public ShellEnvReader(final long timeoutMillis) {
+      myTimeoutMillis = timeoutMillis;
+    }
+
     public Map<String, String> readShellEnv() throws IOException {
       return readShellEnv(null);
     }
@@ -256,10 +278,10 @@ public final class EnvironmentUtil {
     }
 
     @NotNull
-    protected static Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
-                                                                                      @Nullable File workingDir,
-                                                                                      @Nullable Map<String, String> scriptEnvironment,
-                                                                                      @NotNull File envFile) throws IOException {
+    protected final Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
+                                                                                     @Nullable File workingDir,
+                                                                                     @Nullable Map<String, String> scriptEnvironment,
+                                                                                     @NotNull File envFile) throws IOException {
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
       if (scriptEnvironment != null) {
         // we might need default environment for the process to launch correctly
@@ -270,7 +292,7 @@ public final class EnvironmentUtil {
       builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
       Process process = builder.start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
-      int exitCode = waitAndTerminateAfter(process);
+      final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
       gobbler.stop();
 
       String lines = FileUtil.loadFile(envFile);
@@ -356,8 +378,11 @@ public final class EnvironmentUtil {
     return parseEnv(text.split("\0"));
   }
 
-  private static int waitAndTerminateAfter(@NotNull Process process) {
-    Integer exitCode = waitFor(process, SHELL_ENV_READING_TIMEOUT);
+  /**
+   * @param timeoutMillis the time-out (in milliseconds) for {@code process} to terminate.
+   */
+  private static int waitAndTerminateAfter(@NotNull Process process, final long timeoutMillis) {
+    Integer exitCode = waitFor(process, timeoutMillis);
     if (exitCode != null) {
       return exitCode;
     }
@@ -366,7 +391,7 @@ public final class EnvironmentUtil {
     // First, try to interrupt 'softly' (we know how to do it only on *nix)
     if (!SystemInfo.isWindows) {
       UnixProcessManager.sendSigIntToProcessTree(process);
-      exitCode = waitFor(process, 1000);
+      exitCode = waitFor(process, 1000L);
       if (exitCode != null) {
         return exitCode;
       }
@@ -379,7 +404,7 @@ public final class EnvironmentUtil {
     else {
       UnixProcessManager.sendSigKillToProcessTree(process);
     }
-    exitCode = waitFor(process, 1000);
+    exitCode = waitFor(process, 1000L);
     if (exitCode != null) {
       return exitCode;
     }
@@ -387,8 +412,12 @@ public final class EnvironmentUtil {
     return -1;
   }
 
+  /**
+   * @param timeoutMillis the time-out (in milliseconds) for {@code process} to terminate.
+   * @return the exit code of the process, or {@code null} if the time-out expires or {@code timeoutMillis} is zero or negative.
+   */
   @Nullable
-  private static Integer waitFor(@NotNull Process process, int timeoutMillis) {
+  private static Integer waitFor(@NotNull Process process, final long timeoutMillis) {
     long stop = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis);
     while (System.nanoTime() < stop) {
       TimeoutUtil.sleep(100);

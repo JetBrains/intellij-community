@@ -4,9 +4,16 @@ package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.command.undo.UndoableAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.annotations.TestOnly
 
 class SuggestedRefactoringChangeCollector(
   private val availabilityIndicator: SuggestedRefactoringAvailabilityIndicator
@@ -21,6 +28,11 @@ class SuggestedRefactoringChangeCollector(
     state = refactoringSupport.stateChanges.createInitialState(declaration)
     updateAvailabilityIndicator()
     amendStateInBackground()
+
+    val project = declaration.project
+    val document = PsiDocumentManager.getInstance(project).getDocument(declaration.containingFile)!!
+    // add UndoableAction which will reset signature tracking state to initial
+    UndoManager.getInstance(project).undoableActionPerformed(EditingStartedUndoableAction(document, project))
   }
 
   override fun nextSignature(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
@@ -33,7 +45,7 @@ class SuggestedRefactoringChangeCollector(
 
   override fun inconsistentState() {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    state = state?.withSyntaxError(true)
+    state = state?.withErrorLevel(ErrorLevel.INCONSISTENT)
     updateAvailabilityIndicator()
   }
 
@@ -45,7 +57,9 @@ class SuggestedRefactoringChangeCollector(
 
   private fun amendStateInBackground() {
     if (!_amendStateInBackgroundEnabled) return
-    val initialState = state ?: return
+    var initialState = state ?: return
+    val stateLock = Any()
+    require(initialState.errorLevel != ErrorLevel.INCONSISTENT)
     val psiFile = initialState.declaration.containingFile
     val project = initialState.declaration.project
     val psiDocumentManager = PsiDocumentManager.getInstance(project)
@@ -55,24 +69,28 @@ class SuggestedRefactoringChangeCollector(
         val states = initialState.refactoringSupport.availability.amendStateInBackground(initialState)
         states.forEach { newState ->
           ApplicationManager.getApplication().invokeLater {
-            if (state === initialState) {
+            synchronized(stateLock) {
+              if (state !== initialState) return@invokeLater
               state = newState
-              if (psiDocumentManager.isCommitted(document)) { // we can't update availability indicator if document is not committed
-                updateAvailabilityIndicator()
-              }
+              initialState = newState // update initialState so that condition of expireWhen remains false
+            }
+            if (psiDocumentManager.isCommitted(document)) { // we can't update availability indicator if document is not committed
+              updateAvailabilityIndicator()
             }
           }
         }
       }
       .inSmartMode(project)
-      .expireWhen { state !== initialState } //TODO: is explicit cancellation better?
+      .expireWhen {
+        synchronized(stateLock) { state !== initialState }
+      }
       .expireWith(project)
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 
   private fun updateAvailabilityIndicator() {
     val state = this.state
-    if (state == null || state.oldSignature == state.newSignature && !state.syntaxError) {
+    if (state == null || state.oldSignature == state.newSignature && state.errorLevel == ErrorLevel.NO_ERRORS) {
       availabilityIndicator.clear()
       return
     }
@@ -83,21 +101,36 @@ class SuggestedRefactoringChangeCollector(
       return
     }
 
-    val refactoringData = if (!state.syntaxError)
+    val refactoringData = if (state.errorLevel == ErrorLevel.NO_ERRORS)
       refactoringSupport.availability.detectAvailableRefactoring(state)
     else
       null
     availabilityIndicator.update(state.declaration, refactoringData, refactoringSupport)
   }
 
-  // for tests
+  @set:TestOnly
   var _amendStateInBackgroundEnabled = !ApplicationManager.getApplication().isUnitTestMode
     set(value) {
       if (value != field) {
         field = value
-        if (value) {
+        if (value && state?.errorLevel != ErrorLevel.INCONSISTENT) {
           amendStateInBackground()
         }
       }
     }
+
+  private class EditingStartedUndoableAction(document: Document, private val project: Project) : UndoableAction {
+    val documentReference = DocumentReferenceManager.getInstance().create(document)
+
+    override fun undo() {
+      SuggestedRefactoringProvider.getInstance(project).reset()
+    }
+
+    override fun redo() {
+    }
+
+    override fun isGlobal() = false
+
+    override fun getAffectedDocuments() = arrayOf(documentReference)
+  }
 }

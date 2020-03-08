@@ -34,7 +34,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(RemoveBomAction.class);
 
   public RemoveBomAction() {
-    super(IdeBundle.lazyMessage("remove.byte.order.mark"));
+    super(IdeBundle.messagePointer("remove.byte.order.mark"));
   }
 
   @Override
@@ -63,7 +63,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
     String finalFromWhere = fromWhere;
-    e.getPresentation().setDescription(IdeBundle.lazyMessage("remove.byte.order.mark.from", finalFromWhere));
+    e.getPresentation().setDescription(IdeBundle.messagePointer("remove.byte.order.mark.from", finalFromWhere));
   }
 
   @Override
@@ -100,7 +100,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
                          StringUtil.pluralize("file", filesUnableToProcess.size());
           String msg = (filesUnableToProcess.size() == 1 ? "This file has" : "These files have") +
                        " mandatory BOM:<br/>    " + StringUtil.join(filesUnableToProcess, VirtualFile::getName, "<br/>    ");
-          Notifications.Bus.notify(new Notification("Failed to remove BOM", title, msg, NotificationType.ERROR));
+          Notifications.Bus.notify(new Notification(IdeBundle.message("notification.group.failed.to.remove.bom"), title, msg, NotificationType.ERROR));
         }
       }
     }.queue();

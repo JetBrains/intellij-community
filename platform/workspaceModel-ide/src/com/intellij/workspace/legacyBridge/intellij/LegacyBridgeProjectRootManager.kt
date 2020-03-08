@@ -6,9 +6,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.RootProvider
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
@@ -35,7 +33,7 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
 
         val performUpdate = processChanges(event, project)
 
-        if (performUpdate) getBatchSession(false).beforeRootsChanged()
+        if (performUpdate) myRootsChanged.beforeRootsChanged()
       }
 
       override fun changed(event: EntityStoreChanged) {
@@ -44,7 +42,7 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
 
           val performUpdate = processChanges(event, project)
 
-          if (performUpdate) getBatchSession(false).rootsChanged()
+          if (performUpdate) myRootsChanged.rootsChanged()
         }
       }
     })
@@ -66,6 +64,15 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
         jdk.rootProvider.removeRootSetChangedListener(listener)
       }
     })
+  }
+
+  override fun getRootsChangeRunnable(): Runnable {
+    return Runnable {
+      if (hasModuleWithInheritedJdk()) {
+        myRootsChanged.beforeRootsChanged()
+        myRootsChanged.rootsChanged()
+      }
+    }
   }
 
   // Listener that increments modification count should be added to each libraryTable that contains a library included in any orderEntry
@@ -134,6 +141,9 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
       return false
     } else true
   }
+
+  private fun hasModuleWithInheritedJdk() = ModuleManager.getInstance(project).modules.asSequence()
+    .filter { ModuleRootManager.getInstance(it).orderEntries.filterIsInstance<InheritedJdkOrderEntry>().any() }.any()
 
   private fun libraryHasOrderEntry(name: String, project: Project): Boolean {
     ModuleManager.getInstance(project).modules.forEach { module ->

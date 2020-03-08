@@ -8,6 +8,7 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
+import java.awt.Frame
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JFrame
@@ -24,6 +25,8 @@ class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame){
     add(productIcon)
     add(customDecorationTitle.getView(), "wmin 0, left, growx, center")
     add(buttonPanes.getView(), "top, wmin pref")
+
+    setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH })
   }
 
   override fun updateActive() {

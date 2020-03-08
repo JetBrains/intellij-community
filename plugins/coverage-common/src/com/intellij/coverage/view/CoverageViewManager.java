@@ -41,7 +41,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
 
     RegisterToolWindowTask registerToolWindowTask = RegisterToolWindowTask.closableSecondary(
       TOOLWINDOW_ID,
-      CoverageBundle.lazyMessage("coverage.view.title"),
+      CoverageBundle.messagePointer("coverage.view.title"),
       AllIcons.Toolwindows.ToolWindowCoverage,
       ToolWindowAnchor.RIGHT
     );

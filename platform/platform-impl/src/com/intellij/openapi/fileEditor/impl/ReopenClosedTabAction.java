@@ -16,7 +16,7 @@ import java.awt.*;
  */
 public class ReopenClosedTabAction extends AnAction {
   public ReopenClosedTabAction() {
-    super(ActionsBundle.lazyMessage("action.ReopenClosedTabAction.text"));
+    super(ActionsBundle.messagePointer("action.ReopenClosedTabAction.text"));
   }
 
   @Override

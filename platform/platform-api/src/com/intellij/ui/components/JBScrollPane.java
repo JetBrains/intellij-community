@@ -61,11 +61,15 @@ public class JBScrollPane extends JScrollPane {
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
+  private static final String STATUS_COMPONENT = "STATUS_COMPONENT";
+
   private ScrollSource myScrollSource = ScrollSource.UNKNOWN;
   private double myWheelRotation;
 
   private int myViewportBorderWidth = -1;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
+
+  protected JComponent statusComponent;
 
   public JBScrollPane(int viewportWidth) {
     init(false);
@@ -149,10 +153,10 @@ public class JBScrollPane extends JScrollPane {
 
   protected void setupCorners() {
     setBorder(IdeBorderFactory.createBorder());
-    setCorner(UPPER_RIGHT_CORNER, new Corner(UPPER_RIGHT_CORNER));
-    setCorner(UPPER_LEFT_CORNER, new Corner(UPPER_LEFT_CORNER));
-    setCorner(LOWER_RIGHT_CORNER, new Corner(LOWER_RIGHT_CORNER));
-    setCorner(LOWER_LEFT_CORNER, new Corner(LOWER_LEFT_CORNER));
+    setCorner(UPPER_RIGHT_CORNER, new Corner());
+    setCorner(UPPER_LEFT_CORNER, new Corner());
+    setCorner(LOWER_RIGHT_CORNER, new Corner());
+    setCorner(LOWER_LEFT_CORNER, new Corner());
   }
 
   @Override
@@ -177,6 +181,30 @@ public class JBScrollPane extends JScrollPane {
         LOG.warn(exception);
       }
     }
+  }
+
+  /**
+   * Adds status component which's anchored to the top right corner above the right scrollbar.
+   * This component obeys the <code>Flip</code>
+   * @param statusComponent
+   */
+  public void setStatusComponent(JComponent statusComponent) {
+    JComponent old = getStatusComponent();
+    this.statusComponent = statusComponent;
+    if (statusComponent != null) {
+      add(statusComponent, STATUS_COMPONENT);
+    }
+    else if (old != null) {
+      remove(old);
+    }
+    firePropertyChange("statusComponent", old, statusComponent);
+
+    revalidate();
+    repaint();
+  }
+
+  public JComponent getStatusComponent() {
+    return statusComponent;
   }
 
   private static class JBMouseWheelListener implements MouseWheelListener {
@@ -311,10 +339,7 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private static class Corner extends JPanel {
-    private final String myPos;
-
-    Corner(String pos) {
-      myPos = pos;
+    Corner() {
       ScrollBarPainter.setBackground(this);
     }
 
@@ -405,6 +430,27 @@ public class JBScrollPane extends JScrollPane {
    */
   protected static class Layout extends ScrollPaneLayout {
     private static final Insets EMPTY_INSETS = emptyInsets();
+
+    protected Component statusComponent;
+
+    @Override
+    public void syncWithScrollPane(JScrollPane sp) {
+      super.syncWithScrollPane(sp);
+
+      if (sp instanceof JBScrollPane) {
+        statusComponent = ((JBScrollPane)sp).getStatusComponent();
+      }
+    }
+
+    @Override
+    public void addLayoutComponent(String s, Component c) {
+      if (s.equals(STATUS_COMPONENT)) {
+        statusComponent = addSingletonComponent(statusComponent, c);
+      }
+      else {
+        super.addLayoutComponent(s, c);
+      }
+    }
 
     @Override
     public void layoutContainer(Container parent) {
@@ -656,6 +702,34 @@ public class JBScrollPane extends JScrollPane {
           hsbBounds.height = 0;
         }
       }
+
+      if (statusComponent != null && statusComponent.isVisible()) {
+        Dimension scSize = statusComponent.getPreferredSize();
+        vsbBounds = vsb.getBounds();
+
+        switch (flip) {
+          case NONE:
+            statusComponent.setBounds(vsbBounds.x + vsbBounds.width - scSize.width, vsbBounds.y, scSize.width, scSize.height);
+            vsbBounds.y += scSize.height;
+            break;
+          case HORIZONTAL:
+            statusComponent.setBounds(vsbBounds.x, vsbBounds.y, scSize.width, scSize.height);
+            vsbBounds.y += scSize.height;
+            break;
+          case VERTICAL:
+            statusComponent.setBounds(vsbBounds.x + vsbBounds.width - scSize.width,
+                                      vsbBounds.y + vsbBounds.height - scSize.height, scSize.width, scSize.height);
+            break;
+          case BOTH:
+            statusComponent.setBounds(vsbBounds.x,
+                                      vsbBounds.y + vsbBounds.height - scSize.height, scSize.width, scSize.height);
+            break;
+        }
+
+        vsbBounds.height -= scSize.height;
+        vsb.setBounds(vsbBounds);
+      }
+
       // Set the bounds of the corners.
       Rectangle left = vsbOnLeft ? vsbBounds : rowHeadBounds;
       Rectangle right = vsbOnLeft ? rowHeadBounds : vsbBounds;

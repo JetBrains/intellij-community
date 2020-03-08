@@ -8,7 +8,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.SpeedSearchUtil
@@ -58,9 +57,6 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
     }
 
     val toolbarDecorator = ToolbarDecorator.createDecorator(list)
-    if (!SystemInfo.isMac) {
-      toolbarDecorator.setAsUsualTopToolbar()
-    }
     toolbarDecorator.setAddAction { button ->
       showAddPopup(myProject, listModel.items.map(ConfigurationType::getId).toSet(),
                    Consumer { newTypes ->

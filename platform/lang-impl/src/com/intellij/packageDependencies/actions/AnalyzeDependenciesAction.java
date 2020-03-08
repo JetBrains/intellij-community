@@ -32,7 +32,7 @@ public class AnalyzeDependenciesAction extends BaseAnalysisAction {
   private AnalyzeDependenciesSettingPanel myPanel;
 
   public AnalyzeDependenciesAction() {
-    super(CodeInsightBundle.lazyMessage("action.forward.dependency.analysis"), CodeInsightBundle.lazyMessage("action.analysis.noun"));
+    super(CodeInsightBundle.messagePointer("action.forward.dependency.analysis"), CodeInsightBundle.messagePointer("action.analysis.noun"));
   }
 
   @Override
@@ -45,7 +45,7 @@ public class AnalyzeDependenciesAction extends BaseAnalysisAction {
   @Nullable
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
     myPanel = new AnalyzeDependenciesSettingPanel();
-    myPanel.myTransitiveCB.setText("Show transitive dependencies. Do not travel deeper than");
+    myPanel.myTransitiveCB.setText(CodeInsightBundle.message("analyze.dependencies.transitive.dependencies.checkbox"));
     myPanel.myTransitiveCB.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {

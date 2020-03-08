@@ -801,7 +801,7 @@ public class ExpectedHighlightingData {
     private final String myTooltip;
 
     MyLineMarkerInfo(PsiElement element, TextRange range, int updatePass, GutterIconRenderer.Alignment alignment, String tooltip) {
-      super(element, range, null, updatePass, null, null, alignment);
+      super(element, range, null, null, null, alignment);
       myTooltip = tooltip;
     }
 

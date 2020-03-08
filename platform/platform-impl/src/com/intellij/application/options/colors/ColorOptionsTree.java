@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.colors;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,7 +61,7 @@ public class ColorOptionsTree extends Tree {
     if (linkListener != null) {
       statusText.clear();
       statusText.appendText(text + ' ');
-      statusText.appendText("More...", SimpleTextAttributes.LINK_ATTRIBUTES, linkListener);
+      statusText.appendText(IdeBundle.message("link.more"), SimpleTextAttributes.LINK_ATTRIBUTES, linkListener);
     }
     else {
       statusText.setText(text);

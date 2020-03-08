@@ -3,8 +3,8 @@ import os.path
 import sys
 import traceback
 
-from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info
-from pydev_tests_python.debugger_unittest import IS_CPYTHON
+from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info, collect_return_info
+from pydev_tests_python.debugger_unittest import IS_CPYTHON, IS_JYTHON, IS_PY2, IS_PY38_OR_GREATER
 
 
 def _method_call_with_error():
@@ -193,6 +193,60 @@ def test_collect_try_except_info2():
         assert str(lst) == '[{try:1 except 3 end block 5 raises: 5}]'
     else:
         assert lst == []
+
+
+@pytest.mark.skipif(IS_JYTHON, reason='Jython does not have bytecode support.')
+def test_collect_return_info():
+
+    def method():
+        return 1
+
+    assert str(collect_return_info(method.__code__, use_func_first_line=True)) == '[{return: 1}]'
+
+    def method2():
+        pass
+
+    assert str(collect_return_info(method2.__code__, use_func_first_line=True)) == '[{return: 1}]'
+
+    def method3():
+        yield 1
+        yield 2
+
+    assert str(collect_return_info(method3.__code__, use_func_first_line=True)) == '[{return: 2}]'
+
+    def method4():
+        return (1,
+                2,
+                3,
+                4)
+
+    assert str(collect_return_info(method4.__code__, use_func_first_line=True)) == \
+           '[{return: 1}]' if IS_PY38_OR_GREATER else '[{return: 4}]'
+
+    def method5():
+        return \
+ \
+            1
+
+    assert str(collect_return_info(method5.__code__, use_func_first_line=True)) == \
+           '[{return: 1}]' if IS_PY38_OR_GREATER else '[{return: 3}]'
+
+    if not IS_PY2:
+        # return in generator is not valid for python 2.
+        code = '''
+def method():
+    if a:
+        yield 1
+        yield 2
+        return 1
+    else:
+        pass
+'''
+
+        scope = {}
+        exec(code, scope)
+        assert str(collect_return_info(scope['method'].__code__, use_func_first_line=True)) == \
+               '[{return: 4}, {return: 6}]'
 
 
 def _create_entry(instruction):

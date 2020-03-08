@@ -100,7 +100,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <tipAndTrick file="TagNameCompletion.html"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory"/>
 
     <fileType name="HTML" implementationClass="com.intellij.ide.highlighter.HtmlFileType" fieldName="INSTANCE" language="HTML" extensions="html;htm;sht;shtm;shtml"/>
@@ -588,7 +587,7 @@
         implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.DependentNSReferenceQuickFixProvider"/>
 
     <selectInTarget implementation="com.intellij.ide.browsers.actions.SelectInDefaultBrowserTarget"/>
-    <xml.xmlExtension implementation="com.intellij.xml.HtmlXmlExtension"/>
+    <xml.xmlExtension implementation="com.intellij.xml.HtmlXmlExtension" id="html"/>
 
     <applicationConfigurable groupId="tools" groupWeight="160" instance="com.intellij.ide.browsers.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
                              key="browsers.settings" bundle="messages.XmlBundle"/>

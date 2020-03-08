@@ -18,52 +18,35 @@ package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.CopyrightUpdaters;
-import com.maddyhome.idea.copyright.util.FileTypeUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class UpdateCopyrightFactory
 {
+    @Nullable
     public static UpdateCopyright createUpdateCopyright(Project project, Module module, PsiFile file,
         CopyrightProfile options)
     {
       final VirtualFile virtualFile = file.getVirtualFile();
-      return createUpdateCopyright(project, module, virtualFile, virtualFile != null ? virtualFile.getFileType() : null, options);
+      if (virtualFile == null) return null;
+      return createUpdateCopyright(project, module, virtualFile, virtualFile.getFileType(), options);
     }
 
 
 
     private static UpdateCopyright createUpdateCopyright(Project project, Module module, VirtualFile file,
-        FileType base, CopyrightProfile options)
+        FileType type, CopyrightProfile options)
     {
-        if (base == null || file == null)
-        {
-            return null;
-        }
-
-
         // NOTE - any changes here require changes to LanguageOptionsFactory and ConfigTabFactory
-        FileType type = FileTypeUtil.getInstance().getFileTypeByType(base);
         logger.debug("file=" + file);
         logger.debug("type=" + type.getName());
 
-        if (type.equals(StdFileTypes.PROPERTIES))
-        {
-            return new UpdateAnyFileCopyright(project, module, file, options);
-        }
-        else if ("JavaScript".equals(type.getName()))
-        {
-            return new UpdateJavaScriptFileCopyright(project, module, file, options);
-        }
-        else
-        {
-            return CopyrightUpdaters.INSTANCE.forFileType(type).createInstance(project, module, file, type, options);
-        }
+        return CopyrightUpdaters.INSTANCE.forFileType(type).createInstance(project, module, file, type, options);
     }
 
     private UpdateCopyrightFactory()

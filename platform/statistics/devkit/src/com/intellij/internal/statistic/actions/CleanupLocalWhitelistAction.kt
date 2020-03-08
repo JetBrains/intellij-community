@@ -9,22 +9,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.ui.LayeredIcon
 
-class CleanupLocalWhitelistAction : DumbAwareAction {
-  private val recorderId: String?
-
-  constructor() : super(ActionsBundle.message("action.CleanupLocalWhitelistAction.text"),
-                        ActionsBundle.message("action.CleanupLocalWhitelistAction.description"),
-                        ICON) {
-    recorderId = null
-  }
-
-  constructor(recorder: String) : super(ActionsBundle.message("action.CleanupLocalWhitelistAction.text"),
-                                        ActionsBundle.message("action.CleanupLocalWhitelistAction.description"),
-                                        ICON) {
-    recorderId = recorder
-  }
+class CleanupLocalWhitelistAction(private val recorderId: String? = null)
+  : DumbAwareAction(ActionsBundle.message("action.CleanupLocalWhitelistAction.text"),
+                    ActionsBundle.message("action.CleanupLocalWhitelistAction.description"),
+                    AllIcons.Actions.GC) {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
@@ -39,9 +28,5 @@ class CleanupLocalWhitelistAction : DumbAwareAction {
         }
       }
     })
-  }
-
-  companion object {
-    private val ICON = LayeredIcon(AllIcons.General.Remove, AllIcons.Actions.Scratch)
   }
 }

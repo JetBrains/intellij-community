@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.defaultProjectAwareService;
 
-import com.google.common.collect.Sets;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -17,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 public final class PyDefaultProjectAwareModuleConfiguratorImpl<
@@ -58,7 +58,7 @@ public final class PyDefaultProjectAwareModuleConfiguratorImpl<
                                   @NotNull Function<Pair<Module, Collection<VirtualFile>>, ? extends STATE> detector) {
     final String extension = PythonFileType.INSTANCE.getDefaultExtension();
     // Module#getModuleScope() and GlobalSearchScope#getModuleScope() search only in source roots
-    final GlobalSearchScope searchScope = new ModulesScope(Sets.newHashSet(module), module.getProject());
+    final GlobalSearchScope searchScope = new ModulesScope(Collections.singleton(module), module.getProject());
 
     final Collection<VirtualFile> pyFiles =
       ReadAction.compute(() -> FilenameIndex.getAllFilesByExt(module.getProject(), extension, searchScope));

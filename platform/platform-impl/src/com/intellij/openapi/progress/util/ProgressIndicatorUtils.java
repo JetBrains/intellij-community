@@ -311,12 +311,16 @@ public class ProgressIndicatorUtils {
 
   public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    return awaitWithCheckCanceled(future, indicator);
+  }
+
+  public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future, @Nullable ProgressIndicator indicator) {
     while (true) {
       checkCancelledEvenWithPCEDisabled(indicator);
       try {
         return future.get(10, TimeUnit.MILLISECONDS);
       }
-      catch (TimeoutException ignore) {
+      catch (TimeoutException | RejectedExecutionException ignore) {
       }
       catch (Throwable e) {
         Throwable cause = e.getCause();

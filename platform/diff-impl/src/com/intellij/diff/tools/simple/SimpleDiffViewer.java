@@ -27,8 +27,8 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.diff.util.*;
-import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.Range;
+import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
@@ -508,6 +508,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     protected abstract boolean isVisible(@NotNull Side side);
 
+    @Nls
     @NotNull
     protected abstract String getText(@NotNull Side side);
 
@@ -535,7 +536,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     protected void doPerform(@NotNull AnActionEvent e, @NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
       if (!isEditable(myModifiedSide)) return;
 
-      String title = e.getPresentation().getText() + " selected changes";
+      String title = DiffBundle.message("message.use.selected.changes.command", e.getPresentation().getText());
       DiffUtil.executeWriteCommand(getEditor(myModifiedSide).getDocument(), e.getProject(), title, () -> apply(changes));
     }
 
@@ -556,8 +557,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected String getText(@NotNull Side side) {
-      if (myModifiedSide == Side.RIGHT && isDiffForLocalChanges()) return "Revert";
-      return "Accept";
+      if (myModifiedSide == Side.RIGHT && isDiffForLocalChanges()) return DiffBundle.message("action.presentation.diff.revert.text");
+      return DiffBundle.message("action.presentation.diff.accept.text");
     }
 
     @Nullable
@@ -583,7 +584,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected String getText(@NotNull Side side) {
-      return isBothEditable() ? myModifiedSide.select("Append to the Left", "Append to the Right") : "Append";
+      return isBothEditable()
+             ? DiffBundle.message("action.presentation.diff.append.to.the.side.text", myModifiedSide.getIndex())
+             : DiffBundle.message("action.presentation.diff.append.text");
     }
 
     @Nullable

@@ -2,6 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -653,7 +654,7 @@ public class SwingHelper {
     private final String myUrl;
 
     private CopyLinkAction(@NotNull String url) {
-      super("Copy Link Address", null, PlatformIcons.COPY_ICON);
+      super(IdeBundle.message("action.text.copy.link.address"), null, PlatformIcons.COPY_ICON);
       myUrl = url;
     }
 
@@ -674,7 +675,7 @@ public class SwingHelper {
     private final String myUrl;
 
     private OpenLinkInBrowser(@NotNull String url) {
-      super("Open Link in Browser", null, PlatformIcons.WEB_ICON);
+      super(IdeBundle.message("action.text.open.link.in.browser"), null, PlatformIcons.WEB_ICON);
       myUrl = url;
     }
 

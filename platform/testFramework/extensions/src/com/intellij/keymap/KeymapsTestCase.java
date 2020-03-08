@@ -30,7 +30,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
                                   "SearchEverywhere.CompleteCommand", "SearchEverywhere.NextTab"},
     { "LEFT",                     "EditorLeft", "Vcs.Log.GoToChild"},
     { "RIGHT",                    "EditorRight", "Vcs.Log.GoToParent"},
-    { "alt 9",                    "ActivateCommitToolWindow", "ActivateVersionControlToolWindow"},
     { "alt DOWN",                 "ShowContent", "MethodDown", "Arrangement.Rule.Match.Condition.Move.Down", "ShowSearchHistory"},
     { "alt UP",                   "MethodUp", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "alt F1",                   "SelectIn", "ProjectViewChangeView"},
@@ -117,6 +116,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl alt RIGHT",     "MoveElementRight", "Terminal.MoveToolWindowTabRight"},
     });
     put("Mac OS X 10.5+", new String[][] {
+    { "Force touch",              "GotoDeclaration", "RunToCursor"},
     { "BACK_SPACE",               "$Delete", "EditorBackSpace", "Images.Thumbnails.UpFolder"},
     { "shift BACK_SPACE",         "EditorBackSpace", "UsageView.Include"},
     { "meta BACK_SPACE",          "EditorDeleteLine", "$Delete"},
@@ -138,7 +138,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
     { "meta 2",                   "ActivateFavoritesToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
     { "meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
-    { "meta 9",                   "ActivateCommitToolWindow", "ActivateVersionControlToolWindow"},
     { "meta N",                   "FileChooser.NewFolder", "Generate", "NewElement"},
     { "meta O",                   "GotoClass", "GotoChangedFile"},
     { "shift ctrl LEFT",          "Diff.ApplyRightSide", "PreviousEditorTab"},
@@ -156,6 +155,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta DOWN",                "EditSource", "SearchEverywhere.NavigateToNextGroup"},
     });
     put("Mac OS X", new String[][] {
+    { "Force touch",              "GotoDeclaration", "RunToCursor"},
     { "BACK_SPACE",               "$Delete", "EditorBackSpace", "Images.Thumbnails.UpFolder"},
     { "control LEFT",             "Diff.PrevChange", "PreviousTab"},
     { "control RIGHT",            "Diff.NextChange", "NextTab"},
@@ -171,7 +171,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
     { "meta 2",                   "ActivateFavoritesToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
     { "meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
-    { "meta 9",                   "ActivateCommitToolWindow", "ActivateVersionControlToolWindow"},
     { "shift ctrl LEFT",          "Diff.ApplyRightSide", "PreviousEditorTab"},
     { "shift ctrl RIGHT",         "Diff.ApplyLeftSide", "NextEditorTab"},
     { "shift meta LEFT",          "EditorLineStartWithSelection", "ResizeToolWindowLeft"},
@@ -396,11 +395,11 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   // @formatter:on
 
   @NonNls protected static final Set<String> DEFAULT_UNKNOWN_ACTION_IDS = ContainerUtil.set(
-    "ActivateCommitToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow", "ActivateDebugToolWindow",
-    "ActivateServicesToolWindow", "ActivateFindToolWindow", "ActivateHierarchyToolWindow", "ActivateMessagesToolWindow",
-    "ActivateProjectToolWindow", "ActivateRunToolWindow", "ActivateStructureToolWindow", "ActivateTODOToolWindow", "ActivateWebToolWindow",
-    "ActivatePaletteToolWindow", "ActivateTerminalToolWindow", "IDEtalk.SearchUserHistory", "IDEtalk.SearchUserHistory", "IDEtalk.Rename",
-    "CIDR.Lang.Cpp.GenerateDefinitions",
+    "ActivateCommitToolWindow", "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow",
+    "ActivateDebugToolWindow", "ActivateServicesToolWindow", "ActivateFindToolWindow", "ActivateHierarchyToolWindow",
+    "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateRunToolWindow", "ActivateStructureToolWindow",
+    "ActivateTODOToolWindow", "ActivateWebToolWindow", "ActivatePaletteToolWindow", "ActivateTerminalToolWindow",
+    "IDEtalk.SearchUserHistory", "IDEtalk.SearchUserHistory", "IDEtalk.Rename", "CIDR.Lang.Cpp.GenerateDefinitions",
     ""
   );
 

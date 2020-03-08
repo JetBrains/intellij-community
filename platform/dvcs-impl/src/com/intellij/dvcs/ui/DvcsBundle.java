@@ -23,7 +23,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class DvcsBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.DvcsBundle";
+  @NonNls static final String BUNDLE = "messages.DvcsBundle";
   private static final DvcsBundle INSTANCE = new DvcsBundle();
 
   private DvcsBundle() { super(BUNDLE); }
@@ -34,7 +34,7 @@ public class DvcsBundle extends DynamicBundle {
   }
 
   @NotNull
-  public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 

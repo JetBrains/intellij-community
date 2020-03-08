@@ -41,6 +41,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -273,6 +274,11 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(actual, expected);
   }
 
+  protected void assertCompletionVariants(CodeInsightTestFixture f, Function<LookupElement, String> lookupElementStringFunction, String... expected) {
+    List<String> actual = getCompletionVariants(f, lookupElementStringFunction);
+    assertUnorderedElementsAreEqual(actual, expected);
+  }
+
   protected void assertCompletionVariantsInclude(VirtualFile f,
                                                  String... expected) {
     assertCompletionVariantsInclude(f, LOOKUP_STRING, expected);
@@ -295,6 +301,16 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   protected List<String> getCompletionVariants(VirtualFile f, Function<LookupElement, String> lookupElementStringFunction) {
     configTest(f);
     LookupElement[] variants = myFixture.completeBasic();
+
+    List<String> result = new ArrayList<>();
+    for (LookupElement each : variants) {
+      result.add(lookupElementStringFunction.apply(each));
+    }
+    return result;
+  }
+
+  protected List<String> getCompletionVariants(CodeInsightTestFixture fixture, Function<LookupElement, String> lookupElementStringFunction) {
+    LookupElement[] variants = fixture.getLookupElements();
 
     List<String> result = new ArrayList<>();
     for (LookupElement each : variants) {
@@ -363,6 +379,14 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     assertNotNull(renameHandler);
 
     invokeRename(context, renameHandler);
+  }
+
+  protected void doInlineRename(final VirtualFile f, String value) {
+    final MapDataContext context = createRenameDataContext(f, value);
+    final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
+    assertNotNull(renameHandler);
+    assertInstanceOf(renameHandler, VariableInplaceRenameHandler.class);
+    CodeInsightTestUtil.doInlineRename((VariableInplaceRenameHandler)renameHandler, value, myFixture);
   }
 
   protected void assertCannotRename() {

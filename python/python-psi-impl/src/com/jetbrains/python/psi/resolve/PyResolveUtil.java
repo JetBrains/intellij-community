@@ -15,11 +15,15 @@
  */
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,6 +34,10 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
+import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
+import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -44,7 +52,7 @@ import java.util.stream.Stream;
 
 /**
  * @author vlan
- *
+ * <p>
  * TODO: Merge it with {@link ScopeUtil}
  */
 public class PyResolveUtil {
@@ -73,11 +81,12 @@ public class PyResolveUtil {
       if (outerScopeOwner != null) {
         owner = outerScopeOwner;
       }
-    } else if (parent instanceof PyGlobalStatement) {
+    }
+    else if (parent instanceof PyGlobalStatement) {
       /* wee need to search directly in global scope of the module for global statements */
       final PsiFile globalScope = element.getContainingFile();
       if (globalScope instanceof PyFile) {
-        owner = (PyFile) globalScope;
+        owner = (PyFile)globalScope;
       }
     }
     scopeCrawlUp(processor, owner, originalOwner, name, roof);
@@ -383,5 +392,78 @@ public class PyResolveUtil {
       .of(scope.getImportedNameDefiners())
       .select(PyImportElement.class)
       .anyMatch(e -> name.equals(e.getVisibleName()));
+  }
+
+  public static void addImplicitResolveResults(String referencedName, ResolveResultList ret, PyQualifiedExpression element) {
+    final Project project = element.getProject();
+    final GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(project);
+    final Collection<PyFunction> functions = PyFunctionNameIndex.find(referencedName, project, scope);
+    final PsiFile containingFile = element.getContainingFile();
+    final List<QualifiedName> imports;
+    if (containingFile instanceof PyFile) {
+      imports = collectImports((PyFile)containingFile);
+    }
+    else {
+      imports = Collections.emptyList();
+    }
+    for (Object function : functions) {
+      //TODO: most likely the following code is obsolete
+      //if (!(function instanceof PyFunction)) {
+      //  FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
+      //                                               new Throwable("found non-function object " + function + " in function list"));
+      //  break;
+      //}
+      PyFunction pyFunction = (PyFunction)function;
+      if (pyFunction.getContainingClass() != null) {
+        ret.add(new ImplicitResolveResult(pyFunction, getImplicitResultRate(pyFunction, imports, element)));
+      }
+    }
+
+    PyClassAttributesIndex
+      .findClassAndInstanceAttributes(referencedName, project, scope)
+      .forEach(attribute -> ret.add(new ImplicitResolveResult(attribute, getImplicitResultRate(attribute, imports, element))));
+  }
+
+  private static List<QualifiedName> collectImports(PyFile containingFile) {
+    List<QualifiedName> imports = new ArrayList<>();
+    for (PyFromImportStatement anImport : containingFile.getFromImports()) {
+      final QualifiedName source = anImport.getImportSourceQName();
+      if (source != null) {
+        imports.add(source);
+      }
+    }
+    for (PyImportElement importElement : containingFile.getImportTargets()) {
+      final QualifiedName qName = importElement.getImportedQName();
+      if (qName != null) {
+        imports.add(qName.removeLastComponent());
+      }
+    }
+    return imports;
+  }
+
+  private static int getImplicitResultRate(PyElement target, List<QualifiedName> imports, PyQualifiedExpression element) {
+    int rate = RatedResolveResult.RATE_LOW;
+    if (target.getContainingFile() == element.getContainingFile()) {
+      rate += 200;
+    }
+    else {
+      final VirtualFile vFile = target.getContainingFile().getVirtualFile();
+      if (vFile != null) {
+        if (ProjectScope.getProjectScope(element.getProject()).contains(vFile)) {
+          rate += 80;
+        }
+        final QualifiedName qName = QualifiedNameFinder.findShortestImportableQName(element, vFile);
+        if (qName != null && imports.contains(qName)) {
+          rate += 70;
+        }
+      }
+    }
+    if (element.getParent() instanceof PyCallExpression) {
+      if (target instanceof PyFunction) rate += 50;
+    }
+    else {
+      if (!(target instanceof PyFunction)) rate += 50;
+    }
+    return rate;
   }
 }

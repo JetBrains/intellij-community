@@ -1,49 +1,51 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.ide.macro.EditorMacro;
+import com.intellij.ide.macro.Macro;
+import com.intellij.ide.macro.MacrosDialog;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.FixedSizeButton;
-import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.Map;
+import java.util.function.Predicate;
 
 public class CommonProgramParametersPanel extends JPanel implements PanelWithAnchor {
   protected LabeledComponent<RawCommandLineEditor> myProgramParametersComponent;
   protected LabeledComponent<JComponent> myWorkingDirectoryComponent;
-  /**
-   * @deprecated use {@code myWorkingDirectoryComboBox} instead
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed") // because of backward compatibility
   protected TextFieldWithBrowseButton myWorkingDirectoryField;
-  protected MacroComboBoxWithBrowseButton myWorkingDirectoryComboBox;
   protected EnvironmentVariablesComponent myEnvVariablesComponent;
   protected JComponent myAnchor;
 
   private Module myModuleContext = null;
+  private boolean myHasModuleMacro;
 
   public CommonProgramParametersPanel() {
     this(true);
@@ -77,16 +79,18 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   protected void initComponents() {
     myProgramParametersComponent = LabeledComponent.create(new RawCommandLineEditor(),
                                                            ExecutionBundle.message("run.configuration.program.parameters"));
-    FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    //noinspection DialogTitleCapitalization
-    fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
-    myWorkingDirectoryComboBox = new MacroComboBoxWithBrowseButton(fileChooserDescriptor, getProject());
 
     // for backward compatibility: com.microsoft.tooling.msservices.intellij.azure:3.0.11
     myWorkingDirectoryField = new TextFieldWithBrowseButton();
-    addWorkingDirectoryListener(myWorkingDirectoryField::setText);
 
-    myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryComboBox, ExecutionBundle.message("run.configuration.working.directory.label"));
+    //noinspection DialogTitleCapitalization
+    myWorkingDirectoryField.addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null,
+                                                    getProject(),
+                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+                                                    TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryField,
+                                                          ExecutionBundle.message("run.configuration.working.directory.label"));
+
     myEnvVariablesComponent = new EnvironmentVariablesComponent();
 
     myEnvVariablesComponent.setLabelLocation(BorderLayout.WEST);
@@ -94,6 +98,9 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     myWorkingDirectoryComponent.setLabelLocation(BorderLayout.WEST);
 
     addComponents();
+    if (isMacroSupportEnabled()) {
+      initMacroSupport();
+    }
 
     setPreferredSize(new Dimension(10, 10));
 
@@ -110,11 +117,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        List<String> macros = new ArrayList<>();
-        ComboBoxModel<String> model = myWorkingDirectoryComboBox.getModel();
-        for (int i = 0; i < model.getSize(); ++i) {
-          macros.add(model.getElementAt(i));
-        }
+        final List<String> macros = ContainerUtil.map(getPathMacros().keySet(), s -> s.startsWith("%") ? s : "$" + s + "$");
         JBPopupFactory.getInstance()
           .createPopupChooserBuilder(macros)
           .setItemChosenCallback((value) -> textAccessor.setText(value))
@@ -137,6 +140,43 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     add(myEnvVariablesComponent);
   }
 
+  /**
+   * Macro support for run configuration fields is opt-in.
+   * Run configurations that can handle macros (basically any using {@link ProgramParametersConfigurator} or {@link ProgramParametersUtil})
+   * are encouraged to enable "add macro" inline button for program parameters and working directory fields by overriding this method,
+   * and optionally overriding {@link #initMacroSupport()} to enable macros for other fields.
+   */
+  protected boolean isMacroSupportEnabled() {
+    return false;
+  }
+
+  protected void initMacroSupport() {
+    addMacroSupport(myProgramParametersComponent.getComponent().getEditorField(), MacrosDialog.Filters.ALL, getPathMacros());
+    addMacroSupport((ExtendableTextField)myWorkingDirectoryField.getTextField(), MacrosDialog.Filters.DIRECTORY_PATH, getPathMacros());
+  }
+
+  public static void addMacroSupport(@NotNull ExtendableTextField textField) {
+    addMacroSupport(textField, MacrosDialog.Filters.ALL, null);
+  }
+
+  protected static void addMacroSupport(@NotNull ExtendableTextField textField,
+                                        @NotNull Predicate<? super Macro> macroFilter,
+                                        @Nullable Map<String, String> userMacros) {
+    if (Registry.is("allow.macros.for.run.configurations")) {
+      MacrosDialog.addTextFieldExtension(textField, macroFilter.and(macro -> !(macro instanceof EditorMacro)), userMacros);
+    }
+  }
+
+  protected @NotNull Map<String, String> getPathMacros() {
+    final HashMap<String, String> macros = new HashMap<>(PathMacros.getInstance().getUserMacros());
+    if (myModuleContext != null || myHasModuleMacro) {
+      macros.put(PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacros.getInstance().getValue(PathMacroUtil.MODULE_DIR_MACRO_NAME));
+      macros.put(ProgramParametersConfigurator.MODULE_WORKING_DIR,
+                 PathMacros.getInstance().getValue(PathMacroUtil.MODULE_WORKING_DIR_NAME));
+    }
+    return macros;
+  }
+
   protected void copyDialogCaption(final LabeledComponent<RawCommandLineEditor> component) {
     final RawCommandLineEditor rawCommandLineEditor = component.getComponent();
     rawCommandLineEditor.setDialogCaption(component.getRawText());
@@ -153,24 +193,19 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   }
 
   public TextAccessor getWorkingDirectoryAccessor() {
-    return myWorkingDirectoryComboBox;
-  }
-
-  public void addWorkingDirectoryListener(Consumer<? super String> onTextChange) {
-    myWorkingDirectoryComboBox.addActionListener(event -> onTextChange.accept(myWorkingDirectoryComboBox.getText()));
+    return myWorkingDirectoryField;
   }
 
   public void setWorkingDirectory(String dir) {
-    myWorkingDirectoryComboBox.setText(dir);
+    myWorkingDirectoryField.setText(dir);
   }
 
   public void setModuleContext(Module moduleContext) {
     myModuleContext = moduleContext;
-    myWorkingDirectoryComboBox.setModule(moduleContext);
   }
 
   public void setHasModuleMacro() {
-    myWorkingDirectoryComboBox.showModuleMacroAlways();
+    myHasModuleMacro = true;
   }
 
   public LabeledComponent<RawCommandLineEditor> getProgramParametersComponent() {
@@ -192,7 +227,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
   public void applyTo(@NotNull CommonProgramRunConfigurationParameters configuration) {
     configuration.setProgramParameters(fromTextField(myProgramParametersComponent.getComponent(), configuration));
-    configuration.setWorkingDirectory(fromTextField(myWorkingDirectoryComboBox, configuration));
+    configuration.setWorkingDirectory(fromTextField(myWorkingDirectoryField, configuration));
 
     configuration.setEnvs(myEnvVariablesComponent.getEnvs());
     configuration.setPassParentEnvs(myEnvVariablesComponent.isPassParentEnvs());

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
@@ -23,6 +23,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionEvent
@@ -87,8 +88,8 @@ inline fun <reified T : Any> KMutableProperty0<T?>.toNullableBinding(defaultValu
 }
 
 class ValidationInfoBuilder(val component: JComponent) {
-  fun error(message: String): ValidationInfo = ValidationInfo(message, component)
-  fun warning(message: String): ValidationInfo = ValidationInfo(message, component).asWarning().withOKEnabled()
+  fun error(@Nls message: String): ValidationInfo = ValidationInfo(message, component)
+  fun warning(@Nls message: String): ValidationInfo = ValidationInfo(message, component).asWarning().withOKEnabled()
 }
 
 interface CellBuilder<out T : JComponent> {
@@ -205,7 +206,7 @@ abstract class Cell : BaseBuilder {
   val pushY = CCFlags.pushY
   val push = CCFlags.push
 
-  fun label(text: String,
+  fun label(@Nls text: String,
             style: UIUtil.ComponentStyle? = null,
             fontColor: UIUtil.FontColor? = null,
             bold: Boolean = false): CellBuilder<JLabel> {
@@ -213,7 +214,7 @@ abstract class Cell : BaseBuilder {
     return component(label)
   }
 
-  fun link(text: String,
+  fun link(@Nls text: String,
            style: UIUtil.ComponentStyle? = null,
            action: () -> Unit): CellBuilder<JComponent> {
     val result = Link(text, action = action)
@@ -221,26 +222,26 @@ abstract class Cell : BaseBuilder {
     return component(result)
   }
 
-  fun browserLink(text: String, url: String): CellBuilder<JComponent> {
+  fun browserLink(@Nls text: String, url: String): CellBuilder<JComponent> {
     val result = HyperlinkLabel()
     result.setHyperlinkText(text)
     result.setHyperlinkTarget(url)
     return component(result)
   }
 
-  fun buttonFromAction(text: String, actionPlace: String, action: AnAction): CellBuilder<JButton> {
+  fun buttonFromAction(@Nls text: String, actionPlace: String, action: AnAction): CellBuilder<JButton> {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener { ActionUtil.invokeAction(action, button, actionPlace, null, null) }
     return component(button)
   }
 
-  fun button(text: String, actionListener: (event: ActionEvent) -> Unit): CellBuilder<JButton> {
+  fun button(@Nls text: String, actionListener: (event: ActionEvent) -> Unit): CellBuilder<JButton> {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener(actionListener)
     return component(button)
   }
 
-  inline fun checkBox(text: String,
+  inline fun checkBox(@Nls text: String,
                       isSelected: Boolean = false,
                       comment: String? = null,
                       crossinline actionListener: (event: ActionEvent, component: JCheckBox) -> Unit): CellBuilder<JBCheckBox> {
@@ -251,40 +252,40 @@ abstract class Cell : BaseBuilder {
   }
 
   @JvmOverloads
-  fun checkBox(text: String,
+  fun checkBox(@Nls text: String,
                isSelected: Boolean = false,
                comment: String? = null): CellBuilder<JBCheckBox> {
     val result = JBCheckBox(text, isSelected)
     return result(comment = comment)
   }
 
-  fun checkBox(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBCheckBox> {
+  fun checkBox(@Nls text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBCheckBox> {
     return checkBox(text, prop.toBinding(), comment)
   }
 
-  fun checkBox(text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, comment: String? = null): CellBuilder<JBCheckBox> {
+  fun checkBox(@Nls text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, comment: String? = null): CellBuilder<JBCheckBox> {
     return checkBox(text, PropertyBinding(getter, setter), comment)
   }
 
-  private fun checkBox(text: String,
+  private fun checkBox(@Nls text: String,
                        modelBinding: PropertyBinding<Boolean>,
                        comment: String?): CellBuilder<JBCheckBox> {
     val component = JBCheckBox(text, modelBinding.get())
     return component(comment = comment).withSelectedBinding(modelBinding)
   }
 
-  open fun radioButton(text: String, comment: String? = null): CellBuilder<JBRadioButton> {
+  open fun radioButton(@Nls text: String, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text)
     component.putClientProperty(UNBOUND_RADIO_BUTTON, true)
     return component(comment = comment)
   }
 
-  open fun radioButton(text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, comment: String? = null): CellBuilder<JBRadioButton> {
+  open fun radioButton(@Nls text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, getter())
     return component(comment = comment).withSelectedBinding(PropertyBinding(getter, setter))
   }
 
-  open fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBRadioButton> {
+  open fun radioButton(@Nls text: String, prop: KMutableProperty0<Boolean>, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get())
     return component(comment = comment).withSelectedBinding(prop.toBinding())
   }

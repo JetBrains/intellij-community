@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseDialog;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
@@ -49,7 +50,7 @@ public class GitRebase extends DumbAwareAction {
     VirtualFile defaultRoot = DvcsUtil.guessVcsRoot(project, e.getData(CommonDataKeys.VIRTUAL_FILE));
     final GitRebaseDialog dialog = new GitRebaseDialog(project, roots, defaultRoot);
     if (dialog.showAndGet()) {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Rebasing...") {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, GitBundle.getString("rebase.progress.indicator.title")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           GitRepository selectedRepository =

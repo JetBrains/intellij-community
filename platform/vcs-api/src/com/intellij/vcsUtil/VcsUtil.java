@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -391,7 +392,7 @@ public class VcsUtil {
   }
 
   public static <T> T computeWithModalProgress(@Nullable Project project,
-                                               @NotNull String title,
+                                               @NotNull @Nls String title,
                                                boolean canBeCancelled,
                                                @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends VcsException> computable)
     throws VcsException {

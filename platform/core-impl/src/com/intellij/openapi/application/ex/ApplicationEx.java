@@ -182,4 +182,10 @@ public interface ApplicationEx extends Application {
                                                                            @NotNull Consumer<? super ProgressIndicator> action) {
     throw new UnsupportedOperationException();
   }
+
+  /** DO NOT USE */
+  @ApiStatus.Internal
+  default boolean isInImpatientReader() {
+    return false;
+  }
 }

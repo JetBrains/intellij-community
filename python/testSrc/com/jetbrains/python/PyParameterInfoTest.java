@@ -19,6 +19,7 @@ import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.types.PyCallableType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1139,7 +1140,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
       for (Object itemToShow : collector.getItemsToShow()) {
         //noinspection unchecked
-        handler.updateUI((Pair<PyCallExpression, PyCallExpression.PyMarkedCallee>)itemToShow, collector);
+        handler.updateUI((Pair<PyCallExpression, PyCallableType>)itemToShow, collector);
       }
     }
 

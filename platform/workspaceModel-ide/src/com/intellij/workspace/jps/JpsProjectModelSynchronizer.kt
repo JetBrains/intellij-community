@@ -2,6 +2,7 @@
 package com.intellij.workspace.jps
 
 import com.intellij.configurationStore.*
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -89,7 +90,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
 
   private fun registerListener() {
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: MutableList<out VFileEvent>) {
+      override fun after(events: List<VFileEvent>) {
         //todo support move/rename
         //todo optimize: filter events before creating lists
         val toProcess = events.asSequence().filter { isFireStorageFileChangedEvent(it) }
@@ -121,6 +122,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
   }
 
   internal fun loadInitialProject(storagePlace: JpsProjectStoragePlace) {
+    val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
     val baseDirUrl = storagePlace.baseDirectoryUrl
     fileContentReader = StorageJpsConfigurationReader(project, baseDirUrl)
     val serializationData = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, false, true)
@@ -137,6 +139,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
         updater.replaceBySource({ it is JpsFileEntitySource }, builder.toStorage())
       }
     }
+    activity.end()
   }
 
   // Logic from com.intellij.openapi.module.impl.ModuleManagerImpl.loadState(java.util.Set<com.intellij.openapi.module.impl.ModulePath>)

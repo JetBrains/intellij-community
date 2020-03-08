@@ -72,7 +72,7 @@ public class GitSSHGUIHandler {
       }
       final AtomicBoolean rc = new AtomicBoolean();
       ApplicationManager.getApplication().invokeAndWait(
-        () -> rc.set(Messages.YES == Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.titile"), null)),
+        () -> rc.set(Messages.YES == Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.title"), null)),
         ModalityState.any());
       return rc.get();
     });

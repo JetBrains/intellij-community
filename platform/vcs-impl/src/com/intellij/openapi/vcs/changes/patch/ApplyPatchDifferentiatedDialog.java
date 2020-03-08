@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffDialogHints;
@@ -177,7 +177,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                                  updateOkActions();
                                                }
                                              }, new MyChangeNodeDecorator());
-    myChangesTreeList.setDoubleClickHandler(() -> {
+    myChangesTreeList.setDoubleClickAndEnterKeyHandler(() -> {
       List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       if (selectedChanges.size() == 1 && !selectedChanges.get(0).isValid()) {
         myChangesTreeList.handleInvalidChangesAndToggle();
@@ -528,16 +528,16 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         @Override
         public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
           return new AnAction[]{
-            new MapDirectory(), new StripUp(IdeBundle.lazyMessage("action.Anonymous.text.remove.leading.directory")), new ZeroStrip(),
-            new StripDown(IdeBundle.lazyMessage("action.Anonymous.text.restore.leading.directory")), new ResetStrip()};
+            new MapDirectory(), new StripUp(IdeBundle.messagePointer("action.Anonymous.text.remove.leading.directory")), new ZeroStrip(),
+            new StripDown(IdeBundle.messagePointer("action.Anonymous.text.restore.leading.directory")), new ResetStrip()};
         }
       };
       mapDirectoryActionGroup.setPopup(true);
       group.add(mapDirectoryActionGroup);
 
       if (myCanChangePatchFile) {
-        group.add(new DumbAwareAction(VcsBundle.lazyMessage("action.DumbAware.ApplyPatchDifferentiatedDialog.text.refresh"),
-                                      VcsBundle.lazyMessage("action.DumbAware.ApplyPatchDifferentiatedDialog.description.refresh"),
+        group.add(new DumbAwareAction(VcsBundle.messagePointer("action.DumbAware.ApplyPatchDifferentiatedDialog.text.refresh"),
+                                      VcsBundle.messagePointer("action.DumbAware.ApplyPatchDifferentiatedDialog.description.refresh"),
            AllIcons.Actions.Refresh) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
@@ -1038,7 +1038,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private class ZeroStrip extends StripUp {
     ZeroStrip() {
-      super(VcsBundle.lazyMessage("action.Anonymous.text.remove.all.leading.directories"));
+      super(VcsBundle.messagePointer("action.Anonymous.text.remove.all.leading.directories"));
     }
 
     @Override
@@ -1086,7 +1086,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private class ResetStrip extends StripDown {
     ResetStrip() {
-      super(VcsBundle.lazyMessage("action.Anonymous.text.restore.all.leading.directories"));
+      super(VcsBundle.messagePointer("action.Anonymous.text.restore.all.leading.directories"));
     }
 
     @Override

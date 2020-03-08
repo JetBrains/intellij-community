@@ -25,7 +25,7 @@ import javax.swing.JPanel
 
 class VcsLogFileType : FileType {
   override fun getName(): String = "VcsLog"
-  override fun getDescription(): String = VcsLogBundle.message("vcs.log")
+  override fun getDescription(): String = VcsLogBundle.message("vcs.log.file.type.description")
   override fun getDefaultExtension(): String = ""
   override fun getIcon(): Icon? = AllIcons.Vcs.Branch
   override fun isBinary(): Boolean = true

@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.paint.LinePainter2D;
@@ -46,7 +45,7 @@ import java.util.Objects;
 class TextPainter extends BasePainter {
   private final DocumentEx myDocument;
   private RangeMarker myRangeToPrint;
-  private int myOffset = 0;
+  private int myOffset;
   private int myLineNumber = 1;
   private float myLineHeight = -1;
   private float myDescent = -1;
@@ -64,7 +63,7 @@ class TextPainter extends BasePainter {
   private int myNumberOfPages = -1;
   private int mySegmentEnd;
   private Project myProject;
-  private LineMarkerInfo[] myMethodSeparators = new LineMarkerInfo[0];
+  private List<LineMarkerInfo<?>> myMethodSeparators = Collections.emptyList();
   private int myCurrentMethodSeparator;
   private final CodeStyleSettings myCodeStyleSettings;
   private final FileType myFileType;
@@ -126,7 +125,7 @@ class TextPainter extends BasePainter {
                              : null;
   }
 
-  public void setSegment(int segmentStart, int segmentEnd) {
+  void setSegment(int segmentStart, int segmentEnd) {
     setSegment(myDocument.createRangeMarker(segmentStart, segmentEnd));
   }
 
@@ -158,17 +157,21 @@ class TextPainter extends BasePainter {
   }
 
   private Font getFont(int type) {
-    if (type == Font.BOLD)
+    if (type == Font.BOLD) {
       return myBoldFont;
-    else if (type == Font.ITALIC)
+    }
+    else if (type == Font.ITALIC) {
       return myItalicFont;
-    else if (type == Font.ITALIC + Font.BOLD)
+    }
+    else if (type == Font.ITALIC + Font.BOLD) {
       return myBoldItalicFont;
-    else
+    }
+    else {
       return myPlainFont;
+    }
   }
 
-  boolean isPrintingPass = true;
+  private boolean isPrintingPass = true;
 
   @Override
   public int print(final Graphics g, final PageFormat pageFormat, final int pageIndex) {
@@ -213,7 +216,7 @@ class TextPainter extends BasePainter {
       if (!isValidRange(myRangeToPrint)) {
         return false;
       }
-      myProgress.setText(EditorBundle.message(progressMessageKey, myShortFileName, (myPageIndex + 1), myNumberOfPages));
+      myProgress.setText(EditorBundle.message(progressMessageKey, myShortFileName, myPageIndex + 1, myNumberOfPages));
       setSegment(printPage(g2d, pageFormat, myRangeToPrint));
       return true;
     });
@@ -282,9 +285,8 @@ class TextPainter extends BasePainter {
     myCurrentMethodSeparator = 0;
     if (myProject != null) {
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-      List<LineMarkerInfo<PsiElement>> separators = psiFile == null ? Collections.emptyList()
+      myMethodSeparators = psiFile == null ? Collections.emptyList()
                                                                     : FileSeparatorProvider.getFileSeparators(psiFile, myDocument);
-      myMethodSeparators = separators.toArray(new LineMarkerInfo[0]);
     }
   }
 
@@ -320,7 +322,7 @@ class TextPainter extends BasePainter {
 
   private double getCharWidth(Graphics2D g) {
     if (myCharWidth < 0) {
-      FontRenderContext fontRenderContext = (g).getFontRenderContext();
+      FontRenderContext fontRenderContext = g.getFontRenderContext();
       myCharWidth = myPlainFont.getStringBounds(DEFAULT_MEASURE_WIDTH_TEXT, fontRenderContext).getWidth();
     }
     return myCharWidth;
@@ -399,7 +401,7 @@ class TextPainter extends BasePainter {
           if (markerColor != null) {
             Color save = g.getColor();
             setForegroundColor(g, markerColor);
-            LinePainter2D.paint((Graphics2D)g, 0, (int)lineY, (int)clip.getWidth(), (int)lineY);
+            LinePainter2D.paint(g, 0, (int)lineY, (int)clip.getWidth(), (int)lineY);
             setForegroundColor(g, save);
           }
         }
@@ -446,10 +448,10 @@ class TextPainter extends BasePainter {
 
   @Nullable
   private Color getMethodSeparatorColor(int line) {
-    LineMarkerInfo marker = null;
-    LineMarkerInfo tmpMarker;
-    while (myCurrentMethodSeparator < myMethodSeparators.length &&
-           (tmpMarker = myMethodSeparators[myCurrentMethodSeparator]) != null &&
+    LineMarkerInfo<?> marker = null;
+    LineMarkerInfo<?> tmpMarker;
+    while (myCurrentMethodSeparator < myMethodSeparators.size() &&
+           (tmpMarker = myMethodSeparators.get(myCurrentMethodSeparator)) != null &&
            FileSeparatorProvider.getDisplayLine(tmpMarker, myDocument) <= line) {
       marker = tmpMarker;
       myCurrentMethodSeparator++;
@@ -543,18 +545,25 @@ class TextPainter extends BasePainter {
       if (c == '$') {
         String token = s.substring(start, i);
         if (isExpression) {
-          if (HEADER_TOKEN_PAGE.equals(token)) {
-            result.append(myPageIndex + 1);
-          } else if (HEADER_TOKEN_TOTALPAGES.equals(token)) {
-            result.append(myNumberOfPages);
-          } else if (HEADER_TOKEN_FILE.equals(token)) {
-            result.append(myFullFileName);
-          } else if (HEADER_TOKEN_FILENAME.equals(token)) {
-            result.append(myShortFileName);
-          } else if (HEADER_TOKEN_DATE.equals(token)) {
-            result.append(myPrintDate);
-          } else if (HEADER_TOKEN_TIME.equals(token)) {
-            result.append(myPrintTime);
+          switch (token) {
+            case HEADER_TOKEN_PAGE:
+              result.append(myPageIndex + 1);
+              break;
+            case HEADER_TOKEN_TOTALPAGES:
+              result.append(myNumberOfPages);
+              break;
+            case HEADER_TOKEN_FILE:
+              result.append(myFullFileName);
+              break;
+            case HEADER_TOKEN_FILENAME:
+              result.append(myShortFileName);
+              break;
+            case HEADER_TOKEN_DATE:
+              result.append(myPrintDate);
+              break;
+            case HEADER_TOKEN_TIME:
+              result.append(myPrintTime);
+              break;
           }
         } else {
           result.append(token);
@@ -579,7 +588,7 @@ class TextPainter extends BasePainter {
       return 0;
     }
     int maxLineNumber = myLineNumber + (int) (clip.getHeight() / getLineHeight(g));
-    FontRenderContext fontRenderContext = (g).getFontRenderContext();
+    FontRenderContext fontRenderContext = g.getFontRenderContext();
     double numbersStripWidth = 0;
     for (int i = myLineNumber; i < maxLineNumber; i++) {
       double width = myPlainFont.getStringBounds(String.valueOf(i), fontRenderContext).getWidth();
@@ -594,7 +603,7 @@ class TextPainter extends BasePainter {
     if (!myPrintSettings.PRINT_LINE_NUMBERS || !myPerformActualDrawing) {
       return;
     }
-    FontRenderContext fontRenderContext = (g).getFontRenderContext();
+    FontRenderContext fontRenderContext = g.getFontRenderContext();
     double width = myPlainFont.getStringBounds(String.valueOf(myLineNumber), fontRenderContext).getWidth() + getCharWidth(g);
     Color savedColor = g.getColor();
     Font savedFont = g.getFont();
@@ -674,7 +683,7 @@ class TextPainter extends BasePainter {
       Color savedColor = g.getColor();
       setForegroundColor(g, underscoredColor);
       double w = getTextSegmentWidth(text, myOffset, length, position.getX(), g);
-      LinePainter2D.paint((Graphics2D)g, (int)position.getX(), (int)y + 1, (int)(xStart + w), (int)(y + 1));
+      LinePainter2D.paint(g, (int)position.getX(), (int)y + 1, (int)(xStart + w), (int)(y + 1));
       g.setColor(savedColor);
     }
     position.setLocation(x, position.getY());

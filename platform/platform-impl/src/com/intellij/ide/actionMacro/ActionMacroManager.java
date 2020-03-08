@@ -164,7 +164,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       myPresentation = new WidgetPresentation() {
         @Override
         public String getTooltipText() {
-          return "Macro is being recorded now";
+          return IdeBundle.message("tooltip.macro.is.being.recorded.now");
         }
 
         @Override
@@ -194,7 +194,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       myText = new JLabel(RECORDED + "..." + TYPING_SAMPLE, SwingConstants.LEFT);
       final Dimension preferredSize = myText.getPreferredSize();
       myText.setPreferredSize(preferredSize);
-      myText.setText("Macro recording started...");
+      myText.setText(IdeBundle.message("label.macro.recording.started"));
       myLastTyping = "";
       top.add(myText, BorderLayout.CENTER);
       myBalloonComponent.add(top, BorderLayout.CENTER);

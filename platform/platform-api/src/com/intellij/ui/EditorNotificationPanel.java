@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.codeInsight.intention.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -88,11 +89,11 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return UIUtil.getPanelBackground();
   }
 
-  public void setText(String text) {
+  public void setText(@Nls String text) {
     myLabel.setText(text);
   }
 
-  public EditorNotificationPanel text(@NotNull String text) {
+  public EditorNotificationPanel text(@NotNull @Nls String text) {
     myLabel.setText(text);
     return this;
   }
@@ -114,21 +115,21 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return color != null ? color : UIUtil.getToolTipBackground();
   }
 
-  public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {
+  public HyperlinkLabel createActionLabel(@Nls String text, @NonNls final String actionId) {
     return createActionLabel(text, actionId, true);
   }
 
-  public HyperlinkLabel createActionLabel(final String text,
+  public HyperlinkLabel createActionLabel(@Nls String text,
                                           @NonNls final String actionId,
                                           boolean showInIntentionMenu) {
     return createActionLabel(text, () -> executeAction(actionId), showInIntentionMenu);
   }
 
-  public HyperlinkLabel createActionLabel(final String text, final Runnable action) {
+  public HyperlinkLabel createActionLabel(@Nls String text, final Runnable action) {
     return createActionLabel(text, action, true);
   }
 
-  public HyperlinkLabel createActionLabel(final String text,
+  public HyperlinkLabel createActionLabel(@Nls String text,
                                           final Runnable action,
                                           boolean showInIntentionMenu) {
     ActionHyperlinkLabel label = new ActionHyperlinkLabel(text, getBackground(), showInIntentionMenu);
@@ -146,7 +147,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return label;
   }
 
-  protected void executeAction(final String actionId) {
+  protected void executeAction(@NonNls String actionId) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(),
                                                                  DataManager.getInstance().getDataContext(this));
@@ -191,7 +192,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   @NotNull
   @Nls
   protected String getIntentionActionFamilyName() {
-    return "Editor notification";
+    return IdeBundle.message("intention.family.editor.notification");
   }
 
   private static class ActionHyperlinkLabel extends HyperlinkLabel {
@@ -295,7 +296,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Editor notification option";
+      return IdeBundle.message("intention.family.editor.notification.option");
     }
 
     @Override
@@ -332,7 +333,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Editor notification settings";
+      return IdeBundle.message("intention.family.editor.notification.settings");
     }
 
     @Override

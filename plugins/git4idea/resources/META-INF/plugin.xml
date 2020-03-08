@@ -40,6 +40,7 @@
 
     <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
+    <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch"/>
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" icon="AllIcons.Actions.Rollback"/>
@@ -235,7 +236,6 @@
     <projectService serviceImplementation="git4idea.ui.branch.dashboard.BranchesTreeStateHolder"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
-    <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"/>
     <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService"/>
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
                         serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl" />
@@ -304,7 +304,9 @@
 
     <statusBarWidgetFactory implementation="git4idea.light.LightGitStatusBarWidgetFactory"/>
     <lightEditTabAttributesProvider implementation="git4idea.light.LightGitTabAttributesProvider"/>
-    <statusBarWidgetFactory implementation="git4idea.ui.branch.GitBranchWidget$Factory" order="after selectionModeWidget,before notificationsWidget"/>
+    <statusBarWidgetFactory id="gitWidget"
+                            implementation="git4idea.ui.branch.GitBranchWidget$Factory"
+                            order="after selectionModeWidget,before notificationsWidget"/>
   </extensions>
 
   <extensionPoints>

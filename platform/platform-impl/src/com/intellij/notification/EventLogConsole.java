@@ -6,6 +6,7 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
@@ -182,7 +183,8 @@ final class EventLogConsole {
   }
 
   private static void addConfigureNotificationAction(@NotNull DefaultActionGroup actions, @NotNull String groupId) {
-    DefaultActionGroup displayTypeGroup = DefaultActionGroup.createPopupGroup(() -> "Notification Display Type");
+    DefaultActionGroup displayTypeGroup = DefaultActionGroup.createPopupGroup(() -> IdeBundle
+      .message("popup.title.notification.display.type"));
     NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
     NotificationDisplayType current = settings.getDisplayType();
 
@@ -448,7 +450,7 @@ final class EventLogConsole {
     private final EventLogConsole myConsole;
 
     public ClearLogAction(EventLogConsole console) {
-      super("Clear All", "Clear the contents of the Event Log", AllIcons.Actions.GC);
+      super(IdeBundle.message("action.text.clear.all"), IdeBundle.message("action.description.clear.the.contents.of.the.event.log"), AllIcons.Actions.GC);
       myConsole = console;
     }
 

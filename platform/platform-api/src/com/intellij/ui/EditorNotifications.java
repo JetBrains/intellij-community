@@ -13,6 +13,24 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class EditorNotifications {
+  private static final EditorNotifications NULL_IMPL = new EditorNotifications() {
+    @Override
+    public void updateNotifications(@NotNull VirtualFile file) {
+    }
+
+    @Override
+    public void updateNotifications(@NotNull Provider<?> provider) {
+    }
+
+    @Override
+    public void updateAllNotifications() {
+    }
+
+    @Override
+    public void logNotificationActionInvocation(@Nullable Key<?> providerKey, @Nullable Class<?> runnableClass) {
+    }
+  };
+
   /**
    * An extension allowing to add custom notifications to the top of file editors.
    *
@@ -39,8 +57,8 @@ public abstract class EditorNotifications {
     }
   }
 
-  public static EditorNotifications getInstance(Project project) {
-    return project.getService(EditorNotifications.class);
+  public static @NotNull EditorNotifications getInstance(@NotNull Project project) {
+    return project.isDefault() ? NULL_IMPL : project.getService(EditorNotifications.class);
   }
 
   public abstract void updateNotifications(@NotNull VirtualFile file);

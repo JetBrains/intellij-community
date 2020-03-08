@@ -15,9 +15,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class AddManyTestProcesses extends DumbAwareAction {
   public AddManyTestProcesses() {
-    super(ActionsBundle.lazyMessage("action.AddManyTestProcesses.text"));
+    super(ActionsBundle.messagePointer("action.AddManyTestProcesses.text"));
   }
 
   @Override

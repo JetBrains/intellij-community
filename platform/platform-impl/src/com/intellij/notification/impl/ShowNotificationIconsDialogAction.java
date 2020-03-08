@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -28,7 +29,7 @@ public class ShowNotificationIconsDialogAction extends AnAction implements DumbA
 
       @Override
       protected Action @NotNull [] createLeftSideActions() {
-        return new Action[]{new AbstractAction("&Repaint icons") {
+        return new Action[]{new AbstractAction(IdeBundle.message("button.repaint.icons")) {
           @Override
           public void actionPerformed(ActionEvent e) {
             if (myPanel != null) {

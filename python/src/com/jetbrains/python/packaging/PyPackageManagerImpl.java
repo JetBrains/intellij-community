@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.webcore.packaging.PackageVersionComparator;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -56,6 +57,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
   private static final String PACKAGING_TOOL = "packaging_tool.py";
+  private static final String GET_PIP = "get-pip.py";
   private static final int TIMEOUT = 10 * 60 * 1000;
 
   private static final String BUILD_DIR_OPTION = "--build-dir";
@@ -92,28 +94,44 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                    "Upgrade your project interpreter to Python " + LanguageLevel.PYTHON27 + " or newer");
     }
 
-    if (!refreshAndCheckForSetuptools()) {
+    try {
+      getHelperResult(GET_PIP, Collections.singletonList("setuptools"), true, true, null);
+      return;
+    }
+    catch (PyExecutionException exception) {
+      LOG.warn(exception.getStderr()); // get-pip.py executed with error, probably there's no internet connection
+    }
+    finally {
+      refreshPackagesSynchronously();
+    }
+
+    final PyPackage installedSetuptools = refreshAndCheckForSetuptools();
+    if (installedSetuptools == null ||
+        PackageVersionComparator.VERSION_COMPARATOR.compare(installedSetuptools.getVersion(), SETUPTOOLS_VERSION) < 0) {
       installManagement(PyPackageUtil.SETUPTOOLS + "-" + SETUPTOOLS_VERSION);
     }
-    if (PyPsiPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP) == null) {
+    final PyPackage installedPip = PyPsiPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP);
+    if (installedPip == null || PackageVersionComparator.VERSION_COMPARATOR.compare(installedPip.getVersion(), PIP_VERSION) < 0) {
       installManagement(PyPackageUtil.PIP + "-" + PIP_VERSION);
     }
   }
 
   @Override
   public boolean hasManagement() throws ExecutionException {
-    return refreshAndCheckForSetuptools() && PyPsiPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP) != null;
+    return refreshAndCheckForSetuptools() != null &&
+           PyPsiPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP) != null;
   }
 
-  private boolean refreshAndCheckForSetuptools() throws ExecutionException {
+  @Nullable
+  private PyPackage refreshAndCheckForSetuptools() throws ExecutionException {
     try {
       final List<PyPackage> packages = refreshAndGetPackages(false);
-      return PyPsiPackageUtil.findPackage(packages, PyPackageUtil.SETUPTOOLS) != null ||
-             PyPsiPackageUtil.findPackage(packages, PyPackageUtil.DISTRIBUTE) != null;
+      final PyPackage setuptoolsPackage = PyPsiPackageUtil.findPackage(packages, PyPackageUtil.SETUPTOOLS);
+      return setuptoolsPackage != null ? setuptoolsPackage : PyPsiPackageUtil.findPackage(packages, PyPackageUtil.DISTRIBUTE);
     }
     catch (PyExecutionException e) {
       if (e.getExitCode() == ERROR_NO_SETUPTOOLS) {
-        return false;
+        return null;
       }
       throw e;
     }
@@ -122,7 +140,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   protected void installManagement(@NotNull String name) throws ExecutionException {
     final String dirName = extractHelper(name + ".tar.gz");
     try {
-      final String fileName = dirName + name +mySeparator + "setup.py";
+      final String fileName = dirName + name + mySeparator + "setup.py";
       getPythonProcessResult(fileName, Collections.singletonList(INSTALL), true, true, dirName + name);
     }
     finally {

@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -20,7 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
+import static com.intellij.util.ui.UIUtil.removeMnemonic;
 
 public abstract class AbstractShowDiffAction extends AbstractVcsAction {
   @Override
@@ -74,7 +77,8 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction {
   protected void actionPerformed(@NotNull VcsContext vcsContext) {
     Project project = Objects.requireNonNull(vcsContext.getProject());
 
-    if (!ChangeListManager.getInstance(project).isFreezedWithNotification("Can not " + vcsContext.getActionName() + " now")) {
+    String actionName = removeEllipsisSuffix(removeMnemonic(vcsContext.getActionName()));
+    if (!ChangeListManager.getInstance(project).isFreezedWithNotification(VcsBundle.message("error.cant.perform.operation.now", actionName))) {
       VirtualFile file = vcsContext.getSelectedFiles()[0];
       AbstractVcs vcs = Objects.requireNonNull(ChangesUtil.getVcsForFile(file, project));
       DiffProvider provider = Objects.requireNonNull(vcs.getDiffProvider());

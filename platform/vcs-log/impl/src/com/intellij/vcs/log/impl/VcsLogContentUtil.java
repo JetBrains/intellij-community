@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.TabGroupId;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
@@ -21,16 +22,15 @@ import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Utility methods to operate VCS Log tabs as {@link Content}s of the {@link ContentManager} of the VCS toolwindow.
@@ -128,7 +128,8 @@ public class VcsLogContentUtil {
     }
     else {
       existingIds = ContainerUtil.map2SetNotNull(Arrays.asList(contentManager.getContents()), content -> {
-        if (!VcsLogContentProvider.TAB_NAME.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY))) return null;
+        TabGroupId groupId = content.getUserData(Content.TAB_GROUP_ID_KEY);
+        if (groupId == null || !VcsLogContentProvider.TAB_NAME.equals(groupId.getId())) return null;
         return getId(content);
       });
     }
@@ -136,14 +137,18 @@ public class VcsLogContentUtil {
     return existingIds;
   }
 
+
   public static <U extends VcsLogUiEx> U openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
-                                                    @NotNull String tabGroupName, @NotNull String shortName,
+                                                    @NotNull @NonNls String groupId,
+                                                    @NotNull Supplier<String> tabGroupDisplayName,
+                                                    @NotNull Function<U, String> tabDisplayName,
                                                     @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
     U logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.TOOL_WINDOW);
 
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-    ContentUtilEx.addTabbedContent(toolWindow.getContentManager(),
-                                   new VcsLogPanel(logManager, logUi), tabGroupName, shortName, focus, logUi);
+    ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi),
+                                   groupId, tabGroupDisplayName, () -> tabDisplayName.apply(logUi),
+                                   focus, logUi);
     if (focus) {
       toolWindow.activate(null);
     }
@@ -171,7 +176,7 @@ public class VcsLogContentUtil {
 
   public static void runInMainLog(@NotNull Project project, @NotNull Consumer<? super MainVcsLogUi> consumer) {
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-    if (!selectMainLog(window)) {
+    if (window == null || !selectMainLog(window.getContentManager())) {
       showLogIsNotAvailableMessage(project);
       return;
     }
@@ -190,8 +195,7 @@ public class VcsLogContentUtil {
     VcsBalloonProblemNotifier.showOverChangesView(project, VcsLogBundle.message("vcs.log.is.not.available"), MessageType.WARNING);
   }
 
-  private static boolean selectMainLog(@NotNull ToolWindow window) {
-    ContentManager cm = window.getContentManager();
+  public static boolean selectMainLog(@NotNull ContentManager cm) {
     Content[] contents = cm.getContents();
     for (Content content : contents) {
       // here tab name is used instead of log ui id to select the correct tab
@@ -204,14 +208,14 @@ public class VcsLogContentUtil {
     return false;
   }
 
-  public static void renameLogUi(@NotNull Project project, @NotNull VcsLogUi ui, @NotNull String newName) {
+  public static void updateLogUiName(@NotNull Project project, @NotNull VcsLogUi ui) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
     if (toolWindow == null) return;
 
     ContentManager manager = toolWindow.getContentManager();
     JComponent component = ContentUtilEx.findContentComponent(manager, c -> ui == getLogUi(c));
     if (component == null) return;
-    ContentUtilEx.renameTabbedContent(manager, component, newName);
+    ContentUtilEx.updateTabbedContentDisplayName(manager, component);
   }
 
   /**

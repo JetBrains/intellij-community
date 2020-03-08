@@ -70,6 +70,7 @@ public class UIUtil {
   @NonNls public static final String EXPECTED_TYPE = "EXPECTED TYPE";
   @NonNls public static final String MINIMUM_ZERO = "MINIMUM ZERO";
   @NonNls public static final String MAXIMUM_UNLIMITED = "MAXIMUM UNLIMITED";
+  @NonNls public static final String CONTEXT = "CONTEXT";
 
   private UIUtil() {
   }

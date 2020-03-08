@@ -39,6 +39,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,7 +125,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       setDevelopers(developers);
     }
     else {
-      new Task.Backgroundable(null, "Loading Developers List", true) {
+      new Task.Backgroundable(null, DiagnosticBundle.message("progress.title.loading.developers.list"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -208,7 +209,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return panel;
   }
 
-  private static JComponent actionToolbar(String id, AnAction action) {
+  private static JComponent actionToolbar(@NonNls String id, AnAction action) {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(id, new DefaultActionGroup(action), true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     toolbar.getComponent().setBorder(JBUI.Borders.empty());
@@ -277,7 +278,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       });
       myAssigneeCombo.setSwingPopup(false);
       myAssigneePanel = new JPanel();
-      myAssigneePanel.add(new JBLabel("Assignee:"));
+      myAssigneePanel.add(new JBLabel(DiagnosticBundle.message("label.assignee")));
       myAssigneePanel.add(myAssigneeCombo);
     }
 
@@ -449,6 +450,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else if (t instanceof Freeze) {
       info.append(DiagnosticBundle.message("error.list.message.blame.freeze"));
     }
+    else if (t instanceof JBRCrash) {
+      info.append(DiagnosticBundle.message("error.list.message.blame.jbr.crash"));
+    }
     else {
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
     }
@@ -533,7 +537,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateAssigneePanel(MessageCluster cluster) {
-    if (cluster.submitter instanceof ITNReporter && !(cluster.first.getThrowable() instanceof Freeze)) {
+    if (cluster.submitter instanceof ITNReporter) {
       myAssigneePanel.setVisible(true);
       myAssigneeCombo.setEnabled(cluster.isUnsent());
       Integer assignee = cluster.first.getAssigneeId();
@@ -702,7 +706,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class BackAction extends AnAction implements DumbAware {
     BackAction() {
-      super("Previous", null, AllIcons.Actions.Back);
+      super(IdeBundle.message("button.previous"), null, AllIcons.Actions.Back);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB);
       if (action != null) {
         registerCustomShortcutSet(action.getShortcutSet(), getRootPane(), getDisposable());
@@ -723,7 +727,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class ForwardAction extends AnAction implements DumbAware {
     ForwardAction() {
-      super("Next", null, AllIcons.Actions.Forward);
+      super(IdeBundle.message("button.next"), null, AllIcons.Actions.Forward);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB);
       if (action != null) {
         registerCustomShortcutSet(action.getShortcutSet(), getRootPane(), getDisposable());

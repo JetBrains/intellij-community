@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
@@ -65,6 +66,10 @@ fun positionalParametersDistance(map: Map<Argument, CallParameter>, context: Psi
  * @see org.codehaus.groovy.runtime.MetaClassHelper.calculateParameterDistance
  */
 fun parameterDistance(argument: PsiType, parameter: PsiType, context: PsiElement): Long {
+  return parameterDistance0(argument, TypeConversionUtil.erasure(parameter), context)
+}
+
+private fun parameterDistance0(argument: PsiType, parameter: PsiType, context: PsiElement): Long {
   if (argument == parameter) return 0
   val parameterClass = (parameter as? PsiClassType)?.resolve()
   val argumentClass = (argument as? PsiClassType)?.resolve()

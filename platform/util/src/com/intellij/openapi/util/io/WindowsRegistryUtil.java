@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,17 +96,17 @@ public class WindowsRegistryUtil {
   }
 
   @Nullable
-  public static String readRegistryDefault(@NotNull String location) {
+  public static String readRegistryDefault(@NonNls @NotNull String location) {
     return trimToValue(readRegistry("reg query \"" + location + "\" /ve"));
   }
 
   @Nullable
-  public static String readRegistryValue(@NotNull String location, @NotNull String key) {
+  public static String readRegistryValue(@NonNls @NotNull String location, @NonNls @NotNull String key) {
     return trimToValue(readRegistry("reg query \"" + location + "\" /v " + key));
   }
 
   @Nullable
-  private static StringBuilder readRegistry(String command) {
+  private static StringBuilder readRegistry(@NonNls String command) {
     try {
       Process process = Runtime.getRuntime().exec(command);
       StringBuilder output = null;

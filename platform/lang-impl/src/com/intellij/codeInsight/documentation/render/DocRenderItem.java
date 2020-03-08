@@ -4,6 +4,7 @@ package com.intellij.codeInsight.documentation.render;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -18,6 +19,7 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -29,15 +31,16 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.geom.AffineTransform;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
 class DocRenderItem {
@@ -67,6 +70,7 @@ class DocRenderItem {
     Collection<DocRenderItem> items;
     Collection<DocRenderItem> existing = editor.getUserData(OUR_ITEMS);
     if (existing == null) {
+      if (itemsToSet.isEmpty()) return;
       editor.putUserData(OUR_ITEMS, items = new ArrayList<>());
     }
     else {
@@ -74,6 +78,7 @@ class DocRenderItem {
     }
     keepScrollingPositionWhile(editor, () -> {
       List<Runnable> foldingTasks = new ArrayList<>();
+      List<DocRenderItem> itemsToUpdateInlays = new ArrayList<>();
       boolean updated = false;
       for (Iterator<DocRenderItem> it = items.iterator(); it.hasNext(); ) {
         DocRenderItem item = it.next();
@@ -82,20 +87,24 @@ class DocRenderItem {
           updated |= item.remove(foldingTasks);
           it.remove();
         }
-        else {
-          updated |= item.update(matchingItem.textToRender);
+        else if (!matchingItem.textToRender.equals(item.textToRender)) {
+          item.textToRender = matchingItem.textToRender;
+          itemsToUpdateInlays.add(item);
         }
       }
       Collection<DocRenderItem> newRenderItems = new ArrayList<>();
       for (DocRenderPassFactory.Item item : itemsToSet) {
-        DocRenderItem newItem = new DocRenderItem(editor, item.textRange, item.textToRender);
+        DocRenderItem newItem = new DocRenderItem(editor, item.textRange, collapseNewItems ? null : item.textToRender);
         newRenderItems.add(newItem);
         if (collapseNewItems) {
           updated |= newItem.toggle(foldingTasks);
+          newItem.textToRender = item.textToRender;
+          itemsToUpdateInlays.add(newItem);
         }
       }
       editor.getFoldingModel().runBatchFoldingOperation(() -> foldingTasks.forEach(Runnable::run), true, false);
       newRenderItems.forEach(DocRenderItem::cleanup);
+      updated |= updateInlays(itemsToUpdateInlays);
       items.addAll(newRenderItems);
       return updated;
     });
@@ -146,8 +155,8 @@ class DocRenderItem {
     }
   }
 
-  static void keepScrollingPositionWhile(@NotNull Editor editor, @NotNull BooleanSupplier task) {
-    EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor, true);
+  private static void keepScrollingPositionWhile(@NotNull Editor editor, @NotNull BooleanSupplier task) {
+    EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor);
     keeper.savePosition();
     if (task.getAsBoolean()) keeper.restorePosition(false);
   }
@@ -166,13 +175,13 @@ class DocRenderItem {
     }).min(Comparator.comparingInt(i -> i.highlighter.getStartOffset())).orElse(null);
   }
 
-  private DocRenderItem(@NotNull Editor editor, @NotNull TextRange textRange, @NotNull String textToRender) {
+  private DocRenderItem(@NotNull Editor editor, @NotNull TextRange textRange, @Nullable String textToRender) {
     this.editor = editor;
     this.textToRender = textToRender;
     highlighter = editor.getMarkupModel()
       .addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), 0, null, HighlighterTargetArea.EXACT_RANGE);
     AnAction toggleAction = new ToggleRenderingAction(this);
-    highlighter.setGutterIconRenderer(new MyGutterIconRenderer(toggleAction));
+    highlighter.setGutterIconRenderer(new MyGutterIconRenderer(toggleAction, AllIcons.Gutter.JavadocRead));
   }
 
   private int calcFoldStartOffset() {
@@ -217,19 +226,6 @@ class DocRenderItem {
     if (inlay != null && inlay.isValid()) {
       Disposer.dispose(inlay);
       updated = true;
-    }
-    return updated;
-  }
-
-  private boolean update(@NotNull String textToRender) {
-    boolean updated = false;
-    if (!textToRender.equals(this.textToRender)) {
-      this.textToRender = textToRender;
-      if (inlay != null) {
-        inlay.putUserData(DocRenderer.RECREATE_COMPONENT, Boolean.TRUE);
-        inlay.update();
-        updated = true;
-      }
     }
     return updated;
   }
@@ -295,15 +291,14 @@ class DocRenderItem {
     return null;
   }
 
+  private static boolean updateInlays(@NotNull Collection<DocRenderItem> items) {
+    return DocRenderItemUpdater.getInstance().updateInlays(ContainerUtil.mapNotNull(items, i -> i.inlay));
+  }
+
   private static void updateInlays(@NotNull Editor editor) {
     keepScrollingPositionWhile(editor, () -> {
-      AtomicBoolean updated = new AtomicBoolean();
-      editor.getInlayModel().getBlockElementsInRange(0, editor.getDocument().getTextLength(), DocRenderer.class).forEach(inlay -> {
-        updated.set(true);
-        inlay.putUserData(DocRenderer.RECREATE_COMPONENT, Boolean.TRUE);
-        inlay.update();
-      });
-      return updated.get();
+      Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
+      return items != null && updateInlays(items);
     });
   }
 
@@ -357,11 +352,13 @@ class DocRenderItem {
     }
   }
 
-  private static class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
+  static class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
     private final AnAction action;
+    private final Icon icon;
 
-    private MyGutterIconRenderer(AnAction action) {
+    MyGutterIconRenderer(AnAction action, Icon icon) {
       this.action = action;
+      this.icon = icon;
     }
 
     @Override
@@ -377,7 +374,7 @@ class DocRenderItem {
     @NotNull
     @Override
     public Icon getIcon() {
-      return AllIcons.Toolwindows.Documentation;
+      return icon;
     }
 
     @NotNull
@@ -394,7 +391,11 @@ class DocRenderItem {
     @Nullable
     @Override
     public String getTooltipText() {
-      return CodeInsightBundle.message("doc.toggle.rendered.presentation");
+      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC);
+      if (action == null) return null;
+      String actionText = action.getTemplateText();
+      if (actionText == null) return null;
+      return XmlStringUtil.wrapInHtml(actionText + HelpTooltip.getShortcutAsHtml(KeymapUtil.getFirstKeyboardShortcutText(action)));
     }
 
     @Nullable
@@ -422,13 +423,13 @@ class DocRenderItem {
 
   static class ChangeFontSize extends DumbAwareAction {
     ChangeFontSize() {
-      super(CodeInsightBundle.lazyMessage("javadoc.adjust.font.size"));
+      super(CodeInsightBundle.messagePointer("javadoc.adjust.font.size"));
     }
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
-        DocFontSizePopup.show(() -> updateInlays(editor));
+        DocFontSizePopup.show(() -> updateInlays(editor), editor.getContentComponent());
       }
     }
   }

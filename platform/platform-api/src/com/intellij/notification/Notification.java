@@ -104,7 +104,7 @@ public class Notification {
     id = calculateId(this);
   }
 
-  public Notification(@NotNull String groupDisplayId,
+  public Notification(@NotNull @Nls String groupDisplayId,
                       @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title,
                       @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String content,
                       @NotNull NotificationType type) {
@@ -119,7 +119,7 @@ public class Notification {
    * @param type           notification type
    * @param listener       notification lifecycle listener
    */
-  public Notification(@NotNull String groupDisplayId,
+  public Notification(@NotNull @Nls String groupDisplayId,
                       @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title,
                       @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String content,
                       @NotNull NotificationType type,

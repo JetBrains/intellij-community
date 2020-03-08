@@ -76,13 +76,11 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   @Override
-  public void registerAspect(@NotNull Class<? extends PomModelAspect> aClass, @NotNull PomModelAspect aspect, @NotNull Set<PomModelAspect> dependencies) {
+  public void registerAspect(@NotNull Class<? extends PomModelAspect> aClass, @NotNull PomModelAspect aspect, @NotNull Set<? extends PomModelAspect> dependencies) {
     myAspects.put(aClass, aspect);
-    final Iterator<PomModelAspect> iterator = dependencies.iterator();
     final List<PomModelAspect> deps = new ArrayList<>();
     // todo: reorder dependencies
-    while (iterator.hasNext()) {
-      final PomModelAspect depend = iterator.next();
+    for (PomModelAspect depend : dependencies) {
       deps.addAll(getAllDependencies(depend));
     }
     deps.add(aspect); // add self to block same aspect transactions from event processing and update

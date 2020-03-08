@@ -43,7 +43,8 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
 
     addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public void mousePressed(MouseEvent e) {
+        if (e.isPopupTrigger()) return;
         //noinspection CallToSystemGC
         System.gc();
         updateState();

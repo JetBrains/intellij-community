@@ -28,6 +28,7 @@ import com.intellij.util.SystemProperties;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinDef;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -195,7 +196,8 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       });
     }
     else {
-      Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
+      Messages.showErrorDialog(IdeBundle.message("message.this.action.isn.t.supported.on.the.current.platform"),
+                               IdeBundle.message("dialog.title.cannot.open.file"));
     }
   }
 
@@ -213,7 +215,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return path;
   }
 
-  private static void spawn(String... command) {
+  private static void spawn(@NonNls String... command) {
     LOG.debug(Arrays.toString(command));
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
@@ -247,7 +249,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       SystemInfo.isWindows ? "Explorer" :
       readDesktopEntryKey("Name").orElse("File Manager");
 
-    private static Optional<String> readDesktopEntryKey(String key) {
+    private static Optional<String> readDesktopEntryKey(@NonNls String key) {
       if (SystemInfo.hasXdgMime()) {
         String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
         if (appName != null && appName.endsWith(".desktop")) {

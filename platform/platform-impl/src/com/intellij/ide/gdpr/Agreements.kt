@@ -76,22 +76,26 @@ object Agreements {
   }
 
   private fun AgreementUi.applyDataSharing(): AgreementUi {
-    this.setText(prepareConsentsHtmlText(ConsentOptions.getInstance().consents.first[0]))
+    val dataSharingConsent = ConsentOptions.getInstance().consents.first[0]
+    this.setText(prepareConsentsHtmlText(dataSharingConsent))
       .setTitle(bundle.getString("dataSharing.dialog.title"))
       .clearBottomPanel()
       .focusToText()
       .setAcceptButton(bundle.getString("dataSharing.dialog.accept")) {
-        AppUIUtil.saveConsents(ConsentOptions.getInstance().consents.first);
+        val consentToSave = dataSharingConsent.derive(true)
+        AppUIUtil.saveConsents(listOf(consentToSave))
         it.close(DialogWrapper.OK_EXIT_CODE)
       }
       .setDeclineButton(bundle.getString("dataSharing.dialog.decline")) {
+        val consentToSave = dataSharingConsent.derive(false)
+        AppUIUtil.saveConsents(listOf(consentToSave))
         it.close(DialogWrapper.CANCEL_EXIT_CODE)
       }
     return this
   }
 
   private fun prepareConsentsHtmlText(consent: Consent): String {
-    val allProductHint = if (!ConsentOptions.getInstance().isEAP) "<p><hint>${bundle.getString("dataSharing.applyToAll.hint")}</hint></p>"
+    val allProductHint = if (!ConsentOptions.getInstance().isEAP) "<p><hint>${bundle.getString("dataSharing.applyToAll.hint")}</hint></p>".replace("{0}", ApplicationInfoImpl.getShadowInstance().shortCompanyName)
     else ""
     val preferencesHint = "<p><hint>${bundle.getString("dataSharing.revoke.hint").replace("{0}", ShowSettingsUtil.getSettingsMenuName())}</hint></p>"
     return ("<html><body> <h1>${bundle.getString("dataSharing.consents.title")}</h1>"

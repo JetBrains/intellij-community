@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CommandLineUtil;
@@ -15,12 +15,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.execution.CommandLineArgumentEncoder;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.IdeUtilIoBundle;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,17 +87,17 @@ public class GeneralCommandLine implements UserDataHolder {
   private ParentEnvironmentType myParentEnvironmentType = ParentEnvironmentType.CONSOLE;
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
-  private boolean myRedirectErrorStream = false;
+  private boolean myRedirectErrorStream;
   private File myInputFile;
   private Map<Object, Object> myUserData;
 
   public GeneralCommandLine() { }
 
-  public GeneralCommandLine(String @NotNull ... command) {
+  public GeneralCommandLine(@NonNls String @NotNull ... command) {
     this(Arrays.asList(command));
   }
 
-  public GeneralCommandLine(@NotNull List<String> command) {
+  public GeneralCommandLine(@NonNls @NotNull List<String> command) {
     int size = command.size();
     if (size > 0) {
       setExePath(command.get(0));
@@ -286,6 +286,10 @@ public class GeneralCommandLine implements UserDataHolder {
     withRedirectErrorStream(redirectErrorStream);
   }
 
+  public File getInputFile() {
+    return myInputFile;
+  }
+
   @NotNull
   public GeneralCommandLine withInput(@Nullable File file) {
     myInputFile = file;
@@ -312,15 +316,7 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   @NotNull
   public String getCommandLineString(@Nullable String exeName) {
-    return getCommandLineString(exeName, CommandLineArgumentEncoder.DEFAULT_ENCODER);
-  }
-
-  /**
-   * @see GeneralCommandLine#getCommandLineString(String)
-   * @param commandLineArgumentEncoder used to handle (quote or escape) special characters in command line argument
-   */
-  public String getCommandLineString(@Nullable String exeName, @NotNull CommandLineArgumentEncoder commandLineArgumentEncoder) {
-    return ParametersListUtil.join(getCommandLineList(exeName), commandLineArgumentEncoder);
+    return ParametersListUtil.join(getCommandLineList(exeName));
   }
 
   @NotNull
@@ -396,14 +392,16 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     for (Map.Entry<String, String> entry : myEnvParams.entrySet()) {
-      String name = entry.getKey(), value = entry.getValue();
+      String name = entry.getKey();
+      String value = entry.getValue();
       if (!EnvironmentUtil.isValidName(name)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.name", name));
       if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.value", name, value));
     }
 
     String exePath = myExePath;
     if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.separatorChar) == -1) {
-      String systemPath = System.getenv("PATH"), shellPath = EnvironmentUtil.getValue("PATH");
+      String systemPath = System.getenv("PATH");
+      String shellPath = EnvironmentUtil.getValue("PATH");
       if (!Objects.equals(systemPath, shellPath)) {
         File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
         if (exeFile != null) {

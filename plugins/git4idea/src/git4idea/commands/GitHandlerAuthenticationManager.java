@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -8,9 +8,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.URLUtil;
-import com.intellij.util.net.HttpConfigurable;
 import git4idea.GitUtil;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
@@ -20,14 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
 import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
-import org.jetbrains.git4idea.ssh.GitSSHHandler;
 import org.jetbrains.git4idea.ssh.GitXmlRpcHandlerService;
 import org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService;
-import org.jetbrains.git4idea.ssh.GitXmlRpcSshService;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.UUID;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -46,8 +40,6 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
   @Nullable private UUID myHttpHandler;
   private volatile boolean myHttpAuthFailed;
 
-  @Nullable private UUID mySshHandler;
-
   @Nullable private UUID myNativeSshHandler;
 
   private GitHandlerAuthenticationManager(@NotNull Project project,
@@ -65,12 +57,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     GitHandlerAuthenticationManager manager = new GitHandlerAuthenticationManager(project, handler, version);
     GitUtil.tryRunOrClose(manager, () -> {
       manager.prepareHttpAuth();
-      if (GitVcsApplicationSettings.getInstance().isUseIdeaSsh()) {
-        manager.prepareSshAuth();
-      }
-      else if (Registry.is("git.ssh.native.override.ssh.askpass")) {
-        manager.prepareNativeSshAuth();
-      }
+      manager.prepareNativeSshAuth();
       boolean useCredentialHelper = GitVcsApplicationSettings.getInstance().isUseCredentialHelper();
 
       boolean isConfigCommand = handler.getCommand() == GitCommand.CONFIG;
@@ -88,7 +75,6 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
   @Override
   public void close() {
     cleanupHttpAuth();
-    cleanupSshAuth();
     cleanupNativeSshAuth();
   }
 
@@ -159,44 +145,6 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     return myHttpAuthFailed;
   }
 
-  private void prepareSshAuth() throws IOException {
-    GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
-    addHandlerPathToEnvironment(GitSSHHandler.GIT_SSH_ENV, ssh);
-    myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_VAR, "ssh");
-    GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
-    GitSSHGUIHandler guiHandler = new GitSSHGUIHandler(myProject, authenticationGate, myHandler.getIgnoreAuthenticationMode());
-    mySshHandler = ssh.registerHandler(guiHandler);
-    myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
-    int port = ssh.getXmlRcpPort();
-    myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
-    LOG.debug(String.format("myHandler=%s, port=%s", mySshHandler, port));
-
-    final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
-    boolean useHttpProxy =
-      httpConfigurable.USE_HTTP_PROXY && !isSshUrlExcluded(httpConfigurable, myHandler.getUrls());
-    myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
-
-    if (useHttpProxy) {
-      myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PROXY_HOST_ENV, StringUtil.notNullize(httpConfigurable.PROXY_HOST));
-      myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PROXY_PORT_ENV, String.valueOf(httpConfigurable.PROXY_PORT));
-      boolean proxyAuthentication = httpConfigurable.PROXY_AUTHENTICATION;
-      myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PROXY_AUTHENTICATION_ENV, String.valueOf(proxyAuthentication));
-
-      if (proxyAuthentication) {
-        myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PROXY_USER_ENV, StringUtil.notNullize(httpConfigurable.getProxyLogin()));
-        myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PROXY_PASSWORD_ENV,
-                                               StringUtil.notNullize(httpConfigurable.getPlainProxyPassword()));
-      }
-    }
-  }
-
-  private void cleanupSshAuth() {
-    if (mySshHandler != null) {
-      ServiceManager.getService(GitXmlRpcSshService.class).unregisterHandler(mySshHandler);
-      mySshHandler = null;
-    }
-  }
-
   private void prepareNativeSshAuth() throws IOException {
     GitXmlRpcNativeSshService service = ServiceManager.getService(GitXmlRpcNativeSshService.class);
 
@@ -236,12 +184,5 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
       ServiceManager.getService(GitXmlRpcNativeSshService.class).unregisterHandler(myNativeSshHandler);
       myNativeSshHandler = null;
     }
-  }
-
-  private static boolean isSshUrlExcluded(@NotNull HttpConfigurable httpConfigurable, @NotNull Collection<String> urls) {
-    return ContainerUtil.exists(urls, url -> {
-      String host = URLUtil.parseHostFromSshUrl(url);
-      return httpConfigurable.isProxyException(host);
-    });
   }
 }

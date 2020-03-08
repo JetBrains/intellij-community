@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
+import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,20 +19,48 @@ public class EventLogSystemLogger {
     logEvent(recorderId, "whitelist.updated", data);
   }
 
-  public static void logFilesSend(@NotNull String recorderId, int total, int succeed, int failed) {
+  public static void logFilesSend(@NotNull String recorderId, int total, int succeed, int failed, boolean external) {
     final FeatureUsageData data = new FeatureUsageData().
       addData("total", total).
       addData("send", succeed + failed).
-      addData("failed", failed);
+      addData("failed", failed).
+      addData("external", external);
     logEvent(recorderId, "logs.send", data);
   }
 
-  public static void logEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull FeatureUsageData data) {
+  public static void logStartingExternalSend(@NotNull String recorderId, long time) {
+    FeatureUsageData data = new FeatureUsageData().addData("send_ts", time);
+    logEvent(recorderId, "external.send.started", data);
+  }
+
+  public static void logFinishedExternalSend(@NotNull String recorderId, @Nullable String error, long time) {
+    boolean succeed = StringUtil.isEmpty(error);
+    FeatureUsageData data = new FeatureUsageData().addData("succeed", succeed).addData("send_ts", time);
+    if (!succeed) {
+      data.addData("error", error);
+    }
+    logEvent(recorderId, "external.send.finished", data);
+  }
+
+  public static void logCreatingExternalSendCommand(@NotNull String recorderId) {
+    logEvent(recorderId, "external.send.command.creation.started");
+  }
+
+  public static void logFinishedCreatingExternalSendCommand(@NotNull String recorderId, @Nullable EventLogUploadErrorType errorType) {
+    boolean succeed = errorType == null;
+    FeatureUsageData data = new FeatureUsageData().addData("succeed", succeed);
+    if (!succeed) {
+      data.addData("error", errorType.name());
+    }
+    logEvent(recorderId, "external.send.command.creation.finished", data);
+  }
+
+  private static void logEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull FeatureUsageData data) {
     final StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
     provider.getLogger().log(new EventLogGroup(GROUP, provider.getVersion()), eventId, data.build(), false);
   }
 
-  public static void logEvent(@NotNull String recorderId, @NotNull String eventId) {
+  private static void logEvent(@NotNull String recorderId, @NotNull String eventId) {
     final StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
     provider.getLogger().log(new EventLogGroup(GROUP, provider.getVersion()), eventId, false);
   }

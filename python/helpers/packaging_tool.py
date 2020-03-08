@@ -77,10 +77,12 @@ def run_pip(args):
 
 def do_pyvenv(args):
     import runpy
-    # We cannot rely on automatic installation of setuptools and pip and
-    # have to bootstrap these packages ourselves, since some distributions
-    # of CPython on Ubuntu and MacOS don't include "ensurepip" module.
-    sys.argv[1:] = ['--without-pip'] + args
+    try:
+        import ensurepip
+        sys.argv[1:] = args
+    except ImportError:
+        sys.argv[1:] = ['--without-pip'] + args
+
     try:
         runpy.run_module('venv', run_name='__main__', alter_sys=True)
     except ImportError:

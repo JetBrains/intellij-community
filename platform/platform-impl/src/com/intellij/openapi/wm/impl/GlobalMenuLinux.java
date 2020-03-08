@@ -31,6 +31,7 @@ import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
@@ -1336,7 +1337,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
   }
 
-  private static void _trace(String fmt, Object... args) {
+  private static void _trace(@NonNls String fmt, Object... args) {
     if (!TRACE_ENABLED) {
       return;
     }
@@ -1344,7 +1345,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     _trace(msg);
   }
 
-  private static void _trace(String msg) {
+  private static void _trace(@NonNls String msg) {
     if (!TRACE_ENABLED) {
       return;
     }

@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -145,7 +146,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
     else {
       // file wasn't mentioned in coverage information
-      info = null; // don't add arbitrary files in report - many of them can't be ever covered
+      info = fillInfoForUncoveredFile(VfsUtilCore.virtualToIoFile(file));
     }
 
     if (info != null) {
@@ -154,7 +155,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return info;
   }
 
-  private static @Nullable
+  protected static @Nullable
   ClassData getClassData(
     final @NotNull String filePath,
     final @NotNull ProjectData data,
@@ -416,7 +417,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  private FileCoverageInfo fileInfoForCoveredFile(@NotNull final ClassData classData) {
+  protected FileCoverageInfo fileInfoForCoveredFile(@NotNull final ClassData classData) {
     final Object[] lines = classData.getLines();
 
     // class data lines = [0, 1, ... count] but first element with index = #0 is fake and isn't
@@ -459,7 +460,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return null;
   }
 
-  private interface Annotator {
+  protected interface Annotator {
     void annotateSourceDirectory(final String dirPath, final DirCoverageInfo info);
 
     void annotateTestDirectory(final String dirPath, final DirCoverageInfo info);

@@ -13,6 +13,7 @@ import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -68,6 +69,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -309,9 +311,17 @@ public final class EditorMouseHoverPopupManager implements Disposable {
         if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getSource() == window) {
           myKeepPopupOnMouseMove = true;
         }
+        else if (e.getID() == WindowEvent.WINDOW_OPENED && !isParentWindow(window, e.getSource())) {
+          closeHint();
+        }
         return false;
       }, hint);
     }
+  }
+
+  private static boolean isParentWindow(@NotNull Window parent, Object potentialChild) {
+    return parent == potentialChild ||
+           (potentialChild instanceof Component) && isParentWindow(parent, ((Component)potentialChild).getParent());
   }
 
   private static AbstractPopup createHint(JComponent component, PopupBridge popupBridge, boolean requestFocus) {
@@ -892,6 +902,15 @@ public final class EditorMouseHoverPopupManager implements Disposable {
 
       getInstance().cancelCurrentProcessing();
     }
+
+    @Override
+    public void mousePressed(@NotNull EditorMouseEvent event) {
+      if (!Registry.is("editor.new.mouse.hover.popups")) {
+        return;
+      }
+
+      getInstance().cancelProcessingAndCloseHint();
+    }
   }
 
   private static class MyActionListener implements AnActionListener {
@@ -900,7 +919,9 @@ public final class EditorMouseHoverPopupManager implements Disposable {
       if (!Registry.is("editor.new.mouse.hover.popups")) {
         return;
       }
-      if (action instanceof HintManagerImpl.ActionToIgnore || action instanceof ActionGroup) return;
+      if (action instanceof HintManagerImpl.ActionToIgnore ||
+          action instanceof ActionGroup ||
+          action instanceof BaseNavigateToSourceAction) return;
       getInstance().cancelProcessingAndCloseHint();
     }
 

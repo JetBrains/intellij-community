@@ -76,7 +76,7 @@ public final class LanguageUtil {
     return result;
   }
 
-  private static void getAllDerivedLanguages(Language base, Set<Language> result) {
+  private static void getAllDerivedLanguages(Language base, Set<? super Language> result) {
     result.add(base);
     for (Language dialect : base.getDialects()) {
       getAllDerivedLanguages(dialect, result);
@@ -106,10 +106,7 @@ public final class LanguageUtil {
     if (language instanceof TemplateLanguage || language instanceof DependentLanguage) {
       return false;
     }
-    if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) {
-      return false;
-    }
-    return true;
+    return LanguageParserDefinitions.INSTANCE.forLanguage(language) != null;
   }
 
   public static boolean isFileLanguage(@NotNull Language language) {

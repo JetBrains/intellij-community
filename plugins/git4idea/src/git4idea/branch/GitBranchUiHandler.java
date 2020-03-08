@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,12 +77,11 @@ public interface GitBranchUiHandler {
    *                         specify the title of the force button; otherwise (force merge is not possible) pass null.
    * @return the code of the decision.
    */
-  @NotNull
   GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
                                                           @NotNull List<? extends Change> changes,
                                                           @NotNull Collection<String> paths,
-                                                          @NotNull String operation,
-                                                          @Nullable String forceButtonTitle);
+                                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operation,
+                                                          @Nullable @Nls(capitalization = Nls.Capitalization.Title) String forceButtonTitle);
 
   /**
    * @return true if user decided to restore the branch.

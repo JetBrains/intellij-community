@@ -17,7 +17,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -49,9 +47,20 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   @NotNull
   @Override
   public List<AnAction> getActions(SingleInspectionProfilePanel panel) {
-    if (!Registry.is("ssr.separate.inspections")) return Collections.emptyList();
-
     final InspectionProfileModifiableModel profile = panel.getProfile();
+    if (profile.getToolsOrNull(SSBasedInspection.SHORT_NAME, null) != null &&
+        !profile.isToolEnabled(HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME))) {
+      // enable SSBasedInspection if it was manually disabled
+      profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true);
+
+      for (ScopeToolState tool : profile.getAllTools()) {
+        final InspectionToolWrapper<?, ?> wrapper = tool.getTool();
+        if (wrapper instanceof StructuralSearchInspectionToolWrapper) {
+          tool.setEnabled(false);
+        }
+      }
+    }
+
     for (ScopeToolState tool : profile.getAllTools()) {
       final InspectionToolWrapper<?, ?> wrapper = tool.getTool();
       if (wrapper instanceof StructuralSearchInspectionToolWrapper) {
@@ -67,7 +76,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     actionGroup.registerCustomShortcutSet(CommonShortcuts.INSERT, panel);
     final Presentation presentation = actionGroup.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Add);
-    presentation.setText(SSRBundle.lazyMessage("add.inspection.button"));
+    presentation.setText(SSRBundle.messagePointer("add.inspection.button"));
     return Arrays.asList(actionGroup, new RemoveTemplateAction(panel));
   }
 
@@ -155,7 +164,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       // already added
       return;
     }
-    final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration, true);
+    final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
     wrapped.setProfile(profile);
     profile.addTool(project, wrapped, null);
 

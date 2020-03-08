@@ -48,30 +48,14 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     return new LightEditRootPane(getFrame(), this, this);
   }
 
-  private boolean addWidget(@NotNull Disposable disposable,
-                            @NotNull IdeStatusBarImpl statusBar,
-                            @NotNull StatusBarWidget widget,
-                            @NotNull String anchor) {
-    statusBar.doAddWidget(widget, anchor);
-    final String id = widget.ID();
-    Disposer.register(disposable, () -> {
-      statusBar.removeWidget(id);
-    });
-    return true;
-  }
-
   @Override
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
     LightEditorManager editorManager = LightEditService.getInstance().getEditorManager();
     IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
-    addWidget(this, statusBar, new LightEditPositionWidget(editorManager),
-              StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-    addWidget(this, statusBar, new LightEditAutosaveWidget(editorManager),
-              StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-    addWidget(this, statusBar, new LightEditEncodingWidgetWrapper(),
-              StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
-    addWidget(this, statusBar, new LightEditLineSeparatorWidgetWrapper(),
-              StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID));
+    statusBar.addWidget(new LightEditPositionWidget(editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this);
+    statusBar.addWidget(new LightEditAutosaveWidget(editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this);
+    statusBar.addWidget(new LightEditEncodingWidgetWrapper(), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL), this);
+    statusBar.addWidget(new LightEditLineSeparatorWidgetWrapper(), StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID), this);
 
     StatusBarWidgetsManager widgetsManager = project.getService(StatusBarWidgetsManager.class);
     PopupHandler.installPopupHandler(statusBar, new StatusBarPopupActionGroup(widgetsManager), ActionPlaces.STATUS_BAR_PLACE);

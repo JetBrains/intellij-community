@@ -16,20 +16,20 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CreatePythonFileAction extends CreateFileFromTemplateAction implements DumbAware {
   public CreatePythonFileAction() {
-    super(PyBundle.lazyMessage("action.create.python.file.title"), PyBundle.lazyMessage("action.create.python.file.description"), PythonFileType.INSTANCE.getIcon());
+    super(PyBundle.messagePointer("action.create.python.file.title"), PyBundle.messagePointer("action.create.python.file.description"), PythonFileType.INSTANCE.getIcon());
   }
 
   @Override
   protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
-      .setTitle("New Python file")
-      .addKind("Python file", PythonFileType.INSTANCE.getIcon(), "Python Script")
-      .addKind("Python unit test", PythonFileType.INSTANCE.getIcon(), "Python Unit Test")
-      .addKind("Python stub", PyiFileType.INSTANCE.getIcon(), "Python Stub");
+      .setTitle(PyBundle.message("create.python.file.action.new.python.file"))
+      .addKind(PyBundle.message("create.python.file.action.python.file"), PythonFileType.INSTANCE.getIcon(), "Python Script")
+      .addKind(PyBundle.message("create.python.file.action.python.unit.test"), PythonFileType.INSTANCE.getIcon(), "Python Unit Test")
+      .addKind(PyBundle.message("create.python.file.action.python.stub"), PyiFileType.INSTANCE.getIcon(), "Python Stub");
   }
 
   @Override
   protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
-    return "Create Python script " + newName; 
+    return PyBundle.message("create.python.file.script.action", newName);
   }
 }

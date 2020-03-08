@@ -4,6 +4,8 @@ package com.jetbrains.python.codeInsight.mlcompletion
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
+import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PrevCallsModelsProviderService
+import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PyPrevCallsCompletionFeatures
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyContextFeatureProvider : ContextFeatureProvider {
@@ -57,6 +59,14 @@ class PyContextFeatureProvider : ContextFeatureProvider {
       result["diff_lines_with_class_def"] = MLFeatureValue.numerical(diffLinesWithClassDef)
       result["containing_class_have_constructor"] = MLFeatureValue.binary(classHaveConstructor)
     }}
+
+    val cursorOffset = environment.lookup.lookupStart
+    val isInCondition = result["is_in_condition"]?.value as? Boolean ?: false
+    val isInForStatement = result["is_in_for_statement"]?.value as? Boolean ?: false
+    PyPrevCallsCompletionFeatures.calculatePrevCallsContextInfo(cursorOffset, position, isInCondition, isInForStatement)?.let {
+      PrevCallsModelsProviderService.instance.loadModelFor(it.qualifier)
+      environment.putUserData(PyPrevCallsCompletionFeatures.PREV_CALLS_CONTEXT_INFO_KEY, it)
+    }
 
     return result
   }

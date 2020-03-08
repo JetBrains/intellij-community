@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
@@ -115,7 +115,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
     add(createToolbar(), BorderLayout.NORTH);
 
     myViewer.installPopupHandler(myToolBarGroup);
-    myViewer.setDoubleClickHandler(() -> showDiff());
+    myViewer.setDoubleClickAndEnterKeyHandler(() -> showDiff());
   }
 
   @NotNull
@@ -199,7 +199,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
 
   private class ToggleChangeAction extends CheckboxAction {
     ToggleChangeAction() {
-      super(VcsBundle.lazyMessage("commit.dialog.include.action.name"));
+      super(VcsBundle.messagePointer("commit.dialog.include.action.name"));
     }
 
     @Override

@@ -20,7 +20,6 @@ import com.intellij.xml.DefaultXmlExtension;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.util.XmlRefCountHolder;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,13 +184,6 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     return true;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return XmlInspectionGroupNames.XML_INSPECTIONS;
-  }
-
   @NotNull
   @Override
   public String getShortName() {
@@ -212,13 +204,13 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     @Override
     @NotNull
     public String getName() {
-      return XmlAnalysisBundle.message("xml.inspections.unused.schema.remove");
+      return getFamilyName();
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return XmlInspectionGroupNames.XML_INSPECTIONS;
+      return XmlAnalysisBundle.message("xml.inspections.unused.schema.remove");
     }
 
     @Override

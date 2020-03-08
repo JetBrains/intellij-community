@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.icons.AllIcons
@@ -30,7 +30,7 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
                                                   private val message: String? = null)
   : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
   private var githubLoginPanel = GithubLoginPanel(executorFactory, isAccountUnique, project).apply {
-    putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
+    putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
   }
 
   internal lateinit var login: String

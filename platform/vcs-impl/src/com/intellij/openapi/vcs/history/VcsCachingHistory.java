@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.openapi.vcs.impl.BackgroundableActionLock.getLock;
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class VcsCachingHistory {
   @NotNull private final Project myProject;
@@ -141,7 +140,7 @@ public class VcsCachingHistory {
                                                                              @NotNull VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText2("Checking last revision");
+      indicator.setText2(VcsBundle.message("file.history.checking.last.revision.process"));
     }
     VcsAbstractHistorySession cached = myVcsHistoryCache.getFull(filePath, vcsKey, cacheableFactory);
     if (cached == null || cached.getRevisionList().isEmpty()) return null;
@@ -227,8 +226,15 @@ public class VcsCachingHistory {
     if (cacheableFactory != null) {
       VcsAbstractHistorySession session = history.getHistoryCache().getFull(filePath, vcs.getKeyInstanceMethod(), cacheableFactory);
       if (session != null) {
-        partner.reportCreatedEmptySession(session);
-        partner.finished();
+        ProgressManager.getInstance().run(new Task.Backgroundable(vcs.getProject(),
+                                                                  VcsBundle.message("loading.file.history.progress"),
+                                                                  true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            partner.reportCreatedEmptySession(session);
+            partner.finished();
+          }
+        });
         return true;
       }
     }

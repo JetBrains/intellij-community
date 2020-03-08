@@ -131,7 +131,7 @@ public abstract class AnalysisProblemsViewPanel extends SimpleToolWindowPanel im
 
   protected abstract void addQuickFixActions(@NotNull DefaultActionGroup group, @Nullable AnalysisProblem problem);
 
-  void addDiagnosticMessageActions(@NotNull DefaultActionGroup group, @Nullable AnalysisProblem problem){
+  private void addDiagnosticMessageActions(@NotNull DefaultActionGroup group, @Nullable AnalysisProblem problem){
     final List<AnalysisProblem> diagnosticMessages = problem != null ? problem.getSecondaryMessages() : null;
     if (diagnosticMessages == null || diagnosticMessages.isEmpty()) return;
 
@@ -317,8 +317,8 @@ public abstract class AnalysisProblemsViewPanel extends SimpleToolWindowPanel im
     if (url == null) return;
 
     group.addSeparator();
-    group.add(new DumbAwareAction(IdeBundle.lazyMessage("action.DumbAware.DartProblemsViewPanel.text.open.documentation"),
-                                  IdeBundle.lazyMessage(
+    group.add(new DumbAwareAction(IdeBundle.messagePointer("action.DumbAware.DartProblemsViewPanel.text.open.documentation"),
+                                  IdeBundle.messagePointer(
                                     "action.DumbAware.DartProblemsViewPanel.description.open.detailed.problem.description.in.browser"),
                                   AllIcons.Ide.External_link_arrow) {
       @Override

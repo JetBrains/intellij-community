@@ -21,13 +21,19 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.Key;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -56,14 +62,18 @@ public class FontEditorPreview implements PreviewPanel{
   }
 
   private static void registerRestoreAction(EditorEx editor) {
-    String originalGroupId = editor.getContextMenuGroupId();
-    AnAction originalGroup = originalGroupId == null ? null : ActionManager.getInstance().getAction(originalGroupId);
-    DefaultActionGroup group = new DefaultActionGroup();
-    if (originalGroup instanceof ActionGroup) {
-      group.addAll(((ActionGroup)originalGroup).getChildren(null));
+    editor.putUserData(RestorePreviewTextAction.OUR_EDITOR, Boolean.TRUE);
+    AnAction restoreAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RESTOR_FONT_PREVIEW_TEXT);
+    if (restoreAction != null) {
+      String originalGroupId = editor.getContextMenuGroupId();
+      AnAction originalGroup = originalGroupId == null ? null : ActionManager.getInstance().getAction(originalGroupId);
+      DefaultActionGroup group = new DefaultActionGroup();
+      if (originalGroup instanceof ActionGroup) {
+        group.addAll(((ActionGroup)originalGroup).getChildren(null));
+      }
+      group.add(restoreAction);
+      editor.installPopupHandler(new ContextMenuPopupHandler.Simple(group));
     }
-    group.add(new RestorePreviewTextAction());
-    editor.installPopupHandler(new ContextMenuPopupHandler.Simple(group));
   }
 
   private static String getIDEDemoText() {
@@ -91,6 +101,8 @@ public class FontEditorPreview implements PreviewPanel{
   static Editor createPreviewEditor(String text, EditorColorsScheme scheme, boolean editable) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument(text);
+    // enable editor popup toolbar
+    FileDocumentManagerImpl.registerDocument(editorDocument, new LightVirtualFile());
     EditorEx editor = (EditorEx) (editable ? editorFactory.createEditor(editorDocument) : editorFactory.createViewer(editorDocument));
     editor.setColorsScheme(scheme);
     EditorSettings settings = editor.getSettings();
@@ -153,15 +165,15 @@ public class FontEditorPreview implements PreviewPanel{
     }
   }
 
-  private static class RestorePreviewTextAction extends DumbAwareAction {
-    private RestorePreviewTextAction() {
-      super(EditorBundle.lazyMessage("restore.font.preview.text"), Presentation.NULL_STRING, AllIcons.Actions.Rollback);
-    }
+  public static class RestorePreviewTextAction extends DumbAwareAction {
+    private static final Key<Boolean> OUR_EDITOR = Key.create("RestorePreviewTextAction.editor");
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      e.getPresentation().setEnabledAndVisible(editor != null && !editor.getDocument().getText().equals(getIDEDemoText()));
+      e.getPresentation().setEnabledAndVisible(editor != null &&
+                                               editor.getUserData(OUR_EDITOR) != null &&
+                                               !editor.getDocument().getText().equals(getIDEDemoText()));
     }
 
     @Override

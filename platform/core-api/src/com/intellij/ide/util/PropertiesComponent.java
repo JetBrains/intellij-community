@@ -20,9 +20,9 @@ import java.lang.reflect.Field;
  * @author Konstantin Bulenkov
  */
 public abstract class PropertiesComponent extends SimpleModificationTracker {
-  public abstract void unsetValue(@NotNull String name);
+  public abstract void unsetValue(@NonNls @NotNull String name);
 
-  public abstract boolean isValueSet(@NotNull String name);
+  public abstract boolean isValueSet(@NonNls @NotNull String name);
 
   @Nullable
   public abstract String getValue(@NonNls @NotNull String name);
@@ -30,34 +30,34 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
   /**
    * Consider to use {@link #setValue(String, String, String)} to avoid write defaults.
    */
-  public abstract void setValue(@NotNull String name, @Nullable String value);
+  public abstract void setValue(@NonNls @NotNull String name, @Nullable String value);
 
   /**
    * Set value or unset if equals to default value
    */
-  public abstract void setValue(@NotNull String name, @Nullable String value, @Nullable String defaultValue);
+  public abstract void setValue(@NonNls @NotNull String name, @Nullable String value, @Nullable String defaultValue);
 
   /**
    * Set value or unset if equals to default value
    */
-  public abstract void setValue(@NotNull String name, float value, float defaultValue);
+  public abstract void setValue(@NonNls @NotNull String name, float value, float defaultValue);
 
   /**
    * Set value or unset if equals to default value
    */
-  public abstract void setValue(@NotNull String name, int value, int defaultValue);
+  public abstract void setValue(@NonNls @NotNull String name, int value, int defaultValue);
 
   /**
    * Set value or unset if equals to false
    */
-  public final void setValue(@NotNull String name, boolean value) {
+  public final void setValue(@NonNls @NotNull String name, boolean value) {
     setValue(name, value, false);
   }
 
   /**
    * Set value or unset if equals to default
    */
-  public abstract void setValue(@NotNull String name, boolean value, boolean defaultValue);
+  public abstract void setValue(@NonNls @NotNull String name, boolean value, boolean defaultValue);
 
   public abstract String @Nullable [] getValues(@NonNls @NotNull String name);
 
@@ -75,11 +75,11 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
     return Boolean.valueOf(getValue(name)).booleanValue();
   }
 
-  public final boolean getBoolean(@NotNull String name, boolean defaultValue) {
+  public final boolean getBoolean(@NonNls @NotNull String name, boolean defaultValue) {
     return isValueSet(name) ? isTrueValue(name) : defaultValue;
   }
 
-  public final boolean getBoolean(@NotNull String name) {
+  public final boolean getBoolean(@NonNls @NotNull String name) {
     return getBoolean(name, false);
   }
 
@@ -94,15 +94,15 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
    * Init was never performed and in any case is not recommended.
    */
   @Deprecated
-  public final int getOrInitInt(@NotNull String name, int defaultValue) {
+  public final int getOrInitInt(@NonNls @NotNull String name, int defaultValue) {
     return getInt(name, defaultValue);
   }
 
-  public int getInt(@NotNull String name, int defaultValue) {
+  public int getInt(@NonNls @NotNull String name, int defaultValue) {
     return StringUtilRt.parseInt(getValue(name), defaultValue);
   }
 
-  public long getLong(@NotNull String name, long defaultValue) {
+  public long getLong(@NonNls @NotNull String name, long defaultValue) {
     return StringUtilRt.parseLong(getValue(name), defaultValue);
   }
 
@@ -188,12 +188,13 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
     }
   }
 
-  public float getFloat(@NotNull String name, float defaultValue) {
+  public float getFloat(@NonNls @NotNull String name, float defaultValue) {
     if (isValueSet(name)) {
       try {
         return Float.parseFloat(getValue(name));
       }
-      catch (NumberFormatException ignore) {}
+      catch (NumberFormatException ignore) {
+      }
     }
     return defaultValue;
   }

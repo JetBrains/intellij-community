@@ -35,9 +35,13 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
 
   public synchronized final EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
     EditorActionHandler tmp = getHandler();
+    doSetupHandler(newHandler);
+    return tmp;
+  }
+
+  protected void doSetupHandler(@NotNull EditorActionHandler newHandler) {
     myHandler = newHandler;
     myHandler.setWorksInInjected(isInInjectedContext());
-    return tmp;
   }
 
   public synchronized EditorActionHandler getHandler() {
@@ -50,8 +54,7 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
         if (handlerBean.action.equals(id)) {
           EditorActionHandler handler = handlerBean.getHandler(myHandler);
           if (handler != null) {
-            myHandler = handler;
-            myHandler.setWorksInInjected(isInInjectedContext());
+            doSetupHandler(handler);
           }
         }
       }

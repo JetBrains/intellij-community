@@ -234,7 +234,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
       newVirtualEnvPanel != null -> newVirtualEnvPanel
       else -> existingVirtualEnvPanel
     }
-    return PyAddSdkGroupPanel(PyBundle.lazyMessage("python.add.sdk.panel.name.virtualenv.environment"),
+    return PyAddSdkGroupPanel(PyBundle.messagePointer("python.add.sdk.panel.name.virtualenv.environment"),
                               PythonIcons.Python.Virtualenv, panels, defaultPanel)
   }
 
@@ -246,7 +246,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     val panels = listOf(newCondaEnvPanel,
                         PyAddExistingCondaEnvPanel(project, module, existingSdks, null, context))
       .filterNotNull()
-    return PyAddSdkGroupPanel(PyBundle.lazyMessage("python.add.sdk.panel.name.conda.environment"),
+    return PyAddSdkGroupPanel(PyBundle.messagePointer("python.add.sdk.panel.name.conda.environment"),
                               PythonIcons.Python.Anaconda, panels, panels[0])
   }
 
