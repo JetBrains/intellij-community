@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
@@ -17,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -40,16 +40,15 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
     setOpaque(false);
     setFocusable(false);
     setTextAlignment(CENTER_ALIGNMENT);
-
-    addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mousePressed(MouseEvent e) {
-        if (e.isPopupTrigger()) return;
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         //noinspection CallToSystemGC
         System.gc();
         updateState();
+        return true;
       }
-    });
+    }.installOn(this, true);
     setBorder(JBUI.Borders.empty(0, 2));
     updateUI();
 
