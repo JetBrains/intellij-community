@@ -549,7 +549,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     };
     WriteCommandAction.writeCommandAction(project, psiFiles)
-                      .withName("Language Injection Configuration Update")
+                      .withName(IntelliLangBundle.message("command.name.language.injection.configuration.update"))
                       .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)
                       .run(() -> {
                         for (PsiElement annotation : psiElementsToRemove) {
