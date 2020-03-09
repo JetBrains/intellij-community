@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright.psi;
 
+import com.intellij.copyright.CopyrightBundle;
 import com.intellij.copyright.CopyrightManager;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
@@ -336,7 +337,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   }
 
   protected void processActions(final boolean allowReplacement) throws IncorrectOperationException {
-    WriteCommandAction.writeCommandAction(file.getProject()).withName("Update copyright").run(() -> {
+    WriteCommandAction.writeCommandAction(file.getProject()).withName(CopyrightBundle.message("command.name.update.copyright")).run(() -> {
       Document doc = FileDocumentManager.getInstance().getDocument(getRoot());
       if (doc != null) {
         PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(doc);
