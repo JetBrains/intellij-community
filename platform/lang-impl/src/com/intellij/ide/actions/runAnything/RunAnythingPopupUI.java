@@ -90,7 +90,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
   private String myLastInputText = null;
-  @Nullable private RunAnythingSearchListModel myListModel;
   private final Project myProject;
   private final Module myModule;
 
@@ -201,7 +200,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
       if (group != null) {
         myCurrentWorker.doWhenProcessed(() -> {
           RunAnythingUsageCollector.Companion.triggerMoreStatistics(myProject, group, model.getClass());
-          myCurrentWorker = insert(group, myListModel, getDataContext(), getSearchPattern(), index, -1);
+          RunAnythingSearchListModel listModel = (RunAnythingSearchListModel)myResultsList.getModel();
+          myCurrentWorker = insert(group, listModel, getDataContext(), getSearchPattern(), index, -1);
           myCurrentWorker.doWhenProcessed(() -> {
             clearSelection();
             ScrollingUtil.selectItem(myResultsList, index);
@@ -362,16 +362,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
       return;
     }
 
-    ReadAction.nonBlocking(() -> {
-      myListModel = ProgressManager.getInstance()
-        .runProcess(new RunAnythingCalcThread(myProject, getDataContext(), getSearchPattern()), new EmptyProgressIndicator());
-    })
+    ReadAction.nonBlocking(new RunAnythingCalcThread(myProject, getDataContext(), getSearchPattern())::compute)
       .coalesceBy(this)
-      .finishOnUiThread(ModalityState.defaultModalityState(), aVoid ->
+      .finishOnUiThread(ModalityState.defaultModalityState(), model ->
         myListRenderingAlarm.addRequest(() -> {
-          addListDataListener(myListModel);
-          myResultsList.setModel(myListModel);
-          myListModel.update();
+          addListDataListener(model);
+          myResultsList.setModel(model);
+          model.update();
         }, 150))
       .submit(myExecutorService);
   }
@@ -699,10 +696,10 @@ public class RunAnythingPopupUI extends BigPopupUI {
   @NotNull
   @Override
   public JBList<Object> createList() {
-    myListModel = new RunAnythingMainListModel();
-    addListDataListener(myListModel);
+    RunAnythingSearchListModel listModel = new RunAnythingMainListModel();
+    addListDataListener(listModel);
 
-    return new JBList<>(myListModel);
+    return new JBList<>(listModel);
   }
 
   private void initSearchActions() {
