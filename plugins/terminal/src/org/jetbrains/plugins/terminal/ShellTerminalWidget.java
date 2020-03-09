@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.function.Function;
 
 public class ShellTerminalWidget extends JBTerminalWidget {
 
@@ -94,20 +95,22 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     return StringUtil.trimStart(line, myPrompt);
   }
 
-  @NotNull
-  private String getLineAtCursor() {
+  private @NotNull String getLineAtCursor() {
+    return processTerminalBuffer(textBuffer -> {
+      TerminalLine line = textBuffer.getLine(getLineNumberAtCursor());
+      return line != null ? line.getText() : "";
+    });
+  }
+
+  <T> T processTerminalBuffer(@NotNull Function<TerminalTextBuffer, T> processor) {
     TerminalTextBuffer textBuffer = getTerminalPanel().getTerminalTextBuffer();
     textBuffer.lock();
     try {
-      TerminalLine line = textBuffer.getLine(getLineNumberAtCursor());
-      if (line != null) {
-        return line.getText();
-      }
+      return processor.apply(textBuffer);
     }
     finally {
       textBuffer.unlock();
     }
-    return "";
   }
 
   int getLineNumberAtCursor() {
