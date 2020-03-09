@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.ReviseWhenPortedToJDK
@@ -73,7 +73,7 @@ class TestApplicationManager private constructor() {
     @Volatile
     private var ourInstance: TestApplicationManager? = null
     @Volatile
-    private var bootstrapError: RuntimeException? = null
+    private var bootstrapError: Throwable? = null
     private val isBootstrappingAppNow = AtomicBoolean()
 
     private val dataManager: HeadlessDataManager
@@ -86,7 +86,7 @@ class TestApplicationManager private constructor() {
         try {
           result = createInstance()
         }
-        catch (e: RuntimeException) {
+        catch (e: Throwable) {
           bootstrapError = e
           isBootstrappingAppNow.set(false)
           throw e
