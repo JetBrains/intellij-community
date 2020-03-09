@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.google.common.hash.Hashing
@@ -22,13 +22,13 @@ object EventLogConfiguration {
   val deviceId: String = DeviceIdManager.getOrGenerateId()
   val bucket: Int = deviceId.asBucket()
 
-  val build: String = ApplicationInfo.getInstance().build.asBuildNumber()
+  val build: String by lazy { ApplicationInfo.getInstance().build.asBuildNumber() }
 
   private val salt: ByteArray = getOrGenerateSalt()
   private val anonymizedCache = HashMap<String, String>()
 
   fun anonymize(data: String): String {
-    if (StringUtil.isEmptyOrSpaces(data)) {
+    if (data.isBlank()) {
       return data
     }
 
