@@ -16,11 +16,17 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLargeTextFile;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 
 public class PsiLargeTextFileImpl extends PsiPlainTextFileImpl implements PsiLargeTextFile {
   public PsiLargeTextFileImpl(FileViewProvider viewProvider) {
     super(viewProvider);
+  }
+
+  @Override
+  public PsiElement findElementAt(int offset) {
+    return null;  // to suppress the interaction of PSI with large files
   }
 }
