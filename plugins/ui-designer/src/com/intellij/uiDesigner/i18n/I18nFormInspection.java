@@ -66,11 +66,6 @@ public class I18nFormInspection extends StringDescriptorInspection {
       if (prop.getName().equals(BorderProperty.NAME)) {
         provider = new FixesProvider() {
           @Override
-          public LocalQuickFix @Nullable [] getQuickFixes() {
-            return createBatchFixes();
-          }
-
-          @Override
           public @NotNull QuickFix createQuickFix(GuiEditor editor, @NotNull RadComponent component12) {
             return new I18nizeFormQuickFix(editor,
                                            UIDesignerBundle.message("i18n.quickfix.border.title"),
@@ -81,11 +76,6 @@ public class I18nFormInspection extends StringDescriptorInspection {
       else if (prop.getName().equals(ITabbedPane.TAB_TITLE_PROPERTY) || prop.getName().equals(ITabbedPane.TAB_TOOLTIP_PROPERTY)) {
         provider = new FixesProvider() {
           @Override
-          public LocalQuickFix @Nullable [] getQuickFixes() {
-            return createBatchFixes();
-          }
-
-          @Override
           public @NotNull QuickFix createQuickFix(GuiEditor editor, @NotNull RadComponent component1) {
             return new I18nizeFormQuickFix(editor,
                                            UIDesignerBundle.message("i18n.quickfix.tab.title", prop.getName()),
@@ -95,11 +85,6 @@ public class I18nFormInspection extends StringDescriptorInspection {
       }
       else {
         provider = new FixesProvider() {
-          @Override
-          public LocalQuickFix @Nullable [] getQuickFixes() {
-            return createBatchFixes();
-          }
-
           @Override
           public @NotNull QuickFix createQuickFix(GuiEditor editor, @NotNull RadComponent component13) {
             return new I18nizeFormQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.property", prop.getName()), new FormPropertyStringDescriptorAccessor(component13, (IntrospectedProperty)prop));
@@ -120,7 +105,12 @@ public class I18nFormInspection extends StringDescriptorInspection {
     return null;
   }
 
-  interface FixesProvider extends EditorQuickFixProvider, LocalQuickFixProvider { }
+  interface FixesProvider extends EditorQuickFixProvider, LocalQuickFixProvider {
+    @Override
+    default LocalQuickFix @Nullable [] getQuickFixes() {
+      return createBatchFixes();
+    }
+  }
 
   private static boolean isPropertyDescriptor(final IProperty prop) {
     return !prop.getName().equals(BorderProperty.NAME) && !prop.getName().equals(ITabbedPane.TAB_TITLE_PROPERTY) &&
