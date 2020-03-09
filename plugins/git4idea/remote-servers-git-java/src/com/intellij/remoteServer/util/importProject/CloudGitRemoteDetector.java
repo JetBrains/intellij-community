@@ -27,7 +27,7 @@ import com.intellij.remoteServer.configuration.deployment.ModuleDeploymentSource
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceImpl;
-import com.intellij.remoteServer.util.CloudBundle;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.util.CloudGitDeploymentDetector;
 import com.intellij.remoteServer.util.CloudNotifier;
 import com.intellij.util.messages.MessageBusConnection;

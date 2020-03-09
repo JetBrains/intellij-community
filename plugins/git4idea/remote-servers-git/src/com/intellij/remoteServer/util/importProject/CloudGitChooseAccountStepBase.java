@@ -21,7 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.util.CloudAccountSelectionEditor;
-import com.intellij.remoteServer.util.CloudBundle;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.util.CloudDeploymentNameConfiguration;
 import com.intellij.remoteServer.util.CloudGitDeploymentDetector;
 
