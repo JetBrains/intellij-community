@@ -35,7 +35,7 @@ final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription i
   private final IdeaPluginDescriptor plugin;
 
   PluginBooleanOptionDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
-    super(descriptor.getName(), PluginManagerConfigurable.ID);
+    super("Plugins: " + descriptor.getName(), PluginManagerConfigurable.ID);
 
     plugin = descriptor;
   }
