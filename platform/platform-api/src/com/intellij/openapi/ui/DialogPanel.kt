@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.ui.components.JBPanel
-import com.intellij.util.containers.MultiMap
 import java.awt.LayoutManager
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -16,10 +15,10 @@ class DialogPanel : JBPanel<DialogPanel> {
   var preferredFocusedComponent: JComponent? = null
   var validateCallbacks: List<() -> ValidationInfo?> = emptyList()
   var componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?> = emptyMap()
-  var customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit> = MultiMap.empty()
-  var applyCallbacks: MultiMap<JComponent?, () -> Unit> = MultiMap.empty()
-  var resetCallbacks: MultiMap<JComponent?, () -> Unit> = MultiMap.empty()
-  var isModifiedCallbacks: MultiMap<JComponent?, () -> Boolean> = MultiMap.empty()
+  var customValidationRequestors: Map<JComponent, List<(() -> Unit) -> Unit>> = emptyMap()
+  var applyCallbacks: Map<JComponent?, List<() -> Unit>> = emptyMap()
+  var resetCallbacks: Map<JComponent?, List<() -> Unit>> = emptyMap()
+  var isModifiedCallbacks: Map<JComponent?, List<() -> Boolean>> = emptyMap()
 
   private val componentValidationStatus = hashMapOf<JComponent, ValidationInfo>()
 
@@ -50,32 +49,32 @@ class DialogPanel : JBPanel<DialogPanel> {
   }
 
   fun apply() {
-    for ((component, callbacks) in applyCallbacks.entrySet()) {
+    for ((component, callbacks) in applyCallbacks.entries) {
       if (component == null) continue
 
       val modifiedCallbacks = isModifiedCallbacks.get(component)
-      if (modifiedCallbacks.isEmpty() || modifiedCallbacks.any { it() }) {
+      if (modifiedCallbacks.isNullOrEmpty() || modifiedCallbacks.any { it() }) {
         callbacks.forEach { it() }
       }
     }
-    applyCallbacks[null].forEach { it() }
+    applyCallbacks.get(null)?.forEach { it() }
   }
 
   fun reset() {
-    for ((component, callbacks) in resetCallbacks.entrySet()) {
+    for ((component, callbacks) in resetCallbacks.entries) {
       if (component == null) continue
 
       callbacks.forEach { it() }
     }
-    resetCallbacks[null].forEach { it() }
+    resetCallbacks.get(null)?.forEach { it() }
   }
 
   fun isModified(): Boolean {
-    return isModifiedCallbacks.values().any { it() }
+    return isModifiedCallbacks.values.any { list -> list.any { it() } }
   }
 
   private fun registerCustomValidationRequestors(component: JComponent, validator: ComponentValidator) {
-    for (onCustomValidationRequest in customValidationRequestors[component]) {
+    for (onCustomValidationRequest in customValidationRequestors.get(component) ?: return) {
       onCustomValidationRequest { validator.revalidate() }
     }
   }

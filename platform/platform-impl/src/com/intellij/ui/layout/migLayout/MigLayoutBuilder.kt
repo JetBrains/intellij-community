@@ -7,8 +7,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.MultiMap
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
@@ -56,11 +56,11 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   private val buttonGroupStack: MutableList<ButtonGroup> = mutableListOf()
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
-  override var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = hashMapOf()
-  override var customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit> = MultiMap()
-  override var applyCallbacks: MultiMap<JComponent?, () -> Unit> = MultiMap()
-  override var resetCallbacks: MultiMap<JComponent?, () -> Unit> = MultiMap()
-  override var isModifiedCallbacks: MultiMap<JComponent?, () -> Boolean> = MultiMap()
+  override var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = linkedMapOf()
+  override var customValidationRequestors: MutableMap<JComponent, MutableList<(() -> Unit) -> Unit>> = linkedMapOf()
+  override var applyCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
+  override var resetCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
+  override var isModifiedCallbacks: MutableMap<JComponent?, MutableList<() -> Boolean>> = linkedMapOf()
 
   val topButtonGroup: ButtonGroup?
     get() = buttonGroupStack.lastOrNull()
@@ -72,7 +72,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     try {
       body()
 
-      resetCallbacks.putValue(null) {
+      resetCallbacks.getOrPut(null, { SmartList() }).add {
         selectRadioButtonInGroup(buttonGroup)
       }
 

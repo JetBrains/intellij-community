@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.laf.VisualPaddingsProvider
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -24,8 +23,6 @@ import javax.swing.border.LineBorder
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 
-private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
-
 internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             override val builder: MigLayoutBuilder,
                             val labeled: Boolean = false,
@@ -33,6 +30,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             private val indent: Int /* level number (nested rows) */,
                             private val incrementsIndent: Boolean = parent != null) : Row() {
   companion object {
+    private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
+
     // as static method to ensure that members of current row are not used
     private fun createCommentRow(parent: MigLayoutRow,
                                  comment: String,
@@ -225,15 +224,14 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   private fun <T : JComponent> addTitleComponent(titleComponent: T, isEmpty: Boolean) {
-    val cc = CC().apply {
-      if (isEmpty) {
-        vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
-        isTrailingSeparator = true
-      }
-      else {
-        // TitledSeparator doesn't grow by default opposite to SeparatorComponent
-        growX()
-      }
+    val cc = CC()
+    if (isEmpty) {
+      cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
+      isTrailingSeparator = true
+    }
+    else {
+      // TitledSeparator doesn't grow by default opposite to SeparatorComponent
+      cc.growX()
     }
     addComponent(titleComponent, cc)
   }
@@ -247,14 +245,12 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   private fun createBlockRow(title: String?, isSeparated: Boolean, init: Row.() -> Unit): Row {
-    return createChildRow(indent = indent, title = title, isSeparated = isSeparated, incrementsIndent = isSeparated)
-      .apply(init)
-      .apply {
-        createChildRow().apply {
-          placeholder()
-          largeGapAfter()
-        }
-      }
+    val parentRow = createChildRow(indent = indent, title = title, isSeparated = isSeparated, incrementsIndent = isSeparated)
+    parentRow.init()
+    val result = parentRow.createChildRow()
+    result.placeholder()
+    result.largeGapAfter()
+    return result
   }
 
   override fun hideableRow(title: String, init: Row.() -> Unit): Row {
@@ -263,7 +259,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     separatorRow.addTitleComponent(titledSeparator, isEmpty = false)
     builder.hideableRowNestingLevel++
     try {
-      val panelRow = createChildRow(indent + spacing.indentLevel).apply(init)
+      val panelRow = createChildRow(indent + spacing.indentLevel)
+      panelRow.init()
       titledSeparator.row = panelRow
       titledSeparator.collapse()
       return panelRow
@@ -378,9 +375,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  private val JComponent.constraints get() = builder.componentConstraints.getOrPut(this) { CC() }
+  private val JComponent.constraints: CC
+    get() = builder.componentConstraints.getOrPut(this) { CC() }
 
-  fun addCommentRow(component: JComponent, comment: String, maxLineLength: Int, forComponent: Boolean) {
+  fun addCommentRow(comment: String, maxLineLength: Int, forComponent: Boolean) {
     gapAfter = "${spacing.commentVerticalTopGap}px!"
 
     val isParentRowLabeled = labeled
@@ -434,27 +432,32 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   override fun radioButton(text: String, comment: String?): CellBuilder<JBRadioButton> {
-    return super.radioButton(text, comment).also { attachSubRowsEnabled(it.component) }
+    val result = super.radioButton(text, comment)
+    attachSubRowsEnabled(result.component)
+    return result
   }
 
   override fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String?): CellBuilder<JBRadioButton> {
     return super.radioButton(text, prop, comment).also { attachSubRowsEnabled(it.component) }
   }
 
-  override fun onGlobalApply(callback: () -> Unit): Row = apply {
-    builder.applyCallbacks.putValue(null, callback)
+  override fun onGlobalApply(callback: () -> Unit): Row {
+    builder.applyCallbacks.getOrPut(null, { SmartList() }).add(callback)
+    return this
   }
 
-  override fun onGlobalReset(callback: () -> Unit): Row = apply {
-    builder.resetCallbacks.putValue(null, callback)
+  override fun onGlobalReset(callback: () -> Unit): Row {
+    builder.resetCallbacks.getOrPut(null, { SmartList() }).add(callback)
+    return this
   }
 
-  override fun onGlobalIsModified(callback: () -> Boolean): Row = apply {
-    builder.isModifiedCallbacks.putValue(null, callback)
+  override fun onGlobalIsModified(callback: () -> Boolean): Row {
+    builder.isModifiedCallbacks.getOrPut(null, { SmartList() }).add(callback)
+    return this
   }
 }
 
-class CellBuilderImpl<T : JComponent> internal constructor(
+private class CellBuilderImpl<T : JComponent> internal constructor(
   private val builder: MigLayoutBuilder,
   private val row: MigLayoutRow,
   override val component: T
@@ -468,12 +471,12 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   }
 
   override fun comment(text: String, maxLineLength: Int): CellBuilder<T> {
-    row.addCommentRow(component, text, maxLineLength, forComponent = false)
+    row.addCommentRow(text, maxLineLength, forComponent = false)
     return this
   }
 
   override fun commentComponent(text: String, maxLineLength: Int): CellBuilder<T> {
-    row.addCommentRow(component, text, maxLineLength, forComponent = true)
+    row.addCommentRow(text, maxLineLength, forComponent = true)
     return this
   }
 
@@ -489,22 +492,22 @@ class CellBuilderImpl<T : JComponent> internal constructor(
 
   override fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
     builder.componentValidateCallbacks[component.origin] = { callback(ValidationInfoBuilder(component.origin), component) }
-    property?.let { builder.customValidationRequestors.putValue(component.origin, it::afterPropagation) }
+    property?.let { builder.customValidationRequestors.getOrPut(component.origin, { SmartList() }).add(it::afterPropagation) }
     return this
   }
 
   override fun onApply(callback: () -> Unit): CellBuilder<T> {
-    builder.applyCallbacks.putValue(component, callback)
+    builder.applyCallbacks.getOrPut(component, { SmartList() }).add(callback)
     return this
   }
 
   override fun onReset(callback: () -> Unit): CellBuilder<T> {
-    builder.resetCallbacks.putValue(component, callback)
+    builder.resetCallbacks.getOrPut(component, { SmartList() }).add(callback)
     return this
   }
 
   override fun onIsModified(callback: () -> Boolean): CellBuilder<T> {
-    builder.isModifiedCallbacks.putValue(component, callback)
+    builder.isModifiedCallbacks.getOrPut(component, { SmartList() }).add(callback)
     return this
   }
 
@@ -524,8 +527,7 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   }
 
   override fun shouldSaveOnApply(): Boolean {
-    if (applyIfEnabled && !component.isEnabled) return false
-    return true
+    return !(applyIfEnabled && !component.isEnabled)
   }
 
   override fun actsAsLabel() {
@@ -539,56 +541,40 @@ class CellBuilderImpl<T : JComponent> internal constructor(
     }
   }
 
-  override fun sizeGroup(name: String) = apply {
+  override fun sizeGroup(name: String): CellBuilderImpl<T> {
     builder.updateComponentConstraints(component) {
       sizeGroup(name)
     }
+    return this
   }
 
-  override fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T> = apply {
+  override fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T> {
     builder.updateComponentConstraints(component) {
       builder.defaultComponentConstraintCreator.applyGrowPolicy(this, growPolicy)
     }
+    return this
   }
 
-  override fun constraints(vararg constraints: CCFlags): CellBuilder<T> = apply {
+  override fun constraints(vararg constraints: CCFlags): CellBuilder<T> {
     builder.updateComponentConstraints(component) {
       overrideFlags(this, constraints)
     }
+    return this
   }
 
-  override fun withLargeLeftGap(): CellBuilder<T> = apply {
+  override fun withLargeLeftGap(): CellBuilder<T> {
     builder.updateComponentConstraints(component) {
       horizontal.gapBefore = gapToBoundSize(builder.spacing.largeHorizontalGap, true)
     }
+    return this
   }
 
-  override fun withLeftGap(gapLeft: Int): CellBuilder<T> = apply {
+  override fun withLeftGap(gapLeft: Int): CellBuilder<T> {
     builder.updateComponentConstraints(component) {
       horizontal.gapBefore = gapToBoundSize(gapLeft, true)
     }
+    return this
   }
-}
-
-private fun getCommentLeftInset(component: JComponent): Int {
-  if (component is JTextField) {
-    // 1px border, better to indent comment text
-    return 1
-  }
-
-  // as soon as ComponentPanelBuilder will also compensate visual paddings (instead of compensating on LaF level),
-  // this logic will be moved into computeCommentInsets
-  val border = component.border
-  val componentBorderVisualLeftPadding =
-    if (border is VisualPaddingsProvider) {
-      border.getVisualPaddings(component)?.left ?: 0
-    }
-    else {
-      0
-    }
-
-  val insets = ComponentPanelBuilder.computeCommentInsets(component, true)
-  return insets.left - componentBorderVisualLeftPadding
 }
 
 private val JComponent.origin: JComponent
