@@ -39,7 +39,7 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
   @Nullable("null means disabled")
   @Override
   public String getName() {
-    return "Code preview";
+    return EditorConfigBundle.message("line.marker.name.code.preview");
   }
 
   @Override

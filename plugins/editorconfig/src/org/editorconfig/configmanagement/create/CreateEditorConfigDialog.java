@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind;
+import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ public class CreateEditorConfigDialog extends DialogWrapper {
     super(false);
     myProject = project;
     init();
-    setTitle("New EditorConfig File");
+    setTitle(EditorConfigBundle.message("dialog.title.new.editorconfig.file"));
   }
 
   @Nullable
