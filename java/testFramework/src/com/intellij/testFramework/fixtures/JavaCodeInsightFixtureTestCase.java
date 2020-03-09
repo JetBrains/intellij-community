@@ -10,6 +10,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
@@ -20,8 +21,9 @@ import java.io.File;
 /**
  * @author peter
  */
-public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
+public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase implements TestIndexingModeSupporter {
   protected JavaCodeInsightTestFixture myFixture;
+  private @NotNull IndexingMode myIndexingMode = IndexingMode.SMART;
 
   @NotNull
   @Override
@@ -35,6 +37,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
 
     TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
+    myFixture = JavaIndexingModeCodeInsightTestFixture.Companion.wrapFixture(myFixture, myIndexingMode);
     JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     if (toAddSourceRoot()) {
       moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
@@ -105,5 +108,15 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
 
   protected Module getModule() {
     return myFixture.getModule();
+  }
+
+  @Override
+  public void setIndexingMode(@NotNull IndexingMode mode) {
+    myIndexingMode = mode;
+  }
+
+  @Override
+  public @NotNull IndexingMode getIndexingMode() {
+    return myIndexingMode;
   }
 }

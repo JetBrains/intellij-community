@@ -16,9 +16,8 @@ import org.jetbrains.annotations.NotNull;
  *   to check if PSI has changed since they accessed it last time. This can be used to flush and rebuild various internal caches.
  *   See {@link #getModificationCount()}
  *
- *   <li/> Make a {@link CachedValue} instance dependent on a specific PSI modification tracker.
- *   To achieve that, one should can one of the constants in this interface as {@link CachedValueProvider.Result}
- *   dependencies.
+ *   <li/> Make a {@link CachedValue} instance outdated on every physical PSI change.
+ *   To achieve that, one should use {@link #MODIFICATION_COUNT} as {@link CachedValueProvider.Result} dependency.
  *
  *   <li/> Subscribe to any PSI change (for example, to drop caches in the listener manually).
  *   See {@link PsiModificationTracker.Listener}

@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.NeedsIndicesState
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -57,6 +58,7 @@ class Normal11CompletionTest extends NormalCompletionTestCase {
     return var
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testToUnmodifiable() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'collect(Collectors.toUnmodifiableList())', 'collect(Collectors.toUnmodifiableSet())'

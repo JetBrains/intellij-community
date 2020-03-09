@@ -1121,9 +1121,9 @@ public abstract class UsefulTestCase extends TestCase {
     EdtTestUtil.runInEdtAndWait(() -> {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        FileBasedIndexImpl index = (FileBasedIndexImpl)app.getServiceIfCreated(FileBasedIndex.class);
-        if (index != null) {
-          index.getChangedFilesCollector().waitForVfsEventsExecuted(timeout, timeUnit);
+        FileBasedIndex index = app.getServiceIfCreated(FileBasedIndex.class);
+        if (index instanceof FileBasedIndexImpl) {
+          ((FileBasedIndexImpl)index).getChangedFilesCollector().waitForVfsEventsExecuted(timeout, timeUnit);
         }
 
         DocumentCommitThread commitThread = (DocumentCommitThread)app.getServiceIfCreated(DocumentCommitProcessor.class);

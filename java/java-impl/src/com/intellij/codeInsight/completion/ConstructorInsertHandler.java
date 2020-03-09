@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -309,6 +310,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
   private static Runnable createOverrideRunnable(final Editor editor, final PsiFile file, final Project project) {
     return () -> {
       TemplateManager.getInstance(project).finishTemplate(editor);
+      if (DumbService.getInstance(project).isDumb()) return;
 
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       final PsiAnonymousClass

@@ -169,8 +169,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   private PsiClass @NotNull [] getCachedClassesByName(@NotNull String name, GlobalSearchScope scope) {
     DumbService dumbService = DumbService.getInstance(getProject());
-    if (dumbService.isDumb()) {
-      return dumbService.isAlternativeResolveEnabled() ? getCachedClassesInDumbMode(name, scope) : PsiClass.EMPTY_ARRAY;
+    if (dumbService.isDumb() && dumbService.isAlternativeResolveEnabled()) {
+      return getCachedClassesInDumbMode(name, scope);
     }
 
     if (ModelBranchImpl.hasBranchedFilesInScope(scope)) {

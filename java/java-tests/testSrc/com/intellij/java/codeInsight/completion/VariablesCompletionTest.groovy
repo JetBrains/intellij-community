@@ -19,6 +19,7 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.testFramework.NeedsIndicesState
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -40,6 +41,7 @@ class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(FILE_PREFIX + "locals/" + getTestName(false) + "_after.java")
   }
 
+  @NeedsIndicesState.FullIndices
   void testInputMethodEventVariable() throws Exception {
     myFixture.addClass("package java.awt.event; public interface InputMethodEvent {}")
 
@@ -47,6 +49,7 @@ class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(FILE_PREFIX + "locals/" + getTestName(false) + "_after.java")
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testLocals1() throws Exception {
     doSelectTest("TestSource1.java", "TestResult1.java")
   }
@@ -66,6 +69,7 @@ class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     doTest("TestSource3.java", "TestResult3.java")
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testLocals4() throws Exception {
     doSelectTest("TestSource4.java", "TestResult4.java")
   }
@@ -115,6 +119,7 @@ class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     doTest("TestSource8.java", "TestResult8.java")
   }
 
+  @NeedsIndicesState.StandardLibraryIndices(reason = "With empty indices 'Object' may be considered variable name, and instanceof is ok here; Object is not resolved thus not replaced with 'o'")
   void testUnresolvedReference() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + getTestName(false) + ".java")
     assertStringItems("o", "psiClass")
@@ -203,6 +208,7 @@ class Foo {
     myFixture.assertPreferredCompletionItems 0, 'total'
   }
 
+  @NeedsIndicesState.StandardLibraryIndices(reason = "On empty indices String is not resolved and replaced with name 's', filtered out in JavaMemberNameCompletionContributor.getOverlappedNameVersions for being short")
   void testInitializerMatters() throws Exception {
     myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }")
     complete()
@@ -244,11 +250,13 @@ class Foo {
     checkResultByFile(FILE_PREFIX + getTestName(false) + "_after.java")
   }
 
+  @NeedsIndicesState.StandardLibraryIndices(reason = "On empty indices String is not resolved and replaced with name 's', filtered out in JavaMemberNameCompletionContributor.getOverlappedNameVersions for being short")
   void testConstructorParameterName() {
     configure()
     assertStringItems("color")
   }
 
+  @NeedsIndicesState.StandardLibraryIndices(reason = "On empty indices String is not resolved and replaced with name 's', filtered out in JavaMemberNameCompletionContributor.getOverlappedNameVersions for being short; P is from PARAMETER_NAME_PREFIX")
   void testConstructorParameterNameWithPrefix() {
     JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject())
     settings.FIELD_NAME_PREFIX = "my"
@@ -298,6 +306,7 @@ class Rectangle2D {
     myFixture.assertPreferredCompletionItems 0, 'aDouble', 'rectangle2D'
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void "test suggest field-shadowing parameter name"() {
     myFixture.configureByText 'a.java', '''
 class FooFoo {

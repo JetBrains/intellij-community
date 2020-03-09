@@ -26,4 +26,10 @@ public interface DumbUtil {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   @NotNull <T> List<T> filterByDumbAwarenessHonoringIgnoring(@NotNull Collection<? extends T> collection);
+
+  /**
+   * @return true iff one may use file based indices, i.e. project is not in dumb mode, or
+   * {@link com.intellij.util.indexing.FileBasedIndex#ignoreDumbMode(Runnable, com.intellij.util.indexing.DumbModeAccessType)} was used
+   */
+  boolean mayUseIndices();
 }

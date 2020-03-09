@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -516,7 +517,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       ApplicationUtil.tryRunReadAction(() -> {
         Project project = myManager.getProject();
         if (project.isDisposed()) throw new ProcessCanceledException();
-        if (DumbService.isDumb(project) && FileBasedIndex.getInstance().getCurrentDumbModeAccessType() == null) {
+        if (!DumbUtil.getInstance(project).mayUseIndices()) {
           throw ApplicationUtil.CannotRunReadActionException.create();
         }
 

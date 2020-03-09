@@ -2,7 +2,9 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.testFramework.NeedsIndicesState
 
+@NeedsIndicesState.FullIndices
 class AtomicFieldUpdaterCompletionTest : LightFixtureCompletionTestCase() {
   override fun setUp() {
     super.setUp()

@@ -21,13 +21,18 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.NeedsIndicesState
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.indexing.DumbModeAccessType
+import com.intellij.util.indexing.FileBasedIndex
 
 /**
  * @author Pavel.Dolgov
  */
+@NeedsIndicesState.FullIndices
 class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionParameters/"
 
@@ -99,18 +104,23 @@ public class Construct {
   }
 
 }
+
 fun lookupFirstItemsTexts(lookupItems: List<LookupElement?>, maxSize: Int): List<String> =
-  lookupItems.subList(0, Math.min(lookupItems.size, maxSize)).map {
-    val obj = it?.`object`
-    when (obj) {
-      is PsiMethod -> {
-        obj.name + obj.parameterList.parameters.map { it.type.canonicalText + " " + it.name }
-          .joinToString(",", prefix = "(", postfix = ")")
-      }
-      else -> {
-        val presentation = LookupElementPresentation()
-        it?.renderElement(presentation)
-        (presentation.itemText ?: "") + (presentation.tailText ?: "")
+  // PsiJavaCodeReferenceElementImpl.getCanonicalText needs resolve()
+  // see JavaReflectionParametersCompletionTest.testConstructor and JavaReflectionParametersCompletionTest.testDeclaredConstructor
+  FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, ThrowableComputable<List<String>, RuntimeException> {
+    lookupItems.subList(0, Math.min(lookupItems.size, maxSize)).map {
+      val obj = it?.`object`
+      when (obj) {
+        is PsiMethod -> {
+          obj.name + obj.parameterList.parameters.map { it.type.canonicalText + " " + it.name }
+            .joinToString(",", prefix = "(", postfix = ")")
+        }
+        else -> {
+          val presentation = LookupElementPresentation()
+          it?.renderElement(presentation)
+          (presentation.itemText ?: "") + (presentation.tailText ?: "")
+        }
       }
     }
-  }
+  })

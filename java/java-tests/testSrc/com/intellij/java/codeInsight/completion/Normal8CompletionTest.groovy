@@ -20,6 +20,8 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.NeedsIndicesState
+
 /**
  * @author anna
  */
@@ -67,6 +69,7 @@ class Test {
     assert LookupElementPresentation.renderElement(items[0]).itemText == 'x1 -> {}'
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void "test lambda signature duplicate parameter name"() {
     myFixture.configureByText "a.java", """
 import java.util.function.Function;
@@ -135,6 +138,7 @@ class MethodRef {
     assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('MethodRef::boo')}
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void "test suggest receiver method reference for generic methods"() {
     myFixture.configureByText "a.java", """
 import java.util.*;
@@ -186,6 +190,7 @@ class Test88 {
 """
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testInheritorConstructorRef() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'ArrayList::new', 'ArrayList', 'CopyOnWriteArrayList::new'
@@ -218,6 +223,7 @@ class Test88 {
     assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('Bar::new')}
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void "test new array ref"() {
     myFixture.configureByText "a.java", """
 interface Foo9<T> {
@@ -234,18 +240,21 @@ class Test88 {
     assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('String[]::new')}
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testCollectorsToList() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toList') })
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testStaticallyImportedCollectorsToList() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('collect(toList())') })
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testAllCollectors() {
     configureByTestName()
     assert myFixture.lookupElementStrings == ['collect', 'collect', 'collect(Collectors.toCollection())', 'collect(Collectors.toList())', 'collect(Collectors.toSet())']
@@ -253,14 +262,17 @@ class Test88 {
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testCollectorsJoining() { doTest() }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testCollectorsToSet() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toSet') })
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testCollectorsInsideCollect() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'toCollection', 'toList', 'toSet'
@@ -268,30 +280,36 @@ class Test88 {
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testCollectorsJoiningInsideCollect() { doTest() }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testNoExplicitTypeArgsInTernary() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('empty') })
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testCallBeforeLambda() {
     configureByTestName()
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testLambdaInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testLambdaInAmbiguousConstructorCall() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('Empty') })
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testLambdaWithSuperWildcardInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'substring', 'substring', 'subSequence')
@@ -303,6 +321,7 @@ class Test88 {
 
   void testNoContinueInsideLambdaInLoop() { doAntiTest() }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testNoSemicolonAfterVoidMethodInLambda() {
     configureByTestName()
     myFixture.type('l\t')
@@ -315,12 +334,14 @@ class Test88 {
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testPreferLocalsOverMethodRefs() {
-    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.NONE)
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, "psiElement1 -> ", "psiElement", "getParent", "PsiElement"
   }
 
+  @NeedsIndicesState.FullIndices
   void testStaticallyImportedFromInterface() {
     myFixture.addClass("package pkg;\n" +
                        "public interface Point {\n" +
@@ -331,6 +352,7 @@ class Test88 {
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for overriding method completion)")
   void testOverrideMethodAsDefault() {
     configureByTestName()
     assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).itemText == 'default void run'
@@ -338,11 +360,13 @@ class Test88 {
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testChainedMethodReference() {
     configureByTestName()
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.FullIndices
   void testChainedMethodReferenceWithNoPrefix() {
     myFixture.addClass("package bar; public class Strings {}")
     myFixture.addClass("package foo; public class Strings { public static void goo() {} }")
@@ -350,6 +374,7 @@ class Test88 {
     myFixture.assertPreferredCompletionItems 0, 'Strings::goo'
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testOnlyAccessibleClassesInChainedMethodReference() {
     configureByTestName()
     def p = LookupElementPresentation.renderElement(assertOneElement(myFixture.lookupElements))
@@ -363,16 +388,19 @@ class Test88 {
     myFixture.assertPreferredCompletionItems 0, 'output', 'out -> '
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testPreferLambdaToConstructorReference() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, '() -> ', 'Exception::new'
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testPreferLambdaToTooGenericLocalVariables() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, '(foo, foo2) -> '
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testPreferLambdaToRecentSelections() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'String'
@@ -401,7 +429,7 @@ class Test88 {
   }
 
   void "test only importable suggestions in import"() {
-    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.NONE)
     myFixture.addClass("package com.foo; public class Comments { public static final int B = 2; }")
     myFixture.configureByText("a.java", "import com.<caret>x.y;\n" +
                                         "import static java.util.stream.Collectors.joining;")
@@ -409,12 +437,14 @@ class Test88 {
     assert myFixture.lookupElementStrings == ['foo']
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void "test no overloaded method reference duplicates"() {
     myFixture.configureByText 'a.java', 'class C { { Runnable r = this::wa<caret>x; } }'
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings == ['wait']
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testStreamMethodsOnCollection() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'filter'
@@ -428,6 +458,7 @@ class Test88 {
     checkResultByFileName()
   }
 
+  @NeedsIndicesState.StandardLibraryIndices
   void testStreamMethodsOnArray() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'length', 'clone'

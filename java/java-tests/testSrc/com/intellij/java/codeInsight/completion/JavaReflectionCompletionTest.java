@@ -19,11 +19,13 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.NeedsIndicesState;
 import com.intellij.util.ArrayUtil;
 
 /**
  * @author Konstantin Bulenkov
  */
+@NeedsIndicesState.StandardLibraryIndices
 public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase {
 
   @Override
@@ -51,22 +53,27 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTestFirst(1, "method", "method2", "method3");
   }
 
+  @NeedsIndicesState.FullIndices
   public void testForNameDeclaredMethod() {
     doTest(2, "method", "method1", "method2");
   }
 
+  @NeedsIndicesState.FullIndices
   public void testForNameMethod() {
     doTestFirst(1, "method", "method2", "method3");
   }
 
+  @NeedsIndicesState.FullIndices
   public void testForNameField() {
     doTest(1, "num", "num2", "num3");
   }
 
+  @NeedsIndicesState.FullIndices
   public void testForNameDeclaredField() {
     doTest(1, "num", "num1", "num2");
   }
 
+  @NeedsIndicesState.FullIndices
   public void testVarargMethod() {
     doTest(0, "vararg", "vararg2");
   }
@@ -108,10 +115,12 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTestFirst(1, "method", "method2");
   }
 
+  @NeedsIndicesState.FullIndices
   public void testInitChain() {
     doTest(1, "num", "num2");
   }
 
+  @NeedsIndicesState.FullIndices
   public void testAssignChain() {
     doTest(1, "num", "num2");
   }
@@ -165,6 +174,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(-1);
   }
 
+  @NeedsIndicesState.FullIndices
   public void testClassForNamePackages() {
     myFixture.addClass("package foo.bar.one; public class FirstClass {}");
     myFixture.addClass("package foo.bar.two; public class SecondClass {}");
@@ -175,11 +185,13 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(0, "StringBuffer", "StringBuilder");
   }
 
+  @NeedsIndicesState.FullIndices
   public void testClassForNameNestedAutocomplete() {
     myFixture.addClass("package foo.bar; public class PublicClass { public static class NestedClass {} }");
     doTest(-1, () -> assertNull("Auto-completed", myFixture.getLookupElementStrings()));
   }
 
+  @NeedsIndicesState.FullIndices
   public void testClassForNameNested() {
     myFixture.addClass("package foo.bar; public class PublicClass {" +
                        "  public static class NestedClass {}" +

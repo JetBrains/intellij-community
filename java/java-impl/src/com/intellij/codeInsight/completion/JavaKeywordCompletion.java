@@ -640,9 +640,13 @@ public class JavaKeywordCompletion {
     }
 
     if (position instanceof PsiIdentifier && position.getParent() instanceof PsiLocalVariable) {
-      PsiType type = ((PsiLocalVariable)position.getParent()).getType();
-      if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
-        return true;
+      PsiType type = ((PsiLocalVariable) position.getParent()).getType();
+      if (type instanceof PsiClassType && ((PsiClassType) type).resolve() == null) {
+        PsiElement grandParent = position.getParent().getParent();
+        if (!(grandParent instanceof PsiDeclarationStatement) || !(grandParent.getParent() instanceof PsiForStatement) ||
+                ((PsiForStatement) grandParent.getParent()).getInitialization() != grandParent) {
+          return true;
+        }
       }
     }
 
