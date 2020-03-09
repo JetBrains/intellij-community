@@ -46,7 +46,7 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
   protected void initMacroSupport() {
     super.initMacroSupport();
     addMacroSupport(myVMParametersComponent.getComponent().getEditorField(), MacrosDialog.Filters.ALL, getPathMacros());
-    addMacroSupport((ExtendableTextField)myInputRedirectPanel.getComponent().getTextField(), MacrosDialog.Filters.FILE_PATH,
+    addMacroSupport((ExtendableTextField)myInputRedirectPanel.getComponent().getTextField(), MacrosDialog.Filters.ANY_PATH,
                     getPathMacros());
   }
 
