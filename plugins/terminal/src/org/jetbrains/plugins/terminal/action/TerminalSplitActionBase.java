@@ -6,7 +6,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
@@ -15,21 +14,20 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.TerminalView;
 
 import javax.swing.*;
-import java.util.Objects;
+import java.util.function.Supplier;
 
 public class TerminalSplitActionBase extends TerminalSessionContextMenuActionBase implements DumbAware {
   private final boolean myVertically;
 
-  private TerminalSplitActionBase(@NotNull String text, @Nullable Icon icon, boolean vertically) {
+  private TerminalSplitActionBase(@NotNull Supplier<String> text, @Nullable Icon icon, boolean vertically) {
     getTemplatePresentation().setText(text);
     getTemplatePresentation().setIcon(icon);
     myVertically = vertically;
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow, @Nullable Content content) {
-    Project project = Objects.requireNonNull(e.getProject());
-    JBTerminalWidget terminalWidget = getContextTerminal(e, Objects.requireNonNull(content));
+  public void actionPerformedInTerminalToolWindow(@NotNull AnActionEvent e, @NotNull Project project, @NotNull Content content) {
+    JBTerminalWidget terminalWidget = getContextTerminal(e, content);
     if (terminalWidget != null) {
       TerminalView.getInstance(project).split(terminalWidget, myVertically);
     }
@@ -45,13 +43,13 @@ public class TerminalSplitActionBase extends TerminalSessionContextMenuActionBas
 
   public static class Vertical extends TerminalSplitActionBase {
     private Vertical() {
-      super(ActionsBundle.message("action.SplitVertically.text"), AllIcons.Actions.SplitVertically, true);
+      super(ActionsBundle.messagePointer("action.SplitVertically.text"), AllIcons.Actions.SplitVertically, true);
     }
   }
 
   public static class Horizontal extends TerminalSplitActionBase {
     private Horizontal() {
-      super(ActionsBundle.message("action.SplitHorizontally.text"), AllIcons.Actions.SplitHorizontally, false);
+      super(ActionsBundle.messagePointer("action.SplitHorizontally.text"), AllIcons.Actions.SplitHorizontally, false);
     }
   }
 }
