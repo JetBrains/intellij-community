@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.GeneralSettings;
@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBCheckBox;
@@ -126,6 +127,8 @@ final class BrowserSettingsPanel {
 
   private ComboBox<DefaultBrowserPolicy> defaultBrowserPolicyComboBox;
   private JBCheckBox showBrowserHover;
+  private JBCheckBox showBrowserHoverXml;
+  private JPanel browserPopupPanel;
 
   private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
 
@@ -167,6 +170,8 @@ final class BrowserSettingsPanel {
       if (text == null) throw new IllegalStateException(String.valueOf(value));
       return text;
     }));
+
+    browserPopupPanel.setBorder(IdeBorderFactory.createTitledBorder(XmlBundle.message("settings.browsers.show.browser.popup.in.the.editor")));
   }
 
   private void updateCustomPathTextFieldValue(@NotNull DefaultBrowserPolicy browser) {
@@ -279,7 +284,8 @@ final class BrowserSettingsPanel {
 
     DefaultBrowserPolicy defaultBrowserPolicy = getDefaultBrowser();
     if (getDefaultBrowserPolicy(browserManager) != defaultBrowserPolicy ||
-        browserManager.isShowBrowserHover() != showBrowserHover.isSelected()) {
+        browserManager.isShowBrowserHover() != showBrowserHover.isSelected() ||
+        browserManager.isShowBrowserHoverXml() != showBrowserHoverXml.isSelected()) {
       return true;
     }
 
@@ -302,6 +308,7 @@ final class BrowserSettingsPanel {
 
     WebBrowserManager browserManager = WebBrowserManager.getInstance();
     browserManager.setShowBrowserHover(showBrowserHover.isSelected());
+    browserManager.setShowBrowserHoverXml(showBrowserHoverXml.isSelected());
     browserManager.defaultBrowserPolicy = getDefaultBrowser();
     browserManager.setList(browsersEditor.apply());
   }
@@ -317,6 +324,7 @@ final class BrowserSettingsPanel {
 
     GeneralSettings settings = GeneralSettings.getInstance();
     showBrowserHover.setSelected(browserManager.isShowBrowserHover());
+    showBrowserHoverXml.setSelected(browserManager.isShowBrowserHoverXml());
     browsersEditor.reset(browserManager.getList());
 
     customPathValue = settings.getBrowserPath();
