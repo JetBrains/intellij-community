@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
@@ -290,7 +291,8 @@ private class BranchViewSplitter(first: JComponent? = null, second: JComponent? 
 
 private class DiffPreviewSplitter(diffPreview: VcsLogChangeProcessor, uiProperties: VcsLogUiProperties, mainComponent: JComponent)
   : FrameDiffPreview<VcsLogChangeProcessor>(diffPreview, uiProperties, mainComponent,
-                                            "vcs.branch.view.diff.splitter.proportion", true, 0.3f) {
+                                            "vcs.branch.view.diff.splitter.proportion",
+                                            Registry.`is`("vcs.log.diff.preview.vertical"), 0.3f) {
   override fun updatePreview(state: Boolean) {
     previewDiff.updatePreview(state)
   }

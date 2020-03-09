@@ -171,8 +171,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     setLayout(new BorderLayout());
     if (withDiffPreview) {
       myDiffPreview = new FrameDiffPreview<VcsLogChangeProcessor>(createDiffPreview(false, myChangesBrowser),
-                                                                  myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION, false,
-                                                                  0.7f) {
+                                                                  myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
+                                                                  Registry.is("vcs.log.diff.preview.vertical"), 0.7f) {
         @Override
         public void updatePreview(boolean state) {
           getPreviewDiff().updatePreview(state);
