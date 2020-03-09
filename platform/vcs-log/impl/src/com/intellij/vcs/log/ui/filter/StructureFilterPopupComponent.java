@@ -195,7 +195,7 @@ public class StructureFilterPopupComponent
 
     if (roots.size() > 15) {
       return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
-                                    new Separator(VcsLogBundle.messagePointer("action.Anonymous.text.recent")),
+                                    new Separator(VcsLogBundle.messagePointer("vcs.log.filter.recent")),
                                     new DefaultActionGroup(structureActions),
                                     new Separator(VcsLogBundle.messagePointer("action.Anonymous.text.roots")),
                                     new DefaultActionGroup(rootActions));
@@ -203,7 +203,7 @@ public class StructureFilterPopupComponent
     return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
                                   new Separator(VcsLogBundle.messagePointer("action.Anonymous.text.roots")),
                                   new DefaultActionGroup(rootActions),
-                                  new Separator(VcsLogBundle.messagePointer("action.Anonymous.text.recent")),
+                                  new Separator(VcsLogBundle.messagePointer("vcs.log.filter.recent")),
                                   new DefaultActionGroup(structureActions));
   }
 
