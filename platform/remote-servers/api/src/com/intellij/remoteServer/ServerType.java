@@ -42,7 +42,7 @@ public abstract class ServerType<C extends ServerConfiguration> {
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Title)
   public String getDeploymentConfigurationTypePresentableName() {
-    return getPresentableName() + " Deployment";
+    return CloudBundle.message("server.type.deployment.configuration.typ.presentable.name.0.deployment", getPresentableName());
   }
 
   /**
