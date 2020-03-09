@@ -116,14 +116,16 @@ object DynamicPlugins {
       return false
     }
 
-    if (loadedPluginDescriptor != null && isPluginOrModuleLoaded(loadedPluginDescriptor.pluginId)) {
-      if (!descriptor.useIdeaClassLoader) {
-        val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
-        if (pluginClassLoader !is PluginClassLoader && !ApplicationManager.getApplication().isUnitTestMode) {
-          val loader = baseDescriptor ?: descriptor
-          LOG.info("Plugin ${loader.pluginId} is not unload-safe because of use of UrlClassLoader as the default class loader. " +
-                   "For example, the IDE is started from the sources with the plugin.")
-          return false
+    if (!Registry.`is`("ide.plugins.allow.unload.from.sources")) {
+      if (loadedPluginDescriptor != null && isPluginOrModuleLoaded(loadedPluginDescriptor.pluginId)) {
+        if (!descriptor.useIdeaClassLoader) {
+          val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
+          if (pluginClassLoader !is PluginClassLoader && !ApplicationManager.getApplication().isUnitTestMode) {
+            val loader = baseDescriptor ?: descriptor
+            LOG.info("Plugin ${loader.pluginId} is not unload-safe because of use of UrlClassLoader as the default class loader. " +
+                     "For example, the IDE is started from the sources with the plugin.")
+            return false
+          }
         }
       }
     }
