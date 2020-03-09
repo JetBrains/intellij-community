@@ -14,7 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
-import com.intellij.remoteServer.util.CloudBundle;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
@@ -102,7 +102,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   public String getDisplayName() {
     ServerType<?> singleServerType = getSingleServerType();
-    return singleServerType == null ? "Clouds" : singleServerType.getPresentableName();
+    return singleServerType == null ? CloudBundle.message("configurable.display.name.clouds") : singleServerType.getPresentableName();
   }
 
   @Override
@@ -240,7 +240,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   private class AddRemoteServerGroup extends ActionGroup implements ActionGroupWithPreselection {
     private AddRemoteServerGroup() {
-      super("Add", "", IconUtil.getAddIcon());
+      super(CloudBundle.message("group.action.AddRemoteServerGroup.text"), "", IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }
 

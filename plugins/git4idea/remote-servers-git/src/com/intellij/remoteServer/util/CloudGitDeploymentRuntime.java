@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.CloudGitApplication;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
@@ -62,7 +63,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       @Nls
       @Override
       public String getActionText() {
-        return "Commit and Push";
+        return CloudBundle.message("action.text.commit.and.push");
       }
 
       @Override
@@ -82,7 +83,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       @Nls
       @Override
       public String getActionText() {
-        return "Push without Commit";
+        return CloudBundle.message("action.text.push.without.commit");
       }
 
       @NotNull

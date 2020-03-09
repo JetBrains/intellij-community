@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
-import com.intellij.remoteServer.util.CloudBundle;
+import com.intellij.remoteServer.CloudBundle;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.remoteServer.util.ApplicationActionUtils.getDeploymentTarget;
