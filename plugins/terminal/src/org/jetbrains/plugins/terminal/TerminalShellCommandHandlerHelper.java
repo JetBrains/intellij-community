@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal;
 import com.google.common.base.Ascii;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +33,7 @@ public class TerminalShellCommandHandlerHelper {
   @NonNls private static final String GOT_IT = "got_it";
   @NonNls private static final String FEATURE_ID = "terminal.shell.command.handling";
 
-  private static Experiments myExperiments;
+  private static Experiments ourExperiments;
 
   private final ShellTerminalWidget myWidget;
   private final Alarm myAlarm;
@@ -55,12 +56,14 @@ public class TerminalShellCommandHandlerHelper {
   }
 
   public static boolean isFeatureEnabled() {
-    Experiments experiments = myExperiments;
+    Experiments experiments = ourExperiments;
     if (experiments == null) {
-      experiments = ReadAction.compute(() -> Experiments.getInstance());
-      myExperiments = experiments;
+      experiments = ReadAction.compute(() -> {
+        return ApplicationManager.getApplication().isDisposed() ? null : Experiments.getInstance();
+      });
+      ourExperiments = experiments;
     }
-    return experiments.isFeatureEnabled(FEATURE_ID);
+    return experiments != null && experiments.isFeatureEnabled(FEATURE_ID);
   }
 
   private void highlightMatchedCommand(@NotNull Project project) {
