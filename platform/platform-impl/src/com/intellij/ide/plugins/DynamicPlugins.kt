@@ -37,9 +37,7 @@ import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.util.DefaultJDOMExternalizer
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
@@ -49,9 +47,11 @@ import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ConcurrentFactoryMap
+import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.xmlb.BeanBinding
+import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.swing.JComponent
@@ -214,16 +214,29 @@ object DynamicPlugins {
       val dependencyConfigFile = descriptor.findOptionalDependencyConfigFile(rootDescriptor.pluginId) ?: continue
 
       val pathResolver = PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER
+      val context = DescriptorLoadingContext(listContext, false, false, pathResolver)
       val element = try {
-        pathResolver.resolvePath(descriptor.basePath, dependencyConfigFile, pluginXmlFactory)
+        val baseUri = descriptor.basePath.toUri()
+        val jarPair = URLUtil.splitJarUrl(baseUri.toString())
+        val newBasePath = if (jarPair != null) {
+          val (jarPath, pathInsideJar) = jarPair
+          val fs = context.open(Paths.get(jarPath))
+          fs.getPath(pathInsideJar)
+        }
+        else {
+          Paths.get(baseUri)
+        }
+        pathResolver.resolvePath(newBasePath, dependencyConfigFile, pluginXmlFactory)
       }
       catch (e: Exception) {
-        LOG.info("Can't resolve optional dependency on plugin being loaded/unloaded: config file $dependencyConfigFile, error ${e.message}")
+        LOG.info("Can't resolve optional dependency on plugin being loaded/unloaded: config file $dependencyConfigFile", e)
         continue
+      }
+      finally {
+        context.close()
       }
 
       val fullyLoadedDescriptor = IdeaPluginDescriptorImpl(descriptor.pluginPath, false)
-      val context = DescriptorLoadingContext(listContext, false, false, pathResolver)
       if (!fullyLoadedDescriptor.readExternal(element, descriptor.basePath, pathResolver, context, descriptor)) {
         LOG.info("Can't read descriptor $dependencyConfigFile for optional dependency of plugin being loaded/unloaded")
         continue
