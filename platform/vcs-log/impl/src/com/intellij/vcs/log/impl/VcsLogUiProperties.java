@@ -23,8 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public interface VcsLogUiProperties {
-  @NotNull
-  <T> T get(@NotNull VcsLogUiProperty<T> property);
+  @NotNull <T> T get(@NotNull VcsLogUiProperty<T> property);
 
   <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value);
 

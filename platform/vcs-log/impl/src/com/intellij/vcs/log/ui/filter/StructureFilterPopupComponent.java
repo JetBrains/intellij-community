@@ -202,7 +202,8 @@ public class StructureFilterPopupComponent
                                     new DefaultActionGroup(rootActions));
     }
     return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
-                                  new Separator(VcsBundle.messagePointer("action.Anonymous.text.roots")), new DefaultActionGroup(rootActions),
+                                  new Separator(VcsBundle.messagePointer("action.Anonymous.text.roots")),
+                                  new DefaultActionGroup(rootActions),
                                   new Separator(VcsBundle.messagePointer("action.Anonymous.text.recent")),
                                   new DefaultActionGroup(structureActions));
   }

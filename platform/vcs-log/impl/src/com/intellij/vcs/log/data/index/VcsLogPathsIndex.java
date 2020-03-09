@@ -89,7 +89,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   }
 
   @Nullable
-  public EdgeData<FilePath> findRename(int parent, int child, @NotNull VirtualFile root, @NotNull FilePath path, boolean isChildPath) throws IOException {
+  public EdgeData<FilePath> findRename(int parent, int child, @NotNull VirtualFile root, @NotNull FilePath path, boolean isChildPath)
+    throws IOException {
     Collection<Couple<Integer>> renames = myPathsIndexer.myRenamesMap.get(Couple.of(parent, child));
     if (renames == null) return null;
     int pathId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(root, path));

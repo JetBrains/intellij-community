@@ -151,8 +151,9 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       }
     }
     else {
-      Task.Backgroundable task =
-        new Task.Backgroundable(null, VcsLogBundle.message("vcs.log.loading.selected.details.process"), true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+      Task.Backgroundable task = new Task.Backgroundable(null,
+                                                         VcsLogBundle.message("vcs.log.loading.selected.details.process"),
+                                                         true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             indicator.checkCanceled();

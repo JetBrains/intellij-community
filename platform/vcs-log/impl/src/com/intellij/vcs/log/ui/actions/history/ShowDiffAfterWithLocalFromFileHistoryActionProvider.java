@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class ShowDiffAfterWithLocalFromFileHistoryActionProvider implements AnActionExtensionProvider {
