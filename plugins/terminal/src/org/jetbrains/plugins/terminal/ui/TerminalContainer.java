@@ -21,6 +21,7 @@ import org.jetbrains.plugins.terminal.TerminalView;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -200,7 +201,7 @@ public class TerminalContainer {
         return c;
       }
     }
-    LOG.error("Cannot unwrap " + component);
+    LOG.error("Cannot unwrap " + component + ", children: " + Arrays.toString(components));
     return component;
   }
 
