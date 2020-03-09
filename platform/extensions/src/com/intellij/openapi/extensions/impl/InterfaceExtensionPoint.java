@@ -51,7 +51,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   }
 
   @Override
-  public void unregisterExtensions(@NotNull List<Element> elements, List<Runnable> listenerCallbacks) {
+  public void unregisterExtensions(@NotNull PluginDescriptor pluginDescriptor, @NotNull List<Element> elements, List<Runnable> listenerCallbacks) {
     Set<String> implementationClassNames = new HashSet<>();
     for (Element element : elements) {
       implementationClassNames.add(element.getAttributeValue("implementation"));

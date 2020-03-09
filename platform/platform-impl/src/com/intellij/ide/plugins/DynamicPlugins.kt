@@ -309,7 +309,7 @@ object DynamicPlugins {
       application.runWriteAction {
         try {
           processOptionalDependenciesOnPlugin(pluginDescriptor) { loadedDescriptorOfDependency, dependencyDescriptor ->
-            unloadPluginDescriptor(dependencyDescriptor, dependencyDescriptor)
+            unloadPluginDescriptor(dependencyDescriptor, loadedDescriptorOfDependency, dependencyDescriptor)
             if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
               (loadedDescriptorOfDependency.pluginClassLoader as? PluginClassLoader)?.detachParent(loadedPluginDescriptor.pluginClassLoader)
             }
@@ -397,7 +397,11 @@ object DynamicPlugins {
     GROUP.createNotification(text, notificationType).notify(null)
   }
 
-  private fun unloadPluginDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl, loadedPluginDescriptor: IdeaPluginDescriptorImpl) {
+  private fun unloadPluginDescriptor(
+    pluginDescriptor: IdeaPluginDescriptorImpl,
+    loadedPluginDescriptor: IdeaPluginDescriptorImpl,
+    descriptorToUnloadListeners: IdeaPluginDescriptorImpl = loadedPluginDescriptor
+  ) {
     val application = ApplicationManager.getApplication() as ApplicationImpl
     (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
 
@@ -408,12 +412,12 @@ object DynamicPlugins {
       for ((epName, epExtensions) in extensions) {
         val appEp = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName) as ExtensionPointImpl<*>?
         if (appEp != null) {
-          appEp.unregisterExtensions(epExtensions, unloadListeners)
+          appEp.unregisterExtensions(loadedPluginDescriptor, epExtensions, unloadListeners)
         }
         else {
           for (openProject in openProjects) {
             val projectEp = openProject.extensionArea.getExtensionPointIfRegistered<Any>(epName) as ExtensionPointImpl<*>?
-            projectEp?.unregisterExtensions(epExtensions, unloadListeners)
+            projectEp?.unregisterExtensions(loadedPluginDescriptor, epExtensions, unloadListeners)
           }
         }
       }
@@ -437,7 +441,7 @@ object DynamicPlugins {
     for (appServiceInstance in appServiceInstances) {
       application.stateStore.unloadComponent(appServiceInstance)
     }
-    (application.messageBus as MessageBusImpl).unsubscribePluginListeners(loadedPluginDescriptor)
+    (application.messageBus as MessageBusImpl).unsubscribePluginListeners(descriptorToUnloadListeners)
 
     for (project in openProjects) {
       val projectServiceInstances = (project as ProjectImpl).unloadServices(pluginDescriptor.project)
@@ -451,7 +455,7 @@ object DynamicPlugins {
           module.stateStore.unloadComponent(moduleServiceInstance)
         }
       }
-      (project.messageBus as MessageBusImpl).unsubscribePluginListeners(loadedPluginDescriptor)
+      (project.messageBus as MessageBusImpl).unsubscribePluginListeners(descriptorToUnloadListeners)
     }
   }
 

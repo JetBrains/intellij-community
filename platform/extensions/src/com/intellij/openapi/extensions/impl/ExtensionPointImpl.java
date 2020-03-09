@@ -638,7 +638,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return found;
   }
 
-  public abstract void unregisterExtensions(@NotNull List<Element> elements, List<Runnable> listenerCallbacks);
+  public abstract void unregisterExtensions(@NotNull PluginDescriptor pluginDescriptor, @NotNull List<Element> elements, List<Runnable> listenerCallbacks);
 
   private void notifyListeners(@NotNull ExtensionEvent event,
                                @NotNull T extensionObject,
