@@ -411,7 +411,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                          final Editor editor,
                                                          @NotNull PsiClass aClass,
                                                          final boolean toImplement) {
-    LOG.assertTrue(aClass.isValid());
+    PsiUtilCore.ensureValid(aClass);
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
@@ -424,7 +424,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
     if (selectedElements == null || selectedElements.isEmpty()) return;
 
-    LOG.assertTrue(aClass.isValid());
+    PsiUtilCore.ensureValid(aClass);
     WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() ->
       overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
                                              chooser.isInsertOverrideAnnotation())
