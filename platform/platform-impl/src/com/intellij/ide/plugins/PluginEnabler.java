@@ -67,6 +67,7 @@ public class PluginEnabler {
         return true;
       }
     }
+    InstalledPluginsState.getInstance().setRestartRequired(true);
     return false;
   }
 
