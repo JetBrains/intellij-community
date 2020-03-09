@@ -21,6 +21,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SoftFileReferenceSet;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.util.ProcessingContext;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,7 +38,7 @@ public class FileReferenceInjector extends ReferenceInjector {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "File Reference";
+    return IntelliLangBundle.message("reference.injection.display.name.file.reference");
   }
 
   @Override
