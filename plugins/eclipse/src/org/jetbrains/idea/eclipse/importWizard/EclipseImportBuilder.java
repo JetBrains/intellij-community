@@ -207,8 +207,9 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       else {
         naturesByProject = StringUtil.join(naturesNames.keySet(), projectPath -> projectPath + "(" + naturesNames.get(projectPath) + ")", "<br>");
       }
-      Notifications.Bus.notify(new Notification(title, title, "Imported projects contain unknown natures:<br>" + naturesByProject + "<br>" +
-                                                              "Some settings may be lost after import.", NotificationType.WARNING));
+      Notifications.Bus.notify(new Notification(title, title, EclipseBundle
+        .message("notification.content.imported.projects.contain.unknown.natures",
+                 naturesByProject), NotificationType.WARNING));
     }
 
     return true;
@@ -246,10 +247,9 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         }
       }
       if (!files.isEmpty()) {
-        final int resultCode = Messages.showYesNoCancelDialog(ApplicationNamesInfo.getInstance().getFullProductName() +
-                                                              " module files found:\n" +
-                                                              StringUtil.join(files, file -> file.getPath(), "\n") +
-                                                              ".\n Would you like to reuse them?", "Module Files Found",
+        final int resultCode = Messages.showYesNoCancelDialog(EclipseBundle.message(
+          "dialog.message.0.module.files.found.1.would.you.like.to.reuse.them", ApplicationNamesInfo.getInstance().getFullProductName(),
+          StringUtil.join(files, file -> file.getPath(), "\n")), EclipseBundle.message("dialog.title.module.files.found"),
                                                               Messages.getQuestionIcon());
         if (resultCode != Messages.YES) {
           if (resultCode == Messages.NO) {
