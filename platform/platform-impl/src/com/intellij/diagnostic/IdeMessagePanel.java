@@ -142,8 +142,10 @@ public final class IdeMessagePanel extends JPanel implements MessagePoolListener
   }
 
   private void updateIcon(MessagePool.State state) {
-    myIcon.setState(state);
-    UIUtil.invokeLaterIfNeeded(() -> setVisible(state != MessagePool.State.NoErrors));
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myIcon.setState(state);
+      setVisible(state != MessagePool.State.NoErrors);
+    });
   }
 
   @Override
