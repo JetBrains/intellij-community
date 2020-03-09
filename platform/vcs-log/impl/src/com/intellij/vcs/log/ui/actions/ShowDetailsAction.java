@@ -22,7 +22,8 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
   public ShowDetailsAction() {
-    super(VcsLogBundle.messagePointer("vcs.log.action.show.details"), VcsLogBundle.messagePointer("vcs.log.action.description.show.details"), null);
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.details"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.details"), null);
   }
 
   @Override

@@ -208,7 +208,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
           if (myChanges.isEmpty() && detail.getParents().size() > 1) {
             myViewer.getEmptyText().setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).
-              appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"), VcsLogUiUtil.getLinkAttributes(),
+              appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"),
+                                  VcsLogUiUtil.getLinkAttributes(),
                                   e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
           }
           else {

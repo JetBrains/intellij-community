@@ -151,7 +151,6 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
                                       commitId.getRoot().getName());
         }
         return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to.commit", commitId.getHash().toShortString());
-
       }
       return "";
     }

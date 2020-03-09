@@ -8,8 +8,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 public abstract class TypeSafeTableCellRenderer<T> implements TableCellRenderer {
 
   @Override
