@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor) : ChangesViewPreview {
@@ -99,5 +100,5 @@ private class EditorTabDiffPreviewProvider(
 
   override fun getOwner(): Any = this
 
-  override fun getEditorTabName(): String = tabNameProvider().orEmpty()
+  override fun getEditorTabName(): @Nls String = tabNameProvider().orEmpty()
 }
