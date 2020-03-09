@@ -6,8 +6,10 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
 
 internal class GrazieFUSStrategyIDRule : CustomWhiteListRule() {
+  private val defaultEnabledStrategies = setOf("nl.rubensten.texifyidea:Latex", "org.asciidoctor.intellij.asciidoc:AsciiDoc")
+
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    return if (data in LanguageGrammarChecking.getStrategies().map { it.getID() }.toSet()) {
+    return if (data in defaultEnabledStrategies || data in LanguageGrammarChecking.getStrategies().map { it.getID() }.toSet()) {
       ValidationResultType.ACCEPTED
     }
     else {
