@@ -103,14 +103,15 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @Override
   public void updateUI() {
     UISettings.setupComponentAntialiasing(this);
-    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS));
+    Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
+    if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
+    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
   }
 
   private void updateFractionalMetrics() {
     if (SystemInfo.isMacOSCatalina) {
-      Object value = hasSearchMatch()
-                     ? RenderingHints.VALUE_FRACTIONALMETRICS_OFF
-                     : UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
+      Object value = hasSearchMatch() ? null : UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
+      if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
       putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
     }
   }
