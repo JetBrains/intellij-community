@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -13,7 +12,7 @@ import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
@@ -269,9 +268,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       result = MessageFormat.format(myFullVersionFormat, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
     }
     else {
-      result = StringUtil.notNullize(myMajorVersion, "0") + '.' + StringUtil.notNullize(myMinorVersion, "0");
+      result = StringUtilRt.notNullize(myMajorVersion, "0") + '.' + StringUtilRt.notNullize(myMinorVersion, "0");
     }
-    if (!StringUtil.isEmpty(myVersionSuffix)) {
+    if (!StringUtilRt.isEmpty(myVersionSuffix)) {
       result += " " + myVersionSuffix;
     }
     return result;
@@ -280,13 +279,15 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @NotNull
   @Override
   public String getStrictVersion() {
-    return myMajorVersion + "." + myMinorVersion + "." + StringUtil.notNullize(myMicroVersion, "0") + "." + StringUtil.notNullize(myPatchVersion, "0");
+    return myMajorVersion + "." + myMinorVersion + "." + StringUtilRt.notNullize(myMicroVersion, "0") + "." + StringUtilRt.notNullize(myPatchVersion, "0");
   }
 
   @Override
   public String getVersionName() {
     String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
-    if (myEAP && !StringUtil.isEmptyOrSpaces(myCodeName)) fullName += " (" + myCodeName + ")";
+    if (myEAP && !StringUtilRt.isEmptyOrSpaces(myCodeName)) {
+      fullName += " (" + myCodeName + ")";
+    }
     return fullName;
   }
 
@@ -631,7 +632,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   /**
    * Behavior of this method must be consistent with idea/ApplicationInfo.xsd schema.
    */
-  private void loadState(Element parentNode) {
+  private void loadState(@NotNull Element parentNode) {
     Element versionElement = getChild(parentNode, ELEMENT_VERSION);
     if (versionElement != null) {
       myMajorVersion = versionElement.getAttributeValue(ATTRIBUTE_MAJOR);
@@ -783,7 +784,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     Element showLicensee = getChild(parentNode, ELEMENT_LICENSEE);
     if (showLicensee != null) {
-      myShowLicensee = Boolean.valueOf(showLicensee.getAttributeValue(ATTRIBUTE_SHOW)).booleanValue();
+      myShowLicensee = Boolean.parseBoolean(showLicensee.getAttributeValue(ATTRIBUTE_SHOW));
     }
 
     Element welcomeScreen = getChild(parentNode, WELCOME_SCREEN_ELEMENT_NAME);
@@ -842,7 +843,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     if (pluginsElement != null) {
       String url = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
       if (url != null) {
-        myPluginManagerUrl = StringUtil.trimEnd(url, "/");
+        myPluginManagerUrl = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
       }
 
       String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
@@ -860,12 +861,12 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         myPluginsDownloadUrl = downloadUrl;
       }
 
-      myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
+      myBuiltinPluginsUrl = pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
     }
 
-    final String pluginsHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
+    String pluginsHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
     if (pluginsHost != null) {
-      myPluginManagerUrl = StringUtil.trimEnd(pluginsHost, "/");
+      myPluginManagerUrl = pluginsHost.endsWith("/") ? pluginsHost.substring(0, pluginsHost.length() - 1) : pluginsHost;
       myPluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
     }
 
@@ -936,31 +937,36 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     }
   }
 
-  @NotNull
-  private static String getApplicationInfoPath() {
+  private static @NotNull String getApplicationInfoPath() {
     return IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
   }
 
   @NotNull
-  private static List<Element> getChildren(Element parentNode, String name) {
+  private static List<Element> getChildren(@NotNull Element parentNode, @NotNull String name) {
     return parentNode.getChildren(name, parentNode.getNamespace());
   }
 
-  private static Element getChild(Element parentNode, String name) {
+  private static Element getChild(@NotNull Element parentNode, @NotNull String name) {
     return parentNode.getChild(name, parentNode.getNamespace());
   }
 
-  //copy of ApplicationInfoProperties.shortenCompanyName
-  @VisibleForTesting
-  static String shortenCompanyName(String name) {
-    return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.");
+  // copy of ApplicationInfoProperties.shortenCompanyName
+  @TestOnly
+  static String shortenCompanyName(@NotNull String name) {
+    if (name.endsWith(" s.r.o.")) {
+      name = name.substring(0, name.length() - " s.r.o.".length());
+    }
+    if (name.endsWith(" Inc.")) {
+      name = name.substring(0, name.length() - " Inc.".length());
+    }
+    return name;
   }
 
   private static void setBuildNumber(String apiVersion, String buildNumber) {
     PluginManagerCore.BUILD_NUMBER = apiVersion != null ? apiVersion : buildNumber;
   }
 
-  private static GregorianCalendar parseDate(final String dateString) {
+  private static @NotNull GregorianCalendar parseDate(@NotNull String dateString) {
     GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
     try {
       calendar.set(Calendar.YEAR, Integer.parseInt(dateString.substring(0, 4)));
@@ -980,8 +986,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @SuppressWarnings("UseJBColor")
-  private static Color parseColor(final String colorString) {
-    final long rgb = Long.parseLong(colorString, 16);
+  private static @NotNull Color parseColor(final String colorString) {
+    long rgb = Long.parseLong(colorString, 16);
     return new Color((int)rgb, rgb > 0xffffff);
   }
 
