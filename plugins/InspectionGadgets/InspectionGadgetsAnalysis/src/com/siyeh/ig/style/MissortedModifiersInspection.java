@@ -20,7 +20,6 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.SmartList;
@@ -52,24 +51,21 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
   @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiModifierList modifierList = (PsiModifierList)infos[0];
-    final String modifiersText = getModifiersText(modifierList);
-    final String sortedModifiersText = getSortedModifiersText(modifierList);
-    final String text = stripCommonPrefixSuffix(modifiersText, sortedModifiersText);
-    return InspectionGadgetsBundle.message("missorted.modifiers.problem.descriptor", text);
+    final List<String> modifiers = getModifiers(modifierList);
+    final List<String> sortedModifiers = getSortedModifiers(modifierList);
+    final List<String> missortedModifiers = stripCommonPrefixSuffix(modifiers, sortedModifiers);
+    return InspectionGadgetsBundle.message("missorted.modifiers.problem.descriptor", String.join(" ", missortedModifiers));
   }
 
-  private static String stripCommonPrefixSuffix(String text1, String text2) {
-    final List<String> tokens1 = StringUtil.split(text1, " ");
-    final List<String> tokens2 = StringUtil.split(text2, " ");
-    final int max = tokens1.size() - commonSuffixLength(tokens1, tokens2);
-    final StringBuilder text = new StringBuilder();
+  private static <E> List<E> stripCommonPrefixSuffix(List<E> list1, List<E> list2) {
+    final int max = list1.size() - commonSuffixLength(list1, list2);
+    final List<E> result = new SmartList<>();
     for (int i = 0; i < max; i++) {
-      final String token = tokens1.get(i);
-      if (token.equals(tokens2.get(i))) continue; // common prefix
-      if (text.length() > 0) text.append(' ');
-      text.append(token);
+      final E token = list1.get(i);
+      if (token.equals(list2.get(i))) continue; // common prefix
+      result.add(token);
     }
-    return text.toString();
+    return result;
   }
 
   @Contract(pure = true)
@@ -127,21 +123,21 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
         if (!(element instanceof PsiModifierList)) return;
       }
       final PsiModifierList modifierList = (PsiModifierList)element;
-      @NonNls final String text = getSortedModifiersText(modifierList);
+      @NonNls final String text = String.join(" ", getSortedModifiers(modifierList));
       final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(text + " void x() {}", modifierList);
       final PsiModifierList newModifierList = method.getModifierList();
       new CommentTracker().replaceAndRestoreComments(modifierList, newModifierList);
     }
   }
 
-  private static String getModifiersText(PsiModifierList modifierList) {
+  private static List<String> getModifiers(PsiModifierList modifierList) {
     return Stream.of(modifierList.getChildren())
       .filter(e -> e instanceof PsiJavaToken || e instanceof PsiAnnotation)
       .map(PsiElement::getText)
-      .collect(Collectors.joining(" "));
+      .collect(Collectors.toList());
   }
 
-  private String getSortedModifiersText(PsiModifierList modifierList) {
+  private List<String> getSortedModifiers(PsiModifierList modifierList) {
     final List<String> modifiers = new SmartList<>();
     final List<String> typeAnnotations = new SmartList<>();
     final List<String> annotations = new SmartList<>();
@@ -163,17 +159,11 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       }
     }
     Collections.sort(modifiers, new ModifierComparator());
-    @NonNls final StringBuilder buffer = new StringBuilder();
-    for (String annotation : annotations) {
-      buffer.append(annotation).append(' ');
-    }
-    for (String modifier : modifiers) {
-      buffer.append(modifier).append(' ');
-    }
-    for (String annotation : typeAnnotations) {
-      buffer.append(annotation).append(' ');
-    }
-    return buffer.toString().trim();
+    final List<String> result = new SmartList<>();
+    result.addAll(annotations);
+    result.addAll(modifiers);
+    result.addAll(typeAnnotations);
+    return result;
   }
 
   private class MissortedModifiersVisitor extends BaseInspectionVisitor {
