@@ -135,6 +135,11 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
    */
   @Nullable
   protected File getExecutable() {
+    return getFSNotifierExecutable();
+  }
+
+  @Nullable
+  public static File getFSNotifierExecutable() {
     String customPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
     if (customPath != null) {
       File customFile = PathManager.findBinFile(customPath);
