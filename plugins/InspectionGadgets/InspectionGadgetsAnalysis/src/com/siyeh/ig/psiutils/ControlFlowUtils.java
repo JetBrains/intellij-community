@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,17 +150,17 @@ public class ControlFlowUtils {
     final Object value = ExpressionUtils.computeConstantExpression(condition);
     final PsiStatement body = loopStatement.getBody();
     return statementMayCompleteNormally(body) && value != Boolean.TRUE
-           || statementIsBreakTarget(loopStatement) || statementContainsContinueToAncestor(loopStatement);
+           || statementContainsBreakToStatementOrAncestor(loopStatement) || statementContainsContinueToAncestor(loopStatement);
   }
 
   private static boolean whileStatementMayCompleteNormally(@NotNull PsiWhileStatement loopStatement) {
     final PsiExpression condition = loopStatement.getCondition();
     final Object value = ExpressionUtils.computeConstantExpression(condition);
-    return value != Boolean.TRUE || statementIsBreakTarget(loopStatement) || statementContainsContinueToAncestor(loopStatement);
+    return value != Boolean.TRUE || statementContainsBreakToStatementOrAncestor(loopStatement) || statementContainsContinueToAncestor(loopStatement);
   }
 
   private static boolean forStatementMayCompleteNormally(@NotNull PsiForStatement loopStatement) {
-    if (statementIsBreakTarget(loopStatement)) {
+    if (statementContainsBreakToStatementOrAncestor(loopStatement)) {
       return true;
     }
     if (statementContainsContinueToAncestor(loopStatement)) {
@@ -293,7 +293,7 @@ public class ControlFlowUtils {
     if (statement == null) {
       return false;
     }
-    return statementMayCompleteNormally(statement) || statementIsBreakTarget(statement);
+    return statementMayCompleteNormally(statement) || statementContainsBreakToStatementOrAncestor(statement);
   }
 
   public static boolean codeBlockMayCompleteNormally(@Nullable PsiCodeBlock block) {
@@ -309,8 +309,14 @@ public class ControlFlowUtils {
     return true;
   }
 
+  private static boolean statementContainsBreakToStatementOrAncestor(@NotNull PsiStatement statement) {
+    final BreakFinder breakFinder = new BreakFinder(statement, true);
+    statement.accept(breakFinder);
+    return breakFinder.breakFound();
+  }
+
   private static boolean statementIsBreakTarget(@NotNull PsiStatement statement) {
-    final BreakFinder breakFinder = new BreakFinder(statement);
+    final BreakFinder breakFinder = new BreakFinder(statement, false);
     statement.accept(breakFinder);
     return breakFinder.breakFound();
   }
@@ -409,7 +415,7 @@ public class ControlFlowUtils {
 
 
   public static PsiStatement @NotNull [] unwrapBlock(@Nullable PsiStatement statement) {
-    PsiBlockStatement block = ObjectUtils.tryCast(statement, PsiBlockStatement.class);
+    final PsiBlockStatement block = ObjectUtils.tryCast(statement, PsiBlockStatement.class);
     if (block != null) {
       return block.getCodeBlock().getStatements();
     }
@@ -1218,9 +1224,11 @@ public class ControlFlowUtils {
 
     private boolean m_found;
     private final PsiStatement m_target;
+    private final boolean myAncestor;
 
-    BreakFinder(@NotNull PsiStatement target) {
+    BreakFinder(@NotNull PsiStatement target, boolean ancestor) {
       m_target = target;
+      myAncestor = ancestor;
     }
 
     boolean breakFound() {
@@ -1237,7 +1245,11 @@ public class ControlFlowUtils {
       if (exitedStatement == null) {
         return;
       }
-      if (exitedStatement == m_target) {
+      if (myAncestor) {
+        if (PsiTreeUtil.isAncestor(exitedStatement, m_target, false)) {
+          m_found = true;
+        }
+      } else if (exitedStatement == m_target) {
         m_found = true;
       }
     }
