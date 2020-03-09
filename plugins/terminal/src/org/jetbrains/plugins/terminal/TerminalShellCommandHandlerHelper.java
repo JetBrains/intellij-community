@@ -25,6 +25,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.function.Function;
 
 public class TerminalShellCommandHandlerHelper {
 
@@ -150,14 +151,10 @@ public class TerminalShellCommandHandlerHelper {
       }
     };
 
-    TerminalTextBuffer textBuffer = myWidget.getTerminalTextBuffer();
-    textBuffer.lock();
-    try {
+    myWidget.processTerminalBuffer((Function<TerminalTextBuffer, Void>)textBuffer -> {
       textBuffer.processScreenLines(myWidget.getLineNumberAtCursor(), 1, consumer);
-    }
-    finally {
-      textBuffer.unlock();
-    }
+      return null;
+    });
 
     return finder.getResult();
   }
