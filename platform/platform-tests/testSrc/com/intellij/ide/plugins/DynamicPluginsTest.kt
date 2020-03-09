@@ -55,6 +55,7 @@ class DynamicPluginsTest {
     val projectRule = ProjectRule()
 
     val receivedNotifications = mutableListOf<UISettings>()
+    val receivedNotifications2 = mutableListOf<UISettings>()
   }
 
   @Rule
@@ -377,6 +378,55 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun loadOptionalDependencyListener() {
+    receivedNotifications.clear()
+    receivedNotifications2.clear()
+
+    val plugin1Disposable = loadPluginWithOptionalDependency(
+      """
+            <idea-plugin>
+                <id>foo</id>
+                <depends optional="true" config-file="bar.xml">bar</depends>
+                <applicationListeners>
+                  <listener class="${MyUISettingsListener::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>
+                </applicationListeners>  
+            </idea-plugin>
+          """,
+      """
+                    <idea-plugin>
+                      <applicationListeners>
+                        <listener class="${MyUISettingsListener2::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>
+                      </applicationListeners>  
+                    </idea-plugin>
+                """)
+    try {
+      ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
+      assertThat(receivedNotifications).hasSize(1)
+
+      val plugin2Disposable = loadPluginWithText("""
+        <idea-plugin>
+          <id>bar</id>
+        </idea-plugin>
+      """.trimIndent(), DynamicPluginsTest::class.java.classLoader)
+      try {
+        ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
+        assertThat(receivedNotifications).hasSize(2)
+        assertThat(receivedNotifications2).hasSize(1)
+      }
+      finally {
+        Disposer.dispose(plugin2Disposable)
+      }
+
+      ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
+      assertThat(receivedNotifications).hasSize(3)
+      assertThat(receivedNotifications2).hasSize(1)
+    }
+    finally {
+      Disposer.dispose(plugin1Disposable)
+    }
+  }
+
+  @Test
   fun testProjectService() {
     val project = projectRule.project
     val disposable = loadExtensionWithText("""
@@ -505,6 +555,12 @@ class DynamicPluginsTest {
   private class MyUISettingsListener : UISettingsListener {
     override fun uiSettingsChanged(uiSettings: UISettings) {
       receivedNotifications.add(uiSettings)
+    }
+  }
+
+  private class MyUISettingsListener2 : UISettingsListener {
+    override fun uiSettingsChanged(uiSettings: UISettings) {
+      receivedNotifications2.add(uiSettings)
     }
   }
 
