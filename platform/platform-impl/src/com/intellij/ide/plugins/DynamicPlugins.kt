@@ -98,6 +98,10 @@ object DynamicPlugins {
   @JvmStatic
   @JvmOverloads
   fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl, baseDescriptor: IdeaPluginDescriptorImpl? = null): Boolean {
+    if (InstalledPluginsState.getInstance().isRestartRequired) {
+      return false
+    }
+
     if (!Registry.`is`("ide.plugins.allow.unload")) {
       return allowLoadUnloadSynchronously(descriptor)
     }
@@ -365,6 +369,8 @@ object DynamicPlugins {
 
       val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
       if (!classLoaderUnloaded) {
+        InstalledPluginsState.getInstance().isRestartRequired = true
+
         if (Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable() && !ApplicationManager.getApplication().isUnitTestMode) {
           val snapshotFolder = System.getProperty("snapshots.path", SystemProperties.getUserHome())
           val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())

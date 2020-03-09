@@ -189,7 +189,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     boolean enableDisableAppliedWithoutRestart = applyEnableDisablePlugins(parent, enabledMap);
     myDynamicPluginsToUninstall.clear();
-    return enableDisableAppliedWithoutRestart && uninstallsRequiringRestart.isEmpty() && !installsRequiringRestart;
+    boolean changesAppliedWithoutRestart = enableDisableAppliedWithoutRestart && uninstallsRequiringRestart.isEmpty() && !installsRequiringRestart;
+    if (!changesAppliedWithoutRestart) {
+      InstalledPluginsState.getInstance().setRestartRequired(true);
+    }
+    return changesAppliedWithoutRestart;
   }
 
   public void removePluginsOnCancel(@Nullable JComponent parentComponent) {

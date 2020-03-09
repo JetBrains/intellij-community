@@ -34,6 +34,7 @@ public final class InstalledPluginsState {
   private final Set<PluginId> myUninstalledWithoutRestartPlugins = new HashSet<>();
   private final Set<String> myOutdatedPlugins = new SmartHashSet<>();
   private boolean myInstallationInProgress = false;
+  private boolean myRestartRequired = false;
 
   private Runnable myShutdownCallback;
 
@@ -169,5 +170,13 @@ public final class InstalledPluginsState {
       myShutdownCallback.run();
       myShutdownCallback = null;
     }
+  }
+
+  public boolean isRestartRequired() {
+    return myRestartRequired;
+  }
+
+  public void setRestartRequired(boolean restartRequired) {
+    myRestartRequired = restartRequired;
   }
 }
