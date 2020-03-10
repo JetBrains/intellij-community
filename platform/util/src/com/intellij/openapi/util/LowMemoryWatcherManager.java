@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +17,7 @@ import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 public final class LowMemoryWatcherManager implements Disposable {
   @NotNull
@@ -32,7 +32,7 @@ public final class LowMemoryWatcherManager implements Disposable {
   private final Future<?> myMemoryPoolMXBeansFuture;
   private final Consumer<Boolean> myJanitor = new Consumer<Boolean>() {
     @Override
-    public void consume(@NotNull Boolean afterGc) {
+    public void accept(@NotNull Boolean afterGc) {
       // null mySubmitted before all listeners called to avoid data race when listener added in the middle of the execution and is lost
       // this may however cause listeners to execute more than once (potentially even in parallel)
       synchronized (myJanitor) {
@@ -85,7 +85,7 @@ public final class LowMemoryWatcherManager implements Disposable {
       if (memoryThreshold || memoryCollectionThreshold) {
         synchronized (myJanitor) {
           if (mySubmitted == null) {
-            mySubmitted = myExecutorService.submit(() -> myJanitor.consume(memoryCollectionThreshold));
+            mySubmitted = myExecutorService.submit(() -> myJanitor.accept(memoryCollectionThreshold));
             // maybe it's executed too fast or even synchronously
             if (mySubmitted.isDone()) {
               mySubmitted = null;
