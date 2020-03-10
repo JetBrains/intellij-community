@@ -4,7 +4,7 @@ package com.intellij.structuralsearch;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
+import com.intellij.structuralsearch.inspection.SSBasedInspection;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;

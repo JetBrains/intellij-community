@@ -4,7 +4,6 @@ package com.intellij.structuralsearch.inspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.structuralsearch.inspection.highlightTemplate.StructuralSearchFakeInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.NotNull;
 
