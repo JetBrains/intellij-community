@@ -202,7 +202,7 @@ object DynamicPlugins {
   }
 
   private fun processOptionalDependenciesOnPlugin(rootDescriptor: IdeaPluginDescriptorImpl,
-                                                  callback: (descriptor: IdeaPluginDescriptorImpl, fullyLoadedDescriptor: IdeaPluginDescriptorImpl) -> Boolean) {
+                                                  callback: (loadedDescriptorOfDependency: IdeaPluginDescriptorImpl, fullDescriptor: IdeaPluginDescriptorImpl) -> Boolean) {
     val pluginXmlFactory = PluginXmlFactory()
     val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(PluginManagerCore.disabledPlugins())
     for (descriptor in PluginManager.getPlugins()) {
@@ -503,8 +503,12 @@ object DynamicPlugins {
       try {
         loadPluginDescriptor(pluginDescriptor, pluginDescriptor)
 
-        processOptionalDependenciesOnPlugin(pluginDescriptor) { descriptor, fullyLoadedDescriptor ->
-          loadPluginDescriptor(descriptor, fullyLoadedDescriptor)
+        processOptionalDependenciesOnPlugin(pluginDescriptor) { loadedDescriptorOfDependency, fullDescriptor ->
+          if (pluginDescriptor.pluginClassLoader is PluginClassLoader) {
+            (loadedDescriptorOfDependency.pluginClassLoader as? PluginClassLoader)?.attachParent(pluginDescriptor.pluginClassLoader)
+          }
+
+          loadPluginDescriptor(loadedDescriptorOfDependency, fullDescriptor)
           true
         }
 

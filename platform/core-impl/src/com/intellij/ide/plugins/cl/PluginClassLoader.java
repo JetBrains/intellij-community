@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -443,6 +443,11 @@ public final class PluginClassLoader extends UrlClassLoader {
   public List<ClassLoader> _getParents() {
     //noinspection SSBasedInspection
     return Collections.unmodifiableList(Arrays.asList(myParents));
+  }
+
+  @ApiStatus.Internal
+  public void attachParent(@NotNull ClassLoader classLoader) {
+    myParents = ArrayUtil.append(myParents, classLoader);
   }
 
   @ApiStatus.Internal
