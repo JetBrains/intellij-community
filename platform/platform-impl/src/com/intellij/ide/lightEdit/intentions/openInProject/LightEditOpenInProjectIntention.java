@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
+public final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
   public @NotNull String getText() {
@@ -40,7 +40,10 @@ final class LightEditOpenInProjectIntention implements IntentionAction, LightEdi
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    VirtualFile currFile = file.getVirtualFile();
+    performOn(file.getVirtualFile());
+  }
+
+  public static void performOn(@NotNull VirtualFile currFile) throws IncorrectOperationException {
     LightEditorInfo editorInfo =
       ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currFile);
     if (editorInfo != null) {
@@ -56,7 +59,7 @@ final class LightEditOpenInProjectIntention implements IntentionAction, LightEdi
       }
       if (openProject != null) {
         ((LightEditServiceImpl)LightEditService.getInstance()).closeEditor(editorInfo);
-        OpenFileAction.openFile(file.getVirtualFile(), openProject);
+        OpenFileAction.openFile(currFile, openProject);
       }
     }
   }

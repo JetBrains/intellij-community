@@ -89,6 +89,15 @@
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
     </action>
 
+    <!-- LightEdit Mode -->
+    <action id="OpenFileInProject" class="com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction"/>
+
+    <group id="LightEditModePopup">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ShowIntentionsGroup"/>
+      <reference id="OpenFileInProject"/>
+      <separator/>
+    </group>
+
     <!-- Edit -->
     <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
       <add-to-group group-id="CopyGroup" anchor="after" relative-to-action="CopyPaths"/>
