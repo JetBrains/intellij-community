@@ -522,10 +522,18 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                       byte @NotNull [] content,
                                       @NotNull FilePath filePath,
                                       @Nullable Charset defaultCharset) {
-    Charset charset = guessCharsetFromContent(content, filePath.getFileType());
+    FileType fileType = filePath.getFileType();
+    Charset charset = guessCharsetFromContent(content, fileType);
     if (charset != null) return charset;
 
     if (defaultCharset != null) return defaultCharset;
+
+    if (fileType == StdFileTypes.PROPERTIES) {
+      EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : EncodingManager.getInstance();
+      Charset propertiesCharset = e.getDefaultCharsetForPropertiesFiles(null);
+      if (propertiesCharset != null) return propertiesCharset;
+    }
+
     return filePath.getCharset();
   }
 
