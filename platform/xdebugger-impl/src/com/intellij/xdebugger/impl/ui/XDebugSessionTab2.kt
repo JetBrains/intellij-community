@@ -44,7 +44,7 @@ class XDebugSessionTab2(
 
   private val lifetime = Disposer.newDisposable()
 
-  private val splitter = PersistentThreeComponentSplitter(false, true, "DebuggerViewTab", lifetime, project)
+  private val splitter = PersistentThreeComponentSplitter(false, true, "DebuggerViewTab", lifetime, project, 0.35f, 0.3f)
   private val xThreadsFramesView = XThreadsFramesView(myProject)
 
   private val toolWindow get() = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG)
