@@ -1,3 +1,7 @@
+# 17
+
+* add `plugin descriptor loading`.
+
 # 16
 
 * add `RunManager initialization` 

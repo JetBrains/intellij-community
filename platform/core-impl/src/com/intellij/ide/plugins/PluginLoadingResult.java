@@ -32,12 +32,14 @@ final class PluginLoadingResult {
 
   private final Map<PluginId, String> errors = ContainerUtil.newConcurrentMap();
 
-  private IdeaPluginDescriptorImpl[] sortedPlugins;
-  private List<IdeaPluginDescriptorImpl> sortedEnabledPlugins;
-  private Set<PluginId> effectiveDisabledIds;
-  private Set<PluginId> disabledRequiredIds;
-
   final boolean checkModuleDependencies;
+
+  // result, after calling finishLoading
+  private List<IdeaPluginDescriptorImpl> enabledPlugins;
+
+  @NotNull List<IdeaPluginDescriptorImpl> getEnabledPlugins() {
+    return enabledPlugins;
+  }
 
   PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions, @NotNull BuildNumber productBuildNumber) {
     this(brokenPluginVersions, productBuildNumber, !PlatformUtils.isIntelliJ());
@@ -57,33 +59,11 @@ final class PluginLoadingResult {
     return plugins.size();
   }
 
-  /**
-   * not null after initialization ({@link PluginManagerCore#initializePlugins})
-   */
-  IdeaPluginDescriptorImpl @NotNull [] getSortedPlugins() {
-    return sortedPlugins;
-  }
-
-  @NotNull
-  List<IdeaPluginDescriptorImpl> getSortedEnabledPlugins() {
-    return sortedEnabledPlugins;
-  }
-
-  @NotNull
-  Set<PluginId> getEffectiveDisabledIds() {
-    return effectiveDisabledIds;
-  }
-
-  @NotNull
-  Set<PluginId> getDisabledRequiredIds() {
-    return disabledRequiredIds;
-  }
-
-  IdeaPluginDescriptorImpl @NotNull [] finishLoading() {
-    IdeaPluginDescriptorImpl[] enabledPlugins = plugins.values().toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
-    plugins.clear();
+  void finishLoading() {
+    IdeaPluginDescriptorImpl[] enabledPlugins = this.plugins.values().toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
+    this.plugins.clear();
     Arrays.sort(enabledPlugins, Comparator.comparing(IdeaPluginDescriptorImpl::getPluginId));
-    return enabledPlugins;
+    this.enabledPlugins = Arrays.asList(enabledPlugins);
   }
 
   @NotNull
@@ -101,25 +81,13 @@ final class PluginLoadingResult {
     return result;
   }
 
-  void finishInitializing(IdeaPluginDescriptorImpl @NotNull [] sortedPlugins,
-                          @NotNull List<IdeaPluginDescriptorImpl> sortedEnabledPlugins,
-                          @NotNull Map<PluginId, String> disabledIds,
-                          @NotNull Set<PluginId> disabledRequiredIds) {
-    assert this.sortedPlugins == null && this.sortedEnabledPlugins == null && effectiveDisabledIds == null;
-
-    this.sortedPlugins = sortedPlugins;
-    this.sortedEnabledPlugins = sortedEnabledPlugins;
-    effectiveDisabledIds = disabledIds.isEmpty() ? Collections.emptySet() : new HashSet<>(disabledIds.keySet());
-    this.disabledRequiredIds = disabledRequiredIds;
-  }
-
   void addIncompletePlugin(@NotNull IdeaPluginDescriptorImpl plugin) {
     if (!idMap.containsKey(plugin.getPluginId())) {
       incompletePlugins.put(plugin.getPluginId(), plugin);
     }
   }
 
-  void reportIncompatiblePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @Nullable String since, @Nullable String until) {
+  void reportIncompatiblePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @NotNull String reason, @Nullable String since, @Nullable String until) {
     // do not report if some compatible plugin were already added
     // no race condition here — plugins from classpath are loaded before and not in parallel to loading from plugin dir
     if (idMap.containsKey(plugin.getPluginId())) {
@@ -133,10 +101,9 @@ final class PluginLoadingResult {
       until = "*.*";
     }
 
-    String message = "is incompatible (target build " +
+    String message = "is incompatible (" + reason + ", target build " +
                      (since.equals(until) ? ("is " + since) : ("range is " + since + " to " + until)) +
                      ")";
-
     errors.put(plugin.getPluginId(), plugin.formatErrorMessage(message));
   }
 
