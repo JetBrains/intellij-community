@@ -368,7 +368,7 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
     assertRangeText()
   }
 
-  void testCtrlShiftF7OnExceptionInMethodThrowsDeclarationMustHighlightPlacesThrowingThisException() {
+  void testCaretOnExceptionInMethodThrowsDeclarationMustHighlightPlacesThrowingThisException() {
     String s = '''
       import java.io.*;
       class A {
