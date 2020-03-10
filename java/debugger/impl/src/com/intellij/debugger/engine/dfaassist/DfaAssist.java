@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
@@ -237,22 +237,18 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
   private static boolean locationMatches(@NotNull PsiElement element, Location location) {
     Method method = location.method();
     PsiElement context = DebuggerUtilsEx.getContainingMethod(element);
-    try {
-      if (context instanceof PsiMethod) {
-        PsiMethod psiMethod = (PsiMethod)context;
-        String name = psiMethod.isConstructor() ? "<init>" : psiMethod.getName();
-        return name.equals(method.name()) && psiMethod.getParameterList().getParametersCount() == method.arguments().size();
-      }
-      if (context instanceof PsiLambdaExpression) {
-        return DebuggerUtilsEx.isLambda(method) && 
-               method.arguments().size() >= ((PsiLambdaExpression)context).getParameterList().getParametersCount();
-      }
-      if (context instanceof PsiClassInitializer) {
-        String expectedMethod = ((PsiClassInitializer)context).hasModifierProperty(PsiModifier.STATIC) ? "<clinit>" : "<init>";
-        return method.name().equals(expectedMethod);
-      }
+    if (context instanceof PsiMethod) {
+      PsiMethod psiMethod = (PsiMethod)context;
+      String name = psiMethod.isConstructor() ? "<init>" : psiMethod.getName();
+      return name.equals(method.name()) && psiMethod.getParameterList().getParametersCount() == method.argumentTypeNames().size();
     }
-    catch (AbsentInformationException ignored) {
+    if (context instanceof PsiLambdaExpression) {
+      return DebuggerUtilsEx.isLambda(method) &&
+             method.argumentTypeNames().size() >= ((PsiLambdaExpression)context).getParameterList().getParametersCount();
+    }
+    if (context instanceof PsiClassInitializer) {
+      String expectedMethod = ((PsiClassInitializer)context).hasModifierProperty(PsiModifier.STATIC) ? "<clinit>" : "<init>";
+      return method.name().equals(expectedMethod);
     }
     return false;
   }
