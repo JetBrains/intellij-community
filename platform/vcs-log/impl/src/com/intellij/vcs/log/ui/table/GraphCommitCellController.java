@@ -150,10 +150,10 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
       CommitId commitId = myLogData.getCommitId(commit);
       if (commitId != null) {
         if (myLogData.getRoots().size() > 1) {
-          return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to.commit.in.root", commitId.getHash().toShortString(),
+          return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to.hash.in.root", commitId.getHash().toShortString(),
                                       commitId.getRoot().getName());
         }
-        return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to.commit", commitId.getHash().toShortString());
+        return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to.hash", commitId.getHash().toShortString());
       }
       return "";
     }
