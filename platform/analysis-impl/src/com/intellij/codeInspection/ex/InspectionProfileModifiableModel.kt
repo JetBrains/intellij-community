@@ -113,8 +113,10 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     description = model.description
     isProjectLevel = model.isProjectLevel
     myLockedProfile = model.myLockedProfile
-    myChangedToolNames = model.myChangedToolNames
-    myTools = model.myTools
+    myChangedToolNames = null
+    if (model.wasInitialized()) {
+      myTools = model.myTools
+    }
     profileManager = model.profileManager
   }
 
