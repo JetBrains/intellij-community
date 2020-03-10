@@ -16,6 +16,7 @@
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getCountingUsage
@@ -104,6 +105,19 @@ class StatisticsUtilTest {
 
   private fun testPowerOfTwo(value: Int, expected: Int) {
     assertEquals(expected, getNextPowerOfTwo(value), "Incorrect key for value `$value`")
+  }
+
+  @Test
+  fun `test hash sensitive data`() {
+    val salt = byteArrayOf(45, 105, 19, -80, 109, 38, 24, -23, 27, -102, -123, 92, 60, -63, -83, -67, -66, -17, -26, 44, 123, 28, 40, -74, 77, -105, 105, -41, 36, -55, -21, 5)
+    doTestHashing(salt, "test-project-name", "dfa488a68d19d909af416ea02c8013e314562803d421ae747d7fec06dd080609")
+    doTestHashing(salt, "SomeFramework", "894bcfb4eb52e802ce750112ad3ed6d16f049c63f385f5a0d6c6ab5d63e54c4e")
+    doTestHashing(salt, "project", "4d85bff7bbefd0d5695450874de9b38fb1f10bacadd23abdd4ea511248aab7f0")
+  }
+
+  private fun doTestHashing(salt: ByteArray, data: String, expected: String) {
+    val actual = EventLogConfiguration.hashSha256(salt, data)
+    assertEquals(expected, actual, "Hashing algorithm was changed for '$data'")
   }
 
   private fun assertCountingUsage(expectedKey: String, actualValue: Int, steps: List<Int>) {
