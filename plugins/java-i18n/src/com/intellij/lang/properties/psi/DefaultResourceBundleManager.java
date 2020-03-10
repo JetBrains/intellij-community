@@ -27,8 +27,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 public class DefaultResourceBundleManager extends ResourceBundleManager {
   public DefaultResourceBundleManager(final Project project) {
     super(project);
@@ -51,7 +49,7 @@ public class DefaultResourceBundleManager extends ResourceBundleManager {
   }
 
   @Override
-  public boolean isActive(@NotNull Collection<PsiFile> contexts) throws ResourceBundleNotFoundException {
+  public boolean isActive(@NotNull PsiFile context) throws ResourceBundleNotFoundException {
     if (getResourceBundle() != null) {
       return true;
     }

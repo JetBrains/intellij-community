@@ -17,7 +17,7 @@ import org.jetbrains.idea.devkit.actions.generateDefaultBundleName
 import org.jetbrains.idea.devkit.util.PsiUtil
 
 class IntelliJProjectResourceBundleManager(project: Project) : ResourceBundleManager(project) {
-  override fun isActive(contexts: MutableCollection<PsiFile>): Boolean {
+  override fun isActive(context: PsiFile): Boolean {
     return PsiUtil.isIdeaProject(myProject)
   }
 
