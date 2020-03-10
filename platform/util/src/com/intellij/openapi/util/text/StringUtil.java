@@ -35,8 +35,6 @@ import java.util.stream.Collectors;
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class StringUtil extends StringUtilRt {
-  private static final Logger LOG = Logger.getInstance(StringUtil.class);
-
   @SuppressWarnings("SpellCheckingInspection") private static final String VOWELS = "aeiouy";
   private static final Pattern EOL_SPLIT_KEEP_SEPARATORS = Pattern.compile("(?<=(\r\n|\n))|(?<=\r)(?=[^\n])");
   private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
@@ -1118,7 +1116,7 @@ public class StringUtil extends StringUtilRt {
       }
     }
     catch (IOException e) {
-      LOG.error(e);
+      Logger.getInstance(StringUtil.class).error(e);
     }
   }
 
@@ -2327,7 +2325,7 @@ public class StringUtil extends StringUtilRt {
       parser.parse(new StringReader(htmlString));
     }
     catch (IOException e) {
-      LOG.error(e);
+      Logger.getInstance(StringUtil.class).error(e);
     }
     return parser.getText();
   }
