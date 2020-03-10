@@ -30,7 +30,7 @@ public class ListSelection<T> {
   private ListSelection(@NotNull List<T> list, int selectedIndex) {
     myList = list;
     if (myList.isEmpty()) {
-      mySelectedIndex = -1;
+      mySelectedIndex = 0;
     }
     else if (selectedIndex >= 0 && selectedIndex < list.size()) {
       mySelectedIndex = selectedIndex;
