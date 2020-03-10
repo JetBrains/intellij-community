@@ -1743,7 +1743,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       myPopup = null;
     }
 
-    private void updateContentPanel(AnalyzerController controller) {
+    private void updateContentPanel(UIController controller) {
       myContent.removeAll();
 
       GridBag gc = new GridBag();
@@ -1768,14 +1768,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         myContent.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
       }
 
-      if (myProgressBarMap.keySet().equals(analyzerStatus.getPassStat().stream().map(p->p.getPresentableName()).collect(Collectors.toSet()))) {
-        analyzerStatus.getPassStat().forEach(s -> myProgressBarMap.get(s.getPresentableName()).setValue(s.toPercent()));
+      if (myProgressBarMap.keySet().equals(analyzerStatus.getPasses().stream().map(p -> p.getPresentableName()).collect(Collectors.toSet()))) {
+        analyzerStatus.getPasses().forEach(s -> myProgressBarMap.get(s.getPresentableName()).setValue(s.toPercent()));
       }
       else {
         myProgressBarMap.clear();
         myProgressPanel.removeAll();
         GridBag progressGC = new GridBag();
-        analyzerStatus.getPassStat().forEach(s -> {
+        analyzerStatus.getPasses().forEach(s -> {
           myProgressPanel.add(new JLabel(s.getPresentableName() + ": "),
                         progressGC.nextLine().next().anchor(GridBagConstraints.LINE_START).weightx(0).insets(0, 10, 0, 6));
 
@@ -1812,7 +1812,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       }
     }
 
-    private JPanel createLowerPanel(AnalyzerController controller) {
+    private JPanel createLowerPanel(UIController controller) {
       JPanel panel = new JPanel(new GridBagLayout());
       GridBag gc = new GridBag().nextLine();
 
@@ -1854,7 +1854,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       return panel;
     }
 
-    private DropDownLink<InspectionsLevel> createDropDownLink(LanguageHighlightLevel level, AnalyzerController controller) {
+    private DropDownLink<InspectionsLevel> createDropDownLink(LanguageHighlightLevel level, UIController controller) {
       return new DropDownLink<>(level.getLevel(),
                          controller.getAvailableLevels(),
                          l -> {
