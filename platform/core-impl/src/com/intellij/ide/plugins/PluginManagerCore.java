@@ -24,6 +24,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.execution.ParametersListUtil;
@@ -50,7 +51,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -111,11 +111,11 @@ public final class PluginManagerCore {
   private static BuildNumber ourBuildNumber;
 
   public static final ConcurrentMap<PluginDescriptor, Disposable> pluginDisposables = ConcurrentFactoryMap.createWeakMap(
-          plugin -> {
-            Disposable pluginDisposable = Disposer.newDisposable("Plugin disposable [" + plugin.getName() + "]");
-            Disposer.register(ApplicationManager.getApplication(), pluginDisposable);
-            return pluginDisposable;
-          }
+    plugin -> {
+      Disposable pluginDisposable = Disposer.newDisposable("Plugin disposable [" + plugin.getName() + "]");
+      Disposer.register(ApplicationManager.getApplication(), pluginDisposable);
+      return pluginDisposable;
+    }
   );
 
   @Nullable
