@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -58,6 +59,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -576,6 +578,35 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   public @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
     JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.create(element.getProject(), element);
     return JavaDocExternalFilter.filterInternalDocInfo(generator.generateRenderedDocInfo());
+  }
+
+  @Override
+  public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+    if (!(file instanceof PsiJavaFile)) return;
+    for (PsiElement child = file.getFirstChild(); child != null; child = child.getNextSibling()) {
+      ProgressManager.checkCanceled();
+      if (child instanceof PsiClass) {
+        collectDocComments((PsiClass)child, sink);
+      }
+    }
+  }
+
+  private static void collectDocComments(@NotNull PsiClass aClass, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+    collectDocComment(aClass, sink);
+    for (PsiElement child = aClass.getFirstChild(); child != null; child = child.getNextSibling()) {
+      ProgressManager.checkCanceled();
+      if (child instanceof PsiClass) {
+        collectDocComments((PsiClass) child, sink);
+      }
+      else if (child instanceof PsiDocCommentOwner) {
+        collectDocComment((PsiDocCommentOwner)child, sink);
+      }
+    }
+  }
+
+  private static void collectDocComment(@NotNull PsiDocCommentOwner commentOwner, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+    PsiDocComment comment = commentOwner.getDocComment();
+    if (comment != null) sink.accept(comment);
   }
 
   @Nullable
