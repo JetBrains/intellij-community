@@ -380,6 +380,7 @@
       <module fileurl="file://$PROJECT_DIR$/../base/layoutlib-coroutines/android.sdktools.layoutlib-coroutines.iml" filepath="$PROJECT_DIR$/../base/layoutlib-coroutines/android.sdktools.layoutlib-coroutines.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/lint/libs/lint-api/android.sdktools.lint-api.iml" filepath="$PROJECT_DIR$/../base/lint/libs/lint-api/android.sdktools.lint-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/lint/libs/lint-checks/android.sdktools.lint-checks.iml" filepath="$PROJECT_DIR$/../base/lint/libs/lint-checks/android.sdktools.lint-checks.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../base/lint/libs/lint-model/android.sdktools.lint-model.iml" filepath="$PROJECT_DIR$/../base/lint/libs/lint-model/android.sdktools.lint-model.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/build-system/manifest-merger/android.sdktools.manifest-merger.iml" filepath="$PROJECT_DIR$/../base/build-system/manifest-merger/android.sdktools.manifest-merger.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/mlkit-common/android.sdktools.mlkit-common.iml" filepath="$PROJECT_DIR$/../base/mlkit-common/android.sdktools.mlkit-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/ninepatch/android.sdktools.ninepatch.iml" filepath="$PROJECT_DIR$/../base/ninepatch/android.sdktools.ninepatch.iml" />
