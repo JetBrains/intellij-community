@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -31,7 +31,9 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jdom.Element;
@@ -183,16 +185,13 @@ public abstract class DebuggerUtils {
     }
 
     Method method = null;
-    if (methodSignature != null) {
-      if (refType instanceof ClassType) {
-        method = concreteMethodByName((ClassType)refType, methodName, methodSignature);
-      }
-      if (method == null) {
-        method = ContainerUtil.getFirstItem(refType.methodsByName(methodName, methodSignature));
-      }
+    // speedup the search by not gathering all methods through the class hierarchy
+    if (refType instanceof ClassType) {
+      method = concreteMethodByName((ClassType)refType, methodName, methodSignature);
     }
-    else {
-      method = ContainerUtil.getFirstItem(refType.methodsByName(methodName));
+    if (method == null) {
+      method = ContainerUtil.getFirstItem(
+        methodSignature != null ? refType.methodsByName(methodName, methodSignature) : refType.methodsByName(methodName));
     }
     return method;
   }
@@ -202,12 +201,13 @@ public abstract class DebuggerUtils {
    * It does not gather all visible methods before checking so can return early
    */
   @Nullable
-  private static Method concreteMethodByName(@NotNull ClassType type, @NotNull String name, @NotNull String signature)  {
+  private static Method concreteMethodByName(@NotNull ClassType type, @NotNull String name, @Nullable String signature)  {
+    Processor<Method> signatureChecker = signature != null ? m -> m.signature().equals(signature) : CommonProcessors.alwaysTrue();
     LinkedList<InterfaceType> interfaces = new LinkedList<>();
     // first check classes
     while (type != null) {
       for (Method candidate : type.methods()) {
-        if (candidate.name().equals(name) && candidate.signature().equals(signature)) {
+        if (candidate.name().equals(name) && signatureChecker.process(candidate)) {
           return !candidate.isAbstract() ? candidate : null;
         }
       }
@@ -220,7 +220,7 @@ public abstract class DebuggerUtils {
     while ((iface = interfaces.poll()) != null) {
       if (checkedInterfaces.add(iface)) {
         for (Method candidate : iface.methods()) {
-          if (candidate.name().equals(name) && candidate.signature().equals(signature) && !candidate.isAbstract()) {
+          if (candidate.name().equals(name) && signatureChecker.process(candidate) && !candidate.isAbstract()) {
             return candidate;
           }
         }
