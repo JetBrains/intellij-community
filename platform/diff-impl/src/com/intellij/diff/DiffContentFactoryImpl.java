@@ -294,7 +294,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @NotNull
   @Override
   public DocumentContent createDocumentFromBytes(@Nullable Project project, byte @NotNull [] content, @NotNull FilePath filePath) {
-    Charset charset = guessCharset(content, filePath);
+    Charset charset = guessCharset(project, content, filePath);
     return createFromBytesImpl(project, content, filePath.getFileType(), filePath, filePath.getName(), filePath.getVirtualFile(), charset);
   }
 
@@ -310,7 +310,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @NotNull
   @Override
   public DocumentContent createDocumentFromBytes(@Nullable Project project, byte @NotNull [] content, @NotNull VirtualFile highlightFile) {
-    Charset charset = guessCharset(content, highlightFile);
+    Charset charset = guessCharset(project, content, highlightFile);
     FilePath filePath = VcsUtil.getFilePath(highlightFile);
     return createFromBytesImpl(project, content, highlightFile.getFileType(), filePath, highlightFile.getName(), highlightFile, charset);
   }
@@ -513,12 +513,12 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
 
   @NotNull
-  public static Charset guessCharset(byte @NotNull [] content, @NotNull FilePath filePath) {
+  public static Charset guessCharset(@Nullable Project project, byte @NotNull [] content, @NotNull FilePath filePath) {
     return guessCharset(content, filePath.getFileType(), filePath.getCharset());
   }
 
   @NotNull
-  public static Charset guessCharset(byte @NotNull [] content, @NotNull VirtualFile highlightFile) {
+  public static Charset guessCharset(@Nullable Project project, byte @NotNull [] content, @NotNull VirtualFile highlightFile) {
     return guessCharset(content, highlightFile.getFileType(), highlightFile.getCharset());
   }
 
