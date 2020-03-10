@@ -264,7 +264,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     bus.connect(resourcesDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget();
+        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
+                      (analyzerStatus == null || analyzerStatus.getController().enableToolbar());
+
         updateToolbarVisibility();
       }
     });
@@ -363,6 +365,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       if (!AnalyzerStatus.equals(newStatus, analyzerStatus)) {
         analyzerStatus = newStatus;
         smallIconLabel.setIcon(analyzerStatus.getIcon());
+
+        if (showToolbar != analyzerStatus.getController().enableToolbar()) {
+          showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
+                        analyzerStatus.getController().enableToolbar();
+          updateToolbarVisibility();
+        }
 
         myPopupManager.updateVisiblePopup();
         ActivityTracker.getInstance().inc();
@@ -1668,7 +1676,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
       myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null).
         setCancelOnClickOutside(true).
-        setCancelCallback(() -> analyzerStatus == null || analyzerStatus.getController().invoke().canClosePopup());
+        setCancelCallback(() -> analyzerStatus == null || analyzerStatus.getController().canClosePopup());
 
       myAncestorListener = new AncestorListenerAdapter() {
         @Override
@@ -1681,7 +1689,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           if (analyzerStatus != null) {
-            analyzerStatus.getController().invoke().onClosePopup();
+            analyzerStatus.getController().onClosePopup();
           }
         }
       };
@@ -1696,7 +1704,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     private void showPopup(InputEvent event) {
       hidePopup();
 
-      updateContentPanel(analyzerStatus.getController().invoke());
+      updateContentPanel(analyzerStatus.getController());
 
       myPopup = myPopupBuilder.createPopup();
       myPopup.addListener(myPopupListener);
@@ -1738,12 +1746,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       presentation.setIcon(AllIcons.Actions.More);
       presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
 
-      ActionButton menuButton = new ActionButton(new MenuAction(controller.getActionMenu()),
-                                                 presentation,
-                                                 ActionPlaces.EDITOR_POPUP,
-                                                 ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+      List<AnAction> actions = controller.getActions();
+      if (actions.size() > 0) {
+        ActionButton menuButton = new ActionButton(new MenuAction(actions),
+                                                   presentation,
+                                                   ActionPlaces.EDITOR_POPUP,
+                                                   ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
 
-      myContent.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
+        myContent.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
+      }
 
       if (myProgressBarMap.keySet().equals(analyzerStatus.getPassStat().stream().map(p->p.getPresentableName()).collect(Collectors.toSet()))) {
         analyzerStatus.getPassStat().forEach(s -> myProgressBarMap.get(s.getPresentableName()).setValue(s.toPercent()));
@@ -1781,7 +1792,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
     private void updateVisiblePopup() {
       if (myPopup != null && myPopup.isVisible()) {
-        updateContentPanel(analyzerStatus.getController().invoke());
+        updateContentPanel(analyzerStatus.getController());
 
         Dimension size = myContent.getPreferredSize();
         size.width = Math.max(size.width, JBUIScale.scale(296));
@@ -1836,7 +1847,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
                          controller.getAvailableLevels(),
                          l -> {
                            controller.setHighLightLevel(level.copy(level.getLanguage(), l));
-
                            myContent.revalidate();
 
                            Dimension size = myContent.getPreferredSize();
@@ -1847,7 +1857,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
-    private MenuAction(List<AnAction> actions) {
+    private MenuAction(@NotNull List<AnAction> actions) {
       setPopup(true);
       addAll(actions);
       add(new ToggleAction(EditorBundle.message("iw.show.toolbar")) {
@@ -1861,6 +1871,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
           showToolbar = state;
           EditorSettingsExternalizable.getInstance().setShowInspectionWidget(state);
           updateToolbarVisibility();
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(analyzerStatus == null || analyzerStatus.getController().enableToolbar());
         }
 
         @Override

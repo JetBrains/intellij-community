@@ -24,13 +24,17 @@ import java.util.Map;
 public class HighlightDisplayLevel {
   private static final Map<HighlightSeverity, HighlightDisplayLevel> ourMap = new HashMap<>();
 
-  public static final HighlightDisplayLevel GENERIC_SERVER_ERROR_OR_WARNING = new HighlightDisplayLevel(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
-                                                                                                        createIconByKey(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
-  public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR,
-                                                       new ColorizedIcon(CodeInsightColors.ERRORS_ATTRIBUTES, AllIcons.General.InspectionsError));
+  public static final HighlightDisplayLevel GENERIC_SERVER_ERROR_OR_WARNING =
+    new HighlightDisplayLevel(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
+                              new ColorizedIcon(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING, AllIcons.General.InspectionsWarning));
 
-  public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING,
-                                                        new ColorizedIcon(CodeInsightColors.WARNINGS_ATTRIBUTES, AllIcons.General.InspectionsWarning));
+  public static final HighlightDisplayLevel ERROR =
+    new HighlightDisplayLevel(HighlightSeverity.ERROR,
+                              new ColorizedIcon(CodeInsightColors.ERRORS_ATTRIBUTES, AllIcons.General.InspectionsError));
+
+  public static final HighlightDisplayLevel WARNING =
+    new HighlightDisplayLevel(HighlightSeverity.WARNING,
+                              new ColorizedIcon(CodeInsightColors.WARNINGS_ATTRIBUTES, AllIcons.General.InspectionsWarning));
 
   private static final TextAttributesKey DO_NOT_SHOW_KEY = TextAttributesKey.createTextAttributesKey("DO_NOT_SHOW");
   public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(JBColor.gray));
@@ -39,7 +43,10 @@ public class HighlightDisplayLevel {
    */
   @Deprecated
   public static final HighlightDisplayLevel INFO = new HighlightDisplayLevel(HighlightSeverity.INFO, createIconByKey(DO_NOT_SHOW_KEY));
-  public static final HighlightDisplayLevel WEAK_WARNING = new HighlightDisplayLevel(HighlightSeverity.WEAK_WARNING, createIconByKey(CodeInsightColors.WEAK_WARNING_ATTRIBUTES));
+
+  public static final HighlightDisplayLevel WEAK_WARNING =
+    new HighlightDisplayLevel(HighlightSeverity.WEAK_WARNING,
+                              new ColorizedIcon(CodeInsightColors.WEAK_WARNING_ATTRIBUTES, AllIcons.General.InspectionsWarning));
 
   public static final HighlightDisplayLevel NON_SWITCHABLE_ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR) {
     @Override

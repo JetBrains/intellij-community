@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.markup
 
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.editor.EditorBundle
 import com.intellij.util.ui.GridBag
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.Container
@@ -10,12 +11,12 @@ import java.util.*
 import javax.swing.Icon
 import kotlin.math.roundToInt
 
-enum class InspectionsLevel(val type: String) {
-  NONE("None"),
-  ERRORS("Errors Only"),
-  ALL("All Problems");
+enum class InspectionsLevel(private val bundleKey: String) {
+  NONE("iw.level.none"),
+  ERRORS("iw.level.errors"),
+  ALL("iw.level.all");
 
-  override fun toString(): String = type
+  override fun toString(): String = EditorBundle.message(bundleKey)
 }
 
 data class LanguageHighlightLevel(val language: Language, val level: InspectionsLevel)
@@ -31,7 +32,8 @@ typealias AvailableLevels = List<InspectionsLevel>
 typealias PassStat = List<StatInfo>
 
 interface AnalyzerController {
-  fun getActionMenu() : List<AnAction>
+  fun enableToolbar() : Boolean
+  fun getActions() : List<AnAction>
   fun getAvailableLevels() : AvailableLevels
   fun getHighlightLevels() : List<LanguageHighlightLevel>
   fun setHighLightLevel(newLevels: LanguageHighlightLevel)
@@ -42,7 +44,7 @@ interface AnalyzerController {
 }
 
 // Status
-class AnalyzerStatus(val icon: Icon, title: String, details: String, val controller: () -> AnalyzerController) {
+class AnalyzerStatus(val icon: Icon, title: String, details: String, val controller: AnalyzerController) {
   val title = XmlStringUtil.wrapInHtml(title)
   val details = if (details.isNotEmpty()) XmlStringUtil.wrapInHtml(details) else ""
   var showNavigation = false

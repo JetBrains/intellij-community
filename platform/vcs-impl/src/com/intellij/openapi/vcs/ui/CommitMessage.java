@@ -9,10 +9,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -21,6 +18,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
+import com.intellij.openapi.editor.markup.AnalyzerController;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -325,6 +323,23 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
         }
       }
       return false;
+    }
+
+    @Override
+    @NotNull
+    protected AnalyzerController createUIController() {
+      return new UIController() {
+        @Override
+        @NotNull
+        protected List<AnAction> initActions() {
+          return Collections.emptyList();
+        }
+
+        @Override
+        public boolean enableToolbar() {
+          return false;
+        }
+      };
     }
   }
 }
