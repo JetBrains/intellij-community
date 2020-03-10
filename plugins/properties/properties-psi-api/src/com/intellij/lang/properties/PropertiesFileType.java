@@ -19,7 +19,7 @@ public class PropertiesFileType extends LanguageFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "properties";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
 
-  protected PropertiesFileType() {
+  private PropertiesFileType() {
     super(PropertiesLanguage.INSTANCE);
   }
 
