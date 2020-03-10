@@ -4,9 +4,10 @@ def generator2():
 
 
 def generator():
-    a = 42 #breakpoint
+    a = 42  # breakpoint
     yield from generator2()
     return a
+
 
 sum = 0
 for i in generator():

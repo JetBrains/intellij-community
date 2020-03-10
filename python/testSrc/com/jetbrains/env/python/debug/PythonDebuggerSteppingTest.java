@@ -1024,6 +1024,27 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  public void testStepOverOutsideProject() {
+    runPythonTest(new PyDebuggerTask("/debug/stepping/", "test_step_over_outside_project_scope.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(3);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        stepInto();
+        waitForPause();
+        stepOver();
+        waitForPause();
+        eval("instream").hasValue("'a b c'");  // ensure we're still in the library scope after performing a step over
+        resume();
+        waitForTerminate();
+      }
+    });
+  }
 
   @Test
   public void testSteppingFilter() {

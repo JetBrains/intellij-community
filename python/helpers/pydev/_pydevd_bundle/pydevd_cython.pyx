@@ -13,7 +13,7 @@ pydev_log.debug("Using Cython speedups")
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 26
+version = 27
 
 if not hasattr(sys, '_current_frames'):
 
@@ -186,7 +186,7 @@ from _pydevd_bundle import pydevd_dont_trace
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm_constants import (CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK,
-                                                  CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_STEP_INTO_MY_CODE,)
+                                                  CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE)
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_current_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
     dict_keys, RETURN_VALUES_DICT, NO_FTRACE, IS_CPYTHON
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
@@ -975,20 +975,28 @@ cdef class PyDBFrame:
                     if main_debugger.in_project_scope(frame.f_code.co_filename):
                         stop = is_line
 
-                elif step_cmd == CMD_STEP_OVER:
+                elif step_cmd in (CMD_STEP_OVER, CMD_STEP_INTO_COROUTINE):
                     stop = stop_frame is frame
                     if stop:
-                        # checking the we're going to stop in the project scope
                         if is_line:
-                            stop = main_debugger.in_project_scope(frame.f_code.co_filename)
+                            # the only case we shouldn't stop on a line, is when we traversing though asynchronous framework machinery
+                            if step_cmd == CMD_STEP_INTO_COROUTINE:
+                                stop = main_debugger.in_project_scope(frame.f_code.co_filename)
                         elif is_return:
                             stop = frame.f_back and main_debugger.in_project_scope(frame.f_back.f_code.co_filename)
                             if not stop:
-                                # we have to promote the back frame (if any) to the step stop frame because we want to continue tracing
-                                # in the hope of one of the parent frames will be in the project scope
                                 back = frame.f_back
                                 if back:
                                     info.pydev_step_stop = back
+                                    if main_debugger.in_project_scope(frame.f_code.co_filename):
+                                        # we are returning from the project scope, step over should always lead to the project scope
+                                        if is_generator_or_coroutime and step_cmd == CMD_STEP_OVER:
+                                            # setting ad hoc command to ensure we will skip line stops in an asynchronous framework
+                                            info.pydev_step_cmd = CMD_STEP_INTO_COROUTINE
+                                    else:
+                                        # we were already outside the project scope because of step into or breakpoint, it's ok to stop
+                                        # if we are not chopping a way through an asynchronous framework
+                                        stop = not step_cmd == CMD_STEP_INTO_COROUTINE
                                 else:
                                     # if there's no back frame, we just stop as soon as possible
                                     info.pydev_step_cmd = CMD_STEP_INTO
@@ -996,7 +1004,7 @@ cdef class PyDBFrame:
                         else:
                             stop = False
 
-                    if plugin_manager is not None:
+                    if CMD_STEP_OVER and plugin_manager is not None:
                         result = plugin_manager.cmd_step_over(main_debugger, frame, event, self._args, stop_info, stop)
                         if result:
                             stop, plugin_stop = result
