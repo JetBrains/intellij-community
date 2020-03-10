@@ -1330,7 +1330,7 @@ public final class IdeEventQueue extends EventQueue {
   private boolean isTypeaheadTimeoutExceeded() {
     if (!delayKeyEvents.get()) return false;
     long currentTypeaheadDelay = System.currentTimeMillis() - lastTypeaheadTimestamp;
-    if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimout").asDouble()) {
+    if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimeout").asDouble()) {
       // Log4j uses appenders. The appenders potentially may use invokeLater method
       // In this particular place it is possible to get a deadlock because of
       // sun.awt.PostEventQueue#flush implementation.
