@@ -100,8 +100,8 @@ public abstract class JBPopupFactory {
   */
   @Deprecated
   @NotNull
-  public PopupChooserBuilder createListPopupBuilder(@NotNull JList list) {
-    return new PopupChooserBuilder(list);
+  public <T> PopupChooserBuilder<T> createListPopupBuilder(@NotNull JList<T> list) {
+    return new PopupChooserBuilder<>(list);
   }
 
   /**
@@ -429,7 +429,10 @@ public abstract class JBPopupFactory {
   @Nullable
   public abstract Balloon getParentBalloonFor(@Nullable Component c);
 
-  protected abstract PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JList list);
-  protected abstract PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JTree tree);
-  protected abstract PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JTable table);
+  @NotNull
+  protected abstract <T> PopupChooserBuilder.PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder, @NotNull JList<T> list);
+  @NotNull
+  protected abstract <T> PopupChooserBuilder.PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder, @NotNull JTree tree);
+  @NotNull
+  protected abstract <T> PopupChooserBuilder.PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder, @NotNull JTable table);
 }

@@ -19,13 +19,13 @@ import java.util.Set;
 
 public interface IPopupChooserBuilder<T> {
 
-  IPopupChooserBuilder<T> setRenderer(ListCellRenderer renderer);
+  IPopupChooserBuilder<T> setRenderer(ListCellRenderer<? super T> renderer);
 
   @NotNull
   IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Consumer<? super T> callback);
 
   @NotNull
-  IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<? super Set<T>> callback);
+  IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<? super Set<? extends T>> callback);
 
   IPopupChooserBuilder<T> setCancelOnClickOutside(boolean cancelOnClickOutside);
 

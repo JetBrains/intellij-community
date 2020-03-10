@@ -115,18 +115,18 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @Override
-  protected PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JList list) {
-    return new PopupListAdapter(builder, list);
+  protected <T> PopupChooserBuilder.@NotNull PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder, @NotNull JList<T> list) {
+    return new PopupListAdapter<>(builder, list);
   }
 
   @Override
-  protected PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JTree tree) {
-    return new PopupTreeAdapter(builder, tree);
+  protected <T> PopupChooserBuilder.@NotNull PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder, @NotNull JTree tree) {
+    return new PopupTreeAdapter<>(builder, tree);
   }
 
   @Override
-  protected PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JTable table) {
-    return new PopupTableAdapter(builder, table);
+  protected <T> PopupChooserBuilder.@NotNull PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder, @NotNull JTable table) {
+    return new PopupTableAdapter<>(builder, table);
   }
 
   @NotNull

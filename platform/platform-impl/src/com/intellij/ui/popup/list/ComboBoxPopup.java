@@ -10,8 +10,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.WizardPopup;
-
-import java.util.function.Consumer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +20,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class ComboBoxPopup<T> extends ListPopupImpl {
@@ -29,7 +28,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
   public ComboBoxPopup(@NotNull Context<T> context,
                        @Nullable T selectedItem,
-                       @NotNull Consumer<T> onItemSelected) {
+                       @NotNull Consumer<? super T> onItemSelected) {
     this(context, null, popupStateFromContext(context, onItemSelected, selectedItem), null);
   }
 
@@ -44,7 +43,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
   @NotNull
   private static <T> MyBasePopupState<T> popupStateFromContext(@NotNull Context<T> context,
-                                                               @NotNull Consumer<T> onItemSelected,
+                                                               @NotNull Consumer<? super T> onItemSelected,
                                                                @Nullable T selectedItem) {
     MyBasePopupState<T> step = new MyBasePopupState<T>(onItemSelected,
                                                        () -> context.getModel(),
@@ -173,13 +172,13 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
   private static class MyBasePopupState<T> extends BaseListPopupStep<T> {
     private final JBList<T> myProxyList = new JBList<>();
-    private final Consumer<T> myOnItemSelected;
-    private final Supplier<ListModel<T>> myGetComboboxModel;
-    private final Supplier<ListCellRenderer<? super T>> myGetRenderer;
+    private final Consumer<? super T> myOnItemSelected;
+    private final @NotNull Supplier<? extends ListModel<T>> myGetComboboxModel;
+    private final Supplier<? extends ListCellRenderer<? super T>> myGetRenderer;
 
-    private MyBasePopupState(@NotNull Consumer<T> onItemSelected,
-                             @NotNull Supplier<ListModel<T>> getComboboxModel,
-                             @NotNull Supplier<ListCellRenderer<? super T>> getRenderer) {
+    private MyBasePopupState(@NotNull Consumer<? super T> onItemSelected,
+                             @NotNull Supplier<? extends ListModel<T>> getComboboxModel,
+                             @NotNull Supplier<? extends ListCellRenderer<? super T>> getRenderer) {
       super(null, copyItemsFromModel(getComboboxModel.get()));
       myOnItemSelected = onItemSelected;
       myGetComboboxModel = getComboboxModel;

@@ -174,11 +174,11 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       IPopupChooserBuilder<LineMarkerInfo<?>> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(myInfos);
       builder.setRenderer(new SelectionAwareListCellRenderer<>(dom -> {
         Icon icon = null;
-        final GutterIconRenderer renderer = ((LineMarkerInfo<?>)dom).createGutterRenderer();
+        final GutterIconRenderer renderer = dom.createGutterRenderer();
         if (renderer != null) {
           icon = renderer.getIcon();
         }
-        PsiElement element = ((LineMarkerInfo<?>)dom).getElement();
+        PsiElement element = dom.getElement();
         final String elementPresentation;
         if (element == null) {
           elementPresentation = IdeBundle.message("node.structureview.invalid");
