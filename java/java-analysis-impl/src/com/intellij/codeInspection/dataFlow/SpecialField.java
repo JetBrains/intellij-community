@@ -101,7 +101,12 @@ public enum SpecialField implements VariableDescriptor {
 
     @Override
     boolean isMyQualifierType(PsiType type) {
-      return InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP) || InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION);
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+      if (psiClass == null) return false;
+      return !InheritanceUtil.processSupers(psiClass, true, cls -> {
+        String qualifiedName = cls.getQualifiedName();
+        return !JAVA_UTIL_MAP.equals(qualifiedName) && !JAVA_UTIL_COLLECTION.equals(qualifiedName);
+      });
     }
 
     @Override
