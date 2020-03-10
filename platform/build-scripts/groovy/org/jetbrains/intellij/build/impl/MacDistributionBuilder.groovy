@@ -142,9 +142,11 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
     buildContext.ant.copy(file: icnsPath, tofile: "$target/Resources/$targetIcnsFileName")
 
-    if (!customizer.fileAssociationIcons.empty) {
-      customizer.fileAssociationIcons.each {
-        buildContext.ant.copy(file: it, todir: "$target/Resources", overwrite: "true")
+    if (!customizer.fileAssociations.empty) {
+      customizer.fileAssociations.each {
+        if (!it.iconPath.empty) {
+          buildContext.ant.copy(file: it.iconPath, todir: "$target/Resources", overwrite: "true")
+        }
       }
     }
 
