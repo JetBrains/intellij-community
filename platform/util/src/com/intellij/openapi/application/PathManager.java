@@ -448,16 +448,14 @@ public class PathManager {
       Path file = path != null ? Paths.get(path) : null;
       if (file != null && Files.exists(file)) {
         try (Reader reader = Files.newBufferedReader(file)) {
-          Map<String, String> properties = PropertiesUtil.loadProperties(reader);
-          for (Map.Entry<String, String> entry : properties.entrySet()) {
-            String key = entry.getKey();
+          PropertiesUtil.processProperties(reader, (key, value) -> {
             if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
               log(path + ": '" + key + "' cannot be redefined");
             }
             else if (!sysProperties.containsKey(key)) {
-              sysProperties.setProperty(key, substituteVars(entry.getValue()));
+              sysProperties.setProperty(key, substituteVars(value));
             }
-          }
+          });
         }
         catch (IOException e) {
           log("Can't read property file '" + path + "': " + e.getMessage());
