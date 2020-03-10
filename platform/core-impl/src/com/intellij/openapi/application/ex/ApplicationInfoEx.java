@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.Calendar;
@@ -161,6 +160,5 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @Nullable
   public abstract Color getProgressColor();
 
-  @Nullable
-  public abstract Icon getProgressTailIcon();
+  public @Nullable abstract String getProgressTailIcon();
 }

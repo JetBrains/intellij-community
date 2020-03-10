@@ -16,13 +16,11 @@ import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.net.URL;
@@ -56,7 +54,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private Color myAboutLinkColor;
   private Rectangle myAboutLogoRect;
   private String myProgressTailIconName;
-  private Icon myProgressTailIcon;
   private int myProgressHeight = 2;
   private int myProgressY = 350;
   private String mySplashImageUrl;
@@ -189,7 +186,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   // if application loader was not used
   @SuppressWarnings("unused")
   private ApplicationInfoImpl() {
-    loadState(ApplicationNamesInfo.initAndGetRawData());
+    this(ApplicationNamesInfo.initAndGetRawData());
   }
 
   @NonInjectable
@@ -340,18 +337,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   @Nullable
-  public Icon getProgressTailIcon() {
-    if (myProgressTailIcon == null && myProgressTailIconName != null) {
-      try {
-        URL url = getClass().getResource(myProgressTailIconName);
-        @SuppressWarnings("UnnecessaryFullyQualifiedName")
-        Image image = com.intellij.util.ImageLoader.loadFromUrl(url);
-        if (image != null) {
-          myProgressTailIcon = new JBImageIcon(image);
-        }
-      } catch (Exception ignore) {}
-    }
-    return myProgressTailIcon;
+  public String getProgressTailIcon() {
+    return myProgressTailIconName;
   }
 
   @Override
