@@ -25,12 +25,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ChooseClassAndDoHighlightRunnable extends ChooseOneOrAllRunnable<PsiClass> {
-  public ChooseClassAndDoHighlightRunnable(PsiClassType @NotNull [] classTypes, @NotNull Editor editor, @NotNull String title) {
+abstract class ChooseClassAndDoHighlightRunnable extends ChooseOneOrAllRunnable<PsiClass> {
+  ChooseClassAndDoHighlightRunnable(PsiClassType @NotNull [] classTypes, @NotNull Editor editor, @NotNull String title) {
     super(resolveClasses(classTypes), editor, title, PsiClass.class);
   }
 
-  protected ChooseClassAndDoHighlightRunnable(@NotNull List<? extends PsiClass> classes, @NotNull Editor editor, @NotNull String title) {
+  ChooseClassAndDoHighlightRunnable(@NotNull List<? extends PsiClass> classes, @NotNull Editor editor, @NotNull String title) {
     super(classes, editor, title, PsiClass.class);
   }
 
