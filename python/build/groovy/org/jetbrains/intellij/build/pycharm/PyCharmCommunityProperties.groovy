@@ -87,7 +87,7 @@ class PyCharmCommunityWindowsDistributionCustomizer extends PyCharmWindowsDistri
     icoPathForEAP = "$projectHome/python/resources/PyCharmCore_EAP.ico"
     include32BitLauncher = false
     installerImagesPath = "$projectHome/python/build/resources"
-    fileAssociations = ["py"]
+    fileAssociations = FileAssociation.from("py")
   }
 
   @Override

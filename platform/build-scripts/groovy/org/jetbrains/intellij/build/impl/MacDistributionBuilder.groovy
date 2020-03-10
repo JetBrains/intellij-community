@@ -42,17 +42,17 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 """ : "")
     def associations = ""
     if (!customizer.fileAssociations.empty) {
-      for (int i=0; i<customizer.fileAssociations.size(); i++) {
+      for (int i = 0; i < customizer.fileAssociations.size(); i++) {
         def iconFileName = targetIcnsFileName
-        if (customizer.fileAssociationIcons.size() == customizer.fileAssociations.size()) {
-          def iconFile = customizer.fileAssociationIcons[i]
+        def iconFile = customizer.fileAssociations[i].iconPath
+        if (!iconFile.isEmpty()) {
           iconFileName = iconFile.substring(iconFile.lastIndexOf(File.separator) + 1, iconFile.size())
         }
         associations += """<dict>
         <key>CFBundleTypeExtensions</key>
         <array>
 """
-          associations += "          <string>${customizer.fileAssociations[i]}</string>\n"
+          associations += "          <string>${customizer.fileAssociations[i].extension}</string>\n"
           associations +=  """        </array>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
