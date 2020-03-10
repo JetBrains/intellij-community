@@ -206,6 +206,12 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
     }
   }
 
+  @Override
+  public void initStateFrom(@NotNull ProgressIndicator indicator) {
+    super.initStateFrom(indicator);
+    delegate(it -> it.initStateFrom(this));
+  }
+
   protected void onProgressChange() {
 
   }
