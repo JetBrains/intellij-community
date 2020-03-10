@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
+import com.intellij.util.io.hostName
 import com.intellij.util.io.origin
 import com.intellij.util.net.NetUtils
 import com.intellij.util.text.nullize
@@ -27,6 +29,8 @@ import java.net.URI
 import java.net.URISyntaxException
 
 internal class InstallPluginService : RestService() {
+  private val LOG = logger<InstallPluginService>()
+
   override fun getServiceName() = "installPlugin"
 
   override fun isAccessible(request: HttpRequest) = true
@@ -53,8 +57,10 @@ internal class InstallPluginService : RestService() {
                                  pluginId: String): Nothing? {
     //check if there is an update for this IDE with this ID.
     val buildNumber = PluginRepositoryRequests.getBuildForPluginRepositoryRequests()
-    PluginsMetaLoader.getLastCompatiblePluginUpdate(listOf(pluginId), BuildNumber.fromString(buildNumber))
-    val compatibleUpdateExists = PluginsMetaLoader.getLastCompatiblePluginUpdate(listOf(pluginId), BuildNumber.fromString(buildNumber)).isNotEmpty()
+    LOG.debug("Checking for `LastCompatiblePluginUpdate`: id=$pluginId, buildNumber=$buildNumber")
+    val lastCompatiblePluginUpdate = PluginsMetaLoader.getLastCompatiblePluginUpdate(listOf(pluginId), BuildNumber.fromString(buildNumber))
+    LOG.debug("`LastCompatiblePluginUpdate` results: $lastCompatiblePluginUpdate")
+    val compatibleUpdateExists = lastCompatiblePluginUpdate.isNotEmpty()
 
     val out = BufferExposingByteArrayOutputStream()
 
@@ -123,6 +129,11 @@ internal class InstallPluginService : RestService() {
     }
     catch (ignored: URISyntaxException) {
       return false
+    }
+
+    val hostName = request.hostName
+    if (hostName != null && !NetUtils.isLocalhost(hostName)) {
+      LOG.error("Expected 'request.hostName' to be localhost. hostName='$hostName', origin='$origin'")
     }
 
     return (originHost != null &&
