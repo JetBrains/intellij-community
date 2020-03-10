@@ -69,12 +69,22 @@ public final class ConditionalExpressionGenerator {
     PsiExpression condition = model.getCondition();
     PsiExpression thenExpression = model.getThenExpression();
     PsiExpression elseExpression = model.getElseExpression();
-    if (PsiType.BOOLEAN.equals(model.getType())) {
+    if (PsiType.BOOLEAN.equals(model.getType()) || model.getType().equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
       PsiLiteralExpression thenLiteral = ExpressionUtils.getLiteral(thenExpression);
       PsiLiteralExpression elseLiteral = ExpressionUtils.getLiteral(elseExpression);
       Boolean thenValue = thenLiteral == null ? null : tryCast(thenLiteral.getValue(), Boolean.class);
       Boolean elseValue = elseLiteral == null ? null : tryCast(elseLiteral.getValue(), Boolean.class);
-      if (thenValue != null || elseValue != null) {
+      if (thenValue != null && elseValue != null) {
+        if (thenValue.equals(elseValue)) {
+          // Equal branches are handled by separate inspections
+          return null;
+        }
+        if (thenValue) {
+          return new ConditionalExpressionGenerator("", condition);
+        }
+        return new ConditionalExpressionGenerator("", ct -> BoolUtils.getNegatedExpressionText(condition, ct));
+      }
+      if ((thenValue != null || elseValue != null) && PsiType.BOOLEAN.equals(model.getType())) {
         return getAndOrGenerator(condition, thenExpression, elseExpression, thenValue, elseValue);
       }
       if (BoolUtils.areExpressionsOpposite(thenExpression, elseExpression)) {
@@ -93,15 +103,6 @@ public final class ConditionalExpressionGenerator {
                                                                   PsiExpression elseExpression,
                                                                   Boolean thenValue,
                                                                   Boolean elseValue) {
-    if (thenValue != null && elseValue != null) {
-      if (thenValue.equals(elseValue)) {
-        return new ConditionalExpressionGenerator("", thenExpression);
-      }
-      if (thenValue) {
-        return new ConditionalExpressionGenerator("", condition);
-      }
-      return new ConditionalExpressionGenerator("", ct -> BoolUtils.getNegatedExpressionText(condition, ct));
-    }
     if (thenValue != null) {
       if (thenValue) {
         return new ConditionalExpressionGenerator("||", ct -> joinConditions(condition, elseExpression, false, ct));
