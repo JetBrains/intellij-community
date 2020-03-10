@@ -227,8 +227,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public BuildNumber getBuild() {
-    return BuildNumber.fromString(myBuildNumber);
+  public @NotNull BuildNumber getBuild() {
+    return Objects.requireNonNull(BuildNumber.fromString(myBuildNumber));
   }
 
   @Override
@@ -343,8 +343,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public Icon getProgressTailIcon() {
     if (myProgressTailIcon == null && myProgressTailIconName != null) {
       try {
-        final URL url = getClass().getResource(myProgressTailIconName);
-        @SuppressWarnings({"UnnecessaryFullyQualifiedName"}) final Image image = com.intellij.util.ImageLoader.loadFromUrl(url);
+        URL url = getClass().getResource(myProgressTailIconName);
+        @SuppressWarnings("UnnecessaryFullyQualifiedName")
+        Image image = com.intellij.util.ImageLoader.loadFromUrl(url);
         if (image != null) {
           myProgressTailIcon = new JBImageIcon(image);
         }
@@ -622,6 +623,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     Element companyElement = getChild(parentNode, ELEMENT_COMPANY);
     if (companyElement != null) {
       myCompanyName = companyElement.getAttributeValue(ATTRIBUTE_NAME, myCompanyName);
+      //noinspection TestOnlyProblems
       myShortCompanyName = companyElement.getAttributeValue("shortName", shortenCompanyName(myCompanyName));
       myCompanyUrl = companyElement.getAttributeValue(ATTRIBUTE_URL, myCompanyUrl);
       myCopyrightStart = companyElement.getAttributeValue(COPYRIGHT_START, myCopyrightStart);
@@ -629,27 +631,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     Element buildElement = getChild(parentNode, ELEMENT_BUILD);
     if (buildElement != null) {
-      myBuildNumber = getAttributeValue(buildElement, ATTRIBUTE_NUMBER);
-      myApiVersion = getAttributeValue(buildElement, ATTRIBUTE_API_VERSION);
-      setBuildNumber(myApiVersion, myBuildNumber);
-
-      String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
-      if ("__BUILD_DATE__".equals(dateString)) {
-        myBuildDate = new GregorianCalendar();
-        try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + "/lib/bootstrap.jar")) {
-          // META-INF is always updated on build
-          JarEntry jarEntry = bootstrapJar.entries().nextElement();
-          myBuildDate.setTime(new Date(jarEntry.getTime()));
-        }
-        catch (Exception ignore) { }
-      }
-      else {
-        myBuildDate = dateString == null ? GregorianCalendar.getInstance() : parseDate(dateString);
-      }
-      String majorReleaseDateString = buildElement.getAttributeValue(ATTRIBUTE_MAJOR_RELEASE_DATE);
-      if (majorReleaseDateString != null) {
-        myMajorReleaseBuildDate = parseDate(majorReleaseDateString);
-      }
+      readBuildInfo(buildElement);
     }
 
     Element logoElement = getChild(parentNode, ELEMENT_LOGO);
@@ -801,41 +783,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       myWhatsNewUrl = whatsnewElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element pluginsElement = getChild(parentNode, ELEMENT_PLUGINS);
-    if (pluginsElement != null) {
-      String url = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
-      if (url != null) {
-        myPluginManagerUrl = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
-      }
-
-      String listUrl = pluginsElement.getAttributeValue(ATTRIBUTE_LIST_URL);
-      if (listUrl != null) {
-        myPluginsListUrl = listUrl;
-      }
-
-      String channelListUrl = pluginsElement.getAttributeValue(ATTRIBUTE_CHANNEL_LIST_URL);
-      if (channelListUrl != null) {
-        myChannelsListUrl = channelListUrl;
-      }
-
-      String downloadUrl = pluginsElement.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
-      if (downloadUrl != null) {
-        myPluginsDownloadUrl = downloadUrl;
-      }
-
-      myBuiltinPluginsUrl = pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
-    }
-
-    String pluginsHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
-    if (pluginsHost != null) {
-      myPluginManagerUrl = pluginsHost.endsWith("/") ? pluginsHost.substring(0, pluginsHost.length() - 1) : pluginsHost;
-      myPluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
-    }
-
-    myPluginManagerUrl = ObjectUtils.coalesce(myPluginManagerUrl, DEFAULT_PLUGINS_HOST);
-    myPluginsListUrl = ObjectUtils.coalesce(myPluginsListUrl, myPluginManagerUrl + "/plugins/list/");
-    myChannelsListUrl = ObjectUtils.coalesce(myChannelsListUrl, myPluginManagerUrl + "/channels/list/");
-    myPluginsDownloadUrl = ObjectUtils.coalesce(myPluginsDownloadUrl, myPluginManagerUrl + "/pluginManager/");
+    readPluginInfo(getChild(parentNode, ELEMENT_PLUGINS));
 
     Element keymapElement = getChild(parentNode, ELEMENT_KEYMAP);
     if (keymapElement != null) {
@@ -899,6 +847,76 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     }
   }
 
+  private void readBuildInfo(@NotNull Element element) {
+    myBuildNumber = getAttributeValue(element, ATTRIBUTE_NUMBER);
+    myApiVersion = getAttributeValue(element, ATTRIBUTE_API_VERSION);
+    setBuildNumber(myApiVersion, myBuildNumber);
+
+    String dateString = element.getAttributeValue(ATTRIBUTE_DATE);
+    if ("__BUILD_DATE__".equals(dateString)) {
+      myBuildDate = new GregorianCalendar();
+      try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + "/lib/bootstrap.jar")) {
+        // META-INF is always updated on build
+        JarEntry jarEntry = bootstrapJar.entries().nextElement();
+        myBuildDate.setTime(new Date(jarEntry.getTime()));
+      }
+      catch (Exception ignore) { }
+    }
+    else {
+      myBuildDate = dateString == null ? Calendar.getInstance() : parseDate(dateString);
+    }
+
+    String majorReleaseDateString = element.getAttributeValue(ATTRIBUTE_MAJOR_RELEASE_DATE);
+    if (majorReleaseDateString != null) {
+      myMajorReleaseBuildDate = parseDate(majorReleaseDateString);
+    }
+  }
+
+  private void readPluginInfo(@Nullable Element element) {
+    String pluginManagerUrl = DEFAULT_PLUGINS_HOST;
+    String pluginsListUrl = null;
+    myChannelsListUrl = null;
+    myPluginsDownloadUrl = null;
+    if (element != null) {
+      String url = element.getAttributeValue(ATTRIBUTE_URL);
+      if (url != null) {
+        pluginManagerUrl = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+      }
+
+      String listUrl = element.getAttributeValue(ATTRIBUTE_LIST_URL);
+      if (listUrl != null) {
+        pluginsListUrl = listUrl;
+      }
+
+      String channelListUrl = element.getAttributeValue(ATTRIBUTE_CHANNEL_LIST_URL);
+      if (channelListUrl != null) {
+        myChannelsListUrl = channelListUrl;
+      }
+
+      String downloadUrl = element.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
+      if (downloadUrl != null) {
+        myPluginsDownloadUrl = downloadUrl;
+      }
+
+      myBuiltinPluginsUrl = element.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
+    }
+
+    String pluginsHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
+    if (pluginsHost != null) {
+      pluginManagerUrl = pluginsHost.endsWith("/") ? pluginsHost.substring(0, pluginsHost.length() - 1) : pluginsHost;
+      pluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
+    }
+
+    myPluginManagerUrl = pluginManagerUrl;
+    myPluginsListUrl = pluginsListUrl == null ? (pluginManagerUrl + "/plugins/list/") : pluginsListUrl;
+    if (myChannelsListUrl == null) {
+      myChannelsListUrl = pluginManagerUrl + "/channels/list/";
+    }
+    if (myPluginsDownloadUrl == null) {
+      myPluginsDownloadUrl = pluginManagerUrl + "/pluginManager/";
+    }
+  }
+
   @NotNull
   private static List<Element> getChildren(@NotNull Element parentNode, @NotNull String name) {
     return parentNode.getChildren(name, parentNode.getNamespace());
@@ -909,6 +927,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   // copy of ApplicationInfoProperties.shortenCompanyName
+  @SuppressWarnings("SSBasedInspection")
   @TestOnly
   static String shortenCompanyName(@NotNull String name) {
     if (name.endsWith(" s.r.o.")) {
@@ -920,8 +939,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return name;
   }
 
-  private static void setBuildNumber(String apiVersion, String buildNumber) {
-    PluginManagerCore.BUILD_NUMBER = apiVersion != null ? apiVersion : buildNumber;
+  private static void setBuildNumber(@Nullable String apiVersion, String buildNumber) {
+    PluginManagerCore.BUILD_NUMBER = apiVersion == null ? buildNumber : apiVersion;
   }
 
   private static @NotNull GregorianCalendar parseDate(@NotNull String dateString) {

@@ -21,7 +21,7 @@ public abstract class ApplicationInfo {
 
   public abstract Calendar getBuildDate();
 
-  public abstract BuildNumber getBuild();
+  public abstract @NotNull BuildNumber getBuild();
 
   public abstract String getApiVersion();
 
