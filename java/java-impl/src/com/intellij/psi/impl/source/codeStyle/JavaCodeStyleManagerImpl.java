@@ -328,7 +328,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     }
 
     if (!(type instanceof PsiClassType) || skipIndices) {
-      return suggestNamesFromTypeName(type, skipIndices);
+      return suggestNamesFromTypeName(type, skipIndices, variableKind);
     }
 
     final Collection<String> suggestions = new LinkedHashSet<>();
@@ -336,7 +336,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     suggestNamesForCollectionInheritors(classType, suggestions);
     suggestFromOptionalContent(variableKind, classType, suggestions);
     suggestNamesFromGenericParameters(classType, suggestions);
-    suggestions.addAll(suggestNamesFromTypeName(type, false));
+    suggestions.addAll(suggestNamesFromTypeName(type, false, variableKind));
     suggestNamesFromHierarchy(classType, suggestions);
     return suggestions;
   }
@@ -374,9 +374,6 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         case "java.lang.String": return "s";
       }
     }
-    if (kind == VariableKind.PARAMETER && longTypeName.endsWith("Exception")) {
-      return "e";
-    }
     return null;
   }
 
@@ -394,12 +391,16 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @NotNull
-  private static Collection<String> suggestNamesFromTypeName(@NotNull PsiType type, boolean skipIndices) {
+  private static Collection<String> suggestNamesFromTypeName(@NotNull PsiType type, boolean skipIndices, @NotNull VariableKind variableKind) {
     String typeName = getTypeName(type, !skipIndices);
     if (typeName == null) return Collections.emptyList();
 
     typeName = normalizeTypeName(typeName);
-    return Collections.singletonList(type instanceof PsiArrayType ? StringUtil.pluralize(typeName) : typeName);
+    String result = type instanceof PsiArrayType ? StringUtil.pluralize(typeName) : typeName;
+    if (variableKind == VariableKind.PARAMETER && type instanceof PsiClassType && typeName.endsWith("Exception")) {
+      return Arrays.asList("e", result);
+    }
+    return Collections.singletonList(result);
   }
 
   @Nullable
@@ -426,8 +427,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   private static void suggestNamesFromGenericParameters(@NotNull PsiClassType type, @NotNull Collection<? super String> suggestions) {
+    PsiType[] parameters = type.getParameters();
+    if (parameters.length == 0) return;
+
     StringBuilder fullNameBuilder = new StringBuilder();
-    final PsiType[] parameters = type.getParameters();
     for (PsiType parameter : parameters) {
       if (parameter instanceof PsiClassType) {
         final String typeName = normalizeTypeName(getTypeName(parameter));
