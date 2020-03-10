@@ -141,7 +141,6 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
       Navigatable navigatable = null;
       if (virtualFile != null && actualRange != null && virtualFile.isValid() && actualRange.getStartOffset() >= 0) {
         navigatable = new OpenFileDescriptor(pointer.getProject(), virtualFile, actualRange.getStartOffset());
-        navigatables.add(navigatable);
       }
       else {
         PsiElement element = pointer.getElement();
