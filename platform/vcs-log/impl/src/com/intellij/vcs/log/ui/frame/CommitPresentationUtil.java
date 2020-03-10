@@ -15,7 +15,6 @@ import com.intellij.vcs.commit.message.SubjectLimitInspection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,24 +49,6 @@ public class CommitPresentationUtil {
 
   public static boolean isGoToHash(@NotNull HyperlinkEvent e) {
     return e.getDescription().startsWith(GO_TO_HASH);
-  }
-
-  @NotNull
-  public static String getShortSummary(@NotNull VcsShortCommitDetails details) {
-    return getShortSummary(details, true, 50);
-  }
-
-  @NotNull
-  @Nls
-  public static String getShortSummary(@NotNull VcsShortCommitDetails details, boolean useHtml, int maxMessageLength) {
-    long time = details.getAuthorTime();
-    String commitMessage = "\"" + StringUtil.shortenTextWithEllipsis(details.getSubject(), maxMessageLength, 0, "...") + "\"";
-    if (useHtml) commitMessage = XmlStringUtil.wrapInHtmlTag(commitMessage, "b");
-    return VcsLogBundle.message("vcs.log.details.short.commit.summary",
-                                commitMessage,
-                                getAuthorPresentation(details),
-                                DateFormatUtil.formatDate(time),
-                                DateFormatUtil.formatTime(time));
   }
 
   @NotNull
