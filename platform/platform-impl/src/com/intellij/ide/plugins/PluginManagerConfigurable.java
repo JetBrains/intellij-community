@@ -804,7 +804,7 @@ public class PluginManagerConfigurable
         Map<String, List<IdeaPluginDescriptor>> bundledGroups = new HashMap<>();
         ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
         int downloadedEnabled = 0;
-        boolean hideImplDetails = PluginManagerCore.hideImplementationDetails();
+        boolean hideImplDetails = PluginManager.getInstance().hideImplementationDetails();
         String otherCategoryTitle = IdeBundle.message("plugins.configurable.other.bundled");
 
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {

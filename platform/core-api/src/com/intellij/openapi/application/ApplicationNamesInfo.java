@@ -9,6 +9,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.InputStream;
+
 public final class ApplicationNamesInfo {
   private final String myProductName;
   private final String myFullProductName;
@@ -22,8 +24,13 @@ public final class ApplicationNamesInfo {
   private static @NotNull Element loadData() {
     String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "");
     String resource = "/idea/" + prefix + "ApplicationInfo.xml";
+    InputStream stream = ApplicationNamesInfo.class.getResourceAsStream(resource);
+    if (stream == null) {
+      throw new RuntimeException("Resource not found: " + resource);
+    }
+
     try {
-      return JDOMUtil.load(ApplicationNamesInfo.class, resource);
+      return JDOMUtil.load(stream);
     }
     catch (Exception e) {
       throw new RuntimeException("Cannot load resource: " + resource, e);
@@ -32,6 +39,7 @@ public final class ApplicationNamesInfo {
 
   @ApiStatus.Internal
   public static @NotNull Element initAndGetRawData() {
+    //noinspection SynchronizeOnThis
     synchronized (ApplicationNamesInfo.class) {
       Element data = loadData();
       if (instance == null) {

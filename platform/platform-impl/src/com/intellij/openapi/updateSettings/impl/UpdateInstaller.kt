@@ -34,7 +34,7 @@ object UpdateInstaller {
   private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
 
   private val patchesUrl: URL
-    get() = URL(System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl)
+    get() = URL(System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.patchesUrl)
 
   @JvmStatic
   @Throws(IOException::class)

@@ -309,7 +309,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     }
 
     Element updateUrls = getChild(element, UPDATE_URLS_ELEMENT_NAME);
-    myUpdateUrls = new UpdateUrlsImpl(updateUrls);
+    myUpdateUrls = updateUrls == null ? null : new UpdateUrlsImpl(updateUrls);
 
     @SuppressWarnings("DuplicatedCode")
     Element documentationElement = getChild(element, ELEMENT_DOCUMENTATION);
@@ -448,9 +448,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       result = instance;
       if (result == null) {
         Activity activity = StartUpMeasurer.startActivity("app info loading");
-        result = new ApplicationInfoImpl(ApplicationNamesInfo.initAndGetRawData());
-        instance = result;
-        activity.end();
+        try {
+          result = new ApplicationInfoImpl(ApplicationNamesInfo.initAndGetRawData());
+          instance = result;
+        }
+        finally {
+          activity.end();
+        }
       }
     }
     return result;
@@ -472,15 +476,20 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getApiVersion() {
+  public @NotNull String getApiVersion() {
+    return getApiVersionAsNumber().asString();
+  }
+
+  @Override
+  public @NotNull BuildNumber getApiVersionAsNumber() {
     BuildNumber build = getBuild();
     if (myApiVersion != null) {
       BuildNumber api = BuildNumber.fromStringWithProductCode(myApiVersion, build.getProductCode());
       if (api != null) {
-        return api.asString();
+        return api;
       }
     }
-    return build.asString();
+    return build;
   }
 
   @Override
@@ -658,7 +667,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public UpdateUrls getUpdateUrls() {
+  public @Nullable UpdateUrls getUpdateUrls() {
     return myUpdateUrls;
   }
 
@@ -834,7 +843,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private void readBuildInfo(@NotNull Element element) {
     myBuildNumber = getAttributeValue(element, ATTRIBUTE_NUMBER);
     myApiVersion = getAttributeValue(element, ATTRIBUTE_API_VERSION);
-    setBuildNumber(myApiVersion, myBuildNumber);
 
     String dateString = element.getAttributeValue(ATTRIBUTE_DATE);
     if ("__BUILD_DATE__".equals(dateString)) {
@@ -923,10 +931,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return name;
   }
 
-  private static void setBuildNumber(@Nullable String apiVersion, String buildNumber) {
-    PluginManagerCore.BUILD_NUMBER = apiVersion == null ? buildNumber : apiVersion;
-  }
-
   private static @NotNull GregorianCalendar parseDate(@NotNull String dateString) {
     GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
     try {
@@ -967,15 +971,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myEssentialPluginsIds;
   }
 
-  private static class UpdateUrlsImpl implements UpdateUrls {
-    private String myCheckingUrl;
-    private String myPatchesUrl;
+  private static final class UpdateUrlsImpl implements UpdateUrls {
+    private final String myCheckingUrl;
+    private final String myPatchesUrl;
 
-    private UpdateUrlsImpl(Element element) {
-      if (element != null) {
-        myCheckingUrl = element.getAttributeValue("check");
-        myPatchesUrl = element.getAttributeValue("patches");
-      }
+    private UpdateUrlsImpl(@NotNull Element element) {
+      myCheckingUrl = element.getAttributeValue("check");
+      myPatchesUrl = element.getAttributeValue("patches");
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
@@ -238,6 +239,10 @@ public final class PluginManager {
       }
     }
     return null;
+  }
+
+  public boolean hideImplementationDetails() {
+    return !Registry.is("plugins.show.implementation.details");
   }
 
   @ApiStatus.Internal
