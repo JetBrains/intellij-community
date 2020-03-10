@@ -58,8 +58,13 @@ private val LOG = Logger.getInstance("#git4idea.index.GitIndexStatusUtil")
 fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: String): GitFileStatus {
   val h = GitLineHandler(null, VfsUtilCore.virtualToIoFile(root), executable, GitCommand.STATUS, emptyList())
   h.setSilent(true)
-  h.addParameters("--porcelain", "-z", "--no-renames")
-  if (GitVersionSpecialty.STATUS_SUPPORTS_IGNORED_MODES.existsIn(GitExecutableManager.getInstance().getVersion(executable))) {
+  h.addParameters("--porcelain", "-z")
+
+  val gitVersion = GitExecutableManager.getInstance().getVersion(executable)
+  if (GitVersionSpecialty.STATUS_SUPPORTS_NO_RENAMES.existsIn(gitVersion)) {
+    h.addParameters("--no-renames")
+  }
+  if (GitVersionSpecialty.STATUS_SUPPORTS_IGNORED_MODES.existsIn(gitVersion)) {
     h.addParameters("--ignored=matching")
   }
   else {
