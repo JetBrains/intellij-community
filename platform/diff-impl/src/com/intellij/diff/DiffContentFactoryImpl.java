@@ -534,7 +534,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       if (propertiesCharset != null) return propertiesCharset;
     }
 
-    return filePath.getCharset();
+    return filePath.getCharset(project);
   }
 
   @NotNull
