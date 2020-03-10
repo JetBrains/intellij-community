@@ -6,6 +6,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
@@ -700,7 +701,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   /* UI components */
 
-  private class BackAction extends AnAction implements DumbAware {
+  private class BackAction extends AnAction implements DumbAware, LightEditCompatible {
     BackAction() {
       super(IdeBundle.message("button.previous"), null, AllIcons.Actions.Back);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB);
@@ -721,7 +722,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class ForwardAction extends AnAction implements DumbAware {
+  private class ForwardAction extends AnAction implements DumbAware, LightEditCompatible {
     ForwardAction() {
       super(IdeBundle.message("button.next"), null, AllIcons.Actions.Forward);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB);
