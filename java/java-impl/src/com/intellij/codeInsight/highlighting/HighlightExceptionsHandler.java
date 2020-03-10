@@ -67,7 +67,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
   public void computeUsages(final @NotNull List<? extends PsiClass> targets) {
     addUsage(myTarget);
 
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myEditor.getProject());
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myFile.getProject());
     for (PsiClass aClass : targets) {
       addExceptionThrowPlaces(factory.createType(aClass), myPlace);
       if (myOtherPlace != null) {
