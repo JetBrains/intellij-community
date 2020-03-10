@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.ui.DeferredIconImpl;
@@ -52,7 +52,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
   @Test
   public void testJreHiDpi() throws MalformedURLException {
-    assumeTrue(SystemInfo.IS_AT_LEAST_JAVA9 || !SystemInfo.isLinux);
+    assumeTrue(SystemInfoRt.IS_AT_LEAST_JAVA9 || !SystemInfoRt.isLinux);
 
     overrideJreHiDPIEnabled(true);
     try {
