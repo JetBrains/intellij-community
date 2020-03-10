@@ -45,6 +45,12 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
         return createThrowsHandler(editor, file, target);
       }
     }
+    if (target instanceof PsiIdentifier) {
+      PsiElement parent = target.getParent();
+      if (parent instanceof PsiJavaCodeReferenceElement) {
+        return createHighlightExceptionUsagesFromThrowsHandler(editor, file, target, (PsiJavaCodeReferenceElement)parent);
+      }
+    }
     return null;
   }
 
@@ -58,6 +64,23 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
     Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
     PsiClassType[] types = unhandled.toArray(PsiClassType.EMPTY_ARRAY);
     return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, null, Conditions.alwaysTrue());
+  }
+
+  @Nullable
+  private static HighlightUsagesHandlerBase createHighlightExceptionUsagesFromThrowsHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target, @NotNull PsiJavaCodeReferenceElement parent) {
+    PsiElement list = parent.getParent();
+    if (!(list instanceof PsiReferenceList)) return null;
+    PsiElement method = list.getParent();
+    if (!(method instanceof PsiMethod)) return null;
+    if (!file.getManager().areElementsEquivalent(list, ((PsiMethod)method).getThrowsList())) return null;
+
+    PsiElement block = ((PsiMethod)method).getBody();
+    if (block == null) return null;
+    PsiElement resolved = parent.resolve();
+    if (!(resolved instanceof PsiClass)) return null;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(file.getProject());
+    PsiClassType type = factory.createType(parent);
+    return new HighlightThrowsClassesHandler(editor, file, target, type, block, resolved);
   }
 
   @Nullable
