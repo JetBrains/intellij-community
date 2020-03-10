@@ -223,40 +223,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     Element logoElement = getChild(element, ELEMENT_LOGO);
     if (logoElement != null) {
-      mySplashImageUrl = getAttributeValue(logoElement, ATTRIBUTE_URL);
-      String v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_COLOR);
-      if (v != null) {
-        myProgressColor = parseColor(v);
-      }
-
-      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_TAIL_ICON);
-      if (v != null) {
-        myProgressTailIconName = v;
-      }
-
-      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_HEIGHT);
-      if (v != null) {
-        myProgressHeight = Integer.parseInt(v);
-      }
-
-      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
-      if (v != null) {
-        myProgressY = Integer.parseInt(v);
-      }
-
-      for (Element child : getChildren(logoElement, PROGRESS_SLIDE)) {
-        String slideUrl = child.getAttributeValue(ATTRIBUTE_URL);
-        assert slideUrl != null;
-        String progressPercentString = child.getAttributeValue(PROGRESS_PERCENT);
-        assert progressPercentString != null;
-
-        int progressPercentInt = Integer.parseInt(progressPercentString);
-        assert (progressPercentInt <= 100 && progressPercentInt >= 0);
-
-        float progressPercentFloat = (float) progressPercentInt / 100;
-        ProgressSlide progressSlide = new ProgressSlide(slideUrl, progressPercentFloat);
-        myProgressSlides.add(progressSlide);
-      }
+      readLogoInfo(logoElement);
     }
 
     Element aboutLogoElement = getChild(element, ELEMENT_ABOUT);
@@ -293,8 +260,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     if (iconElement != null) {
       myIconUrl = iconElement.getAttributeValue("size32");
       mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16, mySmallIconUrl);
-      myBigIconUrl = iconElement.getAttributeValue("size128", (String)null);
-      final String toolWindowIcon = iconElement.getAttributeValue(ATTRIBUTE_SIZE12);
+      myBigIconUrl = getAttributeValue(iconElement, "size128");
+      String toolWindowIcon = getAttributeValue(iconElement, ATTRIBUTE_SIZE12);
       if (toolWindowIcon != null) {
         myToolWindowIconUrl = toolWindowIcon;
       }
@@ -329,7 +296,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     Element helpElement = getChild(element, HELP_ELEMENT_NAME);
     if (helpElement != null) {
-      final String webHelpUrl = helpElement.getAttributeValue(ATTRIBUTE_WEBHELP_URL);
+      String webHelpUrl = getAttributeValue(helpElement, ATTRIBUTE_WEBHELP_URL);
       if (webHelpUrl != null) {
         myWebHelpUrl = webHelpUrl;
       }
@@ -409,16 +376,16 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     Element evaluationElement = getChild(element, ELEMENT_EVALUATION);
     if (evaluationElement != null) {
-      final String url = evaluationElement.getAttributeValue(ATTRIBUTE_EVAL_LICENSE_URL);
-      if (url != null && !url.isEmpty()) {
+      String url = getAttributeValue(evaluationElement, ATTRIBUTE_EVAL_LICENSE_URL);
+      if (url != null) {
         myEvalLicenseUrl = url.trim();
       }
     }
 
     Element licensingElement = getChild(element, ELEMENT_LICENSING);
     if (licensingElement != null) {
-      final String url = licensingElement.getAttributeValue(ATTRIBUTE_KEY_CONVERSION_URL);
-      if (url != null && !url.isEmpty()) {
+      String url = getAttributeValue(licensingElement, ATTRIBUTE_KEY_CONVERSION_URL);
+      if (url != null) {
         myKeyConversionUrl = url.trim();
       }
     }
@@ -431,6 +398,42 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       mySubscriptionTipsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY);
       mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE));
       mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA);
+    }
+  }
+
+  private void readLogoInfo(@NotNull Element element) {
+    mySplashImageUrl = getAttributeValue(element, ATTRIBUTE_URL);
+    String v = getAttributeValue(element, ATTRIBUTE_PROGRESS_COLOR);
+    if (v != null) {
+      myProgressColor = parseColor(v);
+    }
+
+    v = getAttributeValue(element, ATTRIBUTE_PROGRESS_TAIL_ICON);
+    if (v != null) {
+      myProgressTailIconName = v;
+    }
+
+    v = getAttributeValue(element, ATTRIBUTE_PROGRESS_HEIGHT);
+    if (v != null) {
+      myProgressHeight = Integer.parseInt(v);
+    }
+
+    v = getAttributeValue(element, ATTRIBUTE_PROGRESS_Y);
+    if (v != null) {
+      myProgressY = Integer.parseInt(v);
+    }
+
+    for (Element child : getChildren(element, PROGRESS_SLIDE)) {
+      String slideUrl = child.getAttributeValue(ATTRIBUTE_URL);
+      assert slideUrl != null;
+      String progressPercentString = child.getAttributeValue(PROGRESS_PERCENT);
+      assert progressPercentString != null;
+
+      int progressPercentInt = Integer.parseInt(progressPercentString);
+      assert (progressPercentInt <= 100 && progressPercentInt >= 0);
+
+      float progressPercentFloat = (float) progressPercentInt / 100;
+      myProgressSlides.add(new ProgressSlide(slideUrl, progressPercentFloat));
     }
   }
 
@@ -944,7 +947,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @SuppressWarnings("UseJBColor")
-  private static @NotNull Color parseColor(final String colorString) {
+  private static @NotNull Color parseColor(@NotNull String colorString) {
     long rgb = Long.parseLong(colorString, 16);
     return new Color((int)rgb, rgb > 0xffffff);
   }
