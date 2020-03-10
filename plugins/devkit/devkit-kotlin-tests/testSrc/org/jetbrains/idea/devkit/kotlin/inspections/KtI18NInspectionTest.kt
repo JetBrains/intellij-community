@@ -34,5 +34,22 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  fun testReturnValues() {
+    myFixture.configureByText("Foo.kt", """
+        val a = <warning descr="Hardcoded string literal: \"Test text\"">"Test text"</warning>
+        val b get() = <warning descr="Hardcoded string literal: \"Test text\"">"Test text"</warning>
+        val c: String
+            get() {
+                return <warning descr="Hardcoded string literal: \"Test text\"">"Test text"</warning>
+            }
+
+        fun a() = <warning descr="Hardcoded string literal: \"Test text\"">"Test text"</warning>
+        fun b(): String {
+            return <warning descr="Hardcoded string literal: \"Test text\"">"Test text"</warning>
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
 }
 

@@ -392,7 +392,17 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       }
       else if (body instanceof UBlockExpression) { // fake blocks are popular in Kotlin
         for (UExpression expression : ((UBlockExpression)body).getExpressions()) {
-          addAll(results, checkElement(expression, manager, isOnTheFly));
+          // Kotlin expression body
+          if ((expression instanceof UReturnExpression) && (expression.getSourcePsi() == null)) {
+            UExpression returnExpression = ((UReturnExpression)expression).getReturnExpression();
+            if (returnExpression != null) {
+              addAll(results, checkElement(returnExpression, manager, isOnTheFly));
+            }
+          }
+          // ordinary physical body
+          else {
+            addAll(results, checkElement(expression, manager, isOnTheFly));
+          }
         }
       }
     }
@@ -464,6 +474,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   }
 
   private ProblemDescriptor[] checkElement(@NotNull UElement element, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    if (element instanceof ULiteralExpression) {
+      element = UastLiteralUtils.wrapULiteral((ULiteralExpression)element);
+    }
+
     PsiElement sourcePsi = element.getSourcePsi();
     if (sourcePsi == null) return ProblemDescriptor.EMPTY_ARRAY;
     StringI18nVisitor visitor = new StringI18nVisitor(manager, isOnTheFly);
