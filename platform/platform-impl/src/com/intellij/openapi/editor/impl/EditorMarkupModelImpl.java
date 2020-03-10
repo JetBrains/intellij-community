@@ -138,6 +138,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
   private final ActionToolbar statusToolbar;
   private boolean showToolbar;
+  private boolean trafficLightVisible;
   private final ComponentListener toolbarComponentListener;
   private Rectangle cachedToolbarBounds = new Rectangle();
   private final JLabel smallIconLabel;
@@ -152,6 +153,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
 
     showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget();
+    trafficLightVisible = true;
 
     AnAction nextErrorAction = findAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatches);
     AnAction prevErrorAction = findAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatches);
@@ -226,7 +228,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       public void componentResized(ComponentEvent event) {
         Component toolbar = event.getComponent();
         if (toolbar.getWidth() >0 && toolbar.getHeight() > 0) {
-          updateToolbarVisibility();
+          updateTrafficLightVisibility();
         }
       }
     };
@@ -267,51 +269,57 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
                       (analyzerStatus == null || analyzerStatus.getController().enableToolbar());
 
-        updateToolbarVisibility();
+        updateTrafficLightVisibility();
       }
     });
   }
 
   @Override
   public void caretPositionChanged(@NotNull CaretEvent event) {
-    updateToolbarVisibility();
+    updateTrafficLightVisibility();
   }
 
   @Override
   public void afterDocumentChange(@NotNull Document document) {
     myPopupManager.hidePopup();
-    updateToolbarVisibility();
+    updateTrafficLightVisibility();
   }
 
   @Override
   public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
-    updateToolbarVisibility();
+    updateTrafficLightVisibility();
   }
 
-  private void updateToolbarVisibility() {
-    if (showToolbar) {
-      VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
-      Point point = myEditor.visualPositionToXY(pos);
-      point = SwingUtilities.convertPoint(myEditor.getContentComponent(), point, myEditor.getScrollPane());
+  private void updateTrafficLightVisibility() {
+    if (trafficLightVisible) {
+      if (showToolbar) {
+        VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
+        Point point = myEditor.visualPositionToXY(pos);
+        point = SwingUtilities.convertPoint(myEditor.getContentComponent(), point, myEditor.getScrollPane());
 
-      JComponent stComponent = statusToolbar.getComponent();
-      if (stComponent.isVisible()) {
-        Rectangle bounds = SwingUtilities.convertRectangle(stComponent, stComponent.getBounds(), myEditor.getScrollPane());
+        JComponent stComponent = statusToolbar.getComponent();
+        if (stComponent.isVisible()) {
+          Rectangle bounds = SwingUtilities.convertRectangle(stComponent, stComponent.getBounds(), myEditor.getScrollPane());
 
-        if (!bounds.isEmpty() && bounds.contains(point)) {
-          cachedToolbarBounds = bounds;
-          stComponent.setVisible(false);
-          smallIconLabel.setVisible(true);
+          if (!bounds.isEmpty() && bounds.contains(point)) {
+            cachedToolbarBounds = bounds;
+            stComponent.setVisible(false);
+            smallIconLabel.setVisible(true);
+          }
+        }
+        else if (!cachedToolbarBounds.contains(point)) {
+          stComponent.setVisible(true);
+          smallIconLabel.setVisible(false);
         }
       }
-      else if (!cachedToolbarBounds.contains(point)) {
-        stComponent.setVisible(true);
-        smallIconLabel.setVisible(false);
+      else {
+        statusToolbar.getComponent().setVisible(false);
+        smallIconLabel.setVisible(true);
       }
     }
     else {
       statusToolbar.getComponent().setVisible(false);
-      smallIconLabel.setVisible(true);
+      smallIconLabel.setVisible(false);
     }
   }
 
@@ -353,8 +361,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
   public void setTrafficLightIconVisible(boolean value) {
     MyErrorPanel errorPanel = getErrorPanel();
-    if (errorPanel != null && statusToolbar.getComponent().isVisible() != value) {
-      statusToolbar.getComponent().setVisible(value);
+    if (errorPanel != null) {
+
+      if (value != trafficLightVisible) {
+        trafficLightVisible = value;
+        updateTrafficLightVisibility();
+      }
       repaint();
     }
   }
@@ -369,7 +381,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         if (showToolbar != analyzerStatus.getController().enableToolbar()) {
           showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
                         analyzerStatus.getController().enableToolbar();
-          updateToolbarVisibility();
+          updateTrafficLightVisibility();
         }
 
         myPopupManager.updateVisiblePopup();
@@ -1870,7 +1882,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         public void setSelected(@NotNull AnActionEvent e, boolean state) {
           showToolbar = state;
           EditorSettingsExternalizable.getInstance().setShowInspectionWidget(state);
-          updateToolbarVisibility();
+          updateTrafficLightVisibility();
         }
 
         @Override
