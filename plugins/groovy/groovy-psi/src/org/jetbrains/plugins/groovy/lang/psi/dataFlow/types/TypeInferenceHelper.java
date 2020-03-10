@@ -106,8 +106,8 @@ public final class TypeInferenceHelper {
     if (rwInstruction == null) return null;
 
     final InferenceCache cache = getInferenceCache(scope);
-    final SharedVariableTypeProvider provider = getSharedVariableTypeProvider(scope);
-    final PsiType sharedType = provider.getSharedVariableType(descriptor, rwInstruction);
+    final SharedVariableTypeProvider provider = cache.getSharedVariableTypeProvider();
+    final PsiType sharedType = provider.getSharedVariableType(descriptor);
     return sharedType != null ? sharedType : cache.getInferredType(descriptor, rwInstruction, mixinOnly);
   }
 
@@ -128,9 +128,9 @@ public final class TypeInferenceHelper {
     boolean mixinOnly = variable instanceof GrField && isCompileStatic(scope);
 
     final InferenceCache cache = getInferenceCache(scope);
-    final SharedVariableTypeProvider provider = getSharedVariableTypeProvider(scope);
+    final SharedVariableTypeProvider provider = cache.getSharedVariableTypeProvider();
     final VariableDescriptor descriptor = createDescriptor(variable);
-    final PsiType sharedType = provider.getSharedVariableType(descriptor, nearest);
+    final PsiType sharedType = provider.getSharedVariableType(descriptor);
     if (sharedType != null) {
       return sharedType;
     }
@@ -145,10 +145,6 @@ public final class TypeInferenceHelper {
   @NotNull
   static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
     return CachedValuesManager.getCachedValue(scope, () -> Result.create(new InferenceCache(scope), MODIFICATION_COUNT));
-  }
-
-  private static @NotNull SharedVariableTypeProvider getSharedVariableTypeProvider(@NotNull GrControlFlowOwner scope) {
-    return CachedValuesManager.getCachedValue(scope, () -> Result.create(new SharedVariableTypeProvider(scope), MODIFICATION_COUNT));
   }
 
   @Nullable

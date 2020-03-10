@@ -6,55 +6,54 @@ import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReferenceArray
 
 class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
 
-  private val sharedVariables: List<VariableDescriptor> by lazyPub { doGetSharedVariables() }
+  val sharedVariableDescriptors: List<VariableDescriptor> by lazyPub { doGetSharedVariables() }
   private val writeInstructions: List<ReadWriteVariableInstruction> by lazyPub {
     scope.controlFlow
-      .filter { it is ReadWriteVariableInstruction && it.isWrite && it.descriptor in sharedVariables }
+      .filter { it is ReadWriteVariableInstruction && it.isWrite && it.descriptor in sharedVariableDescriptors }
       .map { it as ReadWriteVariableInstruction }
   }
   private val incrementalTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(scope.controlFlow.size)
-  private val finalTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(sharedVariables.size)
-  private val finishedInference: AtomicBoolean = AtomicBoolean(false)
-  private val isInInferenceMode: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+  private val finalTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(sharedVariableDescriptors.size)
 
-  fun getSharedVariableType(variable: VariableDescriptor, instruction: Instruction): PsiType? {
-    if (isInInferenceMode.get()) {
-      val num: Int = findNearestWriteInstruction(variable, instruction) ?: return null
-      return incrementalTypes.get(num)
-             ?: throw AssertionError("Type for ${variable.getName()} should be computed before entering inference mode")
+  fun getSharedVariableType(descriptor: VariableDescriptor): PsiType? {
+    if (descriptor !in sharedVariableDescriptors) {
+      return null
     }
-    else if (sharedVariables.isNotEmpty()) {
+    val indexInFinalTypes: Int = sharedVariableDescriptors.indexOf(descriptor)
+    val finalType = finalTypes.get(indexInFinalTypes)
+    if (finalType == null) {
       runSharedVariableInferencePhase()
-    }
-    if (variable in sharedVariables) {
-      val indexInFinalTypes: Int = sharedVariables.indexOf(variable)
       return finalTypes.get(indexInFinalTypes)
     }
     else {
-      return null
+      return finalType
     }
   }
 
+
+  /**
+   * Sequentially tries to compute all intermediate types for every shared variable.
+   * The result type of a shared variable is considered to be a LUB of all its intermediate types.
+   *
+   * This method is not supposed to be reentrant.
+   * If DFA would have to query the type of shared variable, then DFA will be self-invoked with a nested context.
+   * Such behavior is consistent with @CompileStatic approach: all variables inside DFA should see the type that was achieved via flow typing.
+   * @see TypeDfaInstance.myDependentOnSharedVariables
+   */
   private fun runSharedVariableInferencePhase() {
-    if (finishedInference.get()) {
-      return
-    }
-    isInInferenceMode.set(true)
     for (instruction: ReadWriteVariableInstruction in writeInstructions) {
       val currentType = incrementalTypes.get(instruction.num())
       if (currentType == null) {
-        val inferredType: PsiType? = TypeInferenceHelper.getInferredType(instruction.descriptor, instruction, scope)
+        val inferredType: PsiType = TypeInferenceHelper.getInferredType(instruction.descriptor, instruction, scope) ?: PsiType.NULL
         if (!incrementalTypes.compareAndSet(instruction.num(), null, inferredType)) {
           val actual = incrementalTypes.get(instruction.num())
           assert(inferredType == actual)
@@ -62,9 +61,8 @@ class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
         }
       }
     }
-    isInInferenceMode.set(false)
-    for (variable in sharedVariables) {
-      val indexInFinalTypes: Int = sharedVariables.indexOf(variable)
+    for (variable in sharedVariableDescriptors) {
+      val indexInFinalTypes: Int = sharedVariableDescriptors.indexOf(variable)
       val inferredTypesForVariable = writeInstructions.filter { it.descriptor == variable }.map { incrementalTypes.get(it.num()) }
       val finalType = TypesUtil.getLeastUpperBoundNullable(inferredTypesForVariable, scope.manager)
       if (!finalTypes.compareAndSet(indexInFinalTypes, null, finalType)) {
@@ -72,11 +70,6 @@ class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
         assert(finalType == actualFinalType)
       }
     }
-    finishedInference.set(true)
-  }
-
-  private fun findNearestWriteInstruction(variable: VariableDescriptor, instruction: Instruction): Int? {
-    return writeInstructions.lastOrNull { it.descriptor == variable && it.num() <= instruction.num() }?.num()
   }
 
   @Suppress("UnnecessaryVariable")

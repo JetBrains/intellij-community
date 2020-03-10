@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.InferenceCache.InstructionInfo;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
@@ -37,19 +37,21 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private final Instruction[] myFlow;
   private final Set<Instruction> myInteresting;
   private final Set<Instruction> myAcyclicInstructions;
+  private final Set<Instruction> myDependentOnSharedVariables;
   private final InferenceCache myCache;
   private final InitialTypeProvider myInitialTypeProvider;
   private final Set<VariableDescriptor> interestingDescriptors;
   private final int lastInterestingInstruction;
 
   TypeDfaInstance(Instruction @NotNull [] flow,
-                  @NotNull Couple<Set<Instruction>> interesting,
+                  @NotNull InstructionInfo interesting,
                   @NotNull InferenceCache cache,
                   @NotNull InitialTypeProvider initialTypeProvider,
                   @NotNull VariableDescriptor initialDescriptor) {
     myFlow = flow;
-    myInteresting = interesting.first;
-    myAcyclicInstructions = interesting.second;
+    myInteresting = interesting.getInterestingInstructions();
+    myAcyclicInstructions = interesting.getAcyclicInstructions();
+    myDependentOnSharedVariables = interesting.getDependentOnSharedVariablesInstructions();
     myCache = cache;
     myInitialTypeProvider = initialTypeProvider;
     Stream<VariableDescriptor> dependentDescriptors = myInteresting.stream()
@@ -167,7 +169,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
     DFAType type = myCache.getCachedInferredType(descriptor, instruction);
     if (type == null) {
-      if (myAcyclicInstructions.contains(instruction)) {
+      if (myAcyclicInstructions.contains(instruction) && !myDependentOnSharedVariables.contains(instruction)) {
         type = computation.compute();
       }
       else {

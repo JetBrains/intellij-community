@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -44,6 +43,7 @@ class InferenceCache {
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
 
   private final AtomicReference<List<TypeDfaState>> myVarTypes;
+  private final SharedVariableTypeProvider mySharedVariableTypeProvider;
   private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
 
   InferenceCache(@NotNull GrControlFlowOwner scope) {
@@ -51,6 +51,7 @@ class InferenceCache {
     myFlow = scope.getControlFlow();
     myVarIndexes = lazyPub(() -> getVarIndexes(myScope));
     myDefinitionMaps = lazyPub(() -> getDefUseMaps(myFlow, myVarIndexes.getValue()));
+    mySharedVariableTypeProvider = new SharedVariableTypeProvider(scope);
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
     List<TypeDfaState> noTypes = new ArrayList<>();
     for (int i = 0; i < myFlow.length; i++) {
@@ -84,13 +85,13 @@ class InferenceCache {
     TypeDfaState cache = myVarTypes.get().get(instruction.num());
     if (!cache.containsVariable(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
-      Couple<Set<Instruction>> interesting = collectRequiredInstructions(definitionMaps, instruction, descriptor, mixinPredicate);
+      InstructionInfo interesting = collectRequiredInstructions(definitionMaps, instruction, descriptor, mixinPredicate);
       List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting, state, descriptor);
       if (dfaResult == null) {
-        myTooComplexInstructions.addAll(interesting.first);
+        myTooComplexInstructions.addAll(interesting.getInterestingInstructions());
       }
       else {
-        Set<Instruction> stored = interesting.first;
+        Set<Instruction> stored = interesting.getInterestingInstructions();
         stored.add(instruction);
         cacheDfaResult(dfaResult, stored);
       }
@@ -102,7 +103,7 @@ class InferenceCache {
   @Nullable
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             Instruction @NotNull [] flow,
-                                            @NotNull Couple<Set<Instruction>> interesting,
+                                            @NotNull InstructionInfo interesting,
                                             @NotNull InitialDFAState state,
                                             @NotNull VariableDescriptor descriptor) {
     final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this, new InitialTypeProvider(owner, state), descriptor);
@@ -115,18 +116,22 @@ class InferenceCache {
     return myVarTypes.get().get(instruction.num()).getVariableType(descriptor);
   }
 
-  private Couple<Set<Instruction>> collectRequiredInstructions(@NotNull List<DefinitionMap> definitionMaps,
-                                                               @NotNull Instruction instruction,
-                                                               @NotNull VariableDescriptor descriptor,
-                                                               @NotNull Predicate<? super Instruction> predicate) {
+  private InstructionInfo collectRequiredInstructions(@NotNull List<DefinitionMap> definitionMaps,
+                                                      @NotNull Instruction instruction,
+                                                      @NotNull VariableDescriptor descriptor,
+                                                      @NotNull Predicate<? super Instruction> predicate) {
     Map<Pair<Instruction, VariableDescriptor>, Collection<Pair<Instruction, VariableDescriptor>>> interesting = new LinkedHashMap<>();
     LinkedList<Pair<Instruction, VariableDescriptor>> queue = new LinkedList<>();
     queue.add(Pair.create(instruction, descriptor));
+    Set<Instruction> dependentOnSharedVariables = new LinkedHashSet<>();
     while (!queue.isEmpty()) {
       Pair<Instruction, VariableDescriptor> pair = queue.removeFirst();
       if (!interesting.containsKey(pair)) {
         Set<Pair<Instruction, VariableDescriptor>> dependencies = findDependencies(definitionMaps, pair.first, pair.second);
         interesting.put(pair, dependencies);
+        if (dependencies.stream().anyMatch(it -> mySharedVariableTypeProvider.getSharedVariableDescriptors().contains(it.second))) {
+          dependentOnSharedVariables.add(pair.first);
+        }
         dependencies.forEach(queue::addLast);
       }
     }
@@ -137,7 +142,7 @@ class InferenceCache {
       .map(it -> it.getFirst())
       .filter(predicate)
       .collect(Collectors.toSet());
-    return Couple.of(interestingInstructions, acyclicInstructions);
+    return new InstructionInfo(interestingInstructions, acyclicInstructions, dependentOnSharedVariables);
   }
 
   @NotNull
@@ -187,6 +192,10 @@ class InferenceCache {
     return result;
   }
 
+  @NotNull SharedVariableTypeProvider getSharedVariableTypeProvider() {
+    return mySharedVariableTypeProvider;
+  }
+
   @NotNull
   private static List<TypeDfaState> addDfaResult(@NotNull List<TypeDfaState> oldTypes,
                                                  @NotNull List<TypeDfaState> dfaResult,
@@ -199,5 +208,32 @@ class InferenceCache {
       }
     }
     return newTypes;
+  }
+
+  static class InstructionInfo {
+
+    InstructionInfo(@NotNull Set<@NotNull Instruction> instructions,
+                    @NotNull Set<@NotNull Instruction> acyclicInstructions,
+                    @NotNull Set<@NotNull Instruction> dependentOnSharedVariablesInstructions) {
+      interestingInstructions = instructions;
+      this.acyclicInstructions = acyclicInstructions;
+      this.dependentOnSharedVariablesInstructions = dependentOnSharedVariablesInstructions;
+    }
+
+    private final Set<Instruction> interestingInstructions;
+    private final Set<Instruction> acyclicInstructions;
+    private final Set<Instruction> dependentOnSharedVariablesInstructions;
+
+    @NotNull Set<@NotNull Instruction> getAcyclicInstructions() {
+      return acyclicInstructions;
+    }
+
+    @NotNull Set<@NotNull Instruction> getDependentOnSharedVariablesInstructions() {
+      return dependentOnSharedVariablesInstructions;
+    }
+
+    @NotNull Set<@NotNull Instruction> getInterestingInstructions() {
+      return interestingInstructions;
+    }
   }
 }

@@ -1656,6 +1656,7 @@ def foo(x) {
   }
 
   void 'test cyclic dependency for shared variables'() {
+    allowNestedContext(2, testRootDisposable)
     doTest '''
   class A{}
   class B extends A{}
@@ -1679,6 +1680,7 @@ def foo(x) {
 
 
   void 'test non-shared variable depends on shared one'() {
+    allowNestedContextOnce(testRootDisposable)
     doTest '''
   class A{}
   class B extends A{}
