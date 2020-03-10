@@ -2,25 +2,22 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 public final class BuildNumber implements Comparable<BuildNumber> {
-  private static final Set<String> BUILD_NUMBER_PLACEHOLDERS = ContainerUtil.set("__BUILD_NUMBER__", "__BUILD__");
   private static final String STAR = "*";
   private static final String SNAPSHOT = "SNAPSHOT";
   private static final String FALLBACK_VERSION = "999.SNAPSHOT";
@@ -39,6 +36,10 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     myComponents = components;
   }
 
+  private static boolean isPlaceholder(@NotNull String value) {
+    return "__BUILD_NUMBER__".equals(value) || "__BUILD__".equals(value);
+  }
+
   @NotNull
   public String getProductCode() {
     return myProductCode;
@@ -53,7 +54,12 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public boolean isSnapshot() {
-    return ArrayUtil.indexOf(myComponents, SNAPSHOT_VALUE) >= 0;
+    for (int value : myComponents) {
+      if (value == SNAPSHOT_VALUE) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -137,7 +143,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
       productCode = productCodeIfAbsentInVersion != null ? productCodeIfAbsentInVersion : "";
     }
 
-    if (BUILD_NUMBER_PLACEHOLDERS.contains(code) || SNAPSHOT.equals(code)) {
+    if (SNAPSHOT.equals(code) || isPlaceholder(code)) {
       return new BuildNumber(productCode, currentVersion().myComponents);
     }
 
@@ -176,7 +182,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   private static int parseBuildNumber(String version, @NotNull String code, String pluginName) {
-    if (SNAPSHOT.equals(code) || BUILD_NUMBER_PLACEHOLDERS.contains(code) || STAR.equals(code)) {
+    if (SNAPSHOT.equals(code) || isPlaceholder(code) || STAR.equals(code)) {
       return SNAPSHOT_VALUE;
     }
 
@@ -247,20 +253,42 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     private static final BuildNumber CURRENT_VERSION = fromFile();
 
     private static @NotNull BuildNumber fromFile() {
-      try {
-        String home = PathManager.getHomePath();
-        File buildTxtFile = FileUtil.findFirstThatExist(
-          home + "/build.txt",
-          home + "/Resources/build.txt",
-          PathManager.getCommunityHomePath() + "/build.txt");
-        if (buildTxtFile != null) {
-          String text = FileUtil.loadFile(buildTxtFile).trim();
-          return Objects.requireNonNull(fromString(text));
+      String homePath = PathManager.getHomePath();
+      Path home = Paths.get(homePath);
+
+      BuildNumber result = readFile(home.resolve("build.txt"));
+      if (result != null) {
+        return result;
+      }
+
+      if (SystemInfoRt.isMac) {
+        result = readFile(home.resolve("Resources/build.txt"));
+        if (result != null) {
+          return result;
         }
       }
-      catch (IOException ignored) { }
+
+      String communityHomePath = PathManager.getCommunityHomePath();
+      if (communityHomePath != homePath) {
+        result = readFile(Paths.get(communityHomePath, "build.txt"));
+        if (result != null) {
+          return result;
+        }
+      }
 
       return Objects.requireNonNull(fromString(FALLBACK_VERSION));
+    }
+
+    private static @Nullable BuildNumber readFile(@NotNull Path path) {
+      try {
+        String text = Files.newBufferedReader(path).readLine();
+        if (text != null) {
+          return fromString(text);
+        }
+      }
+      catch (IOException ignored) {
+      }
+      return null;
     }
   }
 
