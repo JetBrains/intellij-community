@@ -446,6 +446,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
           fileset(dir: "$root/prebuilts/tools/windows-x86_64/simpleperf")
         }
 
+        context.ant.copy(todir: "$targetDirectory/plugins/android/resources/trace_processor_daemon") {
+          fileset(dir: "$root/prebuilts/tools/common/trace-processor-daemon/windows")
+        }
+
         context.ant.copy(todir: "$targetDirectory/plugins/android/lib/layoutlib/data") {
           fileset(dir: "$root/prebuilts/studio/layoutlib/data") {
             include(name: "icu/*")

@@ -121,7 +121,9 @@ class StudioTests(unittest.TestCase):
         "plugins/android/resources/trace_processor_daemon/trace_processor_daemon"
       ],
       # Windows
-      ".win.zip": [],
+      ".win.zip": [
+        "plugins/android/resources/trace_processor_daemon/trace_processor_daemon.exe"
+      ],
     }
 
     for target in archive_files_required.keys():
