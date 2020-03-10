@@ -26,7 +26,6 @@ import com.jetbrains.python.PythonIdeLanguageCustomization;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.*;
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import com.jetbrains.python.sdk.pipenv.UsePipEnvQuickFix;
 import one.util.streamex.StreamEx;
@@ -133,7 +132,10 @@ public class PyInterpreterInspection extends PyInspection {
 
       final UserDataHolderBase context = new UserDataHolderBase();
 
-      final PyDetectedSdk detectedAssociatedSdk = PySdkExtKt.findDetectedAssociatedEnvironment(module, existingSdks, context);
+      final PyDetectedSdk detectedAssociatedSdk = StreamEx.of(PySdkExtKt.detectVirtualEnvs(module, existingSdks, context))
+        .findFirst(sdk -> PySdkExtKt.isAssociatedWithModule(sdk, module))
+        .orElse(null);
+
       if (detectedAssociatedSdk != null) return new UseDetectedInterpreterFix(detectedAssociatedSdk, existingSdks, true, module);
 
       final Matcher matcher = NAME.matcher(name);
@@ -166,21 +168,11 @@ public class PyInterpreterInspection extends PyInspection {
                                                                 @NotNull Module module,
                                                                 @NotNull List<Sdk> existingSdks,
                                                                 @NotNull UserDataHolderBase context) {
-      final PyDetectedSdk associatedViaRootNameVirtualEnv = findAssociatedViaRootNameEnv(
+      return findAssociatedViaRootNameEnv(
         associatedName,
         PySdkExtKt.detectVirtualEnvs(module, existingSdks, context),
         Visitor::getVirtualEnvRootName
       );
-      if (associatedViaRootNameVirtualEnv != null) return associatedViaRootNameVirtualEnv;
-
-      final PyDetectedSdk associatedViaRootNameCondaEnv = findAssociatedViaRootNameEnv(
-        associatedName,
-        PySdkExtKt.detectCondaEnvs(module, existingSdks, context),
-        Visitor::getCondaEnvRootName
-      );
-      if (associatedViaRootNameCondaEnv != null) return associatedViaRootNameCondaEnv;
-
-      return null;
     }
 
     @Nullable
@@ -219,12 +211,6 @@ public class PyInterpreterInspection extends PyInspection {
     private static String getVirtualEnvRootName(@NotNull PyDetectedSdk sdk) {
       final String path = sdk.getHomePath();
       return path == null ? null : getEnvRootName(PythonSdkUtil.getVirtualEnvRoot(path));
-    }
-
-    @Nullable
-    private static String getCondaEnvRootName(@NotNull PyDetectedSdk sdk) {
-      final String path = sdk.getHomePath();
-      return path == null ? null : getEnvRootName(CondaEnvSdkFlavor.getCondaEnvRoot(path));
     }
 
     @Nullable
