@@ -84,6 +84,20 @@ class ReplaceBySourceTest {
   }
 
   @Test
+  fun `work with different entity sources`() {
+    val builder = TypedEntityStorageBuilder.create()
+    val sourceA1 = SampleEntitySource("a1")
+    val sourceA2 = SampleEntitySource("a2")
+    val parentEntity = builder.addParentEntity(source = sourceA1)
+    val replacement = TypedEntityStorageBuilder.from(builder)
+    replacement.addNoDataChildEntity(parentEntity = parentEntity, source = sourceA2)
+    builder.replaceBySource({ it == sourceA2}, replacement)
+    builder.checkConsistency()
+    assertEquals(1, builder.toStorage().entities(ParentEntity::class.java).toList().size)
+    assertEquals(1, builder.toStorage().entities(NoDataChildEntity::class.java).toList().size)
+  }
+
+  @Test
   fun classifyByEquals() {
     fun assertClassify(onlyIn1: List<String>, onlyIn2: List<String>, equal: List<Pair<String, String>>,
                        c1: List<String>, c2: List<String>) {
