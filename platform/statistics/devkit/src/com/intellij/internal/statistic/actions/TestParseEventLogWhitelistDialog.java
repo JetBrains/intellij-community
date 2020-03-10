@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.actions;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.service.fus.EventLogWhitelistParseException;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.lang.Language;
@@ -186,10 +187,13 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
     myResultEditor.getSelectionModel().removeSelection();
     updateResultRequest("{}");
 
-    final FUSWhitelist whitelist = FUStatisticsWhiteListGroupsService.parseApprovedGroups(myWhitelistEditor.getDocument().getText());
     try {
-      final String parsed = parseLogAndFilter(new LogEventWhitelistFilter(whitelist), myEventLogPanel.getText());
+      FUSWhitelist whitelist = FUStatisticsWhiteListGroupsService.parseApprovedGroups(myWhitelistEditor.getDocument().getText());
+      String parsed = parseLogAndFilter(new LogEventWhitelistFilter(whitelist), myEventLogPanel.getText());
       updateResultRequest(parsed.trim());
+    }
+    catch (EventLogWhitelistParseException e) {
+      Messages.showErrorDialog(myProject, e.getMessage(), "Failed Parsing Whitelist");
     }
     catch (IOException | ParseEventLogWhitelistException e) {
       Messages.showErrorDialog(myProject, e.getMessage(), "Failed Applying Whitelist to Event Log");

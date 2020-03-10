@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog.validator.persistence;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.internal.statistic.service.fus.EventLogWhitelistParseException;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroup;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
@@ -102,9 +103,11 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
   public static WLGroups loadTestWhitelist(@NotNull BaseEventLogWhitelistPersistence persistence) {
     final String existing = persistence.getCachedWhitelist();
     if (StringUtil.isNotEmpty(existing)) {
-      final WLGroups loaded = FUStatisticsWhiteListGroupsService.parseWhiteListContent(existing);
-      if (loaded != null) {
-        return loaded;
+      try {
+        return FUStatisticsWhiteListGroupsService.parseWhiteListContent(existing);
+      }
+      catch (EventLogWhitelistParseException e) {
+        LOG.warn("Failed parsing test whitelist", e);
       }
     }
     return new WLGroups();
