@@ -18,6 +18,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Arrays;
 
+/**
+ * On Ctrl-Shift-F7 on the class reference in the method throws clause, highlight places throwing this exception inside the method
+ * (or just highlight the usages under the caret if the user told us so)
+ */
 class HighlightThrowsClassesHandler extends HighlightExceptionsHandler {
   private @NotNull final Editor myEditor;
   private @NotNull final PsiFile myFile;
