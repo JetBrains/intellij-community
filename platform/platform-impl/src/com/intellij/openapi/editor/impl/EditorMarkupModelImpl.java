@@ -1887,6 +1887,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
         @Override
         public void update(@NotNull AnActionEvent e) {
+          super.update(e);
           e.getPresentation().setEnabled(analyzerStatus == null || analyzerStatus.getController().enableToolbar());
         }
 
