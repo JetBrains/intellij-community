@@ -135,5 +135,8 @@ public interface ExtensionPoint<T> {
    */
   boolean isDynamic();
 
+  @NotNull
+  PluginDescriptor getPluginDescriptor();
+
   enum Kind {INTERFACE, BEAN_CLASS}
 }

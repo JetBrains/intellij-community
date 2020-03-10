@@ -31,7 +31,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   @NotNull
   @Override
   public ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
-    InterfaceExtensionPoint<T> result = new InterfaceExtensionPoint<>(getName(), getClassName(), getDescriptor(), isDynamic());
+    InterfaceExtensionPoint<T> result = new InterfaceExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), isDynamic());
     result.setComponentManager(manager);
     return result;
   }

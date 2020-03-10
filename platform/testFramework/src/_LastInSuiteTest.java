@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.DynamicPlugins;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
@@ -113,7 +112,7 @@ public class _LastInSuiteTest extends TestCase {
   }
 
   private static void disposePluginDisposables() {
-    DynamicPlugins.INSTANCE.getPluginDisposables().forEach((plugin, disposable) -> Disposer.dispose(disposable));
+    PluginManagerCore.pluginDisposables.forEach((plugin, disposable) -> Disposer.dispose(disposable));
   }
 
   @NotNull

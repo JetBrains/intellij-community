@@ -27,7 +27,6 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.ExtensionsArea
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
@@ -46,7 +45,6 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
-import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusImpl
@@ -90,10 +88,6 @@ interface DynamicPluginListener {
 object DynamicPlugins {
   private val LOG = Logger.getInstance(DynamicPlugins::class.java)
   private val GROUP = NotificationGroup("Dynamic plugin installation", NotificationDisplayType.BALLOON, false)
-
-  val pluginDisposables = ConcurrentFactoryMap.createWeakMap<PluginDescriptor, Disposable> {
-    plugin -> Disposer.newDisposable("Plugin disposable [${plugin.name}]")
-  }
 
   @JvmStatic
   @JvmOverloads
@@ -366,7 +360,7 @@ object DynamicPlugins {
 
         }
         finally {
-          val disposable = pluginDisposables.remove(pluginDescriptor)
+          val disposable = PluginManagerCore.pluginDisposables.remove(pluginDescriptor)
           if (disposable != null) {
             Disposer.dispose(disposable)
           }
@@ -571,7 +565,7 @@ object DynamicPlugins {
     if (classLoader is PluginClassLoader) {
       val pluginDescriptor = classLoader.pluginDescriptor
       if (pluginDescriptor != null) {
-        return pluginDisposables[pluginDescriptor]
+        return PluginManagerCore.pluginDisposables[pluginDescriptor]
       }
     }
     return null

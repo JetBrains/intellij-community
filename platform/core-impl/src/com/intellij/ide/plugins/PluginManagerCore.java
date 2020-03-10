@@ -6,6 +6,7 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
@@ -15,10 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.reference.SoftReference;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.*;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.execution.ParametersListUtil;
@@ -52,6 +51,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -128,6 +128,14 @@ public final class PluginManagerCore {
       return ourBuildNumber;
     }
   }
+
+  public static final ConcurrentMap<PluginDescriptor, Disposable> pluginDisposables = ConcurrentFactoryMap.createWeakMap(
+          plugin -> {
+            Disposable pluginDisposable = Disposer.newDisposable("Plugin disposable [" + plugin.getName() + "]");
+            Disposer.register(ApplicationManager.getApplication(), pluginDisposable);
+            return pluginDisposable;
+          }
+  );
 
   @Nullable
   @ApiStatus.Internal

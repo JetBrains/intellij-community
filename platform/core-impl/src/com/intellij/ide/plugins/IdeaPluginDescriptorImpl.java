@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
@@ -929,6 +930,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   @Override
   public void setEnabled(final boolean enabled) {
     myEnabled = enabled;
+  }
+
+  @Override
+  public Disposable getPluginDisposable() {
+    return PluginManagerCore.pluginDisposables.get(this);
   }
 
   @Override

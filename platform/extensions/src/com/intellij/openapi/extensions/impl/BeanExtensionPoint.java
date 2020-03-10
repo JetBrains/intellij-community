@@ -27,7 +27,7 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
   @NotNull
   @Override
   public ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
-    BeanExtensionPoint<T> result = new BeanExtensionPoint<>(getName(), getClassName(), getDescriptor(), isDynamic());
+    BeanExtensionPoint<T> result = new BeanExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), isDynamic());
     result.setComponentManager(manager);
     return result;
   }
