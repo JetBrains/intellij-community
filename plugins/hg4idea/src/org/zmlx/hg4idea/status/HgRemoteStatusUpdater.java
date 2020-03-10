@@ -2,10 +2,12 @@
 package org.zmlx.hg4idea.status;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
@@ -26,23 +28,18 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class HgRemoteStatusUpdater {
+public class HgRemoteStatusUpdater implements Disposable {
   private final Project myProject;
   private final HgVcs myVcs;
   private final HgChangesetStatus myIncomingStatus = new HgChangesetStatus("In");
   private final HgChangesetStatus myOutgoingStatus = new HgChangesetStatus("Out");
   private final AtomicBoolean myUpdateStarted = new AtomicBoolean();
 
-  private final MessageBusConnection busConnection;
-
-  private final ScheduledFuture<?> changesUpdaterScheduledFuture;
-
-
   public HgRemoteStatusUpdater(@NotNull HgVcs vcs) {
     myProject = vcs.getProject();
     myVcs = vcs;
 
-    busConnection = myVcs.getProject().getMessageBus().connect();
+    MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
     busConnection.subscribe(HgVcs.REMOTE_TOPIC, (project, root) -> updateInBackground(root));
     busConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, new HgWidgetUpdater() {
       @Override
@@ -52,8 +49,13 @@ public class HgRemoteStatusUpdater {
     });
 
     int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
-    changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateInBackground(null), 5,
-                                                                                       checkIntervalSeconds, TimeUnit.SECONDS);
+    ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateInBackground(null), 5,
+                                                                                   checkIntervalSeconds, TimeUnit.SECONDS);
+    Disposer.register(this, () -> future.cancel(true));
+  }
+
+  @Override
+  public void dispose() {
   }
 
   public HgChangesetStatus getStatus(boolean isIncoming) {
@@ -80,14 +82,6 @@ public class HgRemoteStatusUpdater {
         myUpdateStarted.set(false);
       }
     }.queue();
-  }
-
-  public void deactivate() {
-    busConnection.disconnect();
-
-    if (changesUpdaterScheduledFuture != null) {
-      changesUpdaterScheduledFuture.cancel(true);
-    }
   }
 
   private static void updateChangesStatusSynchronously(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {

@@ -262,7 +262,7 @@ public class HgVcs extends AbstractVcs {
   @Override
   public void deactivate() {
     if (myHgRemoteStatusUpdater != null) {
-      myHgRemoteStatusUpdater.deactivate();
+      Disposer.dispose(myHgRemoteStatusUpdater);
       myHgRemoteStatusUpdater = null;
     }
 
