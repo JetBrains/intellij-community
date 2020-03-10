@@ -160,3 +160,4 @@ de.wieselbau.clion.clangtidy 1.2.2
 eu.broth.intellilab 0.5
 edu.vub.ideAT 2.0.5
 PairHero 1.0
+org.intellij.gitee 2019.2.4_1

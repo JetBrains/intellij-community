@@ -114,18 +114,17 @@ public final class PluginManagerCore {
   private static Boolean isRunningFromSources;
 
   private static final class Holder {
-    private static final BuildNumber ourBuildNumber = calcBuildNumber();
+    private static final BuildNumber ourBuildNumber;
 
-    @NotNull
-    private static BuildNumber calcBuildNumber() {
-      BuildNumber ourBuildNumber = BuildNumber.fromString(getPluginsCompatibleBuild());
-      if (ourBuildNumber == null) {
-        ourBuildNumber = BUILD_NUMBER == null ? null : BuildNumber.fromString(BUILD_NUMBER);
-        if (ourBuildNumber == null) {
-          ourBuildNumber = BuildNumber.currentVersion();
+    static {
+      BuildNumber result = BuildNumber.fromString(getPluginsCompatibleBuild());
+      if (result == null) {
+        result = BUILD_NUMBER == null ? null : BuildNumber.fromString(BUILD_NUMBER);
+        if (result == null) {
+          result = BuildNumber.currentVersion();
         }
       }
-      return ourBuildNumber;
+      ourBuildNumber = result;
     }
   }
 
@@ -150,7 +149,7 @@ public final class PluginManagerCore {
    * <p>
    * Do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by PluginClassLoader.
    */
-  public static IdeaPluginDescriptor @NotNull [] getPlugins() {
+  public static @NotNull IdeaPluginDescriptor[] getPlugins() {
     IdeaPluginDescriptor[] result = ourPlugins;
     if (result == null) {
       loadAndInitializePlugins(null);
@@ -185,12 +184,10 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public static synchronized void setPlugins(IdeaPluginDescriptor @NotNull [] descriptors) {
-    //noinspection SuspiciousToArrayCall
-    IdeaPluginDescriptorImpl[] copy = Arrays.asList(descriptors).toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
-    ourPlugins = copy;
+  static synchronized void doSetPlugins(@NotNull IdeaPluginDescriptorImpl @NotNull [] value) {
+    ourPlugins = value;
     //noinspection NonPrivateFieldAccessedInSynchronizedContext
-    ourLoadedPlugins = Collections.unmodifiableList(ContainerUtil.findAll(copy, IdeaPluginDescriptor::isEnabled));
+    ourLoadedPlugins = Collections.unmodifiableList(getOnlyEnabledPlugins(value));
   }
 
   @ApiStatus.Internal
@@ -909,10 +906,9 @@ public final class PluginManagerCore {
     return PluginManager.loadDescriptor(file.toPath(), fileName, disabledPlugins());
   }
 
-  @Nullable
-  private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
-                                                         boolean isBundled,
-                                                         @NotNull DescriptorListLoadingContext parentContext) {
+  private static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
+                                                                   boolean isBundled,
+                                                                   @NotNull DescriptorListLoadingContext parentContext) {
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ false,
                                                                          PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       return loadDescriptorFromFileOrDir(file, PLUGIN_XML, context, Files.isDirectory(file));
@@ -1108,7 +1104,7 @@ public final class PluginManagerCore {
   }
 
   @TestOnly
-  public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromClassPath(@NotNull ClassLoader loader)
+  public static @NotNull List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromClassPath(@NotNull ClassLoader loader)
     throws ExecutionException, InterruptedException {
     Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     collectPluginFilesInClassPath(loader, urlsFromClassPath);
@@ -1120,8 +1116,7 @@ public final class PluginManagerCore {
   }
 
   @TestOnly
-  @NotNull
-  public static PluginLoadingResult testLoadDescriptorsFromDir(@NotNull Path dir, @NotNull BuildNumber buildNumber)
+  public static @NotNull PluginManagerState testLoadDescriptorsFromDir(@NotNull Path dir, @NotNull BuildNumber buildNumber)
     throws IOException {
     DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), buildNumber));
     context.usePluginClassLoader = true;
@@ -1291,9 +1286,8 @@ public final class PluginManagerCore {
     return Arrays.asList(loadDescriptors().result.finishLoading());
   }
 
-  @NotNull
   @ApiStatus.Internal
-  private static DescriptorListLoadingContext loadDescriptors() {
+  private static @NotNull DescriptorListLoadingContext loadDescriptors() {
     PluginLoadingResult result = new PluginLoadingResult(getBrokenPluginVersions(), getBuildNumber());
     Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     ClassLoader classLoader = PluginManagerCore.class.getClassLoader();
@@ -1591,8 +1585,7 @@ public final class PluginManagerCore {
     }
   }
 
-  @ApiStatus.Internal
-  static void initializePlugins(@NotNull DescriptorListLoadingContext context, @NotNull ClassLoader coreLoader, boolean checkEssentialPlugins) {
+  static @NotNull PluginManagerState initializePlugins(@NotNull DescriptorListLoadingContext context, @NotNull ClassLoader coreLoader, boolean checkEssentialPlugins) {
     PluginLoadingResult loadingResult = context.result;
     List<String> errors = new ArrayList<>(loadingResult.getErrors());
 
@@ -1639,12 +1632,7 @@ public final class PluginManagerCore {
     CachingSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(Arrays.asList(sortedRequired), idMap, true);
     IdeaPluginDescriptorImpl[] sortedAll = getTopologicallySorted(graph);
 
-    List<IdeaPluginDescriptorImpl> enabledPlugins = new ArrayList<>(sortedAll.length);
-    for (IdeaPluginDescriptorImpl descriptor : sortedAll) {
-      if (descriptor.isEnabled()) {
-        enabledPlugins.add(descriptor);
-      }
-    }
+    List<IdeaPluginDescriptorImpl> enabledPlugins = getOnlyEnabledPlugins(sortedAll);
 
     mergeOptionalConfigs(enabledPlugins, idMap);
     configureClassLoaders(coreLoader, graph, coreDescriptor, enabledPlugins, context.usePluginClassLoader);
@@ -1891,9 +1879,10 @@ public final class PluginManagerCore {
     logPlugins(result.getSortedPlugins());
   }
 
-  @NotNull
-  public static Logger getLogger() {
-    return Logger.getInstance(PluginManager.class);
+  public static @NotNull Logger getLogger() {
+    // do not use class reference here
+    //noinspection SSBasedInspection
+    return Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
   }
 
   public static final class EssentialPluginMissingException extends RuntimeException {
@@ -2003,6 +1992,17 @@ public final class PluginManagerCore {
 
     return true;
   }
+
+  @NotNull
+   private static List<IdeaPluginDescriptorImpl> getOnlyEnabledPlugins(IdeaPluginDescriptorImpl[] sortedAll) {
+     List<IdeaPluginDescriptorImpl> enabledPlugins = new ArrayList<>(sortedAll.length);
+     for (IdeaPluginDescriptorImpl descriptor : sortedAll) {
+       if (descriptor.isEnabled()) {
+         enabledPlugins.add(descriptor);
+       }
+     }
+     return enabledPlugins;
+   }
 
   /**
    * @deprecated Use {@link PluginManager#addDisablePluginListener}

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -135,9 +135,11 @@ public final class RepositoryHelper {
     }
   }
 
-  private static List<IdeaPluginDescriptor> process(List<PluginNode> list, @Nullable String repositoryUrl, @Nullable BuildNumber build) {
+  private static @NotNull List<IdeaPluginDescriptor> process(@NotNull List<PluginNode> list, @Nullable String repositoryUrl, @Nullable BuildNumber build) {
     Map<PluginId, IdeaPluginDescriptor> result = new LinkedHashMap<>(list.size());
-    if (build == null) build = PluginManagerCore.getBuildNumber();
+    if (build == null) {
+      build = PluginManagerCore.getBuildNumber();
+    }
 
     boolean isCommunityIDE = !ideContainsUltimateModule();
     boolean isVendorNotJetBrains = !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();

@@ -1,35 +1,14 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
-import com.intellij.internal.statistic.utils.getBooleanUsage
+import com.intellij.internal.statistic.utils.getCountingStepName
 import com.intellij.internal.statistic.utils.getCountingUsage
 import org.junit.Test
 import kotlin.test.assertEquals
 
 class StatisticsUtilTest {
-
-  @Test
-  fun test_boolean_usage() {
-    assertUsage("test.value.enabled", 1, getBooleanUsage("test.value", true))
-    assertUsage("test.value.disabled", 1, getBooleanUsage("test.value", false))
-  }
-
   @Test
   fun test_counting_usage() {
     val steps = listOf(0, 1, 2, 10, 1000, 10 * 1000, 1000 * 1000)
@@ -118,4 +97,8 @@ class StatisticsUtilTest {
     assertEquals(key, actualUsage.key, message)
     assertEquals(value, actualUsage.value, message)
   }
+}
+
+private fun getCountingUsage(key: String, value: Int, steps: List<Int>) : UsageDescriptor {
+  return UsageDescriptor("$key." + getCountingStepName(value, steps), 1)
 }

@@ -475,7 +475,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myDetailsLabel.setText(DiagnosticBundle.message("error.list.message.info", date, count));
 
     ErrorReportSubmitter submitter = cluster.submitter;
-    if (submitter == null && plugin != null && !PluginManager.isDevelopedByJetBrains(plugin)) {
+    if (submitter == null && plugin != null && !PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.setVisible(true);
       String vendor = plugin.getVendor();
       String vendorUrl = plugin.getVendorUrl();
@@ -610,7 +610,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     boolean accepted = submitter.submit(events, message.getAdditionalInfo(), parentComponent, reportInfo -> {
       message.setSubmitted(reportInfo);
-      UIUtil.invokeLaterIfNeeded(() -> updateOnSubmit());
+      UIUtil.invokeLaterIfNeeded(this::updateOnSubmit);
     });
     if (!accepted) {
       message.setSubmitting(false);
@@ -925,7 +925,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
 
-    if (plugin == null || PluginManager.isDevelopedByJetBrains(plugin)) {
+    if (plugin == null || PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
         if (descriptor == null || PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID) == descriptor.getPluginId()) {

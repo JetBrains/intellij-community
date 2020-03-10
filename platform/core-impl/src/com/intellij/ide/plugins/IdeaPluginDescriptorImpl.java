@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -433,20 +434,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
     String preload = element.getAttributeValue("preload");
     if (preload != null) {
-      if (preload.equals("true")) {
-        descriptor.preload = ServiceDescriptor.PreloadMode.TRUE;
-      }
-      else if (preload.equals("await")) {
-        descriptor.preload = ServiceDescriptor.PreloadMode.AWAIT;
-      }
-      else if (preload.equals("notHeadless")) {
-        descriptor.preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS;
-      }
-      else if (preload.equals("notLightEdit")) {
-        descriptor.preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT;
-      }
-      else {
-        LOG.error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
+      switch (preload) {
+        case "true":
+          descriptor.preload = ServiceDescriptor.PreloadMode.TRUE;
+          break;
+        case "await":
+          descriptor.preload = ServiceDescriptor.PreloadMode.AWAIT;
+          break;
+        case "notHeadless":
+          descriptor.preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS;
+          break;
+        case "notLightEdit":
+          descriptor.preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT;
+          break;
+        default:
+          LOG.error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
+          break;
       }
     }
 
@@ -839,7 +842,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       for (Path f : childStream) {
         if (Files.isRegularFile(f)) {
           String name = f.getFileName().toString();
-          if (StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip")) {
+          if (StringUtilRt.endsWithIgnoreCase(name, ".jar") || StringUtilRt.endsWithIgnoreCase(name, ".zip")) {
             result.add(f);
           }
         }
@@ -1009,6 +1012,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return "PluginDescriptor(name=" + myName + ", id=" + myId + ", path=" + myPath + ")";
   }
 
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   private static boolean isSuitableForOs(@NotNull String os) {
     if (os.isEmpty()) {
       return true;
@@ -1301,28 +1305,29 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
         String qualifiedExtensionPointName = stringInterner.intern(ExtensionsAreaImpl.extractPointName(extensionElement, ns));
         ContainerDescriptor containerDescriptor;
-        if (qualifiedExtensionPointName.equals(APPLICATION_SERVICE)) {
-          containerDescriptor = descriptor.myAppContainerDescriptor;
-        }
-        else if (qualifiedExtensionPointName.equals(PROJECT_SERVICE)) {
-          containerDescriptor = descriptor.myProjectContainerDescriptor;
-        }
-        else if (qualifiedExtensionPointName.equals(MODULE_SERVICE)) {
-          containerDescriptor = descriptor.myModuleContainerDescriptor;
-        }
-        else {
-          if (epNameToExtensions == null) {
-            epNameToExtensions = new THashMap<>();
-            descriptor.myExtensions = epNameToExtensions;
-          }
+        switch (qualifiedExtensionPointName) {
+          case APPLICATION_SERVICE:
+            containerDescriptor = descriptor.myAppContainerDescriptor;
+            break;
+          case PROJECT_SERVICE:
+            containerDescriptor = descriptor.myProjectContainerDescriptor;
+            break;
+          case MODULE_SERVICE:
+            containerDescriptor = descriptor.myModuleContainerDescriptor;
+            break;
+          default:
+            if (epNameToExtensions == null) {
+              epNameToExtensions = new THashMap<>();
+              descriptor.myExtensions = epNameToExtensions;
+            }
 
-          List<Element> list = epNameToExtensions.get(qualifiedExtensionPointName);
-          if (list == null) {
-            list = new SmartList<>();
-            epNameToExtensions.put(qualifiedExtensionPointName, list);
-          }
-          list.add(extensionElement);
-          continue;
+            List<Element> list = epNameToExtensions.get(qualifiedExtensionPointName);
+            if (list == null) {
+              list = new SmartList<>();
+              epNameToExtensions.put(qualifiedExtensionPointName, list);
+            }
+            list.add(extensionElement);
+            continue;
         }
 
         containerDescriptor.addService(readServiceDescriptor(extensionElement));

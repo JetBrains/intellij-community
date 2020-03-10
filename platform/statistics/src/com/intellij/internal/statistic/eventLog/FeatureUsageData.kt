@@ -3,14 +3,13 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
 import com.intellij.internal.statistic.utils.PluginInfo
+import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.addPluginInfoTo
-import com.intellij.internal.statistic.utils.getPluginType
-import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
@@ -20,6 +19,8 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
+
+private val LOG = logger<FeatureUsageData>()
 
 /**
  * <p>FeatureUsageData represents additional data for reported event.</p>
@@ -37,7 +38,6 @@ import java.util.*
  * </p>
  */
 class FeatureUsageData {
-  private val LOG = Logger.getInstance(FeatureUsageData::class.java)
   private var data: MutableMap<String, Any> = HashMap()
 
   companion object {
@@ -55,7 +55,7 @@ class FeatureUsageData {
    */
   fun addProject(project: Project?): FeatureUsageData {
     if (project != null) {
-      data["project"] = getProjectId(project)
+      data["project"] = StatisticsUtil.getProjectId(project)
     }
     return this
   }
@@ -122,7 +122,7 @@ class FeatureUsageData {
 
   private fun addLanguageInternal(fieldName: String, language: Language?): FeatureUsageData {
     language?.let {
-      val type = getPluginType(language.javaClass)
+      val type = StatisticsUtil.getPluginType(language.javaClass)
       if (type.isSafeToReport()) {
         data[fieldName] = language.id
       }
