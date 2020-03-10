@@ -32,10 +32,12 @@ import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 
@@ -90,9 +92,15 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
 
   private static void doOpenFile(@Nullable Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) {
+      Path filePath = Paths.get(file.getPath());
+      boolean canAttach = ProjectAttachProcessor.canAttachToProject();
+      boolean preferAttach = PlatformUtils.isDataGrip() && project != null && canAttach && !ProjectUtil.isValidProjectPath(filePath);
       Project openedProject;
-      if (ProjectAttachProcessor.canAttachToProject()) {
-        openedProject = PlatformProjectOpenProcessor.doOpenProject(Paths.get(file.getPath()), new OpenProjectTask(false, project));
+      if (preferAttach && PlatformProjectOpenProcessor.attachToProject(project, filePath, null)) {
+        return;
+      }
+      else if (canAttach) {
+        openedProject = PlatformProjectOpenProcessor.doOpenProject(filePath, new OpenProjectTask(false, project));
       }
       else {
         openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
