@@ -14,7 +14,6 @@ import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.data.index.IndexedDetails
-import com.intellij.vcs.log.graph.DefaultColorGenerator
 import com.intellij.vcs.log.paint.PaintParameters
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.DEFAULT_CELL_HEIGHT
@@ -40,7 +39,7 @@ internal open class GitRebaseCommitsTableView(
   companion object {
     const val DEFAULT_CELL_HEIGHT = PaintParameters.ROW_HEIGHT
     const val GRAPH_LINE_WIDTH = 1.5f
-    val GRAPH_COLOR = DefaultColorGenerator().getColor(1)
+    val GRAPH_COLOR = JBColor.namedColor("VersionControl.GitCommits.graphColor", JBColor(Color(174, 185, 192), Color(135, 146, 154)))
   }
 
   init {
