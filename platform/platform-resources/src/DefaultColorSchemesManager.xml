@@ -1465,16 +1465,6 @@
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
-      <option name="CSS.KEYWORD">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
-        </value>
-      </option>
-      <option name="CSS.TAG_NAME">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
-        </value>
-      </option>
       <option name="CSS.URL">
         <value>
           <option name="FOREGROUND" value="287bde" />
@@ -1940,16 +1930,6 @@
       <option name="INJECTED_LANGUAGE_FRAGMENT">
         <value>
           <option name="BACKGROUND" value="364135" deuteranopia="1f2433" protanopia="1f2433"/>
-        </value>
-      </option>
-      <option name="JAVA_KEYWORD">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
-        </value>
-      </option>
-      <option name="JAVA_VALID_STRING_ESCAPE">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="JSP_DIRECTIVE_NAME">
