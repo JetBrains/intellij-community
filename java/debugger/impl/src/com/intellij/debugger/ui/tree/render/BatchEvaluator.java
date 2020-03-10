@@ -105,7 +105,7 @@ public class BatchEvaluator {
           public void action() {
             myBuffer.remove(suspendContext);
 
-            if(!doEvaluateBatch(commands, evaluationContext)) {
+            if (commands.size() == 1 || !doEvaluateBatch(commands, evaluationContext)) {
               commands.forEach(ToStringCommand::action);
             }
           }
