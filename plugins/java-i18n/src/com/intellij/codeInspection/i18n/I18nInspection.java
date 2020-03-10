@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -739,7 +740,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
 
     Project project = Objects.requireNonNull(expression.getSourcePsi()).getProject();
-    return JavaPsiFacade.getInstance(project).findClass(value, GlobalSearchScope.allScope(project)) != null;
+    return JavaPsiFacade.getInstance(project).findClass(value, GlobalSearchScope.allScope(project)) != null ||
+           ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), value) != null;
   }
 
   private static boolean isClassNonNls(@NotNull UDeclaration clazz) {
