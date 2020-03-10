@@ -203,7 +203,7 @@ public abstract class DebuggerUtils {
   @Nullable
   private static Method concreteMethodByName(@NotNull ClassType type, @NotNull String name, @Nullable String signature)  {
     Processor<Method> signatureChecker = signature != null ? m -> m.signature().equals(signature) : CommonProcessors.alwaysTrue();
-    LinkedList<InterfaceType> interfaces = new LinkedList<>();
+    LinkedList<ReferenceType> types = new LinkedList<>();
     // first check classes
     while (type != null) {
       for (Method candidate : type.methods()) {
@@ -211,20 +211,23 @@ public abstract class DebuggerUtils {
           return !candidate.isAbstract() ? candidate : null;
         }
       }
-      interfaces.addAll(type.interfaces());
+      types.add(type);
       type = type.superclass();
     }
     // then interfaces
-    Set<InterfaceType> checkedInterfaces = new HashSet<>();
-    InterfaceType iface;
-    while ((iface = interfaces.poll()) != null) {
-      if (checkedInterfaces.add(iface)) {
-        for (Method candidate : iface.methods()) {
+    Set<ReferenceType> checkedInterfaces = new HashSet<>();
+    ReferenceType t;
+    while ((t = types.poll()) != null) {
+      if (t instanceof ClassType) {
+        types.addAll(0, ((ClassType)t).interfaces());
+      }
+      else if (t instanceof InterfaceType && checkedInterfaces.add(t)) {
+        for (Method candidate : t.methods()) {
           if (candidate.name().equals(name) && signatureChecker.process(candidate) && !candidate.isAbstract()) {
             return candidate;
           }
         }
-        interfaces.addAll(0, iface.superinterfaces());
+        types.addAll(0, ((InterfaceType)t).superinterfaces());
       }
     }
     return null;
