@@ -738,7 +738,7 @@ public final class UIUtil {
   }
 
   public static String @NotNull [] splitText(@NotNull String text, @NotNull FontMetrics fontMetrics, int widthLimit, char separator) {
-    ArrayList<String> lines = new ArrayList<>();
+    List<String> lines = new ArrayList<>();
     StringBuilder currentLine = new StringBuilder();
     StringBuilder currentAtom = new StringBuilder();
 
@@ -1771,7 +1771,7 @@ public final class UIUtil {
   }
 
   /**
-   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}, ignores and removes all other events from the queue.
+   * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
    * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
    * @see #pump()
    */
@@ -1991,9 +1991,7 @@ public final class UIUtil {
     if (!(component instanceof JComponent)) {
       return;
     }
-    forEachComponentInHierarchy(component, c -> {
-      component.doLayout();
-    });
+    forEachComponentInHierarchy(component, __ -> component.doLayout());
   }
 
   @NotNull
@@ -2005,20 +2003,18 @@ public final class UIUtil {
   @NotNull
   @Language("HTML")
   public static String getCssFontDeclaration(@NotNull Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
-    StringBuilder builder = new StringBuilder().append("<style>\n");
+    @Language("HTML")
     String familyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
-
-    builder.append("body, div, td, p {").append(familyAndSize);
-    if (fgColor != null) builder.append(" color:#").append(ColorUtil.toHex(fgColor)).append(';');
-    builder.append("}\n");
-
-    builder.append("a {").append(familyAndSize);
-    if (linkColor != null) builder.append(" color:#").append(ColorUtil.toHex(linkColor)).append(';');
-    builder.append("}\n");
-
-    builder.append("code {font-size:").append(font.getSize()).append("pt;}\n");
-    builder.append("ul {list-style:disc; margin-left:15px;}\n");
-    return builder.append("</style>").toString();
+    return "<style>\n"
+    +"body, div, td, p {" + familyAndSize
+    + (fgColor != null ? " color:#" + ColorUtil.toHex(fgColor)+';' : "")
+    +"}\n"
+    +"a {" + familyAndSize
+    + (linkColor != null ? " color:#"+ColorUtil.toHex(linkColor)+';' : "")
+    +"}\n"
+    +"code {font-size:"+font.getSize()+"pt;}\n"
+    +"ul {list-style:disc; margin-left:15px;}\n"
+    +"</style>";
   }
 
   @NotNull
@@ -2818,12 +2814,10 @@ public final class UIUtil {
   }
 
   public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
-    forEachComponentInHierarchy(component, c -> {
-      c.setBackground(bg);
-    });
+    forEachComponentInHierarchy(component, c -> c.setBackground(bg));
   }
 
-  private static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<Component> action) {
+  private static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<? super Component> action) {
     action.consume(component);
     if (component instanceof Container) {
       for (Component c : ((Container)component).getComponents()) {
@@ -2960,13 +2954,13 @@ public final class UIUtil {
 
   //May have no usages but it's useful in runtime (Debugger "watches", some logging etc.)
   @NotNull
-  public static String getDebugText(Component c) {
+  public static String getDebugText(@NotNull Component c) {
     StringBuilder builder  = new StringBuilder();
-    getAllTextsRecursivelyImpl(c, builder);
+    getAllTextsRecursively(c, builder);
     return builder.toString();
   }
 
-  private static void getAllTextsRecursivelyImpl(Component component, @NotNull StringBuilder builder) {
+  private static void getAllTextsRecursively(@NotNull Component component, @NotNull StringBuilder builder) {
     String candidate = "";
     if (component instanceof JLabel) candidate = ((JLabel)component).getText();
     if (component instanceof JTextComponent) candidate = ((JTextComponent)component).getText();
@@ -2979,7 +2973,7 @@ public final class UIUtil {
     if (component instanceof Container) {
       Component[] components = ((Container)component).getComponents();
       for (Component child : components) {
-        getAllTextsRecursivelyImpl(child, builder);
+        getAllTextsRecursively(child, builder);
       }
     }
   }
@@ -3286,7 +3280,6 @@ public final class UIUtil {
 
   private static final class FocusedSelection {
     private static final Color BACKGROUND = new JBColor(0x3875D6, 0x2F65CA);
-    private static final Color LIST_BACKGROUND = JBColor.namedColor("List.selectionBackground", BACKGROUND);
     private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.selectionBackground", BACKGROUND);
     private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.selectionBackground", BACKGROUND);
   }
@@ -3686,9 +3679,7 @@ public final class UIUtil {
     assert !SwingUtilities.isEventDispatchThread();
     Semaphore lock = new Semaphore(1);
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      lock.up();
-    });
+    SwingUtilities.invokeLater(() -> lock.up());
     lock.waitFor();
   }
 
