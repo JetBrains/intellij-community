@@ -303,7 +303,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                                          byte @NotNull [] content,
                                                          @NotNull FilePath filePath,
                                                          @Nullable Charset defaultCharset) {
-    Charset charset = guessCharset(content, filePath.getFileType(), defaultCharset != null ? defaultCharset : filePath.getCharset());
+    Charset charset = guessCharset(project, content, filePath, defaultCharset);
     return createFromBytesImpl(project, content, filePath.getFileType(), filePath, filePath.getName(), filePath.getVirtualFile(), charset);
   }
 
@@ -514,23 +514,41 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
   @NotNull
   public static Charset guessCharset(@Nullable Project project, byte @NotNull [] content, @NotNull FilePath filePath) {
-    return guessCharset(content, filePath.getFileType(), filePath.getCharset());
+    return guessCharset(project, content, filePath, null);
+  }
+
+  @NotNull
+  private static Charset guessCharset(@Nullable Project project,
+                                      byte @NotNull [] content,
+                                      @NotNull FilePath filePath,
+                                      @Nullable Charset defaultCharset) {
+    Charset charset = guessCharsetFromContent(content, filePath.getFileType());
+    if (charset != null) return charset;
+
+    if (defaultCharset != null) return defaultCharset;
+    return filePath.getCharset();
   }
 
   @NotNull
   public static Charset guessCharset(@Nullable Project project, byte @NotNull [] content, @NotNull VirtualFile highlightFile) {
-    return guessCharset(content, highlightFile.getFileType(), highlightFile.getCharset());
+    Charset charset = guessCharsetFromContent(content, highlightFile.getFileType());
+    if (charset != null) return charset;
+
+    return highlightFile.getCharset();
   }
 
   @NotNull
   public static Charset guessCharset(@Nullable Project project, byte @NotNull [] content, @NotNull FileType fileType) {
+    Charset charset = guessCharsetFromContent(content, fileType);
+    if (charset != null) return charset;
+
     EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : EncodingManager.getInstance();
-    return guessCharset(content, fileType, e.getDefaultCharset());
+    return e.getDefaultCharset();
   }
 
 
-  @NotNull
-  private static Charset guessCharset(byte @NotNull [] content, @NotNull FileType fileType, @NotNull Charset defaultCharset) {
+  @Nullable
+  private static Charset guessCharsetFromContent(byte @NotNull [] content, @NotNull FileType fileType) {
     Charset bomCharset = CharsetToolkit.guessFromBOM(content);
     if (bomCharset != null) return bomCharset;
 
@@ -539,7 +557,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       if (guessedCharset != null) return guessedCharset;
     }
 
-    return defaultCharset;
+    return null;
   }
 
   @Nullable
