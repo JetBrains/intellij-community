@@ -30,9 +30,9 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
@@ -44,9 +44,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author peter
@@ -134,17 +134,26 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   }
 
   protected void navigateToItems(@Nullable MouseEvent event) {
-    List<Pair<VirtualFile, Segment>> list = myPointers.getValue()
-      .stream()
-      .map(p -> Pair.create(p.getVirtualFile(), p.getRange()))
-      .filter(pair -> pair.getFirst() != null && pair.getFirst().isValid())
-      .filter(pair -> pair.getSecond() != null)
-      .collect(Collectors.toList());
-    if (list.size() == 1) {
-      Project project = myPointers.getValue().get(0).getProject();
-      VirtualFile virtualFile = list.get(0).getFirst();
-      Segment range = list.get(0).getSecond();
-      new OpenFileDescriptor(project, virtualFile, range.getStartOffset()).navigate(true);
+    List<Navigatable> navigatables = new ArrayList<>();
+    for (SmartPsiElementPointer<?> pointer : myPointers.getValue()) {
+      VirtualFile virtualFile = pointer.getVirtualFile();
+      Segment actualRange = pointer.getRange();
+      Navigatable navigatable = null;
+      if (virtualFile != null && actualRange != null && virtualFile.isValid() && actualRange.getStartOffset() >= 0) {
+        navigatable = new OpenFileDescriptor(pointer.getProject(), virtualFile, actualRange.getStartOffset());
+        navigatables.add(navigatable);
+      }
+      else {
+        PsiElement element = pointer.getElement();
+        element = element == null ? null : element.getNavigationElement();
+        if (element instanceof Navigatable) {
+          navigatable = (Navigatable)element;
+        }
+      }
+      ContainerUtil.addIfNotNull(navigatables, navigatable);
+    }
+    if (navigatables.size() == 1) {
+      navigatables.get(0).navigate(true);
     }
     else if (event != null) {
       PsiElement[] elements = PsiUtilCore.toPsiElementArray(getTargetElements());
