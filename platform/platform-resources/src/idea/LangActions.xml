@@ -60,6 +60,7 @@
     <action id="BraceOrQuoteOut" class="com.intellij.codeInsight.editorActions.BraceOrQuoteOutAction"/>
 
     <action id="ToggleRenderedDocPresentation" class="com.intellij.codeInsight.documentation.render.ToggleRenderedDocPresentationAction"/>
+    <action id="ToggleRenderDocsOnFileOpening" class="com.intellij.codeInsight.documentation.render.ToggleRenderDocsOnFileOpeningAction"/>
 
     <group id="CodeInsightEditorActions">
       <reference ref="LookupActions"/>

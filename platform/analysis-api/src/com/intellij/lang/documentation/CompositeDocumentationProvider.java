@@ -5,6 +5,7 @@ package com.intellij.lang.documentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class CompositeDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider, ExternalDocumentationHandler {
   private static final Logger LOG = Logger.getInstance(CompositeDocumentationProvider.class);
@@ -164,6 +166,13 @@ public class CompositeDocumentationProvider implements DocumentationProvider, Ex
       }
     }
     return null;
+  }
+
+  @Override
+  public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+    for (DocumentationProvider provider : getAllProviders()) {
+      provider.collectDocComments(file, sink);
+    }
   }
 
   @Override
