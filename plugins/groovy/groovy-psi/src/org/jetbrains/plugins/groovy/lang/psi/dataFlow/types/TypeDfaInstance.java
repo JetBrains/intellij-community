@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
@@ -31,6 +30,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
+import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.getForeignVariableIdentifiers;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
@@ -192,7 +192,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (blockFlowOwner == null) {
       return;
     }
-    Set<String> foreignIdentifiers = ControlFlowUtils.getForeignVariableIdentifiers(blockFlowOwner);
+    Set<String> foreignIdentifiers = getForeignVariableIdentifiers(blockFlowOwner, ReadWriteVariableInstruction::isWrite);
     if (interestingDescriptors.stream().map(VariableDescriptor::getName).noneMatch(foreignIdentifiers::contains)) {
       return;
     }

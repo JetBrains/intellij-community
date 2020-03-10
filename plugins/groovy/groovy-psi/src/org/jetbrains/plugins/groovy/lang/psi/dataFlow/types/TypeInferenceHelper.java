@@ -34,8 +34,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PartialContext;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.intellij.psi.util.PsiModificationTracker.MODIFICATION_COUNT;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
@@ -103,7 +106,9 @@ public final class TypeInferenceHelper {
     if (rwInstruction == null) return null;
 
     final InferenceCache cache = getInferenceCache(scope);
-    return cache.getInferredType(descriptor, rwInstruction, mixinOnly);
+    final SharedVariableTypeProvider provider = getSharedVariableTypeProvider(scope);
+    final PsiType sharedType = provider.getSharedVariableType(descriptor, rwInstruction);
+    return sharedType != null ? sharedType : cache.getInferredType(descriptor, rwInstruction, mixinOnly);
   }
 
   @Nullable
@@ -123,7 +128,13 @@ public final class TypeInferenceHelper {
     boolean mixinOnly = variable instanceof GrField && isCompileStatic(scope);
 
     final InferenceCache cache = getInferenceCache(scope);
-    final PsiType inferredType = cache.getInferredType(createDescriptor(variable), nearest, mixinOnly);
+    final SharedVariableTypeProvider provider = getSharedVariableTypeProvider(scope);
+    final VariableDescriptor descriptor = createDescriptor(variable);
+    final PsiType sharedType = provider.getSharedVariableType(descriptor, nearest);
+    if (sharedType != null) {
+      return sharedType;
+    }
+    final PsiType inferredType = cache.getInferredType(descriptor, nearest, mixinOnly);
     return inferredType != null ? inferredType : variable.getType();
   }
 
@@ -134,6 +145,10 @@ public final class TypeInferenceHelper {
   @NotNull
   static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
     return CachedValuesManager.getCachedValue(scope, () -> Result.create(new InferenceCache(scope), MODIFICATION_COUNT));
+  }
+
+  private static @NotNull SharedVariableTypeProvider getSharedVariableTypeProvider(@NotNull GrControlFlowOwner scope) {
+    return CachedValuesManager.getCachedValue(scope, () -> Result.create(new SharedVariableTypeProvider(scope), MODIFICATION_COUNT));
   }
 
   @Nullable

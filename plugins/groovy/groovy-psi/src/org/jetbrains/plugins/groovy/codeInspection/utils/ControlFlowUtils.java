@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 
@@ -767,15 +768,16 @@ public final class ControlFlowUtils {
     return result;
   }
 
-  public static @NotNull Set<String> getForeignVariableIdentifiers(@NotNull GrControlFlowOwner owner) {
+  public static @NotNull Set<String> getForeignVariableIdentifiers(@NotNull GrControlFlowOwner owner,
+                                                                   @NotNull Predicate<? super ReadWriteVariableInstruction> predicate) {
     Set<String> instructions = new LinkedHashSet<>();
     for (Instruction instruction : owner.getControlFlow()) {
       PsiElement element = instruction.getElement();
-      if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction)instruction).isWrite()) {
+      if (instruction instanceof ReadWriteVariableInstruction && predicate.test((ReadWriteVariableInstruction)instruction)) {
         instructions.add(((ReadWriteVariableInstruction)instruction).getDescriptor().getName());
       }
       if (!(instruction instanceof ReadWriteVariableInstruction) && element instanceof GrControlFlowOwner) {
-        instructions.addAll(getForeignVariableIdentifiers((GrControlFlowOwner)element));
+        instructions.addAll(getForeignVariableIdentifiers((GrControlFlowOwner)element, predicate));
       }
     }
     GrParameter[] parameters = null;

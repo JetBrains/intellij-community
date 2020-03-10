@@ -1085,6 +1085,16 @@ class W {
     doTest 'def bar(String ss) { <caret>ss }', 'java.lang.String'
   }
 
+  void 'test closure param'() {
+    doTest '''\
+interface I { def foo(String s) }
+def bar(I i) {}
+bar { var ->
+  <caret>var
+}
+''', 'java.lang.String'
+  }
+
   void 'test assignment in cycle independent on index'() {
     doTest '''\
 def foo
@@ -1596,4 +1606,94 @@ def foo(x) {
 }
 ''', "java.io.Serializable"
   }
+
+  void 'test CS with shared variables'() {
+    doTest '''
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = 1
+    def cl = {
+      <caret>x
+    }
+  }
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test infer LUB for shared variables'() {
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    x = new C()
+    def cl = {
+      x
+    }
+    <caret>x
+  }
+''', "A"
+  }
+
+  void 'test flow typing should not work for shared variables'() {
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    <caret>x
+    def cl = {
+      x
+    }
+    x = new C()
+  }
+''', "A"
+  }
+
+  void 'test cyclic dependency for shared variables'() {
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    def y = new C()
+    x = y
+    y = x
+    <caret>x
+    def cl = {
+      x
+      y
+    }
+  }
+
+''', "A"
+  }
+
+
+  void 'test non-shared variable depends on shared one'() {
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    def z = x
+    <caret>z
+    def cl = { x }
+    x = new C()
+  }
+
+''', "B"
+  }
+
 }
