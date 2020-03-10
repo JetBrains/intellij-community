@@ -17,10 +17,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 
 abstract class SpotlightPainter extends AbstractPainter implements ComponentHighlightingListener {
-  private final IdentityHashMap<Configurable, String> myConfigurableOption = new IdentityHashMap<>();
+  private final HashMap<String, String> myConfigurableOption = new HashMap<>();
   private final MergingUpdateQueue myQueue;
   private final GlassPanel myGlassPanel;
   private final JComponent myTarget;
@@ -67,16 +67,16 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
       myGlassPanel.clear();
       String text = filter.getFilterText();
       myVisible = !text.isEmpty();
+      SearchableConfigurable searchable = new SearchableConfigurable.Delegate(configurable);
       try {
-        SearchableConfigurable searchable = new SearchableConfigurable.Delegate(configurable);
         SearchUtil.lightOptions(searchable, component, text);
         Runnable search = searchable.enableSearch(text); // execute for empty string too
-        if (search != null && !filter.contains(configurable) && !text.equals(myConfigurableOption.get(configurable))) {
+        if (search != null && !filter.contains(configurable) && !text.equals(myConfigurableOption.get(searchable.getId()))) {
           search.run();
         }
       }
       finally {
-        myConfigurableOption.put(configurable, text);
+        myConfigurableOption.put(searchable.getId(), text);
       }
     }
     else if (!ApplicationManager.getApplication().isUnitTestMode()) {
