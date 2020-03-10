@@ -191,12 +191,6 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     };
   }
 
-  @TestOnly
-  public void setConfigurations(@NotNull final List<? extends Configuration> configurations) {
-    myConfigurations.clear();
-    myConfigurations.addAll(configurations);
-  }
-
   public List<Configuration> getConfigurations() {
     return Collections.unmodifiableList(myConfigurations);
   }

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -18,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.structuralsearch.SSRBundle;
@@ -99,11 +101,8 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final InspectionToolWrapper<?, ?> selectedTool = myPanel.getSelectedTool();
       final String shortName = selectedTool.getShortName();
       myPanel.removeSelectedRow();
-      final Project project = e.getData(CommonDataKeys.PROJECT);
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
-      final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
-      assert wrapper != null;
-      final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
+      final SSBasedInspection inspection = getStructuralSearchInspection(profile);
       inspection.removeConfigurationWithUuid(UUID.fromString(shortName));
       profile.removeTool(shortName);
       profile.getProfileManager().fireProfileChanged(profile);
@@ -134,19 +133,27 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final Project project = e.getData(CommonDataKeys.PROJECT);
       assert project != null;
       final Configuration configuration = dialog.getConfiguration();
-      if (!createNewInspection(configuration, profile, project)) {
+      if (!createNewInspection(configuration, project, profile)) {
         return;
       }
       myPanel.selectInspectionTool(configuration.getUuid().toString());
     }
-
   }
 
-  public static boolean createNewInspection(Configuration configuration, InspectionProfileImpl profile, Project project) {
-    final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
+  static SSBasedInspection getStructuralSearchInspection(InspectionProfileImpl profile) {
+    final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, (Project)null);
     assert wrapper != null;
-    final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
+    return (SSBasedInspection)wrapper.getTool();
+  }
 
+  public static void createNewInspection(@NotNull Configuration configuration, @NotNull Project project) {
+    createNewInspection(configuration, project, InspectionProfileManager.getInstance(project).getCurrentProfile());
+  }
+
+  static boolean createNewInspection(@NotNull Configuration configuration,
+                                     @NotNull Project project,
+                                     @NotNull InspectionProfileImpl profile) {
+    final SSBasedInspection inspection = getStructuralSearchInspection(profile);
     configuration.setUuidFromName();
     if (!saveInspection(project, inspection, configuration)) {
       return false;
@@ -174,6 +181,10 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   }
 
   public static boolean saveInspection(Project project, SSBasedInspection inspection, Configuration configuration) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      inspection.addConfiguration(configuration);
+      return true;
+    }
     final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration);
     final boolean result = dialog.showAndGet();
     if (result) {

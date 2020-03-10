@@ -5,12 +5,10 @@ import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
@@ -55,7 +53,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -589,12 +586,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFileTypesComboBox));
-          if (project == null) {
-            return;
-          }
-          final InspectionProfileImpl inspectionProfile = InspectionProfileManager.getInstance(project).getCurrentProfile();
-          StructuralSearchProfileActionProvider.createNewInspection(getConfiguration(), inspectionProfile, project);
+          StructuralSearchProfileActionProvider.createNewInspection(getConfiguration(), getProject());
         }
       });
     templateActionGroup.addSeparator();
@@ -688,7 +680,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     return panel;
   }
 
-  private Project getProject() {
+  Project getProject() {
     return mySearchContext.getProject();
   }
 

@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.inspection.SSBasedInspection;
+import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -89,10 +90,7 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     options.setFileType(StdFileTypes.JAVA);
     options.fillSearchCriteria(searchPattern);
 
-    myInspection.setConfigurations(Collections.singletonList(configuration));
-    final InspectionProfileEntry @NotNull [] children =
-      ContainerUtil.map2Array(myInspection.getChildren(), InspectionProfileEntry.class, InspectionToolWrapper::getTool);
-    myFixture.enableInspections(children);
+    StructuralSearchProfileActionProvider.createNewInspection(configuration, myFixture.getProject());
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
   }
 

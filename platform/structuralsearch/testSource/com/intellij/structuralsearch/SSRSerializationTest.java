@@ -32,11 +32,11 @@ public class SSRSerializationTest extends LightPlatformTestCase {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     myInspection = new SSBasedInspection();
-    final SearchConfiguration configuration1 = new SearchConfiguration("i", "user defined");
-    final MatchOptions options = configuration1.getMatchOptions();
+    final SearchConfiguration configuration = new SearchConfiguration("i", "user defined");
+    final MatchOptions options = configuration.getMatchOptions();
     options.setFileType(StdFileTypes.JAVA);
     options.setSearchPattern("int i;");
-    myInspection.setConfigurations(Arrays.asList(configuration1));
+    myInspection.addConfiguration(configuration);
     final InspectionToolsSupplier supplier = new InspectionToolsSupplier() {
 
       @Override
