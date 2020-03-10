@@ -36,7 +36,7 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
     }
 
     // heavy to prevent storages from flushing and blocking FS
-    HeavyProcessLatch.INSTANCE.processStarted(implementationClassName).use {
+    HeavyProcessLatch.INSTANCE.processStarted("Creating service $implementationClassName").use {
       if (indicator == null) {
         return createAndInitialize(componentManager, implementationClass)
       }
