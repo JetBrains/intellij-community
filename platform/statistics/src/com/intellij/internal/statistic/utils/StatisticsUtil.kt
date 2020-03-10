@@ -39,9 +39,9 @@ fun addPluginInfoTo(info: PluginInfo, data : MutableMap<String, Any>) {
   }
 }
 
+@Deprecated("Use com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById directly", ReplaceWith("getPluginInfoById(pluginId).isDevelopedByJetBrains()"))
 fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {
-  val plugin = PluginManagerCore.getPlugin(pluginId)
-  return plugin == null || PluginManager.isDevelopedByJetBrains(plugin.vendor)
+  return getPluginInfoById(pluginId).isDevelopedByJetBrains()
 }
 
 /**
@@ -266,16 +266,9 @@ internal fun isPluginFromOfficialJbPluginRepo(pluginId: PluginId?): Boolean {
  * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
  * so API from it may be reported
  */
+@Deprecated("Use getPluginInfo(clazz) directly", ReplaceWith("getPluginInfo(clazz)"))
 fun getPluginType(clazz: Class<*>): PluginType {
-  val plugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(clazz.name) ?: return PluginType.PLATFORM
-  if (PluginManager.isDevelopedByJetBrains(plugin)) {
-    return if (plugin.isBundled) PluginType.JB_BUNDLED else PluginType.JB_NOT_BUNDLED
-  }
-
-  // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
-  // they are also considered bundled) would be reported
-  val listed = !plugin.isBundled && isSafeToReportFrom(plugin)
-  return if (listed) PluginType.LISTED else PluginType.NOT_LISTED
+  return getPluginInfo(clazz).type
 }
 
 object StatisticsUtil {
