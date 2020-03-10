@@ -34,7 +34,6 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   @NotNull private final HgVcs myVcs;
   @NotNull final Project myProject;
   @NotNull private final HgProjectSettings myProjectSettings;
-  @NotNull private final HgChangesetStatus myChangesStatus;
   private final boolean myIsIncoming;
   private boolean isAlreadyShown;
   @NotNull private final Icon myEnabledIcon;
@@ -52,7 +51,6 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
     this.myIsIncoming = isIncoming;
     myVcs = vcs;
     myProjectSettings = projectSettings;
-    myChangesStatus = new HgChangesetStatus(isIncoming ? "In" : "Out");
     isAlreadyShown = false;
     myEnabledIcon = myIsIncoming ? AllIcons.Ide.IncomingChangesOn : AllIcons.Ide.OutgoingChangesOn;
     myDisabledIcon = IconLoader.getDisabledIcon(myEnabledIcon);
@@ -116,9 +114,10 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
         return;
       }
 
-      boolean changesAvailable = myChangesStatus.getNumChanges() > 0;
+      HgChangesetStatus status = myVcs.getRemoteStatusUpdater().getStatus(myIsIncoming);
+      boolean changesAvailable = status.getNumChanges() > 0;
       myCurrentIcon = changesAvailable ? myEnabledIcon : myDisabledIcon;
-      myTooltip = changesAvailable ? "\n" + myChangesStatus.getToolTip() : "No changes available";
+      myTooltip = changesAvailable ? "\n" + status.getToolTip() : "No changes available";
       if (!isVisible() || !isAlreadyShown) return;
       if (myStatusBar != null) myStatusBar.updateWidget(ID());
     });
@@ -181,10 +180,6 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   @Override
   public Icon getIcon() {
     return myCurrentIcon;
-  }
-
-  public HgChangesetStatus getChangesetStatus() {
-    return myChangesStatus;
   }
 
   //if smb call hide widget then it removed from status bar ans dispose method called.

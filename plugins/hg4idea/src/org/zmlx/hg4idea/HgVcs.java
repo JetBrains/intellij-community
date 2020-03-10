@@ -38,7 +38,6 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +89,6 @@ public class HgVcs extends AbstractVcs {
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
   private final HgCommittedChangesProvider committedChangesProvider;
-  private MessageBusConnection messageBusConnection;
   @NotNull private final HgGlobalSettings globalSettings;
   @NotNull private final HgProjectSettings projectSettings;
   private final ProjectLevelVcsManager myVcsManager;
@@ -256,12 +254,7 @@ public class HgVcs extends AbstractVcs {
     });
 
     // updaters and listeners
-    myHgRemoteStatusUpdater =
-      new HgRemoteStatusUpdater(this, myIncomingWidget.getChangesetStatus(), myOutgoingWidget.getChangesetStatus(),
-                                projectSettings);
-    myHgRemoteStatusUpdater.activate();
-
-    messageBusConnection = myProject.getMessageBus().connect();
+    myHgRemoteStatusUpdater = new HgRemoteStatusUpdater(this);
     myVFSListener = HgVFSListener.createInstance(this);
 
     // ignore temporary files
@@ -291,9 +284,6 @@ public class HgVcs extends AbstractVcs {
     if (myOutgoingWidget != null) {
       myOutgoingWidget.deactivate();
       myOutgoingWidget = null;
-    }
-    if (messageBusConnection != null) {
-      messageBusConnection.disconnect();
     }
 
     if (myVFSListener != null) {
@@ -349,6 +339,10 @@ public class HgVcs extends AbstractVcs {
   @NotNull
   public HgCloseBranchExecutor getCloseBranchExecutor() {
     return myCloseBranchExecutor;
+  }
+
+  public HgRemoteStatusUpdater getRemoteStatusUpdater() {
+    return myHgRemoteStatusUpdater;
   }
 
   public static VcsKey getKey() {
