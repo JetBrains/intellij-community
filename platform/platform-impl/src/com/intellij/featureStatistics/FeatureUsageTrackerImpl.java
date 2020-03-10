@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceCom
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.internal.statistic.utils.StatisticsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
@@ -23,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getPluginType;
 
 @State(name = "FeatureUsageStatistics", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
 public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
@@ -185,7 +184,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
     descriptor.triggerUsed();
 
     Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
-    String id = provider == null || getPluginType(provider).isDevelopedByJetBrains() ? descriptor.getId() : "third.party";
+    String id = provider == null || StatisticsUtil.getPluginType(provider).isDevelopedByJetBrains() ? descriptor.getId() : "third.party";
     String group = descriptor.getGroupId();
     FeatureUsageData data = new FeatureUsageData().addData("id", id).addData("group", StringUtil.notNullize(group, "unknown"));
     FUCounterUsageLogger.getInstance().logEvent("productivity", "feature.used", data);

@@ -175,7 +175,7 @@ class PluginDescriptorTest {
     assertThat(foo.pluginId.idString).isEqualTo("foo")
 
     assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
-    assertThat(result.idMap[foo.pluginId]).isSameAs(foo)
+    assertThat(result.idMap.get(foo.pluginId)).isSameAs(foo)
   }
 
   @Suppress("PluginXmlValidity")
@@ -197,7 +197,7 @@ class PluginDescriptorTest {
         <idea-version since-build="2.0" until-build="4.*"/>
       </idea-plugin>""")
 
-    val result = PluginManagerCore.testLoadDescriptorsFromDir(pluginDir, BuildNumber.fromString("3.12"))
+    val result = PluginManagerCore.testLoadDescriptorsFromDir(pluginDir, BuildNumber.fromString("3.12")!!)
 
     val plugins = result.sortedEnabledPlugins
     assertThat(plugins).hasSize(1)
@@ -234,7 +234,7 @@ class PluginDescriptorTest {
     assertThat(foo.pluginId.idString).isEqualTo("foo")
 
     assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
-    assertThat(result.idMap[foo.pluginId]).isSameAs(foo)
+    assertThat(result.idMap.get(foo.pluginId)).isSameAs(foo)
   }
 
   @Suppress("PluginXmlValidity")

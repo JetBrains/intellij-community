@@ -28,7 +28,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   static final int IGNORE_MISSING_INCLUDE = 2;
   static final int SKIP_DISABLED_PLUGINS = 4;
 
-  private static final Logger LOG = Logger.getInstance(PluginManager.class);
+  private static final Logger LOG = PluginManagerCore.getLogger();
 
   @NotNull
   private final ExecutorService executorService;
@@ -90,8 +90,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     }
   }
 
-  @NotNull
-  Logger getLogger() {
+  @NotNull Logger getLogger() {
     return LOG;
   }
 

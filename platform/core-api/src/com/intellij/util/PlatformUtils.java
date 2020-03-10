@@ -136,7 +136,7 @@ public final class PlatformUtils {
     return COMMERCIAL_EDITIONS.contains(getPlatformPrefix());
   }
 
-  private static boolean is(String idePrefix) {
+  private static boolean is(@NotNull String idePrefix) {
     return idePrefix.equals(getPlatformPrefix());
   }
 }

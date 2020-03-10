@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public final class BuildNumber implements Comparable<BuildNumber> {
@@ -80,7 +81,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   private String asString(boolean includeProductCode, boolean withSnapshotMarker) {
     StringBuilder builder = new StringBuilder();
 
-    if (includeProductCode && !StringUtil.isEmpty(myProductCode)) {
+    if (includeProductCode && !myProductCode.isEmpty()) {
       builder.append(myProductCode).append('-');
     }
 
@@ -112,19 +113,19 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     }
   }
 
-  public static BuildNumber fromString(String version) {
-    return fromString(version, null, null);
+  public static @Nullable BuildNumber fromString(@Nullable String version) {
+    if (version == null) {
+      return null;
+    }
+    version = version.trim();
+    return version.isEmpty() ? null : fromString(version, null, null);
   }
 
-  public static BuildNumber fromStringWithProductCode(String version, @NotNull String productCode) {
+  public static @Nullable BuildNumber fromStringWithProductCode(@NotNull String version, @NotNull String productCode) {
     return fromString(version, null, productCode);
   }
 
-  public static BuildNumber fromString(@Nullable String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
-    if (StringUtil.isEmptyOrSpaces(version)) {
-      return null;
-    }
-
+  public static @Nullable BuildNumber fromString(@NotNull String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
     String code = version;
     int productSeparator = code.indexOf('-');
     String productCode;
@@ -144,7 +145,9 @@ public final class BuildNumber implements Comparable<BuildNumber> {
 
     if (baselineVersionSeparator > 0) {
       String baselineVersionString = code.substring(0, baselineVersionSeparator);
-      if (baselineVersionString.trim().isEmpty()) return null;
+      if (baselineVersionString.trim().isEmpty()) {
+        return null;
+      }
 
       List<String> stringComponents = StringUtil.split(code, ".");
       TIntArrayList intComponentsList = new TIntArrayList();
@@ -152,7 +155,9 @@ public final class BuildNumber implements Comparable<BuildNumber> {
       for (String stringComponent : stringComponents) {
         int comp = parseBuildNumber(version, stringComponent, pluginName);
         intComponentsList.add(comp);
-        if (comp == SNAPSHOT_VALUE) break;
+        if (comp == SNAPSHOT_VALUE) {
+          break;
+        }
       }
 
       int[] intComponents = intComponentsList.toNativeArray();
@@ -238,11 +243,10 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     return 40;
   }
 
-  private static class Holder {
+  private static final class Holder {
     private static final BuildNumber CURRENT_VERSION = fromFile();
 
-    @NotNull
-    private static BuildNumber fromFile() {
+    private static @NotNull BuildNumber fromFile() {
       try {
         String home = PathManager.getHomePath();
         File buildTxtFile = FileUtil.findFirstThatExist(
@@ -251,12 +255,12 @@ public final class BuildNumber implements Comparable<BuildNumber> {
           PathManager.getCommunityHomePath() + "/build.txt");
         if (buildTxtFile != null) {
           String text = FileUtil.loadFile(buildTxtFile).trim();
-          return fromString(text);
+          return Objects.requireNonNull(fromString(text));
         }
       }
       catch (IOException ignored) { }
 
-      return fromString(FALLBACK_VERSION);
+      return Objects.requireNonNull(fromString(FALLBACK_VERSION));
     }
   }
 

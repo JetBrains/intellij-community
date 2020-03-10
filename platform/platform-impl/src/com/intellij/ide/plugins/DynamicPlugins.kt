@@ -199,8 +199,7 @@ object DynamicPlugins {
                                                   callback: (loadedDescriptorOfDependency: IdeaPluginDescriptorImpl, fullDescriptor: IdeaPluginDescriptorImpl) -> Boolean) {
     val pluginXmlFactory = PluginXmlFactory()
     val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(PluginManagerCore.disabledPlugins())
-    for (descriptor in PluginManager.getPlugins()) {
-      if (!descriptor.isEnabled) continue
+    for (descriptor in PluginManagerCore.getLoadedPlugins()) {
       if (!descriptor.optionalDependentPluginIds.contains(rootDescriptor.pluginId)) {
         continue
       }
@@ -357,7 +356,6 @@ object DynamicPlugins {
           else {
             PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), loadedPluginDescriptor))
           }
-
         }
         finally {
           val disposable = PluginManagerCore.pluginDisposables.remove(pluginDescriptor)

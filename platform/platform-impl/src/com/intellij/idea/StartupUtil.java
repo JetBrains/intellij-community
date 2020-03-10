@@ -156,7 +156,7 @@ public final class StartupUtil {
     }
   }
 
-  public static void prepareApp(String @NotNull [] args, @NotNull String mainClass) throws Exception {
+  public static void prepareApp(@NotNull String @NotNull [] args, @NotNull String mainClass) throws Exception {
     LoadingState.setStrictMode();
 
     Activity activity = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
@@ -324,7 +324,7 @@ public final class StartupUtil {
           }
 
           // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater (to allow other queued events to be executed)
-          EventQueue.invokeLater(() -> StartupUiUtil.configureHtmlKitStylesheet());
+          EventQueue.invokeLater(StartupUiUtil::configureHtmlKitStylesheet);
         });
       }
       catch (Throwable e) {
@@ -334,9 +334,7 @@ public final class StartupUtil {
 
     if (!Main.isHeadless()) {
       // do not wait, approach like AtomicNotNullLazyValue is used under the hood
-      initUiFuture.thenRunAsync(() -> {
-        updateFrameClassAndWindowIcon();
-      }, executor);
+      initUiFuture.thenRunAsync(StartupUtil::updateFrameClassAndWindowIcon, executor);
     }
 
     CompletableFuture<Void> instrumentationFuture = new CompletableFuture<>();
@@ -563,7 +561,7 @@ public final class StartupUtil {
     }
 
     EnvironmentUtil.loadEnv()
-      .thenRun(() -> subActivity.end());
+      .thenRun(subActivity::end);
   }
 
   private static void setupSystemLibraries() {
@@ -719,7 +717,7 @@ public final class StartupUtil {
       dialogWasShown = true;
     }
     if (AppUIUtil.needToShowConsentsAgreement()) {
-      runInEdtAndWait(log, () -> Agreements.INSTANCE.showDataSharingAgreement(), initUiTask);
+      runInEdtAndWait(log, Agreements.INSTANCE::showDataSharingAgreement, initUiTask);
     }
     return dialogWasShown;
   }
