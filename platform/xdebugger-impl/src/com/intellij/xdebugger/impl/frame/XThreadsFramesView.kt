@@ -20,6 +20,8 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
@@ -106,6 +108,21 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
             }
         })
 
+        myThreadsList.addMouseListener(object : MouseAdapter() {
+            // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
+            override fun mouseReleased(e: MouseEvent) {
+                if (!myListenersEnabled) return
+
+                val i = myThreadsList.locationToIndex(e.point)
+                if (i == -1 || !myThreadsList.isSelectedIndex(i)) return
+
+                val session = getSession(e) ?: return
+                val stack = myThreadsList.selectedValue?.stack ?: return
+
+                stack.setActive(session)
+            }
+        })
+
         myFramesList.addListSelectionListener {
             if (it.valueIsAdjusting || !myListenersEnabled) return@addListSelectionListener
 
@@ -121,6 +138,22 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
                 val actionManager = ActionManager.getInstance()
                 val group = actionManager.getAction(XDebuggerActions.FRAMES_TREE_POPUP_GROUP) as ActionGroup
                 actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).component.show(comp, x, y)
+            }
+        })
+
+        myFramesList.addMouseListener(object : MouseAdapter() {
+            // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
+            override fun mouseReleased(e: MouseEvent) {
+                if (!myListenersEnabled) return
+
+                val i = myFramesList.locationToIndex(e.point)
+                if (i == -1 || !myFramesList.isSelectedIndex(i)) return
+
+                val session = getSession(e) ?: return
+                val stack = myThreadsList.selectedValue?.stack ?: return
+                val frame = myFramesList.selectedValue as? XStackFrame ?: return
+
+                session.setCurrentStackFrame(stack, frame)
             }
         })
     }
