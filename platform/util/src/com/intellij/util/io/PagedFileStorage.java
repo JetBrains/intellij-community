@@ -8,6 +8,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,17 +94,13 @@ public class PagedFileStorage implements Forceable {
   protected final int myPageSize;
   protected final boolean myValuesAreBufferAligned;
 
-  public PagedFileStorage(Path file, StorageLock lock) {
-    this(file, lock.myDefaultStorageLockContext, BUFFER_SIZE, false, false);
-  }
-
   public PagedFileStorage(Path file,
                           @Nullable StorageLockContext storageLockContext,
                           int pageSize,
                           boolean valuesAreBufferAligned,
                           boolean nativeBytesOrder) {
     myFile = file;
-    myStorageLockContext = storageLockContext != null ? storageLockContext : ourLock.myDefaultStorageLockContext;
+    myStorageLockContext = storageLockContext != null ? storageLockContext : ourLock.myDefaultContext;
     myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, Page.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = myStorageLockContext.myStorageLock.registerPagedFileStorage(this);
@@ -462,10 +459,11 @@ public class PagedFileStorage implements Forceable {
     return isDirty;
   }
 
+  @ApiStatus.Internal
   public static class StorageLock {
     private static final int FILE_INDEX_MASK = 0xFFFF0000;
     private static final int FILE_INDEX_SHIFT = 16;
-    public final StorageLockContext myDefaultStorageLockContext;
+    public final StorageLockContext myDefaultContext;
     private final ConcurrentIntObjectMap<PagedFileStorage> myIndex2Storage = ContainerUtil.createConcurrentIntObjectMap();
 
     private final LinkedHashMap<Integer, ByteBufferWrapper> mySegments;
@@ -478,12 +476,8 @@ public class PagedFileStorage implements Forceable {
     private volatile long mySizeLimit;
     private volatile int myMappingChangeCount;
 
-    public StorageLock() {
-      this(true);
-    }
-
-    public StorageLock(boolean checkThreadAccess) {
-      myDefaultStorageLockContext = new StorageLockContext(this, checkThreadAccess);
+    private StorageLock() {
+      myDefaultContext = new StorageLockContext(this, true);
 
       mySizeLimit = UPPER_LIMIT;
       mySegments = new LinkedHashMap<Integer, ByteBufferWrapper>(10, 0.75f, true) {
@@ -505,14 +499,6 @@ public class PagedFileStorage implements Forceable {
           return wrapper;
         }
       };
-    }
-
-    public void lock() {
-      myDefaultStorageLockContext.lock();
-    }
-
-    public void unlock() {
-      myDefaultStorageLockContext.unlock();
     }
 
     private int registerPagedFileStorage(@NotNull PagedFileStorage storage) {

@@ -60,14 +60,6 @@ public class ResizeableMappedFile implements Forceable {
     myLastWrittenLogicalSize = myLogicalSize = readLength();
   }
 
-  public ResizeableMappedFile(Path file, int initialSize, PagedFileStorage.StorageLock lock, int pageSize, boolean valuesAreBufferAligned) throws IOException {
-    this(file, initialSize, lock.myDefaultStorageLockContext, pageSize, valuesAreBufferAligned);
-  }
-
-  public ResizeableMappedFile(Path file, int initialSize, PagedFileStorage.StorageLock lock) throws IOException {
-    this(file, initialSize, lock, -1, false);
-  }
-
   public long length() {
     return myLogicalSize;
   }
