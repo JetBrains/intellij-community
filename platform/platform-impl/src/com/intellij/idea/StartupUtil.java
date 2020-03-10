@@ -205,6 +205,8 @@ public final class StartupUtil {
     Logger log = setupLogger();
     activity.end();
 
+    PluginManagerCore.scheduleDescriptorLoading();
+
     NonUrgentExecutor.getInstance().execute(() -> {
       ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
       Activity subActivity = StartUpMeasurer.startActivity("essential IDE info logging");

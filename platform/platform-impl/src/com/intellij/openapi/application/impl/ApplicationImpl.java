@@ -107,6 +107,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     ApplicationManager.setApplication(this, myLastDisposable);
 
     registerServiceInstance(TransactionGuard.class, myTransactionGuard, PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
+    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
 
     myPicoContainer.registerComponentInstance(Application.class, this);
 

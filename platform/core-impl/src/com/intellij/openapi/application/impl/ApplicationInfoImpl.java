@@ -11,11 +11,10 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
@@ -60,11 +59,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private Icon myProgressTailIcon;
   private int myProgressHeight = 2;
   private int myProgressY = 350;
-  private int myLicenseOffsetX = 114;
-  private int myLicenseOffsetY = 85;
   private String mySplashImageUrl;
   private String myAboutImageUrl;
-  @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
   private String myBigIconUrl;
@@ -111,7 +107,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionAdditionalFormData;
   private final List<ProgressSlide> myProgressSlides = new ArrayList<>();
 
-  private static final String IDEA_PATH = "/idea/";
   private static final String ELEMENT_VERSION = "version";
   private static final String ATTRIBUTE_MAJOR = "major";
   private static final String ATTRIBUTE_MINOR = "minor";
@@ -129,20 +124,15 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ELEMENT_LOGO = "logo";
   private static final String ATTRIBUTE_URL = "url";
   private static final String COPYRIGHT_START = "copyrightStart";
-  private static final String ATTRIBUTE_TEXT_COLOR = "textcolor";
   private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
   private static final String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
   private static final String ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR = "copyrightForeground";
   private static final String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
   private static final String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
   private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
-  private static final String ATTRIBUTE_LICENSE_TEXT_OFFSET_X = "licenseOffsetX";
-  private static final String ATTRIBUTE_LICENSE_TEXT_OFFSET_Y = "licenseOffsetY";
   private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
   private static final String ELEMENT_ABOUT = "about";
   private static final String ELEMENT_ICON = "icon";
-  private static final String ATTRIBUTE_SIZE32 = "size32";
-  private static final String ATTRIBUTE_SIZE128 = "size128";
   private static final String ATTRIBUTE_SIZE16 = "size16";
   private static final String ATTRIBUTE_SIZE12 = "size12";
   private static final String ELEMENT_PACKAGE = "package";
@@ -152,7 +142,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String WELCOME_SCREEN_ELEMENT_NAME = "welcome-screen";
   private static final String LOGO_URL_ATTR = "logo-url";
   private static final String UPDATE_URLS_ELEMENT_NAME = "update-urls";
-  private static final String XML_EXTENSION = ".xml";
   private static final String ATTRIBUTE_EAP = "eap";
   private static final String HELP_ELEMENT_NAME = "help";
   private static final String ELEMENT_DOCUMENTATION = "documentation";
@@ -195,22 +184,36 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
-  ApplicationInfoImpl() {
-    try {
-      loadState(JDOMUtil.load(ApplicationInfoImpl.class, getApplicationInfoPath()));
+  private static volatile ApplicationInfoImpl instance;
+
+  // if application loader was not used
+  @SuppressWarnings("unused")
+  private ApplicationInfoImpl() {
+    loadState(ApplicationNamesInfo.initAndGetRawData());
+  }
+
+  @NonInjectable
+  ApplicationInfoImpl(@NotNull Element element) {
+    loadState(element);
+  }
+
+  public static @NotNull ApplicationInfoEx getShadowInstance() {
+    ApplicationInfoImpl result = instance;
+    if (result != null) {
+      return result;
     }
-    catch (Exception e) {
-      //this class can be loaded before MainImpl so fix the prefix manually
-      PlatformUtils.setDefaultPrefixForCE();
-      try {
-        loadState(JDOMUtil.load(ApplicationInfoImpl.class, getApplicationInfoPath()));
-        return;
+
+    //noinspection SynchronizeOnThis
+    synchronized (ApplicationInfoImpl.class) {
+      result = instance;
+      if (result == null) {
+        Activity activity = StartUpMeasurer.startActivity("app info loading");
+        result = new ApplicationInfoImpl(ApplicationNamesInfo.initAndGetRawData());
+        instance = result;
+        activity.end();
       }
-      catch (Exception ex) {
-        e = ex;
-      }
-      throw new RuntimeException("Cannot load resource: " + getApplicationInfoPath(), e);
     }
+    return result;
   }
 
   @Override
@@ -312,11 +315,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public Color getSplashTextColor() {
-    return mySplashTextColor;
-  }
-
-  @Override
   public String getAboutImageUrl() {
     return myAboutImageUrl;
   }
@@ -338,16 +336,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public int getProgressY() {
     return myProgressY;
-  }
-
-  @Override
-  public int getLicenseOffsetX() {
-    return myLicenseOffsetX;
-  }
-
-  @Override
-  public int getLicenseOffsetY() {
-    return myLicenseOffsetY;
   }
 
   @Override
@@ -607,26 +595,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myProgressSlides;
   }
 
-  private static volatile ApplicationInfoImpl ourShadowInstance;
-
-  @NotNull
-  public static ApplicationInfoEx getShadowInstance() {
-    ApplicationInfoImpl result = ourShadowInstance;
-    if (result != null) {
-      return result;
-    }
-
-    //noinspection SynchronizeOnThis
-    synchronized (ApplicationInfoImpl.class) {
-      result = ourShadowInstance;
-      if (result == null) {
-        Activity activity = StartUpMeasurer.startActivity("app info loading");
-        result = new ApplicationInfoImpl();
-        ourShadowInstance = result;
-        activity.end();
-      }
-    }
-    return result;
+  private static @Nullable String getAttributeValue(@NotNull Element element, @NotNull String name) {
+    String value = element.getAttributeValue(name);
+    return (value == null || value.isEmpty()) ? null : value;
   }
 
   /**
@@ -658,21 +629,22 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     Element buildElement = getChild(parentNode, ELEMENT_BUILD);
     if (buildElement != null) {
-      myBuildNumber = buildElement.getAttributeValue(ATTRIBUTE_NUMBER);
-      myApiVersion = buildElement.getAttributeValue(ATTRIBUTE_API_VERSION);
+      myBuildNumber = getAttributeValue(buildElement, ATTRIBUTE_NUMBER);
+      myApiVersion = getAttributeValue(buildElement, ATTRIBUTE_API_VERSION);
       setBuildNumber(myApiVersion, myBuildNumber);
 
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
       if ("__BUILD_DATE__".equals(dateString)) {
         myBuildDate = new GregorianCalendar();
         try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + "/lib/bootstrap.jar")) {
-          JarEntry jarEntry = bootstrapJar.entries().nextElement();  // META-INF is always updated on build
+          // META-INF is always updated on build
+          JarEntry jarEntry = bootstrapJar.entries().nextElement();
           myBuildDate.setTime(new Date(jarEntry.getTime()));
         }
         catch (Exception ignore) { }
       }
       else {
-        myBuildDate = parseDate(dateString);
+        myBuildDate = dateString == null ? GregorianCalendar.getInstance() : parseDate(dateString);
       }
       String majorReleaseDateString = buildElement.getAttributeValue(ATTRIBUTE_MAJOR_RELEASE_DATE);
       if (majorReleaseDateString != null) {
@@ -682,8 +654,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     Element logoElement = getChild(parentNode, ELEMENT_LOGO);
     if (logoElement != null) {
-      mySplashImageUrl = logoElement.getAttributeValue(ATTRIBUTE_URL);
-      mySplashTextColor = parseColor(logoElement.getAttributeValue(ATTRIBUTE_TEXT_COLOR));
+      mySplashImageUrl = getAttributeValue(logoElement, ATTRIBUTE_URL);
       String v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_COLOR);
       if (v != null) {
         myProgressColor = parseColor(v);
@@ -702,16 +673,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
       if (v != null) {
         myProgressY = Integer.parseInt(v);
-      }
-
-      v = logoElement.getAttributeValue(ATTRIBUTE_LICENSE_TEXT_OFFSET_X);
-      if (v != null) {
-        myLicenseOffsetX = Integer.parseInt(v);
-      }
-
-      v = logoElement.getAttributeValue(ATTRIBUTE_LICENSE_TEXT_OFFSET_Y);
-      if (v != null) {
-        myLicenseOffsetY = Integer.parseInt(v);
       }
 
       for (Element child : getChildren(logoElement, PROGRESS_SLIDE)) {
@@ -761,9 +722,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     Element iconElement = getChild(parentNode, ELEMENT_ICON);
     if (iconElement != null) {
-      myIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32);
+      myIconUrl = iconElement.getAttributeValue("size32");
       mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16, mySmallIconUrl);
-      myBigIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE128, (String)null);
+      myBigIconUrl = iconElement.getAttributeValue("size128", (String)null);
       final String toolWindowIcon = iconElement.getAttributeValue(ATTRIBUTE_SIZE12);
       if (toolWindowIcon != null) {
         myToolWindowIconUrl = toolWindowIcon;
@@ -814,6 +775,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     Element updateUrls = getChild(parentNode, UPDATE_URLS_ELEMENT_NAME);
     myUpdateUrls = new UpdateUrlsImpl(updateUrls);
 
+    @SuppressWarnings("DuplicatedCode")
     Element documentationElement = getChild(parentNode, ELEMENT_DOCUMENTATION);
     if (documentationElement != null) {
       myDocumentationUrl = documentationElement.getAttributeValue(ATTRIBUTE_URL);
@@ -935,10 +897,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE));
       mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA);
     }
-  }
-
-  private static @NotNull String getApplicationInfoPath() {
-    return IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
   }
 
   @NotNull

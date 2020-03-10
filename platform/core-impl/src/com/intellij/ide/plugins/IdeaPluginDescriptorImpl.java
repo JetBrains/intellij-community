@@ -399,7 +399,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     markAsIncomplete(context);
-    context.parentContext.result.reportIncompatiblePlugin(this, since, until);
+    context.parentContext.result.reportIncompatiblePlugin(this, message, since, until);
     return false;
   }
 

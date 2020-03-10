@@ -41,7 +41,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
 import com.intellij.serviceContainer.PlatformComponentManagerImpl.DescriptorToLoad
-import com.intellij.util.ArrayUtil
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
@@ -351,10 +350,10 @@ object DynamicPlugins {
 
           if (disable) {
             // Update list of disabled plugins
-            PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
+            PluginManager.getInstance().setPlugins(PluginManagerCore.getPlugins().asList())
           }
           else {
-            PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), loadedPluginDescriptor))
+            PluginManager.getInstance().setPlugins(PluginManagerCore.getPlugins().asSequence().minus(loadedPluginDescriptor).toList())
           }
         }
         finally {
@@ -511,11 +510,11 @@ object DynamicPlugins {
         if (wasDisabled) {
           val newPlugins = PluginManagerCore.getPlugins()
             .map { if (it.pluginId == pluginDescriptor.pluginId) pluginDescriptor else it }
-            .toTypedArray()
-          PluginManagerCore.setPlugins(newPlugins)
+            .toList()
+          PluginManager.getInstance().setPlugins(newPlugins)
         }
         else {
-          PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
+          PluginManager.getInstance().setPlugins(PluginManagerCore.getPlugins().asSequence().plus(pluginDescriptor).toList())
         }
         val fuData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(pluginDescriptor))
         FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", "load", fuData)

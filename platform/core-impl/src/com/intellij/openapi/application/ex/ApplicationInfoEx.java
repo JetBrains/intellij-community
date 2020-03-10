@@ -14,14 +14,12 @@ import java.util.List;
 
 public abstract class ApplicationInfoEx extends ApplicationInfo {
   public static ApplicationInfoEx getInstanceEx() {
-    return (ApplicationInfoEx) getInstance();
+    return (ApplicationInfoEx)getInstance();
   }
 
   public abstract Calendar getMajorReleaseBuildDate();
 
   public abstract String getSplashImageUrl();
-
-  public abstract Color getSplashTextColor();
 
   public abstract String getAboutImageUrl();
 
@@ -165,8 +163,4 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   @Nullable
   public abstract Icon getProgressTailIcon();
-
-  public abstract int getLicenseOffsetX();
-
-  public abstract int getLicenseOffsetY();
 }

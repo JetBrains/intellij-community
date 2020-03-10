@@ -27,6 +27,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -776,8 +777,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     String oldHost = System.setProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY, host);
 
     try {
-      ApplicationInfoImpl applicationInfo = new ApplicationInfoImpl();
-
+      ApplicationInfoImpl applicationInfo = new ApplicationInfoImpl(new Element("state"));
       Assert.assertThat(applicationInfo.getPluginManagerUrl(), containsString(host));
       Assert.assertThat(applicationInfo.getPluginsListUrl(), containsString(host));
       Assert.assertThat(applicationInfo.getPluginsDownloadUrl(), containsString(host));
