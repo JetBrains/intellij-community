@@ -195,11 +195,12 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
   public static String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
     // implementation reflected by com.intellij.vcs.log.ui.frame.VcsLogGraphTable.getPresentableText()
     StringBuilder sb = new StringBuilder();
-    sb.append(VcsUtil.getShortRevisionString(revision.getRevisionNumber())).append(" ");
-    sb.append(revision.getAuthor());
     long time = revision.getRevisionDate().getTime();
-    sb.append(" ").append(VcsBundle.message("file.history.details.on.date.at.time", DateFormatUtil.formatDate(time),
-                                            DateFormatUtil.formatTime(time)));
+    sb.append(VcsBundle.message("file.history.details.hash.author.on.date.at.time",
+                                VcsUtil.getShortRevisionString(revision.getRevisionNumber()),
+                                revision.getAuthor(),
+                                DateFormatUtil.formatDate(time),
+                                DateFormatUtil.formatTime(time)));
     if (revision instanceof VcsFileRevisionEx) {
       if (!Comparing.equal(revision.getAuthor(), ((VcsFileRevisionEx)revision).getCommitterName())) {
         sb.append(" (").append(VcsBundle.message("file.history.details.committer.info",
