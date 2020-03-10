@@ -3,6 +3,7 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.BuildNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +82,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    */
   public abstract boolean isMajorEAP();
 
-  public abstract UpdateUrls getUpdateUrls();
+  public @Nullable abstract UpdateUrls getUpdateUrls();
 
   public abstract String getDocumentationUrl();
 
@@ -161,4 +162,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract Color getProgressColor();
 
   public @Nullable abstract String getProgressTailIcon();
+
+  public @NotNull abstract BuildNumber getApiVersionAsNumber();
 }

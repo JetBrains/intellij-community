@@ -23,7 +23,7 @@ public abstract class ApplicationInfo {
 
   public abstract @NotNull BuildNumber getBuild();
 
-  public abstract String getApiVersion();
+  public abstract @NotNull String getApiVersion();
 
   public abstract String getMajorVersion();
 

@@ -18,7 +18,6 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.reference.SoftReference;
@@ -78,9 +77,6 @@ public final class PluginManagerCore {
 
   public static final String VENDOR_JETBRAINS = "JetBrains";
 
-  @SuppressWarnings("StaticNonFinalField")
-  public static String BUILD_NUMBER;
-
   private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
 
   private static final PluginId SPECIAL_IDEA_PLUGIN_ID = PluginId.getId("IDEA CORE");
@@ -112,20 +108,7 @@ public final class PluginManagerCore {
   private static Boolean isRunningFromSources;
   private static volatile CompletableFuture<DescriptorListLoadingContext> descriptorListFuture;
 
-  private static final class Holder {
-    private static final BuildNumber ourBuildNumber;
-
-    static {
-      BuildNumber result = BuildNumber.fromString(getPluginsCompatibleBuild());
-      if (result == null) {
-        result = BUILD_NUMBER == null ? null : BuildNumber.fromString(BUILD_NUMBER);
-        if (result == null) {
-          result = BuildNumber.currentVersion();
-        }
-      }
-      ourBuildNumber = result;
-    }
-  }
+  private static BuildNumber ourBuildNumber;
 
   public static final ConcurrentMap<PluginDescriptor, Disposable> pluginDisposables = ConcurrentFactoryMap.createWeakMap(
           plugin -> {
@@ -692,10 +675,6 @@ public final class PluginManagerCore {
     }
   }
 
-  public static boolean hideImplementationDetails() {
-    return !Registry.is("plugins.show.implementation.details");
-  }
-
   public static boolean isRunningFromSources() {
     Boolean result = isRunningFromSources;
     if (result == null) {
@@ -913,7 +892,8 @@ public final class PluginManagerCore {
     return PluginManager.loadDescriptor(file.toPath(), fileName, disabledPlugins(), false);
   }
 
-  private static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
+  @ApiStatus.Internal
+  public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
                                                                    boolean isBundled,
                                                                    @NotNull DescriptorListLoadingContext parentContext) {
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ false,
@@ -1115,36 +1095,13 @@ public final class PluginManagerCore {
     throws ExecutionException, InterruptedException {
     Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     collectPluginFilesInClassPath(loader, urlsFromClassPath);
-    DescriptorListLoadingContext context = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
+    DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), BuildNumber.currentVersion(), false));
     try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, true, true, new ClassPathXmlPathResolver(loader))) {
       loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, null);
     }
 
     context.result.finishLoading();
     return context.result.getEnabledPlugins();
-  }
-
-  @TestOnly
-  public static @NotNull PluginManagerState testLoadDescriptorsFromDir(@NotNull Path dir, @NotNull BuildNumber buildNumber)
-    throws IOException {
-    DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), buildNumber));
-    context.usePluginClassLoader = true;
-
-    // constant order in tests
-    List<Path> paths;
-    try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
-      paths = ContainerUtil.collect(dirStream.iterator());
-    }
-    paths.sort(null);
-
-    for (Path file : paths) {
-      IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, /* isBundled */ false, context);
-      if (descriptor != null) {
-        context.result.add(descriptor, context, /* overrideUseIfCompatible = */ false);
-      }
-    }
-
-    return initializePlugins(context, UrlClassLoader.build().get(), false);
   }
 
   private static void loadDescriptorsFromClassPath(@NotNull Map<URL, String> urls,
@@ -1487,7 +1444,26 @@ public final class PluginManagerCore {
 
   @NotNull
   static BuildNumber getBuildNumber() {
-    return Holder.ourBuildNumber;
+    BuildNumber result = ourBuildNumber;
+    if (result == null) {
+      result = BuildNumber.fromString(getPluginsCompatibleBuild());
+      if (result == null) {
+        if (isUnitTestMode) {
+          result = BuildNumber.currentVersion();
+        }
+        else {
+          try {
+            result = ApplicationInfoImpl.getShadowInstance().getApiVersionAsNumber();
+          }
+          catch (RuntimeException ignore) {
+            // no need to log error - ApplicationInfo is required in production in any case, so, will be logged if really needed
+            result = BuildNumber.currentVersion();
+          }
+        }
+      }
+      ourBuildNumber = result;
+    }
+    return result;
   }
 
   private static void disableIncompatiblePlugins(@NotNull List<IdeaPluginDescriptorImpl> descriptors,

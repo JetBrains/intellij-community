@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonToken;
@@ -19,20 +19,17 @@ import org.jetbrains.io.JsonUtil;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
  */
-public class PluginRepositoryRequests {
+public final class PluginRepositoryRequests {
   public static String getBuildForPluginRepositoryRequests() {
     ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
     String compatibleBuild = PluginManagerCore.getPluginsCompatibleBuild();
     if (compatibleBuild != null) {
-      return BuildNumber.fromStringWithProductCode(compatibleBuild, instance.getBuild().getProductCode()).asString();
+      return Objects.requireNonNull(BuildNumber.fromStringWithProductCode(compatibleBuild, instance.getBuild().getProductCode())).asString();
     }
     return instance.getApiVersion();
   }
