@@ -357,7 +357,7 @@ object DynamicPlugins {
           }
         }
         finally {
-          val disposable = PluginManagerCore.pluginDisposables.remove(pluginDescriptor)
+          val disposable = PluginManager.pluginDisposables.remove(pluginDescriptor)
           if (disposable != null) {
             Disposer.dispose(disposable)
           }
@@ -562,7 +562,7 @@ object DynamicPlugins {
     if (classLoader is PluginClassLoader) {
       val pluginDescriptor = classLoader.pluginDescriptor
       if (pluginDescriptor != null) {
-        return PluginManagerCore.pluginDisposables[pluginDescriptor]
+        return PluginManager.pluginDisposables[pluginDescriptor]
       }
     }
     return null

@@ -3,6 +3,7 @@
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -112,7 +113,7 @@ public class _LastInSuiteTest extends TestCase {
   }
 
   private static void disposePluginDisposables() {
-    PluginManagerCore.pluginDisposables.forEach((plugin, disposable) -> Disposer.dispose(disposable));
+    PluginManager.pluginDisposables.forEach((plugin, disposable) -> Disposer.dispose(disposable));
   }
 
   @NotNull

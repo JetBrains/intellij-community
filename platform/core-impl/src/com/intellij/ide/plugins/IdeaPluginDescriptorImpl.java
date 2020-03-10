@@ -937,7 +937,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
   @Override
   public Disposable getPluginDisposable() {
-    return PluginManagerCore.pluginDisposables.get(this);
+    return PluginManager.pluginDisposables.get(this);
   }
 
   @Override

@@ -6,7 +6,6 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
@@ -16,7 +15,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -24,7 +26,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.execution.ParametersListUtil;
@@ -59,6 +60,7 @@ import java.util.stream.Stream;
 import static com.intellij.ide.plugins.DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
 import static com.intellij.ide.plugins.DescriptorListLoadingContext.IS_PARALLEL;
 
+// Prefer to use only JDK classes. Any post start-up functionality should be placed in PluginManager class.
 public final class PluginManagerCore {
   public static final String META_INF = "META-INF/";
   public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
@@ -109,14 +111,6 @@ public final class PluginManagerCore {
   private static volatile CompletableFuture<DescriptorListLoadingContext> descriptorListFuture;
 
   private static BuildNumber ourBuildNumber;
-
-  public static final ConcurrentMap<PluginDescriptor, Disposable> pluginDisposables = ConcurrentFactoryMap.createWeakMap(
-    plugin -> {
-      Disposable pluginDisposable = Disposer.newDisposable("Plugin disposable [" + plugin.getName() + "]");
-      Disposer.register(ApplicationManager.getApplication(), pluginDisposable);
-      return pluginDisposable;
-    }
-  );
 
   @Nullable
   @ApiStatus.Internal
