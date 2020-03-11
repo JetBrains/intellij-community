@@ -446,6 +446,7 @@ public class ChangesViewManager implements ChangesViewEx,
       Disposer.register(this, myChangeProcessor);
 
       myDiffPreview = isEditorPreview ? installEditorPreview(myChangeProcessor) : installSplitterPreview(myChangeProcessor);
+      configurePreview();
     }
 
     @NotNull
@@ -525,31 +526,32 @@ public class ChangesViewManager implements ChangesViewEx,
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
           if (isToggleCommitUi().asBoolean()) myCommitWorkflowHandler.deactivate(false);
           Disposer.register(this, myCommitPanel);
-
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);
-          myDiffPreview.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
-          myCommitWorkflowHandler.addActivityListener(
-            () -> myDiffPreview.setAllowExcludeFromCommit(isAllowExcludeFromCommit()),
-            myCommitWorkflowHandler
-          );
+
+          configurePreview();
+          myCommitWorkflowHandler.addActivityListener(() -> configurePreview(), myCommitWorkflowHandler);
         }
       }
       else {
         myChangesPanel.setToolbarHorizontal(false);
         if (myCommitPanel != null) {
-
-          myDiffPreview.setAllowExcludeFromCommit(false);
           myCommitPanelSplitter.setSecondComponent(null);
           Disposer.dispose(myCommitPanel);
 
           myCommitPanel = null;
           myCommitWorkflowHandler = null;
+
+          configurePreview();
         }
       }
     }
 
     public boolean isAllowExcludeFromCommit() {
       return myCommitWorkflowHandler != null && myCommitWorkflowHandler.isActive();
+    }
+
+    private void configurePreview() {
+      myDiffPreview.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
     }
 
     private void setCommitSplitOrientation() {
