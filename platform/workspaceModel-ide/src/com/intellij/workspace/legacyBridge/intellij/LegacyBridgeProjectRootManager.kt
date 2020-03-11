@@ -82,7 +82,7 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
     })
   }
 
-  override fun getRootsChangeRunnable(): Runnable {
+  override fun getActionToRunWhenProjectJdkChanges(): Runnable {
     return Runnable { if (hasModuleWithInheritedJdk()) makeRootsChange(EmptyRunnable.INSTANCE, false, true) }
   }
 
