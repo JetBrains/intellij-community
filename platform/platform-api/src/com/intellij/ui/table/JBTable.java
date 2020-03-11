@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -51,6 +52,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private boolean myEnableAntialiasing;
 
+  private int myVisibleRowCount = 4;
   private int myRowHeight = -1;
   private boolean myRowHeightIsExplicitlySet;
   private boolean myRowHeightIsComputing;
@@ -178,6 +180,16 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
+  public int getVisibleRowCount() {
+    return myVisibleRowCount;
+  }
+
+  public void setVisibleRowCount(int visibleRowCount) {
+    int oldValue = myVisibleRowCount;
+    myVisibleRowCount = Math.max(0, visibleRowCount);
+    firePropertyChange("visibleRowCount", oldValue, visibleRowCount);
+  }
+
   @Override
   public int getRowHeight() {
     int height = super.getRowHeight();
@@ -270,7 +282,37 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   protected void initializeLocalVars() {
     super.initializeLocalVars();
-    setPreferredScrollableViewportSize(JBUI.size(getPreferredScrollableViewportSize()));
+    setPreferredScrollableViewportSize(null);
+  }
+
+  @Override
+  public Dimension getPreferredScrollableViewportSize() {
+    Dimension base = super.getPreferredScrollableViewportSize();
+    if (myVisibleRowCount <= 0) return base;
+    if (base != null && base.height > 0) return base;
+
+    TableModel model = getModel();
+    int modelRows = model == null ? 0 : model.getRowCount();
+    int fixedWidth = base != null && base.width > 0 ? base.width : JBUI.scale(100);
+    Dimension size;
+    if (modelRows > 0) {
+      Rectangle rect = getCellRect(Math.min(myVisibleRowCount, modelRows) - 1, 0, true);
+      size = new Dimension(fixedWidth, rect.y + rect.height);
+      if (myVisibleRowCount > modelRows) {
+        size.height += (myVisibleRowCount - modelRows) * rect.height;
+      }
+      else if (modelRows > myVisibleRowCount) {
+        size.height += rect.height / 2;
+      }
+    }
+    else {
+      int fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
+      if (fixedHeight <= 0) fixedHeight = UIManager.getInt("List.rowHeight");
+      if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16); // scaled value from JDK
+
+      size = new Dimension(fixedWidth, fixedHeight * myVisibleRowCount);
+    }
+    return size;
   }
 
   public boolean isEmpty() {
