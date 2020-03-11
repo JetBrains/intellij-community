@@ -351,7 +351,7 @@ public final class SvnVcs extends AbstractVcs {
       busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myRootsToWorkingCopies);
     }
 
-    SvnLoadedBranchesStorage.getInstance().activate();
+    SvnLoadedBranchesStorage.getInstance(myProject).activate();
   }
 
   public static Logger wrapLogger(final Logger logger) {
@@ -391,7 +391,7 @@ public final class SvnVcs extends AbstractVcs {
 
     mySvnBranchPointsCalculator.deactivate();
     mySvnBranchPointsCalculator = null;
-    SvnLoadedBranchesStorage.getInstance().deactivate();
+    SvnLoadedBranchesStorage.getInstance(myProject).deactivate();
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {
