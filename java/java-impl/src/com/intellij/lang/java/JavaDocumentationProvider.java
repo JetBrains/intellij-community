@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -585,7 +584,6 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     if (!(file instanceof PsiJavaFile)) return;
     PsiClass[] classes = ((PsiJavaFile)file).getClasses();
     for (PsiClass aClass : classes) {
-      ProgressManager.checkCanceled();
       collectDocComments(aClass, sink);
     }
   }
@@ -594,7 +592,6 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     collectDocComment(aClass, sink);
     List<PsiDocCommentOwner> children = PsiTreeUtil.getChildrenOfTypeAsList(aClass, PsiDocCommentOwner.class);
     for (PsiDocCommentOwner child : children) {
-      ProgressManager.checkCanceled();
       if (child instanceof PsiClass) {
         collectDocComments((PsiClass) child, sink);
       }
