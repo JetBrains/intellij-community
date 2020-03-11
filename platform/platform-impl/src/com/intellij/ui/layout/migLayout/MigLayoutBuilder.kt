@@ -12,8 +12,7 @@ import com.intellij.util.containers.ContainerUtil
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
-import javax.swing.ButtonGroup
-import javax.swing.JComponent
+import javax.swing.*
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
   companion object {
@@ -164,6 +163,8 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
 
     val physicalRows = collectPhysicalRows(rootRow)
 
+    configureGapsBetweenRows(physicalRows)
+
     val isNoGrid = layoutConstraints.contains(LCFlags.noGrid)
     if (isNoGrid) {
       physicalRows.flatMap { it.components }.forEach { component ->
@@ -235,6 +236,64 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     for (i in startColumnIndexToApplyHorizontalGap until rootRow.columnIndexIncludingSubRows) {
       columnConstraints.gap(gapAfter, i)
     }
+  }
+
+  private fun configureGapsBetweenRows(physicalRows: List<MigLayoutRow>) {
+    for (rowIndex in physicalRows.indices) {
+      if (rowIndex == 0) continue
+
+      val prevRow = physicalRows[rowIndex - 1]
+      val nextRow = physicalRows[rowIndex]
+
+      val prevRowType = getRowType(prevRow)
+      val nextRowType = getRowType(nextRow)
+      if (prevRowType.isCheckboxRow && nextRowType.isCheckboxRow &&
+          (prevRowType == RowType.CHECKBOX_TALL || nextRowType == RowType.CHECKBOX_TALL)) {
+        // ugly patching to make UI pretty IDEA-234078
+        if (prevRow.gapAfter == null &&
+            prevRow.components.all { it.constraints.vertical.gapAfter == null } &&
+            nextRow.components.all { it.constraints.vertical.gapBefore == null }) {
+          prevRow.gapAfter = "0px!"
+
+          for ((index, component) in prevRow.components.withIndex()) {
+            if (index == 0) {
+              component.constraints.gapBottom("${spacing.componentVerticalGap}px!")
+            }
+            else {
+              component.constraints.gapBottom("${component.insets.bottom}px!")
+            }
+          }
+          for ((index, component) in nextRow.components.withIndex()) {
+            if (index == 0) {
+              component.constraints.gapTop("${spacing.componentVerticalGap}px!")
+            }
+            else {
+              component.constraints.gapTop("${component.insets.top}px!")
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private fun getRowType(row: MigLayoutRow): RowType {
+    if (row.components[0] is JCheckBox) {
+      if (row.components.all {
+          it is JCheckBox || it is JLabel
+        }) return RowType.CHECKBOX
+      if (row.components.all {
+          it is JCheckBox || it is JLabel ||
+          it is JTextField || it is JPasswordField ||
+          it is JComboBox<*>
+        }) return RowType.CHECKBOX_TALL
+    }
+    return RowType.GENERIC
+  }
+
+  private enum class RowType {
+    GENERIC, CHECKBOX, CHECKBOX_TALL;
+
+    val isCheckboxRow get() = this == CHECKBOX || this == CHECKBOX_TALL
   }
 }
 

@@ -75,7 +75,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     private set
 
   var gapAfter: String? = null
-    private set
 
   private var componentIndexWhenCellModeWasEnabled = -1
 
