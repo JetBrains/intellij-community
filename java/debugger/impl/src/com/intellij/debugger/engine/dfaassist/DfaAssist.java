@@ -286,9 +286,6 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
       }
       element = parent;
     }
-    if (element instanceof PsiBlockStatement && ((PsiBlockStatement)element).getCodeBlock().getRBrace() == element) {
-      element = PsiTreeUtil.getNextSiblingOfType(element, PsiStatement.class);
-    }
     return element;
   }
 
