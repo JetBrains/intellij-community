@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,8 +28,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * @see AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int) instead
  */
 public final class BoundedTaskExecutor extends AbstractExecutorService {
-  private static final Logger LOG = Logger.getInstance(BoundedTaskExecutor.class);
-
   private volatile boolean myShutdown;
   @NotNull
   private final String myName;
@@ -63,12 +60,6 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     } else {
       myTaskQueue = new LinkedBlockingQueue<>();
     }
-  }
-
-  /** @deprecated use {@link AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int)} instead */
-  @Deprecated
-  public BoundedTaskExecutor(@NotNull Executor backendExecutor, int maxSimultaneousTasks) {
-    this(ExceptionUtil.getThrowableText(new Throwable("Creation point:")), backendExecutor, maxSimultaneousTasks, true);
   }
 
   /**
@@ -236,7 +227,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
       // do not lose queued tasks because of this exception
       if (!(e instanceof ControlFlowException)) {
         try {
-          LOG.error(e);
+          Logger.getInstance(BoundedTaskExecutor.class).error(e);
         }
         catch (Throwable ignored) {
         }
