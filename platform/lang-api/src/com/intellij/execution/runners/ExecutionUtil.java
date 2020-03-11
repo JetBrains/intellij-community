@@ -106,6 +106,8 @@ public final class ExecutionUtil {
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(fullMessage, e);
+    } else {
+      LOG.info(fullMessage, e);
     }
 
     if (listener == null) {
