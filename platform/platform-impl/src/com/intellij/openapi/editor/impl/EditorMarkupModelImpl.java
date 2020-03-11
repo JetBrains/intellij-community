@@ -1703,6 +1703,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
           if (analyzerStatus != null) {
             analyzerStatus.getController().onClosePopup();
           }
+          myEditor.getComponent().removeAncestorListener(myAncestorListener);
+          myPopup.removeListener(myPopupListener);
         }
       };
 
@@ -1736,8 +1738,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
     private void hidePopup() {
       if (myPopup != null && !myPopup.isDisposed()) {
-        myPopup.removeListener(myPopupListener);
-        myEditor.getComponent().removeAncestorListener(myAncestorListener);
         myPopup.cancel();
       }
       myPopup = null;
