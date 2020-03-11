@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind.*
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDown
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
@@ -95,6 +96,9 @@ fun GrFunctionalExpression?.getControlFlowOwner(): GrControlFlowOwner? = when (t
 }
 
 fun computeInvocationKind(block: GrFunctionalExpression?): InvocationKind {
+  if (PsiUtil.isCompileStatic(block)) {
+    return UNKNOWN
+  }
   val call = block?.parentOfType<GrMethodCall>()?.takeIf { call ->
     (call.invokedExpression as? GrReferenceExpression)?.referenceName in knownMethods &&
     call.getArguments()?.any { (it as? ExpressionArgument)?.expression?.skipParenthesesDown() === block } ?: false

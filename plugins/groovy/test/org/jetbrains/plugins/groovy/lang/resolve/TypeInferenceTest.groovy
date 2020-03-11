@@ -1698,4 +1698,52 @@ def foo(x) {
 ''', "B"
   }
 
+  void 'test assignment to shared variable inside closure'() {
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    def cl = { x = new C() }
+    <caret>x
+  }
+
+''', "A"
+  }
+
+  void 'test dependency on shared variable with assignment inside closure'() {
+    allowNestedContextOnce(testRootDisposable)
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    def cl = { x }
+    def z = x
+    <caret>z
+    x = new C()
+  }
+
+''', "B"
+  }
+
+  void 'test incorrect code that unexpectedly passes type checking'() {
+    doTest '''
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = 1
+    def cl = {
+      def y = x
+      <caret>y
+    }
+    x = ""
+    cl()
+  }''', JAVA_LANG_INTEGER
+  }
 }
