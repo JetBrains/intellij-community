@@ -2,10 +2,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.Scheme_implKt;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunOnTargetComboBox;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.LanguageRuntimeType;
@@ -36,6 +33,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
@@ -53,6 +52,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -64,6 +64,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -91,11 +92,13 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final String myHelpTopic;
   private final boolean myBrokenConfiguration;
   private RCStorageType myRCStorageType;
-  @Nullable @SystemIndependent private String myFolderPathIfStoredInArbitraryFile;
+  @Nullable @SystemIndependent @NonNls private String myFolderPathIfStoredInArbitraryFile;
   private boolean myIsAllowRunningInParallel = false;
   private String myDefaultTargetName;
   private String myFolderName;
   private boolean myChangingNameFromCode;
+
+  @Nullable Boolean myDotIdeaStorageVcsIgnored = null; // used as cache; null means not initialized yet
 
   private SingleConfigurationConfigurable(@NotNull RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
     super(new ConfigurationSettingsEditorWrapper(settings), settings);
@@ -459,7 +462,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   private void setStorageTypeAndPathToTheBestPossibleState() {
-    // all that tricky logic, see the scheme attached to https://youtrack.jetbrains.com/issue/UX-1126
+    // all that tricky logic, see the flowchart from the issue description https://youtrack.jetbrains.com/issue/UX-1126
 
     // 1. If this RC had been shared before Run Configurations dialog was opened - use the state that was used before.
     // This handles the case when user opens shared RC for editing and clicks the 'Save to file' check box two times.
@@ -477,9 +480,68 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       return;
     }
 
-    // TODO implement other steps according to the scheme
-    myRCStorageType = RCStorageType.DotIdeaFolder;
-    myFolderPathIfStoredInArbitraryFile = null;
+    // 2. For IPR-based projects keep using project.ipr file to store RCs by default
+    if (!ProjectKt.isDirectoryBased(myProject)) {
+      myRCStorageType = RCStorageType.DotIdeaFolder;
+      myFolderPathIfStoredInArbitraryFile = null;
+      return;
+    }
+
+    // 3. If the project is not under VCS, keep using .idea/runConfigurations
+    if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
+      myRCStorageType = RCStorageType.DotIdeaFolder;
+      myFolderPathIfStoredInArbitraryFile = null;
+      return;
+    }
+
+    // 4. If .idea/runConfigurations is not excluded from VCS (e.g. not in .gitignore), then use it
+    if (!isDotIdeaStorageVcsIgnored()) {
+      myRCStorageType = RCStorageType.DotIdeaFolder;
+      myFolderPathIfStoredInArbitraryFile = null;
+      return;
+    }
+
+    // notNullize is to make inspections happy. Paths can't be null for non-default project
+    VirtualFile baseDir = LocalFileSystem.getInstance().findFileByPath(StringUtil.notNullize(myProject.getBasePath()));
+    LOG.assertTrue(baseDir != null);
+
+    // 5. If project base dir is not within project content, use .idea/runConfigurations
+    if (!ProjectFileIndex.getInstance(myProject).isInContent(baseDir)) {
+      myRCStorageType = RCStorageType.DotIdeaFolder;
+      myFolderPathIfStoredInArbitraryFile = null;
+      return;
+    }
+
+    // 6. If there are other RCs stored in arbitrary files (and all in the same folder) - suggest that folder
+    Collection<String> otherFolders = getFolderPathsWithinProjectWhereRunConfigurationsStored(myProject);
+    if (otherFolders.size() == 1) {
+      myRCStorageType = RCStorageType.ArbitraryFileInProject;
+      myFolderPathIfStoredInArbitraryFile = otherFolders.iterator().next();
+      return;
+    }
+
+    // default is .../project_base_dir/.run/ folder
+    myRCStorageType = RCStorageType.ArbitraryFileInProject;
+    myFolderPathIfStoredInArbitraryFile = baseDir.getPath() + "/.run";
+  }
+
+  private boolean isDotIdeaStorageVcsIgnored() {
+    if (myDotIdeaStorageVcsIgnored == null) {
+      myDotIdeaStorageVcsIgnored = VcsIgnoreManager.getInstance(myProject).isFileVcsIgnored(getDotIdeaStoragePath(myProject));
+    }
+    return myDotIdeaStorageVcsIgnored.booleanValue();
+  }
+
+  private static Collection<String> getFolderPathsWithinProjectWhereRunConfigurationsStored(@NotNull Project project) {
+    Set<String> result = new THashSet<>();
+    for (RunnerAndConfigurationSettings settings : RunManager.getInstance(project).getAllSettings()) {
+      String filePath = settings.getPathIfStoredInArbitraryFileInProject();
+      // two conditions on the next line are effectively equivalent, this is to make inspections happy
+      if (settings.isStoredInArbitraryFileInProject() && filePath != null) {
+        result.add(PathUtil.getParentPath(filePath));
+      }
+    }
+    return result;
   }
 
   private class MyValidatableComponent {
@@ -754,7 +816,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         pathsToSuggest.add(PathUtil.getParentPath(StringUtil.notNullize(getSettings().getPathIfStoredInArbitraryFileInProject())));
       }
       pathsToSuggest.add(getDotIdeaStoragePath(myProject));
-      // TODO maybe add storage paths used in other run configurations to pathsToSuggest
+      pathsToSuggest.addAll(getFolderPathsWithinProjectWhereRunConfigurationsStored(myProject));
 
       storageUi.reset(path, pathsToSuggest, () -> balloon.hide());
 
