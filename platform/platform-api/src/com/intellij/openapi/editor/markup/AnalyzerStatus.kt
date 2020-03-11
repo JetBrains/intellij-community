@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.markup
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorBundle
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.Container
@@ -145,6 +146,25 @@ class AnalyzerStatus(val icon: Icon, title: String, details: String, controllerC
                a.showNavigation == b.showNavigation
       }
       else return false
+    }
+
+    /**
+     * Default instance for classes that don't implement <code>ErrorStripeRenderer.getStatus</code>
+     */
+    @JvmStatic
+    val DEFAULT by lazy(LazyThreadSafetyMode.NONE) {
+      AnalyzerStatus(EmptyIcon.ICON_0, "", "") {
+        object : UIController {
+          override fun enableToolbar(): Boolean = false
+          override fun getActions(): List<AnAction> = emptyList()
+          override fun getAvailableLevels(): List<InspectionsLevel> = emptyList()
+          override fun getHighlightLevels(): List<LanguageHighlightLevel> = emptyList()
+          override fun setHighLightLevel(newLevels: LanguageHighlightLevel) {}
+          override fun fillHectorPanels(container: Container, gc: GridBag) {}
+          override fun canClosePopup(): Boolean = true
+          override fun onClosePopup() {}
+        }
+      }
     }
   }
 }
