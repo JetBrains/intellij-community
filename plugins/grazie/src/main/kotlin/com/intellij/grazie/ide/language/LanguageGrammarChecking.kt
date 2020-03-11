@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 
 class LanguageGrammarChecking : LanguageExtensionPoint<GrammarCheckingStrategy>() {
   companion object : LanguageExtension<GrammarCheckingStrategy>("com.intellij.grazie.grammar.strategy") {
-    private val EP_NAME: ExtensionPointName<LanguageExtensionPoint<GrammarCheckingStrategy>> = ExtensionPointName.create(
+    val EP_NAME: ExtensionPointName<LanguageExtensionPoint<GrammarCheckingStrategy>> = ExtensionPointName.create(
       "com.intellij.grazie.grammar.strategy")
 
     fun getLanguageExtensionPoints(): List<LanguageExtensionPoint<GrammarCheckingStrategy>> = EP_NAME.extensionList

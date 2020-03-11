@@ -6,8 +6,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.config.SuppressingContext
 import com.intellij.grazie.grammar.GrammarChecker
-import com.intellij.grazie.grammar.suppress.SuppressionContext
 import com.intellij.grazie.ide.inspection.grammar.problem.GrazieProblemDescriptor
 import com.intellij.grazie.ide.language.commit.CommitMessageGrammarCheckingStrategy
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
@@ -23,10 +23,10 @@ class GrazieCommitInspection : BaseCommitMessageInspection() {
   companion object : GrazieStateLifecycle {
     private const val TOOL_SHORT_NAME = "GrazieCommit"
     private val strategy = CommitMessageGrammarCheckingStrategy()
-    private var suppression: SuppressionContext by lazyConfig(this::init)
+    private var suppression: SuppressingContext by lazyConfig(this::init)
 
     override fun init(state: GrazieConfig.State) {
-      suppression = state.suppressionContext
+      suppression = state.suppressingContext
 
       ProjectManager.getInstance().openProjects.forEach { project ->
         updateInspectionState(project, state)
@@ -34,8 +34,8 @@ class GrazieCommitInspection : BaseCommitMessageInspection() {
     }
 
     override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-      suppression = newState.suppressionContext
-      if (prevState.enabledCommitIntegration == newState.enabledCommitIntegration) return
+      suppression = newState.suppressingContext
+      if (prevState.checkingContext.isCheckInCommitMessagesEnabled == newState.checkingContext.isCheckInCommitMessagesEnabled) return
 
       ProjectManager.getInstance().openProjects.forEach { project ->
         updateInspectionState(project, newState)
@@ -44,7 +44,7 @@ class GrazieCommitInspection : BaseCommitMessageInspection() {
 
     private fun updateInspectionState(project: Project, state: GrazieConfig.State = GrazieConfig.get()) {
       with(CommitMessageInspectionProfile.getInstance(project)) {
-        if (state.enabledCommitIntegration) {
+        if (state.checkingContext.isCheckInCommitMessagesEnabled) {
           addTool(project, LocalInspectionToolWrapper(GrazieCommitInspection()), null)
           setToolEnabled(TOOL_SHORT_NAME, true, project)
         }
@@ -66,7 +66,7 @@ class GrazieCommitInspection : BaseCommitMessageInspection() {
         val typos = GrammarChecker.check(element, strategy)
 
         for (typo in typos.filterNot { suppression.isSuppressed(it) }) {
-          holder.registerProblem(GrazieProblemDescriptor(id, typo, isOnTheFly))
+          holder.registerProblem(GrazieProblemDescriptor(typo, isOnTheFly))
         }
 
         super.visitElement(element)

@@ -1,14 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
-import com.intellij.grazie.detection.DetectionContext
-import com.intellij.grazie.grammar.suppress.SuppressionContext
-import com.intellij.grazie.ide.language.LanguageGrammarChecking
+import com.intellij.grazie.config.CheckingContext
+import com.intellij.grazie.config.DetectionContext
+import com.intellij.grazie.config.SuppressingContext
 import com.intellij.grazie.ide.msg.GrazieInitializerManager
 import com.intellij.grazie.jlanguage.Lang
-import com.intellij.grazie.utils.orTrue
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.util.xmlb.annotations.Property
 
 @State(name = "GraziConfig", storages = [
@@ -24,16 +25,16 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
    */
   data class State(
     @Property val enabledLanguages: Set<Lang> = hashSetOf(Lang.AMERICAN_ENGLISH),
-    @Property val nativeLanguage: Lang = enabledLanguages.first(),
-    @Property val enabledProgrammingLanguages: Set<String> = defaultEnabledProgrammingLanguages,
     @Property val enabledGrammarStrategies: Set<String> = defaultEnabledStrategies,
     @Property val disabledGrammarStrategies: Set<String> = HashSet(),
-    @Property val enabledCommitIntegration: Boolean = false,
+    @Deprecated("Moved to checkingContext in version 2") @Property val enabledCommitIntegration: Boolean = false,
     @Property val userDisabledRules: Set<String> = HashSet(),
     @Property val userEnabledRules: Set<String> = HashSet(),
-    @Property val suppressionContext: SuppressionContext = SuppressionContext(),
+    //Formerly suppressionContext -- name changed due to compatibility issues
+    @Property val suppressingContext: SuppressingContext = SuppressingContext(),
     @Property val detectionContext: DetectionContext.State = DetectionContext.State(),
-    @Property val version: Int = 0
+    @Property val checkingContext: CheckingContext = CheckingContext(),
+    @Property val version: Int = 1
   ) {
     /**
      * Available languages set depends on current loaded LanguageTool modules.
@@ -48,37 +49,19 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     val availableLanguages: Set<Lang> by lazy { enabledLanguages.filter { it.jLanguage != null }.toSet() }
 
     val missedLanguages: Set<Lang>
-      get() = enabledLanguages.filter { it.jLanguage == null }.toSet() +
-              setOf(nativeLanguage).takeIf { nativeLanguage.jLanguage == null }.orEmpty()
+      get() = enabledLanguages.filter { it.jLanguage == null }.toSet()
 
-    fun hasMissedLanguages(withNative: Boolean = true): Boolean {
-      return (withNative && nativeLanguage.jLanguage == null) || enabledLanguages.any { it.jLanguage == null }
+    fun hasMissedLanguages(): Boolean {
+      return enabledLanguages.any { it.jLanguage == null }
     }
   }
 
   companion object {
     private val defaultEnabledStrategies = hashSetOf("nl.rubensten.texifyidea:Latex", "org.asciidoctor.intellij.asciidoc:AsciiDoc")
-    private val defaultEnabledProgrammingLanguages by lazy {
-      when {
-        GraziePlugin.isBundled && ApplicationManager.getApplication()?.isUnitTestMode?.not().orTrue() -> {
-          hashSetOf("AsciiDoc", "Latex", "Markdown")
-        }
-        else -> hashSetOf(
-          "AsciiDoc", "Latex", "Markdown",
-          "JAVA",
-          "JavaScript", "JavaScript 1.5", "JavaScript 1.8",
-          "JSX Harmony", "ECMAScript 6",
-          "JSON", "JSON5", "HTML", "XML", "yaml",
-          "Python",
-          "Properties", "TEXT",
-          "go", "Rust"
-        )
-      }
-    }
 
-    private val instance: GrazieConfig by lazy { service<GrazieConfig>() }
+    private val instance by lazy { service<GrazieConfig>() }
 
-    const val VERSION = 1
+    const val VERSION = 2
 
     /**
      * Get copy of Grazie config state
@@ -97,34 +80,18 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
   override fun getState() = myState
 
   override fun loadState(state: State) {
-    when (state.version) {
-      0 -> {
-        val enabledStrategies = state.enabledGrammarStrategies.toMutableSet()
-        val disabledStrategies = state.disabledGrammarStrategies.toMutableSet()
-
-        LanguageGrammarChecking.getLanguageExtensionPoints().forEach {
-          val instance = it.instance
-
-          if (it.language in defaultEnabledProgrammingLanguages) {
-            if (it.language !in state.enabledProgrammingLanguages) {
-              disabledStrategies.add(instance.getID())
-              enabledStrategies.remove(instance.getID())
-            }
-          }
-          else {
-            if (it.language in state.enabledProgrammingLanguages) {
-              enabledStrategies.add(instance.getID())
-              disabledStrategies.remove(instance.getID())
-            }
-          }
-        }
-
-        loadState(state.copy(enabledProgrammingLanguages = HashSet(),
-                             enabledGrammarStrategies = enabledStrategies,
-                             disabledGrammarStrategies = disabledStrategies,
-                             version = state.version + 1))
+    when {
+      state.version == 1 -> {
+        loadState(
+          state.copy(
+            checkingContext = CheckingContext(
+              isCheckInCommitMessagesEnabled = state.enabledCommitIntegration
+            ),
+            version = state.version + 1
+          )
+        )
       }
-      VERSION -> {
+      state.version == VERSION -> {
         val prevState = myState
         myState = state
 
@@ -132,7 +99,10 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
           service<GrazieInitializerManager>().publisher.update(prevState, myState)
         }
       }
-      else -> error("Unknown version of Grazie settings")
+      state.version < VERSION -> {
+        loadState(state.copy(version = state.version + 1))
+      }
+      else -> loadState(State())
     }
   }
 }

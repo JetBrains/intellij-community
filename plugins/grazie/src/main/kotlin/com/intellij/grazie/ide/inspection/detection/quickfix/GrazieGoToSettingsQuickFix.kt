@@ -15,6 +15,6 @@ class GrazieGoToSettingsQuickFix : LocalQuickFix {
   override fun startInWriteAction() = false
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    ShowSettingsUtil.getInstance().showSettingsDialog(project, GraziePlugin.name)
+    ShowSettingsUtil.getInstance().showSettingsDialog(project, GraziePlugin.group)
   }
 }

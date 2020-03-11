@@ -19,6 +19,7 @@ public class AllIcons {
 
   public final static class Actions {
     /** 16x16 */ public static final Icon AddMulticaret = load("/actions/AddMulticaret.svg");
+    /** 16x16 */ public static final Icon AddToDictionary = load("/actions/addToDictionary.svg");
     /** 16x16 */ public static final Icon Amend = load("/actions/amend.svg");
     /** 16x16 */ public static final Icon Annotate = load("/actions/annotate.svg");
     /** 16x16 */ public static final Icon ArrowCollapse = load("/actions/arrowCollapse.svg");

@@ -2,6 +2,8 @@
 package com.intellij.grazie.utils
 
 import org.languagetool.rules.RuleMatch
+import java.util.*
+import kotlin.collections.LinkedHashSet
 
 fun RuleMatch.toIntRange(offset: Int = 0) = IntRange(fromPos + offset, toPos + offset - 1)
 
@@ -10,14 +12,7 @@ fun IntRange.withOffset(offset: Int) = IntRange(start + offset, endInclusive + o
 fun Boolean?.orTrue() = this ?: true
 fun Boolean?.orFalse() = this ?: false
 
-fun <T> Boolean.ifTrue(body: () -> T): T? = if (this) {
-  body()
-}
-else {
-  null
-}
-
-fun String.trimToNull(): String? = takeIf(String::isNotBlank)
+fun String.trimToNull(): String? = trim().takeIf(String::isNotBlank)
 
 fun <T> Collection<T>.toLinkedSet() = LinkedSet<T>(this)
 
@@ -25,3 +20,6 @@ typealias LinkedSet<T> = LinkedHashSet<T>
 
 val IntRange.length
   get() = endInclusive - start + 1
+
+
+fun <T> Enumeration<T>.toSet() = toList().toSet()
