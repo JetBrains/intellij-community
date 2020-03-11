@@ -31,8 +31,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -134,9 +134,9 @@ public class NewMappings implements Disposable {
   }
 
   public void scheduleMappedRootsUpdate() {
-    myRootUpdateQueue.queue(new Update("update") {
+    myRootUpdateQueue.queue(new DisposableUpdate(this, "update") {
       @Override
-      public void run() {
+      public void doRun() {
         updateMappedRoots(true);
       }
     });
