@@ -291,7 +291,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
     CompletableFuture<R> resultFuture = launchTask(onThreadCallable, progressFuture);
 
     if (isModal) {
-      progressFuture.thenAccept(progressIndicator -> {
+      CompletableFuture<Void> blockingRunFuture = progressFuture.thenAccept(progressIndicator -> {
         if (progressIndicator instanceof BlockingProgressIndicator) {
           ((BlockingProgressIndicator)progressIndicator).startBlocking(modalityEntered::up);
         }
@@ -299,10 +299,10 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
           Logger.getInstance(ProgressRunner.class).warn("Can't go modal without BlockingProgressIndicator");
           modalityEntered.up();
         }
-      }).exceptionally(throwable -> {
-        resultFuture.completeExceptionally(throwable);
-        return null;
       });
+      // `startBlocking` might throw unrelated exceptions execute the submitted task so potential failure should be handled.
+      // Relates to testMode-ish execution: unhandled exceptions on event pumping are `LOG.error`-ed, hence throw exceptions in tests.
+      resultFuture = resultFuture.thenCombine(blockingRunFuture, (r, __) -> r);
     }
 
     if (isSync) {
