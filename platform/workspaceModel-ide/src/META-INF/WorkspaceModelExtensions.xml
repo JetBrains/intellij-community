@@ -1,7 +1,7 @@
 <idea-plugin>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="ide.new.project.model" defaultValue="false" restartRequired="false"
+    <registryKey key="ide.new.project.model" defaultValue="false" restartRequired="true"
                  description="Enable new entities-based project model (workspace model)"/>
 
     <registryKey key="ide.workspace.model.jps.enabled" defaultValue="true" restartRequired="false"
