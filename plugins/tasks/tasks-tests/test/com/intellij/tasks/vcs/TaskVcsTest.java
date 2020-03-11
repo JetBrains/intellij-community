@@ -23,7 +23,9 @@ import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskChangelistSupport;
 import com.intellij.tasks.impl.TaskCheckinHandlerFactory;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -50,6 +52,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
   private ChangeListManagerImpl myChangeListManager;
   private TaskManagerImpl myTaskManager;
+  private String TEST_FILE = "Test.txt";;
 
   public void testInitialState() {
     assertEquals(1, myTaskManager.getLocalTasks().size());
@@ -339,7 +342,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
   @NotNull
   private List<Change> addChanges(@NotNull LocalChangeList list) {
-    VirtualFile file = myFixture.getTempDirFixture().createFile("Test.txt");
+    VirtualFile file = myFixture.getTempDirFixture().createFile(TEST_FILE);
     FilePath path = VcsUtil.getFilePath(file);
     Change change = new Change(null,
                                new CurrentContentRevision(path));
@@ -431,7 +434,6 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   }
 
   public void testShelveChanges() {
-
     LocalTask activeTask = myTaskManager.getActiveTask();
     addChanges(myChangeListManager.getDefaultChangeList());
 
@@ -445,6 +447,11 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertTrue(lists.stream().anyMatch(list -> list.DESCRIPTION.equals(activeTask.getShelfName())));
 
     assertEmpty(myChangeListManager.getDefaultChangeList().getChanges());
+    //avoid overwrite file conflict
+    VirtualFile virtualFile = myFixture.getTempDirFixture().getFile(TEST_FILE);
+    if (virtualFile.exists()) {
+      VfsTestUtil.deleteFile(virtualFile);
+    }
     myTaskManager.activateTask(activeTask, true);
     Collection<Change> changes = myChangeListManager.getDefaultChangeList().getChanges();
     assertNotEmpty(changes);
@@ -505,6 +512,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     myRepository = new TestRepository();
     myRepository.setTasks(new MyTask());
     myTaskManager.setRepositories(singletonList(myRepository));
+    PlatformTestUtil.saveProject(getProject());
   }
 
   @Override
