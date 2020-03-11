@@ -60,6 +60,10 @@ public class Xslt2HighlightingTest extends TestBase {
     doXsltHighlighting();
   }
 
+  public void testNamespaces() {
+    doXsltHighlighting();
+  }
+
   private void doXsltHighlighting(String... moreFiles) {
     final String name = getTestFileName();
     myFixture.testHighlighting(true, false, false, ArrayUtil.mergeArrays(new String[]{ name + ".xsl" }, moreFiles));
