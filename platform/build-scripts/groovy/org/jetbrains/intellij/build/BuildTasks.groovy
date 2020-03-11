@@ -47,6 +47,12 @@ abstract class BuildTasks {
    */
   abstract void buildNonBundledPlugins(List<String> mainPluginModules)
 
+  /**
+   * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
+   * @see org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
+   */
+  abstract void generateProjectStructureMapping(File targetFile)
+
   abstract void compileProjectAndTests(List<String> includingTestsInModules)
 
   abstract void compileModules(List<String> moduleNames, List<String> includingTestsInModules = [])
