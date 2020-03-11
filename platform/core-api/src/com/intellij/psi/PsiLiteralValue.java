@@ -17,7 +17,7 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.Nullable;
 
-public interface PsiLiteralValue {
+public interface PsiLiteralValue extends PsiElement {
   /**
    * Returns the value of the literal expression (an Integer for an integer constant, a String
    * for a string literal, and so on).
