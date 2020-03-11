@@ -31,6 +31,7 @@ import git4idea.GitRemoteBranch;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
 import git4idea.repo.*;
@@ -161,7 +162,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     if (!myIsUpdating.compareAndSet(false, true)) return;
     updateBranchesWithIncoming(false);
     updateBranchesWithOutgoing();
-    new Task.Backgroundable(myProject, "Update Branches Info...") {
+    new Task.Backgroundable(myProject, GitBundle.message("branches.update.info.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Semaphore semaphore = new Semaphore(0);
