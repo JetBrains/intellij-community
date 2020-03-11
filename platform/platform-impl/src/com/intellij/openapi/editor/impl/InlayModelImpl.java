@@ -350,8 +350,9 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
       List<Inlay> inlays = getInlineElementsInRange(offset, offset);
       if (!inlays.isEmpty()) {
         VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
-        int x = myEditor.visualPositionToXY(startVisualPosition).x;
-        Inlay inlay = findInlay(inlays, point.x, x);
+        Point inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
+        if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
+        Inlay inlay = findInlay(inlays, point.x, inlayPoint.x);
         if (inlay != null) return inlay;
       }
     }
@@ -363,6 +364,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
         if (!inlays.isEmpty()) {
           Rectangle bounds = inlays.get(0).getBounds();
           assert bounds != null;
+          if (point.y < bounds.y || point.y >= bounds.y + bounds.height) return null;
           Inlay inlay = findInlay(inlays, point.x, bounds.x);
           if (inlay != null) return inlay;
         }
