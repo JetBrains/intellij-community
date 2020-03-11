@@ -765,6 +765,10 @@ public class JBScrollPane extends JScrollPane {
         fixComponentZOrder(vsb, 0);
         fixComponentZOrder(viewport, -1);
       }
+      else if (statusComponent != null && statusComponent.isVisible()) {
+        fixComponentZOrder(statusComponent, 0);
+        fixComponentZOrder(viewport, -1);
+      }
     }
 
     private static boolean tracksViewportWidth(Component view) {
