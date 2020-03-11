@@ -117,6 +117,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testrootTag1() throws Exception { doTest(); }
   public void testManyRootTags() throws Exception { doTest(); }
   public void testCommentBeforeProlog() throws Exception { doTest(); }
+  public void testXmlStylesheet() throws Exception { doTest(); }
   public void testCommentBeforeProlog_2() throws Exception { doTest(); }
   //public void testNoRootTag() throws Exception { doTest(); }
 
