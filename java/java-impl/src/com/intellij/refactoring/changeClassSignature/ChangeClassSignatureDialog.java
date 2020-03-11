@@ -33,6 +33,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,7 +140,8 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     valueColumn.setCellRenderer(new CodeFragmentTableCellRenderer(project));
     valueColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
 
-    myTable.setPreferredScrollableViewportSize(new Dimension(210, myTable.getRowHeight() * 4));
+    myTable.setPreferredScrollableViewportSize(JBUI.size(210, -1));
+    myTable.setVisibleRowCount(4);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.getSelectionModel().setSelectionInterval(0, 0);
     myTable.setSurrendersFocusOnKeystroke(true);

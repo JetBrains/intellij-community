@@ -21,6 +21,7 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -56,7 +57,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   private final String[] mySetterNames;
   private final PsiMethod[] mySetterPrototypes;
 
-  private JTable myTable;
+  private JBTable myTable;
   private MyTableModel myTableModel;
 
   private final JCheckBox myCbEncapsulateGet = new NonFocusableCheckBox();
@@ -366,7 +367,8 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     columnModel.getColumn(SETTER_COLUMN).setCellRenderer(renderer);
     TableUtil.setupCheckboxColumn(columnModel.getColumn(CHECKED_COLUMN));
 
-    myTable.setPreferredScrollableViewportSize(new Dimension(550, myTable.getRowHeight() * 12));
+    myTable.setPreferredScrollableViewportSize(JBUI.size(550, -1));
+    myTable.setVisibleRowCount(12);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);

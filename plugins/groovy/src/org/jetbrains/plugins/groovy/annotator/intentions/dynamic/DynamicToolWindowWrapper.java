@@ -370,7 +370,7 @@ public class DynamicToolWindowWrapper {
     myTreeTable.getTree().setShowsRootHandles(true);
     myTreeTable.getTableHeader().setReorderingAllowed(false);
 
-    myTreeTable.setPreferredScrollableViewportSize(new Dimension(300, myTreeTable.getRowHeight() * 10));
+    myTreeTable.setVisibleRowCount(10);
     myTreeTable.getColumn(myColumnNames[CLASS_OR_ELEMENT_NAME_COLUMN]).setPreferredWidth(200);
     myTreeTable.getColumn(myColumnNames[TYPE_COLUMN]).setPreferredWidth(160);
 

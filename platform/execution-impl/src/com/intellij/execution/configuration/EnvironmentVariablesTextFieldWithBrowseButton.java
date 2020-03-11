@@ -263,9 +263,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     private MyEnvVariablesTable(List<EnvironmentVariable> list, boolean userList) {
       myUserList = userList;
       TableView<EnvironmentVariable> tableView = getTableView();
-      tableView.setPreferredScrollableViewportSize(
-        new Dimension(tableView.getPreferredScrollableViewportSize().width,
-                      tableView.getRowHeight() * JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS));
+      tableView.setVisibleRowCount(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
       setValues(list);
       setPasteActionEnabled(myUserList);
     }

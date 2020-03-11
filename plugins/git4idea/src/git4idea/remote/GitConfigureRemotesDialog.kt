@@ -55,11 +55,11 @@ import git4idea.commands.GitCommandResult
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
-import java.awt.Dimension
 import java.awt.Font
 import java.util.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
+import kotlin.math.min
 
 class GitConfigureRemotesDialog(val project: Project, val repositories: Collection<GitRepository>) :
     DialogWrapper(project, true, getModalityType()) {
@@ -79,6 +79,8 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     title = "Git Remotes"
     updateTableWidth()
   }
+
+  override fun getDimensionServiceKey(): String = javaClass.name
 
   override fun createActions(): Array<Action> = arrayOf(okAction)
 
@@ -168,8 +170,8 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     table.columnModel.getColumn(NAME_COLUMN).preferredWidth = maxNameWidth
     table.columnModel.getColumn(URL_COLUMN).preferredWidth = maxUrlWidth
 
-    val defaultPreferredHeight = table.rowHeight*(table.rowCount+3)
-    table.preferredScrollableViewportSize = Dimension(maxNameWidth + maxUrlWidth + DEFAULT_HGAP, defaultPreferredHeight)
+    table.preferredScrollableViewportSize = JBUI.size(maxNameWidth + maxUrlWidth + DEFAULT_HGAP, -1)
+    table.visibleRowCount = min(nodes.size + 3, 8)
   }
 
   private fun buildNodes(repositories: Collection<GitRepository>): List<Node> {
