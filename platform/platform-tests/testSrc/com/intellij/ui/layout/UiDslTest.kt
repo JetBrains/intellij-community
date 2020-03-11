@@ -122,5 +122,10 @@ abstract class UiDslTest {
     doTest { rowWithIndent() }
   }
 
+  @Test
+  fun `checkbox rows with big components`() {
+    doTest { checkboxRowsWithBigComponents() }
+  }
+
   protected abstract fun doTest(panelCreator: () -> JPanel)
 }

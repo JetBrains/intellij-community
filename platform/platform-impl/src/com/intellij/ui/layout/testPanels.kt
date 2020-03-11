@@ -305,6 +305,53 @@ fun spannedCheckbox(): JPanel {
   }
 }
 
+fun checkboxRowsWithBigComponents(): JPanel {
+  return panel {
+    row {
+      CheckBox("Sample checkbox label")()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+      ComboBox(DefaultComboBoxModel(arrayOf("asd", "asd")))()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+      ComboBox(DefaultComboBoxModel(arrayOf("asd", "asd")))()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+      ComboBox(DefaultComboBoxModel(arrayOf("asd", "asd")))()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+      JBTextField()()
+    }
+    row {
+      cell(isFullWidth = true) {
+        CheckBox("Sample checkbox label")()
+      }
+    }
+    row {
+      cell(isFullWidth = true) {
+        CheckBox("Sample checkbox label")()
+        JBTextField()()
+      }
+    }
+    row {
+      cell(isFullWidth = true) {
+        CheckBox("Sample checkbox label")()
+        comment("commentary")
+      }
+    }
+  }
+}
+
 // titledRows is not enough to test because component align depends on comment components, so, pure titledRow must be tested
 fun titledRow(): JPanel {
   return panel {
