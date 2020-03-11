@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.PathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
 import org.jdom.Element;
@@ -59,23 +60,17 @@ public class PathMacroManager implements PathMacroSubstitutor {
   }
 
   protected static void addFileHierarchyReplacements(ReplacePathToMacroMap result, String macroName, @Nullable String path, @Nullable String stopAt) {
-    if (path == null) {
-      return;
-    }
+    if (path == null) return;
 
     String macro = '$' + macroName + '$';
     path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/");
     boolean overwrite = true;
-    while (StringUtil.isNotEmpty(path) && path.contains("/")) {
+    while (StringUtil.isNotEmpty(path) && path.contains("/") && !"/".equals(path)) {
       result.addReplacement(path, macro, overwrite);
-
-      if (path.equals(stopAt)) {
-        break;
-      }
-
+      if (path.equals(stopAt)) break;
       macro += "/..";
+      path = PathUtil.getParent(path);
       overwrite = false;
-      path = StringUtil.getPackageName(path, '/');
     }
   }
 
