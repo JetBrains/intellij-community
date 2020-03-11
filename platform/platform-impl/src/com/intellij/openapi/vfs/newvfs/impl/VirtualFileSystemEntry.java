@@ -82,6 +82,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   void updateLinkStatus() {
     setFlagInt(HAS_SYMLINK_FLAG, is(VFileProperty.SYMLINK) || getParent().getFlagInt(HAS_SYMLINK_FLAG));
+    registerLink(getFileSystem());
   }
 
   @Override
