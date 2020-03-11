@@ -45,6 +45,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.ui.PyUiUtil
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -190,6 +191,7 @@ var Module.pythonSdk: Sdk?
   get() = PythonSdkUtil.findPythonSdk(this)
   set(value) {
     ModuleRootModificationUtil.setModuleSdk(this, value)
+    PyUiUtil.clearFileLevelInspectionResults(project)
     fireActivePythonSdkChanged(value)
   }
 

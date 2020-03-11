@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import com.jetbrains.python.sdk.pipenv.UsePipEnvQuickFix;
+import com.jetbrains.python.ui.PyUiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -358,6 +359,7 @@ public class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PyUiUtil.clearFileLevelInspectionResults(project);
       SdkConfigurationUtil.setDirectoryProjectSdk(project, mySdk);
       PySdkExtKt.excludeInnerVirtualEnv(myModule, mySdk);
     }
@@ -385,6 +387,7 @@ public class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PyUiUtil.clearFileLevelInspectionResults(project);
       final Sdk newSdk = myAssociate
                          ? PySdkExtKt.setupAssociated(mySdk, myExistingSdks, BasePySdkExtKt.getBasePath(myModule))
                          : PySdkExtKt.setup(mySdk, myExistingSdks);
