@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameHeader;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
@@ -367,7 +368,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private void updateMemoryIndicator() {
     Project project = myStatusBar.getProject();
     if (project != null) {
-      project.getService(StatusBarWidgetsManager.class).updateWidget(MemoryIndicatorWidgetFactory.class);
+      MemoryIndicatorWidgetFactory extension = StatusBarWidgetFactory.EP_NAME.findExtension(MemoryIndicatorWidgetFactory.class);
+      if (extension != null) {
+        project.getService(StatusBarWidgetsManager.class).updateWidget(extension);
+      }
     }
   }
 
