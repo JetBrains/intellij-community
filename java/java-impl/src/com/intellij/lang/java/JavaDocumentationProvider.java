@@ -583,23 +583,23 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   @Override
   public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
     if (!(file instanceof PsiJavaFile)) return;
-    for (PsiElement child = file.getFirstChild(); child != null; child = child.getNextSibling()) {
+    PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+    for (PsiClass aClass : classes) {
       ProgressManager.checkCanceled();
-      if (child instanceof PsiClass) {
-        collectDocComments((PsiClass)child, sink);
-      }
+      collectDocComments(aClass, sink);
     }
   }
 
   private static void collectDocComments(@NotNull PsiClass aClass, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
     collectDocComment(aClass, sink);
-    for (PsiElement child = aClass.getFirstChild(); child != null; child = child.getNextSibling()) {
+    List<PsiDocCommentOwner> children = PsiTreeUtil.getChildrenOfTypeAsList(aClass, PsiDocCommentOwner.class);
+    for (PsiDocCommentOwner child : children) {
       ProgressManager.checkCanceled();
       if (child instanceof PsiClass) {
         collectDocComments((PsiClass) child, sink);
       }
-      else if (child instanceof PsiDocCommentOwner) {
-        collectDocComment((PsiDocCommentOwner)child, sink);
+      else {
+        collectDocComment(child, sink);
       }
     }
   }
