@@ -9,5 +9,6 @@ package com.intellij.openapi.editor;
 public interface BlockInlayPriority {
   int DOC_RENDER = -100;
   int CODE_VISION = 0;
-  int ANNOTATIONS = 100;
+  int PROBLEMS = 100;
+  int ANNOTATIONS = 200;
 }

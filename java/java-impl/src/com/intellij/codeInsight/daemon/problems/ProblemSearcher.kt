@@ -9,11 +9,9 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
-internal class ProblemMatcher {
+internal class ProblemSearcher(private val file: PsiFile): JavaElementVisitor() {
 
-  private class ProblemSearcher(private val file: PsiFile): JavaElementVisitor() {
-
-    val problems = mutableMapOf<Navigatable, String?>()
+    private val problems = mutableSetOf<PsiElement>()
 
     override fun visitElement(element: PsiElement) {
       findProblem(element)
@@ -44,6 +42,11 @@ internal class ProblemMatcher {
 
     override fun visitVariable(variable: PsiVariable) {
       findProblem(variable)
+    }
+
+    override fun visitForeachStatement(statement: PsiForeachStatement) {
+      visitStatement(statement)
+      findProblem(statement.iterationParameter)
     }
 
     override fun visitStatement(statement: PsiStatement) {
@@ -79,7 +82,12 @@ internal class ProblemMatcher {
         }
       }
       element.accept(visitor)
-      problems[element] = problemHolder.problem
+      val problem = problemHolder.problem
+      if (problem != null) {
+        val statement = PsiTreeUtil.getParentOfType(element, PsiStatement::class.java, false,
+                                                    PsiClass::class.java, PsiMethod::class.java, PsiVariable::class.java)
+        problems.add(statement ?: element)
+      }
     }
 
     private class ProblemHolder(private val file: PsiFile): HighlightInfoHolder(file) {
@@ -104,21 +112,15 @@ internal class ProblemMatcher {
         return PsiTreeUtil.findCommonParent(startElement, endElement)
       }
     }
-  }
 
   companion object {
 
-    internal fun getProblems(usage: PsiElement): List<Problem> {
-      val startElement = getSearchStartElement(usage) ?: return emptyList()
+    internal fun getProblems(usage: PsiElement): Set<PsiElement> {
+      val startElement = getSearchStartElement(usage) ?: return emptySet()
       val psiFile = startElement.containingFile
-      return collectProblems(psiFile, startElement)
-    }
-
-    private fun collectProblems(psiFile: PsiFile, startElement: PsiElement): List<Problem> {
       val searcher = ProblemSearcher(psiFile)
       startElement.accept(searcher)
-      val file = psiFile.virtualFile
-      return searcher.problems.map { Problem(file, it.value, it.key) }
+      return searcher.problems
     }
 
     private fun getSearchStartElement(usage: PsiElement) = when (usage) {

@@ -533,7 +533,7 @@
 
     <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
 
-    <postStartupActivity implementation="com.intellij.codeInsight.daemon.problems.ProblemAnalyzer$MyStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileSelectionListener$MyStartupActivity"/>
 
     <bundledKeymap file="Visual Studio.xml"/>
     <bundledKeymap file="Eclipse.xml"/>
@@ -826,11 +826,6 @@
     <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
                     serviceImplementation="com.intellij.ide.todo.nodes.TodoJavaTreeHelper"
                     overrides="true"/>
-    <projectService serviceInterface="com.intellij.codeInsight.daemon.problems.ui.ProjectProblemsView"
-                    serviceImplementation="com.intellij.codeInsight.daemon.problems.ui.ProjectProblemsViewImpl"/>
-
-    <toolWindow id="Project Problems" anchor="bottom" icon="AllIcons.Toolwindows.Problems"
-                factoryClass="com.intellij.codeInsight.daemon.problems.ui.ProjectProblemsToolWindowFactory"/>
 
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 
