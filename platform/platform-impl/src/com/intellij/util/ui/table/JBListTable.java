@@ -40,20 +40,24 @@ import static java.awt.event.KeyEvent.*;
  * @author Konstantin Bulenkov
  */
 public abstract class JBListTable {
-  protected final JTable myInternalTable;
+  protected final JBTable myInternalTable;
   private final JBTable myMainTable;
   private final RowResizeAnimator myRowResizeAnimator;
   protected MouseEvent myMouseEvent;
   private MyCellEditor myCellEditor;
   private int myLastFocusedEditorComponentIdx = -1;
 
-  public JBListTable(@NotNull final JTable t, @NotNull Disposable parent) {
+  public JBListTable(@NotNull JBTable t, @NotNull Disposable parent) {
     myInternalTable = t;
     myMainTable = new MyTable();
     myMainTable.setTableHeader(null);
     myMainTable.setStriped(true);
     myRowResizeAnimator = new RowResizeAnimator(myMainTable);
     Disposer.register(parent, myRowResizeAnimator);
+  }
+
+  public void setVisibleRowCount(int rowCount) {
+    myInternalTable.setVisibleRowCount(rowCount);
   }
 
   public void stopEditing() {
