@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
-import com.intellij.xml.util.XmlStringUtil
 import java.awt.Container
 import java.util.*
 import javax.swing.Icon
@@ -96,17 +95,7 @@ interface UIController {
  * Container containing all necessary information for rendering TrafficLightRenderer.
  * Instance is created each time <code>ErrorStripeRenderer.getStatus</code> is called.
  */
-class AnalyzerStatus(val icon: Icon, title: String, details: String, controllerCreator: () -> UIController) {
-  /**
-   * Main panel title
-   */
-  val title = XmlStringUtil.wrapInHtml(title)
-
-  /**
-   * Possible details
-   */
-  val details = if (details.isNotEmpty()) XmlStringUtil.wrapInHtml(details) else ""
-
+class AnalyzerStatus(val icon: Icon, val title: String, val details: String, controllerCreator: () -> UIController) {
   /**
    * Lazy UI controller getter. Call only when you do need access to the UI details.
    */
@@ -138,14 +127,18 @@ class AnalyzerStatus(val icon: Icon, title: String, details: String, controllerC
      */
     @JvmStatic
     fun equals(a: AnalyzerStatus?, b: AnalyzerStatus?): Boolean {
-      if (a == null && b == null) return true
-      if (a!= null && b != null) {
-        return a.icon == b.icon &&
-               a.expandedIcon == b.expandedIcon &&
-               a.title == b.title && a.details == b.details &&
-               a.showNavigation == b.showNavigation
+      if (a == null && b == null) {
+        return true
       }
-      return false
+      if (a == null || b == null) {
+        return false
+      }
+      return a.icon == b.icon
+             && a.expandedIcon == b.expandedIcon
+             && a.title == b.title 
+             && a.details == b.details
+             && a.showNavigation == b.showNavigation
+             && a.passes == b.passes
     }
 
     /**
