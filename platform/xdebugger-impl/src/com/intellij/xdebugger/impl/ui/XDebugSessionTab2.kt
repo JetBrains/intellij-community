@@ -15,8 +15,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.ui.JBColor
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -190,6 +192,14 @@ class XDebugSessionTab2(
       myUi.options.setTopRightToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
       toolWindow.decorator.isHeaderVisible = singleContent == null
+
+      if (toolWindow.decorator.isHeaderVisible) {
+        toolWindow.component.border = null
+        toolWindow.component.invalidate()
+        toolWindow.component.repaint()
+      } else if (toolWindow.component.border == null) {
+        UIUtil.addBorder(toolWindow.component, JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0))
+      }
     }
   }
 
