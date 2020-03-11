@@ -426,6 +426,18 @@ public class EditorInlayTest extends AbstractEditorTest {
     verifySoftWrapPositions(7, 16);
   }
 
+  public void testInlineElementAtDocumentEnd() {
+    initText("");
+    addInlay(0, 10);
+    assertNull(getEditor().getInlayModel().getElementAt(new Point(5, getEditor().getLineHeight() * 3 / 2)));
+  }
+
+  public void testAfterLineEndElementAtDocumentEnd() {
+    initText("");
+    addAfterLineEndInlay(0, 10);
+    assertNull(getEditor().getInlayModel().getElementAt(new Point(TEST_CHAR_WIDTH + 5, getEditor().getLineHeight() * 3 / 2)));
+  }
+
   private void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                               int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);
