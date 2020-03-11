@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.codeInsight.daemon.problems.SnapshotUpdater;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
@@ -54,6 +55,7 @@ class ProjectProblemFileSelectionListener implements FileEditorManagerListener, 
   }
 
   private void registerListener(@NotNull VirtualFile virtualFile) {
+    if (virtualFile instanceof VirtualFileWindow) return;
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     Document document = documentManager.getDocument(virtualFile);
     if (document == null) return;
