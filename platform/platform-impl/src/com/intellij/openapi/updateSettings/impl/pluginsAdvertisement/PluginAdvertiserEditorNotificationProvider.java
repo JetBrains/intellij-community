@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class PluginAdvertiserEditorNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
@@ -43,10 +45,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file,
                                                          @NotNull FileEditor fileEditor,
                                                          @NotNull Project project) {
-    if (!(file.getFileType() instanceof PlainTextLikeFileType)) {
-      LOG.debug(String.format("File '%s' (type: '%s') is not a plain text like file", file.getName(), file.getFileType()));
-      return null;
-    }
+    boolean alreadySupported = !(file.getFileType() instanceof PlainTextLikeFileType);
 
     final String extension = ObjectUtils.doIfNotNull(file.getExtension(), fileExt -> "*." + fileExt);
     final String fileName = file.getName();
@@ -61,6 +60,13 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
 
     final PluginsAdvertiser.KnownExtensions knownExtensions = PluginsAdvertiser.loadExtensions();
     if (knownExtensions != null) {
+      //if file is already supported by IDE then only plugins exactly matching fileName should be suggested
+      if (alreadySupported) {
+        LOG.debug(String.format("File '%s' (type: '%s') is already supported therefore looking only for plugins exactly matching fileName",
+                                fileName, file.getFileType()));
+        return createPanel(fileName, knownExtensions, project);
+      }
+
       final EditorNotificationPanel panel = extension != null ? createPanel(extension, knownExtensions, project) : null;
       if (panel != null) {
         return panel;
@@ -82,6 +88,8 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
                                               @NotNull Project project) {
     final Set<PluginsAdvertiser.Plugin> plugins = knownExtensions.find(extension);
     if (plugins != null && !plugins.isEmpty()) {
+      List<String> pluginIds = ContainerUtil.map(plugins, plugin -> plugin.myPluginId);
+      LOG.debug(String.format("Found following plugins for '%s': [%s]", extension, StringUtil.join(pluginIds, ",")));
       return createPanel(extension, plugins, project);
     }
     LOG.debug("No plugins for extension " + extension);
