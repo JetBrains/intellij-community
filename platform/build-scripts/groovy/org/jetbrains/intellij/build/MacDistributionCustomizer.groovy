@@ -66,6 +66,12 @@ abstract class MacDistributionCustomizer {
    */
   String additionalDocTypes = ""
 
+  /**
+   * Note that users won't be able to switch off some of these associations during installation
+   * so include only types of files which users will definitely prefer to open by the product.
+   *
+   * @see FileAssociation
+   */
   List<FileAssociation> fileAssociations = []
 
   /**
