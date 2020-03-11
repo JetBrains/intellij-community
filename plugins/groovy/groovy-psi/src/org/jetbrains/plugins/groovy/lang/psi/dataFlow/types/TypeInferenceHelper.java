@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
@@ -34,11 +35,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PartialContext;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import static com.intellij.psi.util.PsiModificationTracker.MODIFICATION_COUNT;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
@@ -106,8 +105,7 @@ public final class TypeInferenceHelper {
     if (rwInstruction == null) return null;
 
     final InferenceCache cache = getInferenceCache(scope);
-    final SharedVariableTypeProvider provider = cache.getSharedVariableTypeProvider();
-    final PsiType sharedType = provider.getSharedVariableType(descriptor);
+    final PsiType sharedType = getSharedVariableType(descriptor);
     return sharedType != null ? sharedType : cache.getInferredType(descriptor, rwInstruction, mixinOnly);
   }
 
@@ -128,9 +126,8 @@ public final class TypeInferenceHelper {
     boolean mixinOnly = variable instanceof GrField && isCompileStatic(scope);
 
     final InferenceCache cache = getInferenceCache(scope);
-    final SharedVariableTypeProvider provider = cache.getSharedVariableTypeProvider();
     final VariableDescriptor descriptor = createDescriptor(variable);
-    final PsiType sharedType = provider.getSharedVariableType(descriptor);
+    final PsiType sharedType = getSharedVariableType(descriptor);
     if (sharedType != null) {
       return sharedType;
     }
@@ -145,6 +142,30 @@ public final class TypeInferenceHelper {
   @NotNull
   static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
     return CachedValuesManager.getCachedValue(scope, () -> Result.create(new InferenceCache(scope), MODIFICATION_COUNT));
+  }
+
+  static boolean isSharedVariable(@NotNull VariableDescriptor descriptor) {
+    SharedVariableTypeProvider provider =  getSharedVariableProvider(descriptor);
+    return provider != null && provider.getSharedVariableDescriptors().contains(descriptor);
+  }
+
+  private static @Nullable PsiType getSharedVariableType(@NotNull VariableDescriptor descriptor) {
+    SharedVariableTypeProvider provider =  getSharedVariableProvider(descriptor);
+    return provider == null ? null : provider.getSharedVariableType(descriptor);
+  }
+
+  private static @Nullable SharedVariableTypeProvider getSharedVariableProvider(@NotNull VariableDescriptor descriptor) {
+    if (descriptor instanceof ResolvedVariableDescriptor) {
+      GrControlFlowOwner trueOwner = ControlFlowUtils.findControlFlowOwner(((ResolvedVariableDescriptor)descriptor).getVariable());
+      if (trueOwner == null) {
+        return null;
+      }
+      return getInferenceCache(trueOwner).getSharedVariableTypeProvider();
+    }
+    else {
+      // this is definitely not a local variable
+      return null;
+    }
   }
 
   @Nullable

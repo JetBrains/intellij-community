@@ -191,6 +191,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       return;
     }
     GrFunctionalExpression block = Objects.requireNonNull((GrFunctionalExpression)instruction.getElement());
+    if (PsiUtil.isCompileStatic(block)) {
+      return;
+    }
     GrControlFlowOwner blockFlowOwner = FunctionalExpressionFlowUtil.getControlFlowOwner(block);
     if (blockFlowOwner == null) {
       return;

@@ -6,6 +6,7 @@ import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
@@ -15,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 
 /**
  * A variable is considered `shared` if it satisfies the following conditions:
- * 1) It is under @CompileStatic
+ * 1) It is under @CompileStatic.
  * 2) It is local variable.
  * 3) It has multiple assignments.
  * 4) There exists an inner closure/lambda where this variable is used.
@@ -23,18 +24,20 @@ import java.util.concurrent.atomic.AtomicReferenceArray
  * Type of shared variable is a LUB of all its initializer types.
  *
  * Static compiler in Groovy performs two phases of type checking:
- * Firstly, all variable types are determined according to the rules of flow typing.
- * Secondly, all types for shared variables are recalculated using flow typing results.
+ * First pass: type of every variable determined according to the rules of flow typing.
+ * Second pass: type of every shared variable is recalculated using flow typing results.
  */
 class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
 
-  val sharedVariableDescriptors: List<VariableDescriptor> by lazyPub { doGetSharedVariables() }
-  private val writeInstructions: List<ReadWriteVariableInstruction> by lazyPub {
-    scope.controlFlow
-      .filter { it is ReadWriteVariableInstruction && it.isWrite && it.descriptor in sharedVariableDescriptors }
-      .map { it as ReadWriteVariableInstruction }
+  val sharedVariableDescriptors: Set<VariableDescriptor> by lazyPub { doGetSharedVariables() }
+  private val writeInstructions: List<Pair<ReadWriteVariableInstruction, GrControlFlowOwner>> by lazyPub {
+    scope.mergeInnerFlows()
+      .filter { (instruction, _) ->
+        instruction is ReadWriteVariableInstruction && instruction.isWrite && instruction.descriptor in sharedVariableDescriptors
+      }
+      .map { (instruction, scope) -> instruction as ReadWriteVariableInstruction to scope }
   }
-  private val flowTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(scope.controlFlow.size)
+  private val flowTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(writeInstructions.size)
   private val finalTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(sharedVariableDescriptors.size)
 
   fun getSharedVariableType(descriptor: VariableDescriptor): PsiType? {
@@ -63,21 +66,24 @@ class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
    * @see TypeDfaInstance.myDependentOnSharedVariables
    */
   private fun runSharedVariableInferencePhase() {
-    for (instruction: ReadWriteVariableInstruction in writeInstructions) {
-      val currentType = flowTypes.get(instruction.num())
+    for (index: Int in writeInstructions.indices) {
+      val (instruction: ReadWriteVariableInstruction, scope: GrControlFlowOwner) = writeInstructions[index]
+      val currentType: PsiType? = flowTypes.get(index)
       if (currentType == null) {
         val inferredType: PsiType = TypeInferenceHelper.getInferredType(instruction.descriptor, instruction, scope) ?: PsiType.NULL
-        if (!flowTypes.compareAndSet(instruction.num(), null, inferredType)) {
-          val actual = flowTypes.get(instruction.num())
+        if (!flowTypes.compareAndSet(index, null, inferredType)) {
+          val actual: PsiType? = flowTypes.get(index)
           assert(inferredType == actual)
           { "Incompatible types detected during shared variable processing: found $actual while inferred $inferredType" }
         }
       }
     }
-    for (variable in sharedVariableDescriptors) {
+    for (variable: VariableDescriptor in sharedVariableDescriptors) {
       val indexInFinalTypes: Int = sharedVariableDescriptors.indexOf(variable)
-      val inferredTypesForVariable = writeInstructions.filter { it.descriptor == variable }.map { flowTypes.get(it.num()) }
-      val finalType = TypesUtil.getLeastUpperBoundNullable(inferredTypesForVariable, scope.manager)
+      val inferredTypesForVariable: List<PsiType?> = writeInstructions.indices
+        .filter { writeInstructions[it].first.descriptor == variable }
+        .map { flowTypes.get(it) }
+      val finalType: PsiType? = TypesUtil.getLeastUpperBoundNullable(inferredTypesForVariable, scope.manager)
       if (!finalTypes.compareAndSet(indexInFinalTypes, null, finalType)) {
         val actualFinalType = finalTypes.get(indexInFinalTypes)
         assert(finalType == actualFinalType)
@@ -87,28 +93,44 @@ class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
   }
 
   @Suppress("UnnecessaryVariable")
-  private fun doGetSharedVariables(): List<VariableDescriptor> {
+  private fun doGetSharedVariables(): Set<VariableDescriptor> {
     if (!PsiUtil.isCompileStatic(scope)) {
-      return emptyList()
+      return emptySet()
     }
     val flow = scope.controlFlow
     val foreignDescriptors: List<String> = flow
       .mapNotNull { it?.element as? GrControlFlowOwner }
       .flatMap { ControlFlowUtils.getForeignVariableIdentifiers(it) { true } }
-    val sharedVariables: List<VariableDescriptor> = flow
+    val sharedVariables: Set<VariableDescriptor> = flow
+      .asSequence()
       .filterIsInstance<ReadWriteVariableInstruction>()
       .mapNotNull { instruction -> instruction.descriptor.takeIf { it.getName() in foreignDescriptors } }
       // fields have their own inference rules
       .filter { if (it is ResolvedVariableDescriptor) it.variable !is GrField else true }
       // do not bother to process variable if it was assigned only once
       .filter { descriptor ->
-        flow
+        scope.mergeInnerFlows()
+          .map(Pair<Instruction, GrControlFlowOwner>::first)
           .filterIsInstance<ReadWriteVariableInstruction>()
           .filter(ReadWriteVariableInstruction::isWrite)
           .count { it.descriptor == descriptor } >= 2
       }
-      .toSet().toList()
+      .toSet()
     return sharedVariables
+  }
+
+  companion object {
+    private fun GrControlFlowOwner.mergeInnerFlows(): List<Pair<Instruction, GrControlFlowOwner>> {
+      return controlFlow.flatMap {
+        val element = it.element
+        if (it !is ReadWriteVariableInstruction && element is GrControlFlowOwner) {
+          element.mergeInnerFlows()
+        }
+        else {
+          listOf<Pair<Instruction, GrControlFlowOwner>>(it to this)
+        }
+      }
+    }
   }
 
 }

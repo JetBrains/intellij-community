@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.isNestedFlowProces
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 
-internal class InitialTypeProvider(val start: GrControlFlowOwner, val initialState: DFAFlowInfo) {
+internal class InitialTypeProvider(private val start: GrControlFlowOwner, private val flowInfo: DFAFlowInfo) {
 
   private val parentFlowOwner by lazyPub {
     val parent = start.parent
@@ -38,7 +38,7 @@ internal class InitialTypeProvider(val start: GrControlFlowOwner, val initialSta
 
   fun initialType(descriptor: VariableDescriptor): PsiType? {
     if (isNestedFlowProcessingAllowed()) {
-      val typeFromInitialContext = initialState.descriptorTypes[descriptor]?.resultType
+      val typeFromInitialContext = flowInfo.descriptorTypes[descriptor]?.resultType
       if (typeFromInitialContext != null) return typeFromInitialContext
       if (PsiUtil.isCompileStatic(start) || invocationKind != InvocationKind.UNKNOWN) {
         val type = getTypeFromParentDFA(descriptor)

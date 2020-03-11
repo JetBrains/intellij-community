@@ -30,6 +30,7 @@ import static java.util.Collections.emptyMap;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.findReadDependencies;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper.getDefUseMaps;
+import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper.isSharedVariable;
 import static org.jetbrains.plugins.groovy.util.GraphKt.findNodesOutsideCycles;
 import static org.jetbrains.plugins.groovy.util.GraphKt.mapGraph;
 
@@ -75,7 +76,7 @@ class InferenceCache {
   PsiType getInferredType(@NotNull VariableDescriptor descriptor,
                           @NotNull Instruction instruction,
                           boolean mixinOnly,
-                          @NotNull Map<VariableDescriptor, DFAType> state) {
+                          @NotNull Map<VariableDescriptor, DFAType> initialState) {
     if (myTooComplexInstructions.contains(instruction)) return null;
     final List<DefinitionMap> definitionMaps = myDefinitionMaps.getValue();
     if (definitionMaps == null) {
@@ -84,7 +85,7 @@ class InferenceCache {
     TypeDfaState cache = myVarTypes.get().get(instruction.num());
     if (!cache.containsVariable(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
-      DFAFlowInfo flowInfo = collectRequiredInstructions(definitionMaps, instruction, descriptor, state, mixinPredicate);
+      DFAFlowInfo flowInfo = collectRequiredInstructions(definitionMaps, instruction, descriptor, initialState, mixinPredicate);
       List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, flowInfo, descriptor);
       if (dfaResult == null) {
         myTooComplexInstructions.addAll(flowInfo.getInterestingInstructions());
@@ -117,7 +118,7 @@ class InferenceCache {
   private DFAFlowInfo collectRequiredInstructions(@NotNull List<DefinitionMap> definitionMaps,
                                                   @NotNull Instruction instruction,
                                                   @NotNull VariableDescriptor descriptor,
-                                                  @NotNull Map<VariableDescriptor, DFAType> state,
+                                                  @NotNull Map<VariableDescriptor, DFAType> initialState,
                                                   @NotNull Predicate<? super Instruction> predicate) {
     Map<Pair<Instruction, VariableDescriptor>, Collection<Pair<Instruction, VariableDescriptor>>> interesting = new LinkedHashMap<>();
     LinkedList<Pair<Instruction, VariableDescriptor>> queue = new LinkedList<>();
@@ -128,7 +129,7 @@ class InferenceCache {
       if (!interesting.containsKey(pair)) {
         Set<Pair<Instruction, VariableDescriptor>> dependencies = findDependencies(definitionMaps, pair.first, pair.second);
         interesting.put(pair, dependencies);
-        if (dependencies.stream().anyMatch(it -> mySharedVariableTypeProvider.getSharedVariableDescriptors().contains(it.second))) {
+        if (dependencies.stream().anyMatch(it -> isSharedVariable(it.second))) {
           dependentOnSharedVariables.add(pair.first);
         }
         dependencies.forEach(queue::addLast);
@@ -141,7 +142,7 @@ class InferenceCache {
       .map(it -> it.getFirst())
       .filter(predicate)
       .collect(Collectors.toSet());
-    return new DFAFlowInfo(state, interestingInstructions, acyclicInstructions, dependentOnSharedVariables);
+    return new DFAFlowInfo(initialState, interestingInstructions, acyclicInstructions, dependentOnSharedVariables);
   }
 
   @NotNull
@@ -207,32 +208,5 @@ class InferenceCache {
       }
     }
     return newTypes;
-  }
-
-  static class InstructionInfo {
-
-    InstructionInfo(@NotNull Set<@NotNull Instruction> interestingInstructions,
-                    @NotNull Set<@NotNull Instruction> acyclicInstructions,
-                    @NotNull Set<@NotNull Instruction> dependentOnSharedVariablesInstructions) {
-      this.interestingInstructions = interestingInstructions;
-      this.acyclicInstructions = acyclicInstructions;
-      this.dependentOnSharedVariablesInstructions = dependentOnSharedVariablesInstructions;
-    }
-
-    private final Set<Instruction> interestingInstructions;
-    private final Set<Instruction> acyclicInstructions;
-    private final Set<Instruction> dependentOnSharedVariablesInstructions;
-
-    @NotNull Set<@NotNull Instruction> getAcyclicInstructions() {
-      return acyclicInstructions;
-    }
-
-    @NotNull Set<@NotNull Instruction> getDependentOnSharedVariablesInstructions() {
-      return dependentOnSharedVariablesInstructions;
-    }
-
-    @NotNull Set<@NotNull Instruction> getInterestingInstructions() {
-      return interestingInstructions;
-    }
   }
 }
