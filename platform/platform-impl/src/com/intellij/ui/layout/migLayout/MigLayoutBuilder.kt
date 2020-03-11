@@ -104,8 +104,12 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   // it doesn't lead to any issue.
   val columnConstraints = AC()
 
+  // MigLayout in any case always creates CC, so, create instance even if it is not required
+  private val Component.constraints: CC
+    get() = componentConstraints.getOrPut(this) { CC() }
+
   fun updateComponentConstraints(component: Component, callback: CC.() -> Unit) {
-    componentConstraints.getOrPut(component) { CC() }.callback()
+    component.constraints.callback()
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
@@ -156,75 +160,71 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
       }
     }
 
+    configureGapBetweenColumns(rootRow)
+
+    val physicalRows = collectPhysicalRows(rootRow)
+
     val isNoGrid = layoutConstraints.contains(LCFlags.noGrid)
+    if (isNoGrid) {
+      physicalRows.flatMap { it.components }.forEach { component ->
+        container.add(component, component.constraints)
+      }
+    }
+    else {
+      for ((rowIndex, row) in physicalRows.withIndex()) {
+        if (row.noGrid) {
+          rowConstraints.noGrid(rowIndex)
+        }
+        else {
+          row.gapAfter?.let {
+            rowConstraints.gap(it, rowIndex)
+          }
+        }
+        // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
+        // so, we set for each row to make sure that constraints from previous row will be not applied
+        rowConstraints.align("baseline", rowIndex)
 
-    var rowIndex = 0
-    fun configureComponents(row: MigLayoutRow) {
-      val lastComponent = row.components.lastOrNull()
-      for ((index, component) in row.components.withIndex()) {
-        // MigLayout in any case always creates CC, so, create instance even if it is not required
-        val cc = componentConstraints.get(component) ?: CC()
+        for ((index, component) in row.components.withIndex()) {
+          val cc = component.constraints
 
-        if (isNoGrid) {
+          // we cannot use columnCount as an indicator of whether to use spanX/wrap or not because component can share cell with another component,
+          // in any case MigLayout is smart enough and unnecessary spanX doesn't harm
+          if (index == row.components.size - 1) {
+            cc.spanX()
+            cc.isWrap = true
+          }
+
+          if (index >= row.rightIndex) {
+            cc.horizontal.gapBefore = BoundSize(null, null, null, true, null)
+          }
+
           container.add(component, cc)
-          continue
-        }
-
-        // we cannot use columnCount as an indicator of whether to use spanX/wrap or not because component can share cell with another component,
-        // in any case MigLayout is smart enough and unnecessary spanX doesn't harm
-        if (component === lastComponent) {
-          cc.spanX()
-          cc.isWrap = true
-        }
-
-        if (index == 0) {
-          if (row.noGrid) {
-            rowConstraints.noGrid(rowIndex)
-          }
-          else {
-            row.gapAfter?.let {
-              rowConstraints.gap(it, rowIndex)
-            }
-          }
-          // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
-          // so, we set for each row to make sure that constraints from previous row will be not applied
-          rowConstraints.align("baseline", rowIndex)
-        }
-
-        if (index >= row.rightIndex) {
-          cc.horizontal.gapBefore = BoundSize(null, null, null, true, null)
-        }
-
-        container.add(component, cc)
-      }
-
-      rowIndex++
-    }
-
-    fun processRows(rows: List<MigLayoutRow>) {
-      for (row in rows) {
-        // configureComponents will increase rowIndex, but if row doesn't have components, it is synthetic row (e.g. titled row that contains only sub rows)
-        if (row.components.isNotEmpty()) {
-          configureComponents(row)
-        }
-        row.subRows?.let {
-          processRows(it)
         }
       }
-    }
-
-    rootRow.subRows?.let {
-      configureGapBetweenColumns(it)
-      processRows(it)
     }
 
     // do not hold components
     componentConstraints.clear()
   }
 
-  private fun configureGapBetweenColumns(subRows: List<MigLayoutRow>) {
+  private fun collectPhysicalRows(rootRow: MigLayoutRow): List<MigLayoutRow> {
+    val result = mutableListOf<MigLayoutRow>()
+    fun collect(subRows: List<MigLayoutRow>?) {
+      subRows?.forEach { row ->
+        // skip synthetic rows that don't have components (e.g. titled row that contains only sub rows)
+        if (row.components.isNotEmpty()) {
+          result.add(row)
+        }
+        collect(row.subRows)
+      }
+    }
+    collect(rootRow.subRows)
+    return result
+  }
+
+  private fun configureGapBetweenColumns(rootRow: MigLayoutRow) {
     var startColumnIndexToApplyHorizontalGap = 0
-    if (subRows.any { it.isLabeledIncludingSubRows }) {
+    if (rootRow.isLabeledIncludingSubRows) {
       // using columnConstraints instead of component gap allows easy debug (proper painting of debug grid)
       columnConstraints.gap("${spacing.labelColumnHorizontalGap}px!", 0)
       columnConstraints.grow(0f, 0)
