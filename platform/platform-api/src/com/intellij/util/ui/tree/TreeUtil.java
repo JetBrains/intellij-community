@@ -1602,9 +1602,8 @@ public final class TreeUtil {
     if (parent instanceof JViewport) {
       if (centered) {
         Rectangle visible = tree.getVisibleRect();
-        if (visible.y < bounds.y + bounds.height && bounds.y < visible.y + visible.height) {
-          centered = false; // disable centering if the given path is already visible
-        }
+        centered = bounds.y < visible.y || bounds.y > visible.y + visible.height - bounds.height;
+        // disable centering if the given path is already visible
       }
       int width = parent.getWidth();
       if (!centered && tree instanceof Tree && !((Tree)tree).isHorizontalAutoScrollingEnabled()) {
