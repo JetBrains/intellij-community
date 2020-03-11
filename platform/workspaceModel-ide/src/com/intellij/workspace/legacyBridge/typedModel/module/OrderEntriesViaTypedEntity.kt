@@ -266,7 +266,7 @@ internal class LibraryOrderEntryViaTypedEntity(
       LegacyBridgeLibraryImpl(libraryTable, rootModel.project, libraryId, rootModel.module.entityStore, disposable)
     }
 
-    rootModel.registerLibraryTableListener(moduleLibraryCopy?.table)
+    rootModel.addListenerForTable(moduleLibraryCopy?.table)
     return LibraryOrderEntryViaTypedEntity(currentModule, index, libraryDependencyItemCopy, moduleLibraryCopy, null)
   }
 
