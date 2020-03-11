@@ -368,10 +368,10 @@ fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*>) {
           DragSource.getDefaultDragSource()
         }
       }
-    }, AppExecutorUtil.getAppExecutorService())  // must not be executed neither in IDE main thread nor in EDT
+    }, AppExecutorUtil.getAppExecutorService()) // must not be executed neither in IDE main thread nor in EDT
 
   try {
-    val activity = initAppActivity.startChild("plugin descriptors loading")
+    val activity = initAppActivity.startChild("plugin descriptor init waiting")
     PluginManagerCore.initPlugins(MainRunner::class.java.classLoader)
       .whenComplete { result, error ->
         activity.end()

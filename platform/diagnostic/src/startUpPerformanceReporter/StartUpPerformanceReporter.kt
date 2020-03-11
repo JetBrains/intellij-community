@@ -40,7 +40,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "17"
+    internal const val VERSION = "18"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
@@ -69,36 +69,35 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
       var end = -1L
 
-      StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false),
-                                      Consumer { item ->
-                                        // process it now to ensure that thread will have first name (because report writer can process events in any order)
-                                        threadNameManager.getThreadName(item)
+      StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false)) { item ->
+        // process it now to ensure that thread will have first name (because report writer can process events in any order)
+        threadNameManager.getThreadName(item)
 
-                                        if (item.end == -1L) {
-                                          instantEvents.add(item)
-                                        }
-                                        else {
-                                          val category = item.category
-                                          if (category == null) {
-                                            items.add(item)
-                                            if (item.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
-                                              end = item.end
-                                            }
-                                          }
-                                          else if (category == ActivityCategory.APP_COMPONENT ||
-                                                   category == ActivityCategory.PROJECT_COMPONENT ||
-                                                   category == ActivityCategory.MODULE_COMPONENT ||
-                                                   category == ActivityCategory.APP_SERVICE ||
-                                                   category == ActivityCategory.PROJECT_SERVICE ||
-                                                   category == ActivityCategory.MODULE_SERVICE ||
-                                                   category == ActivityCategory.SERVICE_WAITING) {
-                                            services.add(item)
-                                          }
-                                          else {
-                                            activities.getOrPut(category.jsonName) { mutableListOf() }.add(item)
-                                          }
-                                        }
-                                      })
+        if (item.end == -1L) {
+          instantEvents.add(item)
+        }
+        else {
+          val category = item.category
+          if (category == null) {
+            items.add(item)
+            if (item.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
+              end = item.end
+            }
+          }
+          else if (category == ActivityCategory.APP_COMPONENT ||
+                   category == ActivityCategory.PROJECT_COMPONENT ||
+                   category == ActivityCategory.MODULE_COMPONENT ||
+                   category == ActivityCategory.APP_SERVICE ||
+                   category == ActivityCategory.PROJECT_SERVICE ||
+                   category == ActivityCategory.MODULE_SERVICE ||
+                   category == ActivityCategory.SERVICE_WAITING) {
+            services.add(item)
+          }
+          else {
+            activities.getOrPut(category.jsonName) { mutableListOf() }.add(item)
+          }
+        }
+      }
 
       if (items.isEmpty()) {
         return null
@@ -130,12 +129,12 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
       }
 
       if (!perfFilePath.isNullOrBlank()) {
-        LOG.info("StartUp Measurement report was written to: ${perfFilePath}")
+        LOG.info("StartUp Measurement report was written to: $perfFilePath")
         Paths.get(perfFilePath).write(currentReport)
       }
 
       if (!traceFilePath.isNullOrBlank()) {
-        LOG.info("StartUp trace report was written to: ${traceFilePath}")
+        LOG.info("StartUp trace report was written to: $traceFilePath")
         val traceEventFormat = TraceEventFormatWriter(startTime, instantEvents, threadNameManager)
         Paths.get(traceFilePath).outputStream().writer().use {
           traceEventFormat.write(items, activities, services, it)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -56,7 +56,12 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         writer.writeStringField("generated", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
         writer.writeStringField("os", SystemInfo.getOsNameAndVersion())
         writer.writeStringField("runtime", SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_VERSION + " " + SystemInfo.JAVA_RUNTIME_VERSION)
-        writer.writeStringField("cds", ManagementFactory.getRuntimeMXBean().inputArguments.any { it == "-Xshare:auto" || it == "-Xshare:on" }.toString()) //see CDSManager from platform-impl)
+
+        // see CDSManager from platform-impl
+        @Suppress("SpellCheckingInspection")
+        if (ManagementFactory.getRuntimeMXBean().inputArguments.any { it == "-Xshare:auto" || it == "-Xshare:on" }) {
+          writer.writeBooleanField("cds", true)
+        }
 
         writer.writeStringField("project", safeHashValue(projectName))
 
