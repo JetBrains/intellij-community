@@ -13,6 +13,19 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import java.util.concurrent.atomic.AtomicReferenceArray
 
+/**
+ * A variable is considered `shared` if it satisfies the following conditions:
+ * 1) It is under @CompileStatic
+ * 2) It is local variable.
+ * 3) It has multiple assignments.
+ * 4) There exists an inner closure/lambda where this variable is used.
+ *
+ * Type of shared variable is a LUB of all its initializer types.
+ *
+ * Static compiler in Groovy performs two phases of type checking:
+ * Firstly, all variable types are determined according to the rules of flow typing.
+ * Secondly, all types for shared variables are recalculated using flow typing results.
+ */
 class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
 
   val sharedVariableDescriptors: List<VariableDescriptor> by lazyPub { doGetSharedVariables() }
@@ -21,7 +34,7 @@ class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
       .filter { it is ReadWriteVariableInstruction && it.isWrite && it.descriptor in sharedVariableDescriptors }
       .map { it as ReadWriteVariableInstruction }
   }
-  private val incrementalTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(scope.controlFlow.size)
+  private val flowTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(scope.controlFlow.size)
   private val finalTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(sharedVariableDescriptors.size)
 
   fun getSharedVariableType(descriptor: VariableDescriptor): PsiType? {
@@ -51,11 +64,11 @@ class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
    */
   private fun runSharedVariableInferencePhase() {
     for (instruction: ReadWriteVariableInstruction in writeInstructions) {
-      val currentType = incrementalTypes.get(instruction.num())
+      val currentType = flowTypes.get(instruction.num())
       if (currentType == null) {
         val inferredType: PsiType = TypeInferenceHelper.getInferredType(instruction.descriptor, instruction, scope) ?: PsiType.NULL
-        if (!incrementalTypes.compareAndSet(instruction.num(), null, inferredType)) {
-          val actual = incrementalTypes.get(instruction.num())
+        if (!flowTypes.compareAndSet(instruction.num(), null, inferredType)) {
+          val actual = flowTypes.get(instruction.num())
           assert(inferredType == actual)
           { "Incompatible types detected during shared variable processing: found $actual while inferred $inferredType" }
         }
@@ -63,11 +76,12 @@ class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
     }
     for (variable in sharedVariableDescriptors) {
       val indexInFinalTypes: Int = sharedVariableDescriptors.indexOf(variable)
-      val inferredTypesForVariable = writeInstructions.filter { it.descriptor == variable }.map { incrementalTypes.get(it.num()) }
+      val inferredTypesForVariable = writeInstructions.filter { it.descriptor == variable }.map { flowTypes.get(it.num()) }
       val finalType = TypesUtil.getLeastUpperBoundNullable(inferredTypesForVariable, scope.manager)
       if (!finalTypes.compareAndSet(indexInFinalTypes, null, finalType)) {
         val actualFinalType = finalTypes.get(indexInFinalTypes)
         assert(finalType == actualFinalType)
+        { "Incompatible types detected during final type computation for shared variable: found $actualFinalType while inferred $finalType" }
       }
     }
   }

@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.InferenceCache.InstructionInfo;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.getForeignVariableIdentifiers;
+import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind.UNKNOWN;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
@@ -44,14 +45,14 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private final int lastInterestingInstruction;
 
   TypeDfaInstance(Instruction @NotNull [] flow,
-                  @NotNull InstructionInfo interesting,
+                  @NotNull DFAFlowInfo flowInfo,
                   @NotNull InferenceCache cache,
                   @NotNull InitialTypeProvider initialTypeProvider,
                   @NotNull VariableDescriptor initialDescriptor) {
     myFlow = flow;
-    myInteresting = interesting.getInterestingInstructions();
-    myAcyclicInstructions = interesting.getAcyclicInstructions();
-    myDependentOnSharedVariables = interesting.getDependentOnSharedVariablesInstructions();
+    myInteresting = flowInfo.getInterestingInstructions();
+    myAcyclicInstructions = flowInfo.getAcyclicInstructions();
+    myDependentOnSharedVariables = flowInfo.getDependentOnSharedVariables();
     myCache = cache;
     myInitialTypeProvider = initialTypeProvider;
     Stream<VariableDescriptor> dependentDescriptors = myInteresting.stream()
@@ -201,7 +202,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (instruction.num() > lastInterestingInstruction) {
       return;
     }
-    InvocationKind kind = FunctionalExpressionFlowUtil.computeInvocationKind(block);
+    InvocationKind kind = PsiUtil.isCompileStatic(block) ? UNKNOWN : FunctionalExpressionFlowUtil.computeInvocationKind(block);
     switch (kind) {
       case EXACTLY_ONCE:
         handleClosureDFAResult(state, blockFlowOwner, state::putType);
@@ -225,13 +226,12 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     InferenceCache blockCache = TypeInferenceHelper.getInferenceCache(block);
     Instruction[] blockFlow = block.getControlFlow();
     Instruction lastBlockInstruction = blockFlow[blockFlow.length - 1];
-    InitialDFAState initialState = new InitialDFAState(state.getVarTypes());
     for (VariableDescriptor outerDescriptor : interestingDescriptors) {
       VariableDescriptor innerDescriptor = blockCache.findDescriptor(outerDescriptor.getName());
       if (innerDescriptor == null) {
         continue;
       }
-      PsiType descriptorType = blockCache.getInferredType(innerDescriptor, lastBlockInstruction, false, initialState);
+      PsiType descriptorType = blockCache.getInferredType(innerDescriptor, lastBlockInstruction, false, state.getVarTypes());
       typeConsumer.accept(outerDescriptor, DFAType.create(descriptorType));
     }
   }

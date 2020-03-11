@@ -1715,7 +1715,7 @@ def foo(x) {
   }
 
   void 'test dependency on shared variable with assignment inside closure'() {
-    allowNestedContextOnce(testRootDisposable)
+//    allowNestedContext(2, testRootDisposable)
     doTest '''
   class A{}
   class B extends A{}
@@ -1724,16 +1724,15 @@ def foo(x) {
   @groovy.transform.CompileStatic
   def foo() {
     def x = new B()
-    def cl = { x }
+    def cl = { x = new C() }
     def z = x
     <caret>z
-    x = new C()
   }
 
 ''', "B"
   }
 
-  void 'test incorrect code that unexpectedly passes type checking'() {
+  void 'test flow typing reachable through closure'() {
     doTest '''
   @groovy.transform.CompileStatic
   def foo() {

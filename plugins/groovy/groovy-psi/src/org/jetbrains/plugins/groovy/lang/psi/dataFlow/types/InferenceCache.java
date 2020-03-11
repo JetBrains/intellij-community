@@ -68,15 +68,14 @@ class InferenceCache {
   PsiType getInferredType(@NotNull VariableDescriptor descriptor,
                           @NotNull Instruction instruction,
                           boolean mixinOnly) {
-    InitialDFAState state = new InitialDFAState(emptyMap());
-    return getInferredType(descriptor, instruction, mixinOnly, state);
+    return getInferredType(descriptor, instruction, mixinOnly, emptyMap());
   }
 
   @Nullable
   PsiType getInferredType(@NotNull VariableDescriptor descriptor,
                           @NotNull Instruction instruction,
                           boolean mixinOnly,
-                          @NotNull InitialDFAState state) {
+                          @NotNull Map<VariableDescriptor, DFAType> state) {
     if (myTooComplexInstructions.contains(instruction)) return null;
     final List<DefinitionMap> definitionMaps = myDefinitionMaps.getValue();
     if (definitionMaps == null) {
@@ -85,13 +84,13 @@ class InferenceCache {
     TypeDfaState cache = myVarTypes.get().get(instruction.num());
     if (!cache.containsVariable(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
-      InstructionInfo interesting = collectRequiredInstructions(definitionMaps, instruction, descriptor, mixinPredicate);
-      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting, state, descriptor);
+      DFAFlowInfo flowInfo = collectRequiredInstructions(definitionMaps, instruction, descriptor, state, mixinPredicate);
+      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, flowInfo, descriptor);
       if (dfaResult == null) {
-        myTooComplexInstructions.addAll(interesting.getInterestingInstructions());
+        myTooComplexInstructions.addAll(flowInfo.getInterestingInstructions());
       }
       else {
-        Set<Instruction> stored = interesting.getInterestingInstructions();
+        Set<Instruction> stored = flowInfo.getInterestingInstructions();
         stored.add(instruction);
         cacheDfaResult(dfaResult, stored);
       }
@@ -103,10 +102,9 @@ class InferenceCache {
   @Nullable
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             Instruction @NotNull [] flow,
-                                            @NotNull InstructionInfo interesting,
-                                            @NotNull InitialDFAState state,
+                                            @NotNull DFAFlowInfo flowInfo,
                                             @NotNull VariableDescriptor descriptor) {
-    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this, new InitialTypeProvider(owner, state), descriptor);
+    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, new InitialTypeProvider(owner, flowInfo), descriptor);
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
   }
@@ -116,10 +114,11 @@ class InferenceCache {
     return myVarTypes.get().get(instruction.num()).getVariableType(descriptor);
   }
 
-  private InstructionInfo collectRequiredInstructions(@NotNull List<DefinitionMap> definitionMaps,
-                                                      @NotNull Instruction instruction,
-                                                      @NotNull VariableDescriptor descriptor,
-                                                      @NotNull Predicate<? super Instruction> predicate) {
+  private DFAFlowInfo collectRequiredInstructions(@NotNull List<DefinitionMap> definitionMaps,
+                                                  @NotNull Instruction instruction,
+                                                  @NotNull VariableDescriptor descriptor,
+                                                  @NotNull Map<VariableDescriptor, DFAType> state,
+                                                  @NotNull Predicate<? super Instruction> predicate) {
     Map<Pair<Instruction, VariableDescriptor>, Collection<Pair<Instruction, VariableDescriptor>>> interesting = new LinkedHashMap<>();
     LinkedList<Pair<Instruction, VariableDescriptor>> queue = new LinkedList<>();
     queue.add(Pair.create(instruction, descriptor));
@@ -142,7 +141,7 @@ class InferenceCache {
       .map(it -> it.getFirst())
       .filter(predicate)
       .collect(Collectors.toSet());
-    return new InstructionInfo(interestingInstructions, acyclicInstructions, dependentOnSharedVariables);
+    return new DFAFlowInfo(state, interestingInstructions, acyclicInstructions, dependentOnSharedVariables);
   }
 
   @NotNull
@@ -212,10 +211,10 @@ class InferenceCache {
 
   static class InstructionInfo {
 
-    InstructionInfo(@NotNull Set<@NotNull Instruction> instructions,
+    InstructionInfo(@NotNull Set<@NotNull Instruction> interestingInstructions,
                     @NotNull Set<@NotNull Instruction> acyclicInstructions,
                     @NotNull Set<@NotNull Instruction> dependentOnSharedVariablesInstructions) {
-      interestingInstructions = instructions;
+      this.interestingInstructions = interestingInstructions;
       this.acyclicInstructions = acyclicInstructions;
       this.dependentOnSharedVariablesInstructions = dependentOnSharedVariablesInstructions;
     }

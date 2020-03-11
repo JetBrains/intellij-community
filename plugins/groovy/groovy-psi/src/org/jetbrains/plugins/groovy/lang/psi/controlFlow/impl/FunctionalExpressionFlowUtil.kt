@@ -96,9 +96,6 @@ fun GrFunctionalExpression?.getControlFlowOwner(): GrControlFlowOwner? = when (t
 }
 
 fun computeInvocationKind(block: GrFunctionalExpression?): InvocationKind {
-  if (PsiUtil.isCompileStatic(block)) {
-    return UNKNOWN
-  }
   val call = block?.parentOfType<GrMethodCall>()?.takeIf { call ->
     (call.invokedExpression as? GrReferenceExpression)?.referenceName in knownMethods &&
     call.getArguments()?.any { (it as? ExpressionArgument)?.expression?.skipParenthesesDown() === block } ?: false

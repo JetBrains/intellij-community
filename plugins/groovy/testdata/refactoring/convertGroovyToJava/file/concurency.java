@@ -15,7 +15,7 @@ public void doCall(java.lang.Object it) {
 for(java.lang.Integer i : new groovy.lang.IntRange(1, 8)){
 org.codehaus.groovy.runtime.DefaultGroovyStaticMethods.sleep(null, 30);
 out("thread loop " + java.lang.String.valueOf(i));
-counter.incrementAndGet();
+counter.invokeMethod("incrementAndGet", new java.lang.Object[0]);
 }
 
 }
