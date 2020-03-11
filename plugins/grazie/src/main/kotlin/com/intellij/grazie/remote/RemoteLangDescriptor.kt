@@ -3,20 +3,19 @@ package com.intellij.grazie.remote
 
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GraziePlugin
-import tanvd.grazie.langdetect.model.LanguageISO
+import com.intellij.grazie.detector.model.LanguageISO
 import java.io.File
 
 enum class RemoteLangDescriptor(val langsClasses: List<String>, val size: String, val iso: LanguageISO) {
-  ENGLISH(listOf("BritishEnglish", "AmericanEnglish", "CanadianEnglish", "AustralianEnglish", "NewZealandEnglish", "SouthAfricanEnglish"),
-          "14 MB", LanguageISO.EN),
+  ENGLISH(listOf("BritishEnglish", "AmericanEnglish", "CanadianEnglish"), "14 MB", LanguageISO.EN),
   RUSSIAN(listOf("Russian"), "3 MB", LanguageISO.RU),
   PERSIAN(listOf("Persian"), "1 MB", LanguageISO.FA),
   FRENCH(listOf("French"), "4 MB", LanguageISO.FR),
-  GERMAN(listOf("GermanyGerman", "AustrianGerman", "SwissGerman"), "19 MB", LanguageISO.DE),
+  GERMAN(listOf("GermanyGerman", "AustrianGerman"), "19 MB", LanguageISO.DE),
   POLISH(listOf("Polish"), "5 MB", LanguageISO.PL),
   ITALIAN(listOf("Italian"), "1 MB", LanguageISO.IT),
   DUTCH(listOf("Dutch"), "17 MB", LanguageISO.NL),
-  PORTUGUESE(listOf("PortugalPortuguese", "BrazilianPortuguese", "AngolaPortuguese", "MozambiquePortuguese"), "5 MB", LanguageISO.PT),
+  PORTUGUESE(listOf("PortugalPortuguese", "BrazilianPortuguese"), "5 MB", LanguageISO.PT),
   CHINESE(listOf("Chinese"), "3 MB", LanguageISO.ZH),
   GREEK(listOf("Greek"), "1 MB", LanguageISO.EL),
   JAPANESE(listOf("Japanese"), "1 MB", LanguageISO.JA),
@@ -25,7 +24,7 @@ enum class RemoteLangDescriptor(val langsClasses: List<String>, val size: String
   SPANISH(listOf("Spanish"), "2 MB", LanguageISO.ES),
   UKRAINIAN(listOf("Ukrainian"), "6 MB", LanguageISO.UK);
 
-  val fileName: String by lazy { "$iso-${GraziePlugin.languageToolVersion}.jar" }
+  val fileName: String by lazy { "$iso-${GraziePlugin.LanguageTool.version}.jar" }
   val file: File by lazy { GrazieDynamic.dynamicFolder.resolve(fileName) }
-  val url: String by lazy { "${GraziePlugin.languageToolURL}/${GraziePlugin.languageToolVersion}/$fileName" }
+  val url: String by lazy { "${GraziePlugin.LanguageTool.url}/${GraziePlugin.LanguageTool.version}/$fileName" }
 }

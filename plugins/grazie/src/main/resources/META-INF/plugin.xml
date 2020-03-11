@@ -41,10 +41,12 @@
                      implementationClass="com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection"
                      level="WARNING" displayName="Natural language detection"/>
 
-    <applicationConfigurable parentId="proofread" instance="com.intellij.grazie.ide.ui.GrazieConfigurable"
+    <applicationConfigurable parentId="editor" instance="com.intellij.grazie.ide.ui.proofreading.ProofreadConfigurable" id="proofread"/>
+
+    <applicationConfigurable parentId="proofread" instance="com.intellij.grazie.ide.ui.grammar.GrazieConfigurable"
                              id="reference.settingsdialog.project.grazie"/>
 
-    <search.optionContributor implementation="com.intellij.grazie.ide.ui.GrazieSearchableOptionContributor"/>
+    <search.optionContributor implementation="com.intellij.grazie.ide.ui.search.GrazieSearchableOptionContributor"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieFUSState"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.grazie.ide.fus.GrazieFUSRuleIDRule"/>
