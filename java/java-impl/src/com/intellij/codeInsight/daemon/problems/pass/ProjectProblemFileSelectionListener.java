@@ -16,11 +16,13 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 class ProjectProblemFileSelectionListener implements FileEditorManagerListener, BulkAwareDocumentListener {
 
@@ -36,7 +38,7 @@ class ProjectProblemFileSelectionListener implements FileEditorManagerListener, 
   public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     VirtualFile virtualFile = event.getNewFile();
     if (virtualFile == null) return;
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
+    PsiJavaFile psiFile = tryCast(PsiManager.getInstance(myProject).findFile(virtualFile), PsiJavaFile.class);
     if (psiFile == null) return;
     registerListener(virtualFile);
     ProjectProblemPassUtils.removeOldInlays(psiFile);
@@ -49,7 +51,7 @@ class ProjectProblemFileSelectionListener implements FileEditorManagerListener, 
     VirtualFile virtualFile = documentManager.getFile(document);
     if (virtualFile == null) return;
     CharSequence content = document.getImmutableCharSequence();
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
+    PsiJavaFile psiFile = tryCast(PsiManager.getInstance(myProject).findFile(virtualFile), PsiJavaFile.class);
     if (psiFile == null) return;
     SnapshotUpdater.storeContent(psiFile, content);
   }
