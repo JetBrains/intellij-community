@@ -4,7 +4,9 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentWithPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.util.concurrent.CompletableFuture
@@ -12,6 +14,10 @@ import java.util.concurrent.CompletableFuture
 interface GHPRReviewService {
 
   fun canComment(): Boolean
+
+  @CalledInAny
+  fun loadPendingReview(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier)
+    : CompletableFuture<GHPullRequestPendingReview?>
 
   @CalledInAny
   fun loadReviewThreads(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier)
@@ -33,7 +39,15 @@ interface GHPRReviewService {
                  diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml>
 
   @CalledInAny
-  fun deleteComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String): CompletableFuture<Unit>
+  fun addComment(progressIndicator: ProgressIndicator,
+                 pullRequestId: GHPRIdentifier, reviewId: String?,
+                 body: String, commitSha: String, fileName: String, diffLine: Int)
+    : CompletableFuture<GHPullRequestReviewCommentWithPendingReview>
+
+  @CalledInAny
+  fun deleteComment(progressIndicator: ProgressIndicator,
+                    pullRequestId: GHPRIdentifier,
+                    commentId: String): CompletableFuture<GHPullRequestPendingReview>
 
   @CalledInAny
   fun updateComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String, newText: String)

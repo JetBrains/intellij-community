@@ -11,7 +11,8 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapp
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
-class GHPRTwosideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
+class GHPRTwosideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewProcessModel,
+                                                commentableRangesModel: SingleValueModel<List<Range>?>,
                                                 reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                 viewer: TwosideTextDiffViewer,
                                                 componentsFactory: GHPRDiffEditorReviewComponentsFactory)
@@ -28,7 +29,8 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleVa
   init {
     val inlaysManagerLeft = EditorComponentInlaysManager(viewer.editor1 as EditorImpl)
 
-    val gutterIconRendererFactoryLeft = GHPRDiffEditorGutterIconRendererFactoryImpl(inlaysManagerLeft, componentsFactory) {
+    val gutterIconRendererFactoryLeft = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManagerLeft,
+                                                                                    componentsFactory) {
       Side.LEFT to it
     }
 
@@ -37,7 +39,8 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleVa
 
     val inlaysManagerRight = EditorComponentInlaysManager(viewer.editor2 as EditorImpl)
 
-    val gutterIconRendererFactoryRight = GHPRDiffEditorGutterIconRendererFactoryImpl(inlaysManagerRight, componentsFactory) {
+    val gutterIconRendererFactoryRight = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManagerRight,
+                                                                                     componentsFactory) {
       Side.RIGHT to it
     }
 

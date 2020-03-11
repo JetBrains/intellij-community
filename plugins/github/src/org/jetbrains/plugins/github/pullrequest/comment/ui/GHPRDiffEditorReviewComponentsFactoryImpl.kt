@@ -44,13 +44,8 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
     return wrapper
   }
 
-  override fun createCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent {
-    val wrapper = RoundedPanel(BorderLayout()).apply {
-      border = JBUI.Borders.empty(2, 0)
-    }
-    val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
-
-    val model = GHPRSubmittableTextField.Model {
+  override fun createSingleCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent {
+    val textFieldModel = GHPRSubmittableTextField.Model {
       val commitSha = createCommentParametersHelper.commitSha
       val filePath = createCommentParametersHelper.filePath
       val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
@@ -59,7 +54,44 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
       }
     }
 
-    val commentField = GHPRSubmittableTextField.create(model, avatarIconsProvider, currentUser, "Comment") {
+    return createCommentComponent(textFieldModel, "Comment", hideCallback)
+  }
+
+  override fun createNewReviewCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent {
+    val textFieldModel = GHPRSubmittableTextField.Model {
+      val commitSha = createCommentParametersHelper.commitSha
+      val filePath = createCommentParametersHelper.filePath
+      val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
+      reviewDataProvider.addComment(EmptyProgressIndicator(), null, it, commitSha, filePath, diffLine).successOnEdt {
+        hideCallback()
+      }
+    }
+
+    return createCommentComponent(textFieldModel, "Start review", hideCallback)
+  }
+
+  override fun createReviewCommentComponent(reviewId: String, side: Side, line: Int, hideCallback: () -> Unit): JComponent {
+    val textFieldModel = GHPRSubmittableTextField.Model {
+      val commitSha = createCommentParametersHelper.commitSha
+      val filePath = createCommentParametersHelper.filePath
+      val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
+      reviewDataProvider.addComment(EmptyProgressIndicator(), reviewId, it, commitSha, filePath, diffLine).successOnEdt {
+        hideCallback()
+      }
+    }
+
+    return createCommentComponent(textFieldModel, "Comment", hideCallback)
+  }
+
+  private fun createCommentComponent(textFieldModel: GHPRSubmittableTextField.Model, actionName: String, hideCallback: () -> Unit)
+    : JComponent {
+
+    val wrapper = RoundedPanel(BorderLayout()).apply {
+      border = JBUI.Borders.empty(2, 0)
+    }
+    val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
+
+    val commentField = GHPRSubmittableTextField.create(textFieldModel, avatarIconsProvider, currentUser, actionName) {
       hideCallback()
     }.apply {
       border = JBUI.Borders.empty(8)

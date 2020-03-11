@@ -14,7 +14,8 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import kotlin.math.max
 import kotlin.math.min
 
-class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
+class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewProcessModel,
+                                                commentableRangesModel: SingleValueModel<List<Range>?>,
                                                 reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                 viewer: UnifiedDiffViewer,
                                                 componentsFactory: GHPRDiffEditorReviewComponentsFactory)
@@ -29,7 +30,8 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleVa
   init {
     val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
 
-    val gutterIconRendererFactory = GHPRDiffEditorGutterIconRendererFactoryImpl(inlaysManager, componentsFactory) { fileLine ->
+    val gutterIconRendererFactory = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManager,
+                                                                                componentsFactory) { fileLine ->
       val (indices, side) = viewer.transferLineFromOneside(fileLine)
       val line = side.select(indices).takeIf { it >= 0 } ?: return@GHPRDiffEditorGutterIconRendererFactoryImpl null
 

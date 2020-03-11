@@ -15,6 +15,8 @@ class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
   override var loading: Boolean = false
 
   override var result: T? = null
+  override var resultAvailable: Boolean = false
+    private set
   override var error: Throwable? = null
 
   //to cancel old callbacks
@@ -37,8 +39,14 @@ class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
     loading = true
     eventDispatcher.multicaster.onLoadingStarted()
     updateFuture = future.handleOnEdt(this) { result, error ->
-      if (error != null && !GithubAsyncUtil.isCancellation(error)) this.error = error
-      else this.result = result
+      if (error != null && !GithubAsyncUtil.isCancellation(error)) {
+        this.error = error
+        resultAvailable = false
+      }
+      else {
+        this.result = result
+        resultAvailable = true
+      }
       loading = false
       eventDispatcher.multicaster.onLoadingCompleted()
     }
@@ -48,6 +56,7 @@ class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
     updateFuture = null
     loading = false
     result = null
+    resultAvailable = false
     error = null
     eventDispatcher.multicaster.onReset()
   }

@@ -10,7 +10,8 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapp
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
-class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
+class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewProcessModel,
+                                                      commentableRangesModel: SingleValueModel<List<Range>?>,
                                                       reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                       viewer: SimpleOnesideDiffViewer,
                                                       componentsFactory: GHPRDiffEditorReviewComponentsFactory)
@@ -24,7 +25,7 @@ class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(commentableRangesModel: Si
   init {
     val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
 
-    val gutterIconRendererFactory = GHPRDiffEditorGutterIconRendererFactoryImpl(inlaysManager, componentsFactory) {
+    val gutterIconRendererFactory = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManager, componentsFactory) {
       viewer.side to it
     }
 

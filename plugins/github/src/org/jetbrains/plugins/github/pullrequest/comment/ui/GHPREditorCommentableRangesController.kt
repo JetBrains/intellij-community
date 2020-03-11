@@ -23,7 +23,7 @@ class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<
     editor.markupModel.addMarkupModelListener(listenerDisposable, object : MarkupModelListener {
       override fun beforeRemoved(highlighter: RangeHighlighterEx) {
         val iconRenderer = highlighter.gutterIconRenderer as? GHPRAddCommentGutterIconRenderer ?: return
-        iconRenderer.disposeInlay()
+        Disposer.dispose(iconRenderer)
         commentableLines.remove(iconRenderer.line)
       }
     })

@@ -6,5 +6,7 @@ import javax.swing.JComponent
 
 interface GHPRDiffEditorReviewComponentsFactory {
   fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent
-  fun createCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent
+  fun createSingleCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent
+  fun createNewReviewCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent
+  fun createReviewCommentComponent(reviewId: String, side: Side, line: Int, hideCallback: () -> Unit): JComponent
 }

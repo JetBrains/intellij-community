@@ -16,7 +16,11 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
 
   private var progressIndicator = NonReusableEmptyProgressIndicator()
 
+  private var overriddenFuture: CompletableFuture<T>? = null
+
   override fun compute(): CompletableFuture<T> {
+    if (overriddenFuture != null) return overriddenFuture!!
+
     progressIndicator = NonReusableEmptyProgressIndicator()
     val indicator = progressIndicator
     return compute(indicator)
@@ -24,7 +28,15 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
 
   abstract fun compute(indicator: ProgressIndicator): CompletableFuture<T>
 
+  fun overrideProcess(future: CompletableFuture<T>) {
+    overriddenFuture = future
+    super.drop()
+    progressIndicator.cancel()
+    dropEventDispatcher.multicaster.eventOccurred()
+  }
+
   override fun drop() {
+    overriddenFuture = null
     super.drop()
     progressIndicator.cancel()
     dropEventDispatcher.multicaster.eventOccurred()

@@ -6,11 +6,17 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewDataProvider {
+  @CalledInAwt
+  fun loadPendingReview(): CompletableFuture<GHPullRequestPendingReview?>
+
+  @CalledInAwt
+  fun resetPendingReview()
 
   @CalledInAwt
   fun loadReviewThreads(): CompletableFuture<List<GHPullRequestReviewThread>>
@@ -33,8 +39,12 @@ interface GHPRReviewDataProvider {
     : CompletableFuture<GithubPullRequestCommentWithHtml>
 
   @CalledInAny
+  fun addComment(progressIndicator: ProgressIndicator, reviewId: String?, body: String, commitSha: String, fileName: String, diffLine: Int)
+    : CompletableFuture<out GHPullRequestReviewComment>
+
+  @CalledInAny
   fun deleteComment(progressIndicator: ProgressIndicator, commentId: String)
-    : CompletableFuture<Unit>
+    : CompletableFuture<out Any>
 
   @CalledInAny
   fun updateComment(progressIndicator: ProgressIndicator, commentId: String, newText: String)
@@ -42,4 +52,7 @@ interface GHPRReviewDataProvider {
 
   @CalledInAwt
   fun addReviewThreadsListener(disposable: Disposable, listener: () -> Unit)
+
+  @CalledInAwt
+  fun addPendingReviewListener(disposable: Disposable, listener: () -> Unit)
 }
