@@ -34,6 +34,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -398,16 +399,16 @@ public class HighlightInfo implements Segment {
     @NotNull Builder inspectionToolId(@NotNull String inspectionTool);
 
     // only one allowed
-    @NotNull Builder description(@NotNull String description);
-    @NotNull Builder descriptionAndTooltip(@NotNull String description);
+    @NotNull Builder description(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description);
+    @NotNull Builder descriptionAndTooltip(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description);
 
     // only one allowed
     @NotNull Builder textAttributes(@NotNull TextAttributes attributes);
     @NotNull Builder textAttributes(@NotNull TextAttributesKey attributesKey);
 
     // only one allowed
-    @NotNull Builder unescapedToolTip(@NotNull String unescapedToolTip);
-    @NotNull Builder escapedToolTip(@NotNull String escapedToolTip);
+    @NotNull Builder unescapedToolTip(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String unescapedToolTip);
+    @NotNull Builder escapedToolTip(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String escapedToolTip);
 
     @NotNull Builder endOfLine();
     @NotNull Builder needsUpdateOnTyping(boolean update);
