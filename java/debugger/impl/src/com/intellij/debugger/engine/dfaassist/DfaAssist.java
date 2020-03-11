@@ -38,6 +38,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.sun.jdi.*;
@@ -50,11 +51,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class DfaAssist implements DebuggerContextListener, Disposable {
+  private static final int CLEANUP_DELAY_MILLIS = 300;
   private final @NotNull Project myProject;
   private InlaySet myInlays = new InlaySet(null, Collections.emptyList()); // modified from EDT only
-  private volatile CancellablePromise<?> myPromise;
+  private volatile CancellablePromise<?> myComputation;
+  private volatile ScheduledFuture<?> myScheduledCleanup;
   private final DebuggerStateManager myManager;
   private volatile boolean myActive;
   
@@ -98,8 +103,11 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
       cleanUp();
       return;
     }
-    if (event != DebuggerSession.Event.PAUSE && event != DebuggerSession.Event.REFRESH) {
+    if (event == DebuggerSession.Event.RESUME) {
       cancelComputation();
+      myScheduledCleanup = EdtScheduledExecutorService.getInstance().schedule(this::cleanUp, CLEANUP_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+    }
+    if (event != DebuggerSession.Event.PAUSE && event != DebuggerSession.Event.REFRESH) {
       return;
     }
     SourcePosition sourcePosition = newContext.getSourcePosition();
@@ -128,7 +136,7 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
           cleanUp();
           return;
         }
-        myPromise = ReadAction.nonBlocking(() -> computeHints(runner)).withDocumentsCommitted(myProject)
+        myComputation = ReadAction.nonBlocking(() -> computeHints(runner)).withDocumentsCommitted(myProject)
           .coalesceBy(DfaAssist.this)
           .finishOnUiThread(ModalityState.NON_MODAL, hints -> DfaAssist.this.displayInlays(hints))
           .submit(AppExecutorUtil.getAppExecutorService());
@@ -171,9 +179,13 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
   }
 
   private void cancelComputation() {
-    CancellablePromise<?> promise = myPromise;
+    CancellablePromise<?> promise = myComputation;
     if (promise != null) {
       promise.cancel();
+    }
+    ScheduledFuture<?> cleanup = myScheduledCleanup;
+    if (cleanup != null) {
+      cleanup.cancel(false);
     }
   }
 
