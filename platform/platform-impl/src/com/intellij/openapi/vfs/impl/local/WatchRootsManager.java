@@ -112,7 +112,8 @@ final class WatchRootsManager {
 
       mySymlinksByPath.put(data.path, data);
       mySymlinksById.put(data.id, data);
-      if (WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, data.path)) {
+      if (data.hasValidTarget()
+          && WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, data.path)) {
         addWatchSymlinkRequest(data.getWatchRequest());
       }
     }
@@ -290,7 +291,11 @@ final class WatchRootsManager {
 
   private void collectSymlinkRequests(WatchRequestImpl newRequest, Collection<WatchSymlinkRequest> watchSymlinkRequestsToAdd) {
     assert newRequest.isToWatchRecursively() : newRequest;
-    WatchRootsUtil.collectByPrefix(mySymlinksByPath, newRequest.getRootPath(), e -> watchSymlinkRequestsToAdd.add(e.getValue().getWatchRequest()));
+    WatchRootsUtil.collectByPrefix(mySymlinksByPath, newRequest.getRootPath(), e -> {
+      if (e.getValue().hasValidTarget()) {
+        watchSymlinkRequestsToAdd.add(e.getValue().getWatchRequest());
+      }
+    });
   }
 
   private static class WatchRequestImpl implements WatchRequest {
@@ -325,6 +330,7 @@ final class WatchRootsManager {
 
     WatchSymlinkRequest(SymlinkData data, boolean watchRecursively) {
       mySymlinkData = data;
+      assert mySymlinkData.hasValidTarget();
       myWatchRecursively = watchRecursively;
     }
 
@@ -342,7 +348,7 @@ final class WatchRootsManager {
 
     @Override
     public @NotNull @SystemIndependent String getRootPath() {
-      return mySymlinkData.target;
+      return Objects.requireNonNull(mySymlinkData.target);
     }
 
     @Override
@@ -358,20 +364,25 @@ final class WatchRootsManager {
   private static class SymlinkData {
     final int id;
     final @NotNull @SystemIndependent String path;
-    final @NotNull @SystemIndependent String target;
+    final @Nullable @SystemIndependent String target;
     private WatchSymlinkRequest myWatchRequest;
 
     SymlinkData(int id, String path, @Nullable String target) {
       this.id = id;
       this.path = FileUtil.toSystemIndependentName(path);
-      this.target = target != null ? FileUtil.toSystemIndependentName(target) : "";
+      this.target = target != null ? FileUtil.toSystemIndependentName(target) : null;
     }
 
     @NotNull WatchSymlinkRequest getWatchRequest() {
+      assert hasValidTarget();
       if (myWatchRequest == null) {
         myWatchRequest = new WatchSymlinkRequest(this, true);
       }
       return myWatchRequest;
+    }
+
+    public boolean hasValidTarget() {
+      return target != null;
     }
 
     void removeRequest(WatchRootsManager manager) {
