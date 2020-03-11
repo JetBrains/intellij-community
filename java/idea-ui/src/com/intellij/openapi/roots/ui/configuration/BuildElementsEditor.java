@@ -233,7 +233,6 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   public void saveData() {
     myOutputPathPanel.commit();
     myTestsOutputPathPanel.commit();
-    getCompilerExtension().commit();
   }
 
   @Override
