@@ -1,3 +1,8 @@
+# 18
+
+* rename `plugin descriptors loading` in application loader to `plugin descriptor init waiting`
+* change `cds` field type from `string` to `boolean`.
+
 # 17
 
 * add `plugin descriptor loading`.
