@@ -25,7 +25,7 @@ internal class SvnLoadedBranchesStorage(private val project: Project) {
 
   companion object {
     @JvmStatic
-    fun getInstance() = service<SvnLoadedBranchesStorage>()
+    fun getInstance(project: Project) = project.service<SvnLoadedBranchesStorage>()
   }
 
   init {
