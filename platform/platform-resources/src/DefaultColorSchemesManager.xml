@@ -93,6 +93,7 @@
       <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="00000080"/>
       <option name="ActionButton.hoverBackground" value="dfdfdf"/>
       <option name="ActionButton.pressedBackground" value="cfcfcf"/>
+      <option name="ActionButton.iconTextForeground" value="787878"/>
     </colors>
 
     <attributes>
@@ -1301,6 +1302,7 @@
       <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="2626268C"/>
       <option name="ActionButton.hoverBackground" value="4c5052"/>
       <option name="ActionButton.pressedBackground" value="5c6164"/>
+      <option name="ActionButton.iconTextForeground" value="8c8c8c"/>
     </colors>
     <attributes>
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">
