@@ -108,11 +108,15 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   public boolean hasOutgoingFor(@Nullable GitRepository repository, @NotNull String localBranchName) {
-    return getBranchesWithOutgoing(repository).contains(new GitLocalBranch(localBranchName));
+    return shouldCheckOutgoingOutgoing() && getBranchesWithOutgoing(repository).contains(new GitLocalBranch(localBranchName));
   }
 
   public boolean shouldCheckIncoming() {
     return Registry.is("git.update.incoming.outgoing.info") && GitVcsSettings.getInstance(myProject).getIncomingCheckStrategy() != Never;
+  }
+
+  private static boolean shouldCheckOutgoingOutgoing() {
+    return Registry.is("git.update.incoming.outgoing.info");
   }
 
   @NotNull
@@ -246,6 +250,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private void updateBranchesWithOutgoing() {
+    if(!shouldCheckOutgoingOutgoing()) return;
     synchronized (LOCK) {
       myDirtyReposWithOutgoing.addAll(GitRepositoryManager.getInstance(myProject).getRepositories());
     }
@@ -424,6 +429,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @Override
   public void repositoryChanged(@NotNull GitRepository repository) {
+    if (!shouldCheckOutgoingOutgoing()) return;
     synchronized (LOCK) {
       myDirtyReposWithOutgoing.add(repository);
       myDirtyReposWithIncoming.add(repository);
