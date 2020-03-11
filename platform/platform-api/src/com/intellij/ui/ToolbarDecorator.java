@@ -12,6 +12,8 @@ import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -365,8 +367,13 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
         myToolbarPosition == ActionToolbarPosition.LEFT ? 1 : 0);
     }
     myActionsPanel.setBorder(myToolbarBorder != null ? myToolbarBorder : JBUI.Borders.empty());
-    Dimension scrollPanePreferredSize = scrollPane.getPreferredSize();
-    scrollPane.setPreferredSize(new Dimension(0, scrollPanePreferredSize.height));
+    new UiNotifyConnector.Once(scrollPane, new Activatable() {
+      @Override
+      public void showNotify() {
+        Dimension scrollPanePreferredSize = scrollPane.getPreferredSize();
+        scrollPane.setPreferredSize(new Dimension(0, scrollPanePreferredSize.height));
+      }
+    });
     return panel;
   }
 
