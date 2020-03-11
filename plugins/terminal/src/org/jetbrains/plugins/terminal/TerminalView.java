@@ -289,22 +289,22 @@ public final class TerminalView {
 
       @Override
       public void moveTabRight() {
-        moveTabRightAction.move(toolWindow.getContentManager().getSelectedContent(), myProject);
+        moveTabRightAction.move(content, myProject);
       }
 
       @Override
       public void moveTabLeft() {
-        moveTabLeftAction.move(toolWindow.getContentManager().getSelectedContent(), myProject);
+        moveTabLeftAction.move(content, myProject);
       }
 
       @Override
       public boolean canMoveTabRight() {
-        return moveTabRightAction.isAvailable(toolWindow.getContentManager().getSelectedContent());
+        return moveTabRightAction.isAvailable(content);
       }
 
       @Override
       public boolean canMoveTabLeft() {
-        return moveTabLeftAction.isAvailable(toolWindow.getContentManager().getSelectedContent());
+        return moveTabLeftAction.isAvailable(content);
       }
 
       @Override
