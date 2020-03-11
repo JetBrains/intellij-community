@@ -199,8 +199,8 @@ object GHPRSubmittableTextField {
       if (isSubmitting) return
 
       isSubmitting = true
-      submitter(document.text).handleOnEdt { _, _ ->
-        runWriteAction {
+      submitter(document.text).handleOnEdt { _, error ->
+        if (error == null) runWriteAction {
           document.setText("")
         }
         isSubmitting = false
