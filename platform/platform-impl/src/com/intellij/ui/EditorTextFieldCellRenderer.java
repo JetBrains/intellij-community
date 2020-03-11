@@ -244,12 +244,18 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     private static final char RETURN_SYMBOL = '\u23ce';
 
     private final StringBuilder myDocumentTextBuilder = new StringBuilder();
+    private final boolean myAppendEllipsis;
 
     private Dimension myPreferredSize;
     private String myRawText;
 
     public AbbreviatingRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
+      this(project, language, inheritFontFromLaF, true);
+    }
+
+    public AbbreviatingRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF, boolean appendEllipsis) {
       super(project, language, inheritFontFromLaF);
+      myAppendEllipsis = appendEllipsis;
     }
 
     @Override
@@ -299,7 +305,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
       boolean singleLineMode = getHeight() / (float)getEditor().getLineHeight() < 1.1f;
       if (singleLineMode) {
-        appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true);
+        appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true, myAppendEllipsis);
       }
       else {
         int lineHeight = getEditor().getLineHeight();
@@ -315,7 +321,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
         for (int line = 0; !lt.atEnd() && line < linesToAppend; lt.advance(), line++) {
           int start = lt.getOffset();
           int end = start + lt.getLength();
-          appendAbbreviated(myDocumentTextBuilder, myRawText, start, end, fontMetrics, maxLineWidth, false);
+          appendAbbreviated(myDocumentTextBuilder, myRawText, start, end, fontMetrics, maxLineWidth, false, myAppendEllipsis);
           if (lt.getLineSeparatorLength() > 0) {
             myDocumentTextBuilder.append('\n');
           }
@@ -326,8 +332,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     private static void appendAbbreviated(StringBuilder to, String text, int start, int end,
-                                          FontMetrics metrics, int maxWidth, boolean replaceLineTerminators) {
-      int abbreviationLength = abbreviationLength(text, start, end, metrics, maxWidth, replaceLineTerminators);
+                                          FontMetrics metrics, int maxWidth, boolean replaceLineTerminators, boolean appendEllipsis) {
+      int abbreviationLength = abbreviationLength(text, start, end, metrics, maxWidth, replaceLineTerminators, appendEllipsis);
 
       if (!replaceLineTerminators) {
         to.append(text, start, start + abbreviationLength);
@@ -342,15 +348,15 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
         }
       }
 
-      if (abbreviationLength != end - start) {
+      if (appendEllipsis && abbreviationLength != end - start) {
         to.append(ABBREVIATION_SUFFIX);
       }
     }
 
-    private static int abbreviationLength(String text, int start, int end, FontMetrics metrics, int maxWidth, boolean replaceSeparators) {
+    private static int abbreviationLength(String text, int start, int end, FontMetrics metrics, int maxWidth, boolean replaceSeparators, boolean appendEllipsis) {
       if (metrics.charWidth('m') * (end - start) <= maxWidth) return end - start;
 
-      int abbrWidth = metrics.charWidth(ABBREVIATION_SUFFIX);
+      int abbrWidth = appendEllipsis ? metrics.charWidth(ABBREVIATION_SUFFIX) : 0;
       int abbrLength = 0;
 
       CharSequenceSubSequence subSeq = new CharSequenceSubSequence(text, start, end);
