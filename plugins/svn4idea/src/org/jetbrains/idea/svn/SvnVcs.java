@@ -126,7 +126,6 @@ public final class SvnVcs extends AbstractVcs {
 
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final SvnAuthenticationNotifier myAuthNotifier;
-  private final SvnLoadedBranchesStorage myLoadedBranchesStorage;
 
   private final SvnExecutableChecker myChecker;
 
@@ -139,7 +138,6 @@ public final class SvnVcs extends AbstractVcs {
   public SvnVcs(@NotNull Project project) {
     super(project, VCS_NAME);
 
-    myLoadedBranchesStorage = project.getService(SvnLoadedBranchesStorage.class);
     myRootsToWorkingCopies = new RootsToWorkingCopies(this);
     myConfiguration = SvnConfiguration.getInstance(project);
     myAuthNotifier = new SvnAuthenticationNotifier(this);
@@ -353,7 +351,7 @@ public final class SvnVcs extends AbstractVcs {
       busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myRootsToWorkingCopies);
     }
 
-    myLoadedBranchesStorage.activate();
+    SvnLoadedBranchesStorage.getInstance().activate();
   }
 
   public static Logger wrapLogger(final Logger logger) {
@@ -393,7 +391,7 @@ public final class SvnVcs extends AbstractVcs {
 
     mySvnBranchPointsCalculator.deactivate();
     mySvnBranchPointsCalculator = null;
-    myLoadedBranchesStorage.deactivate();
+    SvnLoadedBranchesStorage.getInstance().deactivate();
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {

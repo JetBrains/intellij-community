@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.branchConfig
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
@@ -21,6 +22,11 @@ internal class SvnLoadedBranchesStorage(private val project: Project) {
   private val myLock = Any()
   private var myState: SmallMapSerializer<String, Map<Url, Collection<SvnBranchItem>>>? = null
   private val myFile: File
+
+  companion object {
+    @JvmStatic
+    fun getInstance() = service<SvnLoadedBranchesStorage>()
+  }
 
   init {
     val vcsFile = File(PathManager.getSystemPath(), "vcs")
