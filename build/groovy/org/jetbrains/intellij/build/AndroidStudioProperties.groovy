@@ -523,6 +523,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         context.ant.copy(todir: "$targetDirectory/plugins/android/resources/trace_processor_daemon") {
           fileset(dir: "$root/prebuilts/tools/common/trace-processor-daemon/linux")
         }
+        extraExecutables.add("plugins/android/resources/trace_processor_daemon/trace_processor_daemon")
 
         context.ant.copy(todir: "$targetDirectory/plugins/android/lib/layoutlib/data") {
           fileset(dir: "$root/prebuilts/studio/layoutlib/data") {
@@ -588,6 +589,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       context.ant.copy(todir: "$targetDirectory/plugins/android/resources/trace_processor_daemon") {
         fileset(dir: "$root/prebuilts/tools/common/trace-processor-daemon/darwin")
       }
+      extraExecutables.add("plugins/android/resources/trace_processor_daemon/trace_processor_daemon")
 
       context.ant.copy(todir: "$targetDirectory/plugins/android/lib/layoutlib/data") {
         fileset(dir: "$root/prebuilts/studio/layoutlib/data") {
