@@ -116,3 +116,4 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
     return compareFilePaths(getUserObject(), o2);
   }
 }
+
