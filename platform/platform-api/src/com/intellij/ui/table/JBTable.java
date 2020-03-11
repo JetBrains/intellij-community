@@ -291,26 +291,29 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (myVisibleRowCount <= 0) return base;
     if (base != null && base.height > 0) return base;
 
+    boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
+
     TableModel model = getModel();
     int modelRows = model == null ? 0 : model.getRowCount();
     int fixedWidth = base != null && base.width > 0 ? base.width : JBUI.scale(100);
     Dimension size;
-    if (modelRows > 0) {
-      Rectangle rect = getCellRect(Math.min(myVisibleRowCount, modelRows) - 1, 0, true);
-      size = new Dimension(fixedWidth, rect.y + rect.height);
-      if (myVisibleRowCount > modelRows) {
-        size.height += (myVisibleRowCount - modelRows) * rect.height;
-      }
-      else if (modelRows > myVisibleRowCount) {
-        size.height += rect.height / 2;
-      }
-    }
-    else {
+    if (modelRows == 0) {
       int fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
-      if (fixedHeight <= 0) fixedHeight = UIManager.getInt("List.rowHeight");
+      if (fixedHeight <= 0) fixedHeight = UIManager.getInt("Table.rowHeight");
       if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16); // scaled value from JDK
 
       size = new Dimension(fixedWidth, fixedHeight * myVisibleRowCount);
+      if (addExtraSpace) size.height += fixedHeight / 2;
+    }
+    else {
+      Rectangle rect = getCellRect(Math.min(myVisibleRowCount, modelRows) - 1, 0, true);
+      size = new Dimension(fixedWidth, rect.y + rect.height);
+      if (modelRows < myVisibleRowCount) {
+        size.height += (myVisibleRowCount - modelRows) * rect.height;
+      }
+      else if (modelRows > myVisibleRowCount) {
+        if (addExtraSpace) size.height += rect.height / 2;
+      }
     }
     return size;
   }
