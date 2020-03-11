@@ -6,14 +6,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -332,7 +331,18 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
                              myButtonComparator,
                              myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
                              myAddIcon, buttons);
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contextComponent, true);
+    JScrollPane scrollPane = new JBScrollPane(contextComponent) {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension preferredSize = super.getPreferredSize();
+        if (!isPreferredSizeSet()) {
+          setPreferredSize(new Dimension(0, preferredSize.height));
+        }
+        return preferredSize;
+      }
+    };
+    scrollPane.setBorder(JBUI.Borders.empty());
+    scrollPane.setViewportBorder(JBUI.Borders.empty());
     if (myPreferredSize != null) {
       scrollPane.setPreferredSize(myPreferredSize);
     }
@@ -367,13 +377,6 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
         myToolbarPosition == ActionToolbarPosition.LEFT ? 1 : 0);
     }
     myActionsPanel.setBorder(myToolbarBorder != null ? myToolbarBorder : JBUI.Borders.empty());
-    new UiNotifyConnector.Once(scrollPane, new Activatable() {
-      @Override
-      public void showNotify() {
-        Dimension scrollPanePreferredSize = scrollPane.getPreferredSize();
-        scrollPane.setPreferredSize(new Dimension(0, scrollPanePreferredSize.height));
-      }
-    });
     return panel;
   }
 
