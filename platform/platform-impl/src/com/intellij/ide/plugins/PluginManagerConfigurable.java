@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.updateSettings.LightPluginDescriptor;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Pair;
@@ -380,14 +381,13 @@ public class PluginManagerConfigurable
 
           try {
             Pair<Map<PluginId, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> pair = loadRepositoryPlugins();
-            Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap = pair.first;
+            //    Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap = pair.first;
             Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
-
             try {
-              addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true", "/sortBy:featured");
-              addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.new.and.updated"), "orderBy=update+date", "/sortBy:updated");
-              addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.top.downloads"), "orderBy=downloads", "/sortBy:downloads");
-              addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.top.rated"), "orderBy=rating", "/sortBy:rating");
+              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true", "/sortBy:featured");
+              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.new.and.updated"), "orderBy=update+date", "/sortBy:updated");
+              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.top.downloads"), "orderBy=downloads", "/sortBy:downloads");
+              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.top.rated"), "orderBy=rating", "/sortBy:rating");
             }
             catch (IOException e) {
               LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
@@ -432,7 +432,8 @@ public class PluginManagerConfigurable
 
         myMarketplacePanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.marketplace.plugins.not.loaded"))
           .appendSecondaryText(IdeBundle.message("message.check.the.internet.connection.and") + " ", StatusText.DEFAULT_ATTRIBUTES, null)
-          .appendSecondaryText(IdeBundle.message("message.link.refresh"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> myMarketplaceRunnable.run());
+          .appendSecondaryText(IdeBundle.message("message.link.refresh"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+                               e -> myMarketplaceRunnable.run());
 
         ApplicationManager.getApplication().executeOnPooledThread(runnable);
         return createScrollPane(myMarketplacePanel, false);
@@ -555,7 +556,8 @@ public class PluginManagerConfigurable
 
         //noinspection unchecked
         myMarketplaceSortByAction.setListener(
-          (component, __) -> showRightBottomPopup(component.getParent().getParent(), IdeBundle.message("plugins.configurable.sort.by"), myMarketplaceSortByGroup), null);
+          (component, __) -> showRightBottomPopup(component.getParent().getParent(), IdeBundle.message("plugins.configurable.sort.by"),
+                                                  myMarketplaceSortByGroup), null);
 
         myMarketplaceSortByCallback = updateAction -> {
           MarketplaceSortByAction removeAction = null;
@@ -1607,12 +1609,13 @@ public class PluginManagerConfigurable
     }
   }
 
-  private void addGroup(@NotNull List<? super PluginsGroup> groups,
-                        @NotNull Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap,
-                        @NotNull @Nls String name,
-                        @NotNull @NonNls String query,
-                        @NotNull @NonNls String showAllQuery) throws IOException {
-    addGroup(groups, name, showAllQuery, descriptors -> PluginRepositoryRequests.loadPlugins(descriptors, allRepositoriesMap, query));
+  private void addGroupViaLightDescriptor(
+    @NotNull List<? super PluginsGroup> groups,
+    @NotNull @Nls String name,
+    @NotNull @NonNls String query,
+    @NotNull @NonNls String showAllQuery
+  ) throws IOException {
+    addGroup(groups, name, showAllQuery, descriptors -> PluginRepositoryRequests.loadPlugins(descriptors, query));
   }
 
   @Override
@@ -1661,7 +1664,8 @@ public class PluginManagerConfigurable
     if (myPluginModel.apply(myCardPanel)) return;
 
     if (myPluginModel.createShutdownCallback) {
-      InstalledPluginsState.getInstance().setShutdownCallback(() -> ApplicationManager.getApplication().invokeLater(() -> shutdownOrRestartApp()));
+      InstalledPluginsState.getInstance()
+        .setShutdownCallback(() -> ApplicationManager.getApplication().invokeLater(() -> shutdownOrRestartApp()));
     }
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.updateSettings.LightPluginDescriptor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,7 @@ import java.util.List;
 /**
  * @author stathik
  */
-public final class PluginNode implements IdeaPluginDescriptor {
+public final class PluginNode implements IdeaPluginDescriptor, LightPluginDescriptor {
   public enum Status {
     UNKNOWN, INSTALLED, DOWNLOADED, DELETED
   }
