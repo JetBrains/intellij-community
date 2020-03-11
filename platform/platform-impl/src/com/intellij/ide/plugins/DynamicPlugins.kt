@@ -119,7 +119,7 @@ object DynamicPlugins {
           val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
           if (pluginClassLoader !is PluginClassLoader && !ApplicationManager.getApplication().isUnitTestMode) {
             val loader = baseDescriptor ?: descriptor
-            LOG.info("Plugin ${loader.pluginId} is not unload-safe because of use of UrlClassLoader as the default class loader. " +
+            LOG.info("Plugin ${loader.pluginId} is not unload-safe because of use of ${pluginClassLoader.javaClass.name} as the default class loader. " +
                      "For example, the IDE is started from the sources with the plugin.")
             return false
           }
