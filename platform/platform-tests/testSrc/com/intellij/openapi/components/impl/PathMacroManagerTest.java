@@ -123,4 +123,17 @@ public class PathMacroManagerTest {
       USER_HOME + "/IdeaProjects -> $MODULE_DIR$/../..\n" +
       USER_HOME + " -> $USER_HOME$");
   }
+
+  @Test
+  public void testProjectUnderWSL() {
+    String wslHome = "//wsl$/Linux";
+    MockModule module = createModule(wslHome + "/project");
+    assertReplacements(
+      new ModulePathMacroManager(module).getReplacePathMap(),
+      APP_HOME + " -> $APPLICATION_HOME_DIR$\n" +
+      USER_HOME + " -> $USER_HOME$\n" +
+      wslHome + "/project/module -> $MODULE_DIR$\n" +
+      wslHome + "/project -> $MODULE_DIR$/..\n" +
+      wslHome + " -> $MODULE_DIR$/../..");
+  }
 }
