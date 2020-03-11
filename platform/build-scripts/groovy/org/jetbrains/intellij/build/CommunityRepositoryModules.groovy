@@ -339,7 +339,6 @@ class CommunityRepositoryModules {
       withResourceFromModule("intellij.android.core", "lib/javawriter-2.2.1.jar", "lib")
       withProjectLibrary("intellij.android.kotlin.idea", "")
 
-      withResourceFromModule("intellij.android.core", "lib/androidWidgets", "lib/androidWidgets")
       withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "lib/device-art-resources")
       withResourceFromModule("intellij.android.core", "lib/sampleData", "lib/sampleData")
       withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/linux", "lib/libwebp/linux")
