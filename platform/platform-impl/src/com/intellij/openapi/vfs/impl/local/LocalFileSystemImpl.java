@@ -44,6 +44,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     }
     myWatchRootsManager = new WatchRootsManager(myWatcher, this);
     Disposer.register(ApplicationManager.getApplication(), this);
+    new SymbolicLinkRefresher(this);
   }
 
   @NotNull

@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -31,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
- * Unless stated otherwise, all paths are {@link org.jetbrains.annotations.SystemDependent @SystemDependent}.
+ * Unless stated otherwise, all paths are {@link SystemDependent @SystemDependent}.
  */
 public final class FileWatcher {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
@@ -192,6 +193,14 @@ public final class FileWatcher {
       ApplicationManager.getApplication().invokeLater(
         () -> Notifications.Bus.notify(group.createNotification(title, cause, NotificationType.WARNING, listener)), ModalityState.NON_MODAL);
     }
+  }
+
+  @NotNull Collection<String> mapToAllSymlinks(@NotNull @SystemDependent String reportedPath) {
+    Collection<String> result = myPathMap.mapToOriginalWatchRoots(reportedPath, true);
+    if (!result.isEmpty()) {
+      result.remove(reportedPath);
+    }
+    return result;
   }
 
   private final class MyFileWatcherNotificationSink implements FileWatcherNotificationSink {

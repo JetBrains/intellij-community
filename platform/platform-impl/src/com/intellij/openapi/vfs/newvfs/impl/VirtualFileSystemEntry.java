@@ -107,6 +107,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return changedParent != null ? changedParent : myParent;
   }
 
+  public boolean hasSymlink() {
+    return getFlagInt(HAS_SYMLINK_FLAG);
+  }
+
   @Override
   public boolean isDirty() {
     return getFlagInt(DIRTY_FLAG);
