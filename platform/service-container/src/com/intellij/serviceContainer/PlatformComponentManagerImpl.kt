@@ -550,7 +550,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         constructor.isAccessible = true
         @Suppress("UNCHECKED_CAST")
         return when (constructor.parameterCount) {
-          1 -> constructor.newInstance(this)
+          1 -> constructor.newInstance(getActualContainerInstance())
           else -> constructor.newInstance()
         } as T
       }
@@ -575,6 +575,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       }
     }
   }
+
+  protected open fun getActualContainerInstance(): ComponentManager = this
 
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
     return instantiateUsingPicoContainer(aClass, key, pluginId, this, constructorParameterResolver)
