@@ -8,7 +8,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -58,7 +57,6 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
     myEnabledIcon = myIsIncoming ? AllIcons.Ide.IncomingChangesOn : AllIcons.Ide.OutgoingChangesOn;
     myDisabledIcon = IconLoader.getDisabledIcon(myEnabledIcon);
     myCurrentIcon = myDisabledIcon;
-    Disposer.register(project, this);
   }
 
   @Override

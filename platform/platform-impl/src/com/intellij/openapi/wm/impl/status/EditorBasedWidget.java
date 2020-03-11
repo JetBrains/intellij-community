@@ -34,6 +34,7 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
 
   protected EditorBasedWidget(@NotNull Project project) {
     myProject = project;
+    Disposer.register(project, this);
   }
 
   @Nullable
