@@ -8,9 +8,8 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.core.CoreBundle;
 import com.intellij.execution.ExecutionException;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
@@ -623,33 +622,38 @@ public class PyPackageRequirementsInspection extends PyInspection {
             final ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(project);
             profileManager.fireProfileChanged();
 
-            BALLOON_NOTIFICATIONS
+            final Notification notification = BALLOON_NOTIFICATIONS
               .createNotification(
                 packagesToIgnore.size() == 1
                 ? PyBundle.message("INSP.package.requirements.requirement.has.been.ignored", packagesToIgnore.iterator().next())
                 : PyBundle.message("INSP.package.requirements.requirements.have.been.ignored"),
-                PyBundle.message("INSP.package.requirements.undo.add.requirement"),
-                NotificationType.INFORMATION,
-                (notification, event) -> {
-                  try {
-                    switch (event.getDescription()) {
-                      case "#undo":
-                        inspection.ignoredPackages.removeAll(packagesToIgnore);
-                        profileManager.fireProfileChanged();
-                        break;
-                      case "#settings":
-                        final InspectionProfileImpl profile = profileManager.getCurrentProfile();
-                        final String toolName = PyPackageRequirementsInspection.class.getSimpleName();
-                        EditInspectionToolsSettingsAction.editToolSettings(project, profile, toolName);
-                        break;
-                    }
+                NotificationType.INFORMATION
+              );
+
+            notification.addAction(
+              NotificationAction
+                .createSimpleExpiring(
+                  ActionsBundle.message("action.$Undo.text"),
+                  () -> {
+                    inspection.ignoredPackages.removeAll(packagesToIgnore);
+                    profileManager.fireProfileChanged();
                   }
-                  finally {
-                    notification.expire();
+                )
+            );
+
+            notification.addAction(
+              NotificationAction
+                .createSimpleExpiring(
+                  InspectionsBundle.message("inspection.action.edit.settings"),
+                  () -> {
+                    final InspectionProfileImpl profile = profileManager.getCurrentProfile();
+                    final String toolName = PyPackageRequirementsInspection.class.getSimpleName();
+                    EditInspectionToolsSettingsAction.editToolSettings(project, profile, toolName);
                   }
-                }
-              )
-              .notify(project);
+                )
+            );
+
+            notification.notify(project);
           }
         }
       }
