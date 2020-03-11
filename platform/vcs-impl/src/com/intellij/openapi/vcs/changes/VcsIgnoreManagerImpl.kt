@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
@@ -44,6 +45,34 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
   fun findIgnoreFileType(vcs: AbstractVcs): IgnoreFileType? {
     val ignoredFileContentProvider = findIgnoredFileContentProvider(vcs) ?: return null
     return FileTypeManager.getInstance().getFileTypeByFileName(ignoredFileContentProvider.fileName) as? IgnoreFileType
+  }
+
+  override fun isFileVcsIgnored(filePath: String): Boolean {
+    try {
+      val checkForIgnore = { getFileVcsIgnoredStatus(project, filePath) is Ignored }
+      return ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously<Boolean, IOException>(checkForIgnore,
+                                                                   "Checking VCS status of ${PathUtil.getFileName(filePath)}...",
+                                                                   false, project)
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+    }
+    return false
+  }
+
+  private fun getFileVcsIgnoredStatus(project: Project, filePath: String): IgnoredCheckResult {
+    var file = LocalFileSystem.getInstance().findFileByPath(filePath)
+    var parentPath = PathUtil.getParentPath(filePath)
+    while (file == null && parentPath.isNotEmpty()) {
+      file = LocalFileSystem.getInstance().findFileByPath(parentPath)
+      parentPath = PathUtil.getParentPath(parentPath)
+    }
+
+    if (file == null) return NotIgnored
+    val vcsRoot = VcsUtil.getVcsRootFor(project, file) ?: return NotIgnored
+
+    return getCheckerForFile(project, file)?.isFilePatternIgnored(vcsRoot, filePath) ?: NotIgnored
   }
 
   override fun isRunConfigurationVcsIgnored(configurationName: String): Boolean {
