@@ -11,6 +11,7 @@ import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledWhiteListProvider
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -38,7 +39,7 @@ class DistributionJARsBuilder {
   private static final String PLUGINS_DIRECTORY = "/plugins"
 
   private final BuildContext buildContext
-  private final Set<String> usedModules = new LinkedHashSet<>()
+  private final ProjectStructureMapping projectStructureMapping = new ProjectStructureMapping()
   private final PlatformLayout platform
   private final File patchedApplicationInfo
   private final LinkedHashSet<PluginLayout> pluginsToPublish
@@ -364,8 +365,19 @@ class DistributionJARsBuilder {
 
     if (productProperties.buildSourcesArchive) {
       def archiveName = "${productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}-sources.zip"
-      BuildTasks.create(buildContext).zipSourcesOfModules(usedModules, "$buildContext.paths.artifacts/$archiveName")
+      BuildTasks.create(buildContext).zipSourcesOfModules(projectStructureMapping.includedModules, "$buildContext.paths.artifacts/$archiveName")
     }
+  }
+
+  void generateProjectStructureMapping(File targetFile) {
+    LayoutBuilder layoutBuilder = createLayoutBuilder()
+    processLibDirectoryLayout(layoutBuilder, false)
+    def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
+    def pluginsToBundle = allPlugins.findAll { satisfiesBundlingRequirements(it, null) }
+    pluginsToBundle.each {
+      processPluginLayout(it, layoutBuilder, buildContext.paths.temp, [], projectStructureMapping, false)
+    }
+    projectStructureMapping.generateJsonFile(targetFile)
   }
 
   void buildInternalUtilities() {
@@ -383,7 +395,7 @@ class DistributionJARsBuilder {
       def generator = LibraryLicensesListGenerator.create(buildContext.messages,
                                                           buildContext.project,
                                                           buildContext.productProperties.allLibraryLicenses,
-                                                          usedModules)
+                                                          projectStructureMapping.includedModules as Set<String>)
       generator.generateHtml(getThirdPartyLibrariesHtmlFilePath())
       generator.generateJson(getThirdPartyLibrariesJsonFilePath())
     }
@@ -575,9 +587,11 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', whiteList.absolutePath)
     }
 
+    def libDirectoryMapping = new ProjectStructureMapping()
     buildContext.messages.block("Build platform JARs in lib directory") {
-      buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
+      processLibDirectoryLayout(layoutBuilder, true)
     }
+    projectStructureMapping.mergeFrom(libDirectoryMapping, "")
 
     if (buildContext.proprietaryBuildTools.scrambleTool != null) {
       def forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
@@ -596,8 +610,10 @@ class DistributionJARsBuilder {
         }
       }
     }
+  }
 
-    usedModules.addAll(layoutBuilder.usedModules)
+  private processLibDirectoryLayout(LayoutBuilder layoutBuilder, boolean copyFiles) {
+    processLayout(layoutBuilder, platform, buildContext.paths.distAll, projectStructureMapping, copyFiles, platform.moduleJars, [])
   }
 
   static String getLibraryNameWithoutVersion(library) {
@@ -618,9 +634,8 @@ class DistributionJARsBuilder {
       def pluginsToBundle = allPlugins.findAll {
         satisfiesBundlingRequirements(it, null) && !pluginDirectoriesToSkip.contains(it.directoryName)
       }
-      buildPlugins(layoutBuilder, pluginsToBundle, "$buildContext.paths.distAll$PLUGINS_DIRECTORY" )
+      buildPlugins(layoutBuilder, pluginsToBundle, "$buildContext.paths.distAll$PLUGINS_DIRECTORY", projectStructureMapping)
     }
-    usedModules.addAll(layoutBuilder.usedModules)
   }
 
   private boolean satisfiesBundlingRequirements(PluginLayout plugin, @Nullable OsFamily osFamily) {
@@ -643,9 +658,8 @@ class DistributionJARsBuilder {
         def layoutBuilder = createLayoutBuilder()
         buildContext.messages.block("Build bundled plugins for $osFamily.osName") {
           buildPlugins(layoutBuilder, osSpecificPlugins,
-                       "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
+                       "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins", projectStructureMapping)
         }
-        usedModules.addAll(layoutBuilder.usedModules)
       }
     }
   }
@@ -696,7 +710,7 @@ class DistributionJARsBuilder {
 
       def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.applicationInfo.productCode}-plugins-to-publish"
       def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
-      buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish), pluginsToPublishDir)
+      buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish), pluginsToPublishDir, null)
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
 
       def pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
@@ -750,7 +764,7 @@ class DistributionJARsBuilder {
     def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$helpPlugin.mainModule"
     layoutBuilder.patchModuleOutput(helpPlugin.mainModule, patchedPluginXmlDir)
     buildContext.messages.block("Building $directory plugin") {
-      buildPlugins(layoutBuilder, new ArrayList<PluginLayout>([helpPlugin]), pluginsToPublishDir)
+      buildPlugins(layoutBuilder, new ArrayList<PluginLayout>([helpPlugin]), pluginsToPublishDir, null)
       buildContext.ant.zip(destfile: destFile) {
         zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
       }
@@ -783,26 +797,33 @@ class DistributionJARsBuilder {
     (modules - allOptionalModules).collect { (nonTrivialPlugins[it] ?: nonTrivialPlugins[buildContext.findModule(it)?.name])?.first() ?: PluginLayout.plugin(it) }
   }
 
-  private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory) {
+  private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory,
+                            ProjectStructureMapping parentMapping) {
     addSearchableOptions(layoutBuilder)
-    def enabledModulesSet = enabledPluginModules
     (buildContext.options.runBuildStepsInParallel ? pluginsToInclude.parallelStream() : pluginsToInclude.stream()).each { plugin ->
-      def actualModuleJars = plugin.getActualModules(enabledModulesSet)
-      checkOutputOfPluginModules(plugin.mainModule, actualModuleJars.values(), plugin.moduleExcludes)
+      checkOutputOfPluginModules(plugin.mainModule, plugin.getActualModules(enabledPluginModules).values(), plugin.moduleExcludes)
       List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {
         File resourceFile = it.first.generateResources(buildContext)
         resourceFile != null ? [Pair.create(resourceFile, it.second)] : []
       }
 
       final String targetDir = "$targetDirectory/${getActualPluginDirectoryName(plugin, buildContext)}"
-
-      buildByLayout(layoutBuilder, plugin, targetDir, actualModuleJars, generatedResources)
+      processPluginLayout(plugin, layoutBuilder, targetDir, generatedResources, parentMapping, true)
       if (buildContext.proprietaryBuildTools.scrambleTool != null) {
         buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, plugin, targetDir)
       }
       else if (!plugin.pathsToScramble.isEmpty()){
         buildContext.messages.warning("Scrambling plugin $plugin.directoryName skipped: 'scrambleTool' isn't defined, but plugin defines paths to be scrambled")
       }
+    }
+  }
+
+  private void processPluginLayout(PluginLayout plugin, LayoutBuilder layoutBuilder, String targetDir,
+                                   List<Pair<File, String>> generatedResources, ProjectStructureMapping parentMapping, boolean copyFiles) {
+    def mapping = new ProjectStructureMapping()
+    processLayout(layoutBuilder, plugin, targetDir, mapping, copyFiles, plugin.getActualModules(enabledPluginModules), generatedResources)
+    if (parentMapping != null) {
+      parentMapping.mergeFrom(mapping, "plugins/${getActualPluginDirectoryName(plugin, buildContext)}")
     }
   }
 
@@ -867,20 +888,24 @@ class DistributionJARsBuilder {
    * @param moduleJars mapping from JAR path relative to 'lib' directory to names of modules
    * @param additionalResources pairs of resources files and corresponding relative output paths
    */
-  private void buildByLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory, MultiValuesMap<String, String> moduleJars,
+  private void processLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory,
+                             ProjectStructureMapping mapping, boolean copyFiles,
+                             MultiValuesMap<String, String> moduleJars,
                              List<Pair<File, String>> additionalResources) {
     def ant = buildContext.ant
     def resourceExcluded = RESOURCES_EXCLUDED
     def resourcesIncluded = RESOURCES_INCLUDED
     def buildContext = buildContext
-    checkModuleExcludes(layout.moduleExcludes)
+    if (copyFiles) {
+      checkModuleExcludes(layout.moduleExcludes)
+    }
     MultiValuesMap<String, String> actualModuleJars = new MultiValuesMap<>(true)
     moduleJars.entrySet().each {
       def modules = it.value
       def jarPath = getActualModuleJarPath(it.key, modules, layout.explicitlySetJarPaths)
       actualModuleJars.putAll(jarPath, modules)
     }
-    layoutBuilder.layout(targetDirectory) {
+    layoutBuilder.process(targetDirectory, mapping, copyFiles) {
       dir("lib") {
         actualModuleJars.entrySet().each {
           def modules = it.value
@@ -908,7 +933,9 @@ class DistributionJARsBuilder {
             }
             layout.projectLibrariesToUnpack.get(jarPath)?.each {
               buildContext.project.libraryCollection.findLibrary(it)?.getFiles(JpsOrderRootType.COMPILED)?.each {
-                ant.zipfileset(src: it.absolutePath)
+                if (copyFiles) {
+                  ant.zipfileset(src: it.absolutePath)
+                }
               }
             }
           }
@@ -968,37 +995,39 @@ class DistributionJARsBuilder {
           }
         }
       }
-      layout.resourcePaths.each {
-        def path = FileUtil.toSystemIndependentName(new File("${basePath(buildContext, it.moduleName)}/$it.resourcePath").absolutePath)
-        if (it.packToZip) {
-          zip(it.relativeOutputPath) {
-            if (new File(path).isFile()) {
-              ant.fileset(file: path)
+      if (copyFiles) {
+        layout.resourcePaths.each {
+          def path = FileUtil.toSystemIndependentName(new File("${basePath(buildContext, it.moduleName)}/$it.resourcePath").absolutePath)
+          if (it.packToZip) {
+            zip(it.relativeOutputPath) {
+              if (new File(path).isFile()) {
+                ant.fileset(file: path)
+              }
+              else {
+                ant.fileset(dir: path)
+              }
             }
-            else {
-              ant.fileset(dir: path)
-            }
-          }
-        }
-        else {
-          dir(it.relativeOutputPath) {
-            if (new File(path).isFile()) {
-              ant.fileset(file: path)
-            }
-            else {
-              ant.fileset(dir: path)
-            }
-          }
-        }
-      }
-      additionalResources.each {
-        File resource = it.first
-        dir(it.second) {
-          if (resource.isFile()) {
-            ant.fileset(file: resource.absolutePath)
           }
           else {
-            ant.fileset(dir: resource.absolutePath)
+            dir(it.relativeOutputPath) {
+              if (new File(path).isFile()) {
+                ant.fileset(file: path)
+              }
+              else {
+                ant.fileset(dir: path)
+              }
+            }
+          }
+        }
+        additionalResources.each {
+          File resource = it.first
+          dir(it.second) {
+            if (resource.isFile()) {
+              ant.fileset(file: resource.absolutePath)
+            }
+            else {
+              ant.fileset(dir: resource.absolutePath)
+            }
           }
         }
       }
