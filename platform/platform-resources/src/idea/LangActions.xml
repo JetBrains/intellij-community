@@ -90,11 +90,11 @@
     </action>
 
     <!-- LightEdit Mode -->
-    <action id="OpenFileInProject" class="com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction"/>
+    <action id="LightEditOpenFileInProject" class="com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction"/>
 
     <group id="LightEditModePopup">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ShowIntentionsGroup"/>
-      <reference id="OpenFileInProject"/>
+      <reference id="LightEditOpenFileInProject"/>
       <separator/>
     </group>
 
