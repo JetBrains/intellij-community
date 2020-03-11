@@ -34,8 +34,8 @@ abstract class BaseLayout {
   final List<ModuleResourceData> resourcePaths = []
   /** module name to entries which should be excluded from its output */
   final MultiValuesMap<String, String> moduleExcludes = new MultiValuesMap<>(true)
-  final List<ProjectLibraryData> includedProjectLibraries = []
-  final List<ModuleLibraryData> includedModuleLibraries = []
+  final LinkedHashSet<ProjectLibraryData> includedProjectLibraries = []
+  final LinkedHashSet<ModuleLibraryData> includedModuleLibraries = []
   /** JAR name -> name of project library which content should be unpacked */
   final MultiValuesMap<String, String> projectLibrariesToUnpack = new MultiValuesMap<>()
   /** module name -> name of JAR (or path relative to 'lib' directory) where localizable resources will be placed*/
