@@ -42,9 +42,9 @@ abstract class WindowsDistributionCustomizer {
   String installerImagesPath
 
   /**
-   * List of file extensions
+   * List of file extensions (without leading dot) which installer will suggest to associate with the product
    */
-  List<FileAssociation> fileAssociations = []
+  List<String> fileAssociations = []
 
   /**
    * Paths to files which will be used to overwrite the standard *.nsi files

@@ -5,8 +5,6 @@ import groovy.transform.CompileStatic
 
 /**
  * File association which installer will associate with the product.
- * Note that users won't be able to switch off some of these associations during installation
- * so include only types of files which users will definitely prefer to open by the product.
  */
 @CompileStatic
 class FileAssociation {
@@ -16,8 +14,9 @@ class FileAssociation {
   final String extension
 
   /**
-   * Custom icon file for association. Example:
-   * "$projectHome/ruby/ideResources/artwork/rubymine.icns"
+   * Custom icon file for association. Product icon will be used by default.
+   * Example: "$projectHome/ruby/ideResources/artwork/rubymine.icns"
+   * Note: used only for MacOS
    */
   final String iconPath
 
