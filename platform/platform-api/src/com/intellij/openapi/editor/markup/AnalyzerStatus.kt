@@ -139,13 +139,13 @@ class AnalyzerStatus(val icon: Icon, title: String, details: String, controllerC
     @JvmStatic
     fun equals(a: AnalyzerStatus?, b: AnalyzerStatus?): Boolean {
       if (a == null && b == null) return true
-      else if (a!= null && b != null) {
+      if (a!= null && b != null) {
         return a.icon == b.icon &&
                a.expandedIcon == b.expandedIcon &&
                a.title == b.title && a.details == b.details &&
                a.showNavigation == b.showNavigation
       }
-      else return false
+      return false
     }
 
     /**

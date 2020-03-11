@@ -1402,7 +1402,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       myEndVisualLine = fitLineToEditor(myVisualLine + myPreviewLines);
       isDirty |= oldStartLine != myStartVisualLine || oldEndLine != myEndVisualLine;
       myHighlighters.addAll(rangeHighlighters);
-      Collections.sort(myHighlighters, (ex1, ex2) -> {
+      myHighlighters.sort((ex1, ex2) -> {
         LogicalPosition startPos1 = myEditor.offsetToLogicalPosition(ex1.getAffectedAreaStartOffset());
         LogicalPosition startPos2 = myEditor.offsetToLogicalPosition(ex2.getAffectedAreaStartOffset());
         if (startPos1.line != startPos2.line) return 0;
@@ -1759,7 +1759,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
 
       List<AnAction> actions = controller.getActions();
-      if (actions.size() > 0) {
+      if (!actions.isEmpty()) {
         ActionButton menuButton = new ActionButton(new MenuAction(actions),
                                                    presentation,
                                                    ActionPlaces.EDITOR_POPUP,
@@ -1785,14 +1785,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
           myProgressBarMap.put(s.getPresentableName(), pb);
         });
 
-        if (myProgressBarMap.size() > 0) {
+        if (!myProgressBarMap.isEmpty()) {
           myContent.add(myProgressPanel,
                         gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
         }
       }
 
       if (StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
-        int topIndent = myProgressBarMap.size() > 0 ? 10 : 0;
+        int topIndent = !myProgressBarMap.isEmpty() ? 10 : 0;
         myContent.add(new JLabel(analyzerStatus.getDetails()),
                       gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().
                         coverLine().weightx(1).insets(topIndent, 10, 10, 6));
@@ -1869,7 +1869,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
-    private MenuAction(@NotNull List<AnAction> actions) {
+    private MenuAction(@NotNull List<? extends AnAction> actions) {
       setPopup(true);
       addAll(actions);
       add(new ToggleAction(EditorBundle.message("iw.show.toolbar")) {
