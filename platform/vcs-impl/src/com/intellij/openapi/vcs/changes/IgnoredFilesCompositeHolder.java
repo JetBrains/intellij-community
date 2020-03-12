@@ -81,7 +81,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
 
   @NotNull
   private static IgnoredFilesHolder getHolderForVcs(@NotNull Project project, AbstractVcs vcs) {
-    for (VcsIgnoredFilesHolder.Provider provider : VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.getExtensionList(project)) {
+    for (VcsIgnoredFilesHolder.Provider provider : VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.getExtensions(project)) {
       if (provider.getVcs().equals(vcs)) return provider.createHolder();
     }
     return new RecursiveFileHolder(project);

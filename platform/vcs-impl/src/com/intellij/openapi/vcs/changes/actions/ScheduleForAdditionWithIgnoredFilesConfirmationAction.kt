@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.actions
 import com.intellij.CommonBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -34,12 +33,6 @@ import kotlin.streams.toList
 
 
 class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditionAction() {
-
-  companion object {
-    private val EP_NAME =
-      ExtensionPointName.create<ScheduleForAdditionActionExtension>("com.intellij.vcs.actions.ScheduleForAdditionActionExtension")
-  }
-
   override fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return false
     if (!getUnversionedFiles(e, project).isEmpty()) return true
@@ -133,7 +126,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
 
   private fun getExtensionFor(project: Project, vcs: AbstractVcs?) =
     if (vcs == null) null
-    else EP_NAME.extensions.find { it.getSupportedVcs(project) == vcs }
+    else ScheduleForAdditionActionExtension.EP_NAME.findFirstSafe { it.getSupportedVcs(project) == vcs }
 }
 
 fun confirmAddFilePaths(project: Project, paths: List<FilePath>,

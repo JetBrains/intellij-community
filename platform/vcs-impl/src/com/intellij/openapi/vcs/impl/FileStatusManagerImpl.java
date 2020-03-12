@@ -91,6 +91,8 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
         startManager.registerPostStartupDumbAwareActivity(() -> fileStatusesChanged());
       }
     }
+
+    FileStatusProvider.EP_NAME.addExtensionPointListener(myProject, () -> fileStatusesChanged(), project);
   }
 
   static final class FileStatusManagerDocumentListener implements FileDocumentManagerListener, DocumentListener {

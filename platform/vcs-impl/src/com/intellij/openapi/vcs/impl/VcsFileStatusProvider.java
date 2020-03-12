@@ -52,6 +52,8 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
         fileStatusesChanged();
       }
     });
+
+    VcsBaseContentProvider.EP_NAME.addExtensionPointListener(myProject, () -> fileStatusesChanged(), myProject);
   }
 
   private void fileStatusesChanged() {

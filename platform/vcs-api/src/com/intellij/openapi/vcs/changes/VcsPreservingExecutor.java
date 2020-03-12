@@ -40,5 +40,6 @@ public interface VcsPreservingExecutor {
       }
     }
     // shouldn't be reachable
+    throw new IllegalStateException();
   }
 }
