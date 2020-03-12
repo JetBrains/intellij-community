@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ListUtil;
@@ -131,6 +132,11 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   @Override
   public boolean checkResetFilter() {
     return myListWithFilter.resetFilter();
+  }
+
+  @Override
+  public void beforeShown(@NotNull LightweightWindowEvent event) {
+    myList.setVisibleRowCount(Math.min(myList.getVisibleRowCount(), myList.getModel().getSize()));
   }
 
   private class MyListWrapper extends JBScrollPane implements DataProvider {

@@ -66,7 +66,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private int myVisibleRowCount = 15;
   private boolean myAutoPackHeightOnFiltering = true;
 
-  public interface PopupComponentAdapter<T> {
+  public interface PopupComponentAdapter<T> extends JBPopupListener {
     JComponent getComponent();
 
     default void setRenderer(ListCellRenderer<? super T> renderer) {}
@@ -367,6 +367,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     }
 
     builder
+      .addListener(myChooserComponent)
       .setDimensionServiceKey(null, myDimensionServiceKey, myUseForXYLocation)
       .setRequestFocus(myRequestFocus)
       .setResizable(myForceResizable)
