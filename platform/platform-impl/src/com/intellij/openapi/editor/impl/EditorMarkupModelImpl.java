@@ -1711,7 +1711,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       IJSwingUtilities.updateComponentTreeUI(myContent);
     }
 
-    private void showPopup(InputEvent event) {
+    private void showPopup(@NotNull InputEvent event) {
       hidePopup();
 
       updateContentPanel(analyzerStatus.getController());
@@ -1743,62 +1743,63 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       List<PassWrapper> passes = analyzerStatus.getPasses();
       Set<String> presentableNames = ContainerUtil.map2Set(passes, p -> p.getPresentableName());
 
-      if (presentableNames.size() > 0 && myProgressBarMap.keySet().equals(presentableNames)) {
+      if (!presentableNames.isEmpty() && myProgressBarMap.keySet().equals(presentableNames)) {
         for (PassWrapper pass : passes) {
           myProgressBarMap.get(pass.getPresentableName()).setValue(pass.toPercent());
         }
+        return;
       }
-      else {
-        myContent.removeAll();
+      myContent.removeAll();
 
-        GridBag gc = new GridBag();
-        myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getTitle())),
-                         gc.nextLine().next().
-                           anchor(GridBagConstraints.LINE_START).
-                           weightx(1).
-                           fillCellHorizontally().
-                           insets(10, 10, 10, 0));
+      GridBag gc = new GridBag();
+      myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getTitle())),
+                       gc.nextLine().next().
+                         anchor(GridBagConstraints.LINE_START).
+                         weightx(1).
+                         fillCellHorizontally().
+                         insets(10, 10, 10, 0));
 
-        Presentation presentation = new Presentation();
-        presentation.setIcon(AllIcons.Actions.More);
-        presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      Presentation presentation = new Presentation();
+      presentation.setIcon(AllIcons.Actions.More);
+      presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
 
-        List<AnAction> actions = controller.getActions();
-        if (!actions.isEmpty()) {
-          ActionButton menuButton = new ActionButton(new MenuAction(actions),
-                                                     presentation,
-                                                     ActionPlaces.EDITOR_POPUP,
-                                                     ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+      List<AnAction> actions = controller.getActions();
+      if (!actions.isEmpty()) {
+        ActionButton menuButton = new ActionButton(new MenuAction(actions),
+                                                   presentation,
+                                                   ActionPlaces.EDITOR_POPUP,
+                                                   ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
 
-          myContent.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
-        }
-
-        myProgressBarMap.clear();
-        JPanel myProgressPanel = new NonOpaquePanel(new GridBagLayout());
-        GridBag progressGC = new GridBag();
-        for (PassWrapper pass : passes) {
-          myProgressPanel.add(new JLabel(pass.getPresentableName() + ": "),
-                              progressGC.nextLine().next().anchor(GridBagConstraints.LINE_START).weightx(0).insets(0, 10, 0, 6));
-
-          JProgressBar pb = new JProgressBar(0, 100);
-          pb.setValue(pass.toPercent());
-          myProgressPanel.add(pb, progressGC.next().anchor(GridBagConstraints.LINE_START).weightx(1).fillCellHorizontally().insets(0, 0, 0, 6));
-          myProgressBarMap.put(pass.getPresentableName(), pb);
-        }
-
-        myContent.add(myProgressPanel, gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
-
-        if (StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
-          int topIndent = !myProgressBarMap.isEmpty() ? 10 : 0;
-          myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getDetails())),
-                        gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().
-                          coverLine().weightx(1).insets(topIndent, 10, 10, 6));
-        }
-
-        myContent.add(createLowerPanel(controller),
-                         gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
-
+        myContent.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
       }
+
+      myProgressBarMap.clear();
+      JPanel myProgressPanel = new NonOpaquePanel(new GridBagLayout());
+      GridBag progressGC = new GridBag();
+      for (PassWrapper pass : passes) {
+        myProgressPanel.add(new JLabel(pass.getPresentableName() + ": "),
+                            progressGC.nextLine().next().anchor(GridBagConstraints.LINE_START).weightx(0).insets(0, 10, 0, 6));
+
+        JProgressBar pb = new JProgressBar(0, 100);
+        pb.setValue(pass.toPercent());
+        myProgressPanel.add(pb, progressGC.next().anchor(GridBagConstraints.LINE_START).weightx(1).fillCellHorizontally().insets(0, 0, 0, 6));
+        myProgressBarMap.put(pass.getPresentableName(), pb);
+      }
+
+      myContent.add(myProgressPanel, gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
+
+      if (!analyzerStatus.getDetails().isEmpty()) {
+        int topIndent = !myProgressBarMap.isEmpty() ? 10 : 0;
+        myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getDetails())),
+                      gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().
+                        coverLine().weightx(1).insets(topIndent, 10, 10, 6));
+      }
+
+      myContent.add(new LinkLabel<>("Open Problems View", null, (__, ___) -> controller.openProblemsView()),
+                    gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1).insets(10, 10, 10, 0));
+      
+      myContent.add(createLowerPanel(controller),
+                    gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
     }
 
     private void updateVisiblePopup() {
@@ -1811,7 +1812,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       }
     }
 
-    private JPanel createLowerPanel(UIController controller) {
+    private @NotNull JPanel createLowerPanel(@NotNull UIController controller) {
       JPanel panel = new JPanel(new GridBagLayout());
       GridBag gc = new GridBag().nextLine();
 
@@ -1853,17 +1854,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       return panel;
     }
 
-    private DropDownLink<InspectionsLevel> createDropDownLink(LanguageHighlightLevel level, UIController controller) {
+    private @NotNull DropDownLink<InspectionsLevel> createDropDownLink(@NotNull LanguageHighlightLevel level, @NotNull UIController controller) {
       return new DropDownLink<>(level.getLevel(),
-                         controller.getAvailableLevels(),
-                         l -> {
-                           controller.setHighLightLevel(level.copy(level.getLanguage(), l));
-                           myContent.revalidate();
+                                controller.getAvailableLevels(),
+                                inspectionsLevel -> {
+                                  controller.setHighLightLevel(level.copy(level.getLanguage(), inspectionsLevel));
+                                  myContent.revalidate();
 
-                           Dimension size = myContent.getPreferredSize();
-                           size.width = Math.max(size.width, JBUIScale.scale(296));
-                           myPopup.setSize(size);
-                         }, true);
+                                  Dimension size = myContent.getPreferredSize();
+                                  size.width = Math.max(size.width, JBUIScale.scale(296));
+                                  myPopup.setSize(size);
+                                }, true);
     }
   }
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
+import org.jetbrains.annotations.PropertyKey
 import java.awt.Container
 import java.util.*
 import javax.swing.Icon
@@ -14,7 +15,7 @@ import kotlin.math.roundToInt
 /**
  * Inspection highlight level with string representations bound to resources for i18n.
  */
-enum class InspectionsLevel(private val bundleKey: String) {
+enum class InspectionsLevel(private @PropertyKey(resourceBundle = EditorBundle.BUNDLE) val bundleKey: String) {
   NONE("iw.level.none"),
   ERRORS("iw.level.errors"),
   ALL("iw.level.all");
@@ -89,6 +90,8 @@ interface UIController {
    * hector panels.
    */
   fun onClosePopup()
+
+  fun openProblemsView() {}
 }
 
 /**
