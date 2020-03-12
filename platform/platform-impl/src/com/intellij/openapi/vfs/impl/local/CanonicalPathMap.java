@@ -95,6 +95,12 @@ final class CanonicalPathMap {
     }
   }
 
+  boolean belongsToWatchRoots(@NotNull String reportedPath, boolean isFile) {
+    return WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, reportedPath)
+           || myOptimizedFlatWatchRoots.contains(reportedPath)
+           || (isFile && myOptimizedFlatWatchRoots.contains(getParentPath(reportedPath)));
+  }
+
   /**
    * Maps reported paths from canonical representation and linked locations to requested paths,
    * then filters out those that do not fall under watched roots.

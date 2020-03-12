@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -21,10 +22,14 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static com.intellij.util.ObjectUtils.doIfNotNull;
+
 public class SymbolicLinkRefresher {
 
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService(
     "File SymbolicLinkRefresher", 1);
+
+  private static final int REFRESH_DELAY = 10;
 
   private final Object myLock = new Object();
   private Set<String> myRefreshQueue = new HashSet<>();
@@ -50,9 +55,9 @@ public class SymbolicLinkRefresher {
 
     Consumer<VirtualFile> queuePath = file -> {
       if (file instanceof VirtualFileSystemEntry) {
-        if (((VirtualFileSystemEntry)file).hasSymlink()) {
-          file = file.getCanonicalFile();
-          if (file != null) {
+        if (((VirtualFileSystemEntry)file).hasSymlink() && !isUnderRecursiveOrCircularSymlink(file)) {
+          file = doIfNotNull(file.getCanonicalPath(), mySystem::findFileByPathIfCached);
+          if (file != null && fileWatcher.belongsToWatchRoots(FileUtil.toSystemDependentName(file.getPath()), !file.isDirectory())) {
             toRefresh.add(file.getPath());
           }
         }
@@ -93,19 +98,29 @@ public class SymbolicLinkRefresher {
     synchronized (myLock) {
       myRefreshQueue.addAll(toRefresh);
       if (myScheduledFuture == null) {
-        myScheduledFuture = myExecutor.schedule(this::addToRefreshQueue, 10, TimeUnit.MILLISECONDS);
+        myScheduledFuture = myExecutor.schedule(this::performRefresh, REFRESH_DELAY, TimeUnit.MILLISECONDS);
       }
     }
   }
 
-  private void addToRefreshQueue() {
+  private void performRefresh() {
     Set<String> toRefresh;
     synchronized (myLock) {
       toRefresh = myRefreshQueue;
       myRefreshQueue = new HashSet<>();
       myScheduledFuture = null;
     }
-    RefreshQueue.getInstance().refresh(true, false, null,
-                                       ContainerUtil.mapNotNull(toRefresh, filePath -> mySystem.findFileByPath(filePath)));
+    List<VirtualFile> files = ContainerUtil.mapNotNull(toRefresh, mySystem::findFileByPath);
+    RefreshQueue.getInstance().refresh(false, false, null, files);
+  }
+
+  private static boolean isUnderRecursiveOrCircularSymlink(VirtualFile file) {
+    if (((VirtualFileSystemEntry)file).hasSymlink()) {
+      while (file != null && !file.is(VFileProperty.SYMLINK)) {
+        file = file.getParent();
+      }
+      return file != null && file.isRecursiveOrCircularSymLink();
+    }
+    return false;
   }
 }

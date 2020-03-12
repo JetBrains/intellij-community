@@ -195,6 +195,10 @@ public final class FileWatcher {
     }
   }
 
+  boolean belongsToWatchRoots(@NotNull String reportedPath, boolean isFile) {
+    return myPathMap.belongsToWatchRoots(reportedPath, isFile);
+  }
+
   @NotNull Collection<String> mapToAllSymlinks(@NotNull @SystemDependent String reportedPath) {
     Collection<String> result = myPathMap.mapToOriginalWatchRoots(reportedPath, true);
     if (!result.isEmpty()) {
