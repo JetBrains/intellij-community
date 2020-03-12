@@ -85,14 +85,14 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
       if (anchor == null) {
         if (rhs == null && !JavaHighlightUtil.isSuperOrThisCall(statement, true, true)) {
           anchor = statement;
-          PsiTreeUtil.processElements(statement, collector);
+          PsiTreeUtil.processElements(statement, PsiReferenceExpression.class, collector);
         }
         else if (statement.getTextRange().contains(parameterReference.getTextRange())) {
           anchor = statement;
         }
       }
       else {
-        PsiTreeUtil.processElements(statement, collector);
+        PsiTreeUtil.processElements(statement, PsiReferenceExpression.class, collector);
       }
     }
     assert anchor != null;

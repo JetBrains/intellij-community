@@ -17,10 +17,7 @@ import com.intellij.psi.search.PsiElementProcessor.FindElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -321,9 +318,9 @@ public class PsiTreeUtil {
                                                                            Class<? extends T> @NotNull ... classes) {
     if (element == null) return ContainerUtil.emptyList();
 
-    CollectElements<T> processor = new CollectElements<T>() {
+    CollectElements<PsiElement> processor = new CollectElements<PsiElement>() {
       @Override
-      public boolean execute(@NotNull T each) {
+      public boolean execute(@NotNull PsiElement each) {
         if (strict && each == element) return true;
         if (instanceOf(each, classes)) {
           return super.execute(each);
@@ -332,7 +329,8 @@ public class PsiTreeUtil {
       }
     };
     processElements(element, processor);
-    return processor.getCollection();
+    //noinspection unchecked
+    return (Collection<T>)processor.getCollection();
   }
 
   /**
@@ -865,12 +863,34 @@ public class PsiTreeUtil {
     return findChildrenOfAnyType(element, false, classes);
   }
 
+  /**
+   * Recursively process children elements that are instances of given class. Root element is processed as well.
+   * @param element root element to process.
+   * @param elementClass the class of elements to process. All other elements are skipped
+   * @param processor processor to consume elements
+   * @param <T> type of elements to process
+   * @return true if processing was not cancelled (processor.execute method returned true for all the elements)
+   */
+  @Contract("null, _, _ -> true")
+  public static <T extends PsiElement> boolean processElements(@Nullable PsiElement element, @NotNull Class<T> elementClass, @NotNull PsiElementProcessor<? super T> processor) {
+    if (element == null) return true;
+    return processElements(element, e -> {
+      T t = ObjectUtils.tryCast(e, elementClass);
+      return t == null || processor.execute(t);
+    });
+  }
+
+  /**
+   * Recursively process children elements, including the root element
+   * @param element root element to process
+   * @param processor processor to consume elements
+   * @return true if processing was not cancelled (processor.execute method returned true for all the elements)
+   */
   @Contract("null, _ -> true")
-  public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor processor) {
+  public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor<PsiElement> processor) {
     if (element == null) return true;
     if (element instanceof PsiCompiledElement || !element.isPhysical()) {
       // DummyHolders cannot be visited by walking visitors because children/parent relationship is broken there
-      //noinspection unchecked
       if (!processor.execute(element)) return false;
       for (PsiElement child : element.getChildren()) {
         if (!processElements(child, processor)) return false;
@@ -881,7 +901,6 @@ public class PsiTreeUtil {
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        //noinspection unchecked
         if (processor.execute(element)) {
           super.visitElement(element);
         }
@@ -895,7 +914,7 @@ public class PsiTreeUtil {
     return result[0];
   }
 
-  public static boolean processElements(@NotNull PsiElementProcessor processor, PsiElement @Nullable ... elements) {
+  public static boolean processElements(@NotNull PsiElementProcessor<PsiElement> processor, PsiElement @Nullable ... elements) {
     if (elements == null || elements.length == 0) return true;
     for (PsiElement element : elements) {
       if (!processElements(element, processor)) return false;

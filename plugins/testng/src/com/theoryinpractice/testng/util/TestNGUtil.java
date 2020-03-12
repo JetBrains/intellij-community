@@ -389,7 +389,7 @@ public class TestNGUtil {
       }
       return false;
     });
-    PsiTreeUtil.processElements(element, processor);
+    PsiTreeUtil.processElements(element, PsiAnnotation.class, processor);
     return processor.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 

@@ -23,9 +23,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -38,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -161,10 +160,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
   }
 
   private static boolean isDefaultNeededForInitializationOfVariable(PsiSwitchBlock switchBlock) {
-    final SmartList<PsiReferenceExpression> expressions = new SmartList<>();
-    final PsiElementProcessor.CollectFilteredElements<PsiReferenceExpression> collector =
-      new PsiElementProcessor.CollectFilteredElements<>(e -> e instanceof PsiReferenceExpression, expressions);
-    PsiTreeUtil.processElements(switchBlock, collector);
+    Collection<PsiReferenceExpression> expressions = PsiTreeUtil.findChildrenOfType(switchBlock, PsiReferenceExpression.class);
     final Set<PsiElement> checked = new THashSet<>();
     for (PsiReferenceExpression expression : expressions) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);

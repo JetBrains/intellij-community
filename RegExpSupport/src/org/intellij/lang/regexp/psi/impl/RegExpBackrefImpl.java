@@ -70,7 +70,7 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
             return resolveRelativeGroup(Math.abs(index));
         }
 
-        final PsiElementProcessor.FindFilteredElement<RegExpElement> processor =
+        final PsiElementProcessor.FindFilteredElement<PsiElement> processor =
           new PsiElementProcessor.FindFilteredElement<>(new PsiElementFilter() {
             int groupCount;
 
@@ -94,11 +94,11 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
 
     @Nullable
     private RegExpGroup resolveRelativeGroup(int index) {
-        PsiElementProcessor.CollectFilteredElements<RegExpElement> processor =
+        PsiElementProcessor.CollectFilteredElements<PsiElement> processor =
           new PsiElementProcessor.CollectFilteredElements<>(
             element -> element instanceof RegExpGroup && ((RegExpGroup)element).isCapturing());
         PsiTreeUtil.processElements(getContainingFile(), processor);
-        SmartList<RegExpElement> elements = new SmartList<>(processor.getCollection());
+        SmartList<PsiElement> elements = new SmartList<>(processor.getCollection());
         return index <= elements.size() ? (RegExpGroup)elements.get(elements.size() - index) : null;
     }
 

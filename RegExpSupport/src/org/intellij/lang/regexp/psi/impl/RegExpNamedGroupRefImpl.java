@@ -37,7 +37,7 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
   @Override
   @Nullable
   public RegExpGroup resolve() {
-    final PsiElementProcessor.FindFilteredElement<RegExpGroup> processor = new PsiElementProcessor.FindFilteredElement<>(
+    final PsiElementProcessor.FindFilteredElement<PsiElement> processor = new PsiElementProcessor.FindFilteredElement<>(
       element -> {
         if (!(element instanceof RegExpGroup)) {
           return false;
@@ -47,7 +47,7 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
       }
     );
     PsiTreeUtil.processElements(getContainingFile(), processor);
-    return processor.getFoundElement();
+    return (RegExpGroup)processor.getFoundElement();
   }
 
   @Override
@@ -122,7 +122,7 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
 
       @Override
       public Object @NotNull [] getVariants() {
-        final PsiElementProcessor.CollectFilteredElements<RegExpGroup> processor = new PsiElementProcessor.CollectFilteredElements<>(
+        final PsiElementProcessor.CollectFilteredElements<PsiElement> processor = new PsiElementProcessor.CollectFilteredElements<>(
           e -> e instanceof RegExpGroup && ((RegExpGroup)e).isAnyNamedGroup()
         );
         PsiTreeUtil.processElements(getContainingFile(), processor);
