@@ -135,7 +135,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
    */
   private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?) {
     if (indicator != null) {
-      checkCanceledIfNotInClassInit(indicator)
+      checkCanceledIfNotInClassInit()
     }
 
     if (componentManager.isDisposed) {
