@@ -8,6 +8,7 @@ import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentWithPendingReview
@@ -36,6 +37,39 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
       SimpleGHGQLPagesLoader(requestExecutor, { p ->
         GHGQLRequests.PullRequest.reviewThreads(repository, pullRequestId.number, p)
       }).loadAll(it)
+    }
+
+  override fun createReview(progressIndicator: ProgressIndicator,
+                            pullRequestId: GHPRIdentifier,
+                            event: GHPullRequestReviewEvent,
+                            body: String?): CompletableFuture<out Any?> =
+    progressManager.submitIOTask(progressIndicator) {
+      val review = requestExecutor.execute(progressIndicator,
+                                           GHGQLRequests.PullRequest.Review.create(repository.serverPath, pullRequestId.id, event, body))
+      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequestId)
+      review
+    }
+
+  override fun submitReview(progressIndicator: ProgressIndicator,
+                            pullRequestId: GHPRIdentifier,
+                            reviewId: String,
+                            event: GHPullRequestReviewEvent,
+                            body: String?): CompletableFuture<out Any?> =
+    progressManager.submitIOTask(progressIndicator) {
+      val review = requestExecutor.execute(progressIndicator,
+                                           GHGQLRequests.PullRequest.Review.submit(repository.serverPath, reviewId, event, body))
+      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequestId)
+      review
+    }
+
+  override fun deleteReview(progressIndicator: ProgressIndicator,
+                            pullRequestId: GHPRIdentifier,
+                            reviewId: String): CompletableFuture<out Any?> =
+    progressManager.submitIOTask(progressIndicator) {
+      val review = requestExecutor.execute(progressIndicator,
+                                           GHGQLRequests.PullRequest.Review.delete(repository.serverPath, reviewId))
+      messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequestId)
+      review
     }
 
   override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String> {

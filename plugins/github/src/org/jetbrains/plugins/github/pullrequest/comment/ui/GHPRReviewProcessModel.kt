@@ -5,7 +5,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingRev
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 
 interface GHPRReviewProcessModel {
-  val pendingReviewId: String?
+  val pendingReview: GHPullRequestPendingReview?
   val isActual: Boolean
 
   fun populatePendingReviewData(review: GHPullRequestPendingReview?)

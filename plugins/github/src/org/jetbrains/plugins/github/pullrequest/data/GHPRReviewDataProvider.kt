@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
@@ -23,6 +24,13 @@ interface GHPRReviewDataProvider {
 
   @CalledInAwt
   fun resetReviewThreads()
+
+  @CalledInAny
+  fun submitReview(progressIndicator: ProgressIndicator, reviewId: String?, event: GHPullRequestReviewEvent, body: String? = null)
+    : CompletableFuture<out Any?>
+
+  @CalledInAny
+  fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?>
 
   @CalledInAny
   fun canComment(): Boolean

@@ -27,5 +27,7 @@ class GHPRFixedActionDataContext internal constructor(private val delegate: GHPR
   override val pullRequestDetails = details
   override val pullRequestDataProvider = dataProvider
 
+  override val submitReviewCommentDocument = delegate.submitReviewCommentDocument
+
   override fun resetAllData() = delegate.resetAllData()
 }

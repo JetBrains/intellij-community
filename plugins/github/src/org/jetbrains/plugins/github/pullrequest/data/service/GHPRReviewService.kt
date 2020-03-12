@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAny
+import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
@@ -22,6 +23,22 @@ interface GHPRReviewService {
   @CalledInAny
   fun loadReviewThreads(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier)
     : CompletableFuture<List<GHPullRequestReviewThread>>
+
+  @CalledInAny
+  fun createReview(progressIndicator: ProgressIndicator,
+                   pullRequestId: GHPRIdentifier,
+                   event: GHPullRequestReviewEvent,
+                   body: String?): CompletableFuture<out Any?>
+
+  @CalledInAny
+  fun submitReview(progressIndicator: ProgressIndicator,
+                   pullRequestId: GHPRIdentifier,
+                   reviewId: String,
+                   event: GHPullRequestReviewEvent,
+                   body: String?): CompletableFuture<out Any?>
+
+  @CalledInAny
+  fun deleteReview(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, reviewId: String): CompletableFuture<out Any?>
 
   @CalledInAny
   fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String>

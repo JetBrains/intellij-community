@@ -10,20 +10,22 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ComponentUtil
+import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JComponent
 
-abstract class JButtonAction(text: String) : DumbAwareAction(text), CustomComponentAction {
+abstract class JButtonAction(text: String?, description: String? = null, icon: Icon? = null)
+  : DumbAwareAction(text, description, icon), CustomComponentAction {
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val button = JButton().apply {
+    val button = createButton().apply {
       isFocusable = false
     }.also { button ->
       button.addActionListener {
         val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, button)
         val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(button)
         val action = this@JButtonAction
-        val event = AnActionEvent.createFromAnAction(action, null, place, dataContext)
+        val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
 
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
           ActionUtil.performActionDumbAware(action, event)
@@ -39,12 +41,14 @@ abstract class JButtonAction(text: String) : DumbAwareAction(text), CustomCompon
     return JBUI.Panels.simplePanel(button).withBorder(border)
   }
 
+  protected open fun createButton(): JButton = JButton()
+
   protected fun updateButtonFromPresentation(e: AnActionEvent) {
     val button = UIUtil.findComponentOfType(e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), JButton::class.java)
     if (button != null) updateButtonFromPresentation(button, e.presentation)
   }
 
-  private fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
+  protected open fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
     button.isEnabled = presentation.isEnabled
     button.isVisible = presentation.isVisible
     button.text = presentation.text

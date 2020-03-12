@@ -9,19 +9,19 @@ class GHPRReviewProcessModelImpl : GHPRReviewProcessModel {
 
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
-  override var pendingReviewId: String? = null
+  override var pendingReview: GHPullRequestPendingReview? = null
     private set
   override var isActual: Boolean = false
     private set
 
   override fun populatePendingReviewData(review: GHPullRequestPendingReview?) {
-    pendingReviewId = review?.id
+    pendingReview = review
     isActual = true
     changeEventDispatcher.multicaster.eventOccurred()
   }
 
   override fun clearPendingReviewData() {
-    pendingReviewId = null
+    pendingReview = null
     isActual = false
     changeEventDispatcher.multicaster.eventOccurred()
   }

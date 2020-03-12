@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.api
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
 import org.jetbrains.plugins.github.api.data.GHConnection
 import org.jetbrains.plugins.github.api.data.GHNodes
+import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermission
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPageInfo
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPagedRequestResponse
@@ -136,6 +137,25 @@ object GHGQLRequests {
     }
 
     object Review {
+
+      fun create(server: GithubServerPath, pullRequestId: String, event: GHPullRequestReviewEvent, body: String?): GQLQuery<Any> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.createReview,
+                                 mapOf("pullRequestId" to pullRequestId,
+                                       "event" to event,
+                                       "body" to body),
+                                 Any::class.java)
+
+      fun submit(server: GithubServerPath, reviewId: String, event: GHPullRequestReviewEvent, body: String?): GQLQuery<Any> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.submitReview,
+                                 mapOf("reviewId" to reviewId,
+                                       "event" to event,
+                                       "body" to body),
+                                 Any::class.java)
+
+      fun delete(server: GithubServerPath, reviewId: String): GQLQuery<Any> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.deleteReview,
+                                 mapOf("reviewId" to reviewId),
+                                 Any::class.java)
 
       fun pendingReviews(server: GithubServerPath, pullRequestId: String): GQLQuery<GHNodes<GHPullRequestPendingReview>> {
         return GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.pendingReview,

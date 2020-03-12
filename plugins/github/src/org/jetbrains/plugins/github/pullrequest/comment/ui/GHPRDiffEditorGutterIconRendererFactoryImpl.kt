@@ -29,7 +29,7 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
 
     private val reviewProcessListener = object : SimpleEventListener {
       override fun eventOccurred() {
-        reviewState = ReviewState(reviewProcessModel.isActual, reviewProcessModel.pendingReviewId)
+        reviewState = ReviewState(reviewProcessModel.isActual, reviewProcessModel.pendingReview?.id)
       }
     }
 
