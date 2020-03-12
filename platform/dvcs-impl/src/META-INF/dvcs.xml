@@ -54,15 +54,16 @@
     </action>
 
   </actions>
+
   <project-components>
     <component>
       <implementation-class>com.intellij.dvcs.repo.VcsRepositoryManager</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.dvcs.shelf.ShelfViewUpdater</implementation-class>
-      <headless-implementation-class/>
-    </component>
   </project-components>
+
+  <projectListeners>
+    <listener class="com.intellij.dvcs.shelf.ShelfViewUpdater" topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+  </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.dvcs.push.PushSettings"/>
