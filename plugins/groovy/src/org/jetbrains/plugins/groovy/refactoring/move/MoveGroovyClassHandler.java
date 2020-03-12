@@ -225,26 +225,30 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
 
   @Override
   public void preprocessUsages(Collection<UsageInfo> results) {
-    //remove all alias-imported usages from collection
+    removeAllAliasImportedUsages(results);
+  }
+
+  /**
+   * Remove all alias-imported Groovy usages from collection
+   * @param results
+   */
+  static void removeAllAliasImportedUsages(Collection<UsageInfo> results) {
     for (Iterator<UsageInfo> iterator = results.iterator(); iterator.hasNext(); ) {
       UsageInfo info = iterator.next();
-      if (info == null) {
-        LOG.debug("info==null");
-        continue;
-      }
+      if (info == null) continue;
+
       final PsiReference ref = info.getReference();
-      if (ref==null) continue;
+      if (ref == null) continue;
 
       final PsiElement element = ref.getElement();
       if (!(element instanceof GrReferenceElement)) continue;
 
       final GroovyResolveResult resolveResult = ((GrReferenceElement)element).advancedResolve();
       final PsiElement context = resolveResult.getCurrentFileResolveContext();
-      if (!(context instanceof GrImportStatement)) continue;
 
-      if (!((GrImportStatement)context).isAliasedImport()) continue;
-
-      iterator.remove();
+      if ((context instanceof GrImportStatement) && ((GrImportStatement)context).isAliasedImport()) {
+        iterator.remove();
+      }
     }
   }
 

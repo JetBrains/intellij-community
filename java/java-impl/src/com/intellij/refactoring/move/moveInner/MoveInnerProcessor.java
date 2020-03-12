@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -119,7 +120,21 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     }
     MoveClassesOrPackagesUtil.findNonCodeUsages(myInnerClass, myRefactoringScope, mySearchInComments, mySearchInNonJavaFiles,
                                                 newQName, usageInfos);
+    preprocessUsages(usageInfos);
     return usageInfos.toArray(UsageInfo.EMPTY_ARRAY);
+  }
+
+  private void preprocessUsages(ArrayList<UsageInfo> results) {
+    Set<Language> languages = new HashSet<>();
+    for (UsageInfo result : results) {
+      languages.add(result.getElement().getLanguage());
+    }
+    for (Language language : languages) {
+      List<MoveInnerHandler> handlers = MoveInnerHandler.EP_NAME.allForLanguage(language);
+      for (MoveInnerHandler handler : handlers) {
+        handler.preprocessUsages(results);
+      }
+    }
   }
 
   @Override
