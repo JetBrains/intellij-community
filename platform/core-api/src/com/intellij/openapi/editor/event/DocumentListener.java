@@ -12,7 +12,7 @@ import java.util.EventListener;
  * Allows to receive notifications about changes in edited documents.
  * Implementations shouldn't modify the document, for which event is emitted, in listener methods.
  * <p>
- * Consider using {@link BulkAwareDocumentListener} instead of this interface to improve performance.
+ * Implement {@link BulkAwareDocumentListener.Simple} instead of this interface whenever possible to improve performance.
  *
  * @see Document#addDocumentListener(DocumentListener)
  * @see Document#addDocumentListener(DocumentListener, Disposable)
