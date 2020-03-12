@@ -4730,7 +4730,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         PsiFile editorFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(getDocument());
         if (editorFile != event.getPsiFile()) return;
       }
-      reinitSettings(false);
+      int oldTabSize = EditorUtil.getTabSize(this);
+      mySettings.reinitSettings();
+      int newTabSize = EditorUtil.getTabSize(this);
+      if (oldTabSize != newTabSize) {
+        reinitSettings(false);
+      }
     }
   }
 
