@@ -15,7 +15,7 @@ internal class ClassProblemsTest: ProjectProblemsViewTest() {
     psiClass.modifierList?.setModifierProperty(PsiModifier.FINAL, true)
   }
 
-  fun testChangeModifier() = doClassTest { psiClass, _ ->
+  fun testMakeClassPackagePrivate() = doClassTest { psiClass, _ ->
     psiClass.modifierList?.setModifierProperty(PsiModifier.PUBLIC, false)
   }
 

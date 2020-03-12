@@ -15,8 +15,13 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
     field.typeElement?.replace(factory.createTypeElementFromText(CommonClassNames.JAVA_LANG_INTEGER, null))
   }
 
-  fun testChangeFieldAccessModifier() = doFieldTest { psiField, _ ->
+  fun testMakeFieldPackagePrivate() = doFieldTest { psiField, _ ->
     psiField.modifierList?.setModifierProperty(PsiModifier.PUBLIC, false)
+  }
+
+  fun testMakeFieldPrivate() = doFieldTest { psiField, _ ->
+    psiField.modifierList?.setModifierProperty(PsiModifier.PUBLIC, false)
+    psiField.modifierList?.setModifierProperty(PsiModifier.PRIVATE, true)
   }
 
   fun testMakeFieldNonStatic() = doFieldTest { psiField, _ ->

@@ -83,6 +83,11 @@ internal class SnapshotUpdater(project: Project, private val prevSnapshot: Snaps
       publicApi(psiFile).forEach { it.accept(updater) }
       val snapshot = updater.snapshot
       val changes = updater.changes
+      for ((memberPointer, prevMember) in prevSnapshot) {
+        if (memberPointer in snapshot) continue
+        val member = memberPointer.element ?: continue
+        changes[member] = prevMember
+      }
       return ChangeSet(snapshot, changes)
     }
 
@@ -95,24 +100,14 @@ internal class SnapshotUpdater(project: Project, private val prevSnapshot: Snaps
       val oldFile = parseFile(project, oldContent) ?: return null
       val publicMembers = constructMembers(psiFile) { !it.hasModifier(PsiModifier.PRIVATE) }
       val oldPsiMembers = publicApi(oldFile)
-      val snapshot: MutableMap<SmartPsiElementPointer<PsiMember>, ScopedMember> = mutableMapOf()
-      val removedMembers = constructSnapshot(project, scope, publicMembers, oldPsiMembers, snapshot)
-      val changes = mutableMapOf<PsiMember, ScopedMember?>()
+      val prevSnapshot: MutableMap<SmartPsiElementPointer<PsiMember>, ScopedMember> = mutableMapOf()
+      val removedMembers = constructSnapshot(project, scope, publicMembers, oldPsiMembers, prevSnapshot)
       if (removedMembers.size == 1) {
         val removedMember = removedMembers[0]
-        val replacement = findReplacement(project, removedMember, publicMembers, psiFile, snapshot)
-        if (replacement != null) {
-          changes[replacement] = removedMember
-          collectRelatedChanges(replacement, removedMember, changes)
-        }
+        val replacement = findReplacement(removedMember, publicMembers, psiFile)
+        if (replacement != null) prevSnapshot[SmartPointerManager.createPointer(replacement)] = removedMember
       }
-      val pointerManager = SmartPointerManager.getInstance(project)
-      for ((member, psiMember) in publicMembers) {
-        changes.putIfAbsent(psiMember, null)
-        val memberPointer = pointerManager.createSmartPsiElementPointer(psiMember)
-        snapshot[memberPointer] = member
-      }
-      return ChangeSet(snapshot, changes)
+      return update(psiFile, prevSnapshot)
     }
 
     private fun constructSnapshot(project: Project,
@@ -135,19 +130,10 @@ internal class SnapshotUpdater(project: Project, private val prevSnapshot: Snaps
       return removedMembers
     }
 
-    private fun findReplacement(project: Project,
-                                removedMember: ScopedMember,
-                                publicMembers: MutableMap<ScopedMember, PsiMember>,
-                                psiFile: PsiClassOwner,
-                                snapshot: MutableMap<SmartPsiElementPointer<PsiMember>, ScopedMember>): PsiMember? {
-      if (publicMembers.size == 1) {
-        val psiMember = publicMembers.entries.first().value
-        publicMembers.clear()
-        val memberPointer = SmartPointerManager.getInstance(project)
-        val member = ScopedMember.create(psiMember) ?: return null
-        snapshot[memberPointer.createSmartPsiElementPointer(psiMember)] = member
-        return psiMember
-      }
+    private fun findReplacement(removedMember: ScopedMember,
+                                publicMembers: MutableMap<ScopedMember,
+                                  PsiMember>, psiFile: PsiClassOwner): PsiMember? {
+      if (publicMembers.size == 1) return publicMembers.entries.first().value
       val removedPrivate = removedMember.asPrivate()
       val privateMembers = constructMembers(psiFile) { it.hasModifier(PsiModifier.PRIVATE) }
       return privateMembers[removedPrivate]

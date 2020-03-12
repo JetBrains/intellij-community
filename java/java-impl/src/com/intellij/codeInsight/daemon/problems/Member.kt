@@ -16,6 +16,10 @@ internal class ScopedMember(val member: Member, val scope: SearchScope) {
 
   override fun hashCode(): Int = member.hashCode()
 
+  override fun toString(): String {
+    return "ScopedMember(member=$member, scope=$scope)"
+  }
+
   companion object {
     internal fun create(psiMember: PsiMember, scope: SearchScope = psiMember.useScope): ScopedMember? {
       val member = Member.create(psiMember) ?: return null

@@ -14,8 +14,13 @@ internal class MethodProblemsTest: ProjectProblemsViewTest() {
     method.returnTypeElement?.replace(factory.createTypeElement(PsiPrimitiveType.BOOLEAN))
   }
 
-  fun testChangeVisibility() = doMethodTest { method, _ ->
+  fun testMakeMethodPackagePrivate() = doMethodTest { method, _ ->
     method.modifierList.setModifierProperty(PsiModifier.PUBLIC, false)
+  }
+
+  fun testMakeMethodPrivate() = doMethodTest {method, _ ->
+    method.modifierList.setModifierProperty(PsiModifier.PUBLIC, false)
+    method.modifierList.setModifierProperty(PsiModifier.PRIVATE, true)
   }
 
   fun testRemoveParameter() = doMethodTest { method, _ ->
