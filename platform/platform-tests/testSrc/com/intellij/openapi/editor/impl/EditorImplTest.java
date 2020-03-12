@@ -636,4 +636,12 @@ public class EditorImplTest extends AbstractEditorTest {
     assertEquals(new LogicalPosition(0, 3), caret.getLogicalPosition());
     assertEquals(new VisualPosition(0, 2), caret.getVisualPosition());
   }
+
+  public void testDragStartingAtBlockInlay() {
+    initText("abc<caret>");
+    addBlockInlay(0, true, 10);
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
+    mouse().pressAtXY(0, 0).dragToXY(0, getEditor().getLineHeight()).release();
+    checkResultByText("abc<caret>");
+  }
 }
