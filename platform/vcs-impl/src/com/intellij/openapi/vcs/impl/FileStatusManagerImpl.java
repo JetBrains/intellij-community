@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
@@ -21,7 +20,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -47,14 +45,6 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   private final Project myProject;
   private final List<FileStatusListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final FileStatusProvider myFileStatusProvider;
-
-  private final NotNullLazyValue<ExtensionPointImpl<FileStatusProvider>> myExtensionPoint = new NotNullLazyValue<ExtensionPointImpl<FileStatusProvider>>() {
-    @NotNull
-    @Override
-    protected ExtensionPointImpl<FileStatusProvider> compute() {
-      return (ExtensionPointImpl<FileStatusProvider>)FileStatusProvider.EP_NAME.getPoint(myProject);
-    }
-  };
 
   private static class FileStatusNull implements FileStatus {
     private static final FileStatus INSTANCE = new FileStatusNull();
@@ -148,7 +138,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   }
 
   public FileStatus calcStatus(@NotNull final VirtualFile virtualFile) {
-    for (FileStatusProvider extension : myExtensionPoint.getValue()) {
+    for (FileStatusProvider extension : FileStatusProvider.EP_NAME.getExtensions(myProject)) {
       final FileStatus status = extension.getFileStatus(virtualFile);
       if (status != null) {
         if (LOG.isDebugEnabled()) {

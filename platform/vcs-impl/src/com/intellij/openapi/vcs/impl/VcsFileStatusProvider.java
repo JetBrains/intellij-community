@@ -6,7 +6,6 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
@@ -27,7 +26,6 @@ import java.nio.charset.Charset;
 @Service
 public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContentProvider {
   private final Project myProject;
-  private final ExtensionPointImpl<VcsBaseContentProvider> myAdditionalProviderPoint;
 
   private static final Logger LOG = Logger.getInstance(VcsFileStatusProvider.class);
 
@@ -37,7 +35,6 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
 
   VcsFileStatusProvider(@NotNull Project project) {
     myProject = project;
-    myAdditionalProviderPoint = (ExtensionPointImpl<VcsBaseContentProvider>)VcsBaseContentProvider.EP_NAME.getPoint(project);
 
     project.getMessageBus().connect().subscribe(ChangeListListener.TOPIC, new ChangeListAdapter() {
       @Override
@@ -167,16 +164,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
 
   @Nullable
   private VcsBaseContentProvider findProviderFor(@NotNull VirtualFile file) {
-    for (VcsBaseContentProvider support : myAdditionalProviderPoint) {
-      if (support == null) {
-        break;
-      }
-
-      if (support.isSupported(file)) {
-        return support;
-      }
-    }
-    return null;
+    return VcsBaseContentProvider.EP_NAME.findFirstSafe(myProject, it -> it.isSupported(file));
   }
 
   @Override
