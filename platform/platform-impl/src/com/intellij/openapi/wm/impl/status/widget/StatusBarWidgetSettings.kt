@@ -6,7 +6,8 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 
 @Service
 @State(name = "StatusBar", storages = [
-  Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED)
+  Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED, deprecated = true),
+  Storage(value = "ide.general.xml")
 ])
 class StatusBarWidgetSettings : SimplePersistentStateComponent<StatusBarState>(StatusBarState()) {
   fun isEnabled(factory: StatusBarWidgetFactory): Boolean {
