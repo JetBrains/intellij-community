@@ -50,7 +50,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   }
 
   @NotNull
-  protected Map<String, EntryInfo> buildEntryMapForZipFile(ZipFile zip) {
+  protected Map<String, EntryInfo> buildEntryMapForZipFile(@NotNull ZipFile zip) {
     Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
     map.put("", createRootEntry());
 
@@ -80,6 +80,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     EntryInfo info = map.get(entryName);
     if (info != null) return info;
 
+    entryName = StringUtil.trimStart(entryName, "/");
     Trinity<String, String, String> path = splitPathAndFix(entryName);
     EntryInfo parentInfo = getOrCreate(path.first, map, zip);
     if (".".equals(path.second)) {
