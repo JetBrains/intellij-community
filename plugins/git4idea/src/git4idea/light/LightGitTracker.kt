@@ -55,6 +55,10 @@ class LightGitTracker : Disposable {
     highlighterManager = LightGitEditorHighlighterManager(this)
 
     singleTaskController.request(Request.CheckGit)
+    runInEdt(this) {
+      sendRequests(locationRequest(lightEditService.selectedFile),
+                   statusRequest(lightEditorManager.openFiles))
+    }
   }
 
   fun getFileStatus(file: VirtualFile): GitFileStatus {
