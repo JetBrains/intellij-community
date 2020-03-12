@@ -394,6 +394,10 @@
     </action>
     <action id="UpdateIdeFromSourcesSettings" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesSettingsAction"/>
 
+    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
+
     <!-- Theme Toolbar -->
     <group id="DevKit.ThemeEditorToolbar">
       <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" icon="AllIcons.Actions.Execute"/>
