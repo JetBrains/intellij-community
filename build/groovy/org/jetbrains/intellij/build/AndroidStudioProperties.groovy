@@ -355,6 +355,11 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       fileset(dir: "$root/bazel-bin/tools/base/deploy/installer/android-installer")
     }
 
+    // Asset Studio
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources/images") {
+      fileset(dir: "$root/tools/adt/idea/android/resources/images")
+    }
+
     // Native debugger.
     buildContext.ant.copy(todir: "$targetDirectory/bin/lldb") {
       fileset(dir: "$root/prebuilts/tools/common/lldb")
