@@ -12,14 +12,21 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
 
   override val id: String = thread.id
   override val createdAt = thread.createdAt
-  override val state = thread.state
+  override var state = thread.state
+    private set
   override val filePath = thread.path
   override val diffHunk = thread.diffHunk
   override val firstCommentDatabaseId = thread.firstCommentDatabaseId
 
   private val deletionEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
+  private val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   override fun update(thread: GHPullRequestReviewThread) {
+    if (state != thread.state) {
+      state = thread.state
+      stateEventDispatcher.multicaster.eventOccurred()
+    }
+
     var removed = 0
     for (i in 0 until items.size) {
       val idx = i - removed
@@ -59,6 +66,8 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   }
 
   override fun addDeletionListener(listener: () -> Unit) = SimpleEventListener.addListener(deletionEventDispatcher, listener)
+
+  override fun addStateChangeListener(listener: () -> Unit) = SimpleEventListener.addListener(stateEventDispatcher, listener)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

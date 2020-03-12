@@ -44,17 +44,33 @@ object GHPRReviewThreadComponent {
     panel.add(
       GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(thread, reviewDataProvider, avatarIconsProvider)))
 
-    if (reviewDataProvider.canComment() && thread.state != GHPullRequestReviewCommentState.PENDING) {
-      panel.add(createThreadActionsPanel(avatarIconsProvider, currentUser) { text ->
+    var pending = thread.state == GHPullRequestReviewCommentState.PENDING
+    if (!pending) getThreadActionsComponent(reviewDataProvider, thread, avatarIconsProvider, currentUser)?.let { panel.add(it) }
+    thread.addStateChangeListener {
+      if (pending && thread.state != GHPullRequestReviewCommentState.PENDING) {
+        getThreadActionsComponent(reviewDataProvider, thread, avatarIconsProvider, currentUser)?.let { panel.add(it) }
+      }
+      pending = thread.state == GHPullRequestReviewCommentState.PENDING
+    }
+
+    return panel
+  }
+
+  private fun getThreadActionsComponent(reviewDataProvider: GHPRReviewDataProvider,
+                                        thread: GHPRReviewThreadModel,
+                                        avatarIconsProvider: GHAvatarIconsProvider,
+                                        currentUser: GHUser): JComponent? {
+    if (reviewDataProvider.canComment()) {
+      return createThreadActionsPanel(avatarIconsProvider, currentUser) { text ->
         reviewDataProvider.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
           thread.addComment(
             GHPRReviewCommentModel(it.nodeId, GHPullRequestReviewCommentState.SUBMITTED, it.createdAt, it.bodyHtml, it.user.login,
                                    it.user.htmlUrl, it.user.avatarUrl,
                                    true, true))
         }
-      })
+      }
     }
-    return panel
+    return null
   }
 
   private fun createThreadActionsPanel(avatarIconsProvider: GHAvatarIconsProvider, author: GHUser,
