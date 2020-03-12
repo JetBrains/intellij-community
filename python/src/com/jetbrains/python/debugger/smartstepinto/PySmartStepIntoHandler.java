@@ -6,10 +6,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -18,9 +20,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyStackFrame;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStatement;
-import com.jetbrains.python.psi.PyStatementPart;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -81,37 +81,89 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
   private @NotNull List<PySmartStepIntoVariant> removePossiblyUnreachableVariants(@NotNull Document document, int line,
                                                                                   @NotNull List<Pair<String, Boolean>> variantsFromPython,
                                                                                   @NotNull PySmartStepIntoContext context) {
-    PsiElement statement = findLineTopStatement(document, line);
-    if (statement == null) return Collections.emptyList();
+    PsiElement expression = findSmartStepIntoBaseExpression(document, line);
+    if (expression == null) return Collections.emptyList();
 
     List<PySmartStepIntoVariant> result = Lists.newArrayList();
 
     // We are going to filter the variants that PyCharm cannot resolve to be sure we don't suggest stepping into a native function.
-    statement.acceptChildren(new PySmartStepIntoVariantVisitor(result, variantsFromPython, context));
+    expression.accept(new PySmartStepIntoVariantVisitor(result, variantsFromPython, context));
 
     return result;
   }
 
+  /**
+   * Find an expression within which we are going to search for smart step into variants.
+   *
+   * Note, that expressions can span multiple lines, e.g. for parenthesized expressions or argument lists.
+   */
   @Nullable
-  public PsiElement findLineTopStatement(@NotNull Document document, int line) {
-    int offset = DocumentUtil.getFirstNonSpaceCharOffset(document, line);
+  private PsiElement findSmartStepIntoBaseExpression(@NotNull Document document, int line) {
     PsiFile file = PsiDocumentManager.getInstance(mySession.getProject()).getPsiFile(document);
     if (file == null) return null;
-    PsiElement element = file.findElementAt(offset);
-    int lineEndOffset = document.getLineEndOffset(line);
 
-    while (element != null) {
-      if ((element instanceof PyFunction) && (element.getStartOffsetInParent() < lineEndOffset)) {
-        // A decorated function. We allowing stepping into decorators.
-        return element;
-      }
-      if (element.getTextOffset() < lineEndOffset) {
-        if (element instanceof PyStatement || element instanceof PyStatementPart)
-          return element;
-      }
-      element = element.getParent();
+    PsiElement element = file.findElementAt(DocumentUtil.getFirstNonSpaceCharOffset(document, line));
+    if (element == null) return null;
+
+    // Allow multiline smart step into for argument list case.
+    PsiElement argumentList = PsiTreeUtil.getParentOfType(element, PyArgumentList.class);
+    if (argumentList != null) return argumentList.getParent();
+
+    // Allow multiline smart step into for parenthesized multiline expressions.
+    PsiElement parenthesizedExpression = PsiTreeUtil.getParentOfType(element, PyParenthesizedExpression.class);
+    if (parenthesizedExpression != null) return parenthesizedExpression;
+
+    // If it's not an argument list or parenthesized expression, simply find and return top expression at the line.
+    PsiElement parent = element.getParent();
+    int lineStartOffset = document.getLineStartOffset(line);
+    int lineEndOffset = document.getLineEndOffset(line);
+    while (parent != null &&  lineStartOffset <= parent.getTextOffset() && parent.getTextOffset() < lineEndOffset) {
+      element = parent;
+      parent = element.getParent();
     }
-    return null;
+
+    if (element instanceof PyExpression) return element;
+
+    Ref<PsiElement> psiElementRef = new Ref<>();
+
+    element.accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyBinaryExpression(PyBinaryExpression node) {
+        storeElement(node);
+      }
+
+      @Override
+      public void visitPyCallExpression(PyCallExpression node) {
+        storeElement(node);
+      }
+
+      @Override
+      public void visitPyComprehensionElement(PyComprehensionElement node) {
+        storeElement(node);
+      }
+
+      @Override
+      public void visitPyElement(PyElement node) {
+        if (node instanceof PyDecorator) {
+          storeElement(node);
+        }
+        super.visitPyElement(node);
+      }
+
+      @Override
+      public void visitPyDecoratorList(PyDecoratorList node) {
+        storeElement(node);
+        super.visitPyDecoratorList(node);
+      }
+
+      private void storeElement(PsiElement node) {
+        if (psiElementRef.isNull()) {
+          psiElementRef.set(node);
+        }
+      }
+    });
+
+    return psiElementRef.get();
   }
 
   @NotNull
@@ -135,10 +187,10 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
     if (document == null) return null;
 
     PySmartStepIntoHandler handler = (PySmartStepIntoHandler)myProcess.getSmartStepIntoHandler();
-    PsiElement statement = handler.findLineTopStatement(document, position.getLine());
+    PsiElement expression = handler.findSmartStepIntoBaseExpression(document, position.getLine());
 
-    if (statement != null) {
-      TextRange range = statement.getTextRange();
+    if (expression != null) {
+      TextRange range = expression.getTextRange();
       int startLine = document.getLineNumber(range.getStartOffset());
       int endLine = document.getLineNumber(range.getEndOffset());
       return new PySmartStepIntoContext(startLine + 1, endLine + 1, frame);
