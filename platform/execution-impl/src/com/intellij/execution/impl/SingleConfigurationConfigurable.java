@@ -46,7 +46,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.JBUI;
@@ -617,9 +616,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         }
       });
 
-      myJBScrollPane.setBorder(JBUI.Borders.empty());
-      myJBScrollPane.setViewportBorder(JBUI.Borders.empty());
-
       myRunOnPanel.setBorder(JBUI.Borders.emptyLeft(5));
       UI.PanelFactory.panel(myRunOnPanelInner)
         .withLabel(ExecutionBundle.message("run.on"))
@@ -742,24 +738,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
             resetRunOnComboBox(selectedName);
           }
         });
-      myJBScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
-        @Override
-        public Dimension getMinimumSize() {
-          Dimension d = super.getMinimumSize();
-          JViewport viewport = getViewport();
-          if (viewport != null) {
-            Component view = viewport.getView();
-            if (view instanceof Scrollable) {
-              d.width = ((Scrollable)view).getPreferredScrollableViewportSize().width;
-            }
-            if (view != null) {
-              d.width = view.getMinimumSize().width;
-            }
-          }
-          d.height = Math.max(d.height, JBUIScale.scale(400));
-          return d;
-        }
-      };
+      myJBScrollPane = wrapWithScrollPane(null);
     }
 
     @NotNull
