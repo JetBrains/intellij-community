@@ -89,10 +89,11 @@ public class FUStatisticsWhiteListGroupsService {
       }
 
       HttpEntity entity = response.getEntity();
-      if (entity == null) {
+      String content = entity != null ? EntityUtils.toString(entity, StatisticsEventLogUtil.UTF8) : null;
+      if (content == null) {
         throw new EventLogWhitelistLoadException(EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType.EMPTY_RESPONSE_BODY);
       }
-      return EntityUtils.toString(entity, StatisticsEventLogUtil.UTF8);
+      return content;
     }
     catch (Exception e) {
       throw new EventLogWhitelistLoadException(EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType.ERROR_ON_LOAD, e);
