@@ -1743,7 +1743,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       List<PassWrapper> passes = analyzerStatus.getPasses();
       Set<String> presentableNames = ContainerUtil.map2Set(passes, p -> p.getPresentableName());
 
-      if (myProgressBarMap.keySet().equals(presentableNames)) {
+      if (presentableNames.size() > 0 && myProgressBarMap.keySet().equals(presentableNames)) {
         for (PassWrapper pass : passes) {
           myProgressBarMap.get(pass.getPresentableName()).setValue(pass.toPercent());
         }
