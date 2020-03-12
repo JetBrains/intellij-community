@@ -15,10 +15,10 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverridingMethodU
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -31,6 +31,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,16 +44,14 @@ class OverridingMethodsDialog extends DialogWrapper {
   private final boolean[] myChecked;
 
   private static final int CHECK_COLUMN = 0;
-  private Table myTable;
+  private JBTable myTable;
    private final UsagePreviewPanel myUsagePreviewPanel;
 
   OverridingMethodsDialog(Project project, List<? extends UsageInfo> overridingMethods) {
     super(project, true);
     myOverridingMethods = overridingMethods;
     myChecked = new boolean[myOverridingMethods.size()];
-    for (int i = 0; i < myChecked.length; i++) {
-      myChecked[i] = true;
-    }
+    Arrays.fill(myChecked, true);
 
     myMethodText = new String[myOverridingMethods.size()];
     for (int i = 0; i < myMethodText.length; i++) {
@@ -113,7 +112,7 @@ class OverridingMethodsDialog extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 4, 0));
     final MyTableModel tableModel = new MyTableModel();
-    myTable = new Table(tableModel);
+    myTable = new JBTable(tableModel);
     myTable.setShowGrid(false);
 
     TableColumnModel columnModel = myTable.getColumnModel();
