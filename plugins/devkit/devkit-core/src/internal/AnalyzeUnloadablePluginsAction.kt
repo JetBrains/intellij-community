@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.xml.XmlFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.text.DateFormatUtil
+import org.jetbrains.idea.devkit.dom.Dependency
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.util.DescriptorUtil
@@ -50,19 +51,20 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             else -> GlobalSearchScopesCore.directoryScope(dir, true)
           }
           val pluginXmlFiles = FilenameIndex.getFilesByName(project, PluginManagerCore.PLUGIN_XML, searchScope)
+            .ifEmpty { FilenameIndex.getFilesByName(project, PluginManagerCore.PLUGIN_XML, GlobalSearchScopesCore.projectProductionScope(project)) }
+            .filterIsInstance<XmlFile>()
 
           for ((processed, pluginXmlFile) in pluginXmlFiles.withIndex()) {
             pi.checkCanceled()
             pi.fraction = (processed.toDouble() / pluginXmlFiles.size)
 
-            if (pluginXmlFile !is XmlFile) continue
             if (!ProjectRootManager.getInstance(project).fileIndex.isUnderSourceRootOfType(pluginXmlFile.virtualFile,
                                                                                            JavaModuleSourceRootTypes.PRODUCTION)) {
               continue
             }
 
             val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXmlFile) ?: continue
-            val status = analyzeUnloadable(ideaPlugin, extensionPointOwners)
+            val status = analyzeUnloadable(ideaPlugin, extensionPointOwners, pluginXmlFiles)
             result.add(status)
             pi.text = status.pluginId
           }
@@ -86,7 +88,12 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         }
       }
 
-      val unloadablePlugins = result.filter { it.componentCount == 0 && it.unspecifiedDynamicEPs.isEmpty() && it.nonDynamicEPs.isEmpty() }
+      val unloadablePlugins = result.filter {
+        it.componentCount == 0 &&
+        it.unspecifiedDynamicEPs.isEmpty() &&
+        it.nonDynamicEPs.isEmpty() &&
+        it.nonDynamicEPsInDependencies.isEmpty()
+      }
       appendln("Can unload ${unloadablePlugins.size} plugins out of ${result.size}")
       for (status in unloadablePlugins) {
         appendln(status.pluginId)
@@ -97,6 +104,21 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       appendln("Plugins using components (${pluginsUsingComponents.size}):")
       for (status in pluginsUsingComponents) {
         appendln("${status.pluginId} (${status.componentCount})")
+      }
+      appendln()
+
+      val pluginsWithOptionalDependencies = result.filter {
+        it.componentCount == 0 &&
+        it.unspecifiedDynamicEPs.isEmpty() &&
+        it.nonDynamicEPs.isEmpty() &&
+        it.nonDynamicEPsInDependencies.isNotEmpty()
+      }
+      appendln("Plugins not unloadable because of optional dependencies (${pluginsWithOptionalDependencies.size}):")
+      for (status in pluginsWithOptionalDependencies) {
+        appendln(status.pluginId)
+        for ((pluginId, eps) in status.nonDynamicEPsInDependencies) {
+          appendln("  ${pluginId} - ${eps.joinToString()}")
+        }
       }
       appendln()
 
@@ -150,22 +172,57 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     FileEditorManager.getInstance(project).openEditor(descriptor, true)
   }
 
-  private fun analyzeUnloadable(ideaPlugin: IdeaPlugin, extensionPointOwners: ExtensionPointOwners): PluginUnloadabilityStatus {
+  private fun analyzeUnloadable(ideaPlugin: IdeaPlugin, extensionPointOwners: ExtensionPointOwners, allPlugins: List<XmlFile>): PluginUnloadabilityStatus {
     val unspecifiedDynamicEPs = mutableSetOf<String>()
     val nonDynamicEPs = mutableSetOf<String>()
     val analysisErrors = mutableListOf<String>()
     var componentCount = analyzePluginFile(ideaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, extensionPointOwners)
 
     for (dependency in ideaPlugin.dependencies) {
-      val depXmlFile = DescriptorUtil.resolveDependencyToXmlFile(dependency) ?: continue
-      val depIdeaPlugin = DescriptorUtil.getIdeaPlugin(depXmlFile) ?: continue
+      val configFileName = dependency.configFile.stringValue ?: continue
+      val depIdeaPlugin = resolvePluginDependency(dependency)
+      if (depIdeaPlugin == null) {
+        analysisErrors.add("Failed to resolve dependency descriptor file $configFileName")
+        continue
+      }
       componentCount += analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, extensionPointOwners)
+    }
+
+    val nonDynamicEPsInOptionalDependencies = mutableMapOf<String, MutableSet<String>>()
+    for (descriptor in allPlugins.mapNotNull { DescriptorUtil.getIdeaPlugin(it) }) {
+      for (dependency in descriptor.dependencies) {
+        if (dependency.optional.value == true && dependency.value == ideaPlugin) {
+          val depIdeaPlugin = resolvePluginDependency(dependency)
+          if (depIdeaPlugin == null) {
+            if (dependency.configFile.stringValue != null) {
+              analysisErrors.add("Failed to resolve dependency descriptor file ${dependency.configFile.stringValue}")
+            }
+            continue
+          }
+          val nonDynamicEPsInDependency = mutableSetOf<String>()
+          analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPsInDependency, nonDynamicEPsInDependency, extensionPointOwners)
+          if (nonDynamicEPsInDependency.isNotEmpty()) {
+            nonDynamicEPsInOptionalDependencies[descriptor.pluginId ?: "<unknown>"] = nonDynamicEPsInDependency
+          }
+        }
+      }
     }
 
     return PluginUnloadabilityStatus(
       ideaPlugin.pluginId ?: "?",
-      unspecifiedDynamicEPs, nonDynamicEPs, componentCount, analysisErrors
+      unspecifiedDynamicEPs, nonDynamicEPs, nonDynamicEPsInOptionalDependencies, componentCount, analysisErrors
     )
+  }
+
+  private fun resolvePluginDependency(dependency: Dependency): IdeaPlugin? {
+    var xmlFile = DescriptorUtil.resolveDependencyToXmlFile(dependency)
+    val configFileName = dependency.configFile.stringValue
+    if (xmlFile == null && configFileName != null) {
+      val project = dependency.manager.project
+      val matchingFiles = FilenameIndex.getFilesByName(project, configFileName, GlobalSearchScopesCore.projectProductionScope(project))
+      xmlFile = matchingFiles.singleOrNull() as? XmlFile?
+    }
+    return xmlFile?.let { DescriptorUtil.getIdeaPlugin(it) }
   }
 
   private fun analyzePluginFile(ideaPlugin: IdeaPlugin,
@@ -200,6 +257,7 @@ private data class PluginUnloadabilityStatus(
   val pluginId: String,
   val unspecifiedDynamicEPs: Set<String>,
   val nonDynamicEPs: Set<String>,
+  val nonDynamicEPsInDependencies: Map<String, Set<String>>,
   val componentCount: Int,
   val analysisErrors: List<String>
 )
