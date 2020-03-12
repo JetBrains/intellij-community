@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFie
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.addPluginInfoTo
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -122,7 +123,7 @@ class FeatureUsageData {
 
   private fun addLanguageInternal(fieldName: String, language: Language?): FeatureUsageData {
     language?.let {
-      val type = StatisticsUtil.getPluginType(language.javaClass)
+      val type = getPluginInfo(language.javaClass)
       if (type.isSafeToReport()) {
         data[fieldName] = language.id
       }
