@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.application.ApplicationManager
@@ -181,23 +180,6 @@ object StatisticsUtil {
   @JvmStatic
   fun getProjectId(project: Project): String {
     return EventLogConfiguration.anonymize(project.getProjectCacheFileName())
-  }
-
-  /**
-   * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
-   * so API from it may be reported
-   */
-  @JvmStatic
-  fun getPluginType(clazz: Class<*>): PluginType {
-    val plugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(clazz.name) ?: return PluginType.PLATFORM
-    if (PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
-      return if (plugin.isBundled) PluginType.JB_BUNDLED else PluginType.JB_NOT_BUNDLED
-    }
-
-    // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
-    // they are also considered bundled) would be reported
-    val listed = !plugin.isBundled && isSafeToReportFrom(plugin)
-    return if (listed) PluginType.LISTED else PluginType.NOT_LISTED
   }
 
   /**

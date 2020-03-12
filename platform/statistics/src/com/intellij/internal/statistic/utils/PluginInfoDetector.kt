@@ -13,15 +13,15 @@ import com.intellij.openapi.extensions.PluginId
  */
 fun getPluginInfo(clazz: Class<*>): PluginInfo {
   val classLoader = clazz.classLoader
-  when {
+  return when {
     classLoader is PluginClassLoader -> {
-      return getPluginInfoByDescriptor(classLoader.pluginDescriptor ?: return unknownPlugin)
+      getPluginInfoByDescriptor(classLoader.pluginDescriptor ?: return unknownPlugin)
     }
     PluginManagerCore.isRunningFromSources() && !PluginManagerCore.isUnitTestMode -> {
-      return builtFromSources
+      builtFromSources
     }
     else -> {
-      return getPluginInfo(clazz.name)
+      getPluginInfo(clazz.name)
     }
   }
 }
