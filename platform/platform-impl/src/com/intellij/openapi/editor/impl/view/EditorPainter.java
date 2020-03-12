@@ -318,10 +318,9 @@ public class EditorPainter implements TextDrawingCallback {
         TextAttributes attributes = myView.getPrefixAttributes();
         paintBackground(attributes, myCorrector.startX(myStartVisualLine), myYShift + myView.visualLineToY(0), width);
         myTextDrawingTasks.add(g -> {
-          g.setColor(attributes.getForegroundColor());
           paintLineLayoutWithEffect(prefixLayout,
                                     myCorrector.startX(myStartVisualLine), myAscent + myYShift + myView.visualLineToY(0),
-                                    attributes.getEffectColor(), attributes.getEffectType());
+                                    attributes.getForegroundColor(), attributes.getEffectColor(), attributes.getEffectType());
         });
       }
 
@@ -663,9 +662,10 @@ public class EditorPainter implements TextDrawingCallback {
       });
     }
 
-    private float paintLineLayoutWithEffect(LineLayout layout, float x, float y,
+    private float paintLineLayoutWithEffect(LineLayout layout, float x, float y, @Nullable Color color,
                                             @Nullable Color effectColor, @Nullable EffectType effectType) {
       paintTextEffect(x, x + layout.getWidth(), (int)y, effectColor, effectType, false);
+      myGraphics.setColor(color);
       for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(x)) {
         fragment.draw(myGraphics, fragment.getStartX(), y);
         x = fragment.getEndX();
@@ -820,8 +820,7 @@ public class EditorPainter implements TextDrawingCallback {
       List<LineExtensionData> data = myExtensionData.get(visualLine);
       if (data == null) return;
       for (LineExtensionData datum : data) {
-        myGraphics.setColor(datum.info.getColor());
-        x = paintLineLayoutWithEffect(datum.layout, x, y, datum.info.getEffectColor(), datum.info.getEffectType());
+        x = paintLineLayoutWithEffect(datum.layout, x, y, datum.info.getColor(), datum.info.getEffectColor(), datum.info.getEffectType());
       }
       int currentLineWidth = myCorrector.lineWidth(visualLine, x);
       EditorSizeManager sizeManager = myView.getSizeManager();
