@@ -83,8 +83,8 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull private final DiffContext myContext;
 
   @NotNull private final DiffSettings mySettings;
-  @NotNull private final List<DiffTool> myAvailableTools;
-  @NotNull private final List<DiffTool> myToolOrder;
+  @NotNull private final List<DiffTool> myAvailableTools = new ArrayList<>();
+  @NotNull private final List<DiffTool> myToolOrder = new ArrayList<>();
   @Nullable private final DiffTool myForcedDiffTool;
 
   @NotNull private final DefaultActionGroup myToolbarGroup;
@@ -120,8 +120,11 @@ public abstract class DiffRequestProcessor implements Disposable {
     mySettings = DiffSettings.getSettings(myContext.getUserData(DiffUserDataKeys.PLACE));
     myForcedDiffTool = myContext.getUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL);
 
-    myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
-    myToolOrder = new ArrayList<>(getToolOrderFromSettings(myAvailableTools));
+    updateAvailableDiffTools();
+    DiffTool.EP_NAME.addExtensionPointListener(() -> {
+      updateAvailableDiffTools();
+      updateRequest(true);
+    }, this);
 
     myToolbarGroup = new DefaultActionGroup();
     myPopupActionGroup = new DefaultActionGroup();
@@ -243,6 +246,14 @@ public abstract class DiffRequestProcessor implements Disposable {
   private FrameDiffTool findToolSubstitutor(@NotNull DiffTool tool) {
     DiffTool substitutor = DiffUtil.findToolSubstitutor(tool, myContext, myActiveRequest);
     return substitutor instanceof FrameDiffTool ? (FrameDiffTool)substitutor : null;
+  }
+
+  private void updateAvailableDiffTools() {
+    myAvailableTools.clear();
+    myToolOrder.clear();
+
+    myAvailableTools.addAll(DiffManagerEx.getInstance().getDiffTools());
+    myToolOrder.addAll(getToolOrderFromSettings(myAvailableTools));
   }
 
   private void moveToolOnTop(@NotNull DiffTool tool) {
