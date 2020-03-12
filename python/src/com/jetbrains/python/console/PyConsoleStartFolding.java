@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.util.DocumentUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +22,7 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
   private boolean doNotAddFoldingAgain = false;
   private FoldRegion myStartFoldRegion;
   private final boolean myAddOnce;
-  private static final String DEFAULT_FOLDING_MESSAGE = "Python Console";
+  private final String DEFAULT_FOLDING_MESSAGE = PyBundle.message("python.console");
   private static final String PYTHON_PREFIX = "Python";
   private int myStartLineOffset = 0;
   private final List<String> firstLinePrefix = ImmutableList.of("Python", "PyDev console");
