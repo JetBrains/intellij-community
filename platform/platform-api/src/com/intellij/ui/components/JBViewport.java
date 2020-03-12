@@ -547,7 +547,11 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
     ListModel<?> model = list.getModel();
     int modelRows = model == null ? 0 : model.getSize();
+    boolean visibleRowCountOverride = list.getClientProperty("visibleRowCountIsMax") != null;
     int visibleRows = list.getVisibleRowCount();
+    if (visibleRowCountOverride && visibleRows > 0) {
+      visibleRows = Math.min(modelRows, visibleRows);
+    }
     if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
 
     boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
