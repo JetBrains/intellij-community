@@ -218,7 +218,7 @@ class LegacyBridgeModifiableRootModel(
   }
 
   // Listener that increments modification count should be added to each libraryTable that contains a library included in any orderEntry
-  internal fun addListenerForTable(libraryTable: LibraryTable?) {
+  private fun addListenerForTable(libraryTable: LibraryTable?) {
     if (libraryTable == null) return
     synchronized(lock) {
       myLibraryTableListeners.computeIfAbsent(libraryTable) { libraryTable ->
