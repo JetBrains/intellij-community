@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -126,6 +127,7 @@ object GHPRSubmittableTextField {
       setOneLineMode(false)
       setPlaceholder(placeHolder)
       addSettingsProvider {
+        it.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)
         it.colorsScheme.lineSpacing = 1f
       }
       selectAll()
