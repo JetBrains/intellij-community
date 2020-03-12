@@ -58,12 +58,7 @@ public class LinkLabel<T> extends JLabel {
 
   @NotNull
   public static LinkLabel<?> create(@Nullable @Nls String text, @Nullable Runnable action) {
-    return new LinkLabel<>(text, null, action == null ? null : new LinkListener<Object>() {
-      @Override
-      public void linkSelected(LinkLabel source, Object linkData) {
-        action.run();
-      }
-    }, null, null);
+    return new LinkLabel<>(text, null, action == null ? null : (__, ___) -> action.run(), null, null);
   }
 
   public LinkLabel(@Nls String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener, @Nullable T aLinkData) {
@@ -283,10 +278,6 @@ public class LinkLabel<T> extends JLabel {
     for (Project project : projects) {
       StatusBar.Info.set(statusBarText, project);
     }
-  }
-
-  public static void clearVisitedHistory() {
-    ourVisitedLinks.clear();
   }
 
   protected Color getVisited() {

@@ -41,7 +41,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
   }
 
   public DropDownLink(@NotNull T initialItem, @NotNull List<T> items, @Nullable Consumer<? super T> itemChosenAction, boolean updateLabel) {
-    this(initialItem, (linkLabel) -> {
+    this(initialItem, linkLabel -> {
       IPopupChooserBuilder<T> popupBuilder = JBPopupFactory.getInstance().createPopupChooserBuilder(items).
         setRenderer(new LinkCellRenderer<>(linkLabel)).
         setItemChosenCallback(t -> {
