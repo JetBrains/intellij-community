@@ -1423,7 +1423,11 @@ public class ExpressionUtils {
     }
   }
 
-  public static PsiElement getPassThroughParent(PsiExpression expression) {
+  public static PsiElement getPassThroughParent(@NotNull PsiExpression expression) {
+    return getPassThroughExpression(expression).getParent();
+  }
+  
+  public static @NotNull PsiExpression getPassThroughExpression(@NotNull PsiExpression expression) {
     while (true) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression) {
@@ -1451,7 +1455,7 @@ public class ExpressionUtils {
           continue;
         }
       }
-      return parent;
+      return expression;
     }
   }
 

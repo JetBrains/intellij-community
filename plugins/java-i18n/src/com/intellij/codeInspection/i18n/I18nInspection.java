@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.analysis.UastAnalysisPlugin;
 import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
 import org.jetbrains.uast.util.UastExpressionUtils;
@@ -634,8 +635,24 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
 
     if (ignoreForAllButNls) {
-      return JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NLS, null) ||
-             isReturnedFromAnnotatedMethod(expression, AnnotationUtil.NLS, null);
+      List<UExpression> usages = Collections.emptyList();
+      UastLanguagePlugin plugin = UastLanguagePlugin.Companion.byLanguage(expression.getLang());
+      if (plugin != null) {
+        UastAnalysisPlugin analysis = plugin.getAnalysisPlugin();
+        if (analysis != null) {
+          usages = analysis.findIndirectUsages(expression);
+        }
+      }
+      if (usages.isEmpty()) {
+        usages = Collections.singletonList(expression);
+      }
+      for (UExpression usage : usages) {
+        if (JavaI18nUtil.isPassedToAnnotatedParam(usage, AnnotationUtil.NLS, null) ||
+            isReturnedFromAnnotatedMethod(usage, AnnotationUtil.NLS, null)) {
+          return true;
+        }
+      }
+      return false;
     }
 
     if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, nonNlsTargets)) {
@@ -881,7 +898,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return false;
   }
 
-  private static boolean isReturnedFromAnnotatedMethod(final UInjectionHost expression,
+  private static boolean isReturnedFromAnnotatedMethod(final UExpression expression,
                                                        final String fqn,
                                                        final @Nullable Set<? super PsiModifierListOwner> nonNlsTargets) {
     PsiMethod method;

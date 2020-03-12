@@ -4,11 +4,15 @@ package org.jetbrains.uast.java.analysis
 import com.intellij.codeInspection.dataFlow.CommonDataflow
 import com.intellij.codeInspection.dataFlow.DfaNullability
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.psi.PsiExpression
+import com.intellij.psi.*
+import com.intellij.psi.controlFlow.DefUseUtil
+import com.intellij.psi.util.PsiUtil
+import com.siyeh.ig.psiutils.ExpressionUtils
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.analysis.UExpressionFact
 import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
+import org.jetbrains.uast.toUElement
 
 class JavaUastAnalysisPlugin : UastAnalysisPlugin {
   override fun <T : Any> UExpression.getExpressionFact(fact: UExpressionFact<T>): T? {
@@ -22,6 +26,28 @@ class JavaUastAnalysisPlugin : UastAnalysisPlugin {
         return nullability as T
       }
     }
+  }
+
+  override fun UExpression.findIndirectUsages(): List<UExpression> {
+    val expression = sourcePsi as? PsiExpression ?: return listOf(this)
+    val passThrough = ExpressionUtils.getPassThroughExpression(expression)
+    val parent = passThrough.parent
+    val defaultResult = if (passThrough == expression) emptyList() else listOfNotNull(passThrough.toUElement(UExpression::class.java))
+    var local : PsiLocalVariable? = null
+    if (parent is PsiLocalVariable) {
+      local = parent
+    }
+    else if (parent is PsiAssignmentExpression && parent.rExpression == passThrough && parent.operationTokenType == JavaTokenType.EQ) {
+      local = ExpressionUtils.resolveLocalVariable(parent.lExpression)
+    }
+    if (local != null) {
+      val codeBlock = PsiUtil.getVariableCodeBlock(local, null) as? PsiCodeBlock
+      if (codeBlock != null) {
+        return defaultResult +
+               DefUseUtil.getRefs(codeBlock, local, passThrough).mapNotNull { e -> e.toUElement(UExpression::class.java) }
+      }
+    }
+    return defaultResult
   }
 
   override val language = JavaLanguage.INSTANCE
