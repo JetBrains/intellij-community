@@ -92,7 +92,7 @@ public class PyInterpreterInspection extends PyInspection {
       final String product = pyCharm ? "PyCharm" : "Python plugin";
 
       if (sdk == null) {
-        registerProblem(node, "No Python interpreter configured for the " + interpreterOwner, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        registerProblem(node, PyBundle.message("python.sdk.no.interpreter.configured.owner", interpreterOwner), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
       else {
         final Module associatedModule = PySdkExtKt.getAssociatedModule(sdk);
