@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys
 
 class PySyncPythonRequirementsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val module = LangDataKeys.MODULE.getData(e.dataContext) ?: return
+    val module = e.getData(LangDataKeys.MODULE) ?: return
     syncWithImports(module)
   }
 }

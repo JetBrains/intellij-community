@@ -99,7 +99,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
           registerProblem(file, PyBundle.message("python.requirements.file.empty"),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new PyGenerateRequirementsFileQuickFix(module));
         }
-        else checkPackagesHaveBeenInstalled(file, module);
+        else {
+          checkPackagesHaveBeenInstalled(file, module);
+        }
       }
     }
 
