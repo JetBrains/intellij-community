@@ -18,7 +18,7 @@ import java.util.function.Function;
  */
 @ApiStatus.Internal
 public class DiskQueryRelay<Param, Result> {
-  private final Function<Param, Result> myFunction;
+  private final @NotNull Function<? super Param, ? extends Result> myFunction;
 
   /**
    * We remember the submitted tasks in "myTasks" until they're finished, to avoid creating many-many similar threads
@@ -26,7 +26,7 @@ public class DiskQueryRelay<Param, Result> {
    */
   private final Map<Param, Future<Result>> myTasks = ContainerUtil.newConcurrentMap();
 
-  public DiskQueryRelay(@NotNull Function<Param, Result> function) {
+  public DiskQueryRelay(@NotNull Function<? super Param, ? extends Result> function) {
     myFunction = function;
   }
 
@@ -49,5 +49,4 @@ public class DiskQueryRelay<Param, Result> {
     }
     return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
   }
-
 }

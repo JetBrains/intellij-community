@@ -330,8 +330,7 @@ public class ProgressIndicatorUtils {
         if (cause instanceof CancellationException) {
           throw new ProcessCanceledException(cause);
         }
-        ExceptionUtil.rethrowUnchecked(e);
-        throw new RuntimeException(e);
+        ExceptionUtil.rethrow(e);
       }
     }
   }
