@@ -42,6 +42,9 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
 
   BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName) {
     this(name, backendExecutor, maxThreads, changeThreadName, null);
+    if (name.isEmpty() || !Character.isUpperCase(name.charAt(0))) {
+      Logger.getInstance(getClass()).warn("Pool name must be capitalized but got: '" + name + "'", new IllegalArgumentException());
+    }
   }
 
   public BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName, @Nullable Comparator<Runnable> comparator) {

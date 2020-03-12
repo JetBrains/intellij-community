@@ -244,7 +244,7 @@ private fun startApp(app: ApplicationImpl,
 
 @ApiStatus.Internal
 fun createExecutorToPreloadServices(): Executor {
-  return AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), false)
+  return AppExecutorUtil.createBoundedApplicationPoolExecutor("Preload Services", Runtime.getRuntime().availableProcessors(), false)
 }
 
 @ApiStatus.Internal
