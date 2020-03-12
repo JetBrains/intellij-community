@@ -530,7 +530,7 @@
       <reference ref="OptimizeImports"/>
       <reference ref="$Delete"/>
       <reference ref="Scratch.ChangeLanguage"/>
-      <group id="MarkFileAs" class="com.intellij.openapi.file.exclude.ui.MarkFileGroup">
+      <group id="MarkFileAs">
         <action id="MarkAsPlainTextAction" class="com.intellij.openapi.file.exclude.ui.MarkAsPlainTextAction"/>
         <action id="MarkAsOriginalTypeAction" class="com.intellij.openapi.file.exclude.ui.MarkAsOriginalTypeAction"/>
       </group>
