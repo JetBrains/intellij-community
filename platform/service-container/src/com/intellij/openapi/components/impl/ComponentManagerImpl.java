@@ -1,20 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.serviceContainer.MyComponentAdapter;
 import com.intellij.serviceContainer.PlatformComponentManagerImpl;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.pico.DefaultPicoContainer;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
@@ -25,7 +24,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManager {
-  protected final DefaultPicoContainer myPicoContainer;
+  protected final @NotNull DefaultPicoContainer myPicoContainer;
 
   protected enum ContainerState {
     ACTIVE, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
@@ -59,21 +58,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  @NotNull
-  public final DefaultPicoContainer getPicoContainer() {
-    DefaultPicoContainer container = myPicoContainer;
-    if (container == null || containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-      throwAlreadyDisposed();
-    }
-    return container;
-  }
-
-  @Contract("->fail")
-  private void throwAlreadyDisposed() {
-    ReadAction.run(() -> {
+  public final @NotNull DefaultPicoContainer getPicoContainer() {
+    if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
       ProgressManager.checkCanceled();
-      throw new AssertionError("Already disposed: " + this);
-    });
+      throw new AlreadyDisposedException("Already disposed: " + this);
+    }
+    return myPicoContainer;
   }
 
   protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
