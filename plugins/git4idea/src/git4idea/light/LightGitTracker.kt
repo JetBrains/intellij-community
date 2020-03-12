@@ -205,17 +205,40 @@ class LightGitTracker : Disposable {
     companion object {
       val Blank = State()
     }
+
+    override fun toString(): String {
+      return "State(location=$location, statuses=${statuses.toShortenedString()})"
+    }
   }
 
   private sealed class StateUpdater(val state: State) {
-    object Clear : StateUpdater(State.Blank)
-    class Update(s: State, val updateLocation: Boolean) : StateUpdater(s)
+    object Clear : StateUpdater(State.Blank) {
+      override fun toString(): String = "Clear"
+    }
+
+    class Update(s: State, val updateLocation: Boolean) : StateUpdater(s) {
+      override fun toString(): String {
+        return "Update(state=$state, updateLocation=$updateLocation)"
+      }
+    }
   }
 
   private sealed class Request {
-    class Location(val file: VirtualFile) : Request()
-    class Status(val files: Collection<VirtualFile>) : Request()
-    object CheckGit : Request()
+    class Location(val file: VirtualFile) : Request() {
+      override fun toString(): String {
+        return "Location(file=$file)"
+      }
+    }
+
+    class Status(val files: Collection<VirtualFile>) : Request() {
+      override fun toString(): String {
+        return "Status(files=${files.toShortenedString()}"
+      }
+    }
+
+    object CheckGit : Request() {
+      override fun toString(): String = "CheckGit"
+    }
   }
 
   companion object {
@@ -243,4 +266,22 @@ fun <R> List<*>.lastInstance(klass: Class<R>): R? {
     if (klass.isInstance(element)) return element as R
   }
   return null
+}
+
+private fun <T> Collection<T>.toShortenedString(num: Int = 20): String {
+  if (size < num) return toString()
+  return "${take(num)} ... +${size - num} more"
+}
+
+private fun <K, V> Map<K, V>.toShortenedString(num: Int = 20): String {
+  if (size < num) return toString()
+  return "${asIterable().take(num).toMap()} ... +${size - num} more"
+}
+
+private fun <K, V> Iterable<Map.Entry<K, V>>.toMap(): Map<K, V> {
+  val result = mutableMapOf<K, V>()
+  for (entry in this) {
+    result[entry.key] = entry.value
+  }
+  return result
 }
