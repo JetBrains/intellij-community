@@ -36,7 +36,8 @@
                     interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"/>
 
     <extensionPoint name="unresolvedMergeCheckProvider"
-                    interface="com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckProvider"/>
+                    interface="com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="changesViewContent"
                     beanClass="com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP"
