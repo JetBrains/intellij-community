@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,15 +84,23 @@ public class ProblemDescriptorUtil {
     message = StringUtil.replace(message, "#loc ", "");
     message = StringUtil.replace(message, " #loc", "");
     message = StringUtil.replace(message, "#loc", "");
+
+    if ((flags & TRIM_AT_TREE_END) != 0) {
+      if (XmlStringUtil.isWrappedInHtml(message)) {
+        message = StringUtil.removeHtmlTags(message, true);
+      }
+
+      final int endIndex = message.indexOf("#treeend");
+      if (endIndex > 0) {
+        message = message.substring(0, endIndex);
+      }
+    }
+
     if (message.contains("#ref")) {
       String ref = extractHighlightedText(descriptor, element);
       message = StringUtil.replace(message, "#ref", ref);
     }
 
-    final int endIndex = (flags & TRIM_AT_TREE_END) != 0 ? message.indexOf("#treeend") : -1;
-    if (endIndex > 0) {
-      message = message.substring(0, endIndex);
-    }
     message = StringUtil.replace(message, "#end", "");
     message = StringUtil.replace(message, "#treeend", "");
 
@@ -102,7 +111,8 @@ public class ProblemDescriptorUtil {
   public static String unescapeTags(@NotNull String message) {
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
-    message = message.contains(XML_CODE_MARKER.first) ? unescapeXmlCode(message) : StringUtil.unescapeXmlEntities(message);
+    message = message.contains(XML_CODE_MARKER.first) ? unescapeXmlCode(message) : 
+              !XmlStringUtil.isWrappedInHtml(message) ? StringUtil.unescapeXmlEntities(message) : message;
     return message;
   }
 
