@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ActivityCategory
@@ -14,6 +14,8 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.util.Disposer
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
+
+class AlreadyDisposedException(message: String) : IllegalStateException(message)
 
 internal abstract class BaseComponentAdapter(internal val componentManager: PlatformComponentManagerImpl,
                                              val pluginDescriptor: PluginDescriptor,
@@ -71,7 +73,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
 
   private fun <T : Any> getInstanceUncached(componentManager: PlatformComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T? {
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-    checkContainerIsActive(componentManager)
+    checkContainerIsActive(componentManager, indicator)
 
     val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
     val beforeLockTime = if (activityCategory == null) -1 else StartUpMeasurer.getCurrentTime()
@@ -98,17 +100,18 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
         initializing = true
 
         val startTime = StartUpMeasurer.getCurrentTime()
-        @Suppress("UNCHECKED_CAST")
-        val implementationClass = when {
+        val implementationClass: Class<T>
+        when {
           keyClass != null && isImplementationEqualsToInterface() -> {
             implementationClass = keyClass
-            keyClass
           }
-          else -> getImplementationClass() as Class<T>
+          else -> {
+            @Suppress("UNCHECKED_CAST")
+            implementationClass = getImplementationClass() as Class<T>
+            // check after loading class once again
+            checkContainerIsActive(componentManager, indicator)
+          }
         }
-
-        // check after loading class once again
-        checkContainerIsActive(componentManager)
 
         instance = doCreateInstance(componentManager, implementationClass, indicator)
         activityCategory?.let { category ->
@@ -127,11 +130,26 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     }
   }
 
-  private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl) {
-    checkCanceledIfNotInClassInit()
+  /**
+   * Indicator must be always passed - if under progress, then ProcessCanceledException will be thrown instead of AlreadyDisposedException.
+   */
+  private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?) {
+    if (indicator != null) {
+      checkCanceledIfNotInClassInit(indicator)
+    }
 
     if (componentManager.isDisposed) {
-      throw ProcessCanceledException(RuntimeException("Cannot create ${toString()} because container is already disposed (container=${componentManager})"))
+      throwAlreadyDisposedError(componentManager, indicator)
+    }
+  }
+
+  internal fun throwAlreadyDisposedError(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?) {
+    val error = AlreadyDisposedException("Cannot create ${toString()} because container is already disposed (container=${componentManager})")
+    if (indicator == null) {
+      throw error
+    }
+    else {
+      throw ProcessCanceledException(error)
     }
   }
 

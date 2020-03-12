@@ -91,7 +91,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     private set
 
   private val lightServices: ConcurrentMap<Class<*>, Any>? = when {
-    parent == null || parent.picoContainer.parent == null -> ContainerUtil.newConcurrentMap()
+    parent == null || parent.myPicoContainer.parent == null -> ContainerUtil.newConcurrentMap()
     else -> null
   }
 
@@ -206,7 +206,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
 
     // app - phase must be set before getMessageBus()
-    if (picoContainer.parent == null && !LoadingState.COMPONENTS_REGISTERED.isOccurred /* loading plugin on the fly */) {
+    if (myPicoContainer.parent == null && !LoadingState.COMPONENTS_REGISTERED.isOccurred /* loading plugin on the fly */) {
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_REGISTERED)
     }
 
@@ -321,8 +321,15 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   protected abstract fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor
 
   final override fun <T : Any> getComponent(interfaceClass: Class<T>): T? {
-    val picoContainer = picoContainer
-    val adapter = picoContainer.getComponentAdapter(interfaceClass) ?: return null
+    val picoContainer = myPicoContainer
+    val adapter = picoContainer.getComponentAdapter(interfaceClass)
+    if (adapter == null) {
+      checkCanceledIfNotInClassInit()
+      if (isDisposed) {
+        throw ProcessCanceledException(RuntimeException("Cannot get ${interfaceClass.name} because container is already disposed (container=${toString()})"))
+      }
+      return null
+    }
 
     if (adapter is ServiceComponentAdapter) {
       LOG.error("$interfaceClass it is a service, use getService instead of getComponent")
@@ -334,7 +341,12 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         if (parent != null && adapter.componentManager !== this) {
           LOG.error("getComponent must be called on appropriate container (current: $this, expected: ${adapter.componentManager})")
         }
-        adapter.getInstance(adapter.componentManager, interfaceClass)
+
+        val indicator = ProgressManager.getGlobalProgressIndicator()
+        if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+          adapter.throwAlreadyDisposedError(this, indicator)
+        }
+        adapter.getInstance(adapter.componentManager, interfaceClass, indicator = indicator)
       }
       else -> adapter.getComponentInstance(picoContainer) as T
     }
@@ -351,12 +363,19 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
 
     val key = serviceClass.name
-    val adapter = picoContainer.getServiceAdapter(key) as? ServiceComponentAdapter
+    val adapter = myPicoContainer.getServiceAdapter(key) as? ServiceComponentAdapter
     if (adapter != null) {
-      return adapter.getInstance(this, serviceClass, createIfNeeded)
+      val indicator = ProgressManager.getGlobalProgressIndicator()
+      if (createIfNeeded && containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+        adapter.throwAlreadyDisposedError(this, indicator)
+      }
+      return adapter.getInstance(this, serviceClass, createIfNeeded, indicator)
     }
 
     checkCanceledIfNotInClassInit()
+    if (isDisposed) {
+      throw ProcessCanceledException(RuntimeException("Cannot get ${serviceClass.name} because container is already disposed (container=${toString()})"))
+    }
 
     if (parent != null) {
       val result = parent.doGetService(serviceClass, createIfNeeded)
@@ -493,7 +512,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   @Internal
   fun <T : Any> registerServiceInstance(serviceInterface: Class<T>, instance: T, pluginDescriptor: PluginDescriptor) {
     val serviceKey = serviceInterface.name
-    myPicoContainer.unregisterComponent(serviceKey)
+    val picoContainer = picoContainer
+    picoContainer.unregisterComponent(serviceKey)
 
     val descriptor = ServiceDescriptor()
     descriptor.serviceInterface = serviceKey
