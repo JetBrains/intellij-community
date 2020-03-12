@@ -4,7 +4,6 @@ package com.intellij.serviceContainer
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.pico.DefaultPicoContainer
 import org.jetbrains.annotations.ApiStatus
@@ -94,14 +93,9 @@ fun isWorkspaceComponent(container: PicoContainer, componentImplementation: Clas
   return false
 }
 
-internal fun checkCanceledIfNotInClassInit(indicator: ProgressIndicator? = null) {
+internal fun checkCanceledIfNotInClassInit() {
   try {
-    if (indicator == null) {
-      ProgressManager.checkCanceled()
-    }
-    else {
-      indicator.checkCanceled()
-    }
+    ProgressManager.checkCanceled()
   }
   catch (e: ProcessCanceledException) {
     // otherwise ExceptionInInitializerError happens and the class is screwed forever
