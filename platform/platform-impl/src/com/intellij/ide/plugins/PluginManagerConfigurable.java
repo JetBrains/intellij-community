@@ -832,7 +832,7 @@ public class PluginManagerConfigurable
         if (!downloaded.descriptors.isEmpty()) {
           myUpdateAll.setListener(new LinkListener<Object>() {
             @Override
-            public void linkSelected(LinkLabel aSource, Object aLinkData) {
+            public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
               myUpdateAll.setEnabled(false);
 
               for (UIPluginGroup group : myInstalledPanel.getGroups()) {

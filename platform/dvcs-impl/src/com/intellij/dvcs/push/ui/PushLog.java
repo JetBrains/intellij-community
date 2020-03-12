@@ -317,7 +317,7 @@ public final class PushLog extends JPanel implements DataProvider {
     linkLabel.setBorder(JBUI.Borders.empty(2));
     linkLabel.setListener(new LinkListener<String>() {
       @Override
-      public void linkSelected(LinkLabel aSource, String aLinkData) {
+      public void linkSelected(LinkLabel<String> aSource, String aLinkData) {
         if (linkLabel.isEnabled()) {
           startSyncEditing();
         }
