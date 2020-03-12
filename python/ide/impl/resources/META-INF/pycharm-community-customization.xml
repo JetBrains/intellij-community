@@ -1,5 +1,6 @@
 <!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <idea-plugin>
+  <resource-bundle>messages.PyBundle</resource-bundle>
 
   <project-components>
     <component>
@@ -69,7 +70,7 @@
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <action id="PySwitchSdkAction" class="com.jetbrains.python.configuration.PySwitchSdkAction"/>
     <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PyCharmNewProjectAction">
       <add-to-group group-id="NewProjectOrModuleGroup"/>
