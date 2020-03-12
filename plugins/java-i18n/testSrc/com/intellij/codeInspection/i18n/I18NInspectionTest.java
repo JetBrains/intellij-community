@@ -106,7 +106,11 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
       myTool.setIgnoreForAllButNls(old);
     }
   }
-  
+
+  public void testNonNlsIndirect() {
+    doTest();
+  }
+
   public void testNlsIndirect() {
     boolean old = myTool.setIgnoreForAllButNls(true);
     try {
