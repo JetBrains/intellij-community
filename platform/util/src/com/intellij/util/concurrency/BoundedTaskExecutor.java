@@ -2,21 +2,17 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -41,13 +37,17 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   private final boolean myChangeThreadName;
 
   BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName) {
-    this(name, backendExecutor, maxThreads, changeThreadName, null);
+    this(name, backendExecutor, maxThreads, changeThreadName, new LinkedBlockingQueue<>());
     if (name.isEmpty() || !Character.isUpperCase(name.charAt(0))) {
       Logger.getInstance(getClass()).warn("Pool name must be capitalized but got: '" + name + "'", new IllegalArgumentException());
     }
   }
 
-  public BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName, @Nullable Comparator<Runnable> comparator) {
+  BoundedTaskExecutor(@NotNull String name,
+                      @NotNull Executor backendExecutor,
+                      int maxThreads,
+                      boolean changeThreadName,
+                      @NotNull BlockingQueue<Runnable> queue) {
     myName = name;
     myBackendExecutor = backendExecutor;
     if (maxThreads < 1) {
@@ -58,19 +58,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     }
     myMaxThreads = maxThreads;
     myChangeThreadName = changeThreadName;
-    if (comparator != null) {
-      myTaskQueue = new PriorityBlockingQueue<>(11, comparator);
-    } else {
-      myTaskQueue = new LinkedBlockingQueue<>();
-    }
-  }
-
-  /**
-   * Constructor which automatically shuts down this executor when {@code parent} is disposed.
-   */
-  BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxSimultaneousTasks, @NotNull Disposable parent) {
-    this(name, backendExecutor, maxSimultaneousTasks, true);
-    Disposer.register(parent, () -> shutdownNow());
+    myTaskQueue = queue;
   }
 
   // for diagnostics
