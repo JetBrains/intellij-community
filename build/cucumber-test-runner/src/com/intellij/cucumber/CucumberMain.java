@@ -19,6 +19,8 @@ import com.intellij.TestCaseLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.RuntimeOptions;
@@ -27,6 +29,7 @@ import cucumber.runtime.io.Resource;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
 
 import java.io.IOException;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,10 +43,12 @@ public class CucumberMain {
     System.setProperty("apple.awt.UIElement", "true");
   }
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     int exitStatus;
     try {
-      exitStatus = run(args, Thread.currentThread().getContextClassLoader());
+      UrlClassLoader loader = new UrlClassLoader(Thread.currentThread().getContextClassLoader());
+      Thread.currentThread().setContextClassLoader(loader);
+      exitStatus = (Integer)loader.loadClass(CucumberMain.class.getName()).getMethod("run", String[].class, ClassLoader.class).invoke(null, args, loader);
     }
     catch (Throwable e) {
       exitStatus = 1;
