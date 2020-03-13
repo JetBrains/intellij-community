@@ -36,7 +36,6 @@ import java.util.Set;
 public class GitTagDialog extends DialogWrapper {
 
   private static final Logger LOG = Logger.getInstance(GitTagDialog.class);
-  private static final String CANT_CREATE_TAG = "Couldn't Create Tag";
 
   private JPanel myPanel;
   private JComboBox myGitRootComboBox;
@@ -111,7 +110,8 @@ public class GitTagDialog extends DialogWrapper {
         }
       }
       catch (IOException ex) {
-        myNotifier.notifyError(CANT_CREATE_TAG, GitBundle.message("tag.error.creating.message.file.message", ex.toString()));
+        myNotifier.notifyError(GitBundle.message("git.tag.could.not.create.tag"),
+                               GitBundle.message("tag.error.creating.message.file.message", ex.toString()));
         return;
       }
     }
@@ -139,10 +139,10 @@ public class GitTagDialog extends DialogWrapper {
       GitCommandResult result = myGit.runCommand(h);
       if (result.success()) {
         myNotifier.notifySuccess(myTagNameTextField.getText(),
-                                 "Created tag " + myTagNameTextField.getText() + " successfully.");
+                                 GitBundle.message("git.tag.created.tag.successfully", myTagNameTextField.getText()));
       }
       else {
-        myNotifier.notifyError(CANT_CREATE_TAG, result.getErrorOutputAsHtmlString());
+        myNotifier.notifyError(GitBundle.message("git.tag.could.not.create.tag"), result.getErrorOutputAsHtmlString());
       }
 
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
