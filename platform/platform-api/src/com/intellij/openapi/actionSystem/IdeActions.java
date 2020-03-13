@@ -256,7 +256,8 @@ public interface IdeActions {
   @NonNls String ACTION_CHECKIN_PROJECT = "CheckinProject";
   @NonNls String ACTION_FILE_STRUCTURE_POPUP = "FileStructurePopup";
   @NonNls String ACTION_TOGGLE_RENDERED_DOC = "ToggleRenderedDocPresentation";
-  @NonNls String ACTION_TOGGLE_RENDER_DOCS_ON_FILE_OPENING = "ToggleRenderDocsOnFileOpening";
+
+  @NonNls String GROUP_DOC_COMMENT_GUTTER_ICON_CONTEXT_MENU = "DocCommentGutterIconContextMenu";
 
   @NonNls String GROUP_USAGE_VIEW_POPUP = "UsageView.Popup";
 
