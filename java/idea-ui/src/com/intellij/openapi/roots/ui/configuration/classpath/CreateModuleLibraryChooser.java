@@ -73,7 +73,8 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
       if (descriptor == null) {
         descriptor = myDefaultDescriptor;
       }
-      if (!myLibraryTypes.containsKey(descriptor)) {
+      boolean acceptsClasses = descriptor.getRootDetectors().stream().anyMatch(detector -> detector.getRootType().equals(OrderRootType.CLASSES));
+      if (acceptsClasses && !myLibraryTypes.containsKey(descriptor)) {
         myLibraryTypes.put(descriptor, libraryType);
       }
     }
