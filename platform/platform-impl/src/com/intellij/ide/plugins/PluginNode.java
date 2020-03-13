@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.updateSettings.LightPluginDescriptor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,10 +12,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-/**
- * @author stathik
- */
-public final class PluginNode implements IdeaPluginDescriptor, LightPluginDescriptor {
+public class PluginNode implements IdeaPluginDescriptor {
   public enum Status {
     UNKNOWN, INSTALLED, DOWNLOADED, DELETED
   }
@@ -51,6 +47,8 @@ public final class PluginNode implements IdeaPluginDescriptor, LightPluginDescri
   private String myRating;
   private boolean myIncomplete;
   private List<String> myTags;
+  private String externalUpdateId;
+  private String externalPluginId;
 
   public PluginNode() { }
 
@@ -120,6 +118,25 @@ public final class PluginNode implements IdeaPluginDescriptor, LightPluginDescri
 
   public void setLicenseOptional(boolean optional) {
     this.licenseOptional = optional;
+  }
+
+  /**
+   * TODO:
+   */
+  public String getExternalUpdateId() {
+    return externalUpdateId;
+  }
+
+  public void setExternalUpdateId(String externalUpdateId) {
+    this.externalUpdateId = externalUpdateId;
+  }
+
+  public String getExternalPluginId() {
+    return externalPluginId;
+  }
+
+  public void setExternalPluginId(String externalPluginId) {
+    this.externalPluginId = externalPluginId;
   }
 
   @Override

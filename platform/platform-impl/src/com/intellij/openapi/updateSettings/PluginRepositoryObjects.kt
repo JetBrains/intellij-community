@@ -3,8 +3,8 @@ package com.intellij.openapi.updateSettings
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
-import com.intellij.openapi.extensions.PluginId
 
 /**
  * Object from Search Service for getting compatible updates for IDE.
@@ -57,30 +57,26 @@ data class IntellijUpdateMetadata(
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class LightPluginNode(
+class MarketplaceSearchPluginData(
   @get:JsonProperty("xmlId")
   val id: String,
-  val isPaid: Boolean = false,
-  override var rating: String = "",
-  override var name: String = "",
-  override var vendor: String = ""
-) : LightPluginDescriptor {
-  override fun getPluginId(): PluginId = PluginId.getId(id)
+  var productCode: String? = null,
+  val rating: String = "",
+  val name: String = "",
+  val vendor: String = "",
+  val ideCompatibleUpdate: IdeCompatibleUpdate,
+  val downloads: String = ""
+) {
   fun toPluginNode(): PluginNode {
     val pluginNode = PluginNode()
     pluginNode.setId(id)
     pluginNode.name = name
-    pluginNode.vendor = vendor
     pluginNode.rating = rating
-    pluginNode.tags = listOf("Paid")
+    pluginNode.downloads = downloads
+    pluginNode.vendor = vendor
+    pluginNode.externalPluginId = ideCompatibleUpdate.externalPluginId
+    pluginNode.externalUpdateId = ideCompatibleUpdate.externalUpdateId
+    pluginNode.productCode = productCode
     return pluginNode
-
   }
-}
-
-interface LightPluginDescriptor {
-  var name: String
-  var vendor: String
-  var rating: String
-  fun getPluginId(): PluginId
 }

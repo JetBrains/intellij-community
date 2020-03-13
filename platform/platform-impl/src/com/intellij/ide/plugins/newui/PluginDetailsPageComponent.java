@@ -8,6 +8,8 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -384,6 +386,18 @@ public class PluginDetailsPageComponent extends MultiPanel {
       setEmptyState(multiSelection);
     }
     else {
+
+      IdeaPluginDescriptor descriptor = component.getPluginDescriptor();
+      if (descriptor instanceof PluginNode) {
+        PluginNode node = (PluginNode)descriptor;
+        if (node.getDescription() == null && node.getExternalPluginId() != null) {
+          WriteAction.run(() -> { // TODO DROP
+            PluginNode meta = PluginsMetaLoader.loadPluginDescriptor(node.getPluginId().getIdString(), node.getExternalPluginId(), node.getExternalUpdateId());
+            component.myPlugin = meta;
+          });
+        }
+      }
+
       myPlugin = component.myPlugin;
       myUpdateDescriptor = component.myUpdateDescriptor;
       showPlugin();
@@ -456,8 +470,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myHomePage.hide();
     }
     else {
-      myHomePage.show(IdeBundle.message("plugins.configurable.plugin.homepage.link"), () -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
-                                                                                                               URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
+      myHomePage.show(IdeBundle.message("plugins.configurable.plugin.homepage.link"),
+                      () -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
+                                               URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
     }
 
     String date = PluginManagerConfigurable.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);

@@ -37,7 +37,8 @@ object PluginsMetaLoader {
 
   private val AVAILABLE_PLUGINS_XML_IDS_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/files/$FULL_PLUGINS_XML_IDS_FILENAME"
 
-  private val COMPATIBLE_UPDATE_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')}/api/search/compatibleUpdates"
+  private val COMPATIBLE_UPDATE_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd(
+    '/')}/api/search/compatibleUpdates"
 
   private val objectMapper = ObjectMapper()
 
@@ -68,6 +69,12 @@ object PluginsMetaLoader {
       IdeBundle.message("progress.downloading.plugins.meta", xmlId),
       ::parseJsonPluginMeta
     ).toPluginNode()
+  }
+
+  @JvmStatic
+  fun loadPluginDescriptor(xmlId: String, externalPluginId: String, externalUpdateId: String): PluginNode {
+    val ideCompatibleUpdate = IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
+    return loadPluginDescriptor(xmlId, ideCompatibleUpdate, null)
   }
 
   @JvmStatic
@@ -107,6 +114,7 @@ object PluginsMetaLoader {
       }
   }
 
+  @JvmStatic
   fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber?): List<IdeCompatibleUpdate> {
     val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
     val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()

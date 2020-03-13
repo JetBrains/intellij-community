@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.updateSettings.LightPluginDescriptor;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Pair;
@@ -396,12 +395,13 @@ public class PluginManagerConfigurable
             for (String host : UpdateSettings.getInstance().getPluginHosts()) {
               List<IdeaPluginDescriptor> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
-                addGroup(groups, IdeBundle.message("plugins.configurable.repository.0", host), "/repository:\"" + host + "\"", descriptors -> {
-                  int allSize = allDescriptors.size();
-                  descriptors.addAll(ContainerUtil.getFirstItems(allDescriptors, ITEMS_PER_GROUP));
-                  PluginsGroup.sortByName(descriptors);
-                  return allSize > ITEMS_PER_GROUP;
-                });
+                addGroup(groups, IdeBundle.message("plugins.configurable.repository.0", host), "/repository:\"" + host + "\"",
+                         descriptors -> {
+                           int allSize = allDescriptors.size();
+                           descriptors.addAll(ContainerUtil.getFirstItems(allDescriptors, ITEMS_PER_GROUP));
+                           PluginsGroup.sortByName(descriptors);
+                           return allSize > ITEMS_PER_GROUP;
+                         });
               }
             }
           }
@@ -733,10 +733,12 @@ public class PluginManagerConfigurable
               }
               catch (IOException e) {
                 LOG.info(e);
-
-                ApplicationManager.getApplication().invokeLater(() -> myPanel.getEmptyText().setText(
-                  IdeBundle.message("plugins.configurable.search.result.not.loaded"))
-                  .appendSecondaryText(IdeBundle.message("plugins.configurable.check.internet"), StatusText.DEFAULT_ATTRIBUTES, null), ModalityState.any());
+                ApplicationManager.getApplication().invokeLater(
+                  () -> myPanel.getEmptyText()
+                    .setText(IdeBundle.message("plugins.configurable.search.result.not.loaded"))
+                    .appendSecondaryText(
+                      IdeBundle.message("plugins.configurable.check.internet"), StatusText.DEFAULT_ATTRIBUTES, null), ModalityState.any()
+                );
               }
             }
           };
@@ -1017,7 +1019,8 @@ public class PluginManagerConfigurable
                 query.contains("/invalid") || query.contains("/bundled")) {
               return;
             }
-            myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+            myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"),
+                                                       SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                                        e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
           }
 
@@ -1592,15 +1595,18 @@ public class PluginManagerConfigurable
     }
   }
 
-  private void addGroup(@NotNull List<? super PluginsGroup> groups,
-                        @NotNull @Nls String name,
-                        @NotNull String showAllQuery,
-                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function)
+  private void addGroup(
+    @NotNull List<? super PluginsGroup> groups,
+    @NotNull @Nls String name,
+    @NotNull String showAllQuery,
+    @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function
+  )
     throws IOException {
     PluginsGroup group = new PluginsGroup(name);
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
-      group.rightAction = new LinkLabel<>(IdeBundle.message("plugins.configurable.show.all"), null, myMarketplaceTab.mySearchListener, showAllQuery);
+      group.rightAction =
+        new LinkLabel<>(IdeBundle.message("plugins.configurable.show.all"), null, myMarketplaceTab.mySearchListener, showAllQuery);
       group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
     }
 
