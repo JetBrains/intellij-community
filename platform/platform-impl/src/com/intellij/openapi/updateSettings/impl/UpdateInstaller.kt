@@ -206,7 +206,7 @@ object UpdateInstaller {
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
 
   private fun getJdkSuffix(): String = when {
-    !SystemInfo.isMac && Files.isDirectory(Paths.get(PathManager.getHomePath(), "jre32")) -> "-jbr11-x86"
+    !SystemInfo.isMac && Files.isDirectory(Paths.get(PathManager.getHomePath(), "jbr-x86")) -> "-jbr11-x86"
     Files.isDirectory(Paths.get(PathManager.getHomePath(), "jbr")) -> "-jbr11"
     else -> "-no-jbr"
   }
