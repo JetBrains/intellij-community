@@ -81,7 +81,7 @@ class GitUpdateSession(private val project: Project,
     }
     else {
       title = mainMessage
-      content = getBodyForUpdateNotification(updatedFilesNumber, updatedCommitsNumber, filteredCommitsNumber)
+      content = getBodyForUpdateNotification(filteredCommitsNumber)
       type = NotificationType.INFORMATION
     }
 
@@ -103,7 +103,7 @@ fun getTitleForUpdateNotification(updatedFilesNumber: Int, updatedCommitsNumber:
   return "$updatedFilesNumber $files updated in $updatedCommitsNumber $commits"
 }
 
-fun getBodyForUpdateNotification(updatedFilesNumber: Int, updatedCommitsNumber: Int, filteredCommitsNumber: Int?): String {
+fun getBodyForUpdateNotification(filteredCommitsNumber: Int?): String {
   return when (filteredCommitsNumber) {
     null -> ""
     0 -> "No commits matching filters"
