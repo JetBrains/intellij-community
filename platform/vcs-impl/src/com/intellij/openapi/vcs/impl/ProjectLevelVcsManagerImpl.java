@@ -64,6 +64,7 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
+import javax.swing.JComponent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -860,6 +861,35 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     if (myInitialization != null) {
       myInitialization.waitFinished();
     }
+  }
+
+  @Override
+  public void showConsole() {
+    if (!Registry.is("vcs.showConsole")) {
+      return;
+    }
+    ToolWindow vcsToolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+    if (vcsToolWindow == null) {
+      return;
+    }
+    if (vcsToolWindow.isVisible()) {
+      showConsoleInternal();
+    }
+    else {
+      vcsToolWindow.show(this::showConsoleInternal);
+    }
+  }
+
+  private void showConsoleInternal() {
+    ContentManager cm = getContentManager();
+    if (cm == null) {
+      return;
+    }
+    Content console = cm.findContent(VcsBundle.message("vcs.console.toolwindow.display.name"));
+    if (console == null) {
+      return;
+    }
+    cm.setSelectedContent(console);
   }
 
   private static class ActionKey {
