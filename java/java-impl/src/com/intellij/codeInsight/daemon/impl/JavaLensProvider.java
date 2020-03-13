@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hints.*;
 import com.intellij.codeInsight.hints.presentation.*;
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
@@ -84,7 +85,9 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
               hints.add(new InlResult() {
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
-                  FUCounterUsageLogger.getInstance().logEvent(file.getProject(), FUS_GROUP_ID, IMPLEMENTATIONS_CLICKED_EVENT_ID);
+                  FeatureUsageData data = new FeatureUsageData().addData("location", "class");
+                  FUCounterUsageLogger.getInstance()
+                    .logEvent(file.getProject(), FUS_GROUP_ID, IMPLEMENTATIONS_CLICKED_EVENT_ID, data);
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.SUBCLASSED_CLASS.getNavigationHandler();
                   navigationHandler.navigate(event, ((PsiClass)element).getNameIdentifier());
                 }
@@ -104,7 +107,9 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
               hints.add(new InlResult() {
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
-                  FUCounterUsageLogger.getInstance().logEvent(file.getProject(), FUS_GROUP_ID, IMPLEMENTATIONS_CLICKED_EVENT_ID);
+                  FeatureUsageData data = new FeatureUsageData().addData("location", "method");
+                  FUCounterUsageLogger.getInstance()
+                    .logEvent(file.getProject(), FUS_GROUP_ID, IMPLEMENTATIONS_CLICKED_EVENT_ID, data);
                   GutterIconNavigationHandler<PsiElement> navigationHandler = MarkerType.OVERRIDDEN_METHOD.getNavigationHandler();
                   navigationHandler.navigate(event, ((PsiMethod)element).getNameIdentifier());
                 }
