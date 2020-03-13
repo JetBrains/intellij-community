@@ -106,7 +106,7 @@ public class WindowsRegistryUtil {
   }
 
   @Nullable
-  private static StringBuilder readRegistry(@NonNls String command) {
+  public static StringBuilder readRegistry(@NonNls @NotNull String command) {
     try {
       Process process = Runtime.getRuntime().exec(command);
       StringBuilder output = null;
