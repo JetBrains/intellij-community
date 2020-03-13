@@ -38,7 +38,7 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
 
   internal fun asPrivate(): Member {
     val modifiers = this.modifiers.toMutableSet()
-    modifiers.removeIf { it == PsiModifier.PUBLIC || it == PsiModifier.PROTECTED }
+    modifiers.removeIf { it == PsiModifier.PUBLIC || it == PsiModifier.PROTECTED || it == PsiModifier.ABSTRACT }
     modifiers.add(PsiModifier.PRIVATE)
     return copy(modifiers)
   }

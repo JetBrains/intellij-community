@@ -110,6 +110,37 @@ internal class MethodProblemsTest: ProjectProblemsViewTest() {
     }
   }
 
+  fun testMakeInterfaceMethodPrivate() {
+    val targetClass = myFixture.addClass("""
+      package foo;
+      
+      public interface A {
+        int test();
+      }
+    """.trimIndent())
+
+    val refClass = myFixture.addClass("""
+      package bar;
+      
+      import foo.*;
+      
+      public class B {
+      
+        void test(A a) { 
+          int i = a.test();
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeMethod(targetClass) { method, _ ->
+        method.modifierList.setModifierProperty(PsiModifier.PRIVATE, true)
+      }
+    }
+
+    assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
+  }
+
   private fun doMethodTest(methodChangeAction: (PsiMethod, PsiElementFactory) -> Unit) {
 
     val targetClass = myFixture.addClass("""
