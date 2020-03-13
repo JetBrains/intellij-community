@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -276,7 +276,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     ourTraceMask = mask;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  private int getTraceMask() {
+    int mask = ourTraceMask;
+    DebugEnvironment environment = mySession.getDebugEnvironment();
+    if (environment instanceof DefaultDebugEnvironment) {
+      mask |= ((DefaultDebugEnvironment)environment).getTraceMode();
+    }
+    return mask;
+  }
+
   protected void commitVM(VirtualMachine vm) {
     if (!isInInitialState()) {
       LOG.error("State is invalid " + myState.get());
@@ -294,11 +302,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
     });
     LOG.debug("*******************VM attached******************");
+
+    vm.setDebugTraceMode(getTraceMask());
+
     checkVirtualMachineVersion(vm);
-
     myVirtualMachineProxy = new VirtualMachineProxyImpl(this, vm);
-
-    vm.setDebugTraceMode(ourTraceMask);
   }
 
   private void stopConnecting() {
@@ -1116,11 +1124,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             }
 
             // workaround for jdi hang in trace mode, see IDEA-183387
-            if (Patches.JDK_BUG_WITH_TRACE_SEND && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
+            if (Patches.JDK_BUG_WITH_TRACE_SEND && (getTraceMask() & VirtualMachine.TRACE_SENDS) != 0) {
               StreamEx.of(myArgs).findAny(ThreadReference.class::isInstance).ifPresent(t -> {
                 //noinspection UseOfSystemOutOrSystemErr
                 System.err.println("[JDI: workaround for invocation of " + myMethod + "]");
-                myMethod.virtualMachine().setDebugTraceMode(ourTraceMask & ~VirtualMachine.TRACE_SENDS);
+                myMethod.virtualMachine().setDebugTraceMode(getTraceMask() & ~VirtualMachine.TRACE_SENDS);
               });
             }
 
@@ -1133,8 +1141,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             if (invocationWatcher != null) {
               invocationWatcher.invocationFinished();
             }
-            if (Patches.JDK_BUG_WITH_TRACE_SEND && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
-              myMethod.virtualMachine().setDebugTraceMode(ourTraceMask);
+            if (Patches.JDK_BUG_WITH_TRACE_SEND && (getTraceMask() & VirtualMachine.TRACE_SENDS) != 0) {
+              myMethod.virtualMachine().setDebugTraceMode(getTraceMask());
             }
             //  assertThreadSuspended(thread, context);
             if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
