@@ -294,7 +294,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
         progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
         return ProgressManager.getInstance().runProcess(() -> {
           try {
-            return myProject.isDisposed() ? null : moduleModel.loadModuleInternal(path);
+            return myProject.isDisposed() ? null : loadModuleInternal(path, moduleModel);
           }
           catch (IOException e) {
             reportError(errors, modulePath, e);
@@ -361,6 +361,16 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     onModuleLoadErrors(moduleModel, errors);
 
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
+  }
+
+  private static @NotNull Module loadModuleInternal(@NotNull String filePath, @NotNull ModuleModelImpl model) throws IOException {
+    // we cannot call refreshAndFindFileByPath during module init under read action because it is forbidden
+    StandardFileSystems.local().refreshAndFindFileByPath(filePath);
+    return ReadAction.compute(() -> {
+      ModuleEx module = model.myManager.createAndLoadModule(filePath);
+      model.initModule(module, () -> ((ModuleStore)ServiceKt.getStateStore(module)).setPath(filePath, false));
+      return module;
+    });
   }
 
   private void reportError(@NotNull List<? super ModuleLoadingErrorDescription> errors, @NotNull ModulePath modulePath, @NotNull Exception e) {
@@ -842,7 +852,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       String resolvedPath = FileUtilRt.toSystemIndependentName(resolveShortWindowsName(filePath));
       try {
         Module module = getModuleByFilePath(resolvedPath);
-        return module == null ? loadModuleInternal(resolvedPath) : module;
+        return module == null ? loadModuleInternal(resolvedPath, this) : module;
       }
       catch (FileNotFoundException e) {
         throw e;
@@ -850,16 +860,6 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       catch (IOException e) {
         throw new IOException(ProjectModelBundle.message("module.corrupted.file.error", FileUtilRt.toSystemDependentName(resolvedPath), e.getMessage()), e);
       }
-    }
-
-    private @NotNull Module loadModuleInternal(@NotNull String filePath) throws IOException {
-      // we cannot call refreshAndFindFileByPath during module init under read action because it is forbidden
-      StandardFileSystems.local().refreshAndFindFileByPath(filePath);
-      return ReadAction.compute(() -> {
-        ModuleEx module = myManager.createAndLoadModule(filePath);
-        initModule(module, () -> ((ModuleStore)ServiceKt.getStateStore(module)).setPath(filePath, false));
-        return module;
-      });
     }
 
     private void initModule(@NotNull ModuleEx module, @NotNull Runnable beforeComponentCreation) {
