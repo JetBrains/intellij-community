@@ -53,11 +53,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
   public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
 
-  private static final String APPLICATION_SERVICE = "com.intellij.applicationService";
-  private static final String PROJECT_SERVICE = "com.intellij.projectService";
-  private static final String MODULE_SERVICE = "com.intellij.moduleService";
-
-  static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList(APPLICATION_SERVICE, PROJECT_SERVICE, MODULE_SERVICE);
+  static final String APPLICATION_SERVICE = "com.intellij.applicationService";
+  static final String PROJECT_SERVICE = "com.intellij.projectService";
+  static final String MODULE_SERVICE = "com.intellij.moduleService";
 
   private final Path myPath;
   private Path myBasePath;   // base path for resolving optional dependency descriptors
