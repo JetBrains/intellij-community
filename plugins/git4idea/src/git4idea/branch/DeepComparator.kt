@@ -67,7 +67,7 @@ class DeepComparator(private val project: Project,
       return
     }
 
-    val singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.filters, dataPack.refs)
+    val singleFilteredBranch = getComparedBranchFromFilters(dataPack.filters, dataPack.refs)
     if (comparedBranch != singleFilteredBranch) {
       LOG.debug("Branch filter changed. Compared branch: $comparedBranch, filtered branch: $singleFilteredBranch")
       stopTaskAndUnhighlight()
@@ -331,6 +331,15 @@ class DeepComparator(private val project: Project,
     @JvmStatic
     fun getInstance(project: Project, dataProvider: VcsLogData, logUi: VcsLogUi): DeepComparator {
       return ServiceManager.getService(project, DeepComparatorHolder::class.java).getInstance(dataProvider, logUi)
+    }
+
+    @JvmStatic
+    fun getComparedBranchFromFilters(filters: VcsLogFilterCollection, refs: VcsLogRefs): String? {
+      val singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(filters, refs)
+      if (singleFilteredBranch != null) return singleFilteredBranch
+
+      val rangeFilter = filters.get(VcsLogFilterCollection.RANGE_FILTER) ?: return null
+      return rangeFilter.ranges.singleOrNull()?.inclusiveRef
     }
   }
 
