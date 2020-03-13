@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.*;
@@ -25,6 +26,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.Pattern;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +44,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
   @NotNull private Configuration myConfiguration;
   private InspectionProfileImpl myProfile = null;
+  private Element myOldConfig = null;
 
   public StructuralSearchFakeInspection(@NotNull Configuration configuration) {
     myConfiguration = configuration;
@@ -50,6 +53,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   public StructuralSearchFakeInspection(StructuralSearchFakeInspection copy) {
     myConfiguration = copy.myConfiguration;
     myProfile = copy.myProfile;
+    myOldConfig = null;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -115,7 +119,26 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   }
 
   @Override
+  public void writeSettings(@NotNull Element node) {
+    super.writeSettings(node);
+    if (isModified()) node.setAttribute("modified", String.valueOf(true));
+  }
+
+  private boolean isModified() {
+    if (myOldConfig == null) return false;
+    return !JDOMUtil.areElementsEqual(myOldConfig, getSettingsElement());
+  }
+
+  private Element getSettingsElement() {
+    final SSBasedInspection inspection = getStructuralSearchInspection();
+    final Element element = new Element("inspection");
+    inspection.writeSettings(element);
+    return element;
+  }
+
+  @Override
   public @Nullable JComponent createOptionsPanel() {
+    myOldConfig = getSettingsElement();
     final MyListModel model = new MyListModel();
     final JButton button = new JButton(SSRBundle.message("edit.metadata.button"));
     button.addActionListener(e -> {
