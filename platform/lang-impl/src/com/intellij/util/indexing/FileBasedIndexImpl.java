@@ -298,6 +298,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myStorageBufferingHandler.resetState();
     myRegisteredIndexes = new RegisteredIndexes(myFileDocumentManager, this);
     myRegisteredIndexes.initializeIndexes(new FileBasedIndexDataInitialization(this));
+    FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.initialize());
   }
 
   @Override
@@ -481,7 +482,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
 
-        FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.performShutdown());
+        FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.shutdown());
         IndexedHashesSupport.flushContentHashes();
         SharedIndicesData.flushData();
         if (!keepConnection) {
