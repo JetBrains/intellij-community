@@ -213,10 +213,10 @@ public class ClassInnerStuffCache {
 
     @Override
     public boolean equals(Object another) {
-      return another != null &&
-             another.getClass() == getClass() &&
-             myClass.equals(((LightMethod)another).getContainingClass()) &&
-             myText.equals(((LightMethod)another).getText());
+      return this == another ||
+             another instanceof EnumSyntheticMethod &&
+             myClass.equals(((EnumSyntheticMethod)another).myClass) &&
+             myText.equals(((EnumSyntheticMethod)another).myText);
     }
 
     @Override
