@@ -465,6 +465,10 @@ public class XmlParsingTest extends ParsingTestCase {
     doTestXml("<a");
   }
 
+  public void testMissingClosingTagName() throws Exception {
+    doTestXml("<a></>");
+  }
+
   public void testProcessingInstruction1() throws Exception {
     doTestXml("<?This is=\"PI\"?>");
   }
