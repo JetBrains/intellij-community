@@ -805,21 +805,19 @@ public final class PluginManagerCore {
     }
   }
 
-  @Nullable
-  private static IdeaPluginDescriptorImpl loadDescriptorFromDir(@NotNull Path file,
-                                                                @NotNull String descriptorRelativePath,
-                                                                @Nullable Path pluginPath,
-                                                                @NotNull DescriptorLoadingContext context) {
+  private static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromDir(@NotNull Path file,
+                                                                          @NotNull String descriptorRelativePath,
+                                                                          @Nullable Path pluginPath,
+                                                                          @NotNull DescriptorLoadingContext context) {
     Path descriptorFile = file.resolve(descriptorRelativePath);
-    if (!Files.exists(descriptorFile)) {
-      return null;
-    }
-
     try {
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath == null ? file : pluginPath, context.isBundled);
       Element element = JDOMUtil.load(descriptorFile, context.parentContext.getXmlFactory());
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(ObjectUtils.notNull(pluginPath, file), context.isBundled);
       descriptor.readExternal(element, descriptorFile.getParent(), context.pathResolver, context, descriptor);
       return descriptor;
+    }
+    catch (NoSuchFileException e) {
+      return null;
     }
     catch (SerializationException | JDOMException | IOException e) {
       if (context.isEssential) {
@@ -854,7 +852,7 @@ public final class PluginManagerCore {
         return null;
       }
 
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(ObjectUtils.notNull(pluginPath, file), context.isBundled);
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath == null ? file : pluginPath, context.isBundled);
       if (descriptor.readExternal(element, metaInf, pathResolver, context, descriptor)) {
         descriptor.jarFiles = Collections.singletonList(descriptor.getPluginPath());
       }
