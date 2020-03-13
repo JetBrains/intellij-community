@@ -69,9 +69,10 @@ class DeepComparator(private val project: Project,
 
     val singleFilteredBranch = getComparedBranchFromFilters(dataPack.filters, dataPack.refs)
     if (comparedBranch != singleFilteredBranch) {
-      LOG.debug("Branch filter changed. Compared branch: $comparedBranch, filtered branch: $singleFilteredBranch")
+      val oldComparedBranch = comparedBranch
+      LOG.debug("Branch filter changed. Compared branch: $oldComparedBranch, filtered branch: $singleFilteredBranch")
       stopTaskAndUnhighlight()
-      notifyUnhighlight()
+      notifyUnhighlight(oldComparedBranch)
       return
     }
 
@@ -151,9 +152,9 @@ class DeepComparator(private val project: Project,
     }.associateWith { it.currentBranch!! }
   }
 
-  private fun notifyUnhighlight() {
+  private fun notifyUnhighlight(branch: String?) {
     if (ui is VcsLogUiEx) {
-      val message = GitBundle.message("git.log.cherry.picked.highlighter.cancelled.message")
+      val message = GitBundle.message("git.log.cherry.picked.highlighter.cancelled.message", branch)
       val balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, null,
                                                                               MessageType.INFO.popupBackground, null)
         .setFadeoutTime(5000)
