@@ -58,7 +58,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     private val constructorParameterResolver = ConstructorParameterResolver()
 
     @JvmStatic
-    protected val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
+    @Internal
+    val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
 
     // not as file level function to avoid scope cluttering
     @Internal
