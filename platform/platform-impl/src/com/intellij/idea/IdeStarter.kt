@@ -104,8 +104,13 @@ open class IdeStarter : ApplicationStarter {
       }
 
       // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
-      val willOpenProject = args.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
-      needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
+      if (app.isHeadlessEnvironment()) {
+        needToOpenProject = false
+      }
+      else {
+        val willOpenProject = args.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
+        needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
+      }
 
       frameInitActivity.end()
 
@@ -153,7 +158,7 @@ open class IdeStarter : ApplicationStarter {
 
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
 
-    if (PluginManagerCore.isRunningFromSources()) {
+    if (PluginManagerCore.isRunningFromSources() && !app.isHeadlessEnvironment) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
     }
   }
