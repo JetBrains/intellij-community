@@ -57,6 +57,37 @@ internal class ClassProblemsTest: ProjectProblemsViewTest() {
     doNestedClassTest(false)
   }
 
+  fun testMakeClassAnnotationType() {
+    var targetClass = myFixture.addClass("""
+      package foo;
+      
+      public class A {
+        
+      }
+    """.trimIndent())
+
+    val refClass = myFixture.addClass("""
+      package bar;
+      
+      import foo.*;
+      
+      public class B {
+      
+        void test() { 
+          A a = new A();
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeClass(targetClass) { _, factory ->
+        val annoType = factory.createAnnotationType("A")
+        targetClass = targetClass.replace(annoType) as PsiClass
+      }
+    }
+    assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
+  }
+
   private fun doNestedClassTest(isStatic: Boolean) {
     val staticModifier = if (isStatic) "static" else ""
     val targetClass = myFixture.addClass("""

@@ -123,18 +123,19 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
                             override val modifiers: Set<String>,
                             val isEnum: Boolean,
                             val isInterface: Boolean,
+                            val isAnnotationType: Boolean,
                             val extendsList: Set<String>,
                             val implementsList: Set<String>) : Member(name, modifiers) {
 
     override fun hasChanged(other: Member): Boolean {
       return other !is Class || super.hasChanged(other) ||
-             isEnum != other.isEnum || isInterface != other.isInterface ||
+             isEnum != other.isEnum || isInterface != other.isInterface || isAnnotationType != other.isAnnotationType ||
              extendsList != other.extendsList || implementsList != other.implementsList
     }
 
     override fun copy(modifiers: MutableSet<String>): Member = copy(name = name, modifiers = modifiers, isEnum = isEnum,
-                                                                    isInterface = isInterface, extendsList = extendsList,
-                                                                    implementsList = implementsList)
+                                                                    isInterface = isInterface, isAnnotationType = isAnnotationType,
+                                                                    extendsList = extendsList, implementsList = implementsList)
 
     companion object {
       internal fun create(psiClass: PsiClass): Class? {
@@ -142,9 +143,10 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
         val modifiers = extractModifiers(psiClass.modifierList)
         val isEnum = psiClass.isEnum
         val isInterface = psiClass.isInterface
+        val isAnnotationType = psiClass.isAnnotationType
         val extendsList: Set<String> = getParentClasses(psiClass.extendsList)
         val implementsList: Set<String> = getParentClasses(psiClass.implementsList)
-        return Class(name, modifiers, isEnum, isInterface, extendsList, implementsList)
+        return Class(name, modifiers, isEnum, isInterface, isAnnotationType, extendsList, implementsList)
       }
     }
   }
