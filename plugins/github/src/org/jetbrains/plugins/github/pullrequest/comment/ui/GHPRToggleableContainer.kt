@@ -6,22 +6,22 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import javax.swing.JComponent
 
-object GHPRTogglableContainer {
+object GHPRToggleableContainer {
 
-  fun create(mainComponentSupplier: (SingleValueModel<Boolean>) -> JComponent,
-             togglableComponentSupplier: (SingleValueModel<Boolean>) -> JComponent): JComponent {
+  fun create(model: SingleValueModel<Boolean>,
+             mainComponentSupplier: () -> JComponent,
+             togglableComponentSupplier: () -> JComponent): JComponent {
 
-    val toggleModel = SingleValueModel(false)
     val container = BorderLayoutPanel().apply {
       isOpaque = false
-      addToCenter(mainComponentSupplier(toggleModel))
+      addToCenter(mainComponentSupplier())
     }
-    toggleModel.addValueChangedListener {
-      if (toggleModel.value) {
-        updateTogglableContainer(container, togglableComponentSupplier(toggleModel))
+    model.addValueChangedListener {
+      if (model.value) {
+        updateTogglableContainer(container, togglableComponentSupplier())
       }
       else {
-        updateTogglableContainer(container, mainComponentSupplier(toggleModel))
+        updateTogglableContainer(container, mainComponentSupplier())
       }
     }
     return container

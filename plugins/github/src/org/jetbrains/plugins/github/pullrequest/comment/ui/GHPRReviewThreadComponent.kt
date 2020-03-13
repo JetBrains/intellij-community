@@ -77,7 +77,9 @@ object GHPRReviewThreadComponent {
                                        submitter: (String) -> CompletableFuture<*>): JComponent {
     var text = ""
 
-    return GHPRTogglableContainer.create(::createThreadActionsComponent) { toggleModel ->
+    val toggleModel = SingleValueModel(false)
+
+    return GHPRToggleableContainer.create(toggleModel, { createThreadActionsComponent(toggleModel) }) {
       val model = GHPRSubmittableTextField.Model {
         submitter(it).successOnEdt {
           text = ""
