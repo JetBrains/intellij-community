@@ -527,7 +527,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   private boolean isDotIdeaStorageVcsIgnored() {
     if (myDotIdeaStorageVcsIgnored == null) {
-      myDotIdeaStorageVcsIgnored = VcsIgnoreManager.getInstance(myProject).isFileVcsIgnored(getDotIdeaStoragePath(myProject));
+      myDotIdeaStorageVcsIgnored = VcsIgnoreManager.getInstance(myProject).isDirectoryVcsIgnored(getDotIdeaStoragePath(myProject));
     }
     return myDotIdeaStorageVcsIgnored.booleanValue();
   }

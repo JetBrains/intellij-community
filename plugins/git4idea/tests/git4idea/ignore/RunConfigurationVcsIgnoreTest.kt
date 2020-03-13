@@ -37,7 +37,7 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
     gitIgnore.writeText("!$configurationName")
 
     assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isFileVcsIgnored("$projectPath/.idea/runConfigurations") })
+    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations") })
 
     gitIgnore.writeText("!$configurationName*")
 
@@ -53,7 +53,7 @@ class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
   fun `test remove run configuration from ignore`() {
     gitIgnore.writeText(".idea")
     assertTrue(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
-    assertTrue(invokeAndWaitIfNeeded { vcsIgnoreManager.isFileVcsIgnored("$projectPath/.idea/runConfigurations") })
+    assertTrue(invokeAndWaitIfNeeded { vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations") })
 
     invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
     assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
