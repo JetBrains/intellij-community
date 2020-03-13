@@ -62,7 +62,7 @@
   </project-components>
 
   <projectListeners>
-    <listener class="com.intellij.dvcs.shelf.ShelfViewUpdater" topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+    <listener class="com.intellij.dvcs.shelf.ShelfViewUpdater" topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener" activeInHeadlessMode="false"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
