@@ -31,9 +31,9 @@ open class MemberFilterWithNameMappings(private val rawNameToSource: Map<String,
       return null
     }
 
-    for ((key, value) in rawNameToSource) {
-      if (value == name) {
-        return key
+    for ((generatedName, sourceName) in rawNameToSource) {
+      if (sourceName == name) {
+        return generatedName
       }
     }
     return null
