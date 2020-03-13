@@ -766,8 +766,7 @@ class DistributionJARsBuilder {
    * directory name return the old module name to temporary keep layout of plugins unchanged.
    */
   static String getActualPluginDirectoryName(PluginLayout plugin, BuildContext context) {
-    // do not use old name for intellij.platform. modules
-    if (!plugin.directoryNameSetExplicitly && !plugin.mainModule.startsWith("intellij.platform.") && plugin.directoryName == BaseLayout.convertModuleNameToFileName(plugin.mainModule)
+    if (!plugin.directoryNameSetExplicitly && plugin.directoryName == BaseLayout.convertModuleNameToFileName(plugin.mainModule)
                                            && context.getOldModuleName(plugin.mainModule) != null) {
       context.getOldModuleName(plugin.mainModule)
     }
