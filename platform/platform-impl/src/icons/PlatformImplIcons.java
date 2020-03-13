@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.ui.IconManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -10,20 +11,20 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class PlatformImplIcons {
-  private static Icon load(String path) {
+  private static @NotNull Icon load(@NotNull String path) {
     return IconManager.getInstance().getIcon(path, PlatformImplIcons.class);
   }
 
-  /** 48x48 */ public static final Icon Android = load("/icons/plugins/Android.png");
-  /** 48x48 */ public static final Icon ApplicationServers = load("/icons/plugins/ApplicationServers.png");
-  /** 48x48 */ public static final Icon BuildTools = load("/icons/plugins/BuildTools.png");
-  /** 48x48 */ public static final Icon Clouds = load("/icons/plugins/Clouds.png");
-  /** 48x48 */ public static final Icon DatabaseTools = load("/icons/plugins/DatabaseTools.png");
-  /** 48x48 */ public static final Icon JavaFrameworks = load("/icons/plugins/JavaFrameworks.png");
-  /** 48x48 */ public static final Icon OtherTools = load("/icons/plugins/OtherTools.png");
-  /** 48x48 */ public static final Icon PluginDevelopment = load("/icons/plugins/PluginDevelopment.png");
-  /** 48x48 */ public static final Icon Swing = load("/icons/plugins/Swing.png");
-  /** 48x48 */ public static final Icon TestTools = load("/icons/plugins/TestTools.png");
-  /** 48x48 */ public static final Icon VersionControls = load("/icons/plugins/VersionControls.png");
-  /** 48x48 */ public static final Icon WebDevelopment = load("/icons/plugins/WebDevelopment.png");
+  /** 48x48 */ public static final @NotNull Icon Android = load("/icons/plugins/Android.png");
+  /** 48x48 */ public static final @NotNull Icon ApplicationServers = load("/icons/plugins/ApplicationServers.png");
+  /** 48x48 */ public static final @NotNull Icon BuildTools = load("/icons/plugins/BuildTools.png");
+  /** 48x48 */ public static final @NotNull Icon Clouds = load("/icons/plugins/Clouds.png");
+  /** 48x48 */ public static final @NotNull Icon DatabaseTools = load("/icons/plugins/DatabaseTools.png");
+  /** 48x48 */ public static final @NotNull Icon JavaFrameworks = load("/icons/plugins/JavaFrameworks.png");
+  /** 48x48 */ public static final @NotNull Icon OtherTools = load("/icons/plugins/OtherTools.png");
+  /** 48x48 */ public static final @NotNull Icon PluginDevelopment = load("/icons/plugins/PluginDevelopment.png");
+  /** 48x48 */ public static final @NotNull Icon Swing = load("/icons/plugins/Swing.png");
+  /** 48x48 */ public static final @NotNull Icon TestTools = load("/icons/plugins/TestTools.png");
+  /** 48x48 */ public static final @NotNull Icon VersionControls = load("/icons/plugins/VersionControls.png");
+  /** 48x48 */ public static final @NotNull Icon WebDevelopment = load("/icons/plugins/WebDevelopment.png");
 }
