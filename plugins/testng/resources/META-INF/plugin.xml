@@ -93,12 +93,12 @@
 
   <actions>
     <group id="excludeGroup">
-      <action class="com.theoryinpractice.testng.ui.actions.TestNGExcludeFromRunAction" text="Exclude from Suite" id="excludeFromTestNGSuite"/>
+      <action class="com.theoryinpractice.testng.ui.actions.TestNGExcludeFromRunAction" id="excludeFromTestNGSuite"/>
       <separator/>
       <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
     </group>
     <group id="addToTempGroup">
-      <action class="com.theoryinpractice.testng.ui.actions.TestNGAddToTestsPatternAction" id="AddToTestNGSuite" text="Add to Temp Suite"/>
+      <action class="com.theoryinpractice.testng.ui.actions.TestNGAddToTestsPatternAction" id="AddToTestNGSuite"/>
       <add-to-group anchor="first" group-id="RunContextGroup"/>
     </group>
   </actions>
