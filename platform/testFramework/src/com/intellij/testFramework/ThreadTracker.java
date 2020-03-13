@@ -79,6 +79,7 @@ public final class ThreadTracker {
     "JobScheduler FJ pool ",
     "JPS thread pool",
     "Keep-Alive-Timer",
+    "Keep-Alive-SocketCleaner", // Thread[Keep-Alive-SocketCleaner,8,InnocuousThreadGroup], JBR-11
     "main",
     "Monitor Ctrl-Break",
     "Netty ",
