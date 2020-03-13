@@ -3,18 +3,22 @@
 
 package com.intellij.psi
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.uast.UElementPattern
+import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.ProcessingContext
-import gnu.trove.THashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.toUElementOfExpectedTypes
+import java.util.concurrent.ConcurrentHashMap
 
 private val CONTRIBUTOR_CHUNKS_KEY: Key<MutableMap<ChunkTag, UastReferenceContributorChunk>> = Key.create(
   "uast.psiReferenceContributor.chunks")
@@ -29,8 +33,14 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, Proc
   val registrar = this
   var chunks = registrar.getUserData(CONTRIBUTOR_CHUNKS_KEY)
   if (chunks == null) {
-    chunks = THashMap()
+    chunks = ConcurrentHashMap()
     registrar.putUserData(CONTRIBUTOR_CHUNKS_KEY, chunks)
+    // reset cache on extension point removal IDEA-235191
+    PsiReferenceContributor.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<KeyedLazyInstance<PsiReferenceContributor>> {
+      override fun extensionRemoved(extension: KeyedLazyInstance<PsiReferenceContributor>, pluginDescriptor: PluginDescriptor) {
+        chunks.clear()
+      }
+    }, ApplicationManager.getApplication())
   }
 
   val chunk = chunks.getOrPut(ChunkTag(priority, provider.supportedUElementTypes)) {
