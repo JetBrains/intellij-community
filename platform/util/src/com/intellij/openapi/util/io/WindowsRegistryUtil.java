@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,7 +106,7 @@ public class WindowsRegistryUtil {
   }
 
   @Nullable
-  private static StringBuilder readRegistry(String command) {
+  public static StringBuilder readRegistry(@NonNls @NotNull String command) {
     try {
       Process process = Runtime.getRuntime().exec(command);
       StringBuilder output = null;
