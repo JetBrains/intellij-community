@@ -137,6 +137,9 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
                    comment = if (isOverridden) message("option.is.overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS)
                    else null)
             .enabled(!isOverridden)
+
+          commentNoWrap(message("support.screen.readers.comment"))
+            .withLargeLeftGap()
         }
         fullRow { checkBox(cdUseContrastToolbars) }
 
@@ -151,6 +154,7 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
           fullRow {
             if (supportedValues.size == 1) {
               component(JBCheckBox(UIBundle.message("color.blindness.checkbox.text")))
+                .comment(UIBundle.message("color.blindness.checkbox.comment"))
                 .withBinding({ if (it.isSelected) supportedValues.first() else null },
                              { it, value -> it.isSelected = value != null },
                              modelBinding)
@@ -162,6 +166,7 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
               component(ComboBox(supportedValues.toTypedArray()))
                 .enableIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create<ColorBlindness>("") { PlatformEditorBundle.message(it.key) } }
+                .comment(UIBundle.message("color.blindness.combobox.comment"))
                 .withBinding({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
                              { it, value -> it.selectedItem = value ?: supportedValues.first() },
                              modelBinding)
