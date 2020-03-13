@@ -64,6 +64,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     new TObjectHashingStrategy<VirtualFilePointer>() {
       @Override
       public int computeHashCode(VirtualFilePointer pointer) {
+        // Hashcode is not stable, because pointer URL can change.
+        // Access keys with caution.
         return FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());
       }
 
@@ -96,10 +98,11 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public Element getState() {
     Element element = new Element("x");
     if (!myMapping.isEmpty()) {
-      List<VirtualFilePointer> files = new ArrayList<>(myMapping.keySet());
-      ContainerUtil.quickSort(files, Comparator.comparing(VirtualFilePointer::getUrl));
-      for (VirtualFilePointer file : files) {
-        Charset charset = myMapping.get(file);
+      List<Map.Entry<VirtualFilePointer, Charset>> mappings = new ArrayList<>(myMapping.entrySet());
+      ContainerUtil.quickSort(mappings, Comparator.comparing(e -> e.getKey().getUrl()));
+      for (Map.Entry<VirtualFilePointer, Charset> mapping : mappings) {
+        VirtualFilePointer file = mapping.getKey();
+        Charset charset = mapping.getValue();
         Element child = new Element("file");
         element.addContent(child);
         child.setAttribute("url", file.getUrl());
