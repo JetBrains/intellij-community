@@ -97,6 +97,7 @@ class CompilationPartsUploader implements Closeable {
     String path = '/check-files'
 
     CloseableHttpResponse response = null
+    String responseString = null
     try {
       String url = myServerUrl + StringUtil.trimStart(path, '/')
       debug("POST " + url)
@@ -108,12 +109,14 @@ class CompilationPartsUploader implements Closeable {
 
       debug("POST code: ${response.getStatusLine().getStatusCode()}")
 
-      def responseString = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
+      responseString = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
       def parsedResponse = new Gson().fromJson(responseString, CheckFilesResponse.class)
       return parsedResponse
     }
     catch (Exception e) {
-      myMessages.warning("Failed to check for found and mising files ('$path'): ${e.message}")
+      def additionalMessage = responseString == null ? "" : "\nResponse: $responseString"
+      // FIXME temporary fail here
+      myMessages.error("Failed to check for found and mising files ('$path'): ${e.message}" + additionalMessage)
       return null
     }
     finally {
