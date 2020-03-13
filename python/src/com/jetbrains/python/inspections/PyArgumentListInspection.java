@@ -26,7 +26,6 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureHandler;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -313,7 +312,7 @@ public class PyArgumentListInspection extends PyInspection {
       return XmlStringUtil.wrapInHtml(
         prefix + separator +
         PyBundle.message("INSP.possible.callees") + ":" + separator +
-        XmlStringUtil.escapeString(possibleCalleesRepresentation)
+        possibleCalleesRepresentation
       );
     }
     else {
@@ -331,7 +330,7 @@ public class PyArgumentListInspection extends PyInspection {
       .of(mappings)
       .map(PyCallExpression.PyArgumentsMapping::getCallableType)
       .nonNull()
-      .map(callableType -> calculatePossibleCalleeRepresentation(callableType, context))
+      .map(callableType -> XmlStringUtil.escapeString(calculatePossibleCalleeRepresentation(callableType, context)))
       .nonNull()
       .collect(Collectors.joining(isOnTheFly ? "<br>" : " "));
   }
