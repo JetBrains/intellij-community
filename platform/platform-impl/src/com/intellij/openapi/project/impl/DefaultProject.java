@@ -18,12 +18,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectStoreOwner;
+import com.intellij.serviceContainer.PlatformComponentManagerImpl;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
-import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.List;
@@ -71,9 +71,8 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
 
         @Override
         public void init(@Nullable ProgressIndicator indicator) {
-          MutablePicoContainer picoContainer = getPicoContainer();
           // do not leak internal delegate, use DefaultProject everywhere instead
-          picoContainer.registerComponentInstance(Project.class, DefaultProject.this);
+          registerServiceInstance(Project.class, DefaultProject.this, PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
 
           //noinspection unchecked
           registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), false);

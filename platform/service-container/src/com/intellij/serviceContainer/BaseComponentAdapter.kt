@@ -39,14 +39,12 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
   fun getImplementationClass(): Class<*> {
     var result = implementationClass
     if (result == null) {
-      val implClass: Class<*> = try {
-        Class.forName(implementationClassName, true, pluginDescriptor.pluginClassLoader)
+      try {
+        result = Class.forName(implementationClassName, true, pluginDescriptor.pluginClassLoader) as Class<*>
       }
       catch (e: ClassNotFoundException) {
         throw PluginException("Failed to load class: ${toString()}", e, pluginDescriptor.pluginId)
       }
-
-      result = implClass
       implementationClass = result
     }
     return result
@@ -104,6 +102,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
         when {
           keyClass != null && isImplementationEqualsToInterface() -> {
             implementationClass = keyClass
+            this.implementationClass = keyClass
           }
           else -> {
             @Suppress("UNCHECKED_CAST")

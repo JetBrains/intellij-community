@@ -77,7 +77,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     putUserData(CREATION_TIME, System.nanoTime());
     creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
 
-    getPicoContainer().registerComponentInstance(Project.class, this);
+    registerServiceInstance(Project.class, this, PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state
@@ -353,7 +353,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NonNls
   @Override
   public String toString() {
-    return "Project (name=" + myName + ", containerState=" + containerState.get().name() +
+    return "Project (name=" + myName + ", containerState=" + getContainerStateName() +
            ", componentStore=" + (myComponentStore.isComputed() ? getPresentableUrl() : "<not initialized>") + ") " +
            (temporarilyDisposed ? " (disposed" + " temporarily)" : "");
   }
