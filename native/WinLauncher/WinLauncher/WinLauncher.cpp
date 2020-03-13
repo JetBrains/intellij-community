@@ -288,7 +288,7 @@ bool LocateJVM()
 
   if (FindJVMInSettings()) return true;
 
-  if (FindValidJVM(GetAdjacentDir(need64BitJRE ? "jbr" : "jre32").c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
+  if (FindValidJVM(GetAdjacentDir(need64BitJRE ? "jbr" : "jbr-x86").c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
   {
     return true;
   }
