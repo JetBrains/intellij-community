@@ -55,7 +55,7 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
       append(": ").append(escape(commitMessage))
     }
     val feedback = committer.feedback
-    if (!feedback.isEmpty()) {
+    if (feedback.isNotEmpty()) {
       append("<br/>")
       append(join(feedback, "<br/>"))
     }
