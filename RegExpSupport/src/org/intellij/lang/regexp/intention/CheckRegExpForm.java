@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -84,6 +85,7 @@ public class CheckRegExpForm {
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
         editor.putUserData(CHECK_REG_EXP_EDITOR, Boolean.TRUE);
+        editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
       }
@@ -98,6 +100,7 @@ public class CheckRegExpForm {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
+        editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
       }
