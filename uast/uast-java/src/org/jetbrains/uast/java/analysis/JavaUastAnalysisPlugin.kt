@@ -29,7 +29,10 @@ class JavaUastAnalysisPlugin : UastAnalysisPlugin {
   }
 
   override fun UExpression.findIndirectUsages(): List<UExpression> {
-    val expression = sourcePsi as? PsiExpression ?: return listOf(this)
+    var expression = sourcePsi as? PsiExpression ?: return listOf(this)
+    while (expression.parent is PsiPolyadicExpression || expression.parent is PsiParenthesizedExpression) {
+      expression = expression.parent as PsiExpression
+    }
     val passThrough = ExpressionUtils.getPassThroughExpression(expression)
     val parent = passThrough.parent
     val defaultResult = if (passThrough == expression) emptyList() else listOfNotNull(passThrough.toUElement(UExpression::class.java))

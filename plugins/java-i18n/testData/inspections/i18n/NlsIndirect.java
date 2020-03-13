@@ -5,7 +5,7 @@ class NlsIndirect {
     native void useOk(String s);
     
     void test(boolean flag, String input) {
-        String s = <warning descr="Hardcoded string literal: \"foo\"">"foo"</warning>;
+        String s = <warning descr="Hardcoded string literal: \"foo\"">"foo"</warning> + <warning descr="Hardcoded string literal: \"bar\"">"bar"</warning>;
         use(s);
         s = "bar";
         useOk(s);
