@@ -19,6 +19,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
@@ -33,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -41,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.uast.*;
-import org.jetbrains.uast.analysis.UastAnalysisPlugin;
 import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
 import org.jetbrains.uast.util.UastExpressionUtils;
@@ -627,6 +628,44 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
   }
 
+  private static List<UExpression> findIndirectUsages(UExpression expression) {
+    PsiElement sourcePsi = expression.getSourcePsi();
+    if (!(sourcePsi instanceof PsiLiteralExpression)) {
+      return Collections.emptyList();
+    }
+    
+    while (sourcePsi.getParent() instanceof PsiPolyadicExpression || sourcePsi.getParent() instanceof PsiParenthesizedExpression) {
+      sourcePsi = sourcePsi.getParent();
+    }
+
+    PsiExpression passThrough = ExpressionUtils.getPassThroughExpression((PsiExpression)sourcePsi);
+    PsiElement parent = passThrough.getParent();
+    List<UExpression> expressions = new ArrayList<>();
+    if (!passThrough.equals(sourcePsi)) {
+      expressions.add(UastContextKt.toUElement(passThrough, UExpression.class));
+    }
+
+    PsiLocalVariable local = null;
+    if (parent instanceof PsiLocalVariable) {
+      local = (PsiLocalVariable)parent;
+    }
+    else if (parent instanceof PsiAssignmentExpression && 
+             passThrough.equals(((PsiAssignmentExpression)parent).getRExpression()) && 
+             ((PsiAssignmentExpression)parent).getOperationTokenType() == JavaTokenType.EQ) {
+      local = ExpressionUtils.resolveLocalVariable(((PsiAssignmentExpression)parent).getLExpression());
+    }
+
+    if (local != null) {
+      PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
+      if (codeBlock instanceof PsiCodeBlock) {
+        for (PsiElement e : DefUseUtil.getRefs(((PsiCodeBlock)codeBlock), local, passThrough)) {
+          ContainerUtil.addIfNotNull(expressions, UastContextKt.toUElement(e, UExpression.class));
+        }
+      }
+    }
+    return expressions;
+  }
+  
   private boolean canBeI18ned(@NotNull Project project,
                               @NotNull UInjectionHost expression,
                               @NotNull String value,
@@ -635,14 +674,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return false;
     }
 
-    List<UExpression> usages = Collections.emptyList();
-    UastLanguagePlugin plugin = UastLanguagePlugin.Companion.byLanguage(expression.getLang());
-    if (plugin != null) {
-      UastAnalysisPlugin analysis = plugin.getAnalysisPlugin();
-      if (analysis != null) {
-        usages = analysis.findIndirectUsages(expression);
-      }
-    }
+    List<UExpression> usages = findIndirectUsages(expression);
     if (usages.isEmpty()) {
       usages = Collections.singletonList(expression);
     }
