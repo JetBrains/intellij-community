@@ -84,7 +84,7 @@ class GitUpdateSession(private val project: Project,
       type = NotificationType.INFORMATION
     }
 
-    val additionalContent = getAdditionalNotificationContent()
+    val additionalContent = additionalNotificationContent
     if (additionalContent != null) {
       if (content.isNotEmpty()) {
         content += "<br/>" // NON-NLS
