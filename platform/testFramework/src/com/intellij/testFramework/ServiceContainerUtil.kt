@@ -6,29 +6,21 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.openapi.util.Disposer
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusOwner
 import org.jetbrains.annotations.TestOnly
 
+private val testDescriptor by lazy { DefaultPluginDescriptor("test") }
+
 @TestOnly
 fun <T : Any> ComponentManager.registerServiceInstance(serviceInterface: Class<T>, instance: T) {
-  (this as PlatformComponentManagerImpl).registerServiceInstance(serviceInterface, instance, DefaultPluginDescriptor("test"))
+  (this as PlatformComponentManagerImpl).registerServiceInstance(serviceInterface, instance, testDescriptor)
 }
 
 @TestOnly
 fun <T : Any> ComponentManager.replaceService(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
-  val serviceContainer = this as PlatformComponentManagerImpl
-  if (PlatformComponentManagerImpl.isLightService(serviceInterface)) {
-    serviceContainer.registerServiceInstance(serviceInterface, instance)
-    Disposer.register(parentDisposable, Disposable {
-      serviceContainer.picoContainer.unregisterComponent(serviceInterface)
-    })
-  }
-  else {
-    serviceContainer.replaceServiceInstance(serviceInterface, instance, parentDisposable)
-  }
+  (this as PlatformComponentManagerImpl).replaceServiceInstance(serviceInterface, instance, parentDisposable)
 }
 
 /**

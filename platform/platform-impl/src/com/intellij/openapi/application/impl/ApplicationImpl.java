@@ -108,8 +108,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     registerServiceInstance(TransactionGuard.class, myTransactionGuard, PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
     registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
-
-    myPicoContainer.registerComponentInstance(Application.class, this);
+    registerServiceInstance(Application.class, this, PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
 
     boolean strictMode = isUnitTestMode || isInternal;
     BundleBase.assertOnMissedKeys(strictMode);
@@ -1385,7 +1384,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public String toString() {
-    return "Application (containerState=" + containerState.get().name() + ") " +
+    return "Application (containerState=" + getContainerStateName() + ") " +
            (isUnitTestMode() ? " (Unit test)" : "") +
            (isInternal() ? " (Internal)" : "") +
            (isHeadlessEnvironment() ? " (Headless)" : "") +

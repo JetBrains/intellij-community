@@ -31,7 +31,7 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
       val app = componentManager.getApplication()
       if (app != null && app.isWriteAccessAllowed && !app.isUnitTestMode &&
           PersistentStateComponent::class.java.isAssignableFrom(implementationClass)) {
-        LOG.warn(Throwable("Getting service from write-action leads to possible deadlock. Service implementation ${implementationClassName}"))
+        LOG.warn(Throwable("Getting service from write-action leads to possible deadlock. Service implementation $implementationClassName"))
       }
     }
 
@@ -40,14 +40,13 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
       if (indicator == null) {
         return createAndInitialize(componentManager, implementationClass)
       }
-      else {
-        // don't use here computeInNonCancelableSection - it is kotlin and no need of such awkward and stack-trace unfriendly methods
-        var instance: T? = null
-        ProgressManager.getInstance().executeNonCancelableSection {
-          instance = createAndInitialize(componentManager, implementationClass)
-        }
-        return instance!!
+
+      // don't use here computeInNonCancelableSection - it is kotlin and no need of such awkward and stack-trace unfriendly methods
+      var instance: T? = null
+      ProgressManager.getInstance().executeNonCancelableSection {
+        instance = createAndInitialize(componentManager, implementationClass)
       }
+      return instance!!
     }
   }
 
