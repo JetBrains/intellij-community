@@ -41,11 +41,11 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
 
     when {
       errorsSize > 0 -> {
-        val title = pluralize(message("message.text.commit.failed.with.error"), errorsSize)
+        val title = message("message.text.commit.failed.with.error", errorsSize)
         notifier.notifyError(title, message)
       }
       warningsSize > 0 -> {
-        val title = pluralize(message("message.text.commit.finished.with.warning"), warningsSize)
+        val title = message("message.text.commit.finished.with.warning", warningsSize)
         notifier.notifyImportantWarning(title, message)
       }
       else -> notifier.notifySuccess(message)
