@@ -100,7 +100,7 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
 
   @Override
   public void handleEvent(@NotNull Event event, Object associated){
-    if(event == JavaScopeProcessorEvent.START_STATIC){
+    if (JavaScopeProcessorEvent.isEnteringStaticScope(event, associated)) {
       myStatic = true;
     }
     if(event == JavaScopeProcessorEvent.CHANGE_LEVEL){
