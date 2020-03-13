@@ -2,6 +2,7 @@
 package com.intellij.ui.stripe;
 
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelListener;
@@ -47,10 +48,7 @@ public class TreeUpdater<Painter extends ErrorStripePainter> extends Updater<Pai
 
   @Override
   protected void onSelect(Painter painter, int index) {
-    if (0 <= index) {
-      myTree.setSelectionRow(index);
-      myTree.scrollRowToVisible(index);
-    }
+    TreeUtil.selectRow(myTree, index);
   }
 
   @Override
