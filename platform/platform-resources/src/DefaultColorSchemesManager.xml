@@ -24,7 +24,8 @@
       <option name="VISUAL_INDENT_GUIDE" value="eeeeee"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="add9c7"/>
       <option name="RECENT_LOCATIONS_SELECTION" value="e9eef5"/>
-      <option name="DEFAULT_DOC_COMMENT_GUIDE" value="EBEBEB"/>
+      <option name="DOC_COMMENT_GUIDE" value="e8e8e8"/>
+      <option name="DOC_COMMENT_LINK" value="4585be"/>
 
       <option name="ADDED_LINES_COLOR" value="c9dec1" deuteranopia="99ca90" protanopia="99ca90"/>
       <option name="MODIFIED_LINES_COLOR" value="c3d6e8" deuteranopia="9ca9bf" protanopia="9ca9bf"/>
@@ -1264,7 +1265,8 @@
       <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="43474a"/>
       <option name="RECENT_LOCATIONS_SELECTION" value="383838"/>
-      <option name="DEFAULT_DOC_COMMENT_GUIDE" value="404142"/>
+      <option name="DOC_COMMENT_GUIDE" value="3b4b38"/>
+      <option name="DOC_COMMENT_LINK" value="4f86cd"/>
 
       <option name="VCS_ANNOTATIONS_COLOR_1" value="464c43"/>
       <option name="VCS_ANNOTATIONS_COLOR_2" value="444342"/>

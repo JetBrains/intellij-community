@@ -6,7 +6,6 @@ import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -54,13 +53,13 @@ import java.util.Objects;
 class DocRenderer implements EditorCustomElementRenderer {
   private static final int MIN_WIDTH = 350;
   private static final int MAX_WIDTH = 680;
-  private static final int LEFT_INSET = 15;
+  private static final int LEFT_INSET = 14;
   private static final int RIGHT_INSET = 12;
   private static final int TOP_BOTTOM_INSETS = 4;
-  private static final int LINE_WIDTH = 3;
+  private static final int LINE_WIDTH = 2;
 
   private static StyleSheet ourCachedStyleSheet;
-  private static String ourCachedStyleSheetLaf = "non-existing";
+  private static String ourCachedStyleSheetLinkColor = "non-existing";
   private static String ourCachedStyleSheetMonoFont = "non-existing";
 
   private final DocRenderItem myItem;
@@ -309,16 +308,18 @@ class DocRenderer implements EditorCustomElementRenderer {
   }
 
   private static StyleSheet getStyleSheet(@NotNull Editor editor) {
-    UIManager.LookAndFeelInfo lookAndFeel = LafManager.getInstance().getCurrentLookAndFeel();
-    String lafName = lookAndFeel == null ? null : lookAndFeel.getName();
-    String editorFontName = ObjectUtils.notNull(editor.getColorsScheme().getEditorFontName(), Font.MONOSPACED);
-    if (!Objects.equals(lafName, ourCachedStyleSheetLaf) || !Objects.equals(editorFontName, ourCachedStyleSheetMonoFont)) {
+    EditorColorsScheme colorsScheme = editor.getColorsScheme();
+    String editorFontName = ObjectUtils.notNull(colorsScheme.getEditorFontName(), Font.MONOSPACED);
+    Color linkColor = colorsScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK);
+    if (linkColor == null) linkColor = getTextColor(colorsScheme);
+    String linkColorHex = ColorUtil.toHex(linkColor);
+    if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor) || !Objects.equals(editorFontName, ourCachedStyleSheetMonoFont)) {
       String escapedFontName = StringUtil.escapeQuotes(editorFontName);
       ourCachedStyleSheet = StartupUiUtil.createStyleSheet(
         "code {font-family:\"" + escapedFontName + "\"}" +
         "pre {font-family:\"" + escapedFontName + "\"}" +
         "h1, h2, h3, h4, h5, h6 { margin-top: 0; padding-top: 1px; }" +
-        "a { color: #" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkSecondaryColor()) + "; text-decoration: none;}" +
+        "a { color: #" + linkColorHex + "; text-decoration: none;}" +
         "p { padding: 1px 0 2px 0; }" +
         "ol { padding: 0 16px 0 0; }" +
         "ul { padding: 0 16px 0 0; }" +
@@ -327,7 +328,7 @@ class DocRenderer implements EditorCustomElementRenderer {
         "td { margin: 4px 0 0 0; padding: 0; }" +
         "th { text-align: left; }"
       );
-      ourCachedStyleSheetLaf = lafName;
+      ourCachedStyleSheetLinkColor = linkColorHex;
       ourCachedStyleSheetMonoFont = editorFontName;
     }
     return ourCachedStyleSheet;

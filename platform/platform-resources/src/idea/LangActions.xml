@@ -60,7 +60,9 @@
     <action id="BraceOrQuoteOut" class="com.intellij.codeInsight.editorActions.BraceOrQuoteOutAction"/>
 
     <action id="ToggleRenderedDocPresentation" class="com.intellij.codeInsight.documentation.render.ToggleRenderedDocPresentationAction"/>
-    <action id="ToggleRenderDocsOnFileOpening" class="com.intellij.codeInsight.documentation.render.ToggleRenderDocsOnFileOpeningAction"/>
+    <group id="DocCommentGutterIconContextMenu">
+      <action id="ToggleRenderDocsOnFileOpening" class="com.intellij.codeInsight.documentation.render.ToggleRenderDocsOnFileOpeningAction"/>
+    </group>
 
     <group id="CodeInsightEditorActions">
       <reference ref="LookupActions"/>
@@ -191,6 +193,7 @@
 
     <action id="ShowGutterIconsSettings" class="com.intellij.application.options.editor.GutterIconsConfigurable$ShowSettingsAction">
       <add-to-group group-id="EditorGutterPopupMenu"/>
+      <add-to-group group-id="DocCommentGutterIconContextMenu"/>
     </action>
 
     <action id="FixDocComment" class="com.intellij.codeInsight.editorActions.FixDocCommentAction"/>
