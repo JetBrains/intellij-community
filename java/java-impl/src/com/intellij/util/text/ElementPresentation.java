@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -177,7 +178,7 @@ public abstract class ElementPresentation {
     @Override
     public String getQualifiedName() {
       String qualifiedName = myPsiPackage.getQualifiedName();
-      if (qualifiedName.length() == 0) return PsiBundle.message("default.package.presentation");
+      if (qualifiedName.length() == 0) return JavaBundle.message("default.package.presentation");
       return qualifiedName;
     }
 
@@ -204,7 +205,7 @@ public abstract class ElementPresentation {
     public String getQualifiedName() {
       PsiClass psiClass = PsiTreeUtil.getParentOfType(myPsiAnonymousClass, PsiClass.class);
       if (psiClass != null) return JavaPsiBundle.message("anonymous.class.context.display", forElement(psiClass).getQualifiedName());
-      return PsiBundle.message("anonymous.class.display");
+      return JavaBundle.message("anonymous.class.display");
     }
 
     @Override
@@ -323,8 +324,8 @@ public abstract class ElementPresentation {
     @Override
     public String getQualifiedName() {
       PsiFile containingFile = myPsiElement.getContainingFile();
-      if (containingFile != null) return PsiBundle.message("code.from.context.display", forElement(containingFile).getQualifiedName());
-      return PsiBundle.message("code.display");
+      if (containingFile != null) return JavaBundle.message("code.from.context.display", forElement(containingFile).getQualifiedName());
+      return JavaBundle.message("code.display");
     }
 
     @Override

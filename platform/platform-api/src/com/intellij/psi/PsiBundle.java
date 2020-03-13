@@ -22,6 +22,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
+/**
+ * @deprecated use properties from other bundles ({@link com.intellij.lang.LangBundle}, {@link com.intellij.core.CoreBundle},
+ * {@link com.intellij.util.indexing.IndexingBundle}) instead
+ */
+@Deprecated
 public class PsiBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.PsiBundle";
   private static final PsiBundle INSTANCE = new PsiBundle();
