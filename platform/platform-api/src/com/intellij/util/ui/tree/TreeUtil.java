@@ -429,6 +429,20 @@ public final class TreeUtil {
   }
 
   /**
+   * Makes visible the specified tree row and selects it.
+   * It does not clear selection if there is nothing to select.
+   *
+   * @param tree  a tree to select in
+   * @param index an index of a viewable node in the given tree
+   * @see JTree#getRowCount
+   * @see JTree#clearSelection
+   */
+  public static void selectRow(@NotNull JTree tree, int index) {
+    TreePath path = tree.getPathForRow(index);
+    if (path != null) internalSelect(tree, path);
+  }
+
+  /**
    * Makes visible specified tree paths and select them.
    * It does not clear selection if there are no paths to select.
    *
@@ -1575,11 +1589,15 @@ public final class TreeUtil {
   }
 
   private static void internalSelect(@NotNull JTree tree, TreePath @NotNull ... paths) {
+    internalSelect(tree, true, paths);
+  }
+
+  private static void internalSelect(@NotNull JTree tree, boolean centered, TreePath @NotNull ... paths) {
     assert EventQueue.isDispatchThread();
     if (paths.length == 0) return;
     tree.setSelectionPaths(paths);
     for (TreePath path : paths) {
-      if (scrollToVisible(tree, path, true)) {
+      if (scrollToVisible(tree, path, centered)) {
         break;
       }
     }
