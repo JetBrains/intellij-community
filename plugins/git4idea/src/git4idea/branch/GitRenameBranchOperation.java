@@ -17,10 +17,13 @@ package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -53,7 +56,8 @@ public class GitRenameBranchOperation extends GitBranchOperation {
         markSuccessful(repository);
       }
       else {
-        fatalError("Couldn't rename " + myCurrentName + " to " + myNewName, result.getErrorOutputAsJoinedString());
+        fatalError(GitBundle.message("git.rename.branch.could.not.rename.from.to", myCurrentName, myNewName),
+                   result.getErrorOutputAsJoinedString());
         return;
       }
     }
@@ -69,25 +73,31 @@ public class GitRenameBranchOperation extends GitBranchOperation {
       repository.update();
     }
     if (result.totalSuccess()) {
-      myNotifier.notifySuccess("Rollback Successful", "Renamed back to " + myCurrentName);
+      myNotifier.notifySuccess(GitBundle.message("git.rename.branch.rollback.successful"),
+                               GitBundle.message("git.rename.branch.renamed.back.to", myCurrentName));
     }
     else {
-      myNotifier.notifyError("Rollback Failed", result.getErrorOutputWithReposIndication());
+      myNotifier.notifyError(GitBundle.message("git.rename.branch.rollback.failed"), result.getErrorOutputWithReposIndication());
     }
   }
 
   @NotNull
   @Override
   public String getSuccessMessage() {
-    return String.format("Branch <b><code>%s</code></b> was renamed to <b><code>%s</code></b>", myCurrentName, myNewName);
+    return GitBundle.message("git.rename.branch.was.renamed.to",
+                             XmlStringUtil.wrapInHtmlTag(XmlStringUtil.wrapInHtmlTag(myCurrentName, "code"), "b"),
+                             XmlStringUtil.wrapInHtmlTag(XmlStringUtil.wrapInHtmlTag(myNewName, "code"), "b"));
   }
 
   @NotNull
   @Override
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   protected String getRollbackProposal() {
-    return "However rename has succeeded for the following " + repositories() + ":<br/>" +
+    return GitBundle.message("git.branch.rename.has.succeeded.for.the.following.repositories", getSuccessfulRepositories().size()) +
+           "<br/>" + //NON-NLS
            successfulRepositoriesJoined() +
-           "<br/>You may rollback (rename branch back to " + myCurrentName + ") not to let branches diverge.";
+           "<br/>" + //NON-NLS
+           GitBundle.message("git.rename.branch.you.may.rename.branch.back", myCurrentName);
   }
 
   @NotNull

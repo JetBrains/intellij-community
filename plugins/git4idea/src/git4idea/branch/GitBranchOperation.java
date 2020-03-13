@@ -37,6 +37,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,6 +91,7 @@ abstract class GitBranchOperation {
   public abstract String getSuccessMessage();
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   protected abstract String getRollbackProposal();
 
   /**
