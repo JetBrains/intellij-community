@@ -609,7 +609,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     // read ID and register loaded action
     String id = obtainActionId(element, className);
-    if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() &&
+    if (Boolean.parseBoolean(element.getAttributeValue(INTERNAL_ATTR_NAME)) &&
         !ApplicationManager.getApplication().isInternal()) {
       myNotRegisteredInternalActionIds.add(id);
       return null;
@@ -748,7 +748,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         customClass = true;
       }
       // read ID and register loaded group
-      if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManager.getApplication().isInternal()) {
+      if (Boolean.parseBoolean(element.getAttributeValue(INTERNAL_ATTR_NAME)) && !ApplicationManager.getApplication().isInternal()) {
         myNotRegisteredInternalActionIds.add(id);
         return null;
       }
@@ -786,7 +786,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       // popup
       String popup = element.getAttributeValue(POPUP_ATTR_NAME);
       if (popup != null) {
-        group.setPopup(Boolean.valueOf(popup).booleanValue());
+        group.setPopup(Boolean.parseBoolean(popup));
         if (group instanceof ActionGroupStub) {
           ((ActionGroupStub)group).setPopupDefinedInXml(true);
         }
@@ -1111,37 +1111,44 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return true;
   }
 
-  private static boolean canUnloadGroup(Element element) {
-    if (element.getAttributeValue(ID_ATTR_NAME) == null) return false;
+  private static boolean canUnloadGroup(@NotNull Element element) {
+    if (element.getAttributeValue(ID_ATTR_NAME) == null) {
+      return false;
+    }
     for (Element child : element.getChildren()) {
       if (child.getName().equals(GROUP_ELEMENT_NAME) && !canUnloadGroup(child)) return false;
     }
     return true;
   }
 
-  public void unloadActions(IdeaPluginDescriptor pluginDescriptor) {
+  public void unloadActions(@NotNull IdeaPluginDescriptor pluginDescriptor) {
     List<Element> elements = pluginDescriptor.getActionDescriptionElements();
-    if (elements == null) return;
-    for (Element element : ContainerUtil.reverse(elements)) {
-      if (element.getName().equals(ACTION_ELEMENT_NAME)) {
-        unloadActionElement(element);
-      }
-      else if (element.getName().equals(GROUP_ELEMENT_NAME)) {
-        unloadGroupElement(element);
-      }
-      else if (element.getName().equals(REFERENCE_ELEMENT_NAME)) {
-        PluginId pluginId = pluginDescriptor.getPluginId();
-        AnAction action = processReferenceElement(element, pluginId);
-        if (action == null) return;
-        String actionId = getReferenceActionId(element);
+    if (elements == null) {
+      return;
+    }
 
-        for (Element child : element.getChildren(ADD_TO_GROUP_ELEMENT_NAME)) {
-          String groupId = child.getAttributeValue(GROUPID_ATTR_NAME);
-          final DefaultActionGroup parentGroup = getParentGroup(groupId, actionId, pluginId);
-          if (parentGroup == null) return;
-          parentGroup.remove(action);
-          myId2GroupId.remove(actionId, groupId);
-        }
+    for (Element element : ContainerUtil.reverse(elements)) {
+      switch (element.getName()) {
+        case ACTION_ELEMENT_NAME:
+          unloadActionElement(element);
+          break;
+        case GROUP_ELEMENT_NAME:
+          unloadGroupElement(element);
+          break;
+        case REFERENCE_ELEMENT_NAME:
+          PluginId pluginId = pluginDescriptor.getPluginId();
+          AnAction action = processReferenceElement(element, pluginId);
+          if (action == null) return;
+          String actionId = getReferenceActionId(element);
+
+          for (Element child : element.getChildren(ADD_TO_GROUP_ELEMENT_NAME)) {
+            String groupId = child.getAttributeValue(GROUPID_ATTR_NAME);
+            final DefaultActionGroup parentGroup = getParentGroup(groupId, actionId, pluginId);
+            if (parentGroup == null) return;
+            parentGroup.remove(action);
+            myId2GroupId.remove(actionId, groupId);
+          }
+          break;
       }
     }
   }

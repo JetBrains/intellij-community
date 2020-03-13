@@ -137,7 +137,7 @@ public final class PluginManagerCore {
    * <p>
    * Do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by PluginClassLoader.
    */
-  public static @NotNull IdeaPluginDescriptor[] getPlugins() {
+  public static @NotNull IdeaPluginDescriptor @NotNull[] getPlugins() {
     IdeaPluginDescriptor[] result = ourPlugins;
     if (result == null) {
       loadAndInitializePlugins(null, null);
@@ -525,7 +525,7 @@ public final class PluginManagerCore {
     Class<? extends ClassLoader> aClass = loader.getClass();
     if (isInstanceofUrlClassLoader(aClass)) {
       try {
-        return ((Boolean)aClass.getMethod("hasLoadedClass", String.class).invoke(loader, className)).booleanValue();
+        return (Boolean)aClass.getMethod("hasLoadedClass", String.class).invoke(loader, className);
       }
       catch (Exception ignored) {
       }
@@ -637,7 +637,7 @@ public final class PluginManagerCore {
     ourShadowedBundledPlugins = null;
   }
 
-  private static void logPlugins(IdeaPluginDescriptorImpl @NotNull [] plugins) {
+  private static void logPlugins(@NotNull IdeaPluginDescriptorImpl @NotNull[] plugins) {
     StringBuilder bundled = new StringBuilder();
     StringBuilder disabled = new StringBuilder();
     StringBuilder custom = new StringBuilder();
@@ -1114,9 +1114,7 @@ public final class PluginManagerCore {
     ExecutorService executorService = context.parentContext.getExecutorService();
     for (Map.Entry<URL, String> entry : urls.entrySet()) {
       URL url = entry.getKey();
-      tasks.add(executorService.submit(() -> {
-        return loadDescriptorFromResource(url, entry.getValue(), context.copy(url.equals(platformPluginURL)));
-      }));
+      tasks.add(executorService.submit(() -> loadDescriptorFromResource(url, entry.getValue(), context.copy(url.equals(platformPluginURL)))));
     }
 
     PluginLoadingResult result = context.parentContext.result;
