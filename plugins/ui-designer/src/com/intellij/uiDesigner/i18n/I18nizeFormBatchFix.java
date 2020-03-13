@@ -189,6 +189,9 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
     if (BorderProperty.NAME.equals(propertyName)) {
       return "border.title";
     }
+    if (ITabbedPane.TAB_TITLE_PROPERTY.equals(propertyName)) {
+      return "tab.title";
+    }
     return null;
   }
 
