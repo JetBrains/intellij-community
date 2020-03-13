@@ -290,7 +290,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
         continue;
       }
 
-      tasks.add(Pair.create(service.submit(() -> {
+      tasks.add(new Pair<>(service.submit(() -> {
         progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
         return ProgressManager.getInstance().runProcess(() -> {
           try {
@@ -837,8 +837,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     }
 
     @Override
-    @NotNull
-    public Module loadModule(@NotNull @SystemIndependent String filePath) throws IOException {
+    public @NotNull Module loadModule(@NotNull @SystemIndependent String filePath) throws IOException {
       assertWritable();
       String resolvedPath = FileUtilRt.toSystemIndependentName(resolveShortWindowsName(filePath));
       try {
@@ -853,8 +852,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       }
     }
 
-    @NotNull
-    private Module loadModuleInternal(@NotNull String filePath) throws IOException {
+    private @NotNull Module loadModuleInternal(@NotNull String filePath) throws IOException {
       // we cannot call refreshAndFindFileByPath during module init under read action because it is forbidden
       StandardFileSystems.local().refreshAndFindFileByPath(filePath);
       return ReadAction.compute(() -> {

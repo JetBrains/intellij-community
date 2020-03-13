@@ -166,8 +166,11 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
   private static final Set<String> CLASS_NAMES = ContainerUtil.newIdentityTroveSet(CLASS_NAME_LIST);
 
   final Interner<String> stringInterner = new HashSetInterner<String>(ContainerUtil.concat(CLASS_NAME_LIST,
-                                                                                           IdeaPluginDescriptorImpl.SERVICE_QUALIFIED_ELEMENT_NAMES,
-                                                                                           Collections.singletonList(PluginManagerCore.VENDOR_JETBRAINS))) {
+                                                                                           Arrays.asList("id",
+                                                                                                         PluginManagerCore.VENDOR_JETBRAINS,
+                                                                                                         IdeaPluginDescriptorImpl.APPLICATION_SERVICE,
+                                                                                                         IdeaPluginDescriptorImpl.PROJECT_SERVICE,
+                                                                                                         IdeaPluginDescriptorImpl.MODULE_SERVICE))) {
     @NotNull
     @Override
     public String intern(@NotNull String name) {
