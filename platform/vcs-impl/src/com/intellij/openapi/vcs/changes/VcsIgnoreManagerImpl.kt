@@ -9,8 +9,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,12 +47,12 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
     return FileTypeManager.getInstance().getFileTypeByFileName(ignoredFileContentProvider.fileName) as? IgnoreFileType
   }
 
-  override fun isFileVcsIgnored(filePath: String): Boolean {
+  override fun isDirectoryVcsIgnored(dirPath: String): Boolean {
     try {
-      val checkForIgnore = { getFileVcsIgnoredStatus(project, filePath) is Ignored }
+      val checkForIgnore = { getDirectoryVcsIgnoredStatus(project, dirPath) is Ignored }
       return ProgressManager.getInstance()
         .runProcessWithProgressSynchronously<Boolean, IOException>(checkForIgnore,
-                                                                   "Checking VCS status of ${PathUtil.getFileName(filePath)}...",
+                                                                   "Checking VCS status of ${PathUtil.getFileName(dirPath)}...",
                                                                    false, project)
     }
     catch (e: IOException) {
@@ -61,18 +61,10 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
     return false
   }
 
-  private fun getFileVcsIgnoredStatus(project: Project, filePath: String): IgnoredCheckResult {
-    var file = LocalFileSystem.getInstance().findFileByPath(filePath)
-    var parentPath = PathUtil.getParentPath(filePath)
-    while (file == null && parentPath.isNotEmpty()) {
-      file = LocalFileSystem.getInstance().findFileByPath(parentPath)
-      parentPath = PathUtil.getParentPath(parentPath)
-    }
-
-    if (file == null) return NotIgnored
-    val vcsRoot = VcsUtil.getVcsRootFor(project, file) ?: return NotIgnored
-
-    return getCheckerForFile(project, file)?.isFilePatternIgnored(vcsRoot, filePath) ?: NotIgnored
+  private fun getDirectoryVcsIgnoredStatus(project: Project, dirPathString: String): IgnoredCheckResult {
+    val dirPath = VcsContextFactory.SERVICE.getInstance().createFilePath(dirPathString, true)
+    val vcsRoot = VcsUtil.getVcsRootFor(project, dirPath) ?: return NotIgnored
+    return getCheckerForFile(project, dirPath)?.isFilePatternIgnored(vcsRoot, dirPathString) ?: NotIgnored
   }
 
   override fun isRunConfigurationVcsIgnored(configurationName: String): Boolean {
@@ -163,6 +155,11 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
 
   private fun getCheckerForFile(project: Project, file: VirtualFile): VcsIgnoreChecker? {
     val vcs = VcsUtil.getVcsFor(project, file) ?: return null
+    return VcsIgnoreChecker.EXTENSION_POINT_NAME.getExtensionList(project).find { checker -> checker.supportedVcs == vcs.keyInstanceMethod }
+  }
+
+  private fun getCheckerForFile(project: Project, filePath: FilePath): VcsIgnoreChecker? {
+    val vcs = VcsUtil.getVcsFor(project, filePath) ?: return null
     return VcsIgnoreChecker.EXTENSION_POINT_NAME.getExtensionList(project).find { checker -> checker.supportedVcs == vcs.keyInstanceMethod }
   }
 

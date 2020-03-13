@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface VcsIgnoreManager {
 
-  boolean isFileVcsIgnored(@NotNull String filePath);
+  boolean isDirectoryVcsIgnored(@NotNull String dirPath);
 
   boolean isRunConfigurationVcsIgnored(@NotNull String configurationName);
 
