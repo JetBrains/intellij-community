@@ -71,9 +71,8 @@ public class SymbolicLinkRefresher {
       }
     };
 
-    for (int i = events.size() - 1; i >= 0; i--) {
-      VFileEvent event = events.get(i);
-      if (event.getFileSystem() != mySystem) {
+    for (VFileEvent event: events) {
+      if (event.isFromRefresh() || event.getFileSystem() != mySystem) {
         continue;
       }
       if (event instanceof VFileContentChangeEvent
