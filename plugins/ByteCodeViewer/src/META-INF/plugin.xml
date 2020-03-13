@@ -20,9 +20,10 @@ To view the bytecode, select a class file and open <b>View | Show Bytecode</b>.]
 
   <actions>
     <group id="ByeCodeViewerGroup">
-      <action id="ByteCodeViewer" class="com.intellij.byteCodeViewer.ShowByteCodeAction" text="Show Bytecode"/>
+      <action id="ByteCodeViewer" class="com.intellij.byteCodeViewer.ShowByteCodeAction"/>
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
     </group>
   </actions>
 
+  <resource-bundle>messages.JavaByteCodeViewerBundle</resource-bundle>
 </idea-plugin>
