@@ -13,13 +13,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.NettyUtil;
 import org.junit.Assert;
@@ -35,7 +33,7 @@ import java.util.stream.Collectors;
 /**
  * @author cdr
  */
-public class ThreadTracker {
+public final class ThreadTracker {
   private static final Logger LOG = Logger.getInstance(ThreadTracker.class);
   private final Map<String, Thread> before;
   private final boolean myDefaultProjectInitialized;
@@ -76,6 +74,7 @@ public class ThreadTracker {
     FlushingDaemon.NAME,
     "IDEA Test Case Thread",
     "Image Fetcher ",
+    "InnocuousThreadGroup",
     "Java2D Disposer",
     "JobScheduler FJ pool ",
     "JPS thread pool",
@@ -100,7 +99,7 @@ public class ThreadTracker {
     List<String> sorted = offenders.stream().sorted(String::compareToIgnoreCase).collect(Collectors.toList());
     if (!offenders.equals(sorted)) {
       String proper = StringUtil.join(ContainerUtil.map(sorted, s -> '"' + s + '"'), ",\n").replaceAll('"'+FlushingDaemon.NAME+'"', "FlushingDaemon.NAME");
-      throw new AssertionError("Thread names must be sorted (for ease of maintainance). Something like this will do:\n" + proper);
+      throw new AssertionError("Thread names must be sorted (for ease of maintenance). Something like this will do:\n" + proper);
     }
     wellKnownOffenders.addAll(offenders);
     Application application = ApplicationManager.getApplication();
@@ -193,17 +192,17 @@ public class ThreadTracker {
     }
   }
 
-  @NotNull
-  private static String dumpThreadsToString(@NotNull Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
+  private static @NotNull CharSequence dumpThreadsToString(@NotNull Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
     StringBuilder f = new StringBuilder();
     after.forEach((name, thread) -> {
-      f.append("\"" + name + "\" (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n");
+      f.append("\"").append(name).append("\" (").append(thread.isAlive() ? "alive" : "dead").append(") ").append(thread.getState());
+      f.append("\n");
       for (StackTraceElement element : stackTraces.get(thread)) {
-        f.append("\tat " + element + "\n");
+        f.append("\tat ").append(element).append("\n");
       }
       f.append("\n");
     });
-    return f.toString();
+    return f;
   }
 
   private static boolean shouldIgnore(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
