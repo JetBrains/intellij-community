@@ -72,7 +72,7 @@ class BundledJreManager {
     return patchesUrl != null ? "${patchesUrl}${x86JreArchiveName(os)}" : null
   }
 
-  private String x86JreArchiveName(OsFamily os) { "jre-for-${buildContext.buildNumber}-${os.jbrArchiveSuffix}-x86.tar.gz" }
+  private String x86JreArchiveName(OsFamily os) { "jbr-for-${buildContext.buildNumber}-${os.jbrArchiveSuffix}-x86.tar.gz" }
 
   /**
    * @param archive linux or windows JRE archive
