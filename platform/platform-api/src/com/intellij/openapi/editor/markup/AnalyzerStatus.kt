@@ -8,7 +8,6 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
 import org.jetbrains.annotations.PropertyKey
 import java.awt.Container
-import java.util.*
 import javax.swing.Icon
 import kotlin.math.roundToInt
 
@@ -37,6 +36,11 @@ data class PassWrapper(val presentableName: String, val progress: Double, val fi
     return if (percent == 100 && !finished) 99 else percent
   }
 }
+
+/**
+ * Severity status item containing text (not necessarily a number) and a possible icon
+ */
+data class StatusItem(val text: String, val icon: Icon?)
 
 /**
  * <code>UIController</code> contains methods for filling inspection widget popup and
@@ -105,16 +109,21 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
   val controller : UIController by lazy(LazyThreadSafetyMode.NONE) { controllerCreator() }
 
   var showNavigation : Boolean = false
-  var expandedIcon: Icon = icon
-  var passes : List<PassWrapper> = Collections.emptyList()
+  var expandedStatus: List<StatusItem> = emptyList()
+  var passes : List<PassWrapper> = emptyList()
 
   fun withNavigation() : AnalyzerStatus {
     showNavigation = true
     return this
   }
 
-  fun withExpandedIcon(icon: Icon): AnalyzerStatus {
-    expandedIcon = icon
+  fun withExpandedStatus(status: List<StatusItem>): AnalyzerStatus {
+    expandedStatus = status
+    return this
+  }
+
+  fun withExpandedStatus(status: String): AnalyzerStatus {
+    expandedStatus = listOf(StatusItem(status, null))
     return this
   }
 
@@ -137,8 +146,8 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
         return false
       }
       return a.icon == b.icon
-             && a.expandedIcon == b.expandedIcon
-             && a.title == b.title 
+             && a.expandedStatus == b.expandedStatus
+             && a.title == b.title
              && a.details == b.details
              && a.showNavigation == b.showNavigation
              && a.passes == b.passes

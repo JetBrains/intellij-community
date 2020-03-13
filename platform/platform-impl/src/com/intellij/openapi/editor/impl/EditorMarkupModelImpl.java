@@ -8,15 +8,16 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.actionSystem.ex.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,10 +39,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -75,6 +73,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Queue;
@@ -93,6 +92,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
   private static final ColorKey PRESSED_BACKGROUND = ColorKey.createColorKey("ActionButton.pressedBackground",
                                                                        JBUI.CurrentTheme.ActionButton.pressedBackground());
+
+  private static final ColorKey ICON_TEXT_COLOR = ColorKey.createColorKey("ActionButton.iconTextForeground",
+                                                                          UIUtil.getContextHelpForeground());
+
   private int getMinMarkHeight() {
     return JBUIScale.scale(myMinMarkHeight);
   }
@@ -169,10 +172,27 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
       @Override
       protected void paintComponent(Graphics g) {
-        // Paint this toolbar background for non opaque (in mini mode)
-        // ignoring base component background and use Editor's background.
-        g.setColor(myEditor.getColorsScheme().getDefaultBackground());
-        g.fillRect(0, 0, getWidth(), getHeight());
+        Graphics2D g2 = (Graphics2D)g.create();
+        try {
+          Rectangle rect = new Rectangle(getSize());
+          int leftGradientWidth = JBUIScale.scale(5);
+          rect.x += leftGradientWidth;
+          rect.width -= leftGradientWidth;
+
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                              MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+
+          g2.setColor(myEditor.getBackgroundColor());
+          g2.fill(rect);
+
+          g2.setPaint(new GradientPaint(0, 0, ColorUtil.withAlpha(myEditor.getBackgroundColor(), 0),
+                                        leftGradientWidth, 0, myEditor.getBackgroundColor()));
+          g2.fillRect(0, 0, leftGradientWidth, getHeight());
+        }
+        finally {
+          g2.dispose();
+        }
 
         super.paintComponent(g);
       }
@@ -191,10 +211,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
                                                  @NotNull Dimension minimumSize) {
 
         ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
-          @Override
-          protected DataContext getDataContext() {
-            return getToolbarDataContext();
-          }
 
           @Override
           public void updateIcon() {
@@ -209,9 +225,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
             Dimension size = new Dimension(Math.max(icon.getIconWidth(), DEFAULT_MINIMUM_BUTTON_SIZE.width),
                                            Math.max(icon.getIconHeight(), DEFAULT_MINIMUM_BUTTON_SIZE.height));
 
-            if (getIcon() instanceof LayeredIcon) {
-              JBInsets.addTo(size, JBUI.insets(0, 7));
-            }
             JBInsets.addTo(size, getInsets());
             return size;
           }
@@ -227,7 +240,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       @Override
       public void componentResized(ComponentEvent event) {
         Component toolbar = event.getComponent();
-        if (toolbar.getWidth() >0 && toolbar.getHeight() > 0) {
+        if (toolbar.getWidth() > 0 && toolbar.getHeight() > 0) {
           updateTrafficLightVisibility();
         }
       }
@@ -241,7 +254,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         myPopupManager.showPopup(event);
       }
     });
-    smallIconLabel.setOpaque(true);
+    smallIconLabel.setOpaque(false);
     smallIconLabel.setBackground(new JBColor(() -> myEditor.getColorsScheme().getDefaultBackground()));
     smallIconLabel.setVisible(false);
 
@@ -1620,7 +1633,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private class StatusAction extends DumbAwareAction {
+  private static final Key<List<StatusItem>> EXPANDED_STATUS = new Key<>("EXPANDED_STATUS");
+
+  private class StatusAction extends DumbAwareAction implements CustomComponentAction {
+    @Override
+    @NotNull
+    public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      return new StatusButton(this, presentation, new EditorToolbarButtonLook(), place, myEditor.getColorsScheme());
+    }
+
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myPopupManager.showPopup(e.getInputEvent());
@@ -1628,12 +1649,188 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      Icon newIcon = analyzerStatus != null ? analyzerStatus.getExpandedIcon() : null;
-      if (!Objects.equals(e.getPresentation().getIcon(), newIcon)) {
-        e.getPresentation().setIcon(newIcon);
+      Presentation presentation = e.getPresentation();
+      if (analyzerStatus != null) {
+        List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
+        Icon newIcon = analyzerStatus.getIcon();
+
+        if (newStatus.isEmpty()) {
+          newStatus = Collections.singletonList(new StatusItem("", newIcon));
+          presentation.putClientProperty(EXPANDED_STATUS, newStatus);
+        }
+        else if (!Objects.equals(presentation.getClientProperty(EXPANDED_STATUS), newStatus)) {
+          presentation.putClientProperty(EXPANDED_STATUS, newStatus);
+        }
+      }
+      else {
+        presentation.putClientProperty(EXPANDED_STATUS, Collections.emptyList());
+      }
+    }
+  }
+
+  private static class StatusButton extends JPanel {
+    private static final int LEFT_RIGHT_INDENT = 7;
+    private static final int INTER_GROUP_OFFSET = 6;
+
+    private boolean mousePressed;
+    private boolean mouseHover;
+    private final ActionButtonLook buttonLook;
+    private final MouseListener mouseListener;
+    private final PropertyChangeListener presentationPropertyListener;
+    private final Presentation presentation;
+    private final EditorColorsScheme colorsScheme;
+
+    private StatusButton(@NotNull AnAction action, @NotNull Presentation presentation,
+                         @NotNull ActionButtonLook buttonLook, @NotNull String place,
+                         @NotNull EditorColorsScheme colorsScheme) {
+      setLayout(new GridBagLayout());
+      setOpaque(false);
+
+      this.buttonLook = buttonLook;
+      this.presentation = presentation;
+      this.colorsScheme = colorsScheme;
+
+      presentationPropertyListener = l -> {
+        if (EXPANDED_STATUS.toString().equals(l.getPropertyName()) && l.getNewValue() != null) {
+          //noinspection unchecked
+          List<StatusItem> newStatus = (List<StatusItem>)l.getNewValue();
+          updateContents(newStatus);
+          revalidate();
+          repaint();
+        }
+      };
+
+      mouseListener = new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent me) {
+          DataContext context = getDataContext();
+          AnActionEvent event = AnActionEvent.createFromInputEvent(me, place, presentation, context, false, true);
+          if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+            return;
+          }
+
+          if (presentation.isEnabled()) {
+            ActionManagerEx manager = ActionManagerEx.getInstanceEx();
+            manager.fireBeforeActionPerformed(action, context, event);
+
+            action.actionPerformed(event);
+
+            manager.queueActionPerformedEvent(action, context, event);
+            ToolbarClicksCollector.record(action, place, me, context);
+
+            ActionToolbar toolbar = getActionToolbar();
+            if (toolbar != null) {
+              toolbar.updateActionsImmediately();
+            }
+          }
+        }
+
+        @Override
+        public void mousePressed(MouseEvent me) {
+          mousePressed = true;
+          repaint();
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent me) {
+          mousePressed = false;
+          repaint();
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent me) {
+          mouseHover = true;
+          repaint();
+        }
+
+        @Override
+        public void mouseExited(MouseEvent me) {
+          mouseHover = false;
+          repaint();
+        }
+      };
+
+      List<StatusItem> newStatus = presentation.getClientProperty(EXPANDED_STATUS);
+      if (newStatus != null) {
+        updateContents(newStatus);
       }
 
-      e.getPresentation().setEnabledAndVisible(newIcon != null);
+      setBorder(JBUI.Borders.empty(1, 2));
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      presentation.addPropertyChangeListener(presentationPropertyListener);
+      addMouseListener(mouseListener);
+    }
+
+    @Override
+    public void removeNotify() {
+      presentation.removePropertyChangeListener(presentationPropertyListener);
+      removeMouseListener(mouseListener);
+    }
+
+    private DataContext getDataContext() {
+      ActionToolbar actionToolbar = getActionToolbar();
+      return actionToolbar != null ? actionToolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(this);
+    }
+
+    private ActionToolbar getActionToolbar() {
+      return ComponentUtil.getParentOfType((Class<? extends ActionToolbar>)ActionToolbar.class, this);
+    }
+
+    private void updateContents(@NotNull List<StatusItem> status) {
+      removeAll();
+
+      setEnabled(!status.isEmpty());
+      setVisible(!status.isEmpty());
+
+      GridBag gc = new GridBag().nextLine();
+      if (status.size() == 1 && StringUtil.isEmpty(status.get(0).getText())) {
+        add(createStyledLabel(null, status.get(0).getIcon(), SwingConstants.CENTER),
+            gc.next().weightx(1).fillCellHorizontally());
+      }
+      else if (status.size() > 0) {
+        int leftRightOffset = JBUIScale.scale(LEFT_RIGHT_INDENT);
+        add(Box.createHorizontalStrut(leftRightOffset), gc.next());
+
+        int counter = 0;
+        for(StatusItem item : status) {
+          add(createStyledLabel(item.getText(), item.getIcon(), SwingConstants.LEFT),
+              gc.next().insetLeft(counter++ > 0 ? INTER_GROUP_OFFSET : 0));
+        }
+
+        add(Box.createHorizontalStrut(leftRightOffset), gc.next());
+      }
+    }
+
+    private JLabel createStyledLabel(@Nullable String text, @Nullable Icon icon, int alignment) {
+      JLabel label = new JLabel(text, icon, alignment);
+      label.setForeground(colorsScheme.getColor(ICON_TEXT_COLOR));
+
+      Font font = label.getFont();
+      font = font.deriveFont(font.getStyle(), font.getSize() - JBUIScale.scale(2));
+      label.setFont(font);
+      return label;
+    }
+
+    @Override
+    protected void paintComponent(Graphics graphics) {
+        int state = mousePressed ? ActionButtonComponent.PUSHED :
+                    mouseHover ? ActionButtonComponent.POPPED:
+                    ActionButtonComponent.NORMAL;
+
+        buttonLook.paintBackground(graphics, this, state);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      size.height = Math.max(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height, size.height);
+      size.width = Math.max(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width, size.width);
+      JBInsets.addTo(size, getInsets());
+      return size;
     }
   }
 
@@ -1663,8 +1860,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
     @Override
     public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
-      boolean isDark = ColorUtil.isDark(myEditor.getColorsScheme().getDefaultBackground());
-      super.paintIcon(g, actionButton, IconLoader.getDarkIcon(icon, isDark), x, y);
+      if (icon != null) {
+        boolean isDark = ColorUtil.isDark(myEditor.getColorsScheme().getDefaultBackground());
+        super.paintIcon(g, actionButton, IconLoader.getDarkIcon(icon, isDark), x, y);
+      }
     }
   }
 
