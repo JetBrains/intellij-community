@@ -217,6 +217,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       myInspection = inspection;
 
       myConfiguration = configuration;
+      assert myConfiguration.getOrder() == 0;
       myNameTextField = new JTextField(configuration.getName());
       myProblemDescriptorTextField = new JTextField(configuration.getProblemDescriptor());
       myDescriptionTextArea = new EditorTextField(ObjectUtils.notNull(configuration.getDescription(), ""), project, StdFileTypes.HTML);

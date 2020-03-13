@@ -116,16 +116,17 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
   @Override
   public @Nullable JComponent createOptionsPanel() {
+    final MyListModel model = new MyListModel();
     final JButton button = new JButton(SSRBundle.message("edit.metadata.button"));
     button.addActionListener(e -> {
       Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
       if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-      if (StructuralSearchProfileActionProvider.saveInspection(project, getStructuralSearchInspection(), myConfiguration)) {
+      if (StructuralSearchProfileActionProvider.saveInspection(project, getStructuralSearchInspection(), model.getElementAt(0))) {
         myProfile.getProfileManager().fireProfileChanged(myProfile);
       }
     });
 
-    final JList<Configuration> list = new JBList<>(new MyListModel());
+    final JList<Configuration> list = new JBList<>(model);
     list.setCellRenderer(new ConfigurationCellRenderer());
     final JPanel listPanel = ToolbarDecorator.createDecorator(list)
       .setAddAction(b -> performAdd(list, b))
@@ -153,7 +154,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     return panel;
   }
 
-  private static void performMove(JList<Configuration> list, boolean up) {
+  private void performMove(JList<Configuration> list, boolean up) {
     final MyListModel model = (MyListModel)list.getModel();
     final List<Configuration> values = list.getSelectedValuesList();
     final Comparator<Configuration> c = Comparator.comparingInt(Configuration::getOrder);
@@ -165,8 +166,20 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
       model.swap(order, order + (up ? -1 : +1));
       indices[i] = value.getOrder();
     }
+    myConfiguration = moveMetaData(myConfiguration, model.getElementAt(0));
     list.setSelectedIndices(indices);
     model.fireContentsChanged(list);
+  }
+
+  private static Configuration moveMetaData(Configuration source, Configuration target) {
+    if (source == target) return source;
+    target.setDescription(source.getDescription());
+    target.setSuppressId(source.getSuppressId());
+    target.setProblemDescriptor(source.getProblemDescriptor());
+    source.setDescription(null);
+    source.setSuppressId(null);
+    source.setProblemDescriptor(null);
+    return target;
   }
 
   private void performAdd(JList<Configuration> list, AnActionButton b) {
@@ -191,11 +204,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     final MyListModel model = (MyListModel)list.getModel();
     model.clearCache();
     if (metaData) {
-      final Configuration first = model.getElementAt(0);
-      first.setDescription(myConfiguration.getDescription());
-      first.setSuppressId(myConfiguration.getNewSuppressId());
-      first.setProblemDescriptor(myConfiguration.getProblemDescriptor());
-      myConfiguration = first;
+      myConfiguration = moveMetaData(myConfiguration, model.getElementAt(0));
     }
     for (int i = 0, max = model.getSize(); i < max; i++){
       model.getElementAt(i).setOrder(i);
