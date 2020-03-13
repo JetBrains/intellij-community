@@ -36,7 +36,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.project.ProjectStoreOwner;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.serviceContainer.PlatformComponentManagerImpl;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.*;
@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
+public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance(ProjectImpl.class);
 
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
@@ -72,12 +72,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   });
 
   protected ProjectImpl(@NotNull Path filePath, @Nullable String projectName) {
-    super((PlatformComponentManagerImpl)ApplicationManager.getApplication());
+    super((ComponentManagerImpl)ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
 
-    registerServiceInstance(Project.class, this, PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
+    registerServiceInstance(Project.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state
@@ -89,7 +89,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   // default project constructor
   ProjectImpl() {
-    super((PlatformComponentManagerImpl)ApplicationManager.getApplication());
+    super((ComponentManagerImpl)ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     if (ApplicationManager.getApplication().isUnitTestMode()) {

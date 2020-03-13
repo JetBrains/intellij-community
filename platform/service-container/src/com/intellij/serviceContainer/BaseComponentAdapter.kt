@@ -17,7 +17,7 @@ import org.picocontainer.PicoContainer
 
 class AlreadyDisposedException(message: String) : IllegalStateException(message)
 
-internal abstract class BaseComponentAdapter(internal val componentManager: PlatformComponentManagerImpl,
+internal abstract class BaseComponentAdapter(internal val componentManager: ComponentManagerImpl,
                                              val pluginDescriptor: PluginDescriptor,
                                              @field:Volatile private var initializedInstance: Any?,
                                              private var implementationClass: Class<*>?) : ComponentAdapter {
@@ -59,7 +59,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     return getInstance(componentManager, null)
   }
 
-  fun <T : Any> getInstance(componentManager: PlatformComponentManagerImpl, keyClass: Class<T>?, createIfNeeded: Boolean = true, indicator: ProgressIndicator? = null): T? {
+  fun <T : Any> getInstance(componentManager: ComponentManagerImpl, keyClass: Class<T>?, createIfNeeded: Boolean = true, indicator: ProgressIndicator? = null): T? {
     // could be called during some component.dispose() call, in this case we don't attempt to instantiate
     @Suppress("UNCHECKED_CAST")
     val instance = initializedInstance as T?
@@ -69,7 +69,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     return getInstanceUncached(componentManager, keyClass, indicator ?: ProgressIndicatorProvider.getGlobalProgressIndicator())
   }
 
-  private fun <T : Any> getInstanceUncached(componentManager: PlatformComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T? {
+  private fun <T : Any> getInstanceUncached(componentManager: ComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T? {
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
     checkContainerIsActive(componentManager, indicator)
 
@@ -132,7 +132,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
   /**
    * Indicator must be always passed - if under progress, then ProcessCanceledException will be thrown instead of AlreadyDisposedException.
    */
-  private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?) {
+  private fun checkContainerIsActive(componentManager: ComponentManagerImpl, indicator: ProgressIndicator?) {
     if (indicator != null) {
       checkCanceledIfNotInClassInit()
     }
@@ -142,7 +142,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     }
   }
 
-  internal fun throwAlreadyDisposedError(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?) {
+  internal fun throwAlreadyDisposedError(componentManager: ComponentManagerImpl, indicator: ProgressIndicator?) {
     val error = AlreadyDisposedException("Cannot create ${toString()} because container is already disposed (container=${componentManager})")
     if (indicator == null) {
       throw error
@@ -152,9 +152,9 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     }
   }
 
-  protected abstract fun getActivityCategory(componentManager: PlatformComponentManagerImpl): ActivityCategory?
+  protected abstract fun getActivityCategory(componentManager: ComponentManagerImpl): ActivityCategory?
 
-  protected abstract fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T
+  protected abstract fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T
 
   @Synchronized
   fun <T : Any> replaceInstance(instance: T, parentDisposable: Disposable?): T? {

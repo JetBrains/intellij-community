@@ -46,10 +46,10 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicReference
 
-internal val LOG = logger<PlatformComponentManagerImpl>()
+internal val LOG = logger<ComponentManagerImpl>()
 
-abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: PlatformComponentManagerImpl?,
-                                                                      setExtensionsRootArea: Boolean = parent == null) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase() {
+abstract class ComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManagerImpl?,
+                                                              setExtensionsRootArea: Boolean = parent == null) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase() {
   protected enum class ContainerState {
     ACTIVE, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }

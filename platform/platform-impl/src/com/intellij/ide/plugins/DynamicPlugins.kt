@@ -39,8 +39,8 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.serviceContainer.PlatformComponentManagerImpl
-import com.intellij.serviceContainer.PlatformComponentManagerImpl.DescriptorToLoad
+import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.ComponentManagerImpl.DescriptorToLoad
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
@@ -454,7 +454,7 @@ object DynamicPlugins {
       }
 
       for (module in ModuleManager.getInstance(project).modules) {
-        val moduleServiceInstances = (module as PlatformComponentManagerImpl).unloadServices(pluginDescriptor.module)
+        val moduleServiceInstances = (module as ComponentManagerImpl).unloadServices(pluginDescriptor.module)
         for (moduleServiceInstance in moduleServiceInstances) {
           module.stateStore.unloadComponent(moduleServiceInstance)
         }
@@ -540,7 +540,7 @@ object DynamicPlugins {
     for (openProject in ProjectManager.getInstance().openProjects) {
       (openProject as ProjectImpl).registerComponents(pluginsToLoad, listenerCallbacks)
       for (module in ModuleManager.getInstance(openProject).modules) {
-        (module as PlatformComponentManagerImpl).registerComponents(pluginsToLoad, listenerCallbacks)
+        (module as ComponentManagerImpl).registerComponents(pluginsToLoad, listenerCallbacks)
       }
     }
     for (descriptorToLoad in pluginsToLoad) {
