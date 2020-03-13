@@ -272,7 +272,6 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <label value="Test connection"/>
               <text resource-bundle="messages/SvnBundle" key="dialog.edit.http.proxies.settings.test.connection.button.text"/>
             </properties>
           </component>
