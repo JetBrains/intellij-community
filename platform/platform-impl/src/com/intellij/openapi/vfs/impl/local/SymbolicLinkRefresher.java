@@ -22,6 +22,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.vfs.VirtualFile.PROP_NAME;
 import static com.intellij.util.ObjectUtils.doIfNotNull;
 
 public class SymbolicLinkRefresher {
@@ -53,7 +54,10 @@ public class SymbolicLinkRefresher {
     Set<String> toRefresh = new HashSet<>();
     FileWatcher fileWatcher = mySystem.getFileWatcher();
 
-    Consumer<VirtualFile> queuePath = file -> {
+    Consumer<String> queuePath = path -> {
+      toRefresh.addAll(fileWatcher.mapToAllSymlinks(FileUtil.toSystemDependentName(path)));
+    };
+    Consumer<VirtualFile> queueFile = file -> {
       if (file instanceof VirtualFileSystemEntry) {
         if (((VirtualFileSystemEntry)file).hasSymlink() && !isUnderRecursiveOrCircularSymlink(file)) {
           file = doIfNotNull(file.getCanonicalPath(), mySystem::findFileByPathIfCached);
@@ -62,8 +66,7 @@ public class SymbolicLinkRefresher {
           }
         }
         else {
-          String filePath = FileUtil.toSystemDependentName(file.getPath());
-          toRefresh.addAll(fileWatcher.mapToAllSymlinks(filePath));
+          queuePath.accept(file.getPath());
         }
       }
     };
@@ -74,19 +77,26 @@ public class SymbolicLinkRefresher {
         continue;
       }
       if (event instanceof VFileContentChangeEvent
-          || event instanceof VFilePropertyChangeEvent
           || event instanceof VFileDeleteEvent) {
-        queuePath.accept(event.getFile());
+        queueFile.accept(event.getFile());
       }
-      else if (event instanceof VFileCreateEvent) {
-        queuePath.accept(((VFileCreateEvent)event).getParent());
+      else if (event instanceof VFilePropertyChangeEvent) {
+        VirtualFile file = ((VFilePropertyChangeEvent)event).getFile();
+        if (((VFilePropertyChangeEvent)event).getPropertyName().equals(PROP_NAME)) {
+          queuePath.accept(((VFilePropertyChangeEvent)event).getOldPath());
+          queueFile.accept(file.getParent());
+        } else {
+          queueFile.accept(file);
+        }
+      } else if (event instanceof VFileCreateEvent) {
+        queueFile.accept(((VFileCreateEvent)event).getParent());
       }
       else if (event instanceof VFileCopyEvent) {
-        queuePath.accept(((VFileCopyEvent)event).getNewParent());
+        queueFile.accept(((VFileCopyEvent)event).getNewParent());
       }
       else if (event instanceof VFileMoveEvent) {
-        queuePath.accept(event.getFile());
-        queuePath.accept(((VFileMoveEvent)event).getNewParent());
+        queueFile.accept(event.getFile());
+        queueFile.accept(((VFileMoveEvent)event).getNewParent());
       }
     }
     if (!toRefresh.isEmpty()) {
