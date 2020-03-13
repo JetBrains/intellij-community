@@ -24,7 +24,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.serviceContainer.PlatformComponentManagerImpl
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.ui.mac.MacOSApplicationProvider
@@ -244,7 +244,7 @@ fun createExecutorToPreloadServices(): Executor {
 @ApiStatus.Internal
 @JvmOverloads
 fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
-                    container: PlatformComponentManagerImpl,
+                    container: ComponentManagerImpl,
                     activityPrefix: String,
                     onlyIfAwait: Boolean = false,
                     executor: Executor = createExecutorToPreloadServices()): CompletableFuture<Void?> {

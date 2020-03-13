@@ -37,7 +37,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.serviceContainer.PlatformComponentManagerImpl;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -58,7 +58,7 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
+public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
   private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
 
@@ -106,9 +106,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
 
-    registerServiceInstance(TransactionGuard.class, myTransactionGuard, PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
-    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
-    registerServiceInstance(Application.class, this, PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
+    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.getFakeCorePluginDescriptor());
+    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.getFakeCorePluginDescriptor());
+    registerServiceInstance(Application.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
     boolean strictMode = isUnitTestMode || isInternal;
     BundleBase.assertOnMissedKeys(strictMode);

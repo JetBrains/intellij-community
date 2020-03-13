@@ -63,7 +63,8 @@ final class SystemFileProcessor extends ProjectTemplateFileProcessor {
     Element root = new Element("project");
     for (Object component : componentList) {
       final Element element = new Element("component");
-      element.setAttribute("name", component instanceof NamedComponent ? ((NamedComponent)component).getComponentName() : component.getClass().getName());
+      element.setAttribute("name", component instanceof NamedComponent
+                                   ? ((NamedComponent)component).getComponentName() : component.getClass().getName());
       root.addContent(element);
       ApplicationManager.getApplication().invokeAndWait(() -> {
         if (component instanceof JDOMExternalizable) {
