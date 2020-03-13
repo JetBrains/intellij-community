@@ -115,8 +115,7 @@ class CompilationPartsUploader implements Closeable {
     }
     catch (Exception e) {
       def additionalMessage = responseString == null ? "" : "\nResponse: $responseString"
-      // FIXME temporary fail here
-      myMessages.error("Failed to check for found and mising files ('$path'): ${e.message}" + additionalMessage)
+      myMessages.warning("Failed to check for found and mising files ('$path'): ${e.message}" + additionalMessage)
       return null
     }
     finally {
