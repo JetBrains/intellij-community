@@ -36,6 +36,42 @@ internal class MethodProblemsTest: ProjectProblemsViewTest() {
     method.parameterList.getParameter(0)?.typeElement?.replace(factory.createTypeElement(PsiPrimitiveType.BOOLEAN))
   }
 
+  fun testMakeOverrideMethodPrivateInAbstractClass() {
+    myFixture.addClass("""
+      package foo;
+      
+      public abstract class Parent {
+        public abstract int len(String s);
+      }
+    """.trimIndent())
+
+    val targetClass = myFixture.addClass("""
+      package foo;
+      
+      public abstract class A extends Parent {
+      
+        public int len(String s) {
+          return s.length();
+        }
+      }
+    """.trimIndent())
+
+    val refClass = myFixture.addClass("""
+      package foo;
+      
+      public class B extends A {
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeMethod(targetClass) { method, _ ->
+        method.modifierList.setModifierProperty(PsiModifier.PUBLIC, false)
+        method.modifierList.setModifierProperty(PsiModifier.PRIVATE, true)
+      }
+      assertTrue(hasReportedProblems<PsiClass>(targetClass, refClass))
+    }
+  }
+
   fun testMakeAbstractInAbstractClass() {
     val targetClass = myFixture.addClass("""
       package foo;

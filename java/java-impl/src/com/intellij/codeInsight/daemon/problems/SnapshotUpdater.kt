@@ -87,6 +87,7 @@ internal class SnapshotUpdater(project: Project, private val prevSnapshot: Snaps
         if (memberPointer in snapshot) continue
         val member = memberPointer.element ?: continue
         changes[member] = prevMember
+        collectRelatedChanges(member, prevMember, changes)
       }
       return ChangeSet(snapshot, changes)
     }

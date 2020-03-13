@@ -69,7 +69,7 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
 
   protected inline fun <reified T : PsiElement> hasReportedProblems(targetClass: PsiClass, vararg refClasses: PsiClass): Boolean {
     for (refClass in refClasses) {
-      val element = PsiTreeUtil.findChildrenOfType(refClass, T::class.java).first()
+      val element = PsiTreeUtil.findChildOfAnyType(refClass, false, T::class.java)!!
       val problems = getProblems(targetClass.containingFile)
       if (problems.none { problemElement -> PsiTreeUtil.isAncestor(element, problemElement, false) }) return false
     }
