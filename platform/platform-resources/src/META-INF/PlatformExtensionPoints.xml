@@ -365,5 +365,8 @@
     <extensionPoint name="lightEditTabAttributesProvider" interface="com.intellij.ide.lightEdit.LightEditTabAttributesProvider" dynamic="true"/>
 
     <extensionPoint name="jdkDownloader.jdkInstallerListener" interface="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerListener" dynamic="true"/>
+    <extensionPoint name="ui.optionEditorProvider" dynamic="true" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.openapi.options.OptionEditorProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
