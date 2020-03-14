@@ -4,6 +4,7 @@ package com.intellij.grazie
 import com.intellij.grazie.config.CheckingContext
 import com.intellij.grazie.config.DetectionContext
 import com.intellij.grazie.config.SuppressingContext
+import com.intellij.grazie.config.migration.VersionedState
 import com.intellij.grazie.ide.msg.GrazieInitializerManager
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.components.PersistentStateComponent
@@ -17,6 +18,30 @@ import com.intellij.util.xmlb.annotations.Property
   Storage("grazie_global.xml")
 ])
 class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
+  @Suppress("unused")
+  enum class Version : VersionedState.Version<State> {
+    INITIAL,
+
+    //Since commit abc7e5f5
+    OLD_UI {
+      override fun migrate(state: State) = state.copy(
+        checkingContext = CheckingContext(
+          isCheckInCommitMessagesEnabled = state.enabledCommitIntegration
+        )
+      )
+    },
+
+    //Since commit cc47dd17
+    NEW_UI;
+
+    override fun next() = values().getOrNull(ordinal + 1)
+    override fun toString() = ordinal.toString()
+
+    companion object {
+      val CURRENT = NEW_UI
+    }
+  }
+
   /**
    * State of Grazie plugin
    *
@@ -34,8 +59,8 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     @Property val suppressingContext: SuppressingContext = SuppressingContext(),
     @Property val detectionContext: DetectionContext.State = DetectionContext.State(),
     @Property val checkingContext: CheckingContext = CheckingContext(),
-    @Property val version: Int = 1
-  ) {
+    @Property override val version: Version = Version.CURRENT
+  ) : VersionedState<Version, State> {
     /**
      * Available languages set depends on current loaded LanguageTool modules.
      *
@@ -51,6 +76,8 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     val missedLanguages: Set<Lang>
       get() = enabledLanguages.filter { it.jLanguage == null }.toSet()
 
+    override fun increment() = copy(version = version.next() ?: error("Attempt to increment latest version $version"))
+
     fun hasMissedLanguages(): Boolean {
       return enabledLanguages.any { it.jLanguage == null }
     }
@@ -60,8 +87,6 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     private val defaultEnabledStrategies = hashSetOf("nl.rubensten.texifyidea:Latex", "org.asciidoctor.intellij.asciidoc:AsciiDoc")
 
     private val instance by lazy { service<GrazieConfig>() }
-
-    const val VERSION = 2
 
     /**
      * Get copy of Grazie config state
@@ -80,29 +105,11 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
   override fun getState() = myState
 
   override fun loadState(state: State) {
-    when {
-      state.version == 1 -> {
-        loadState(
-          state.copy(
-            checkingContext = CheckingContext(
-              isCheckInCommitMessagesEnabled = state.enabledCommitIntegration
-            ),
-            version = state.version + 1
-          )
-        )
-      }
-      state.version == VERSION -> {
-        val prevState = myState
-        myState = state
+    val prevState = myState
+    myState = VersionedState.migrate(state)
 
-        if (prevState != myState || prevState.availableLanguages != myState.availableLanguages) {
-          service<GrazieInitializerManager>().publisher.update(prevState, myState)
-        }
-      }
-      state.version < VERSION -> {
-        loadState(state.copy(version = state.version + 1))
-      }
-      else -> loadState(State())
+    if (prevState != myState || prevState.availableLanguages != myState.availableLanguages) {
+      service<GrazieInitializerManager>().publisher.update(prevState, myState)
     }
   }
 }
