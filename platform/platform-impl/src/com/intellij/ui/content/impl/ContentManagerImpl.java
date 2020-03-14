@@ -249,6 +249,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       }
 
       mySelectionHistory.remove(content);
+      myContentWithChangedComponent.remove(content);
       myContents.remove(content);
       content.removePropertyChangeListener(this);
 
