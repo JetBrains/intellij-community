@@ -10,7 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.ServiceKt;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -294,7 +295,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
         progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
         return ProgressManager.getInstance().runProcess(() -> {
           try {
-            return myProject.isDisposed() ? null : loadModuleInternal(path, moduleModel);
+            return myProject.isDisposed() ? null : loadModuleInternal(path, this);
           }
           catch (IOException e) {
             reportError(errors, modulePath, e);
@@ -321,6 +322,8 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
         if (module == null) {
           continue;
         }
+
+        moduleModel.addModule(module);
 
         if (isUnknownModuleType(module)) {
           modulesWithUnknownTypes.add(module);
@@ -363,14 +366,24 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
   }
 
-  private static @NotNull Module loadModuleInternal(@NotNull String filePath, @NotNull ModuleModelImpl model) throws IOException {
+  private static @NotNull Module loadModuleInternal(@NotNull String filePath, @NotNull ModuleManagerImpl manager) throws IOException {
     // we cannot call refreshAndFindFileByPath during module init under read action because it is forbidden
-    StandardFileSystems.local().refreshAndFindFileByPath(filePath);
+    VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(filePath);
     return ReadAction.compute(() -> {
-      ModuleEx module = model.myManager.createAndLoadModule(filePath);
-      model.initModule(module, () -> ((ModuleStore)ServiceKt.getStateStore(module)).setPath(filePath, false));
+      ModuleEx module = manager.createAndLoadModule(filePath);
+      initModule(module, () -> ((ModuleStore)module.getService(IComponentStore.class)).setPath(filePath, virtualFile, false));
       return module;
     });
+  }
+
+  private static void initModule(@NotNull ModuleEx module, @NotNull Runnable beforeComponentCreation) {
+    try {
+      module.init(beforeComponentCreation);
+    }
+    catch (Throwable e) {
+      disposeModuleLater(module);
+      throw e;
+    }
   }
 
   private void reportError(@NotNull List<? super ModuleLoadingErrorDescription> errors, @NotNull ModulePath modulePath, @NotNull Exception e) {
@@ -442,7 +455,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     fireModuleLoadErrors(errors);
   }
 
-  private static void disposeModuleLater(Module module) {
+  private static void disposeModuleLater(@NotNull Module module) {
     ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(module), module.getDisposed());
   }
 
@@ -795,6 +808,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       initModule(module, () -> {
         module.setModuleType(moduleTypeId);
       });
+      addModule(module);
       return module;
     }
 
@@ -813,7 +827,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       final ModuleEx newModule = module;
       String finalFilePath = filePath;
       initModule(module, () -> {
-        ((ModuleStore)ServiceKt.getStateStore(newModule)).setPath(finalFilePath, true);
+        ((ModuleStore)newModule.getService(IComponentStore.class)).setPath(finalFilePath, null, true);
 
         newModule.setModuleType(moduleTypeId);
         if (options != null) {
@@ -823,6 +837,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
           }
         }
       });
+      addModule(module);
       return module;
     }
 
@@ -852,7 +867,11 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       String resolvedPath = FileUtilRt.toSystemIndependentName(resolveShortWindowsName(filePath));
       try {
         Module module = getModuleByFilePath(resolvedPath);
-        return module == null ? loadModuleInternal(resolvedPath, this) : module;
+        if (module == null) {
+          module = loadModuleInternal(resolvedPath, myManager);
+          addModule(module);
+        }
+        return module;
       }
       catch (FileNotFoundException e) {
         throw e;
@@ -862,14 +881,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       }
     }
 
-    private void initModule(@NotNull ModuleEx module, @NotNull Runnable beforeComponentCreation) {
-      try {
-        module.init(beforeComponentCreation);
-      }
-      catch (Throwable e) {
-        disposeModuleLater(module);
-        throw e;
-      }
+    private void addModule(@NotNull Module module) {
       myModulesCache = null;
       myModules.put(module.getName(), module);
     }

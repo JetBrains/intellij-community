@@ -548,9 +548,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                            entityStore: TypedEntityStore,
                            diff: TypedEntityStorageDiffBuilder?,
                            isNew: Boolean): LegacyBridgeModule {
-
     val modulePath = getModuleFilePath(moduleEntity)
-
     val module = LegacyBridgeModuleImpl(
       name = moduleEntity.name,
       project = project,
@@ -563,7 +561,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     module.init {
       try {
         val moduleStore = module.stateStore as ModuleStoreBase
-        moduleStore.setPath(modulePath, isNew)
+        moduleStore.setPath(modulePath, null, isNew)
         moduleStore.storageManager.addMacro("MODULE_FILE", modulePath)
       }
       catch (t: Throwable) {
