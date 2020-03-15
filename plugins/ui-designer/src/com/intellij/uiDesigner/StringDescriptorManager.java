@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner;
 
@@ -7,7 +7,6 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Pair;
@@ -41,7 +40,7 @@ public class StringDescriptorManager {
   }
 
   public static StringDescriptorManager getInstance(Module module) {
-    StringDescriptorManager service = ModuleServiceManager.getService(module, StringDescriptorManager.class);
+    StringDescriptorManager service = module.getService(StringDescriptorManager.class);
     if (service != null) {
       service.myModule = module;
     }
