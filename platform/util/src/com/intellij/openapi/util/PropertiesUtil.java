@@ -8,7 +8,6 @@ import java.io.Reader;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.function.BiConsumer;
 
 public final class PropertiesUtil {
   /**
@@ -25,16 +24,5 @@ public final class PropertiesUtil {
       }
     }.load(reader);
     return map;
-  }
-
-  public static void processProperties(@NotNull Reader reader, @NotNull BiConsumer<String, String> consumer) throws IOException {
-    //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
-    new Properties() {
-      @Override
-      public Object put(Object key, Object value) {
-        consumer.accept((String)key, (String)value);
-        return null;
-      }
-    }.load(reader);
   }
 }

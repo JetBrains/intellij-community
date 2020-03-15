@@ -64,12 +64,12 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
     configureFromPlugin(module, javaParameters, mavenProject, runtimeProperties, "maven-failsafe-plugin", "failsafe");
   }
 
-  private void configureFromPlugin(@NotNull Module module,
-                                   JavaParameters javaParameters,
-                                   MavenProject mavenProject,
-                                   UnaryOperator<String> runtimeProperties,
-                                   String pluginArtifact,
-                                   String pluginName) {
+  private static void configureFromPlugin(@NotNull Module module,
+                                          JavaParameters javaParameters,
+                                          MavenProject mavenProject,
+                                          UnaryOperator<String> runtimeProperties,
+                                          String pluginArtifact,
+                                          String pluginName) {
     MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", pluginArtifact);
     if (plugin != null) {
       Element config = mavenProject.getPluginGoalConfiguration(plugin, null);
@@ -183,7 +183,8 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
           }
           if (StringUtil.isNotEmpty(systemPropertiesFilePath) && new File(systemPropertiesFilePath).exists()) {
             try (Reader fis = Files.newBufferedReader(Paths.get(systemPropertiesFilePath), StandardCharsets.ISO_8859_1)) {
-              PropertiesUtil.processProperties(fis, (pName, pValue) -> javaParameters.getVMParametersList().addProperty(pName, pValue));
+              Map<String, String> properties = PropertiesUtil.loadProperties(fis);
+              properties.forEach((pName, pValue) -> javaParameters.getVMParametersList().addProperty(pName, pValue));
             }
             catch (IOException e) {
               LOG.warn("Can't read property file '" + systemPropertiesFilePath + "': " + e.getMessage());
