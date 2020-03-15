@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -27,6 +27,7 @@ import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.config.UpdateMethod;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
@@ -120,7 +121,7 @@ public class GitUpdateProcess {
   public GitUpdateResult update(final UpdateMethod updateMethod) {
     LOG.info("update started|" + updateMethod);
     String oldText = myProgressIndicator.getText();
-    myProgressIndicator.setText("Updating...");
+    myProgressIndicator.setText(GitBundle.message("update.process.progress.title"));
 
     // check if update is possible
     if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles()) {
@@ -446,8 +447,8 @@ public class GitUpdateProcess {
     }
     LOG.info("isMergeInProgress: roots with unfinished merge: " + mergingRoots);
     GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
-    params.setErrorNotificationTitle("Can't update");
-    params.setMergeDescription("You have unfinished merge. These conflicts must be resolved before update.");
+    params.setErrorNotificationTitle(GitBundle.message("update.process.generic.error.title"));
+    params.setMergeDescription(GitBundle.message("update.process.error.message.unfinished.merge"));
     return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, mergingRoots, params, false).merge();
   }
 
@@ -458,8 +459,8 @@ public class GitUpdateProcess {
   private boolean areUnmergedFiles() {
     LOG.info("areUnmergedFiles: checking if there are unmerged files...");
     GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
-    params.setErrorNotificationTitle("Update was not started");
-    params.setMergeDescription("Unmerged files detected. These conflicts must be resolved before update.");
+    params.setErrorNotificationTitle(GitBundle.message("update.process.generic.error.title"));
+    params.setMergeDescription(GitBundle.message("update.process.error.message.unmerged.files"));
     return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, getRootsFromRepositories(myRepositories),
                                                    params, false).merge();
   }
@@ -478,9 +479,9 @@ public class GitUpdateProcess {
     LOG.info("checkRebaseInProgress: roots with unfinished rebase: " + rebasingRoots);
 
     GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
-    params.setErrorNotificationTitle("Can't update");
-    params.setMergeDescription("You have unfinished rebase process. These conflicts must be resolved before update.");
-    params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
+    params.setErrorNotificationTitle(GitBundle.message("update.process.generic.error.title"));
+    params.setMergeDescription(GitBundle.message("update.process.error.description.unfinished.rebase"));
+    params.setErrorNotificationAdditionalDescription(GitBundle.message("update.process.error.additional.description.unfinished.rebase"));
     params.setReverse(true);
     return !new GitConflictResolver(myProject, rebasingRoots, params) {
       @Override protected boolean proceedIfNothingToMerge() {
