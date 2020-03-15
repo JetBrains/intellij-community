@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -152,15 +151,14 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
     return myRootModel.isSdkInherited();
   }
 
-  void commitModel(RootModelImpl rootModel) {
+  void commitModel(@NotNull RootModelImpl rootModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(rootModel.myModuleRootManager == this);
     LOG.assertTrue(!myIsDisposed);
 
     boolean changed = rootModel.isChanged();
 
-    final Project project = myModule.getProject();
-    final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+    ModifiableModuleModel moduleModel = ModuleManager.getInstance(myModule.getProject()).getModifiableModel();
     ModifiableModelCommitter.multiCommit(Collections.singletonList(rootModel), moduleModel);
 
     if (changed) {
@@ -168,10 +166,10 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
     }
   }
 
-  static void doCommit(RootModelImpl rootModel) {
+  static void doCommit(@NotNull RootModelImpl rootModel) {
     ModuleRootManagerImpl rootManager = (ModuleRootManagerImpl)getInstance(rootModel.getModule());
     LOG.assertTrue(!rootManager.myIsDisposed);
-    rootModel.docommit();
+    rootModel.doCommit();
     rootModel.dispose();
 
     try {
@@ -320,10 +318,9 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
     myLoaded = true;
   }
 
-  protected void loadState(ModuleRootManagerState object, boolean throwEvent) {
+  protected void loadState(@NotNull ModuleRootManagerState object, boolean throwEvent) {
     ThrowableRunnable<RuntimeException> r = () -> {
-      final RootModelImpl newModel = new RootModelImpl(object.getRootModelElement(), this, myProjectRootManager, myFilePointerManager, throwEvent);
-
+      RootModelImpl newModel = new RootModelImpl(object.getRootModelElement(), this, myProjectRootManager, myFilePointerManager, throwEvent);
       if (throwEvent) {
         makeRootsChange(() -> doCommit(newModel));
       }
@@ -334,9 +331,14 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
 
       assert !myRootModel.isOrderEntryDisposed();
     };
+
     try {
-      if (throwEvent) WriteAction.run(r);
-      else ReadAction.run(r);
+      if (throwEvent) {
+        WriteAction.run(r);
+      }
+      else {
+        ReadAction.run(r);
+      }
     }
     catch (InvalidDataException e) {
       LOG.error(e);
@@ -356,7 +358,7 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
     return ExternalProjectSystemRegistry.getInstance().getExternalSource(myModule);
   }
 
-  public static class ModuleRootManagerState implements JDOMExternalizable {
+  public static final class ModuleRootManagerState implements JDOMExternalizable {
     private RootModelImpl myRootModel;
     private Element myRootModelElement;
 
