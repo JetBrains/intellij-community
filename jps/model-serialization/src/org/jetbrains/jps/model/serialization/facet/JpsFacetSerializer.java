@@ -37,6 +37,7 @@ public final class JpsFacetSerializer {
         }
       }
     }
+
     XmlSerializer.serializeInto(managerState, facetManagerElement, new SkipDefaultValuesSerializationFilters());
   }
 
@@ -45,7 +46,7 @@ public final class JpsFacetSerializer {
       final JpsFacetConfigurationSerializer<?> serializer = getModuleExtensionSerializer(facetState.getFacetType());
       if (serializer != null) {
         final JpsElement element = addExtension(module, serializer, facetState, parentFacet);
-        addFacets(module, facetState.getSubFacets(), element);
+        addFacets(module, facetState.subFacets, element);
       }
     }
   }
