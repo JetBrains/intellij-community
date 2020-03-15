@@ -35,6 +35,7 @@ import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.pico.DefaultPicoContainer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.PicoContainer
 import java.lang.reflect.Constructor
@@ -350,9 +351,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     val adapter = picoContainer.getComponentAdapter(interfaceClass)
     if (adapter == null) {
       checkCanceledIfNotInClassInit()
-      if (isDisposed) {
-        throw ProcessCanceledException(RuntimeException("Cannot get ${interfaceClass.name} because container is already disposed (container=${toString()})"))
-      }
+      checkThatNotDisposedCompletely(ProgressManager.getGlobalProgressIndicator())
       return null
     }
 
@@ -398,15 +397,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
 
     checkCanceledIfNotInClassInit()
-    if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-      val error = AlreadyDisposedException("Cannot create ${toString()} because container is already disposed (container=${toString()})")
-      if (indicator == null) {
-        throw error
-      }
-      else {
-        throw ProcessCanceledException(error)
-      }
-    }
+    checkThatNotDisposedCompletely(indicator)
 
     if (parent != null) {
       val result = parent.doGetService(serviceClass, createIfNeeded)
@@ -426,6 +417,18 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       PluginException.logPluginError(LOG, message, null, serviceClass)
     }
     return result
+  }
+
+  private fun checkThatNotDisposedCompletely(indicator: @Nullable ProgressIndicator?) {
+    if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+      val error = AlreadyDisposedException("Cannot create ${toString()} because container is already disposed (container=${toString()})")
+      if (indicator == null) {
+        throw error
+      }
+      else {
+        throw ProcessCanceledException(error)
+      }
+    }
   }
 
   internal fun <T : Any> getLightService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
