@@ -52,6 +52,7 @@ import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -369,6 +370,10 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   private static @NotNull Module loadModuleInternal(@NotNull String filePath, @NotNull ModuleManagerImpl manager) throws IOException {
     // we cannot call refreshAndFindFileByPath during module init under read action because it is forbidden
     VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(filePath);
+    if (virtualFile != null) {
+      // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
+      virtualFile.setCharset(StandardCharsets.UTF_8, null, false);
+    }
     return ReadAction.compute(() -> {
       ModuleEx module = manager.createAndLoadModule(filePath);
       initModule(module, () -> ((ModuleStore)module.getService(IComponentStore.class)).setPath(filePath, virtualFile, false));
