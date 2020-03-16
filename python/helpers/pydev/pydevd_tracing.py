@@ -133,11 +133,11 @@ def load_python_helper_lib():
         filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'attach_%s' % (suffix,))
 
     else:
-        pydev_log.info('Unable to set trace to all threads in platform: %s', sys.platform)
+        pydev_log.info('Unable to set trace to all threads in platform: %s' % sys.platform)
         return None
 
     if not os.path.exists(filename):
-        pydev_log.error('Expected: %s to exist.', filename)
+        pydev_log.error('Expected: %s to exist.' % filename)
         return None
 
     try:
@@ -147,7 +147,7 @@ def load_python_helper_lib():
     except:
         # Only show message if tracing is on (we don't have pre-compiled
         # binaries for all architectures -- i.e.: ARM).
-        pydev_log.error('Error loading: %s', filename)
+        pydev_log.error('Error loading: %s' % filename)
         return None
 
 
