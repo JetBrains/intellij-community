@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.tests.di
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.cfg.ControlFlowInformationProviderImpl
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.container.StorageComponentContainer
 import org.jetbrains.kotlin.container.getValue
@@ -28,6 +29,7 @@ fun createContainerForTests(project: Project, module: ModuleDescriptor): Contain
         )
         useImpl<AnnotationResolverImpl>()
         useInstance(ModuleStructureOracle.SingleModule)
+        useInstance(ControlFlowInformationProviderImpl.Factory)
     })
 }
 
