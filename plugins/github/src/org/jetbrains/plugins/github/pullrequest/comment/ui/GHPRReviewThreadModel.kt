@@ -10,6 +10,7 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
   val id: String
   val createdAt: Date
   val state: GHPullRequestReviewCommentState
+  val isResolved: Boolean
   val filePath: String
   val diffHunk: String
   val firstCommentDatabaseId: Long

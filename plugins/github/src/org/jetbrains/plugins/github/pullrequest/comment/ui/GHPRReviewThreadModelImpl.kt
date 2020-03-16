@@ -14,6 +14,8 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   override val createdAt = thread.createdAt
   override var state = thread.state
     private set
+  override var isResolved: Boolean = thread.isResolved
+    private set
   override val filePath = thread.path
   override val diffHunk = thread.diffHunk
   override val firstCommentDatabaseId = thread.firstCommentDatabaseId
@@ -21,9 +23,17 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   private val deletionEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
   private val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
+  init {
+    maybeMarkFirstCommentResolved()
+  }
+
   override fun update(thread: GHPullRequestReviewThread) {
     if (state != thread.state) {
       state = thread.state
+      stateEventDispatcher.multicaster.eventOccurred()
+    }
+    if (isResolved != thread.isResolved) {
+      isResolved = thread.isResolved
       stateEventDispatcher.multicaster.eventOccurred()
     }
 
@@ -47,9 +57,18 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
       }
     }
 
-    if (size == thread.comments.size) return
     val newComments = thread.comments.subList(size, thread.comments.size)
     add(newComments.map { GHPRReviewCommentModel.convert(it) })
+    maybeMarkFirstCommentResolved()
+  }
+
+  private fun maybeMarkFirstCommentResolved() {
+    if (size > 0) {
+      getElementAt(0).isFirstInResolvedThread = isResolved
+      for (i in 1 until size) {
+        getElementAt(i).isFirstInResolvedThread = false
+      }
+    }
   }
 
   override fun addComment(comment: GHPRReviewCommentModel) {

@@ -5,6 +5,7 @@ import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.util.*
 
 class GHPRReviewCommentModel(val id: String, state: GHPullRequestReviewCommentState, dateCreated: Date, body: String,
@@ -25,6 +26,10 @@ class GHPRReviewCommentModel(val id: String, state: GHPullRequestReviewCommentSt
     private set
   var authorAvatarUrl = authorAvatarUrl
     private set
+
+  var isFirstInResolvedThread by equalVetoingObservable(false) {
+    changeEventDispatcher.multicaster.eventOccurred()
+  }
 
   fun update(comment: GHPullRequestReviewComment): Boolean {
     if (comment.id != id) throw IllegalArgumentException("Can't update comment data from different comment")

@@ -56,13 +56,17 @@ object GHPRReviewCommentComponent {
       foreground = UIUtil.getContextHelpForeground()
       background = JBUI.CurrentTheme.Validator.warningBackgroundColor()
     }.andOpaque()
+    val resolvedLabel = JBLabel(" Resolved ", UIUtil.ComponentStyle.SMALL).apply {
+      foreground = UIUtil.getContextHelpForeground()
+      background = UIUtil.getPanelBackground()
+    }.andOpaque()
 
     val textPane = HtmlEditorPane().apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
 
-    Controller(comment, titlePane, pendingLabel, textPane)
+    Controller(comment, titlePane, pendingLabel, resolvedLabel, textPane)
 
     val editorWrapper = Wrapper()
     val editButton = createEditButton(reviewDataProvider, comment, editorWrapper, textPane).apply {
@@ -82,8 +86,9 @@ object GHPRReviewCommentComponent {
                          AC().gap("${UI.scale(8)}"))
 
       add(avatarLabel, CC().pushY())
-      add(titlePane, CC().minWidth("0").split(4).alignX("left"))
+      add(titlePane, CC().minWidth("0").split(5).alignX("left"))
       add(pendingLabel, CC().hideMode(3).alignX("left"))
+      add(resolvedLabel, CC().hideMode(3).alignX("left"))
       add(editButton, CC().hideMode(3).gapBefore("${UI.scale(12)}"))
       add(deleteButton, CC().hideMode(3).gapBefore("${UI.scale(8)}"))
       add(contentPanel, CC().newline().skip().grow().push().minWidth("0").minHeight("0"))
@@ -171,6 +176,7 @@ object GHPRReviewCommentComponent {
   private class Controller(private val model: GHPRReviewCommentModel,
                            private val titlePane: HtmlEditorPane,
                            private val pendingLabel: JComponent,
+                           private val resolvedLabel: JComponent,
                            private val bodyPane: HtmlEditorPane) {
     init {
       model.addChangesListener {
@@ -196,6 +202,8 @@ object GHPRReviewCommentComponent {
           titlePane.text = authorName + """ commented ${GithubUIUtil.formatActionDate(model.dateCreated)}"""
         }
       }
+
+      resolvedLabel.isVisible = model.isFirstInResolvedThread
     }
   }
 
