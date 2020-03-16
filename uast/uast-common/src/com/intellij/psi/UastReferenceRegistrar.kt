@@ -30,6 +30,17 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, Proc
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
   val registrar = this
+  val chunks = getContributorChunks(registrar)
+
+  val chunk = chunks.getOrPut(ChunkTag(priority, provider.supportedUElementTypes)) {
+    val newChunk = UastReferenceContributorChunk(provider.supportedUElementTypes)
+    registrar.registerReferenceProvider(uastTypePattern(provider.supportedUElementTypes), newChunk, priority)
+    newChunk
+  }
+  chunk.register(pattern, provider)
+}
+
+private fun getContributorChunks(registrar: PsiReferenceRegistrar): MutableMap<ChunkTag, UastReferenceContributorChunk> {
   var chunks = registrar.getUserData(CONTRIBUTOR_CHUNKS_KEY)
   if (chunks == null) {
     chunks = ConcurrentHashMap()
@@ -41,13 +52,7 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, Proc
       }
     }, ApplicationManager.getApplication())
   }
-
-  val chunk = chunks.getOrPut(ChunkTag(priority, provider.supportedUElementTypes)) {
-    val newChunk = UastReferenceContributorChunk(provider.supportedUElementTypes)
-    registrar.registerReferenceProvider(uastTypePattern(provider.supportedUElementTypes), newChunk, priority)
-    newChunk
-  }
-  chunk.register(pattern, provider)
+  return chunks
 }
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
