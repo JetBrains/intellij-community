@@ -111,7 +111,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   public void update(final Project project, @Nullable VirtualFile root) {
     if (!isVisible()) return;
     ApplicationManager.getApplication().invokeLater(() -> {
-      if ((project == null) || project.isDisposed()) {
+      if (myProject.isDisposed()) {
         emptyTooltip();
         return;
       }

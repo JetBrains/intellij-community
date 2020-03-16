@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HgRemoteStatusUpdater implements HgUpdater {
-
+  private final Project myProject;
   private final AbstractVcs myVcs;
   private final HgChangesetStatus myIncomingStatus;
   private final HgChangesetStatus myOutgoingStatus;
@@ -40,14 +40,11 @@ public class HgRemoteStatusUpdater implements HgUpdater {
                                HgChangesetStatus incomingStatus,
                                HgChangesetStatus outgoingStatus,
                                HgProjectSettings projectSettings) {
+    myProject = vcs.getProject();
     myVcs = vcs;
     myIncomingStatus = incomingStatus;
     myOutgoingStatus = outgoingStatus;
     myProjectSettings = projectSettings;
-  }
-
-  public void update(final Project project) {
-    update(project, null);
   }
 
   @Override
@@ -56,16 +53,16 @@ public class HgRemoteStatusUpdater implements HgUpdater {
       return;
     }
     myUpdateStarted.set(true);
-    new Task.Backgroundable(project, getProgressTitle(), true) {
+    new Task.Backgroundable(myProject, getProgressTitle(), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        if (project.isDisposed()) return;
-        final VirtualFile[] roots =
-          root != null ? new VirtualFile[]{root} : ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(myVcs);
-        updateChangesStatusSynchronously(project, roots, myIncomingStatus, true);
-        updateChangesStatusSynchronously(project, roots, myOutgoingStatus, false);
+        if (myProject.isDisposed()) return;
+        final VirtualFile[] roots = root != null ? new VirtualFile[]{root}
+                                                 : ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs);
+        updateChangesStatusSynchronously(myProject, roots, myIncomingStatus, true);
+        updateChangesStatusSynchronously(myProject, roots, myOutgoingStatus, false);
 
-        BackgroundTaskUtil.syncPublisher(project, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).update();
+        BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).update();
 
         indicator.stop();
         myUpdateStarted.set(false);
@@ -75,11 +72,11 @@ public class HgRemoteStatusUpdater implements HgUpdater {
 
 
   public void activate() {
-    busConnection = myVcs.getProject().getMessageBus().connect();
+    busConnection = myProject.getMessageBus().connect();
     busConnection.subscribe(HgVcs.REMOTE_TOPIC, this);
 
     int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
-    changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> update(myVcs.getProject()), 5, checkIntervalSeconds, TimeUnit.SECONDS);
+    changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> update(myProject, null), 5, checkIntervalSeconds, TimeUnit.SECONDS);
   }
 
   public void deactivate() {
