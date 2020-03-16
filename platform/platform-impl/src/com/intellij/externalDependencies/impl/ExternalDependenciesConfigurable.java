@@ -110,7 +110,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
     });
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         return editSelectedDependency(dependenciesList);
       }
     }.installOn(dependenciesList);

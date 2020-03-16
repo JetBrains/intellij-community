@@ -19,20 +19,20 @@ import java.util.List;
 public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
   @Nullable private final Function<? super T, String> myToStringConvertor;
 
-  public ListSpeedSearch(JList<T> list) {
+  public ListSpeedSearch(@NotNull JList<T> list) {
     super(list);
     myToStringConvertor = null;
     registerSelectAll(list);
   }
 
-  public ListSpeedSearch(final JList<T> list, @NotNull Function<? super T, String> convertor) {
+  public ListSpeedSearch(@NotNull JList<T> list, @NotNull Function<? super T, String> convertor) {
     super(list);
     myToStringConvertor = convertor;
     registerSelectAll(list);
   }
 
-  private void registerSelectAll(JList<T> list) {
-    new MySelectAllAction(list, this).registerCustomShortcutSet(list, null);
+  private void registerSelectAll(@NotNull JList<T> list) {
+    new MySelectAllAction<>(list, this).registerCustomShortcutSet(list, null);
   }
 
   @Override
@@ -55,18 +55,16 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
     return getAllListElements(myComponent);
   }
 
-  public static Object[] getAllListElements(final JList list) {
-    ListModel model = list.getModel();
+  public static <T> Object[] getAllListElements(final @NotNull JList<T> list) {
+    ListModel<T> model = list.getModel();
     if (model instanceof DefaultListModel){ // optimization
-      return ((DefaultListModel)model).toArray();
+      return ((DefaultListModel<T>)model).toArray();
     }
-    else{
-      Object[] elements = new Object[model.getSize()];
-      for(int i = 0; i < elements.length; i++){
-        elements[i] = model.getElementAt(i);
-      }
-      return elements;
+    Object[] elements = new Object[model.getSize()];
+    for(int i = 0; i < elements.length; i++){
+      elements[i] = model.getElementAt(i);
     }
+    return elements;
   }
 
   @Override
@@ -79,7 +77,7 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
   }
 
   @NotNull
-  private TIntArrayList findAllFilteredElements(String s) {
+  private TIntArrayList findAllFilteredElements(@NotNull String s) {
     TIntArrayList indices = new TIntArrayList();
     String _s = s.trim();
 
@@ -91,11 +89,11 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
     return indices;
   }
 
-  private static final class MySelectAllAction extends DumbAwareAction {
-    @NotNull private final JList myList;
-    @NotNull private final ListSpeedSearch mySearch;
+  private static final class MySelectAllAction<T> extends DumbAwareAction {
+    @NotNull private final JList<T> myList;
+    @NotNull private final ListSpeedSearch<T> mySearch;
 
-    MySelectAllAction(@NotNull JList list, @NotNull ListSpeedSearch search) {
+    MySelectAllAction(@NotNull JList<T> list, @NotNull ListSpeedSearch<T> search) {
       myList = list;
       mySearch = search;
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL);

@@ -119,7 +119,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         close(OK_EXIT_CODE);
         return true;
       }

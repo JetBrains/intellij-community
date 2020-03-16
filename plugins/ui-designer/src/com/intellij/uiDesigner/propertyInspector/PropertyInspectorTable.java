@@ -173,7 +173,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         int row = rowAtPoint(e.getPoint());
         int column = columnAtPoint(e.getPoint());
         if (row >= 0 && column == 0) {

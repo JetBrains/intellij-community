@@ -68,7 +68,7 @@ public abstract class SpeedSearchSupply {
     return null;
   }
 
-  protected void installSupplyTo(final JComponent component) {
+  protected void installSupplyTo(@NotNull JComponent component) {
     component.putClientProperty(SPEED_SEARCH_COMPONENT_MARKER, this);
     addChangeListener(evt -> component.repaint());
   }

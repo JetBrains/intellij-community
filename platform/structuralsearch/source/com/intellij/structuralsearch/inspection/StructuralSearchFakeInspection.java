@@ -163,7 +163,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         performEdit(list);
         return true;
       }

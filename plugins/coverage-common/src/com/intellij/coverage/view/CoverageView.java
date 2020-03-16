@@ -98,7 +98,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myBuilder.setParentTitle(titleLabel);
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         drillDown(structure);
         return true;
       }

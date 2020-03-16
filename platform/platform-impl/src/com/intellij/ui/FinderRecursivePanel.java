@@ -339,7 +339,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   private void installEditOnDoubleClick(JBList list) {
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         performEditAction();
         return true;
       }

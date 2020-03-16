@@ -471,7 +471,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
 
       new DoubleClickListener() {
         @Override
-        protected boolean onDoubleClick(MouseEvent e) {
+        protected boolean onDoubleClick(@NotNull MouseEvent e) {
           final int row = rowAtPoint(e.getPoint());
           if (row < 0) return false;
           if (columnAtPoint(e.getPoint()) <= 0) return false;

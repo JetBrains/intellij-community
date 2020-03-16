@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
@@ -29,7 +30,7 @@ public abstract class AddEditDeleteListPanel<T> extends AddDeleteListPanel<T> {
     super(title, initialList);
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         editSelectedItem();
         return true;
       }

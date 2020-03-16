@@ -717,7 +717,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       });
       new DoubleClickListener(){
         @Override
-        protected boolean onDoubleClick(MouseEvent event) {
+        protected boolean onDoubleClick(@NotNull MouseEvent event) {
           int row = table.rowAtPoint(event.getPoint());
           int column = table.columnAtPoint(event.getPoint());
           if (row >=0 && row < table.getRowCount() && column >=0 && column < table.getColumnCount()) {

@@ -186,7 +186,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     myTable.setStriped(true);
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         doEdit();
         return true;
       }
