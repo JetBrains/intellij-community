@@ -19,7 +19,6 @@ import com.intellij.TestCaseLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.TestRunnerUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
 import cucumber.runtime.Runtime;
@@ -29,7 +28,6 @@ import cucumber.runtime.io.Resource;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
 
 import java.io.IOException;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +36,7 @@ import java.util.List;
  * @author Dennis.Ushakov
  */
 public class CucumberMain {
+  private static final Logger LOG = Logger.getInstance(CucumberMain.class);
   static {
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
     System.setProperty("apple.awt.UIElement", "true");
@@ -51,6 +50,7 @@ public class CucumberMain {
       exitStatus = (Integer)loader.loadClass(CucumberMain.class.getName()).getMethod("run", String[].class, ClassLoader.class).invoke(null, args, loader);
     }
     catch (Throwable e) {
+      LOG.warn(e);
       exitStatus = 1;
     }
     System.exit(exitStatus);
