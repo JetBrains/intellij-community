@@ -18,7 +18,7 @@ public class ProjectTopHitCache extends TopHitCache {
         @Override
         public void extensionRemoved(@NotNull OptionsSearchTopHitProvider.ProjectLevelProvider extension,
                                      @NotNull PluginDescriptor pluginDescriptor) {
-          map.remove(extension.getClass());
+          invalidateCachedOptions(extension.getClass());
         }
       }, project);
   }

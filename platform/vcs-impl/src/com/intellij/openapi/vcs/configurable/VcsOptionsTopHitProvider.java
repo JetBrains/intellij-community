@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.PublicFieldBasedOptionDescription;
 import com.intellij.ide.ui.PublicMethodBasedOptionDescription;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -23,7 +22,7 @@ import java.util.Collections;
 
 import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyRightMargin;
 
-public final class VcsOptionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
+public final class VcsOptionsTopHitProvider extends VcsOptionsTopHitProviderBase {
   @NotNull
   @Override
   public String getId() {
@@ -33,7 +32,7 @@ public final class VcsOptionsTopHitProvider implements OptionsSearchTopHitProvid
   @NotNull
   @Override
   public Collection<OptionDescription> getOptions(@NotNull Project project) {
-    if (ProjectLevelVcsManager.getInstance(project).getAllVcss().length == 0) {
+    if (!project.isDefault() && !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) {
       return Collections.emptyList();
     }
 
