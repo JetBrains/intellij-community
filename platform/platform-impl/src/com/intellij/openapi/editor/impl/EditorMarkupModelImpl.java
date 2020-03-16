@@ -1969,7 +1969,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         ActionButton menuButton = new ActionButton(new MenuAction(actions),
                                                    presentation,
                                                    ActionPlaces.EDITOR_POPUP,
-                                                   ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+                                                   ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
 
         myContent.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
       }
