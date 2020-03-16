@@ -28,13 +28,9 @@ import java.util.Collection;
  *
  * <p> If it is possible and correct to restrict file type matching by particular means (e.g. match only by file name),
  * it is advised to do so, in order to improve the performance of the check, e.g. use
- * <pre><code>
- * FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence())
- * </code></pre>
+ * <pre>{@code FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence())}</pre>
  * instead of
- * <pre><code>
- * file.getFileType()
- * </code></pre>
+ * <pre>{@code file.getFileType()}</pre>
  *
  * Also, if you are interested not in getting file type, but rather comparing file type with a known one, prefer using
  * {@link #isFileOfType(VirtualFile, FileType)}, as it is faster than {@link #getFileTypeByFile(VirtualFile)} as well.
@@ -172,6 +168,6 @@ public abstract class FileTypeRegistry {
       return 1024;
     }
 
-    int getVersion();
+    default int getVersion() { return 0; }
   }
 }

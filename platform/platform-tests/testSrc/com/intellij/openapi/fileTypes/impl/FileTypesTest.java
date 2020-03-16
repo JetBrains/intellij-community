@@ -308,11 +308,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       public int getDesiredContentPrefixLength() {
         return 48;
       }
-
-      @Override
-      public int getVersion() {
-        return 0;
-      }
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
     myFileTypeManager.toLog = true;
@@ -631,11 +626,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       public int getDesiredContentPrefixLength() {
         return 48;
       }
-
-      @Override
-      public int getVersion() {
-        return 0;
-      }
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
     myFileTypeManager.toLog = true;
@@ -841,11 +831,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       @Override
       public int getDesiredContentPrefixLength() {
         return "#!archive".length();
-      }
-
-      @Override
-      public int getVersion() {
-        return 0;
       }
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
