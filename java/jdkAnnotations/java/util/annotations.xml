@@ -2610,15 +2610,24 @@
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.Map V compute(K, java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.Map V computeIfAbsent(K, java.util.function.Function&lt;? super K,? extends V&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.Map V computeIfAbsent(K, java.util.function.Function&lt;? super K,? extends V&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.Map V computeIfPresent(K, java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
+  </item>
+  <item name='java.util.Map V computeIfPresent(K, java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Map V get(java.lang.Object)'>
     <annotation name='org.intellij.lang.annotations.Flow'>
@@ -2630,6 +2639,12 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
+  </item>
+  <item name='java.util.Map V merge(K, V, java.util.function.BiFunction&lt;? super V,? super V,? extends V&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Map V merge(K, V, java.util.function.BiFunction&lt;? super V,? super V,? extends V&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Map V put(K, V)'>
     <annotation name='org.jetbrains.annotations.Contract'>
