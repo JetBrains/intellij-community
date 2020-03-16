@@ -51,7 +51,7 @@ data class Typo(val location: Location, val info: Info, val fixes: LinkedSet<Str
   /** Constructor for LangTool, applies fixes to RuleMatch (Main constructor doesn't apply fixes) */
   constructor(match: RuleMatch, lang: Lang, offset: Int = 0) : this(
     Location(match.toIntRange(offset), IntRange(match.patternStartPos, match.patternEndPos - 1).withOffset(offset)),
-    Info(lang, match.rule, match.shortMessage, match.message),
+    Info(lang, match.rule, match.shortMessage, match.messageSanitized),
     LinkedSet(match.getSuggestedReplacements())
   )
 
