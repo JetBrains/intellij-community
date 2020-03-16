@@ -15,6 +15,7 @@ import com.intellij.psi.util.findParentInFile
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
 import org.jetbrains.kotlin.analyzer.AnalysisResult
+import org.jetbrains.kotlin.cfg.ControlFlowInformationProviderImpl
 import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.context.GlobalContext
@@ -48,7 +49,6 @@ import org.jetbrains.kotlin.util.slicedMap.ReadOnlySlice
 import org.jetbrains.kotlin.util.slicedMap.WritableSlice
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.checkWithAttachment
-import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 
 internal class PerFileAnalysisCache(val file: KtFile, componentProvider: ComponentProvider) {
@@ -549,8 +549,9 @@ private object KotlinResolveDataProvider {
                     analyzableElement.languageVersionSettings,
                     IdeaModuleStructureOracle(),
                     IdeMainFunctionDetectorFactory(),
-                    IdeSealedClassInheritorsProvider
-            ).get<LazyTopDownAnalyzer>()
+                    IdeSealedClassInheritorsProvider,
+                    ControlFlowInformationProviderImpl.Factory,
+                ).get<LazyTopDownAnalyzer>()
 
                 lazyTopDownAnalyzer.analyzeDeclarations(TopDownAnalysisMode.TopLevelDeclarations, listOf(analyzableElement))
             } finally {
