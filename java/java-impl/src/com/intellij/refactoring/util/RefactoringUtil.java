@@ -998,30 +998,6 @@ public class RefactoringUtil {
     return (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body.replace(codeBlock));
   }
 
-  /**
-   * Ensures that given call is surrounded by {@link PsiCodeBlock} (that is, it has a parent statement
-   * which is located inside the code block). If not, tries to create a code block.
-   *
-   * <p>
-   * Note that the expression is not necessarily a child of {@link PsiExpressionStatement}; it could be a subexpression,
-   * {@link PsiIfStatement}, etc.
-   * </p>
-   *
-   * <p>
-   * This method works if {@link com.siyeh.ig.psiutils.ControlFlowUtils#canExtractStatement(PsiExpression)}
-   * returns true on the same expression.
-   * </p>
-   *
-   * @param expression an expression which should be located inside the code block
-   * @return a passed expression if it's already surrounded by code block and no changes are necessary;
-   *         a replacement expression (which is equivalent to the passed expression) if a new code block was created;
-   *         {@code null} if the expression cannot be surrounded with code block.
-   */
-  @Nullable
-  public static <T extends PsiExpression> T ensureCodeBlock(@NotNull T expression) {
-    return EnsureCodeBlockImpl.ensureCodeBlock(expression);
-  }
-
   public static String checkEnumConstantInSwitchLabel(PsiExpression expr) {
     if (PsiImplUtil.getSwitchLabel(expr) != null) {
       PsiReferenceExpression ref = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expr), PsiReferenceExpression.class);

@@ -17,6 +17,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -465,6 +466,14 @@ public abstract class CodeBlockSurrounder {
       PsiExpression oldCondition = Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(whileStatement.getCondition()));
       PsiStatement body = whileStatement.getBody();
       PsiBlockStatement blockBody;
+      int operandIndex = -1;
+      if (oldCondition instanceof PsiPolyadicExpression) {
+        PsiPolyadicExpression polyadic = (PsiPolyadicExpression)oldCondition;
+        if (polyadic.getOperationTokenType().equals(JavaTokenType.ANDAND)) {
+          PsiExpression[] operands = polyadic.getOperands();
+          operandIndex = ContainerUtil.indexOf(Arrays.asList(operands), o -> PsiTreeUtil.isAncestor(o, myExpression, false));
+        }
+      }
       if (body == null) {
         PsiWhileStatement newWhileStatement = (PsiWhileStatement)factory.createStatementFromText("while(true) {}", whileStatement);
         Objects.requireNonNull(newWhileStatement.getCondition()).replace(oldCondition);
@@ -480,19 +489,17 @@ public abstract class CodeBlockSurrounder {
         newBody.getCodeBlock().add(body);
         blockBody = (PsiBlockStatement)body.replace(newBody);
       }
-      PsiExpression lOperands = factory.createExpressionFromText("true", whileStatement);
-      PsiExpression rOperands = oldCondition;
-      if (oldCondition instanceof PsiPolyadicExpression) {
+      PsiExpression lOperands;
+      PsiExpression rOperands;
+      if (operandIndex > 0) {
         PsiPolyadicExpression polyadic = (PsiPolyadicExpression)oldCondition;
-        if (polyadic.getOperationTokenType().equals(JavaTokenType.ANDAND)) {
-          PsiExpression[] operands = polyadic.getOperands();
-          PsiExpression operand = Objects.requireNonNull(ContainerUtil.find(operands, o -> PsiTreeUtil.isAncestor(o, myExpression, false)));
-          PsiJavaToken token = polyadic.getTokenBeforeOperand(operand);
-          if (token != null) {
-            lOperands = SplitConditionUtil.getLOperands(polyadic, token);
-            rOperands = AndOrToIfSurrounder.getRightOperands(polyadic, operand);
-          }
-        }
+        PsiExpression operand = polyadic.getOperands()[operandIndex];
+        PsiJavaToken token = Objects.requireNonNull(polyadic.getTokenBeforeOperand(operand));
+        lOperands = SplitConditionUtil.getLOperands(polyadic, token);
+        rOperands = AndOrToIfSurrounder.getRightOperands(polyadic, operand);
+      } else {
+        lOperands = factory.createExpressionFromText("true", whileStatement);
+        rOperands = oldCondition;
       }
       PsiCodeBlock codeBlock = blockBody.getCodeBlock();
       PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText("if(!true) break;", whileStatement);
