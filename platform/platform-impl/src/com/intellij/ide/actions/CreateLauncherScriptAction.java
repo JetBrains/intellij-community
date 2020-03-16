@@ -44,8 +44,8 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
   private static class Holder {
     private static final String INTERPRETER_NAME =
-      PathEnvironmentVariableUtil.findInPath("python") != null ? "python":
-      PathEnvironmentVariableUtil.findInPath("python3") != null ? "python3" :null;
+      PathEnvironmentVariableUtil.findInPath("python") != null ? "python" :
+      PathEnvironmentVariableUtil.findInPath("python3") != null ? "python3" : null;
   }
 
   public static boolean isAvailable() {
@@ -101,7 +101,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
       }
     }
 
-    new Task.Backgroundable(project, ApplicationBundle.message("launcher.script.title")) {
+    new Task.Backgroundable(project, ApplicationBundle.message("launcher.script.progress")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
