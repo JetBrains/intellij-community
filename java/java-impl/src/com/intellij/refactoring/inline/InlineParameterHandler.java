@@ -99,9 +99,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
           if (expressions.length <= index) return false;
           PsiExpression argument = expressions[index];
           if (!refInitializer.isNull()) {
-            return argument != null
-                   && PsiEquivalenceUtil.areElementsEquivalent(refInitializer.get(), argument)
-                   && PsiEquivalenceUtil.areElementsEquivalent(refMethodCall.get(), methodCall);
+            return argument != null && PsiEquivalenceUtil.areElementsEquivalent(refInitializer.get(), argument);
           }
           if (InlineToAnonymousConstructorProcessor.isConstant(argument) || getReferencedFinalField(argument) != null) {
             if (refConstantInitializer.isNull()) {
