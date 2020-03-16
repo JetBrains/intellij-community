@@ -19,6 +19,7 @@ import com.intellij.TestCaseLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
 import cucumber.runtime.Runtime;
@@ -26,8 +27,12 @@ import cucumber.runtime.RuntimeOptions;
 import cucumber.runtime.io.MultiLoader;
 import cucumber.runtime.io.Resource;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
+import org.jetbrains.annotations.NotNull;
+import sun.net.www.ParseUtil;
 
-import java.io.IOException;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,7 +50,13 @@ public class CucumberMain {
   public static void main(String[] args) {
     int exitStatus;
     try {
-      UrlClassLoader loader = new UrlClassLoader(Thread.currentThread().getContextClassLoader());
+      ClassLoader original = Thread.currentThread().getContextClassLoader();
+      List<@NotNull URL> urls = ContainerUtil.mapNotNull(System.getProperty("java.class.path").split(File.pathSeparator), CucumberMain::fileToEncodedURL);
+      UrlClassLoader loader = UrlClassLoader.build().urls(
+        urls).parent(original.getParent()).allowLock().useCache()
+        .usePersistentClasspathIndexForLocalClassDirectories()
+        .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false")))
+        .autoAssignUrlsWithProtectionDomain().get();
       Thread.currentThread().setContextClassLoader(loader);
       exitStatus = (Integer)loader.loadClass(CucumberMain.class.getName()).getMethod("run", String[].class, ClassLoader.class).invoke(null, args, loader);
     }
@@ -56,7 +67,16 @@ public class CucumberMain {
     System.exit(exitStatus);
   }
 
-  public static int run(final String[] argv, final ClassLoader classLoader) throws IOException {
+  public static URL fileToEncodedURL(String path) {
+    try {
+      return ParseUtil.fileToEncodedURL(new File(path));
+    } catch (MalformedURLException e) {
+      return null;
+    }
+  }
+
+
+  public static int run(final String[] argv, final ClassLoader classLoader) {
     final Ref<Throwable> errorRef = new Ref<>();
     final Ref<Runtime> runtimeRef = new Ref<>();
 
@@ -64,7 +84,7 @@ public class CucumberMain {
       TestRunnerUtil.replaceIdeEventQueueSafely();
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
         try {
-          RuntimeOptions runtimeOptions = new RuntimeOptions(new ArrayList(Arrays.asList(argv)));
+          RuntimeOptions runtimeOptions = new RuntimeOptions(new ArrayList<>(Arrays.asList(argv)));
           MultiLoader resourceLoader = new MultiLoader(classLoader) {
             @Override
             public Iterable<Resource> resources(String path, String suffix) {
@@ -99,12 +119,10 @@ public class CucumberMain {
 
     final Throwable throwable = errorRef.get();
     if (throwable != null) {
-      throwable.printStackTrace();
+      LOG.error(throwable);
     }
-    System.err.println("Failed tests :");
     for (Throwable error : runtimeRef.get().getErrors()) {
-      error.printStackTrace();
-      System.err.println("=============================");
+      LOG.error(error);
     }
     return throwable != null ? 1 : 0;
   }
