@@ -321,7 +321,7 @@ public class HgVcs extends AbstractVcs {
     return myCloseBranchExecutor;
   }
 
-  @NotNull
+  @Nullable
   public HgRemoteStatusUpdater getRemoteStatusUpdater() {
     return myHgRemoteStatusUpdater;
   }
