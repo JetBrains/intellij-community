@@ -105,6 +105,11 @@ public final class PluginManagerCore {
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
   public static Set<PluginId> ourPluginsToEnable;
+  /**
+   * Bundled plugins that were updated.
+   * When we update bundled plugin it becomes not bundled, so it is more difficult for analytics to use that data.
+   */
+  private static Set<PluginId> ourShadowedBundledPlugins;
 
   private static Boolean isRunningFromSources;
   private static volatile CompletableFuture<DescriptorListLoadingContext> descriptorListFuture;
@@ -629,6 +634,7 @@ public final class PluginManagerCore {
     //noinspection NonPrivateFieldAccessedInSynchronizedContext
     ourLoadedPlugins = null;
     ourDisabledPlugins = null;
+    ourShadowedBundledPlugins = null;
   }
 
   private static void logPlugins(IdeaPluginDescriptorImpl @NotNull [] plugins) {
@@ -1884,6 +1890,7 @@ public final class PluginManagerCore {
       ourPluginsToDisable = initResult.effectiveDisabledIds;
       ourPluginsToEnable = initResult.disabledRequiredIds;
       ourLoadedPlugins = initResult.sortedEnabledPlugins;
+      ourShadowedBundledPlugins = result.getShadowedBundledIds();
 
       loadPluginsActivity.end();
       loadPluginsActivity.setDescription("plugin count: " + ourLoadedPlugins.size());
@@ -2037,5 +2044,9 @@ public final class PluginManagerCore {
   @Deprecated
   public static void removeDisablePluginListener(@NotNull Runnable listener) {
     PluginManager.getInstance().removeDisablePluginListener(listener);
+  }
+
+  public static synchronized boolean isUpdatedBundledPlugin(@NotNull PluginDescriptor plugin) {
+    return ourShadowedBundledPlugins != null && ourShadowedBundledPlugins.contains(plugin.getPluginId());
   }
 }

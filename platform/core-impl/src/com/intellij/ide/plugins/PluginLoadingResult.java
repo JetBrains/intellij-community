@@ -32,6 +32,8 @@ final class PluginLoadingResult {
 
   private final Map<PluginId, String> errors = ContainerUtil.newConcurrentMap();
 
+  private final Set<PluginId> shadowedBundledIds = new HashSet<>();
+
   final boolean checkModuleDependencies;
 
   // result, after calling finishLoading
@@ -147,6 +149,10 @@ final class PluginLoadingResult {
       return true;
     }
 
+    if (prevDescriptor.isBundled() || descriptor.isBundled()) {
+      shadowedBundledIds.add(pluginId);
+    }
+
     if (isCompatible(descriptor) &&
         (overrideUseIfCompatible || VersionComparatorUtil.compare(descriptor.getVersion(), prevDescriptor.getVersion()) > 0)) {
       context.getLogger().info(descriptor.getPluginPath() + " overrides " + prevDescriptor.getPluginPath());
@@ -185,5 +191,9 @@ final class PluginLoadingResult {
     list.add(existingDescriptor);
     list.add(descriptor);
     duplicateModuleMap.put(id, list);
+  }
+
+  Set<PluginId> getShadowedBundledIds() {
+    return shadowedBundledIds;
   }
 }

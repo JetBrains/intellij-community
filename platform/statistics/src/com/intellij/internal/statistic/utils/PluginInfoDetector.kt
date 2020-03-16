@@ -67,20 +67,25 @@ fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
   val id = plugin.pluginId.idString
   val version = plugin.version
   if (PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
-    return if (plugin.isBundled) PluginInfo(PluginType.JB_BUNDLED, id, version) else PluginInfo(PluginType.JB_NOT_BUNDLED, id, version)
+    val pluginType = when {
+      plugin.isBundled -> PluginType.JB_BUNDLED
+      PluginManagerCore.isUpdatedBundledPlugin(plugin) -> PluginType.JB_UPDATED_BUNDLED
+      else -> PluginType.JB_NOT_BUNDLED
+    }
+    return PluginInfo(pluginType, id, version)
   }
 
   // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
   // they are also considered bundled) would be reported
-  val listed = !plugin.isBundled && isSafeToReportFrom(plugin)
+  val listed = !plugin.isBundled && !PluginManagerCore.isUpdatedBundledPlugin(plugin) && isSafeToReportFrom(plugin)
   return if (listed) PluginInfo(PluginType.LISTED, id, version) else notListedPlugin
 }
 
 enum class PluginType {
-  PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN, FROM_SOURCES;
+  PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN, FROM_SOURCES, JB_UPDATED_BUNDLED;
 
   private fun isPlatformOrJBBundled(): Boolean {
-    return this == PLATFORM || this == JB_BUNDLED || this == FROM_SOURCES
+    return this == PLATFORM || this == JB_BUNDLED || this == FROM_SOURCES || this == JB_UPDATED_BUNDLED
   }
 
   fun isDevelopedByJetBrains(): Boolean {
