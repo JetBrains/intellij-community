@@ -26,6 +26,7 @@ import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -131,6 +132,7 @@ public class EditorPainter implements TextDrawingCallback {
     private final int myMarginColumns;
     private final List<Consumer<Graphics2D>> myTextDrawingTasks = new ArrayList<>();
     private final List<RangeHighlighter> myForegroundCustomHighlighters = new SmartList<>();
+    private final ScaleContext myScaleContext;
     private MarginPositions myMarginPositions;
 
     private Session(EditorView view, Graphics2D g) {
@@ -159,6 +161,7 @@ public class EditorPainter implements TextDrawingCallback {
       myDefaultBackgroundColor = myEditor.getColorsScheme().getDefaultBackground();
       myBackgroundColor = myEditor.getBackgroundColor();
       myMarginColumns = myEditor.getSettings().getRightMargin(myEditor.getProject());
+      myScaleContext = ScaleContext.create(myGraphics);
     }
 
     private void paint() {
@@ -714,8 +717,9 @@ public class EditorPainter implements TextDrawingCallback {
       return Math.max(1, Math.round(scale * unscaledSize));
     }
 
-    private static float roundToPixelCenter(double value, Graphics2D g) {
-      return (float)(PaintUtil.alignToInt(value, g, PaintUtil.RoundingMode.FLOOR) + PaintUtil.devPixel(g) / 2);
+    private float roundToPixelCenter(double value) {
+      double devPixel = 1 / PaintUtil.devValue(1, myScaleContext);
+      return (float)(PaintUtil.alignToInt(value, myScaleContext, PaintUtil.RoundingMode.FLOOR, null) + devPixel / 2);
     }
 
     private void paintWhitespace(float x, int y, int start, int end,
@@ -741,8 +745,8 @@ public class EditorPainter implements TextDrawingCallback {
 
           if (c == ' ') {
             // making center point lie at the center of device pixel
-            float dotX = roundToPixelCenter((startX + endX) / 2., myGraphics) - scale / 2;
-            float dotY = roundToPixelCenter(yToUse + 1 - myAscent + myLineHeight / 2., myGraphics) - scale / 2;
+            float dotX = roundToPixelCenter((startX + endX) / 2.) - scale / 2;
+            float dotY = roundToPixelCenter(yToUse + 1 - myAscent + myLineHeight / 2.) - scale / 2;
             myTextDrawingTasks.add(g -> {
               CachingPainter.paint(g, dotX, dotY, scale, scale,
                                    _g -> {
