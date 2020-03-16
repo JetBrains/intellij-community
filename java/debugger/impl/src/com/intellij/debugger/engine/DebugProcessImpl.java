@@ -1149,8 +1149,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               // ensure args are not collected
               for (Value arg : myArgs) {
                 if (arg instanceof ObjectReference) {
-                  getManagerThread()
-                    .schedule(PrioritizedTask.Priority.LOWEST, () -> DebuggerUtilsEx.enableCollection((ObjectReference)arg));
+                  if (Registry.is("debugger.postpone.collection")) {
+                    getManagerThread()
+                      .schedule(PrioritizedTask.Priority.LOWEST, () -> DebuggerUtilsEx.enableCollection((ObjectReference)arg));
+                  }
+                  else {
+                    DebuggerUtilsEx.enableCollection((ObjectReference)arg);
+                  }
                 }
               }
             }
