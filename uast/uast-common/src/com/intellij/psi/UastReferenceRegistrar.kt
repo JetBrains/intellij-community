@@ -42,18 +42,18 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, Proc
 }
 
 private fun getContributorChunks(registrar: PsiReferenceRegistrar): MutableMap<ChunkTag, UastReferenceContributorChunk> {
-  var chunks = registrar.getUserData(CONTRIBUTOR_CHUNKS_KEY)
-  if (chunks == null) {
-    chunks = ConcurrentHashMap()
-    registrar.putUserData(CONTRIBUTOR_CHUNKS_KEY, chunks)
-    // reset cache on extension point removal IDEA-235191
-    PsiReferenceContributor.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<KeyedLazyInstance<PsiReferenceContributor>> {
-      override fun extensionRemoved(extension: KeyedLazyInstance<PsiReferenceContributor>, pluginDescriptor: PluginDescriptor) {
-        chunks.clear()
-      }
-    }, ApplicationManager.getApplication())
-  }
-  return chunks
+  val existingChunks = registrar.getUserData(CONTRIBUTOR_CHUNKS_KEY)
+  if (existingChunks != null) return existingChunks
+
+  val newChunks: MutableMap<ChunkTag, UastReferenceContributorChunk> = ConcurrentHashMap()
+  registrar.putUserData(CONTRIBUTOR_CHUNKS_KEY, newChunks)
+  // reset cache on extension point removal IDEA-235191
+  PsiReferenceContributor.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<KeyedLazyInstance<PsiReferenceContributor>> {
+    override fun extensionRemoved(extension: KeyedLazyInstance<PsiReferenceContributor>, pluginDescriptor: PluginDescriptor) {
+      newChunks.clear()
+    }
+  }, ApplicationManager.getApplication())
+  return newChunks
 }
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
