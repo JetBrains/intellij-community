@@ -52,7 +52,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
       val checkForIgnore = { getDirectoryVcsIgnoredStatus(project, dirPath) is Ignored }
       return ProgressManager.getInstance()
         .runProcessWithProgressSynchronously<Boolean, IOException>(checkForIgnore,
-                                                                   "Checking VCS status of ${PathUtil.getFileName(dirPath)}...",
+                                                                   VcsBundle.message("checking.vcs.status.progress"),
                                                                    false, project)
     }
     catch (e: IOException) {
@@ -153,10 +153,8 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
     }
   }
 
-  private fun getCheckerForFile(project: Project, file: VirtualFile): VcsIgnoreChecker? {
-    val vcs = VcsUtil.getVcsFor(project, file) ?: return null
-    return VcsIgnoreChecker.EXTENSION_POINT_NAME.getExtensionList(project).find { checker -> checker.supportedVcs == vcs.keyInstanceMethod }
-  }
+  private fun getCheckerForFile(project: Project, file: VirtualFile): VcsIgnoreChecker? = getCheckerForFile(project,
+                                                                                                            VcsUtil.getFilePath(file))
 
   private fun getCheckerForFile(project: Project, filePath: FilePath): VcsIgnoreChecker? {
     val vcs = VcsUtil.getVcsFor(project, filePath) ?: return null
