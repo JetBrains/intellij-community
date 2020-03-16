@@ -692,6 +692,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myModule = actionEvent.getData(LangDataKeys.MODULE);
 
     init();
+    getAccessibleContext().setAccessibleName("Run Anything");
 
     initSearchActions();
 
