@@ -21,24 +21,17 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
+import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,39 +40,14 @@ import java.util.Map;
 public class ID<K, V> extends IndexId<K,V> {
   private static final Logger LOG = Logger.getInstance(ID.class);
   private static final IntObjectMap<ID<?, ?>> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
-  private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<>();
+
+  private static final SimpleStringPersistentEnumerator ourNameToIdRegistry = new SimpleStringPersistentEnumerator(getEnumFile());
 
   private static final Map<ID<?, ?>, PluginId> ourIdToPluginId = Collections.synchronizedMap(new THashMap<>());
   private static final Map<ID<?, ?>, Throwable> ourIdToRegistrationStackTrace = Collections.synchronizedMap(new THashMap<>());
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private final short myUniqueId;
-
-  static {
-    Path indices = getEnumFile();
-    try {
-      TObjectIntHashMap<String> nameToIdRegistry = new TObjectIntHashMap<>();
-      List<String> lines = Files.readAllLines(indices, Charset.defaultCharset());
-      for (int i = 0; i < lines.size(); i++) {
-        String name = lines.get(i);
-        nameToIdRegistry.put(name, i + 1);
-      }
-
-      synchronized (ourNameToIdRegistry) {
-        ourNameToIdRegistry.ensureCapacity(nameToIdRegistry.size());
-        nameToIdRegistry.forEachEntry((name, index) -> {
-          ourNameToIdRegistry.put(name, index);
-          return true;
-        });
-      }
-    }
-    catch (IOException e) {
-      synchronized (ourNameToIdRegistry) {
-        ourNameToIdRegistry.clear();
-        writeEnumFile();
-      }
-    }
-  }
 
   @NotNull
   private static Path getEnumFile() {
@@ -101,41 +69,11 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   private static short stringToId(@NotNull String name) {
-    synchronized (ourNameToIdRegistry) {
-      if (ourNameToIdRegistry.containsKey(name)) {
-        return (short)ourNameToIdRegistry.get(name);
-      }
-
-      int n = ourNameToIdRegistry.size() + 1;
-      assert n <= MAX_NUMBER_OF_INDICES : "Number of indices exceeded: "+n;
-
-      ourNameToIdRegistry.put(name, n);
-      writeEnumFile();
-      return (short)n;
-    }
+    return ourNameToIdRegistry.enumerate(name);
   }
 
   static void reinitializeDiskStorage() {
-    synchronized (ourNameToIdRegistry) {
-      writeEnumFile();
-    }
-  }
-
-  private static void writeEnumFile() {
-    try {
-      final String[] names = new String[ourNameToIdRegistry.size()];
-      ourNameToIdRegistry.forEachEntry((key, value) -> {
-        names[value - 1] = key;
-        return true;
-      });
-
-      Path file = getEnumFile();
-      Files.createDirectories(file.getParent());
-      Files.write(file, Arrays.asList(names), Charset.defaultCharset());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    ourNameToIdRegistry.forceDiskSync();
   }
 
   @NotNull
@@ -175,6 +113,11 @@ public class ID<K, V> extends IndexId<K,V> {
       }
     }
     return id;
+  }
+
+  @NotNull
+  public Throwable getRegistrationTrace() {
+    return ourIdToRegistrationStackTrace.get(this);
   }
 
   @Override
