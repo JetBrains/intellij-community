@@ -456,6 +456,7 @@
             <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="AllIcons.Actions.Copy"/>
             <action id="CopyPaths" class="com.intellij.ide.actions.CopyPathsAction"/>
             <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" />
+            <action id="CopyFileName" class="com.intellij.ide.actions.CopyFileNameProvider"/>
             <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider"/>
             <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider"/>
             <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider"/>
@@ -1195,6 +1196,7 @@
     <group id="CopyReferencePopupGroup">
       <group id="CopyFileReference">
         <reference ref="CopyAbsolutePath" />
+        <reference ref="CopyFileName" />
         <reference ref="CopyPathWithLineNumber" />
         <reference ref="CopyContentRootPath" />
         <reference ref="CopySourceRootPath" />
