@@ -108,7 +108,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget implements Statu
   @CalledInAny
   public void updateLater() {
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (myProject.isDisposed()) return;
+      if (Disposer.isDisposed(this)) return;
 
       HgChangesetStatus status = myVcs.getRemoteStatusUpdater().getStatus(myIsIncoming);
       boolean changesAvailable = status.getNumChanges() > 0;
