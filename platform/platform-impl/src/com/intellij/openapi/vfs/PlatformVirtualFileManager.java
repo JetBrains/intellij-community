@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
-public final class PlatformVirtualFileManager extends VirtualFileManagerImpl {
+public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   @NotNull private final ManagingFS myManagingFS;
 
   public PlatformVirtualFileManager() {
