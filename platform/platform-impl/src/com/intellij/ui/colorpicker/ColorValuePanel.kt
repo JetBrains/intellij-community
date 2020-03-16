@@ -75,7 +75,7 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
   private val alphaHexDocument = DigitColorDocument(alphaField, COLOR_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   private val alphaPercentageDocument = DigitColorDocument(alphaField, PERCENT_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   @get:TestOnly
-  val hexField = ColorValueField(hex = true)
+  val hexField = ColorValueField(hex = true, showAlpha = showAlpha)
 
   private val alphaLabel = ColorLabel()
   private val colorLabel1 = ColorLabel()
