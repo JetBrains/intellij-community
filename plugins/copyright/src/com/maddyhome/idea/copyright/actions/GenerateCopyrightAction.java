@@ -60,8 +60,7 @@ public class GenerateCopyrightAction extends AnAction
         PsiFile file = getFile(context, project);
         assert file != null;
         if (CopyrightManager.getInstance(project).getCopyrightOptions(file) == null) {
-          if (Messages.showOkCancelDialog(project, CopyrightBundle
-                                            .message("dialog.message.no.copyright.configured"),
+          if (Messages.showOkCancelDialog(project, CopyrightBundle.message("dialog.message.no.copyright.configured"),
                                           CopyrightBundle.message("dialog.title.no.copyright.available"), Messages.getQuestionIcon()) == Messages.OK) {
             ShowSettingsUtil.getInstance().showSettingsDialog(project, new CopyrightProjectConfigurable(project).getDisplayName());
           } else {
