@@ -73,7 +73,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   }
 
   private boolean canExtractSideEffect(PsiExpression subExpression) {
-    if (ControlFlowUtils.canExtractStatement(subExpression)) return true;
+    if (CodeBlockSurrounder.canSurround(subExpression)) return true;
     if (!mySubExpressionValue) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
       if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) return true;
@@ -176,7 +176,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     simplifyExpression(expression);
   }
 
-  public PsiExpression ensureCodeBlock(@NotNull Project project, PsiExpression subExpression) {
+  private PsiExpression ensureCodeBlock(@NotNull Project project, PsiExpression subExpression) {
     if (!mySubExpressionValue) {
       // Prevent extracting while condition to internal 'if'
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
@@ -200,7 +200,8 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         }
       }
     }
-    return RefactoringUtil.ensureCodeBlock(subExpression);
+    CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(subExpression);
+    return surrounder == null ? null : surrounder.surround().getExpression();
   }
 
   @Nullable

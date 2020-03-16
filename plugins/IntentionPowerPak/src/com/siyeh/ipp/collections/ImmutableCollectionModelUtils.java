@@ -13,7 +13,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -39,7 +38,7 @@ class ImmutableCollectionModelUtils {
   static ImmutableCollectionModel createModel(@NotNull PsiMethodCallExpression call) {
     CollectionType type = CollectionType.create(call);
     if (type == null) return null;
-    if (!ControlFlowUtils.canExtractStatement(call)) return null;
+    if (!CodeBlockSurrounder.canSurround(call)) return null;
     String assignedVariable = getAssignedVariable(call);
     PsiExpression[] args = call.getArgumentList().getExpressions();
     PsiMethod method = call.resolveMethod();
@@ -170,10 +169,11 @@ class ImmutableCollectionModelUtils {
     }
 
     private void replaceWithMutable(@NotNull ImmutableCollectionModel model) {
-      PsiMethodCallExpression call = RefactoringUtil.ensureCodeBlock(model.myCall);
-      if (call == null) return;
-      PsiStatement statement = ObjectUtils.tryCast(RefactoringUtil.getParentStatement(call, false), PsiStatement.class);
-      if (statement == null) return;
+      CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(model.myCall);
+      if (surrounder == null) return;
+      CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+      PsiMethodCallExpression call = (PsiMethodCallExpression)result.getExpression();
+      PsiStatement statement = result.getAnchor();
 
       model.myCall = call;
       String assignedVariable = model.myAssignedVariable;
