@@ -67,11 +67,13 @@ public class SplitConditionUtil {
     return factory.createExpressionFromText(rOperands, expression.getParent());
   }
 
-  public static PsiExpression getLOperands(PsiPolyadicExpression expression, PsiJavaToken separator) {
+  public static PsiExpression getLOperands(@NotNull PsiPolyadicExpression expression, @NotNull PsiJavaToken separator) {
     return getLOperands(expression, separator, new CommentTracker());
   }
 
-  public static PsiExpression getLOperands(PsiPolyadicExpression expression, PsiJavaToken separator, CommentTracker ct) {
+  public static PsiExpression getLOperands(@NotNull PsiPolyadicExpression expression,
+                                           @NotNull PsiJavaToken separator,
+                                           @NotNull CommentTracker ct) {
     PsiElement prev = separator;
     if (prev.getPrevSibling() instanceof PsiWhiteSpace) prev = prev.getPrevSibling();
     ct.markRangeUnchanged(expression.getFirstChild(), prev.getPrevSibling());
