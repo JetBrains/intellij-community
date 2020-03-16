@@ -301,7 +301,10 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   private void startTracking(long start) {
-    myCurrentEDTEventChecker = new FreezeCheckerTask(start);
+    int delay = getUnresponsiveInterval();
+    if (delay > 0) {
+      myCurrentEDTEventChecker = new FreezeCheckerTask(start, delay);
+    }
   }
 
   private void finishTracking() {
@@ -431,8 +434,8 @@ public final class PerformanceWatcher implements Disposable {
     private boolean myFreezeDuringStartup;
     private volatile SamplingTask myDumpTask;
 
-    FreezeCheckerTask(long start) {
-      myFuture = !myExecutor.isShutdown() ? myExecutor.schedule(this::edtFrozen, getUnresponsiveInterval(), TimeUnit.MILLISECONDS) : null;
+    FreezeCheckerTask(long start, int delay) {
+      myFuture = !myExecutor.isShutdown() ? myExecutor.schedule(this::edtFrozen, delay, TimeUnit.MILLISECONDS) : null;
       myFreezeStart = start;
     }
 
