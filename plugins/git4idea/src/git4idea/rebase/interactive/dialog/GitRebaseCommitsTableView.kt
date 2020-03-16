@@ -164,10 +164,13 @@ private class SubjectRenderer : ColoredTableCellRenderer() {
   companion object {
     private const val GRAPH_WIDTH = 20
     private const val CONNECTION_CENTER_X = GRAPH_WIDTH / 4
-    private const val CONNECTION_CENTER_Y = DEFAULT_CELL_HEIGHT / 2
   }
 
-  var graphType: GraphType = GraphType.NoGraph
+  private var graphType: GraphType = GraphType.NoGraph
+  private var rowHeight: Int = DEFAULT_CELL_HEIGHT
+
+  private val connectionCenterY: Int
+    get() = rowHeight / 2
 
   override fun paint(g: Graphics?) {
     super.paint(g)
@@ -194,11 +197,11 @@ private class SubjectRenderer : ColoredTableCellRenderer() {
   private fun Graphics2D.drawCenterLine() {
     val gap = GRAPH_WIDTH / 5
     val xRight = GRAPH_WIDTH - gap
-    drawLine(CONNECTION_CENTER_X, CONNECTION_CENTER_Y, xRight, CONNECTION_CENTER_Y)
+    drawLine(CONNECTION_CENTER_X, connectionCenterY, xRight, connectionCenterY)
   }
 
   private fun Graphics2D.drawDownLine() {
-    drawLine(CONNECTION_CENTER_X, CONNECTION_CENTER_Y, CONNECTION_CENTER_X, DEFAULT_CELL_HEIGHT)
+    drawLine(CONNECTION_CENTER_X, connectionCenterY, CONNECTION_CENTER_X, rowHeight)
   }
 
   private fun Graphics2D.drawUpLine(withArrow: Boolean) {
@@ -206,7 +209,7 @@ private class SubjectRenderer : ColoredTableCellRenderer() {
     val triangleBottomY = triangleSide / 2
     val triangleBottomXDiff = triangleSide / 2
     val upLineY = if (withArrow) triangleBottomY else 0
-    drawLine(CONNECTION_CENTER_X, CONNECTION_CENTER_Y, CONNECTION_CENTER_X, upLineY)
+    drawLine(CONNECTION_CENTER_X, connectionCenterY, CONNECTION_CENTER_X, upLineY)
 
     if (withArrow) {
       val xPoints = intArrayOf(CONNECTION_CENTER_X, CONNECTION_CENTER_X - triangleBottomXDiff, CONNECTION_CENTER_X + triangleBottomXDiff)
@@ -229,6 +232,7 @@ private class SubjectRenderer : ColoredTableCellRenderer() {
       isOpaque = false
       val commitsTable = table as GitRebaseCommitsTableView
       graphType = getRowGraphType(commitsTable, row)
+      rowHeight = table.getRowHeight(row)
       val entryWithEditedMessage = commitsTable.model.getEntry(row)
       var attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES
       when (entryWithEditedMessage.entry.action) {
