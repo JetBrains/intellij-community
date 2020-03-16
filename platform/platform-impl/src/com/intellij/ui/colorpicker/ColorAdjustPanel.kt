@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.JBUI
 import sun.security.util.SecurityConstants
+import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -115,12 +116,16 @@ class ColorAdjustPanel(private val model: ColorPickerModel,
     c.gridy = 0
     c.weightx = 0.76
     val sliderPanel = JPanel()
-    sliderPanel.layout = BoxLayout(sliderPanel, BoxLayout.Y_AXIS)
-    sliderPanel.border = JBUI.Borders.empty()
     sliderPanel.background = PICKER_BACKGROUND_COLOR
-    sliderPanel.add(hueSlider)
     if (showAlpha) {
+      sliderPanel.border = JBUI.Borders.empty()
+      sliderPanel.layout = BoxLayout(sliderPanel, BoxLayout.Y_AXIS)
+      sliderPanel.add(hueSlider)
       sliderPanel.add(alphaSlider)
+    } else {
+      sliderPanel.border = JBUI.Borders.empty(9, 0)
+      sliderPanel.layout = BorderLayout()
+      sliderPanel.add(hueSlider)
     }
     add(sliderPanel, c)
 
