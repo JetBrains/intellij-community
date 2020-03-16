@@ -152,6 +152,7 @@ def get_smart_step_into_candidates(code):
     varnames = code.co_varnames
     names = code.co_names
     constants = code.co_consts
+    freevars = code.co_freevars
     lineno = None
     stk = []  # only the instructions related to calls are pushed in the stack
     result = []
@@ -170,7 +171,9 @@ def get_smart_step_into_candidates(code):
                     result.append(Instruction(opname, op, arg, _UNARY_OP_MAP[opname], lineno, offset))
             if opname == 'COMPARE_OP':
                 stk.pop()
-                result.append(Instruction(opname, op, arg, _COMP_OP_MAP[dis.cmp_op[arg]], lineno, offset))
+                cmp_op = dis.cmp_op[arg]
+                if cmp_op not in ('exception match', 'BAD'):
+                    result.append(Instruction(opname, op, arg, _COMP_OP_MAP[cmp_op], lineno, offset))
             if _is_load_opname(opname):
                 if opname == 'LOAD_CONST':
                     argval = constants[arg]
@@ -184,6 +187,8 @@ def get_smart_step_into_candidates(code):
                 elif IS_PY3K and opname == 'LOAD_METHOD':
                     stk.pop()
                     argval = names[arg]
+                elif opname == 'LOAD_DEREF':
+                    argval = freevars[arg]
                 stk.append(Instruction(opname, op, arg, argval, lineno, offset))
             elif _is_make_opname(opname):
                 tos = stk.pop()  # qualified name of the function or function code in Python 2
@@ -210,6 +215,12 @@ def get_smart_step_into_candidates(code):
                 elif not IS_PY3K and opname == 'CALL_FUNCTION':
                     argc = arg & 0xff  # positional args
                     argc += ((arg >> 8) * 2)  # keyword args
+                elif opname == 'CALL_FUNCTION_EX':
+                    has_keyword_args = arg & 0x01
+                    if has_keyword_args:
+                        stk.pop()
+                    stk.pop()  # positional args
+                    argc = 0
                 while argc > 0:
                     stk.pop()  # popping args from the stack
                     argc -= 1

@@ -1357,7 +1357,7 @@ class InternalGetSmartStepIntoVariants(InternalThreadCommand):
             cmd = NetCommand(CMD_GET_SMART_STEP_INTO_VARIANTS, self.sequence, xml)
             dbg.writer.add_command(cmd)
         except:
-            traceback.print_exc()
+            pydevd_log(1, traceback.format_exc())
             cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error getting smart step into veriants for frame: %s from thread: %s"
                                                      % (self.frame_id, self.thread_id))
             self._reset_smart_step_context()
