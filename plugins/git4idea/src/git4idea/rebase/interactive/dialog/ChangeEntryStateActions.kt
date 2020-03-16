@@ -57,7 +57,6 @@ internal open class ChangeEntryStateSimpleAction(
   }
 
   override fun updateButton(e: AnActionEvent) {
-    super.updateButton(e)
     actionIsEnabled(e, true)
     if (table.editingRow != -1 || table.selectedRowCount == 0) {
       actionIsEnabled(e, false)
@@ -69,7 +68,7 @@ internal open class ChangeEntryStateSimpleAction(
   }
 
   protected open fun actionIsEnabled(e: AnActionEvent, isEnabled: Boolean) {
-    e.presentation.isEnabled = isEnabled
+    e.presentation.isEnabled = e.presentation.isEnabled && isEnabled
   }
 }
 
@@ -96,7 +95,7 @@ internal open class ChangeEntryStateButtonAction(
 
   override fun actionIsEnabled(e: AnActionEvent, isEnabled: Boolean) {
     super.actionIsEnabled(e, isEnabled)
-    button.isEnabled = isEnabled
+    button.isEnabled = button.isEnabled && isEnabled
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String) = buttonPanel
