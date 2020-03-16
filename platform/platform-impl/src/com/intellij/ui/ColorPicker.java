@@ -399,6 +399,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location) {
+    showColorPickerPopup(project, currentColor, listener, location, false);
+  }
+
+  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
     Ref<LightCalloutPopup> ref = Ref.create();
 
     ColorListener colorListener = new ColorListener() {
@@ -410,7 +414,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       }
     };
 
-    LightCalloutPopup popup = new ColorPickerBuilder()
+    LightCalloutPopup popup = new ColorPickerBuilder(showAlpha)
       .setOriginalColor(currentColor)
       .addSaturationBrightnessComponent()
       .addColorAdjustPanel(new MaterialGraphicalColorPipetteProvider())
