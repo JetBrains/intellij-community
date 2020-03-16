@@ -266,7 +266,10 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     final PsiField field1 = getReferencedFinalField(expr1);
     final PsiField field2 = getReferencedFinalField(expr2);
     if (field1 != null && field1 == field2) {
-      return true;
+      PsiExpression q1 = ((PsiReferenceExpression)expr1).getQualifierExpression();
+      PsiExpression q2 = ((PsiReferenceExpression)expr2).getQualifierExpression();
+      return q1 == null && q2 == null ||
+             q1 != null && q2 != null && PsiEquivalenceUtil.areElementsEquivalent(q1, q2);
     }
     Object value1 = JavaPsiFacade.getInstance(expr1.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr1);
     Object value2 = JavaPsiFacade.getInstance(expr2.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr2);
