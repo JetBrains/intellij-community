@@ -799,7 +799,7 @@ class DistributionJARsBuilder {
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory,
                             ProjectStructureMapping parentMapping) {
     addSearchableOptions(layoutBuilder)
-    (buildContext.options.runBuildStepsInParallel ? pluginsToInclude.parallelStream() : pluginsToInclude.stream()).each { plugin ->
+    pluginsToInclude.each { plugin ->
       checkOutputOfPluginModules(plugin.mainModule, plugin.getActualModules(enabledPluginModules).values(), plugin.moduleExcludes)
       List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {
         File resourceFile = it.first.generateResources(buildContext)
