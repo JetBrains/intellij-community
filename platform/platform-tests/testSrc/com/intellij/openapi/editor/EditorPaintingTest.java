@@ -26,8 +26,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
@@ -220,6 +222,28 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     addBlockInlay(0);
     addLineHighlighter(0, 1, HighlighterLayer.SELECTION + 1, null, Color.green);
     checkResult();
+  }
+
+  public void testEmptyEditorWithGutterIcon() throws Exception {
+    initText("");
+    Icon icon = new ColorIcon(TEST_LINE_HEIGHT, Color.GREEN);
+    addRangeHighlighter(0, 0, 0, null).setGutterIconRenderer(new GutterIconRenderer() {
+      @Override
+      public boolean equals(Object obj) {
+        return false;
+      }
+
+      @Override
+      public int hashCode() {
+        return 0;
+      }
+
+      @Override
+      public @NotNull Icon getIcon() {
+        return icon;
+      }
+    });
+    checkResultWithGutter();
   }
 
   private void runIndentsPass() {
