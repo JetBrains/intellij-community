@@ -20,7 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.ui.UIUtil
 import git4idea.GitUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
@@ -532,6 +534,8 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
 internal fun assertGitignoreValid(ignoreFile: File, gitIgnoreExpectedContent: String) {
   val gitIgnoreExpectedContentList = gitIgnoreExpectedContent.trimIndent().lines()
+
+  UIUtil.invokeAndWaitIfNeeded(Runnable { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() })
 
   UsefulTestCase.assertExists(ignoreFile)
   val generatedGitIgnoreContent = ignoreFile.readText()
