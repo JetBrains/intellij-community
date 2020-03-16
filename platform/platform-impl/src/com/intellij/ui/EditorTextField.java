@@ -65,7 +65,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private Document myDocument;
   private final Project myProject;
   private FileType myFileType;
-  private EditorEx myEditor;
+  protected EditorEx myEditor;
   private Component myNextFocusable;
   private boolean myWholeTextSelected;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
