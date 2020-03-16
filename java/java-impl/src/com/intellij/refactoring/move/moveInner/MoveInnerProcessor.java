@@ -411,9 +411,14 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     final String visibilityModifier = VisibilityUtil.getVisibilityModifier(element.getModifierList());
     if (PsiModifier.PRIVATE.equals(visibilityModifier)) return true;
     if (PsiModifier.PUBLIC.equals(visibilityModifier)) return false;
-    if (PsiModifier.PROTECTED.equals(visibilityModifier) &&
-        InheritanceUtil.isInheritorOrSelf(myInnerClass, myOuterClass, true)) {
-      return false;
+    if (PsiModifier.PROTECTED.equals(visibilityModifier)) {
+      if (InheritanceUtil.isInheritorOrSelf(myInnerClass, myOuterClass, true)) {
+        return false;
+      }
+      PsiClass memberClass = element.getContainingClass();
+      if (memberClass != null && InheritanceUtil.hasEnclosingInstanceInScope(memberClass, myInnerClass, true, false)) {
+        return false;
+      }
     }
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     if (myTargetContainer instanceof PsiDirectory) {
