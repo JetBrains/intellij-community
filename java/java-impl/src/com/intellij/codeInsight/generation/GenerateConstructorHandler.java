@@ -145,11 +145,9 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     for (ClassMember member : members) {
       if (member instanceof PsiFieldMember) {
         final PsiField psiField = ((PsiFieldMember)member).getElement();
-        if (psiField.hasModifierProperty(PsiModifier.FINAL)) {
-          preselection.add(member);
+        if (!psiField.hasModifierProperty(PsiModifier.FINAL)) {
           continue fieldLoop;
         }
-
         for (ImplicitUsageProvider provider : implicitUsageProviders) {
           if (provider.isImplicitWrite(psiField)) continue fieldLoop;
         }
