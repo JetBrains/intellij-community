@@ -184,6 +184,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   }
 
   private void handleFunctionalExpression(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
+    if (!FunctionalExpressionFlowUtil.isNestedFlowProcessingAllowed()) {
+      return;
+    }
     GrFunctionalExpression block = Objects.requireNonNull((GrFunctionalExpression)instruction.getElement());
     GrControlFlowOwner blockFlowOwner = FunctionalExpressionFlowUtil.getControlFlowOwner(block);
     if (blockFlowOwner == null) {

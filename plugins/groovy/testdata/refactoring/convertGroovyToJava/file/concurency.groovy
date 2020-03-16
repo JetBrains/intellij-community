@@ -1,6 +1,6 @@
 import java.util.concurrent.atomic.AtomicInteger
 
-def counter = new AtomicInteger()
+final def counter = new AtomicInteger()
 
 synchronized out(message) {
     println(message)

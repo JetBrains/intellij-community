@@ -3,6 +3,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
@@ -120,3 +121,6 @@ private fun InvocationKind.weakenIfUsesSafeNavigation(call: GrMethodCall): Invoc
   else -> this
 }
 
+
+private const val GROOVY_PROCESS_NESTED_DFA = "groovy.process.nested.dfa"
+internal fun isNestedFlowProcessingAllowed() : Boolean = Registry.`is`(GROOVY_PROCESS_NESTED_DFA, false)

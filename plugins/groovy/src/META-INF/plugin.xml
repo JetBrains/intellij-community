@@ -331,6 +331,8 @@
                  description="Allows to collect method usages for more precise type inference"/>
     <registryKey key="groovy.use.explicitly.typed.closure.in.inference" defaultValue="true"
                  description="Enable type inference with using info from explicitly typed closures"/>
+    <registryKey key="groovy.process.nested.dfa" defaultValue="true"
+                 description="Allows to run nested DFA inside the outer one"/>
 
     <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer$MyPostStartUpActivity"/>
 
@@ -338,6 +340,8 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
 
     <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension"/>
+
+    <fileTypeDetector implementation="org.jetbrains.plugins.groovy.GroovyHashBangFileTypeDetector"/>
 
     <declarationRangeHandler key="org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod"
                              implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GrMethodDeclarationRangeHandler"/>

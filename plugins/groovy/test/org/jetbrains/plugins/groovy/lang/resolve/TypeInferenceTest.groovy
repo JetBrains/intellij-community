@@ -8,10 +8,12 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
@@ -1278,8 +1280,14 @@ class C {
 ''', JAVA_LANG_INTEGER
   }
 
+  void doNestedDfaTest(String text, @Nullable String type) {
+    if (FunctionalExpressionFlowUtil.nestedFlowProcessingAllowed) {
+      doTest(text, type)
+    }
+  }
+
   void 'test no type inference for variables from outer context'() {
-    doTest '''
+    doNestedDfaTest '''
 def foo(p) {
   p = 1
   def closure = {
@@ -1290,7 +1298,7 @@ def foo(p) {
   }
 
   void 'test do type inference for outer variables with explicit type'() {
-    doTest '''
+    doNestedDfaTest '''
 def foo() {
   Integer x = 1
   def closure = {
@@ -1301,7 +1309,7 @@ def foo() {
   }
 
   void 'test do type inference for outer final variables'() {
-    doTest '''
+    doNestedDfaTest '''
 def foo() {
   final def x = "string"
   def closure = { <caret>x }
@@ -1310,7 +1318,7 @@ def foo() {
   }
 
   void 'test use outer context for closures passed to DGM'() {
-    doTest '''
+    doNestedDfaTest '''
 def foo() {
   def x = 1
   'q'.with {
@@ -1320,7 +1328,7 @@ def foo() {
   }
 
   void 'test forbid use of outer context for nested closures'() {
-    doTest '''
+    doNestedDfaTest '''
 def foo() {
   def x = 1
   'q'.with ({
@@ -1330,7 +1338,7 @@ def foo() {
   }
 
   void 'test allow use of outer context for nested DGM closures'() {
-    doTest '''
+    doNestedDfaTest '''
 def foo(x) {
   x = 1
   def cl1 = 1.with { 2.with { <caret>x } }
@@ -1339,7 +1347,7 @@ def foo(x) {
   }
 
   void 'test detect changed field'() {
-    doTest '''
+    doNestedDfaTest '''
 class A {
   def field = 1
   def foo() {
@@ -1351,7 +1359,7 @@ class A {
   }
 
   void 'test field changed inside closure'() {
-    doTest '''
+    doNestedDfaTest '''
 class A {
 
     def counter
@@ -1365,7 +1373,7 @@ class A {
   }
 
   void 'test field changed inside closure 2'() {
-    doTest '''
+    doNestedDfaTest '''
 class E {}
 class E1 extends E{}
 class E2 extends E{}
@@ -1383,7 +1391,7 @@ class A {
   }
 
   void 'test parenthesized expression'() {
-    doTest '''
+    doNestedDfaTest '''
 def foo(def p) {
     def x = 1
     1.with (({ <caret>x }))
@@ -1391,7 +1399,7 @@ def foo(def p) {
   }
 
   void 'test assignment inside closure'() {
-    doTest '''
+    doNestedDfaTest '''
   def foo() {
     def x = 'q'
     1.with {
@@ -1403,7 +1411,7 @@ def foo(def p) {
   }
 
   void 'test assignment inside closure 2'() {
-    doTest '''
+    doNestedDfaTest '''
 class A{}
 class B extends A{}
 class C extends A{}
@@ -1418,7 +1426,7 @@ def foo() {
   }
 
   void 'test no changes for null type inside closure'() {
-    doTest '''
+    doNestedDfaTest '''
 def foo() {
   def x
   [1].each {
@@ -1430,7 +1438,7 @@ def foo() {
   }
 
   void 'test other statements inside closure'() {
-    doTest '''
+    doNestedDfaTest '''
 def method() {
     def list = []
 
@@ -1442,7 +1450,7 @@ def method() {
   }
 
   void 'test use dfa results from conditional branch'() {
-    doTest '''
+    doNestedDfaTest '''
 def foo(def bar) {
     if (bar instanceof String) {
         10.with {
@@ -1453,7 +1461,7 @@ def foo(def bar) {
   }
 
   void 'test use method calls inside closure block'() {
-    doTest '''
+    doNestedDfaTest '''
 def test(def x, y) {
     y = new A()
     1.with {
@@ -1470,7 +1478,7 @@ class A {
 
 
   void 'test use method calls inside closure block 2'() {
-    doTest '''
+    doNestedDfaTest '''
 def test(def x, y) {
     y = new A()
     1.with {
@@ -1488,7 +1496,7 @@ class A {
   }
 
   void 'test use method calls inside closure block 3'() {
-    doTest '''
+    doNestedDfaTest '''
 static def foo(x) {
     1.with {
         cast(x)
@@ -1504,7 +1512,7 @@ static def cast(Integer x) {}
 
 
   void 'test deep nested interconnected variables'() {
-    doTest '''
+    doNestedDfaTest '''
 
 static def foo(x, y, z) {
     1.with {
@@ -1532,7 +1540,7 @@ class B {
   }
 
   void 'test instanceof influence on nested closures'() {
-    doTest '''
+    doNestedDfaTest '''
 def test(def x) {
     1.with {
         if (x instanceof Integer) {
@@ -1545,7 +1553,7 @@ def test(def x) {
   }
 
   void 'test assignment in nested closure'() {
-    doTest '''
+    doNestedDfaTest '''
 def foo() {
     def y
     1.with {
@@ -1559,7 +1567,7 @@ def foo() {
   }
 
   void 'test safe navigation'() {
-    doTest '''
+    doNestedDfaTest '''
 class A {}
 class B extends A{}
 class C extends A{}

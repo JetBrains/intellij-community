@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.computeInvocationKind
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.isNestedFlowProcessingAllowed
 
 
 class InitialTypeProvider(val start: GrControlFlowOwner, val initialState: InitialDFAState) {
@@ -35,11 +36,13 @@ class InitialTypeProvider(val start: GrControlFlowOwner, val initialState: Initi
   }
 
   fun initialType(descriptor: VariableDescriptor): PsiType? {
-    val typeFromInitialContext = initialState.descriptorTypes[descriptor]?.resultType
-    if (typeFromInitialContext != null) return typeFromInitialContext
-    if (invocationKind != InvocationKind.UNKNOWN) {
-      val type = getTypeFromParentDFA(descriptor)
-      if (type != null) return type
+    if (isNestedFlowProcessingAllowed()) {
+      val typeFromInitialContext = initialState.descriptorTypes[descriptor]?.resultType
+      if (typeFromInitialContext != null) return typeFromInitialContext
+      if (invocationKind != InvocationKind.UNKNOWN) {
+        val type = getTypeFromParentDFA(descriptor)
+        if (type != null) return type
+      }
     }
     val resolvedDescriptor = descriptor as? ResolvedVariableDescriptor ?: return null
     val field = resolvedDescriptor.variable as? GrField ?: return null

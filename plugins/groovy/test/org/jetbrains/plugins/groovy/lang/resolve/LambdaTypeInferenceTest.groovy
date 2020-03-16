@@ -3,7 +3,9 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil
 
 class LambdaTypeInferenceTest extends TypeInferenceTestBase {
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
@@ -350,8 +352,14 @@ class W {
 ''', 'W'
   }
 
+  void doNestedDfaTest(String text, @Nullable String type) {
+    if (FunctionalExpressionFlowUtil.nestedFlowProcessingAllowed) {
+      doTest(text, type)
+    }
+  }
+
   void 'test use parent DFA'() {
-    doTest '''
+    doNestedDfaTest '''
   def foo(a) {
     a = 1
     1.with(x -> {
@@ -362,7 +370,7 @@ class W {
   }
 
   void 'test detect changes from outside'() {
-    doTest '''
+    doNestedDfaTest '''
 class X {
   def a
   
@@ -376,7 +384,7 @@ class X {
   }
 
   void 'test detect changes from inside'() {
-    doTest '''
+    doNestedDfaTest '''
 class X {
   def a
   
@@ -390,7 +398,7 @@ class X {
   }
 
   void 'test do not use outer types inside unknown lambdas'() {
-    doTest '''
+    doNestedDfaTest '''
 def foo() {
   def a = 1
   lambda = x -> {
