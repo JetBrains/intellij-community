@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.libraries.libraries
 
+import com.google.common.io.Files
+import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -103,6 +105,7 @@ class LegacyBridgeRootsWatcher(
       }
 
       private fun updateModuleName(oldUrl: String, newUrl: String) {
+        if (!oldUrl.isImlFile() || !newUrl.isImlFile()) return
         val oldModuleName = getModuleNameByFilePath(oldUrl)
         val newModuleName = getModuleNameByFilePath(newUrl)
         if (oldModuleName == newModuleName) return
@@ -113,6 +116,8 @@ class LegacyBridgeRootsWatcher(
           diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) { this.name = newModuleName }
         }
       }
+
+      private fun String.isImlFile() = Files.getFileExtension(this) == ModuleFileType.DEFAULT_EXTENSION
 
       /** Update stored urls after folder movement */
       private fun getUrls(event: VFileEvent): Pair<String, String>? {
