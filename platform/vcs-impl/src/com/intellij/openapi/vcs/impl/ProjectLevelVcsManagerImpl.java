@@ -475,6 +475,10 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myMappings.scheduleMappedRootsUpdate();
   }
 
+  public void scheduleMappingsUpdate() {
+    myMappings.scheduleMappingsUpdate();
+  }
+
   @Override
   public void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator) {
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator);

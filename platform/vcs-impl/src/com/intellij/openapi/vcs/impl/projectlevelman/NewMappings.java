@@ -134,6 +134,17 @@ public class NewMappings implements Disposable {
     myRootUpdateQueue.flush();
   }
 
+  public void scheduleMappingsUpdate() {
+    MyVcsActivator activator;
+    synchronized (myUpdateLock) {
+      if (!myActivated) return;
+      activator = updateActiveVcses();
+    }
+    activator.activate();
+
+    scheduleMappedRootsUpdate();
+  }
+
   public void scheduleMappedRootsUpdate() {
     myRootUpdateQueue.queue(new DisposableUpdate(this, "update") {
       @Override

@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRootChecker;
+import com.intellij.openapi.vcs.impl.VcsEP;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -67,6 +68,7 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
 
     VcsRootChecker.EXTENSION_POINT_NAME.addExtensionPointListener(() -> scheduleScan(), project);
+    VcsEP.EP_NAME.addExtensionPointListener(() -> scheduleScan(), project);
   }
 
   @Override
