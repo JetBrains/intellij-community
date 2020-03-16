@@ -16,7 +16,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -1324,6 +1324,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               UIUtil.drawImage(g2d, myCacheLevel2, -gutterWidth, 0, null);
               TIntIntHashMap rightEdges = new TIntIntHashMap();
               int h = myEditor.getLineHeight() - 2;
+
+              EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
+              Font font = UIUtil.getFontWithFallback(colorsScheme.getEditorFontName(), Font.PLAIN, colorsScheme.getEditorFontSize());
+              g2d.setFont(font.deriveFont(font.getSize() *.8F));
+
               for (RangeHighlighterEx ex : myHighlighters) {
                 if (!ex.isValid()) continue;
                 int hEndOffset = ex.getAffectedAreaEndOffset();
@@ -1342,8 +1347,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 placeToShow.x += R * 3 / 2;
                 placeToShow.y -= cacheStartY - 1;
 
-                Font font = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
-                g2d.setFont(font.deriveFont(font.getSize() *.8F));
                 int w = g2d.getFontMetrics().stringWidth(s);
 
                 int rightEdge = rightEdges.get(logicalPosition.line);
