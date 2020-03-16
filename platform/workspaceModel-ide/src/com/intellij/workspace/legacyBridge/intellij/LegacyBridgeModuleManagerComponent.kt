@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
@@ -561,6 +562,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     module.init {
       try {
         val moduleStore = module.stateStore as ModuleStoreBase
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(modulePath)
         moduleStore.setPath(modulePath, null, isNew)
         moduleStore.storageManager.addMacro("MODULE_FILE", modulePath)
       }
