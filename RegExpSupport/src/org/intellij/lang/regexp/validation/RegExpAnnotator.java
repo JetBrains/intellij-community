@@ -530,29 +530,37 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
           return;
         }
       }
-      myLength = length;
+      myLength = length + branchLength;
     }
 
     @Override
-    public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
-      super.visitRegExpQuantifier(quantifier);
+    public void visitRegExpClosure(RegExpClosure closure) {
       if (mySupport == RegExpLanguageHost.Lookbehind.FULL) {
         return;
       }
+      final RegExpQuantifier quantifier = closure.getQuantifier();
       if (quantifier.isCounted()) {
-        final RegExpNumber minElement = quantifier.getMin();
-        final RegExpNumber maxElement = quantifier.getMax();
-        if (minElement != null && maxElement != null) {
-          try {
-            final long min = Long.parseLong(minElement.getText());
-            final long max = Long.parseLong(maxElement.getText());
-            if (min == max) {
-              myLength += min;
+        if (mySupport == RegExpLanguageHost.Lookbehind.FIXED_LENGTH_ALTERNATION ||
+          mySupport == RegExpLanguageHost.Lookbehind.VARIABLE_LENGTH_ALTERNATION) {
+          final RegExpNumber minElement = quantifier.getMin();
+          final RegExpNumber maxElement = quantifier.getMax();
+          if (minElement != null && maxElement != null) {
+            final Number min = minElement.getValue();
+            if (min == null) {
+              myStop = true;
               return;
             }
-          } catch (NumberFormatException ignore) {}
-        }
-        if (mySupport != RegExpLanguageHost.Lookbehind.FINITE_REPETITION) {
+            final Number max = maxElement.getValue();
+            if (min.equals(max)) {
+              final int length = myLength;
+              myLength = 0;
+              final RegExpAtom atom = closure.getAtom();
+              atom.accept(this);
+              final int atomLength = myLength;
+              myLength = length + (atomLength * min.intValue());
+              return;
+            }
+          }
           stopAndReportError(quantifier,
                              RegExpBundle.message("error.unequal.min.and.max.in.counted.quantifier.not.allowed.inside.lookbehind"));
         }
