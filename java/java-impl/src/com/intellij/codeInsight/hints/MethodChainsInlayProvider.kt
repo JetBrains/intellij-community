@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.java.JavaBundle
@@ -36,7 +35,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
         val types = chain.mapNotNull { it.type }
         if (types.size != chain.size) return true // some type unknown
 
-        val uniqueTypes = mutableSetOf<PsiType>()
+        val uniqueTypes = hashSetOf<PsiType>()
         for (i in (0 until types.size - 1)) { // Except last to avoid builder.build() which has obvious type
           uniqueTypes.add(types[i])
         }
