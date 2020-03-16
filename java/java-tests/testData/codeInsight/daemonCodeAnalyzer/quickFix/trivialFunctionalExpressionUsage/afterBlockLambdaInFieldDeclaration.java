@@ -2,8 +2,10 @@
 import java.util.function.Supplier;
 
 class Test {
-  String str = ((Supplier<String>) () -> {
-    String s = "";
-    return s;
-  }).g<caret>et();
+  String str;
+
+    {
+        String s = "";
+        str = s;
+    }
 }
