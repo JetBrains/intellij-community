@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.PomModel;
+import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.tree.TreeAspect;
@@ -24,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public final class PsiEventWrapperAspect implements PomModelAspect{
+public final class PsiEventWrapperAspect implements PomModelAspect {
   private final TreeAspect myTreeAspect;
 
   public PsiEventWrapperAspect(@NotNull Project project) {
     myTreeAspect = TreeAspect.getInstance(project);
-    project.getService(PomModel.class).registerAspect(PsiEventWrapperAspect.class, this, Collections.singleton(myTreeAspect));
+    PomManager.getModel(project).registerAspect(PsiEventWrapperAspect.class, this, Collections.singleton(myTreeAspect));
   }
 
   @Override
@@ -64,5 +64,4 @@ public final class PsiEventWrapperAspect implements PomModelAspect{
       }
     }
   }
-
 }
