@@ -57,7 +57,7 @@ internal open class ChangeEntryStateSimpleAction(
   }
 
   override fun updateButton(e: AnActionEvent) {
-    actionIsEnabled(e, true)
+    enableAction(e)
     if (table.editingRow != -1 || table.selectedRowCount == 0) {
       actionIsEnabled(e, false)
     }
@@ -65,6 +65,10 @@ internal open class ChangeEntryStateSimpleAction(
       val selectedRows = table.selectedRows
       actionIsEnabled(e, selectedRows.any { table.model.getEntryAction(it) != action })
     }
+  }
+
+  protected open fun enableAction(e: AnActionEvent) {
+    e.presentation.isEnabled = true
   }
 
   protected open fun actionIsEnabled(e: AnActionEvent, isEnabled: Boolean) {
@@ -92,6 +96,11 @@ internal open class ChangeEntryStateButtonAction(
   }
 
   private val buttonPanel = button.withLeftToolbarBorder()
+
+  override fun enableAction(e: AnActionEvent) {
+    super.enableAction(e)
+    button.isEnabled = true
+  }
 
   override fun actionIsEnabled(e: AnActionEvent, isEnabled: Boolean) {
     super.actionIsEnabled(e, isEnabled)
