@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -178,13 +179,18 @@ public final class CommandLineProcessor {
         arg = StringUtil.unquoteString(arg);
       }
 
-      Path file = Paths.get(arg);
-      if (!file.isAbsolute()) {
-        file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
+      Path file = null;
+      try {
+        file = Paths.get(arg);
+        if (!file.isAbsolute()) {
+          file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
+        }
       }
-
-      if (!Files.exists(file)) {
-        return CommandLineProcessorResult.createError("Cannot find file '" + file + "'");
+      catch (InvalidPathException e) {
+        LOG.warn(e);
+      }
+      if (file == null || !Files.exists(file)) {
+        return CommandLineProcessorResult.createError("Cannot find file '" + arg + "'");
       }
 
       if (line != -1 || tempProject) {
