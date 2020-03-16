@@ -13,8 +13,8 @@
         <li>Uses LanguageTool as its proofreading engine.</li>
     </ul>
 
-    <p>English is enabled by default when you install the plugin. To enable other languages, open Settings/Preferences
-       and select <strong>Tools</strong> > <strong>Grazie</strong>.</p>
+    <p>English is enabled by default when you install the plugin. To enable other languages, open <strong>Settings/Preferences</strong>
+       and select <strong>Tools</strong> > <strong>Grazie</strong> (or <strong>Editor</strong> > <strong>Proofreading</strong> for 2020.1 EAP).</p>
 
     <p><strong>NOTE:</strong> All verification is performed locally, inside your IDE.</p>
     ]]></description>
