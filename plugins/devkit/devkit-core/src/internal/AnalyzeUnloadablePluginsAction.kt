@@ -176,7 +176,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     val unspecifiedDynamicEPs = mutableSetOf<String>()
     val nonDynamicEPs = mutableSetOf<String>()
     val analysisErrors = mutableListOf<String>()
-    var componentCount = analyzePluginFile(ideaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, extensionPointOwners)
+    var componentCount = analyzePluginFile(ideaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, extensionPointOwners, true)
 
     for (dependency in ideaPlugin.dependencies) {
       val configFileName = dependency.configFile.stringValue ?: continue
@@ -185,7 +185,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         analysisErrors.add("Failed to resolve dependency descriptor file $configFileName")
         continue
       }
-      componentCount += analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, extensionPointOwners)
+      componentCount += analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, extensionPointOwners, true)
     }
 
     val nonDynamicEPsInOptionalDependencies = mutableMapOf<String, MutableSet<String>>()
@@ -200,7 +200,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             continue
           }
           val nonDynamicEPsInDependency = mutableSetOf<String>()
-          analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPsInDependency, nonDynamicEPsInDependency, extensionPointOwners)
+          analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPsInDependency, nonDynamicEPsInDependency, extensionPointOwners, false)
           if (nonDynamicEPsInDependency.isNotEmpty()) {
             nonDynamicEPsInOptionalDependencies[descriptor.pluginId ?: "<unknown>"] = nonDynamicEPsInDependency
           }
@@ -229,14 +229,15 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
                                 analysisErrors: MutableList<String>,
                                 nonDynamicEPs: MutableSet<String>,
                                 unspecifiedDynamicEPs: MutableSet<String>,
-                                extensionPointOwners: ExtensionPointOwners): Int {
+                                extensionPointOwners: ExtensionPointOwners,
+                                allowOwnEPs: Boolean): Int {
     for (extension in ideaPlugin.extensions.flatMap { it.collectExtensions() }) {
       val ep = extension.extensionPoint
       if (ep == null) {
         analysisErrors.add("Cannot resolve EP ${extension.xmlElementName}")
         continue
       }
-      if (ep.module == ideaPlugin.module || ep.module == extension.module) continue  // a plugin can have extensions for its own non-dynamic EPs
+      if (allowOwnEPs && (ep.module == ideaPlugin.module || ep.module == extension.module)) continue  // a plugin can have extensions for its own non-dynamic EPs
       if (Registry.`is`("analyze.unloadable.discover.owners")) {
         extensionPointOwners.discoverOwner(ep)
       }
