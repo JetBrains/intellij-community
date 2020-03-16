@@ -31,6 +31,17 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, Proc
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
   // important: here we rely on the fact that all reference contributors run in a single-thread
   val registrar = this
+  val chunks = getContributorChunks(registrar)
+
+  val chunk = chunks.getOrPut(ChunkTag(priority, provider.supportedUElementTypes)) {
+    val newChunk = UastReferenceContributorChunk(provider.supportedUElementTypes)
+    registrar.registerReferenceProvider(uastTypePattern(provider.supportedUElementTypes), newChunk, priority)
+    newChunk
+  }
+  chunk.register(pattern, provider)
+}
+
+private fun getContributorChunks(registrar: PsiReferenceRegistrar): MutableMap<ChunkTag, UastReferenceContributorChunk> {
   var chunks = registrar.getUserData(CONTRIBUTOR_CHUNKS_KEY)
   if (chunks == null) {
     chunks = ConcurrentHashMap()
@@ -42,13 +53,7 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, Proc
       }
     }, ApplicationManager.getApplication())
   }
-
-  val chunk = chunks.getOrPut(ChunkTag(priority, provider.supportedUElementTypes)) {
-    val newChunk = UastReferenceContributorChunk(provider.supportedUElementTypes)
-    registrar.registerReferenceProvider(uastTypePattern(provider.supportedUElementTypes), newChunk, priority)
-    newChunk
-  }
-  chunk.register(pattern, provider)
+  return chunks
 }
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
