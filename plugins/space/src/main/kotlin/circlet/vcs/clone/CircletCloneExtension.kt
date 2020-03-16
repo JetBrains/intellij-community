@@ -2,6 +2,7 @@ package circlet.vcs.clone
 
 import circlet.components.*
 import circlet.ui.*
+import com.intellij.openapi.application.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vcs.ui.cloneDialog.*
 import icons.*
@@ -21,5 +22,9 @@ class CircletCloneExtension : VcsCloneDialogExtension {
         // todo: simplify host obtaining
         val server = circletWorkspace.workspace.value?.client?.server?.let { cleanupUrl(it) }
         return listOf(VcsCloneDialogExtensionStatusLine.greyText(server ?: "No account"))
+    }
+
+    override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {
+        return CircletCloneComponent(project)
     }
 }

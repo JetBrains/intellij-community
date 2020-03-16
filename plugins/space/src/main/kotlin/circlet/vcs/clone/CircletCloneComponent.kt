@@ -316,12 +316,11 @@ private class CloneView(
 
     fun getView(): DialogPanel {
         return panel {
-            val gapLeft = JBUI.scale(VcsCloneDialogUiSpec.Components.innerHorizontalGap)
             row {
                 cell(isFullWidth = true) {
                     searchTextField.textEditor(pushX, growX)
-                    JSeparator(JSeparator.VERTICAL)(growY, gapLeft = gapLeft)
-                    accountLabel(gapLeft = gapLeft)
+                    JSeparator(JSeparator.VERTICAL)(growY)
+                    accountLabel()
                 }
             }
             row {
