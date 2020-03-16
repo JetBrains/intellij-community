@@ -5,6 +5,10 @@ import kotlinx.html.FlowOrPhrasingContent
 import kotlinx.html.strong
 import org.languagetool.rules.ExampleSentence
 import org.languagetool.rules.IncorrectExample
+import org.languagetool.rules.RuleMatch
+
+val RuleMatch.messageSanitized
+  get() = message.replace("<suggestion>", "").replace("</suggestion>", "")
 
 val ExampleSentence.text: CharSequence
   get() = example
