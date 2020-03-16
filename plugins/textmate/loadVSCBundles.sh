@@ -12,10 +12,10 @@ fi
 
 cd temp
 
-#git clone https://github.com/Microsoft/vscode
+git clone https://github.com/Microsoft/vscode
 # cp -r /Users/denofevil/WebstormProjects/vscode .
 
-#cd vscode/extensions
+cd vscode/extensions
 for f in *; do
   if [ -d "$f/syntaxes" ]; then
     echo "Adding $f"
@@ -26,7 +26,7 @@ for f in *; do
   fi
 done
 
-#cd ../..
+cd ../..
 git clone https://github.com/silvenon/vscode-mdx.git
 cd vscode-mdx
 
