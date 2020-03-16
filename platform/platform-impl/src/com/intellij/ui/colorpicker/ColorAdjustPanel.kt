@@ -20,8 +20,11 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.JBUI
 import sun.security.util.SecurityConstants
-import java.awt.*
-import javax.swing.*
+import java.awt.Color
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import javax.swing.BoxLayout
+import javax.swing.JPanel
 import javax.swing.plaf.basic.BasicButtonUI
 import kotlin.math.abs
 
@@ -38,7 +41,8 @@ private val HUE_SLIDER_BORDER = JBUI.Borders.empty(0, 16, 8, 16)
 private val ALPHA_SLIDER_BORDER = JBUI.Borders.empty(8, 16, 0, 16)
 
 class ColorAdjustPanel(private val model: ColorPickerModel,
-                       private val pipetteProvider: ColorPipetteProvider)
+                       private val pipetteProvider: ColorPipetteProvider,
+                       showAlpha: Boolean = false)
   : JPanel(GridBagLayout()), ColorListener {
 
   private val pipetteButton by lazy {
@@ -115,7 +119,9 @@ class ColorAdjustPanel(private val model: ColorPickerModel,
     sliderPanel.border = JBUI.Borders.empty()
     sliderPanel.background = PICKER_BACKGROUND_COLOR
     sliderPanel.add(hueSlider)
-    sliderPanel.add(alphaSlider)
+    if (showAlpha) {
+      sliderPanel.add(alphaSlider)
+    }
     add(sliderPanel, c)
 
     model.addListener(this)
