@@ -976,39 +976,45 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintIcons(final int firstVisibleLine, final int lastVisibleLine, final Graphics2D g) {
-    VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, firstVisibleLine);
-    while (!visLinesIterator.atEnd()) {
-      int visualLine = visLinesIterator.getVisualLine();
-      if (visualLine > lastVisibleLine) break;
-      int y = visLinesIterator.getY();
+    if (myEditor.getVisibleLineCount() == 0) {
+      // case of empty editor
+      if (firstVisibleLine == 0) paintIconRow(myEditor.visualLineToY(0), getGutterRenderers(0), g);
+    }
+    else {
+      VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, firstVisibleLine);
+      while (!visLinesIterator.atEnd()) {
+        int visualLine = visLinesIterator.getVisualLine();
+        if (visualLine > lastVisibleLine) break;
+        int y = visLinesIterator.getY();
 
-      List<GutterMark> renderers = getGutterRenderers(visualLine);
-      paintIconRow(y, renderers, g);
+        List<GutterMark> renderers = getGutterRenderers(visualLine);
+        paintIconRow(y, renderers, g);
 
-      if (myHasInlaysWithGutterIcons) {
-        Rectangle clip = g.getClipBounds();
-        int curY = y;
-        for (Inlay inlay : visLinesIterator.getBlockInlaysAbove()) {
-          if (curY <= clip.y) break;
-          int height = inlay.getHeightInPixels();
-          if (height > 0) {
-            int newY = curY - height;
-            paintInlayIcon(inlay, g, newY);
-            curY = newY;
+        if (myHasInlaysWithGutterIcons) {
+          Rectangle clip = g.getClipBounds();
+          int curY = y;
+          for (Inlay inlay : visLinesIterator.getBlockInlaysAbove()) {
+            if (curY <= clip.y) break;
+            int height = inlay.getHeightInPixels();
+            if (height > 0) {
+              int newY = curY - height;
+              paintInlayIcon(inlay, g, newY);
+              curY = newY;
+            }
+          }
+          curY = y + myEditor.getLineHeight();
+          for (Inlay inlay : visLinesIterator.getBlockInlaysBelow()) {
+            if (curY >= clip.y + clip.height) break;
+            int height = inlay.getHeightInPixels();
+            if (height > 0) {
+              paintInlayIcon(inlay, g, curY);
+              curY += height;
+            }
           }
         }
-        curY = y + myEditor.getLineHeight();
-        for (Inlay inlay : visLinesIterator.getBlockInlaysBelow()) {
-          if (curY >= clip.y + clip.height) break;
-          int height = inlay.getHeightInPixels();
-          if (height > 0) {
-            paintInlayIcon(inlay, g, curY);
-            curY += height;
-          }
-        }
+
+        visLinesIterator.advance();
       }
-
-      visLinesIterator.advance();
     }
   }
 
