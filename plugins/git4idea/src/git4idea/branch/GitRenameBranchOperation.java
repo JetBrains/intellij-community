@@ -93,7 +93,7 @@ public class GitRenameBranchOperation extends GitBranchOperation {
   @Override
   @Nls(capitalization = Nls.Capitalization.Sentence)
   protected String getRollbackProposal() {
-    return GitBundle.message("git.branch.rename.has.succeeded.for.the.following.repositories", getSuccessfulRepositories().size()) +
+    return GitBundle.message("git.rename.branch.has.succeeded.for.the.following.repositories", getSuccessfulRepositories().size()) +
            "<br/>" + //NON-NLS
            successfulRepositoriesJoined() +
            "<br/>" + //NON-NLS
