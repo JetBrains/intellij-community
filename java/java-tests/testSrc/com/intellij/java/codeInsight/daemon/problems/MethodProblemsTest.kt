@@ -104,6 +104,42 @@ internal class MethodProblemsTest: ProjectProblemsViewTest() {
     }
   }
 
+  fun testChangeReturnTypeOfAnnotationTypeMethod() {
+    val targetClass = myFixture.addClass("""
+      package foo;
+      
+      import java.lang.annotation.*;
+      
+      @Retention(RetentionPolicy.RUNTIME)
+      @Inherited
+      @Target({ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+      public @interface BooleanString {
+        String[] trueStrings();
+      }
+    """.trimIndent())
+
+    val refClass = myFixture.addClass("""
+      package foo;
+      
+      public class B {
+      
+        @BooleanString(trueStrings = {"TRUE", "Y"})
+        void test() {
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeMethod(targetClass) { method, factory ->
+        val type = factory.createTypeFromText("int[]", null)
+        val newReturnType = factory.createTypeElement(type)
+        method.returnTypeElement?.replace(newReturnType)
+      }
+
+      assertTrue(hasReportedProblems<PsiAnnotation>(targetClass, refClass))
+    }
+  }
+
   fun testMethodOverrideScopeIsChanged() {
     myFixture.addClass("""
       package bar;

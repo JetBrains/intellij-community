@@ -30,7 +30,11 @@ internal class ProblemSearcher(private val file: PsiFile): JavaElementVisitor() 
 
     override fun visitAnnotation(annotation: PsiAnnotation) {
       val paramsList = annotation.parameterList
-      paramsList.attributes.forEach { findProblem(it) }
+      paramsList.attributes.forEach {
+        val detachedValue = it.detachedValue
+        if (detachedValue != null) findProblem(detachedValue)
+        findProblem(it)
+      }
       visitElement(annotation)
     }
 
@@ -103,7 +107,7 @@ internal class ProblemSearcher(private val file: PsiFile): JavaElementVisitor() 
       }
 
       override fun hasErrorResults(): Boolean {
-        return false
+        return problem != null
       }
 
       private fun findPlace(info: HighlightInfo): PsiElement? {
