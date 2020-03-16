@@ -15,11 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiVariable;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -33,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
@@ -59,7 +56,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstructio
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
@@ -769,28 +765,6 @@ public final class ControlFlowUtils {
     }
 
     return result;
-  }
-
-  public static boolean mayUseDefinition(@NotNull PsiElement expression, @NotNull PsiVariable definition) {
-    if (definition.hasModifier(JvmModifier.FINAL)) {
-      return true;
-    }
-    else {
-      GrFunctionalExpression firstEnclosingExpression = getNearestFunctionalExpression(expression);
-      if (firstEnclosingExpression == null) {
-        return true;
-      }
-      GrFunctionalExpression secondEnclosingExpression = getNearestFunctionalExpression(definition);
-      return Objects.equals(firstEnclosingExpression, secondEnclosingExpression);
-    }
-  }
-
-
-  private static @Nullable GrFunctionalExpression getNearestFunctionalExpression(@NotNull PsiElement element) {
-    if (element instanceof ClosureSyntheticParameter) {
-      return ((ClosureSyntheticParameter)element).getClosure();
-    }
-    return PsiTreeUtil.getParentOfType(element, GrFunctionalExpression.class);
   }
 
   public static @NotNull Set<String> getForeignVariableIdentifiers(@NotNull GrControlFlowOwner owner) {

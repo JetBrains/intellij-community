@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -21,10 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
+import org.jetbrains.plugins.groovy.lang.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -34,11 +33,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrReassignedLocalVarsChecker;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTargetElementEvaluator;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
@@ -51,15 +50,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrStaticExpressionReference;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.psi.util.PsiUtilCore.ensureValid;
 import static java.util.Collections.emptyList;
 import static kotlin.LazyKt.lazy;
-import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.mayUseDefinition;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isLValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
@@ -355,6 +350,27 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     else {
       return null;
     }
+  }
+
+  private static boolean mayUseDefinition(@NotNull GrReferenceExpression expression, @NotNull PsiVariable definition) {
+    if (definition.hasModifier(JvmModifier.FINAL)) {
+      return true;
+    }
+    else {
+      GrFunctionalExpression firstEnclosingExpression = getNearestFunctionalExpression(expression);
+      if (firstEnclosingExpression == null) {
+        return true;
+      }
+      GrFunctionalExpression secondEnclosingExpression = getNearestFunctionalExpression(definition);
+      return Objects.equals(firstEnclosingExpression, secondEnclosingExpression);
+    }
+  }
+
+  private static @Nullable GrFunctionalExpression getNearestFunctionalExpression(@NotNull PsiElement element) {
+    if (element instanceof ClosureSyntheticParameter) {
+      return ((ClosureSyntheticParameter)element).getClosure();
+    }
+    return PsiTreeUtil.getParentOfType(element, GrFunctionalExpression.class);
   }
 
   @Nullable

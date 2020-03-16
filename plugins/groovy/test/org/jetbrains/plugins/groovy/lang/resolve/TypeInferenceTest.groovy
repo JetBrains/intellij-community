@@ -26,7 +26,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContext
 @CompileStatic
 class TypeInferenceTest extends TypeInferenceTestBase {
 
-
   void testTryFinallyFlow() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow/A.groovy").element
     final PsiType type = ref.type

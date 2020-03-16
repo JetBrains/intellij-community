@@ -7,19 +7,31 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind.*
 import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDown
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
+/**
+ * Specifies how many times functional expression will be invoked.
+ *
+ * [EXACTLY_ONCE] is for functional expressions that will be invoked inplace and only one time.
+ * Such functional expressions may be inlined in the place where they are defined.
+ *
+ * [ZERO_OR_MORE] is for functional expressions that will be invoked inplace, but amount of their invocations is undefined.
+ * Such functional expressions act like code blocks under some conditional statement.
+ *
+ * [UNKNOWN] is for functional expressions for which we don't have any information:
+ * neither if they are invoked inplace, nor about amount of invocations.
+ */
 enum class InvocationKind {
-  INVOKED_ONCE,
-  MAYBE_INVOKED,
+  EXACTLY_ONCE,
+  ZERO_OR_MORE,
   UNKNOWN
 }
 
@@ -75,41 +87,36 @@ private val trustedMethodsForExecutingManyTimes: Set<String> = setOf(
 
 private val knownMethods = trustedMethodsForExecutingManyTimes union trustedMethodsForExecutingOnce
 
-private fun InvocationKind.weakenIfUsesSafeNavigation(call: GrMethodCall): InvocationKind = when (this) {
-  InvocationKind.INVOKED_ONCE -> {
-    val refExpr = PsiTreeUtil.findChildOfType(call, GrReferenceExpression::class.java)
-    if (refExpr != null && refExpr.dotToken?.text == "?.") {
-      InvocationKind.MAYBE_INVOKED
-    }
-    else {
-      InvocationKind.INVOKED_ONCE
-    }
-  }
-  else -> this
-}
-
 fun GrFunctionalExpression?.getControlFlowOwner(): GrControlFlowOwner? = when (this) {
   is GrClosableBlock -> this
   is GrLambdaExpression -> body
   else -> null
 }
 
-fun GrControlFlowOwner?.getFunctionalExpression(): GrFunctionalExpression? = when (this) {
-  is GrClosableBlock -> this
-  is GrLambdaBody -> lambdaExpression
-  else -> null
-}
-
 fun computeInvocationKind(block: GrFunctionalExpression?): InvocationKind {
   val call = block?.parentOfType<GrMethodCall>()?.takeIf { call ->
-    call.invokedExpression.lastChild.text in knownMethods &&
+    (call.invokedExpression as? GrReferenceExpression)?.referenceName in knownMethods &&
     call.getArguments()?.any { (it as? ExpressionArgument)?.expression?.skipParenthesesDown() === block } ?: false
-  } ?: return InvocationKind.UNKNOWN
+  } ?: return UNKNOWN
   val method = call.multiResolve(false).firstOrNull()?.element as? GrGdkMethod
   val primaryInvocationKind = when (method?.name) {
-    in trustedMethodsForExecutingOnce -> InvocationKind.INVOKED_ONCE
-    in trustedMethodsForExecutingManyTimes -> InvocationKind.MAYBE_INVOKED
-    else -> return InvocationKind.UNKNOWN
+    in trustedMethodsForExecutingOnce -> EXACTLY_ONCE
+    in trustedMethodsForExecutingManyTimes -> ZERO_OR_MORE
+    else -> return UNKNOWN
   }
   return primaryInvocationKind.weakenIfUsesSafeNavigation(call)
 }
+
+private fun InvocationKind.weakenIfUsesSafeNavigation(call: GrMethodCall): InvocationKind = when (this) {
+  EXACTLY_ONCE -> {
+    val refExpr = PsiTreeUtil.findChildOfType(call, GrReferenceExpression::class.java)
+    if (refExpr != null && refExpr.dotToken?.text == "?.") {
+      ZERO_OR_MORE
+    }
+    else {
+      EXACTLY_ONCE
+    }
+  }
+  else -> this
+}
+

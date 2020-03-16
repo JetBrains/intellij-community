@@ -198,10 +198,10 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     InvocationKind kind = FunctionalExpressionFlowUtil.computeInvocationKind(block);
     switch (kind) {
-      case INVOKED_ONCE:
+      case EXACTLY_ONCE:
         handleClosureDFAResult(state, blockFlowOwner, state::putType);
         break;
-      case MAYBE_INVOKED:
+      case ZERO_OR_MORE:
         handleClosureDFAResult(state, blockFlowOwner, (descriptor, dfaType) -> {
           DFAType existingType = state.getVariableType(descriptor);
           if (existingType != null) {

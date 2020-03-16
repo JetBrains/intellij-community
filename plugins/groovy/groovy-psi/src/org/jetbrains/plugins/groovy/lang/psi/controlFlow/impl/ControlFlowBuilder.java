@@ -226,12 +226,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   @Override
   public void visitClosure(@NotNull GrClosableBlock closure) {
-    // do not go inside closures except gstring injections
+    //do not go inside closures except gstring injections
     if (closure.getParent() instanceof GrStringInjection) {
       addFunctionalExpressionParameters(closure);
+
       super.visitClosure(closure);
       return;
     }
+
     ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(closure.getControlFlow(), false);
     addReadFromNestedControlFlow(closure, reads);
   }
