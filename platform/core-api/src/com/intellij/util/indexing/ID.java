@@ -115,6 +115,7 @@ public class ID<K, V> extends IndexId<K,V> {
     return id;
   }
 
+  @ApiStatus.Internal
   @NotNull
   public Throwable getRegistrationTrace() {
     return ourIdToRegistrationStackTrace.get(this);
