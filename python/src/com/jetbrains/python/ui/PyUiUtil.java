@@ -4,6 +4,7 @@ package com.jetbrains.python.ui;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -76,7 +77,7 @@ public class PyUiUtil {
     StreamEx.of(FileEditorManager.getInstance(project).getAllEditors())
       .map(editor -> editor.getFile())
       .nonNull()
-      .map(file -> psiManager.findFile(file))
+      .map(file -> ReadAction.compute(() -> psiManager.findFile(file)))
       .nonNull()
       .forEach(file -> {
         codeAnalyzer.cleanFileLevelHighlights(project, Pass.LOCAL_INSPECTIONS, file);
