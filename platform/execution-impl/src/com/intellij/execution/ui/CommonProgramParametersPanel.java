@@ -156,10 +156,21 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   }
 
   public static void addMacroSupport(@NotNull ExtendableTextField textField) {
-    addMacroSupport(textField, MacrosDialog.Filters.ALL, null);
+    doAddMacroSupport(textField, MacrosDialog.Filters.ALL, null);
   }
 
-  protected static void addMacroSupport(@NotNull ExtendableTextField textField,
+  protected void addMacroSupport(@NotNull ExtendableTextField textField,
+                                 @NotNull Predicate<? super Macro> macroFilter,
+                                 @Nullable Map<String, String> userMacros) {
+    final Predicate<? super Macro> commonMacroFilter = getCommonMacroFilter();
+    doAddMacroSupport(textField, t -> commonMacroFilter.test(t) && macroFilter.test(t), userMacros);
+  }
+
+  protected @NotNull Predicate<? super Macro> getCommonMacroFilter() {
+    return MacrosDialog.Filters.ALL;
+  }
+
+  private static void doAddMacroSupport(@NotNull ExtendableTextField textField,
                                         @NotNull Predicate<? super Macro> macroFilter,
                                         @Nullable Map<String, String> userMacros) {
     if (Registry.is("allow.macros.for.run.configurations")) {
