@@ -103,8 +103,6 @@ class CommunityRepositoryModules {
     plugin("intellij.properties.resource.bundle.editor"),
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar", null)
-      withModule("intellij.platform.remoteServers.git")
-      withModule("intellij.java.remoteServers.git", "remote-servers-git.jar")
     },
     plugin("intellij.vcs.cvs") {
       directoryName = "cvsIntegration"

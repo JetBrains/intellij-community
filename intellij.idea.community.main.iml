@@ -119,7 +119,6 @@
     <orderEntry type="module" module-name="intellij.platform.updater" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.coverage" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.scriptDebugger.ui" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.remoteServers.git" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.terminal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.jps.javacRefScanner8" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
