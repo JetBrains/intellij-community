@@ -75,6 +75,6 @@ public final class FacetState {
 
   @Override
   public int hashCode() {
-    return Objects.hash(myFacetType, myName, myExternalSystemId, myConfiguration, subFacets);
+    return (31 * Objects.hash(myFacetType, myName, myExternalSystemId, subFacets)) + JDOMUtil.hashCode(myConfiguration, false);
   }
 }
