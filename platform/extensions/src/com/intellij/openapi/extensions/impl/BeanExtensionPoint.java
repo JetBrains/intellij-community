@@ -48,7 +48,10 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
   }
 
   @Override
-  public void unregisterExtensions(@NotNull PluginDescriptor pluginDescriptor, @NotNull List<Element> elements, List<Runnable> listenerCallbacks) {
+  public void unregisterExtensions(@NotNull ComponentManager componentManager,
+                                   @NotNull PluginDescriptor pluginDescriptor,
+                                   @NotNull List<Element> elements,
+                                   List<Runnable> listenerCallbacks) {
     Map<String, String> defaultAttributes = new HashMap<>();
     ClassLoader classLoader = myDescriptor.getPluginClassLoader();
     if (classLoader == null) {
@@ -56,7 +59,13 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
     }
     try {
       Class<?> aClass = Class.forName(getClassName(), true, classLoader);
-      Object defaultInstance = ReflectionUtil.newInstance(aClass);
+      Object defaultInstance;
+      if (componentManager.getPicoContainer().getParent() == null) {
+        defaultInstance = ReflectionUtil.newInstance(aClass);
+      }
+      else {
+        defaultInstance = componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.getPluginId());
+      }
       defaultAttributes.putAll(XmlExtensionAdapter.getExtensionAttributesMap(XmlSerializer.serialize(defaultInstance)));
     }
     catch (ClassNotFoundException ignored) {

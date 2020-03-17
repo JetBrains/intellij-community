@@ -416,12 +416,12 @@ object DynamicPlugins {
       for ((epName, epExtensions) in extensions) {
         val appEp = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName) as ExtensionPointImpl<*>?
         if (appEp != null) {
-          appEp.unregisterExtensions(loadedPluginDescriptor, epExtensions, unloadListeners)
+          appEp.unregisterExtensions(application, loadedPluginDescriptor, epExtensions, unloadListeners)
         }
         else {
           for (openProject in openProjects) {
             val projectEp = openProject.extensionArea.getExtensionPointIfRegistered<Any>(epName) as ExtensionPointImpl<*>?
-            projectEp?.unregisterExtensions(loadedPluginDescriptor, epExtensions, unloadListeners)
+            projectEp?.unregisterExtensions(openProject, loadedPluginDescriptor, epExtensions, unloadListeners)
           }
         }
       }
