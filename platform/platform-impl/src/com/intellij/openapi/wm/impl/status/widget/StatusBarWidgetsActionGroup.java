@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status.widget;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -11,8 +10,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
-import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,27 +18,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class StatusBarPopupActionGroup extends ComputableActionGroup {
-  @NotNull
-  private final StatusBarWidgetsManager myManager;
+public class StatusBarWidgetsActionGroup extends ActionGroup {
+  public static final String GROUP_ID = "ViewStatusBarWidgetsGroup";
 
-  public StatusBarPopupActionGroup(@NotNull StatusBarWidgetsManager manager) {
-    super(true);
-    myManager = manager;
-  }
-
-  @NotNull
   @Override
-  protected CachedValueProvider<AnAction[]> createChildrenProvider(@NotNull ActionManager actionManager) {
-    return () -> {
-      Collection<AnAction> toggleActions = new ArrayList<>(ContainerUtil.map(myManager.getWidgetFactories(), ToggleWidgetAction::new));
-      toggleActions.add(Separator.getInstance());
-      toggleActions.add(new HideCurrentWidgetAction());
-      return CachedValueProvider.Result.create(toggleActions.toArray(AnAction.EMPTY_ARRAY), myManager);
-    };
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    Project project = e != null ? e.getProject() : null;
+    if (project == null) return AnAction.EMPTY_ARRAY;
+
+    StatusBarWidgetsManager manager = project.getService(StatusBarWidgetsManager.class);
+    Collection<AnAction> toggleActions = new ArrayList<>(ContainerUtil.map(manager.getWidgetFactories(), ToggleWidgetAction::new));
+    toggleActions.add(Separator.getInstance());
+    toggleActions.add(new HideCurrentWidgetAction());
+    return toggleActions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  private class ToggleWidgetAction extends DumbAwareToggleAction {
+  private static class ToggleWidgetAction extends DumbAwareToggleAction {
     private final StatusBarWidgetFactory myWidgetFactory;
 
     private ToggleWidgetAction(@NotNull StatusBarWidgetFactory widgetFactory) {
@@ -53,9 +45,17 @@ public class StatusBarPopupActionGroup extends ComputableActionGroup {
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       Project project = e.getProject();
+      if (project == null) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+      if (ActionPlaces.isMainMenuOrShortcut(e.getPlace())) {
+        e.getPresentation().setEnabledAndVisible(myWidgetFactory.isConfigurable() && myWidgetFactory.isAvailable(project));
+        return;
+      }
       StatusBar statusBar = e.getData(PlatformDataKeys.STATUS_BAR);
-      e.getPresentation().setEnabledAndVisible(project != null && statusBar != null &&
-                                               myManager.canBeEnabledOnStatusBar(myWidgetFactory, statusBar));
+      e.getPresentation().setEnabledAndVisible(statusBar != null && project.getService(StatusBarWidgetsManager.class)
+        .canBeEnabledOnStatusBar(myWidgetFactory, statusBar));
     }
 
     @Override
