@@ -64,11 +64,11 @@ public class StatisticsUploadAssistant {
     return new EventLogStatisticsService(
       new DeviceConfiguration(EventLogConfiguration.INSTANCE.getDeviceId(), EventLogConfiguration.INSTANCE.getBucket()),
       new EventLogInternalRecorderConfig(recorderId),
-      new EventLogInternalApplicationInfo(false), listener
+      new EventLogInternalApplicationInfo(recorderId, false), listener
     );
   }
 
   public static EventLogUploadSettingsService createExternalSettings(@NotNull String recorderId, boolean isTest) {
-    return new EventLogUploadSettingsService(recorderId, new EventLogInternalApplicationInfo(isTest));
+    return new EventLogUploadSettingsService(recorderId, new EventLogInternalApplicationInfo(recorderId, isTest));
   }
 }
