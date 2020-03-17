@@ -21,6 +21,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ import static git4idea.util.GitUIUtil.code;
  */
 class GitCheckoutOperation extends GitBranchOperation {
   private static final int REPOSITORIES_LIMIT = 4;
+  @NonNls private static final String ROLLBACK_HREF_ATTRIBUTE = "rollback";
 
   @NotNull private final String myStartPointReference;
   private final boolean myDetach;
@@ -141,7 +143,7 @@ class GitCheckoutOperation extends GitBranchOperation {
           VcsNotifier.getInstance(myProject).notifySuccess("",
                                                            mentionSuccess +
                                                            mentionSkipped +
-                                                           "<br><a href='rollback'>" + //NON-NLS
+                                                           "<br><a href='" + ROLLBACK_HREF_ATTRIBUTE + "'>" + //NON-NLS
                                                            GitBundle.message("checkout.operation.rollback")
                                                            + "</a>", //NON-NLS
                                                            new RollbackOperationNotificationListener());
@@ -315,7 +317,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     @Override
     public void hyperlinkUpdate(@NotNull Notification notification,
                                 @NotNull HyperlinkEvent event) {
-      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase("rollback")) { //NON-NLS
+      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase(ROLLBACK_HREF_ATTRIBUTE)) {
         rollback();
       }
     }
