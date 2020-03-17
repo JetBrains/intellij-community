@@ -61,7 +61,6 @@ public class BuiltinWebServerAccess {
 
   private static String createUserAuthenticationToken() throws IOException {
     try {
-      PathManager.ensureConfigFolderExists();
       byte[] seed = SecureRandom.getInstance("SHA1PRNG").generateSeed(24);
       String token = new BigInteger(seed).toString(36);
       FileUtil.writeToFile(getTokenFile(), token);
