@@ -20,29 +20,32 @@ internal class SnapshotUpdater(project: Project, private val prevSnapshot: Snaps
   private val changes = mutableMapOf<PsiMember, ScopedMember?>()
 
   override fun visitEnumConstant(psiEnumConstant: PsiEnumConstant) {
-    val (psiMember, prevMember) = visitMember(psiEnumConstant) ?: return
+    val member = ScopedMember.create(psiEnumConstant) ?: return
+    val (psiMember, prevMember) = visitMember(member, psiEnumConstant) ?: return
     changes[psiMember] = prevMember
   }
 
   override fun visitClass(psiClass: PsiClass) {
-    val (psiMember, prevMember) = visitMember(psiClass) ?: return
+    val member = ScopedMember.create(psiClass) ?: return
+    val (psiMember, prevMember) = visitMember(member, psiClass) ?: return
     changes[psiMember] = prevMember
-    collectRelatedChanges(psiClass, prevMember, changes)
+    collectRelatedChanges(psiClass, member, prevMember, changes)
   }
 
   override fun visitField(psiField: PsiField) {
-    val (psiMember, prevMember) = visitMember(psiField) ?: return
+    val member = ScopedMember.create(psiField) ?: return
+    val (psiMember, prevMember) = visitMember(member, psiField) ?: return
     changes[psiMember] = prevMember
   }
 
   override fun visitMethod(psiMethod: PsiMethod) {
-    val (psiMember, prevMember) = visitMember(psiMethod) ?: return
+    val member = ScopedMember.create(psiMethod) ?: return
+    val (psiMember, prevMember) = visitMember(member, psiMethod) ?: return
     changes[psiMember] = prevMember
-    collectRelatedChanges(psiMethod, prevMember, changes)
+    collectRelatedChanges(psiMethod, member, prevMember, changes)
   }
 
-  private fun visitMember(psiMember: PsiMember): Pair<PsiMember, ScopedMember?>? {
-    val member = ScopedMember.create(psiMember) ?: return null
+  private fun visitMember(member: ScopedMember, psiMember: PsiMember): Pair<PsiMember, ScopedMember?>? {
     val pointer = pointerManager.createSmartPsiElementPointer(psiMember)
     snapshot[pointer] = member
     val prevMember = prevSnapshot[pointer]
@@ -85,9 +88,10 @@ internal class SnapshotUpdater(project: Project, private val prevSnapshot: Snaps
       val changes = updater.changes
       for ((memberPointer, prevMember) in prevSnapshot) {
         if (memberPointer in snapshot) continue
-        val member = memberPointer.element ?: continue
-        changes[member] = prevMember
-        collectRelatedChanges(member, prevMember, changes)
+        val psiMember = memberPointer.element ?: continue
+        val member = ScopedMember.create(psiMember) ?: continue
+        changes[psiMember] = prevMember
+        collectRelatedChanges(psiMember, member, prevMember, changes)
       }
       return ChangeSet(snapshot, changes)
     }
@@ -154,6 +158,7 @@ internal class SnapshotUpdater(project: Project, private val prevSnapshot: Snaps
     }
 
     private fun collectRelatedChanges(psiMember: PsiMember,
+                                      curMember: ScopedMember,
                                       prevMember: ScopedMember?,
                                       changes: MutableMap<PsiMember, ScopedMember?>) {
       when (psiMember) {
@@ -164,14 +169,24 @@ internal class SnapshotUpdater(project: Project, private val prevSnapshot: Snaps
         }
         is PsiClass -> {
           val prevClass = prevMember?.member as? Member.Class ?: return
-          if (prevClass.isInterface == psiMember.isInterface) return
-          // members usages might be broken, need to check them all
-          publicApi(psiMember).forEach { changes.putIfAbsent(it, null) }
+          val curClass = curMember.member as? Member.Class ?: return
+          when {
+            prevClass.isInterface != psiMember.isInterface -> {
+              // members usages might be broken, need to check them all
+              publicApi(psiMember).forEach { changes.putIfAbsent(it, null) }
+            }
+            prevClass.extendsList != curClass.extendsList || prevClass.implementsList != curClass.implementsList -> {
+              // maybe some parent members were referenced instead of current class overrides
+              publicApi(psiMember).filter { it is PsiMethod && it.isOverride() }.forEach { changes.putIfAbsent(it, null) }
+            }
+          }
         }
       }
     }
 
     private fun publicApi(psiElement: PsiElement) = MemberCollector.collectMembers(psiElement) { !it.hasModifier(PsiModifier.PRIVATE) }
+
+    private fun PsiMethod.isOverride() = hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)
 
     private fun PsiMember.hasModifier(modifier: String) = modifierList?.hasModifierProperty(modifier) ?: false
   }

@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.*
+import com.siyeh.ig.psiutils.TypeUtils
 
 internal class MethodProblemsTest: ProjectProblemsViewTest() {
 
@@ -137,6 +138,55 @@ internal class MethodProblemsTest: ProjectProblemsViewTest() {
       }
 
       assertTrue(hasReportedProblems<PsiAnnotation>(targetClass, refClass))
+    }
+  }
+
+  fun testChangeOverrideMethodAndThenRemoveExtend() {
+    myFixture.addClass("""
+      package foo;
+
+      public class Parent {
+        public int test(int i) { return 42; }
+      }
+    """.trimIndent())
+
+    val targetClass = myFixture.addClass("""
+      package foo;
+      
+      public class A extends Parent {
+        @Override
+        public int test(int i) { return 1437; }
+      }
+    """.trimIndent())
+
+    val refClass = myFixture.addClass("""
+      package foo;
+
+      public class B {
+        void useA() {
+          int j = 0;
+          A a = new A();
+          j = a.test(0);
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeMethod(targetClass) { method, factory ->
+        val stringTypeElement = factory.createTypeElement(TypeUtils.getStringType(method))
+        method.parameterList.parameters[0].typeElement?.replace(stringTypeElement)
+      }
+
+      assertFalse(hasReportedProblems<PsiAssignmentExpression>(targetClass, refClass))
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        val factory = JavaPsiFacade.getInstance(project).elementFactory
+        val extendsList = factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY)
+        targetClass.extendsList?.replace(extendsList)
+      }
+      myFixture.doHighlighting()
+
+      assertTrue(hasReportedProblems<PsiAssignmentExpression>(targetClass, refClass))
     }
   }
 
