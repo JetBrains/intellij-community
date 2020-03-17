@@ -25,7 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.successAsync
-import kotlin.properties.Delegates
+import kotlin.properties.Delegates.observable
 
 class GHPRDiffReviewSupportImpl(private val reviewDataProvider: GHPRReviewDataProvider,
                                 private val diffRanges: List<Range>,
@@ -44,7 +44,11 @@ class GHPRDiffReviewSupportImpl(private val reviewDataProvider: GHPRReviewDataPr
   override val isLoadingReviewData: Boolean
     get() = reviewThreadsLoadingModel?.loading == true || pendingReviewLoadingModel?.loading == true
 
-  override var showReviewThreads by Delegates.observable(true) { _, _, newValue ->
+  override var showReviewThreads by observable(true) { _, _, _ ->
+    updateReviewThreads()
+  }
+
+  override var showResolvedReviewThreads by observable(false) { _, _, _ ->
     updateReviewThreads()
   }
 
@@ -131,6 +135,6 @@ class GHPRDiffReviewSupportImpl(private val reviewDataProvider: GHPRReviewDataPr
   private fun updateReviewThreads() {
     val loadingModel = reviewThreadsLoadingModel ?: return
     if (loadingModel.loading) return
-    if (showReviewThreads) reviewThreadsModel.value = loadingModel.result else reviewThreadsModel.value = null
+    reviewThreadsModel.value = if (showReviewThreads) loadingModel.result?.filter { showResolvedReviewThreads || !it.thread.isResolved } else null
   }
 }

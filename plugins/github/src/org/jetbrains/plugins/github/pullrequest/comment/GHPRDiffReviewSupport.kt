@@ -13,6 +13,10 @@ interface GHPRDiffReviewSupport {
   var showReviewThreads: Boolean
 
   @get:CalledInAwt
+  @set:CalledInAwt
+  var showResolvedReviewThreads: Boolean
+
+  @get:CalledInAwt
   val isLoadingReviewData: Boolean
 
   @CalledInAwt

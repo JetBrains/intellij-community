@@ -5,18 +5,20 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 
-class GHPRDiffReviewThreadsToggleAction
-  : ToggleAction("Show Comments", "Show or hide pull request review threads", null) {
+class GHPRDiffReviewResolvedThreadsToggleAction
+  : ToggleAction("Show Resolved Threads", "Show or hide resolved pull request review threads", null) {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.getData(GHPRDiffReviewSupport.DATA_KEY) != null
+    val reviewSupport = e.getData(GHPRDiffReviewSupport.DATA_KEY)
+    e.presentation.isVisible = reviewSupport != null
+    e.presentation.isEnabled = reviewSupport != null && reviewSupport.showReviewThreads
   }
 
   override fun isSelected(e: AnActionEvent): Boolean =
-    e.getData(GHPRDiffReviewSupport.DATA_KEY)?.showReviewThreads ?: false
+    e.getData(GHPRDiffReviewSupport.DATA_KEY)?.showResolvedReviewThreads ?: false
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    e.getData(GHPRDiffReviewSupport.DATA_KEY)?.showReviewThreads = state
+    e.getData(GHPRDiffReviewSupport.DATA_KEY)?.showResolvedReviewThreads = state
   }
 }

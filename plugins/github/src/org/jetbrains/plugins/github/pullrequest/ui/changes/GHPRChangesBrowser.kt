@@ -3,7 +3,9 @@ package org.jetbrains.plugins.github.pullrequest.ui.changes
 
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.actions.NonEmptyActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -24,6 +26,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
+import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewResolvedThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
@@ -75,8 +78,16 @@ internal class GHPRChangesBrowser(private val model: GHPRChangesModel,
           putData(GHPRActionKeys.ACTION_DATA_CONTEXT, dataContext)
           putData(GHPRDiffReviewSupport.DATA_KEY, reviewSupport)
         }
+        val viewOptionsGroup = NonEmptyActionGroup().apply {
+          isPopup = true
+          templatePresentation.text = "View Options"
+          templatePresentation.icon = AllIcons.Actions.Show
+          add(GHPRDiffReviewThreadsToggleAction())
+          add(GHPRDiffReviewResolvedThreadsToggleAction())
+        }
+
         dataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(GHToolbarLabelAction("Review:"),
-                                                            GHPRDiffReviewThreadsToggleAction(),
+                                                            viewOptionsGroup,
                                                             GHPRDiffReviewThreadsReloadAction(),
                                                             GHPRReviewSubmitAction())
       }
