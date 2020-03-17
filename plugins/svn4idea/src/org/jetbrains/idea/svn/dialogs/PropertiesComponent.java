@@ -40,10 +40,13 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.util.io.FileUtil.filesEqual;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class PropertiesComponent extends JPanel {
   @NonNls public static final @NotNull String ID = "SVN Properties";
@@ -228,12 +231,12 @@ public class PropertiesComponent extends JPanel {
   }
 
   private static class CloseAction extends DumbAwareAction {
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText("Close");
-      e.getPresentation().setDescription("Close this tool window");
-      e.getPresentation().setIcon(AllIcons.Actions.Cancel);
+    private CloseAction() {
+      super(
+        messagePointer("action.Subversion.PropertiesView.Close.text"),
+        messagePointer("action.Subversion.PropertiesView.Close.description"),
+        AllIcons.Actions.Cancel
+      );
     }
 
     @Override
@@ -246,11 +249,16 @@ public class PropertiesComponent extends JPanel {
   }
 
   private class RefreshAction extends DumbAwareAction {
+    private RefreshAction() {
+      super(
+        messagePointer("action.Subversion.PropertiesView.Refresh.text"),
+        messagePointer("action.Subversion.PropertiesView.Refresh.description"),
+        AllIcons.Actions.Refresh
+      );
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText("Refresh");
-      e.getPresentation().setDescription("Reload properties");
-      e.getPresentation().setIcon(AllIcons.Actions.Refresh);
       e.getPresentation().setEnabled(myFile != null);
     }
 
@@ -262,6 +270,9 @@ public class PropertiesComponent extends JPanel {
   }
 
   private abstract class BasePropertyAction extends DumbAwareAction {
+    protected BasePropertyAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Icon icon) {
+      super(dynamicText, dynamicDescription, icon);
+    }
 
     protected void setProperty(@Nullable String property, @Nullable String value, boolean recursive, boolean force) {
       if (!StringUtil.isEmpty(property)) {
@@ -271,8 +282,7 @@ public class PropertiesComponent extends JPanel {
         }
         catch (VcsException error) {
           VcsBalloonProblemNotifier
-            .showOverChangesView(myVcs.getProject(), "Can not set property: " + error.getMessage(), MessageType.ERROR);
-          // show error message.
+            .showOverChangesView(myVcs.getProject(), message("error.can.not.set.property", error.getMessage()), MessageType.ERROR);
         }
       }
     }
@@ -284,12 +294,16 @@ public class PropertiesComponent extends JPanel {
   }
 
   private class SetKeywordsAction extends BasePropertyAction {
+    private SetKeywordsAction() {
+      super(
+        messagePointer("action.Subversion.PropertiesView.EditKeywords.text"),
+        messagePointer("action.Subversion.PropertiesView.EditKeywords.description"),
+        AllIcons.Actions.Properties
+      );
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText("Edit Keywords");
-      e.getPresentation().setDescription("Manage svn:keywords property");
-      e.getPresentation().setIcon(AllIcons.Actions.Properties);
       e.getPresentation().setEnabled(myFile != null && myFile.isFile());
     }
 
@@ -313,11 +327,16 @@ public class PropertiesComponent extends JPanel {
   }
 
   private class DeletePropertyAction extends BasePropertyAction {
+    private DeletePropertyAction() {
+      super(
+        messagePointer("action.Subversion.PropertiesView.DeleteProperty.text"),
+        messagePointer("action.Subversion.PropertiesView.DeleteProperty.description"),
+        AllIcons.General.Remove
+      );
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText("Delete Property");
-      e.getPresentation().setDescription("Delete selected property");
-      e.getPresentation().setIcon(AllIcons.General.Remove);
       e.getPresentation().setEnabled(myFile != null && getSelectedPropertyName() != null);
     }
 
@@ -329,12 +348,16 @@ public class PropertiesComponent extends JPanel {
   }
 
   private class AddPropertyAction extends BasePropertyAction {
+    private AddPropertyAction() {
+      super(
+        messagePointer("action.Subversion.PropertiesView.AddProperty.text"),
+        messagePointer("action.Subversion.PropertiesView.AddProperty.description"),
+        IconUtil.getAddIcon()
+      );
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText("Add Property");
-      e.getPresentation().setDescription("Add new property");
-      e.getPresentation().setIcon(IconUtil.getAddIcon());
       e.getPresentation().setEnabled(myFile != null);
     }
 
@@ -353,11 +376,16 @@ public class PropertiesComponent extends JPanel {
   }
 
   private class EditPropertyAction extends BasePropertyAction {
+    private EditPropertyAction() {
+      super(
+        messagePointer("action.Subversion.PropertiesView.EditProperty.text"),
+        messagePointer("action.Subversion.PropertiesView.EditProperty.description"),
+        AllIcons.Actions.EditSource
+      );
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText("Edit Property");
-      e.getPresentation().setDescription("Edit selected property value");
-      e.getPresentation().setIcon(AllIcons.Actions.EditSource);
       e.getPresentation().setEnabled(myFile != null && getSelectedPropertyName() != null);
     }
 
@@ -375,11 +403,19 @@ public class PropertiesComponent extends JPanel {
   }
 
   private class FollowSelectionAction extends DumbAwareToggleAction {
+    private FollowSelectionAction() {
+      super(
+        messagePointer("action.Subversion.PropertiesView.FollowSelection.text"),
+        messagePointer("action.Subversion.PropertiesView.FollowSelection.description"),
+        AllIcons.General.AutoscrollFromSource
+      );
+    }
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myIsFollowSelection;
     }
+
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state && !myIsFollowSelection) {
@@ -391,9 +427,6 @@ public class PropertiesComponent extends JPanel {
     @Override
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setIcon(AllIcons.General.AutoscrollFromSource);
-      e.getPresentation().setText("Follow Selection");
-      e.getPresentation().setDescription("Follow Selection");
       // change file
       if (myIsFollowSelection) {
         updateSelection(e);
