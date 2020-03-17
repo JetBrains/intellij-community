@@ -30,8 +30,6 @@ public class JCEFHtmlPanel extends JBCefBrowser {
 
   @NotNull
   private final String myUrl;
-  protected CefContextMenuHandler myDefaultContextMenuHandler;
-  private static final int DEBUG_COMMAND_ID = MENU_ID_USER_LAST;
 
   static {
     Disposer.register(ApplicationManager.getApplication(), () -> {
@@ -49,8 +47,12 @@ public class JCEFHtmlPanel extends JBCefBrowser {
     if (client != ourCefClient) {
       Disposer.register(this, client);
     }
+  }
+
+  @Override
+  protected CefContextMenuHandlerAdapter createDefaultContextMenuHandler() {
     boolean isInternal = ApplicationManager.getApplication().isInternal();
-    myDefaultContextMenuHandler = new CefContextMenuHandlerAdapter() {
+    return new CefContextMenuHandlerAdapter() {
       @Override
       public void onBeforeContextMenu(CefBrowser browser, CefFrame frame, CefContextMenuParams params, CefMenuModel model) {
         model.clear();
@@ -62,34 +64,13 @@ public class JCEFHtmlPanel extends JBCefBrowser {
       @Override
       public boolean onContextMenuCommand(CefBrowser browser, CefFrame frame, CefContextMenuParams params, int commandId, int eventFlags) {
         if (commandId == DEBUG_COMMAND_ID) {
-          openDevtools(browser);
+          openDevtools();
           return true;
         }
         return false;
       }
     };
-    client.addContextMenuHandler(myDefaultContextMenuHandler, this.getCefBrowser());
-  }
 
-  private void openDevtools(CefBrowser browser) {
-    Window activeFrame = IdeFrameImpl.getActiveFrame();
-    if (activeFrame == null) return;
-    Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
-    JFrame frame = new IdeFrameImpl();
-
-    frame.setTitle("JCEF DevTools");
-    frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-    frame.setBounds(bounds.width / 4, bounds.height / 4, bounds.width / 2, bounds.height / 2);
-    frame.setLayout(new BorderLayout());
-    JBCefBrowser devTools = new JBCefBrowser(browser.getDevTools());
-    frame.add(devTools.getComponent(), BorderLayout.CENTER);
-    frame.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowClosed(WindowEvent e) {
-        Disposer.dispose(devTools);
-      }
-    });
-    frame.setVisible(true);
   }
 
   public void setHtml(@NotNull String html) {
