@@ -2,6 +2,7 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,4 +28,14 @@ public abstract class DnDManager {
 
   @Nullable
   public abstract Component getLastDropHandler();
+
+  /**
+   * This key is intended to switch on a smooth scrolling during drag-n-drop operations.
+   * Note, that the target component must not use default auto-scrolling.
+   *
+   * @see java.awt.dnd.Autoscroll
+   * @see JComponent#setAutoscrolls
+   * @see JComponent#putClientProperty
+   */
+  public static final Key<Boolean> AUTO_SCROLL = Key.create("AUTO_SCROLL");
 }
