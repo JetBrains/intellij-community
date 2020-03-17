@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -1621,7 +1622,11 @@ public class PluginManagerConfigurable
     @NotNull @NonNls String query,
     @NotNull @NonNls String showAllQuery
   ) throws IOException {
-    addGroup(groups, name, showAllQuery, descriptors -> PluginRepositoryRequests.loadPlugins(descriptors, query));
+    addGroup(groups, name, showAllQuery, descriptors -> {
+      List<PluginNode> pluginNodes = MarketplaceRequests.searchPlugins(query, ITEMS_PER_GROUP);
+      descriptors.addAll(pluginNodes);
+      return pluginNodes.size() == ITEMS_PER_GROUP;
+    });
   }
 
   @Override

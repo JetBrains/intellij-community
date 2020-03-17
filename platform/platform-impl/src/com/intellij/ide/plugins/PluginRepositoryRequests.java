@@ -5,14 +5,10 @@ import com.google.gson.stream.JsonToken;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.updateSettings.IdeCompatibleUpdate;
-import com.intellij.openapi.updateSettings.MarketplaceSearchPluginData;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,30 +70,6 @@ public class PluginRepositoryRequests {
     });
 
     return ids;
-  }
-
-  public static boolean loadPlugins(
-    @NotNull List<? super IdeaPluginDescriptor> descriptors,
-    @NotNull String query
-  ) throws IOException {
-    Url baseUrl = createSearchUrl(query, PluginManagerConfigurable.ITEMS_PER_GROUP);
-    Url offsetUrl = baseUrl;
-    List<PluginId> pluginIds = requestToPluginRepository(offsetUrl);
-    pluginIds.remove(PluginId.getId("org.jfrog.ide-intellij-plugin"));
-    pluginIds.remove(PluginId.getId("mobi.hsz.idea.gitignore"));
-    pluginIds.remove(PluginId.getId("com.chrisrm.idea.MaterialThemeUI"));
-    descriptors.addAll(loadLightDescriptors(pluginIds));
-    return pluginIds.size() == PluginManagerConfigurable.ITEMS_PER_GROUP;
-  }
-
-  public static List<PluginNode> loadLightDescriptors(List<PluginId> pluginIds) {
-    String build = PluginRepositoryRequests.getBuildForPluginRepositoryRequests();
-    BuildNumber number = BuildNumber.fromString(build);
-    return ContainerUtil.mapNotNull(pluginIds, id ->
-      new MarketplaceSearchPluginData(
-        id.getIdString(),
-        "BCN",
-        "1", id.getIdString(), "Jb", (IdeCompatibleUpdate)PluginsMetaLoader.getLastCompatiblePluginUpdate(new SmartList(id.getIdString()), number).get(0), "2134234").toPluginNode());
   }
 
   @Nullable

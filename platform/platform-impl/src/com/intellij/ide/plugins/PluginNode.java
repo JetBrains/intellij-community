@@ -123,6 +123,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   /**
    * TODO:
    */
+  @Nullable
   public String getExternalUpdateId() {
     return externalUpdateId;
   }
@@ -130,7 +131,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   public void setExternalUpdateId(String externalUpdateId) {
     this.externalUpdateId = externalUpdateId;
   }
-
+  @Nullable
   public String getExternalPluginId() {
     return externalPluginId;
   }

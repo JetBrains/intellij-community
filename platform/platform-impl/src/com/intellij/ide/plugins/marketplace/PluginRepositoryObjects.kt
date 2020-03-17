@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.updateSettings
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
 
 /**
@@ -59,12 +58,15 @@ data class IntellijUpdateMetadata(
 @JsonIgnoreProperties(ignoreUnknown = true)
 class MarketplaceSearchPluginData(
   @get:JsonProperty("xmlId")
-  val id: String,
+  val id: String = "",
   var productCode: String? = null,
   val rating: String = "",
   val name: String = "",
   val vendor: String = "",
-  val ideCompatibleUpdate: IdeCompatibleUpdate,
+  @get:JsonProperty("updateId")
+  val externalUpdateId: String? = null,
+  @get:JsonProperty("id")
+  val externalPluginId: String? = null,
   val downloads: String = ""
 ) {
   fun toPluginNode(): PluginNode {
@@ -74,8 +76,8 @@ class MarketplaceSearchPluginData(
     pluginNode.rating = rating
     pluginNode.downloads = downloads
     pluginNode.vendor = vendor
-    pluginNode.externalPluginId = ideCompatibleUpdate.externalPluginId
-    pluginNode.externalUpdateId = ideCompatibleUpdate.externalUpdateId
+    pluginNode.externalPluginId = externalPluginId
+    pluginNode.externalUpdateId = externalUpdateId
     pluginNode.productCode = productCode
     return pluginNode
   }

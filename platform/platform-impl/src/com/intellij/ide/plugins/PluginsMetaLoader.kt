@@ -7,10 +7,9 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.updateSettings.IdeCompatibleUpdate
-import com.intellij.openapi.updateSettings.IntellijUpdateMetadata
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
