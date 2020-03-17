@@ -47,13 +47,19 @@ class IntellijModulesPublication {
      * Output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}
      */
     File outputDir = property('intellij.modules.publication.prebuilt.artifacts.dir')?.with { new File(it) }
-    Collection<String> modulesToPublish = property('intellij.modules.publication.list')
-                                            ?.split(',')?.toList()
-                                            ?.collect { it.trim() }
-                                            ?.findAll { !it.isEmpty() } ?: []
+    Collection<String> modulesToPublish = listProperty('intellij.modules.publication.list')
+    Collection<String> modulesToExclude = listProperty('intellij.modules.publication.excluded', ['fleet'])
 
     private static String property(String property) {
       System.getProperty(property)
+    }
+
+    private static List<String> listProperty(String propertyName, List<String> defaultList = []) {
+      property(propertyName)
+        ?.split(',')?.toList()
+        ?.collect { it.trim() }
+        ?.findAll { !it.isEmpty() }
+        ?: defaultList
     }
   }
 
@@ -68,6 +74,9 @@ class IntellijModulesPublication {
         modules << module
         transitiveModuleDependencies(module, modules)
       }
+    }
+    modules = modules.findAll {
+      !options.modulesToExclude.contains(it.name)
     }
     if (modules.isEmpty()) context.messages.warning('Nothing to publish')
     modules.each {
