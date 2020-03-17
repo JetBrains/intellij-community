@@ -18,6 +18,15 @@ class StatusBarWidgetSettings : SimplePersistentStateComponent<StatusBarState>(S
 
   override fun loadState(state: StatusBarState) {
     super.loadState(state)
+    migrateShowMemoryIndicatorSettings()
+  }
+
+  override fun noStateLoaded() {
+    super.noStateLoaded()
+    migrateShowMemoryIndicatorSettings()
+  }
+
+  private fun migrateShowMemoryIndicatorSettings() {
     if (UISettings.instance.showMemoryIndicator) {
       UISettings.instance.showMemoryIndicator = false
       state.widgets[MemoryUsagePanel.WIDGET_ID] = true
