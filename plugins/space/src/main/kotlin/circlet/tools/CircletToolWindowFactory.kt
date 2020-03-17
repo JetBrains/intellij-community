@@ -24,7 +24,7 @@ class CircletToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     companion object {
-        const val TOOL_WINDOW_ID = ProductName
+        const val TOOL_WINDOW_ID = "$ProductName Automation"
     }
 
 }
