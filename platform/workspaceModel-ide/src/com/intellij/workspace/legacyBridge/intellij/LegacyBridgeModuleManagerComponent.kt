@@ -38,8 +38,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.Callable
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
 @Suppress("ComponentNotRegistered")
 class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleManagerEx(), Disposable {
@@ -48,7 +46,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
   private val LOG = Logger.getInstance(javaClass)
 
-  private val idToModule: ConcurrentMap<ModuleId, LegacyBridgeModule> = ConcurrentHashMap()
+  private val idToModule = Collections.synchronizedMap(LinkedHashMap<ModuleId, LegacyBridgeModule>())
   internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
   private val newModuleInstances = mutableMapOf<ModuleId, LegacyBridgeModule>()
 
