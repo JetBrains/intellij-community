@@ -5,11 +5,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class ExternalUploadFinishedEvent extends ExternalUploadEvent {
+public class ExternalUploadFinishedEvent extends ExternalSystemEvent {
   private final String myError;
 
   public ExternalUploadFinishedEvent(long timestamp, @Nullable String error) {
-    super(ExternalUploadEventType.FINISHED, timestamp);
+    super(ExternalSystemEventType.FINISHED, timestamp);
     myError = error;
   }
 

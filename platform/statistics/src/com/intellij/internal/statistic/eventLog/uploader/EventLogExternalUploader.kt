@@ -39,6 +39,9 @@ object EventLogExternalUploader {
             is ExternalUploadFinishedEvent -> {
               EventLogSystemLogger.logFinishedExternalSend(recorderId, event.error, event.timestamp)
             }
+            is ExternalSystemErrorEvent -> {
+              EventLogSystemLogger.logSystemError(recorderId, event.event, event.errorClass, event.timestamp)
+            }
           }
         }
       }

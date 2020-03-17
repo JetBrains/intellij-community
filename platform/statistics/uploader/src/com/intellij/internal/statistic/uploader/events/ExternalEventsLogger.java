@@ -63,18 +63,18 @@ public class ExternalEventsLogger {
     logEvent(new ExternalUploadSendEvent(System.currentTimeMillis(), succeed, failed, total));
   }
 
-  private void logEvent(@NotNull ExternalUploadEvent event) {
-    myLogger.info(ExternalUploadEventSerializer.serialize(event));
+  private void logEvent(@NotNull ExternalSystemEvent event) {
+    myLogger.info(ExternalSystemEventSerializer.serialize(event));
   }
 
   @NotNull
-  public static List<ExternalUploadEvent> parseEvents(@NotNull File directory) throws IOException {
+  public static List<ExternalSystemEvent> parseEvents(@NotNull File directory) throws IOException {
     File file = getEventLogFile(directory.getAbsolutePath());
     List<String> lines = file.exists() ? Files.readAllLines(file.toPath()) : Collections.emptyList();
     if (!lines.isEmpty()) {
-      List<ExternalUploadEvent> events = new ArrayList<>();
+      List<ExternalSystemEvent> events = new ArrayList<>();
       for (String line : lines) {
-        ExternalUploadEvent event = ExternalUploadEventSerializer.deserialize(line);
+        ExternalSystemEvent event = ExternalSystemEventSerializer.deserialize(line);
         if (event != null) {
           events.add(event);
         }
