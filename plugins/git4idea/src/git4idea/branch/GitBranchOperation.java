@@ -100,6 +100,7 @@ abstract class GitBranchOperation {
    * Some operations (like checkout new branch) can be not mentioned in these dialogs, so their operation names would be not used.
    */
   @NotNull
+  @Nls
   protected abstract String getOperationName();
 
   /**

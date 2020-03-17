@@ -23,6 +23,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitUIUtil.bold
 import git4idea.util.GitUIUtil.code
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 
 internal class GitCreateBranchOperation(
@@ -85,5 +86,5 @@ internal class GitCreateBranchOperation(
     "<br/>" + //NON-NLS
     GitBundle.message("create.branch.operation.you.may.rollback.not.to.let.branches.diverge", branchName)
 
-  override fun getOperationName(): @NotNull String = "create branch"
+  override fun getOperationName(): @NotNull @Nls String = GitBundle.message("create.branch.operation.name")
 }

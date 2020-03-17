@@ -23,6 +23,7 @@ import git4idea.commands.GitCompoundResult;
 import git4idea.commands.GitSimpleEventDetector;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -99,9 +100,10 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
+  @Nls
   @Override
   protected String getOperationName() {
-    return "checkout";
+    return GitBundle.message("checkout.operation.name");
   }
 
   @Override

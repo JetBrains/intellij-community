@@ -122,10 +122,11 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   public GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
                                                                  @NotNull List<? extends Change> changes,
                                                                  @NotNull Collection<String> paths,
-                                                                 @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operation,
+                                                                 @NotNull String operation,
                                                                  @Nullable @Nls(capitalization = Nls.Capitalization.Title) String forceButtonTitle) {
     Ref<GitSmartOperationDialog.Choice> exitCode = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(() -> exitCode.set(GitSmartOperationDialog.show(project, changes, paths, operation, forceButtonTitle)));
+    ApplicationManager.getApplication().invokeAndWait(
+      () -> exitCode.set(GitSmartOperationDialog.show(project, changes, paths, StringUtil.capitalize(operation), forceButtonTitle)));
     return exitCode.get();
   }
 

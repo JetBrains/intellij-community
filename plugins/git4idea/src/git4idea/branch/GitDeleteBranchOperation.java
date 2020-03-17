@@ -26,6 +26,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -238,9 +239,10 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
+  @Nls
   @Override
   protected String getOperationName() {
-    return "branch deletion";
+    return GitBundle.message("delete.branch.operation.name");
   }
 
   @NotNull
