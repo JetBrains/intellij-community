@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.testFramework.DisposeModulesRule
@@ -44,7 +44,7 @@ internal abstract class BuiltInServerTestCase {
 
   protected fun doTest(filePath: String? = manager.filePath, additionalCheck: ((connection: HttpURLConnection) -> Unit)? = null) {
     val serviceUrl = "http://localhost:${BuiltInServerManager.getInstance().port}$urlPathPrefix"
-    var url = serviceUrl + (if (filePath == null) "" else ("/$filePath"))
+    var url = "$serviceUrl${if (filePath == null) "" else ("/$filePath")}"
     val line = manager.annotation?.line ?: -1
     if (line != -1) {
       url += ":$line"
