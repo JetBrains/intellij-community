@@ -199,6 +199,18 @@ object GHGQLRequests {
                                        "body" to newText),
                                  GHPullRequestReviewComment::class.java,
                                  "updatePullRequestReviewComment", "pullRequestReviewComment")
+
+      fun resolveThread(server: GithubServerPath, threadId: String): GQLQuery<GHPullRequestReviewThread> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.resolveReviewThread,
+                                 mapOf("threadId" to threadId),
+                                 GHPullRequestReviewThread::class.java,
+                                 "resolveReviewThread", "thread")
+
+      fun unresolveThread(server: GithubServerPath, threadId: String): GQLQuery<GHPullRequestReviewThread> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.unresolveReviewThread,
+                                 mapOf("threadId" to threadId),
+                                 GHPullRequestReviewThread::class.java,
+                                 "unresolveReviewThread", "thread")
     }
   }
 }

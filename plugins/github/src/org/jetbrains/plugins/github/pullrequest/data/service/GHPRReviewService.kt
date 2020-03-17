@@ -69,4 +69,12 @@ interface GHPRReviewService {
   @CalledInAny
   fun updateComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String, newText: String)
     : CompletableFuture<GHPullRequestReviewComment>
+
+  @CalledInAny
+  fun resolveThread(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, id: String)
+    : CompletableFuture<GHPullRequestReviewThread>
+
+  @CalledInAny
+  fun unresolveThread(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, id: String)
+    : CompletableFuture<GHPullRequestReviewThread>
 }

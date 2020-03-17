@@ -13,6 +13,7 @@ import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentWithPendingReview
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -122,6 +123,22 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(GHGQLRequests.PullRequest.Review.updateComment(repository.serverPath, commentId, newText))
     }.logError("Error occurred while updating review comment")
+
+  override fun resolveThread(progressIndicator: ProgressIndicator,
+                             pullRequestId: GHPRIdentifier,
+                             id: String): CompletableFuture<GHPullRequestReviewThread> =
+    progressManager.submitIOTask(progressIndicator) {
+        requestExecutor.execute(GHGQLRequests.PullRequest.Review.resolveThread(repository.serverPath, id))
+      }
+      .logError("Error occurred while resolving review thread")
+
+  override fun unresolveThread(progressIndicator: ProgressIndicator,
+                               pullRequestId: GHPRIdentifier,
+                               id: String): CompletableFuture<GHPullRequestReviewThread> =
+    progressManager.submitIOTask(progressIndicator) {
+        requestExecutor.execute(GHGQLRequests.PullRequest.Review.unresolveThread(repository.serverPath, id))
+      }
+      .logError("Error occurred while unresolving review thread")
 
   private fun <T> CompletableFuture<T>.notify(pullRequestId: GHPRIdentifier): CompletableFuture<T> =
     handle(BiFunction<T, Throwable?, T> { result: T, error: Throwable? ->

@@ -150,6 +150,22 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService, p
     return future
   }
 
+  override fun resolveThread(progressIndicator: ProgressIndicator, id: String): CompletableFuture<GHPullRequestReviewThread> {
+    val future = reviewService.resolveThread(progressIndicator, pullRequestId, id)
+    reviewThreadsRequestValue.combineResult(future) { list, thread ->
+      list.map { if (it == thread) thread else it }
+    }
+    return future
+  }
+
+  override fun unresolveThread(progressIndicator: ProgressIndicator, id: String): CompletableFuture<GHPullRequestReviewThread> {
+    val future = reviewService.unresolveThread(progressIndicator, pullRequestId, id)
+    reviewThreadsRequestValue.combineResult(future) { list, thread ->
+      list.map { if (it == thread) thread else it }
+    }
+    return future
+  }
+
   override fun addReviewThreadsListener(disposable: Disposable, listener: () -> Unit) =
     reviewThreadsRequestValue.addDropEventListener(disposable, listener)
 

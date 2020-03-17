@@ -18,4 +18,6 @@ object GHGQLQueries {
   const val addReviewComment = "addReviewComment"
   const val deleteReviewComment = "deleteReviewComment"
   const val updateReviewComment = "updateReviewComment"
+  const val resolveReviewThread = "resolveReviewThread"
+  const val unresolveReviewThread = "unresolveReviewThread"
 }

@@ -58,6 +58,12 @@ interface GHPRReviewDataProvider {
   fun updateComment(progressIndicator: ProgressIndicator, commentId: String, newText: String)
     : CompletableFuture<GHPullRequestReviewComment>
 
+  @CalledInAny
+  fun resolveThread(progressIndicator: ProgressIndicator, id: String): CompletableFuture<GHPullRequestReviewThread>
+
+  @CalledInAny
+  fun unresolveThread(progressIndicator: ProgressIndicator, id: String): CompletableFuture<GHPullRequestReviewThread>
+
   @CalledInAwt
   fun addReviewThreadsListener(disposable: Disposable, listener: () -> Unit)
 
