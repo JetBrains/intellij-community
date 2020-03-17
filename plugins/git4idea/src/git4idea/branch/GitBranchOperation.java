@@ -168,11 +168,6 @@ abstract class GitBranchOperation {
   }
 
   @NotNull
-  protected Collection<GitRepository> getRemainingRepositories() {
-    return myRemainingRepositories;
-  }
-
-  @NotNull
   protected List<GitRepository> getRemainingRepositoriesExceptGiven(@NotNull final GitRepository currentRepository) {
     List<GitRepository> repositories = new ArrayList<>(myRemainingRepositories);
     repositories.remove(currentRepository);
