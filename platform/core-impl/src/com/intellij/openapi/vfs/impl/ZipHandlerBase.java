@@ -76,11 +76,13 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
       entryName = entryName.substring(0, entryName.length() - 1);
       isDirectory = true;
     }
+    if (StringUtil.startsWithChar(entryName, '/')) {
+      entryName = StringUtil.trimStart(entryName, "/");
+    }
 
     EntryInfo info = map.get(entryName);
     if (info != null) return info;
 
-    entryName = StringUtil.trimStart(entryName, "/");
     Trinity<String, String, String> path = splitPathAndFix(entryName);
     EntryInfo parentInfo = getOrCreate(path.first, map, zip);
     if (".".equals(path.second)) {
