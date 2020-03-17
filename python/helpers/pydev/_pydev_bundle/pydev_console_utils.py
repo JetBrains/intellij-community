@@ -234,11 +234,11 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         array = pydevd_vars.eval_in_context(name, self.get_namespace(), self.get_namespace())
         return pydevd_thrift.table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format)
 
-    def evaluate(self, expression):
+    def evaluate(self, expression, do_trunc):
         # returns `DebugValue` of evaluated expression
 
         result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
-        return [pydevd_thrift.var_to_struct(result, expression)]
+        return [pydevd_thrift.var_to_struct(result, expression, do_trim=do_trunc)]
 
     def do_get_completions(self, text, act_tok):
         """Retrieves completion options.
