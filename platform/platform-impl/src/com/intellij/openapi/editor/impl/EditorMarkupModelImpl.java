@@ -1635,8 +1635,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private static final Key<List<StatusItem>> EXPANDED_STATUS = new Key<>("EXPANDED_STATUS");
+  private static final Key<Boolean> TRANSLUCENT_STATE = new Key<>("TRANSLUCENT_STATE");
+  private static final int DELTA_X = 6;
+  private static final int DELTA_Y = 6;
 
   private class StatusAction extends DumbAwareAction implements CustomComponentAction {
+    private boolean hasAnalyzed;
+    private boolean isAnalyzing;
+
     @Override
     @NotNull
     public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
@@ -1655,12 +1661,25 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
         Icon newIcon = analyzerStatus.getIcon();
 
-        if (newStatus.isEmpty()) {
-          newStatus = Collections.singletonList(new StatusItem("", newIcon));
-          presentation.putClientProperty(EXPANDED_STATUS, newStatus);
+        boolean analyzing = analyzerStatus.getStandardStatus() == StandardStatus.ANALYZING;
+        hasAnalyzed = hasAnalyzed || (isAnalyzing && !analyzing);
+        isAnalyzing = analyzing;
+
+        if (!(hasAnalyzed && isAnalyzing)) {
+          if (newStatus.isEmpty()) {
+            newStatus = Collections.singletonList(new StatusItem("", newIcon));
+            presentation.putClientProperty(EXPANDED_STATUS, newStatus);
+          }
+
+          if (!Objects.equals(presentation.getClientProperty(EXPANDED_STATUS), newStatus)) {
+            presentation.putClientProperty(EXPANDED_STATUS, newStatus);
+          }
+          else {
+            presentation.putClientProperty(TRANSLUCENT_STATE, false);
+          }
         }
-        else if (!Objects.equals(presentation.getClientProperty(EXPANDED_STATUS), newStatus)) {
-          presentation.putClientProperty(EXPANDED_STATUS, newStatus);
+        else {
+          presentation.putClientProperty(TRANSLUCENT_STATE, true);
         }
       }
       else {
@@ -1680,6 +1699,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     private final PropertyChangeListener presentationPropertyListener;
     private final Presentation presentation;
     private final EditorColorsScheme colorsScheme;
+    private boolean translucent;
 
     private StatusButton(@NotNull AnAction action, @NotNull Presentation presentation,
                          @NotNull ActionButtonLook buttonLook, @NotNull String place,
@@ -1692,11 +1712,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       this.colorsScheme = colorsScheme;
 
       presentationPropertyListener = l -> {
-        if (EXPANDED_STATUS.toString().equals(l.getPropertyName()) && l.getNewValue() != null) {
+        String propName = l.getPropertyName();
+        if (propName.equals(EXPANDED_STATUS.toString()) && l.getNewValue() != null) {
           //noinspection unchecked
           List<StatusItem> newStatus = (List<StatusItem>)l.getNewValue();
           updateContents(newStatus);
+          translucent = false;
           revalidate();
+          repaint();
+        }
+        else if (propName.equals(TRANSLUCENT_STATE.toString())) {
+          translucent = l.getNewValue() == Boolean.TRUE;
           repaint();
         }
       };
@@ -1797,7 +1823,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         add(Box.createHorizontalStrut(leftRightOffset), gc.next());
 
         int counter = 0;
-        for(StatusItem item : status) {
+        for (StatusItem item : status) {
           add(createStyledLabel(item.getText(), item.getIcon(), SwingConstants.LEFT),
               gc.next().insetLeft(counter++ > 0 ? INTER_GROUP_OFFSET : 0));
         }
@@ -1807,7 +1833,21 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     }
 
     private JLabel createStyledLabel(@Nullable String text, @Nullable Icon icon, int alignment) {
-      JLabel label = new JLabel(text, icon, alignment);
+      JLabel label = new JLabel(text, icon, alignment) {
+        @Override
+        protected void paintComponent(Graphics graphics) {
+          Graphics2D g2 = (Graphics2D)graphics.create();
+          try {
+            float alpha = translucent ? 0.5f : 1.0f;
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            super.paintComponent(g2);
+          }
+          finally {
+            g2.dispose();
+          }
+        }
+      };
+
       label.setForeground(colorsScheme.getColor(ICON_TEXT_COLOR));
 
       Font font = label.getFont();
@@ -1818,11 +1858,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
     @Override
     protected void paintComponent(Graphics graphics) {
-        int state = mousePressed ? ActionButtonComponent.PUSHED :
-                    mouseHover ? ActionButtonComponent.POPPED:
-                    ActionButtonComponent.NORMAL;
+      int state = mousePressed ? ActionButtonComponent.PUSHED :
+                  mouseHover ? ActionButtonComponent.POPPED :
+                  ActionButtonComponent.NORMAL;
 
-        buttonLook.paintBackground(graphics, this, state);
+      buttonLook.paintBackground(graphics, this, state);
     }
 
     @Override
@@ -1867,9 +1907,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       }
     }
   }
-
-  private static final int DELTA_X = 6;
-  private static final int DELTA_Y = 6;
 
   private class InspectionPopupManager {
     private final JPanel myContent = new JPanel(new GridBagLayout());

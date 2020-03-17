@@ -14,7 +14,7 @@ import kotlin.math.roundToInt
 /**
  * Inspection highlight level with string representations bound to resources for i18n.
  */
-enum class InspectionsLevel(private @PropertyKey(resourceBundle = EditorBundle.BUNDLE) val bundleKey: String) {
+enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) private val bundleKey: String) {
   NONE("iw.level.none"),
   ERRORS("iw.level.errors"),
   ALL("iw.level.all");
@@ -35,6 +35,18 @@ data class PassWrapper(val presentableName: String, val progress: Double, val fi
     val percent = (progress * 100).roundToInt()
     return if (percent == 100 && !finished) 99 else percent
   }
+}
+
+/**
+ * Standard (predefined) expanded status that's printed as text in the inspection widget component.
+ */
+enum class StandardStatus(private val bundleKey: String) {
+  NONE(""),
+  OFF("iw.status.off"),
+  INDEXING("iw.status.indexing"),
+  ANALYZING("iw.status.analyzing");
+
+  override fun toString(): String = if (bundleKey.isNotEmpty()) EditorBundle.message(bundleKey) else ""
 }
 
 /**
@@ -111,6 +123,7 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
   var showNavigation : Boolean = false
   var expandedStatus: List<StatusItem> = emptyList()
   var passes : List<PassWrapper> = emptyList()
+  var standardStatus: StandardStatus = StandardStatus.NONE;
 
   fun withNavigation() : AnalyzerStatus {
     showNavigation = true
@@ -122,8 +135,9 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
     return this
   }
 
-  fun withExpandedStatus(status: String): AnalyzerStatus {
-    expandedStatus = listOf(StatusItem(status, null))
+  fun withStandardStatus(status: StandardStatus): AnalyzerStatus {
+    expandedStatus = listOf(StatusItem(status.toString(), null))
+    standardStatus = status
     return this
   }
 
