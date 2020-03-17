@@ -111,11 +111,11 @@ class VariableExtractor {
 
     if (!(var instanceof PsiPatternVariable)) {
       PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
-    }
-    if (mySettings.isDeclareVarType()) {
-      PsiTypeElement typeElement = var.getTypeElement();
-      LOG.assertTrue(typeElement != null);
-      IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement, var);
+      if (mySettings.isDeclareVarType()) {
+        PsiTypeElement typeElement = var.getTypeElement();
+        LOG.assertTrue(typeElement != null);
+        IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement, var);
+      }
     }
     myFieldConflictsResolver.fix();
     return SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var);
