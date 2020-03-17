@@ -146,6 +146,7 @@ abstract class ImageResourcesTestBase {
                                model: JpsModel): List<JpsModule> {
       val home = getHomePath(root)
       return model.project.modules
+        .filterNot { it.name.startsWith("fleet.") }
         .filterNot { root == TestRoot.ULTIMATE && isCommunityModule(home, it) }
     }
 
