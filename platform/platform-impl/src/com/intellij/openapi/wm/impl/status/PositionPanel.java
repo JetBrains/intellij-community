@@ -174,10 +174,11 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   private void updatePosition(final Editor editor) {
-    if (!isOurEditor(editor)) return;
-
     myQueue.queue(Update.create(this, () -> {
-      myText = editor == null || DISABLE_FOR_EDITOR.isIn(editor) ? "" : getPositionText(editor);
+      boolean empty = editor == null || DISABLE_FOR_EDITOR.isIn(editor);
+      if (!empty && !isOurEditor(editor)) return;
+
+      myText = empty ? "" : getPositionText(editor);
       if (myStatusBar != null) {
         myStatusBar.updateWidget(ID());
       }
