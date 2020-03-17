@@ -46,6 +46,7 @@ import static git4idea.util.GitUIUtil.code;
  * changes, checking out, and then unstashing the changes back (possibly with showing the conflict resolving dialog). 
  */
 class GitCheckoutOperation extends GitBranchOperation {
+  private static final int REPOSITORIES_LIMIT = 4;
 
   @NotNull private final String myStartPointReference;
   private final boolean myDetach;
@@ -123,7 +124,7 @@ class GitCheckoutOperation extends GitBranchOperation {
       Collection<GitRepository> repositories = getSkippedRepositories();
       String revisionNotFound = GitBundle.message("checkout.operation.revision.not.found",
                                                   repositories.size(),
-                                                  joinShortNames(repositories, 4));
+                                                  joinShortNames(repositories, REPOSITORIES_LIMIT));
       if (wereSuccessful()) {
         if (!wereSkipped()) {
           notifySuccess();
@@ -132,7 +133,7 @@ class GitCheckoutOperation extends GitBranchOperation {
           Collection<GitRepository> successfulRepositories = getSuccessfulRepositories();
           String mentionSuccess = GitBundle.message("checkout.operation.in", getSuccessMessage(),
                                                     successfulRepositories.size(),
-                                                    joinShortNames(successfulRepositories, 4));
+                                                    joinShortNames(successfulRepositories, REPOSITORIES_LIMIT));
           String mentionSkipped = wereSkipped()
                                   ? "<br>" + revisionNotFound // NON-NLS
                                   : "";
