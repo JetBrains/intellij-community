@@ -1,72 +1,49 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn.actions;
+package org.jetbrains.idea.svn.actions
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.dialogs.PropertiesComponent;
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.FileStatusManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.content.ContentFactory
+import com.intellij.util.ContentsUtil.addContent
+import org.jetbrains.idea.svn.SvnUtil.toIoFiles
+import org.jetbrains.idea.svn.SvnVcs
+import org.jetbrains.idea.svn.dialogs.PropertiesComponent
 
-import java.io.File;
+class ShowPropertiesAction : BasicAction() {
+  override fun getActionName(): String = "Show Properties"
 
-import static com.intellij.util.ContentsUtil.addContent;
-import static com.intellij.util.containers.ContainerUtil.ar;
-import static org.jetbrains.idea.svn.SvnUtil.toIoFiles;
+  override fun needsAllFiles(): Boolean = false
 
-public class ShowPropertiesAction extends BasicAction {
-
-  @NotNull
-  @Override
-  protected String getActionName() {
-    return "Show Properties";
+  override fun isEnabled(vcs: SvnVcs, file: VirtualFile): Boolean {
+    val status = FileStatusManager.getInstance(vcs.project).getStatus(file)
+    return status != null && status != FileStatus.UNKNOWN && status != FileStatus.IGNORED
   }
 
-  @Override
-  protected boolean needsAllFiles() {
-    return false;
-  }
+  override fun perform(vcs: SvnVcs, file: VirtualFile, context: DataContext) =
+    batchPerform(vcs, arrayOf(file), context)
 
-  @Override
-  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
-    FileStatus status = FileStatusManager.getInstance(vcs.getProject()).getStatus(file);
-
-    return status != null && !FileStatus.UNKNOWN.equals(status) && !FileStatus.IGNORED.equals(status);
-  }
-
-  @Override
-  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) {
-    batchPerform(vcs, ar(file), context);
-  }
-
-  @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) {
-    File[] ioFiles = toIoFiles(files);
-    ToolWindow w = ToolWindowManager.getInstance(vcs.getProject()).getToolWindow(PropertiesComponent.ID);
-    PropertiesComponent component;
+  override fun batchPerform(vcs: SvnVcs, files: Array<VirtualFile>, context: DataContext) {
+    val ioFiles = toIoFiles(files)
+    var w = ToolWindowManager.getInstance(vcs.project).getToolWindow(PropertiesComponent.ID)
+    val component: PropertiesComponent
     if (w == null) {
-      w = ToolWindowManager.getInstance(vcs.getProject())
-                           .registerToolWindow(PropertiesComponent.ID, false, ToolWindowAnchor.BOTTOM, vcs.getProject(), true);
-      component = new PropertiesComponent();
-      Content content = ContentFactory.SERVICE.getInstance().createContent(component, "", false);
-      addContent(w.getContentManager(), content, true);
+      w = ToolWindowManager.getInstance(vcs.project)
+        .registerToolWindow(PropertiesComponent.ID, false, ToolWindowAnchor.BOTTOM, vcs.project, true)
+      component = PropertiesComponent()
+      val content = ContentFactory.SERVICE.getInstance().createContent(component, "", false)
+      addContent(w.contentManager, content, true)
     }
     else {
-      component = (PropertiesComponent)w.getContentManager().getContents()[0].getComponent();
+      component = w.contentManager.contents[0].component as PropertiesComponent
     }
-    w.setTitle(ioFiles[0].getName());
-    w.show(null);
-    w.activate(() -> component.setFile(vcs, ioFiles[0]));
+    w.title = ioFiles[0].name
+    w.show(null)
+    w.activate(Runnable { component.setFile(vcs, ioFiles[0]) })
   }
 
-  @Override
-  protected boolean isBatchAction() {
-    return false;
-  }
+  override fun isBatchAction(): Boolean = false
 }
