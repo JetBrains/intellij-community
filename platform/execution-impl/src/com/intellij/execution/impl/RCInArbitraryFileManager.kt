@@ -31,6 +31,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
 
   private var saving = false
   private val filePathToRunConfigs = mutableMapOf<String, MutableList<RunnerAndConfigurationSettingsImpl>>()
+
   // Remember digest in order not to overwrite file with an equivalent content (e.g. different line endings or smth non-meaningful)
   private val filePathToDigests = mutableMapOf<String, MutableList<ByteArray>>()
 
@@ -52,19 +53,23 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     }
   }
 
-  internal fun removeRunConfiguration(runConfig: RunnerAndConfigurationSettingsImpl, removeOnlyIfFileNameChanged: Boolean = false) {
+  internal fun removeRunConfiguration(runConfig: RunnerAndConfigurationSettingsImpl,
+                                      removeRunConfigOnlyIfFileNameChanged: Boolean = false,
+                                      deleteContainingFile: Boolean = true) {
     val fileEntryIterator = filePathToRunConfigs.iterator()
     for (fileEntry in fileEntryIterator) {
       val filePath = fileEntry.key
       val runConfigIterator = fileEntry.value.iterator()
       for (rc in runConfigIterator) {
         if (rc == runConfig) {
-          if (filePath != runConfig.pathIfStoredInArbitraryFileInProject || !removeOnlyIfFileNameChanged) {
+          if (filePath != runConfig.pathIfStoredInArbitraryFileInProject || !removeRunConfigOnlyIfFileNameChanged) {
             runConfigIterator.remove()
             if (fileEntry.value.isEmpty()) {
               fileEntryIterator.remove()
               filePathToDigests.remove(filePath)
-              LocalFileSystem.getInstance().findFileByPath(filePath)?.let { deleteFile(it) }
+              if (deleteContainingFile) {
+                LocalFileSystem.getInstance().findFileByPath(filePath)?.let { deleteFile(it) }
+              }
             }
           }
           return
