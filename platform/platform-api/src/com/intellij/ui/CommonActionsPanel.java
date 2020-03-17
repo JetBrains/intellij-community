@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
@@ -30,44 +29,56 @@ public class CommonActionsPanel extends JPanel {
   private final ActionToolbar myToolbar;
 
   public enum Buttons {
-    ADD, REMOVE, EDIT,  UP, DOWN;
+    ADD(IconUtil.getAddIcon(), UIBundle.messagePointer("button.text.add")) {
+      @Override
+      @NotNull MyActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+        return new AddButton(listener, name == null ? getText() : name, icon);
+      }
+    },
+    REMOVE(IconUtil.getRemoveIcon(), UIBundle.messagePointer("button.text.remove")) {
+      @Override
+      @NotNull MyActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+        return new RemoveButton(listener, name == null ? getText() : name, icon);
+      }
+    },
+    EDIT(IconUtil.getEditIcon(), UIBundle.messagePointer("button.text.edit")) {
+      @Override
+      @NotNull MyActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+        return new EditButton(listener, name == null ? getText() : name, icon);
+      }
+    },
+    UP(IconUtil.getMoveUpIcon(), UIBundle.messagePointer("button.text.up")) {
+      @Override
+      @NotNull MyActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+        return new UpButton(listener, name == null ? getText() : name, icon);
+      }
+    },
+    DOWN(IconUtil.getMoveDownIcon(), UIBundle.messagePointer("button.text.down")) {
+      @Override
+      @NotNull MyActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+        return new DownButton(listener, name == null ? getText() : name, icon);
+      }
+    };
 
-    public static final Buttons[] ALL = {ADD, REMOVE, EDIT,  UP, DOWN};
+    private final Icon myIcon;
+    private final @NotNull Supplier<String> myText;
+
+    Buttons(@NotNull Icon icon, @NotNull Supplier<String> text) {
+      myIcon = icon;
+      myText = text;
+    }
 
     @NotNull
-    private static final Map<Buttons, Supplier<String>> ourPresentableNamesMap = ContainerUtil.newHashMap(
-      new Pair<>(ADD, UIBundle.messagePointer("button.text.add")),
-      new Pair<>(REMOVE, UIBundle.messagePointer("button.text.remove")),
-      new Pair<>(EDIT, UIBundle.messagePointer("button.text.edit")),
-      new Pair<>(UP, UIBundle.messagePointer("button.text.up")),
-      new Pair<>(DOWN, UIBundle.messagePointer("button.text.down"))
-    );
-
     public Icon getIcon() {
-      switch (this) {
-        case ADD:    return IconUtil.getAddIcon();
-        case EDIT:   return IconUtil.getEditIcon();
-        case REMOVE: return IconUtil.getRemoveIcon();
-        case UP:     return IconUtil.getMoveUpIcon();
-        case DOWN:   return IconUtil.getMoveDownIcon();
-      }
-      return null;
+      return myIcon;
     }
 
-    MyActionButton createButton(final Listener listener, String name, Icon icon) {
-      String buttonName = name == null ? getText() : name;
-      switch (this) {
-        case ADD: return new AddButton(listener, buttonName, icon);
-        case REMOVE: return new RemoveButton(listener, buttonName, icon);
-        case EDIT: return new EditButton(listener, buttonName, icon);
-        case UP: return new UpButton(listener, buttonName, icon);
-        case DOWN: return new DownButton(listener, buttonName, icon);
-      }
-      throw new IllegalStateException("can't reach this");
-    }
+    @NotNull
+    abstract MyActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon);
 
+    @NotNull
     public String getText() {
-      return ourPresentableNamesMap.get(this).get();
+      return myText.get();
     }
   }
 
@@ -92,10 +103,10 @@ public class CommonActionsPanel extends JPanel {
   private final AnActionButton[] myActions;
   private EnumMap<Buttons, ShortcutSet> myCustomShortcuts;
 
-  CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,
-                     AnActionButton @Nullable [] additionalActions, @Nullable Comparator<AnActionButton> buttonComparator,
+  CommonActionsPanel(@NotNull ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,
+                     AnActionButton @Nullable [] additionalActions, @Nullable Comparator<? super AnActionButton> buttonComparator,
                      String addName, String removeName, String moveUpName, String moveDownName, String editName,
-                     Icon addIcon, Buttons... buttons) {
+                     Icon addIcon, Buttons @NotNull ... buttons) {
     super(new BorderLayout());
     myPosition = position;
     final Listener listener = factory.createListener(this);
@@ -258,7 +269,7 @@ public class CommonActionsPanel extends JPanel {
     private final Buttons myButton;
     protected final Listener myListener;
 
-    MyActionButton(Buttons button, Listener listener, String name, Icon icon) {
+    MyActionButton(@NotNull Buttons button, @NotNull Listener listener, @NotNull String name, @NotNull Icon icon) {
       super(name, name, icon);
       myButton = button;
       myListener = listener;
@@ -287,15 +298,6 @@ public class CommonActionsPanel extends JPanel {
     }
 
     protected abstract boolean isEnabled(int size, int min, int max);
-
-    //@Override
-    //public boolean isEnabled() {
-    //  if (myButton == Buttons.REMOVE) {
-    //    final JComponent c = getContextComponent();
-    //    if (c instanceof JTable && ((JTable)c).isEditing()) return false;
-    //  }
-    //  return super.isEnabled();
-    //}
   }
 
   static class AddButton extends MyActionButton {
@@ -411,6 +413,7 @@ public class CommonActionsPanel extends JPanel {
   }
 
   interface ListenerFactory {
-    Listener createListener(CommonActionsPanel panel);
+    @NotNull
+    Listener createListener(@NotNull CommonActionsPanel panel);
   }
 }
