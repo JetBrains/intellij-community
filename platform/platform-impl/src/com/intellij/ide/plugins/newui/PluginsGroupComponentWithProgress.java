@@ -14,7 +14,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
-  private AsyncProcessIcon myIcon = new CenteredIcon();
+  private AsyncProcessIcon myIcon = new AsyncProcessIcon.BigCentered("Loading");
   private Runnable myVisibleRunnable;
 
   public PluginsGroupComponentWithProgress(@NotNull LayoutManager layout,
@@ -94,20 +94,6 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
       Runnable runnable = myVisibleRunnable;
       myVisibleRunnable = null;
       runnable.run();
-    }
-  }
-
-  private static class CenteredIcon extends AsyncProcessIcon.Big {
-    CenteredIcon() {
-      super("Loading");
-    }
-
-    @NotNull
-    @Override
-    protected Rectangle calculateBounds(@NotNull JComponent container) {
-      Dimension size = container.getSize();
-      Dimension iconSize = getPreferredSize();
-      return new Rectangle((size.width - iconSize.width) / 2, (size.height - iconSize.height) / 2, iconSize.width, iconSize.height);
     }
   }
 }
