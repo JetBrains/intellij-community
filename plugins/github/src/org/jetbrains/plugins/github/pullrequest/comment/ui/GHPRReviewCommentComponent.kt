@@ -72,7 +72,7 @@ object GHPRReviewCommentComponent {
     val editButton = createEditButton(reviewDataProvider, comment, editorWrapper, textPane).apply {
       isVisible = comment.canBeUpdated
     }
-    val deleteButton = createDeleteButton(reviewDataProvider, thread, comment).apply {
+    val deleteButton = createDeleteButton(reviewDataProvider, comment).apply {
       isVisible = comment.canBeDeleted
     }
 
@@ -96,7 +96,6 @@ object GHPRReviewCommentComponent {
   }
 
   private fun createDeleteButton(reviewDataProvider: GHPRReviewDataProvider,
-                                 thread: GHPRReviewThreadModel,
                                  comment: GHPRReviewCommentModel): JComponent {
     val icon = GithubIcons.Delete
     val hoverIcon = GithubIcons.DeleteHovered
@@ -105,7 +104,6 @@ object GHPRReviewCommentComponent {
         if (Messages.showConfirmationDialog(this, "Are you sure you want to delete this comment?", "Delete Comment",
                                             Messages.getYesButton(), Messages.getNoButton()) == Messages.YES) {
           reviewDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
-          thread.removeComment(comment)
         }
       }
     }
@@ -122,7 +120,7 @@ object GHPRReviewCommentComponent {
 
       val model = GHPRSubmittableTextField.Model { newText ->
         reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText).successOnEdt {
-          comment.update(it)
+          //comment.update(it)
         }.handleOnEdt { _, _ ->
           editorWrapper.setContent(null)
           editorWrapper.revalidate()

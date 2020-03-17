@@ -115,15 +115,13 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
 
   override fun deleteComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String) =
     progressManager.submitIOTask(progressIndicator) {
-        requestExecutor.execute(GHGQLRequests.PullRequest.Review.deleteComment(repository.serverPath, commentId))
-      }.notify(pullRequestId)
-      .logError("Error occurred while deleting review comment")
+      requestExecutor.execute(GHGQLRequests.PullRequest.Review.deleteComment(repository.serverPath, commentId))
+    }.logError("Error occurred while deleting review comment")
 
   override fun updateComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String, newText: String) =
     progressManager.submitIOTask(progressIndicator) {
-        requestExecutor.execute(GHGQLRequests.PullRequest.Review.updateComment(repository.serverPath, commentId, newText))
-      }.notify(pullRequestId)
-      .logError("Error occurred while updating review comment")
+      requestExecutor.execute(GHGQLRequests.PullRequest.Review.updateComment(repository.serverPath, commentId, newText))
+    }.logError("Error occurred while updating review comment")
 
   private fun <T> CompletableFuture<T>.notify(pullRequestId: GHPRIdentifier): CompletableFuture<T> =
     handle(BiFunction<T, Throwable?, T> { result: T, error: Throwable? ->

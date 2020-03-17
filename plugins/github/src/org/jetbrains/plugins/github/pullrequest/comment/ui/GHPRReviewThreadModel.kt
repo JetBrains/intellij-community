@@ -17,8 +17,6 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
 
   fun update(thread: GHPullRequestReviewThread)
   fun addComment(comment: GHPRReviewCommentModel)
-  fun removeComment(comment: GHPRReviewCommentModel)
 
-  fun addDeletionListener(listener: () -> Unit)
   fun addStateChangeListener(listener: () -> Unit)
 }

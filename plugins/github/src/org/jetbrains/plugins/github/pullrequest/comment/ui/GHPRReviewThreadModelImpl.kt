@@ -20,7 +20,6 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   override val diffHunk = thread.diffHunk
   override val firstCommentDatabaseId = thread.firstCommentDatabaseId
 
-  private val deletionEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
   private val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   init {
@@ -74,17 +73,6 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   override fun addComment(comment: GHPRReviewCommentModel) {
     add(comment)
   }
-
-  override fun removeComment(comment: GHPRReviewCommentModel) {
-    val index = items.indexOf(comment)
-    if (index < 0) error("Comment not found in thread")
-    if (index == 0) {
-      deletionEventDispatcher.multicaster.eventOccurred()
-    }
-    else remove(index)
-  }
-
-  override fun addDeletionListener(listener: () -> Unit) = SimpleEventListener.addListener(deletionEventDispatcher, listener)
 
   override fun addStateChangeListener(listener: () -> Unit) = SimpleEventListener.addListener(stateEventDispatcher, listener)
 
