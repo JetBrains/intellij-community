@@ -13,11 +13,13 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
@@ -40,10 +42,12 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.openapi.util.io.FileUtil.filesEqual;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 public class PropertiesComponent extends JPanel {
-  public static final String ID = "SVN Properties";
+  @NonNls public static final @NotNull String ID = "SVN Properties";
+
   private JTable myTable;
   private JTextArea myTextArea;
   private boolean myIsFollowSelection;
@@ -52,7 +56,6 @@ public class PropertiesComponent extends JPanel {
   private JSplitPane mySplitPane;
   private final CloseAction myCloseAction = new CloseAction();
   private final RefreshAction myRefreshAction = new RefreshAction();
-  private ActionGroup myPopupActionGroup;
 
   public PropertiesComponent() {
     // register toolwindow and add listener to the selection.
@@ -91,9 +94,9 @@ public class PropertiesComponent extends JPanel {
         myTextArea.setText("");
       }
     });
-    myPopupActionGroup = createPopup();
-    PopupHandler.installPopupHandler(myTable, myPopupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    PopupHandler.installPopupHandler(scrollPane, myPopupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    ActionGroup popupActionGroup = createPopup();
+    PopupHandler.installPopupHandler(myTable, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupHandler(scrollPane, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
     myCloseAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB), this);
     myRefreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
   }
@@ -235,8 +238,10 @@ public class PropertiesComponent extends JPanel {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Project p = e.getData(CommonDataKeys.PROJECT);
-      ToolWindowManager.getInstance(p).unregisterToolWindow(ID);
+      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+      ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ID);
+
+      if (toolWindow != null) toolWindow.remove();
     }
   }
 
@@ -296,8 +301,7 @@ public class PropertiesComponent extends JPanel {
         propValue = myVcs.getFactory(myFile).createPropertyClient()
           .getProperty(Target.on(myFile), SvnPropertyKeys.SVN_KEYWORDS, false, Revision.WORKING);
       }
-      catch (VcsException e1) {
-        // show erorr message
+      catch (VcsException ignored) {
       }
 
       SetKeywordsDialog dialog = new SetKeywordsDialog(project, propValue);
@@ -397,18 +401,17 @@ public class PropertiesComponent extends JPanel {
     }
 
     private void updateSelection(AnActionEvent e) {
-      if (myVcs == null) {
-        return;
-      }
-      VirtualFile vf = e.getData(CommonDataKeys.VIRTUAL_FILE);
-      if (vf != null) {
-        File f = virtualToIoFile(vf);
-        if (!f.equals(myFile)) {
-          setFile(myVcs, f);
-          Project p = e.getProject();
-          ToolWindowManager.getInstance(p).getToolWindow(ID).setTitle(f.getName());
-        }
+      if (myVcs == null) return;
 
+      VirtualFile vf = e.getData(CommonDataKeys.VIRTUAL_FILE);
+      if (vf == null) return;
+
+      File f = virtualToIoFile(vf);
+      if (!filesEqual(f, myFile)) {
+        setFile(myVcs, f);
+
+        ToolWindow toolWindow = ToolWindowManager.getInstance(myVcs.getProject()).getToolWindow(ID);
+        if (toolWindow != null) toolWindow.setTitle(f.getName());
       }
     }
   }
