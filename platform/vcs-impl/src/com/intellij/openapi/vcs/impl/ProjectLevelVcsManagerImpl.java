@@ -656,7 +656,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     }
     for (VcsDirectoryMapping mapping : getDirectoryMappings()) {
       VcsRootSettings rootSettings = mapping.getRootSettings();
-      if (rootSettings == null && StringUtil.isEmpty(mapping.getDirectory()) && StringUtil.isEmpty(mapping.getVcs())) {
+      if (rootSettings == null && mapping.isDefaultMapping() && mapping.isNoneMapping()) {
         continue;
       }
 

@@ -537,7 +537,7 @@ public class VcsUtil {
     List<VcsDirectoryMapping> mappings = new ArrayList<>(existingMappings);
     for (Iterator<VcsDirectoryMapping> iterator = mappings.iterator(); iterator.hasNext(); ) {
       VcsDirectoryMapping mapping = iterator.next();
-      if (mapping.isDefaultMapping() && StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
+      if (mapping.isDefaultMapping() && mapping.isNoneMapping()) {
         LOG.debug("Removing <Project> -> <None> mapping");
         iterator.remove();
       }

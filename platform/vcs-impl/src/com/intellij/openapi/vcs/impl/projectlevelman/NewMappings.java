@@ -443,7 +443,7 @@ public class NewMappings implements Disposable {
   }
 
   public boolean isEmpty() {
-    return all(myMappings, mapping -> StringUtil.isEmpty(mapping.getVcs()));
+    return all(myMappings, mapping -> mapping.isNoneMapping());
   }
 
   public void removeDirectoryMapping(@NotNull VcsDirectoryMapping mapping) {
