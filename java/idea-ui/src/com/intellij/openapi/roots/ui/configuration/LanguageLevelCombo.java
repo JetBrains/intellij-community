@@ -107,7 +107,7 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
 
   @Override
   public void setSelectedItem(Object anObject) {
-    super.setSelectedItem(anObject == null ? myDefaultItem : anObject);
+    super.setSelectedItem(anObject == null || anObject == LanguageLevel.JDK_X ? myDefaultItem : anObject);
     checkAcceptedLevel(getSelectedLevel());
   }
 }
