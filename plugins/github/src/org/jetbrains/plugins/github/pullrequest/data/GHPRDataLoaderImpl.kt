@@ -1,56 +1,52 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.google.common.cache.CacheBuilder
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
-import com.intellij.util.EventDispatcher
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.CalledInAwt
-import java.util.*
 
 internal class GHPRDataLoaderImpl(private val dataProviderFactory: (GHPRIdentifier) -> GHPRDataProvider)
   : GHPRDataLoader {
 
   private var isDisposed = false
-  private val cache = CacheBuilder.newBuilder()
-    .removalListener<GHPRIdentifier, GHPRDataProvider> {
-      runInEdt { invalidationEventDispatcher.multicaster.providerChanged(it.key) }
-    }
-    .maximumSize(5)
-    .build<GHPRIdentifier, GHPRDataProvider>()
 
-  private val invalidationEventDispatcher = EventDispatcher.create(DataInvalidatedListener::class.java)
+  private val cache = mutableMapOf<GHPRIdentifier, DisposalCountingHolder>()
 
   @CalledInAwt
-  override fun invalidateAllData() {
-    cache.invalidateAll()
-  }
-
-  @CalledInAwt
-  override fun getDataProvider(id: GHPRIdentifier): GHPRDataProvider {
+  override fun getDataProvider(id: GHPRIdentifier, disposable: Disposable): GHPRDataProvider {
     if (isDisposed) throw IllegalStateException("Already disposed")
 
-    return cache.get(id) {
-      dataProviderFactory(id)
-    }
+    return cache.getOrPut(id) {
+      DisposalCountingHolder(dataProviderFactory(id)).also {
+        Disposer.register(it, Disposable { cache.remove(id) })
+      }
+    }.acquire(disposable)
   }
 
   @CalledInAwt
-  override fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider? = cache.getIfPresent(id)
-
-  override fun addInvalidationListener(disposable: Disposable, listener: (GHPRIdentifier) -> Unit) =
-    invalidationEventDispatcher.addListener(object : DataInvalidatedListener {
-      override fun providerChanged(id: GHPRIdentifier) {
-        listener(id)
-      }
-    }, disposable)
+  override fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider? = cache[id]?.provider
 
   override fun dispose() {
-    invalidateAllData()
     isDisposed = true
+    cache.values.toList().forEach(Disposer::dispose)
   }
 
-  private interface DataInvalidatedListener : EventListener {
-    fun providerChanged(id: GHPRIdentifier)
+  private class DisposalCountingHolder(val provider: GHPRDataProvider) : Disposable {
+
+    private var disposalCounter = 0
+
+    fun acquire(disposable: Disposable): GHPRDataProvider {
+      disposalCounter++
+      Disposer.register(disposable, Disposable {
+        disposalCounter--
+        if (disposalCounter <= 0) {
+          Disposer.dispose(this)
+        }
+      })
+      return provider
+    }
+
+    override fun dispose() {
+    }
   }
 }

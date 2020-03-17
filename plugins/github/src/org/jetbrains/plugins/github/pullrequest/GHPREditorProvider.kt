@@ -33,8 +33,8 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContextBase
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
@@ -73,7 +73,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
                                                     pullRequest: GHPullRequestShort): ComponentContainer {
     val disposable = Disposer.newDisposable()
 
-    val dataProvider = dataContext.dataLoader.getDataProvider(pullRequest)
+    val dataProvider = dataContext.dataLoader.getDataProvider(pullRequest, disposable)
 
     val detailsModel = SingleValueModel(pullRequest)
     val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(dataProvider.reviewData, disposable)
@@ -96,11 +96,8 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     val mainPanel = Wrapper().also {
       DataManager.registerDataProvider(it, DataProvider { dataId ->
-        if (GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId)) object : GHPRActionDataContextBase(dataContext) {
-          override val avatarIconsProviderFactory = avatarIconsProviderFactory
-          override val pullRequestDetails = pullRequest
-          override val pullRequestDataProvider = dataProvider
-        }
+        if (GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId))
+          GHPRFixedActionDataContext(dataContext, dataProvider, avatarIconsProviderFactory, pullRequest)
         else null
       })
     }
@@ -198,6 +195,8 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     (actionManager.getAction("Github.PullRequest.Timeline.Update") as RefreshAction).registerCustomShortcutSet(mainPanel, disposable)
     val actionGroup = actionManager.getAction("Github.PullRequest.Timeline.Popup") as ActionGroup
     PopupHandler.installPopupHandler(timelinePanel, actionGroup, ActionPlaces.UNKNOWN, actionManager)
+
+    loader.loadMore()
 
     return object : ComponentContainer {
       override fun getComponent() = mainPanel

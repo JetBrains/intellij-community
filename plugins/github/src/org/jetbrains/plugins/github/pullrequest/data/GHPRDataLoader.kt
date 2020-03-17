@@ -6,14 +6,8 @@ import org.jetbrains.annotations.CalledInAwt
 
 internal interface GHPRDataLoader : Disposable {
   @CalledInAwt
-  fun getDataProvider(id: GHPRIdentifier): GHPRDataProvider
+  fun getDataProvider(id: GHPRIdentifier, disposable: Disposable): GHPRDataProvider
 
   @CalledInAwt
   fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider?
-
-  @CalledInAwt
-  fun invalidateAllData()
-
-  @CalledInAwt
-  fun addInvalidationListener(disposable: Disposable, listener: (GHPRIdentifier) -> Unit)
 }

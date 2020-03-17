@@ -23,7 +23,6 @@ import com.intellij.ui.SideBorder
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewResolvedThreadsToggleAction
@@ -47,6 +46,7 @@ internal class GHPRChangesBrowser(private val model: GHPRChangesModel,
     model.addStateChangesListener {
       myViewer.rebuildTree()
     }
+    myViewer.rebuildTree()
   }
 
   override fun canShowDiff(): Boolean {
@@ -68,14 +68,9 @@ internal class GHPRChangesBrowser(private val model: GHPRChangesModel,
         dataKeys[GHPRDiffReviewSupport.KEY] = reviewSupport
         val currentDataContext =
           GHPRActionKeys.ACTION_DATA_CONTEXT.getData(DataManager.getInstance().getDataContext(this))
-        val dataContext = currentDataContext?.let { ctx ->
-          ctx.pullRequestDataProvider?.let {
-            GHPRFixedActionDataContext(ctx, it)
-          }
-        }
 
         dataKeys[DiffUserDataKeys.DATA_PROVIDER] = GenericDataProvider().apply {
-          putData(GHPRActionKeys.ACTION_DATA_CONTEXT, dataContext)
+          putData(GHPRActionKeys.ACTION_DATA_CONTEXT, currentDataContext)
           putData(GHPRDiffReviewSupport.DATA_KEY, reviewSupport)
         }
         val viewOptionsGroup = NonEmptyActionGroup().apply {

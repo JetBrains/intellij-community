@@ -32,9 +32,7 @@ interface GHPRActionDataContext {
   val currentUser: GHUser
 
   val pullRequestDetails: GHPullRequestShort?
-  val pullRequestDataProvider: GHPRDataProvider?
+  val pullRequestDataProvider: GHPRDataProvider
 
   val submitReviewCommentDocument: Document
-
-  fun resetAllData()
 }

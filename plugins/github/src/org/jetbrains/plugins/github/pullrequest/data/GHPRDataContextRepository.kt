@@ -87,9 +87,6 @@ internal class GHPRDataContextRepository(private val project: Project) {
                            gitRemoteCoordinates, repositoryCoordinates, it,
                            GHPRReviewDataProviderImpl(reviewService, it))
     }
-    requestExecutor.addListener(dataLoader) {
-      dataLoader.invalidateAllData()
-    }
     messageBus.connect().subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
       override fun onPullRequestEdited(id: GHPRIdentifier) {
         runInEdt {
