@@ -55,6 +55,8 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntIntHashMap;
@@ -114,6 +116,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   @NotNull private final EditorImpl myEditor;
   // null renderer means we should not show traffic light icon
   @Nullable private ErrorStripeRenderer myErrorStripeRenderer;
+  private final MergingUpdateQueue myErrorUpdates;
   private final List<ErrorStripeListener> myErrorMarkerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private boolean dimensionsAreValid;
@@ -284,6 +287,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         updateTrafficLightVisibility();
       }
     });
+    myErrorUpdates = new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable);
   }
 
   @Override
@@ -384,22 +388,30 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   public void repaintTrafficLightIcon() {
-    if (myErrorStripeRenderer != null) {
-      AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus(myEditor);
-      if (!AnalyzerStatus.equals(newStatus, analyzerStatus)) {
-        analyzerStatus = newStatus;
-        smallIconLabel.setIcon(analyzerStatus.getIcon());
-
-        if (showToolbar != analyzerStatus.getController().enableToolbar()) {
-          showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
-                        analyzerStatus.getController().enableToolbar();
-          updateTrafficLightVisibility();
+    if (myErrorStripeRenderer == null) return;
+    
+    myErrorUpdates.queue(Update.create(this, () -> {
+      if (myErrorStripeRenderer != null) {
+        AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus(myEditor);
+        if (!AnalyzerStatus.equals(newStatus, analyzerStatus)) {
+          changeStatus(newStatus);
         }
-
-        myPopupManager.updateVisiblePopup();
-        ActivityTracker.getInstance().inc();
       }
+    }));
+  }
+
+  private void changeStatus(AnalyzerStatus newStatus) {
+    analyzerStatus = newStatus;
+    smallIconLabel.setIcon(analyzerStatus.getIcon());
+
+    if (showToolbar != analyzerStatus.getController().enableToolbar()) {
+      showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
+                    analyzerStatus.getController().enableToolbar();
+      updateTrafficLightVisibility();
     }
+
+    myPopupManager.updateVisiblePopup();
+    ActivityTracker.getInstance().inc();
   }
 
   private static class PositionedStripe {
