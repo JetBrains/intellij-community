@@ -134,7 +134,9 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testPatternVariableNotUsedAfterwards() {
     doTest("temp", true, false, false, "boolean");
   }
-  public void testPatternVariableDeclarationJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
+  public void testPatternVariableDeclarationJava14Preview() {
+    doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, JAVA_LANG_STRING));
+  }
   public void testPatternVariableDeclarationUsedInLocalJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
   public void testPatternVariableDeclarationAfterIfJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
   public void testNonPatternDeclarationJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
