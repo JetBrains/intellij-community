@@ -276,7 +276,7 @@ public abstract class CodeBlockSurrounder {
   private static class NoOpSurrounder extends CodeBlockSurrounder {
     private final PsiStatement myAnchor;
 
-    private NoOpSurrounder(@NotNull PsiExpression expression, @NotNull PsiStatement anchor) {
+    NoOpSurrounder(@NotNull PsiExpression expression, @NotNull PsiStatement anchor) {
       super(expression);
       myAnchor = anchor;
     }
@@ -292,7 +292,7 @@ public abstract class CodeBlockSurrounder {
     private final @NotNull PsiLambdaExpression myLambda;
     private final boolean myVoidMode;
 
-    public LambdaCodeBlockSurrounder(@NotNull PsiExpression expression, @NotNull PsiLambdaExpression lambda) {
+    LambdaCodeBlockSurrounder(@NotNull PsiExpression expression, @NotNull PsiLambdaExpression lambda) {
       super(expression);
       myLambda = lambda;
       myVoidMode = PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(myLambda));
@@ -308,7 +308,7 @@ public abstract class CodeBlockSurrounder {
     }
 
     @Override
-    protected @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
+    @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
       String replacementText = myVoidMode ? "{a;}" : "{return a;}";
       PsiCodeBlock newBody = factory.createCodeBlockFromText(replacementText, myLambda);
       LambdaUtil.extractSingleExpressionFromBody(newBody).replace(Objects.requireNonNull(myLambda.getBody()));
@@ -320,7 +320,7 @@ public abstract class CodeBlockSurrounder {
   private static class YieldSurrounder extends CodeBlockSurrounder {
     private final PsiExpressionStatement myStatement;
 
-    public YieldSurrounder(PsiExpression expression, PsiExpressionStatement statement) {
+    YieldSurrounder(PsiExpression expression, PsiExpressionStatement statement) {
       super(expression);
       myStatement = statement;
     }
@@ -331,7 +331,7 @@ public abstract class CodeBlockSurrounder {
     }
 
     @Override
-    protected @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
+    @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
       PsiBlockStatement block = (PsiBlockStatement)factory.createStatementFromText("{yield x;}", myStatement);
       PsiExpression newExpression = Objects.requireNonNull(((PsiYieldStatement)block.getCodeBlock().getStatements()[0]).getExpression());
       newExpression.replace(myStatement.getExpression());
@@ -343,13 +343,13 @@ public abstract class CodeBlockSurrounder {
   private static class SimpleSurrounder extends CodeBlockSurrounder {
     private final PsiStatement myStatement;
 
-    public SimpleSurrounder(PsiExpression expression, PsiStatement statement) {
+    SimpleSurrounder(PsiExpression expression, PsiStatement statement) {
       super(expression);
       myStatement = statement;
     }
 
     @Override
-    protected @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
+    @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
       PsiBlockStatement block = (PsiBlockStatement)factory.createStatementFromText("{}", myStatement);
       block.getCodeBlock().add(myStatement);
       block = (PsiBlockStatement)myStatement.replace(block);
@@ -371,7 +371,7 @@ public abstract class CodeBlockSurrounder {
     }
 
     @Override
-    protected @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
+    @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
       PsiClassInitializer initializer =
         ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(myField), PsiClassInitializer.class);
       boolean isStatic = myField.hasModifierProperty(PsiModifier.STATIC);
@@ -408,16 +408,16 @@ public abstract class CodeBlockSurrounder {
     private final PsiResourceVariable myVariable;
     private final PsiTryStatement myStatement;
 
-    public SplitTrySurrounder(@NotNull PsiExpression expression,
-                              @NotNull PsiResourceVariable variable,
-                              @NotNull PsiTryStatement tryStatement) {
+    SplitTrySurrounder(@NotNull PsiExpression expression,
+                       @NotNull PsiResourceVariable variable,
+                       @NotNull PsiTryStatement tryStatement) {
       super(expression);
       myVariable = variable;
       myStatement = tryStatement;
     }
 
     @Override
-    protected @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
+    @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
       PsiResourceList list = Objects.requireNonNull(myStatement.getResourceList());
       PsiTryStatement copy = (PsiTryStatement)myStatement.copy();
       PsiResourceList copyList = copy.getResourceList();
@@ -455,13 +455,13 @@ public abstract class CodeBlockSurrounder {
   private static class WhileConditionSurrounder extends CodeBlockSurrounder {
     private final PsiWhileStatement myStatement;
 
-    public WhileConditionSurrounder(@NotNull PsiExpression expression, @NotNull PsiWhileStatement whileStatement) {
+    WhileConditionSurrounder(@NotNull PsiExpression expression, @NotNull PsiWhileStatement whileStatement) {
       super(expression);
       myStatement = whileStatement;
     }
 
     @Override
-    protected @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
+    @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
       PsiWhileStatement whileStatement = myStatement;
       PsiExpression oldCondition = Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(whileStatement.getCondition()));
       PsiStatement body = whileStatement.getBody();
@@ -532,7 +532,7 @@ public abstract class CodeBlockSurrounder {
     }
 
     @Override
-    protected @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
+    @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
       boolean then = PsiTreeUtil.isAncestor(myConditional.getThenExpression(), myExpression, false);
       SurroundResult upstreamResult = myUpstream.surround();
       PsiConditionalExpression ternary = (PsiConditionalExpression)upstreamResult.getExpression();
@@ -597,7 +597,7 @@ public abstract class CodeBlockSurrounder {
     }
 
     @Override
-    protected @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
+    @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
       PsiExpression[] operands = myPolyadicExpression.getOperands();
       int index = (int)StreamEx.of(operands).indexOf(o -> PsiTreeUtil.isAncestor(o, myExpression, false))
         .orElseThrow(IllegalStateException::new);
