@@ -274,7 +274,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       List<ActionItem> items = ActionPopupStep.createActionItems(
           actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
 
-      return new ActionPopupStep(items, title, getComponentContextSupplier(component), actionPlace, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+      return new ActionPopupStep(items, title, getComponentContextSupplier(dataContext, component), actionPlace, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
                                  preselectActionCondition, autoSelection, showDisabledActions, presentationFactory);
     }
 
@@ -351,8 +351,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @NotNull
-  private static Supplier<DataContext> getComponentContextSupplier(Component component) {
-    return () -> DataManager.getInstance().getDataContext(component);
+  private static Supplier<DataContext> getComponentContextSupplier(@NotNull DataContext dataContext, Component component) {
+    return () -> {
+      DataContext componentContext = DataManager.getInstance().getDataContext(component);
+      return (DataContext)dataId -> {
+        Object data = dataContext.getData(dataId);
+        return data != null ? data : componentContext.getData(dataId);
+      };
+    };
   }
 
   @Override
@@ -409,7 +415,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return ActionPopupStep.createActionsStep(
       actionGroup, dataContext, showNumbers, true, showDisabledActions,
       title, honorActionMnemonics, autoSelectionEnabled,
-      getComponentContextSupplier(component),
+      getComponentContextSupplier(dataContext, component),
       actionPlace, null, defaultOptionIndex, null);
   }
 
