@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.psi.PsiElement;
@@ -54,26 +54,5 @@ public class MethodSmartStepTarget extends SmartStepTarget {
 
   public void setOrdinal(int ordinal) {
     myOrdinal = ordinal;
-  }
-
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    final MethodSmartStepTarget that = (MethodSmartStepTarget)o;
-
-    if (!myMethod.equals(that.myMethod)) {
-      return false;
-    }
-
-    return true;
-  }
-
-  public int hashCode() {
-    return myMethod.hashCode();
   }
 }
