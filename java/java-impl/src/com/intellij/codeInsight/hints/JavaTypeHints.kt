@@ -132,6 +132,12 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
       return factory.roundWithBackground(base)
     }
 
+    @JvmStatic
+    fun presentationWithColon(type: PsiType, factory: PresentationFactory): InlayPresentation {
+      val presentations = JavaTypeHintsPresentationFactory(factory, 3).hint(type, 0)
+      return factory.roundWithBackground(factory.seq(factory.smallText(": "), presentations))
+    }
+
     private const val ANONYMOUS_MARK = "anonymous"
     private const val PLACEHOLDER_MARK = "..."
   }
