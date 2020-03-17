@@ -281,9 +281,11 @@ public final class ThreadTracker {
     if (stackTrace.length != 4) {
       return false;
     }
-    return "kotlinx.coroutines.DefaultExecutor".equals(thread.getName()) &&
-           stackTrace[0].getClassName().equals("sun.misc.Unsafe") && stackTrace[0].getMethodName().equals("park") &&
-           stackTrace[2].getClassName().equals("kotlinx.coroutines.DefaultExecutor") && stackTrace[2].getMethodName().equals("run");
+    return "kotlinx.coroutines.DefaultExecutor".equals(thread.getName())
+           && (stackTrace[0].getClassName().equals("sun.misc.Unsafe") || stackTrace[0].getClassName().equals("jdk.internal.misc.Unsafe"))
+           && stackTrace[0].getMethodName().equals("park")
+           && stackTrace[2].getClassName().equals("kotlinx.coroutines.DefaultExecutor")
+           && stackTrace[2].getMethodName().equals("run");
   }
 
   private static boolean isCoroutineSchedulerPoolThread(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
