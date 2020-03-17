@@ -29,12 +29,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-public class GitRenameBranchOperation extends GitBranchOperation {
+class GitRenameBranchOperation extends GitBranchOperation {
   @NotNull private final VcsNotifier myNotifier;
   @NotNull private final String myCurrentName;
   @NotNull private final String myNewName;
 
-  public GitRenameBranchOperation(@NotNull Project project,
+  GitRenameBranchOperation(@NotNull Project project,
                                   @NotNull Git git,
                                   @NotNull GitBranchUiHandler uiHandler,
                                   @NotNull String currentName,
