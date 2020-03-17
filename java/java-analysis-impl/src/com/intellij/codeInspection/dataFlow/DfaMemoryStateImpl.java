@@ -19,7 +19,10 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -296,14 +299,20 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       RelationType relation = that.myDistinctClasses.getRelation(firstIndex, secondIndex);
       if (relation == null || pair.isOrdered() && relation != RelationType.LT) return false;
     }
-    Set<DfaVariableValue> values = new HashSet<>(this.myVariableStates.keySet());
-    values.addAll(that.myVariableStates.keySet());
-    for (DfaVariableValue value : values) {
+    for (Map.Entry<DfaVariableValue, DfaVariableState> entry : this.myVariableStates.entrySet()) {
+      DfaVariableValue value = entry.getKey();
+      DfaVariableState thisState = entry.getValue();
       // the default variable state is not always a superstate for any non-default state
       // (e.g. default can be nullable, but current state can be notnull)
       // so we cannot limit checking to myVariableStates map only
-      DfaVariableState thisState = this.getVariableState(value);
       DfaVariableState thatState = that.getVariableState(value);
+      if(!thisState.isSuperStateOf(thatState)) return false;
+    }
+    for (Map.Entry<DfaVariableValue, DfaVariableState> entry : that.myVariableStates.entrySet()) {
+      DfaVariableValue value = entry.getKey();
+      if (this.myVariableStates.containsKey(value)) continue; // already processed in the previous loop
+      DfaVariableState thisState = this.getVariableState(value);
+      DfaVariableState thatState = entry.getValue();
       if(!thisState.isSuperStateOf(thatState)) return false;
     }
     return true;
