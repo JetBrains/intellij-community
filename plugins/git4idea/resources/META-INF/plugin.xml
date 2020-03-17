@@ -180,6 +180,7 @@
     <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction" internal="true"/>
     <action id="CopyPathFromRepositoryRootProvider" class="git4idea.actions.CopyPathFromRepositoryRootProvider">
       <add-to-group group-id="CopyFileReference"/>
+      <add-to-group group-id="CopyGroup" relative-to-action="CopySourceRootPath" anchor="after"/>
     </action>
   </actions>
 
