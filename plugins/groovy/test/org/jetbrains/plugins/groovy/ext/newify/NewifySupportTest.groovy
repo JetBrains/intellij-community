@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 @CompileStatic
 class NewifySupportTest extends GrHighlightingTestBase {
 
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_5
 
   @Override
   void setUp() throws Exception {
@@ -222,5 +222,32 @@ class B {
       assert contains("name")
       assert contains("age")
     }
+  }
+
+  void 'test newify supports regex patterns'() {
+    testHighlighting """
+@Newify(pattern = /[A-Z].*/)
+class B {
+  def a = A()
+  def b = new A()
+  def c = Integer(1)
+}
+"""
+
+
+    testHighlighting """
+@Newify(pattern = "A")
+class B {
+  def a = A("B")
+}
+"""
+  }
+
+  void 'test newify should not throw on incorrect regex'() {
+    testHighlighting """
+@Newify(pattern = "*")
+class B {
+  def a = <warning descr="Cannot resolve symbol 'A'">A</warning>()
+}"""
   }
 }
