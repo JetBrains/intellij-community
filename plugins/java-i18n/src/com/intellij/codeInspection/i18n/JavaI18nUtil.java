@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.util.UastExpressionUtils;
 
+import java.text.ChoiceFormat;
+import java.text.Format;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.IntStream;
@@ -401,11 +403,24 @@ public class JavaI18nUtil extends I18nUtil {
    */
   public static int getPropertyValuePlaceholdersCount(@NotNull final String propertyValue) {
     try {
-      return new MessageFormat(propertyValue).getFormatsByArgumentIndex().length;
+      return countFormatParameters(new MessageFormat(propertyValue));
     }
     catch (final IllegalArgumentException e) {
       return 0;
     }
+  }
+
+  private static int countFormatParameters(MessageFormat mf) {
+    Format[] formats = mf.getFormatsByArgumentIndex();
+    int maxLength = formats.length;
+    for (Format format : formats) {
+      if (format instanceof ChoiceFormat) {
+        for (Object o : ((ChoiceFormat) format).getFormats()) {
+          maxLength = Math.max(maxLength, countFormatParameters(new MessageFormat((String) o)));
+        }
+      }
+    }
+    return maxLength;
   }
 
   /**
