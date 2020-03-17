@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 
 /**
@@ -144,7 +145,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return "However tag deletion has succeeded for the following " + repositories() + ":<br/>" +
+    return "However tag deletion has succeeded for the following " +
+           pluralize("repository", getSuccessfulRepositories().size()) + ":<br/>" +
            successfulRepositoriesJoined() +
            "<br/>You may rollback (recreate " + myTagName + " in these roots) not to let tags diverge.";
   }

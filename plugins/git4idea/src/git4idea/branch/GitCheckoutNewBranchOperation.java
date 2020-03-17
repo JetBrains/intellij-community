@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -88,7 +89,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return "However checkout has succeeded for the following " + repositories() + ":<br/>" +
+    return "However checkout has succeeded for the following " + pluralize("repository", getSuccessfulRepositories().size()) + ":<br/>" +
            successfulRepositoriesJoined() +
            "<br/>You may rollback (checkout previous branch back, and delete " + myNewBranchName + ") not to let branches diverge.";
   }

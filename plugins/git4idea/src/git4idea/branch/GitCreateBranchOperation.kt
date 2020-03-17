@@ -16,6 +16,7 @@
 package git4idea.branch
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.commands.Git
 import git4idea.commands.GitCompoundResult
@@ -71,7 +72,8 @@ internal class GitCreateBranchOperation(
   override fun getSuccessMessage() = "Branch <b><code>$branchName</code></b> was created"
 
   override fun getRollbackProposal() = """
-    However the branch was created in the following ${repositories()}:<br/>
+    However the branch was created in the following ${StringUtil.pluralize("repository",
+                                                                           successfulRepositories.size)}:<br/>
     ${successfulRepositoriesJoined()}<br/>
     You may rollback (delete $branchName) not to let branches diverge.""".trimIndent()
 

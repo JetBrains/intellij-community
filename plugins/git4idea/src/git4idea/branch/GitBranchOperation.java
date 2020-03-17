@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static git4idea.GitUtil.getRepositoryManager;
 import static java.util.stream.Collectors.toList;
@@ -235,11 +234,6 @@ abstract class GitBranchOperation {
     else {
       showUnmergedFilesNotification();
     }
-  }
-
-  @NotNull
-  protected String repositories() {
-    return pluralize("repository", getSuccessfulRepositories().size());
   }
 
   /**

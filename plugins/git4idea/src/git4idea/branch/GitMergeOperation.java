@@ -28,6 +28,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static git4idea.GitUtil.getHead;
 import static git4idea.GitUtil.updateAndRefreshChangedVfs;
 
@@ -318,7 +319,7 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return "However merge has succeeded for the following " + repositories() + ":<br/>" +
+    return "However merge has succeeded for the following " + pluralize("repository", getSuccessfulRepositories().size()) + ":<br/>" +
            successfulRepositoriesJoined() +
            "<br/>" + ROLLBACK_PROPOSAL;
   }
