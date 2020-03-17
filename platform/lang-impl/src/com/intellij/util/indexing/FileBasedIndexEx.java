@@ -1,12 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -17,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
+import com.intellij.util.indexing.roots.*;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -331,6 +338,67 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
     for (Runnable r : collectScanRootRunnables(processor, project, indicator)) r.run();
+  }
+
+  /**
+   * This method is backport-ed from master (202+ branches), where indexing roots collecting has been reimplemented.
+   * In this 201 branch the method is used only for shared-indexes, which are experimental.
+   * It must not be used in production code!
+   *
+   * It is copied to avoid massive merge conflicts on backport-ing changes to "shared-indexes" plugin from the master branch.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @NotNull
+  public List<IndexableFilesProvider> getOrderedIndexableFilesProviders(@NotNull Project project,
+                                                                        @SuppressWarnings({"unused", "for the sake of descriptor as in master branch"}) @NotNull ProgressIndicator indicator) {
+    if (LightEdit.owns(project)) {
+      return Collections.emptyList();
+    }
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) {
+        return Collections.emptyList();
+      }
+
+      Set<Library> seenLibraries = new HashSet<>();
+      Set<Sdk> seenSdks = new HashSet<>();
+      Set<OrderEntry> allEntries = new THashSet<>();
+
+      List<IndexableFilesProvider> providers = new ArrayList<>();
+      Module[] modules = ModuleManager.getInstance(project).getSortedModules();
+      for (Module module : modules) {
+        providers.add(new ModuleIndexableFilesProvider(module));
+
+        OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
+        for (OrderEntry orderEntry : orderEntries) {
+          allEntries.add(orderEntry);
+          if (orderEntry instanceof LibraryOrderEntry) {
+            Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
+            if (library != null && seenLibraries.add(library)) {
+              providers.add(new LibraryIndexableFilesProvider(library));
+            }
+          }
+          if (orderEntry instanceof JdkOrderEntry) {
+            Sdk sdk = ((JdkOrderEntry)orderEntry).getJdk();
+            if (sdk != null && seenSdks.add(sdk)) {
+              providers.add(new SdkIndexableFilesProvider(sdk));
+            }
+          }
+        }
+      }
+
+      for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
+        providers.add(new IndexableSetContributorFilesProvider(contributor));
+      }
+
+      for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
+        for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(project)) {
+          providers.add(new SyntheticLibraryIndexableFilesProvider(library));
+        }
+      }
+
+      return providers;
+    });
   }
 
   @NotNull
