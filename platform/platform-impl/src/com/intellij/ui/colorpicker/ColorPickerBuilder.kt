@@ -42,7 +42,7 @@ private const val SEPARATOR_HEIGHT = 5
 /**
  * Builder class to help to create customized picker components depends on the requirement.
  */
-class ColorPickerBuilder(private val showAlpha: Boolean) {
+class ColorPickerBuilder(private val showAlpha: Boolean = false) {
 
   private val componentsToBuild = mutableListOf<JComponent>()
   private val model = ColorPickerModel()
