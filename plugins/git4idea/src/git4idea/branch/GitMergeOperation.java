@@ -37,6 +37,7 @@ import static git4idea.util.GitUIUtil.code;
 class GitMergeOperation extends GitBranchOperation {
 
   private static final Logger LOG = Logger.getInstance(GitMergeOperation.class);
+  @NotNull private static final String DELETE_HREF_ATTRIBUTE = "delete";
 
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final String myBranchToMerge;
@@ -152,7 +153,7 @@ class GitMergeOperation extends GitBranchOperation {
         break;
       case PROPOSE:
         String deleteBranch = GitBundle.message("merge.operation.delete.branch", myBranchToMerge);
-        String description = message + "<br/><a href='delete'>" + deleteBranch + "</a>";  //NON-NLS
+        String description = message + "<br/><a href='" + DELETE_HREF_ATTRIBUTE + "'>" + deleteBranch + "</a>";  //NON-NLS
         VcsNotifier.getInstance(myProject).notifySuccess("", description, new DeleteMergedLocalBranchNotificationListener());
         break;
       case NOTHING:
@@ -352,7 +353,7 @@ class GitMergeOperation extends GitBranchOperation {
   private class DeleteMergedLocalBranchNotificationListener extends NotificationListener.Adapter {
     @Override
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      if (event.getDescription().equalsIgnoreCase("delete")) {
+      if (event.getDescription().equalsIgnoreCase(DELETE_HREF_ATTRIBUTE)) {
         notification.expire();
         GitBrancher.getInstance(myProject).deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
       }
