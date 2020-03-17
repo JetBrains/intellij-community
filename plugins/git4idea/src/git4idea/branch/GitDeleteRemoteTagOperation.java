@@ -11,6 +11,7 @@ import git4idea.GitTag;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
+import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushParams.ForceWithLease;
 import git4idea.push.GitPushParamsImpl;
 import git4idea.push.GitPushParamsImpl.ForceWithLeaseReference;
@@ -55,7 +56,8 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
                                             : emptyList();
 
       for (GitRemote remote: repository.getRemotes()) {
-        GitCommandResult lsRemoteResult = myGit.lsRemoteRefs(myProject, repository.getRoot(), remote, singletonList(tagFullName), "--tags");
+        GitCommandResult lsRemoteResult =
+          myGit.lsRemoteRefs(myProject, repository.getRoot(), remote, singletonList(tagFullName), "--tags"); //NON-NLS
         if (!lsRemoteResult.success()) {
           result.append(repository, lsRemoteResult);
           continue;
@@ -78,21 +80,25 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
       repository.update();
     }
 
-
-    boolean hasMultipleRemotes = ContainerUtil.exists(repositories, it -> it.getRemotes().size() > 1);
-    String onRemotes = hasMultipleRemotes ? " on Remotes" : " on Remote";
+    int remotesCount = ContainerUtil.exists(repositories, it -> it.getRemotes().size() > 1) ? 1 : 2;
 
     if (successRemotes > 0) {
-      String message = "<b>Deleted Tag" + onRemotes + ":</b> " + myTagName;
+      String message = GitBundle.message("delete.remote.tag.operation.deleted.tag.on.remotes",
+                                         remotesCount,
+                                         myTagName);
       notifySuccess("", message);
     }
     else if (successRemotes == 0 && failureRemotes == 0) {
-      String message = "<b>Tag Doesn't Exist" + onRemotes + ":</b> " + myTagName;
+      String message = GitBundle.message("delete.remote.tag.operation.tag.does.not.exist.on.remotes",
+                                         remotesCount,
+                                         myTagName);
       notifySuccess("", message);
     }
 
     if (!result.totalSuccess()) {
-      String title = "Failed to delete tag " + myTagName + StringUtil.toLowerCase(onRemotes);
+      String title = GitBundle.message("delete.remote.tag.operation.failed.to.delete.tag.on.remotes",
+                                       myTagName,
+                                       remotesCount);
       VcsNotifier.getInstance(myProject).notifyError(title, result.getErrorOutputWithReposIndication());
     }
   }
