@@ -250,4 +250,17 @@ class B {
   def a = <warning descr="Cannot resolve symbol 'A'">A</warning>()
 }"""
   }
+
+  void 'test non-static classes are not available in static context'() {
+    testHighlighting """
+class Z {
+    class Inner {
+    }
+
+    @Newify(<error descr="Cannot reference non-static symbol 'Inner' from static context">Inner</error>)
+    public static void main(String[] args) {
+        def aaa = <warning descr="Cannot resolve symbol 'Inner'">Inner</warning>()
+    }
+}"""
+  }
 }

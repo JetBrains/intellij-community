@@ -4,9 +4,11 @@ package org.jetbrains.plugins.groovy.ext.newify
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.parents
 import com.intellij.psi.util.parentsWithSelf
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.getClassArrayValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
@@ -15,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.processUnqualified
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
+import org.jetbrains.plugins.groovy.transformations.impl.synch.isStatic
 import java.util.regex.PatternSyntaxException
 
 internal const val newifyAnnotationFqn = "groovy.lang.Newify"
@@ -40,7 +43,13 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
       if (qualifier == null) {
         val patternClasses = getClassesForPatternAttribute(annotation, referenceName, place)
         val newifiedClasses = getClassArrayValue(annotation, "value", true)
-        (patternClasses + newifiedClasses).flatMap { buildConstructors(it, it.name) }.forEach {
+        val staticClassFilter: (PsiClass) -> Boolean = if (place.parents.find { it is GrMethod && it.isStatic() } != null) {
+          { if (it.containingClass != null) it.isStatic() else true }
+        }
+        else {
+          { true }
+        }
+        (patternClasses + newifiedClasses).filter(staticClassFilter).flatMap { buildConstructors(it, it.name) }.forEach {
           ResolveUtil.processElement(processor, it, state)
         }
       }
