@@ -236,7 +236,6 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
     }
   }
 
-  // note: we are not calling this method during the project startup - it is called anyway by f.e the GitRootTracker
   private void checkAndUpdateRepositoriesCollection(@Nullable VirtualFile checkedRoot) {
     MODIFY_LOCK.lock();
     try {
