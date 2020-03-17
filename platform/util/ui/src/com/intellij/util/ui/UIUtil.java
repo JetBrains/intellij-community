@@ -3069,6 +3069,11 @@ public final class UIUtil {
   }
 
   @NotNull
+  public static String leftArrow() {
+    return FontUtil.leftArrow(StartupUiUtil.getLabelFont());
+  }
+
+  @NotNull
   public static String rightArrow() {
     return FontUtil.rightArrow(StartupUiUtil.getLabelFont());
   }
