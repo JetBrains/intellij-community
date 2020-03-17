@@ -160,8 +160,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
       }
     });
 
-    ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      
+    messageBusConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void checkUnloadPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
         XDebugSession[] sessions = getDebugSessions();
