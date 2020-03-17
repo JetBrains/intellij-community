@@ -30,6 +30,7 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
@@ -506,6 +507,13 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
       eventPublisher.runConfigurationSelected(value)
     }
+
+  internal fun selectConfigurationStoredInFile(file: VirtualFile) {
+    val runConfigs = rcInArbitraryFileManager.getRunConfigsFromFiles(listOf(file.path))
+    if (!runConfigs.isEmpty()) {
+      selectedConfiguration = runConfigs.first()
+    }
+  }
 
   fun requestSort() {
     lock.write {

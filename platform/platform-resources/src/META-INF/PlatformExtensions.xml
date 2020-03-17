@@ -540,6 +540,7 @@
     <projectServiceContainerInitializedListener implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" order="last"/>
     <filePropertyPusher implementation="com.intellij.execution.impl.RCInArbitraryFileScanner"/>
     <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
+    <editorNotificationProvider implementation="com.intellij.execution.impl.RunConfigEditorNotificationProvider"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
