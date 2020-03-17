@@ -156,6 +156,7 @@ internal class GHPRComponentFactory(private val project: Project) {
         if (Disposer.isDisposed(disposable)) null
         else when {
           GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
+          GHPRActionKeys.DATA_CONTEXT.`is`(dataId) -> dataContext
           else -> null
         }
 
