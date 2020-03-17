@@ -150,6 +150,14 @@ public abstract class CodeBlockSurrounder {
     return forExpression(expression) != null;
   }
 
+  /**
+   * Creates a surrounder for given expression.
+   * 
+   * @param expression an expression to surround.
+   * @return a new surrounder that is definitely capable to produce a code block around given expression 
+   * where it's safe to place new statements. Returns null if it's impossible to surround given expression 
+   * with a code block.
+   */
   public static @Nullable CodeBlockSurrounder forExpression(@NotNull PsiExpression expression) {
     PsiElement cur = expression;
     PsiElement parent = cur.getParent();
