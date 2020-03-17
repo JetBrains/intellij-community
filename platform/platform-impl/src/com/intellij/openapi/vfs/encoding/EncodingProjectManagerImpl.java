@@ -64,8 +64,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     new TObjectHashingStrategy<VirtualFilePointer>() {
       @Override
       public int computeHashCode(VirtualFilePointer pointer) {
-        // Hashcode is not stable, because pointer URL can change.
-        // Access keys with caution.
+        // TODO !! hashCode is unstable - VirtualFilePointer URL can change
         return FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());
       }
 
