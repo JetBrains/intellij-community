@@ -22,7 +22,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
     }
   }
 
-  fun `_test indicator cancellation cancels job`() {
+  fun `test indicator cancellation cancels job`() {
     val lock = Semaphore(1)
     val indicator = EmptyProgressIndicator()
     val future = backgroundActivity(indicator) {  // some blocking code under indicator
@@ -42,7 +42,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
     future.get(2000, TimeUnit.MILLISECONDS)
   }
 
-  fun `_test job cancellation cancels indicator`(): Unit = runBlocking {
+  fun `test job cancellation cancels indicator`(): Unit = runBlocking {
     val lock = Semaphore(1)
     val job = launch(Dispatchers.Default) {   // some coroutine
       runUnderIndicator {                     // want to execute blocking Java code from under coroutine
@@ -60,7 +60,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
     }
   }
 
-  fun `_test PCE from runUnderIndicator is rethrown`(): Unit = runBlocking {
+  fun `test PCE from runUnderIndicator is rethrown`(): Unit = runBlocking {
     val lock = Semaphore(1)
     supervisorScope {
       val deferred: Deferred<Unit> = async(Dispatchers.Default) {
