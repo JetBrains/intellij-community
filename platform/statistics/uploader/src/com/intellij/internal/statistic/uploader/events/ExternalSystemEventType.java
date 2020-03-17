@@ -5,12 +5,12 @@ import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public enum ExternalUploadEventType {
-  STARTED, FINISHED, SEND;
+public enum ExternalSystemEventType {
+  STARTED, FINISHED, SEND, ERROR;
 
   @Nullable
-  static ExternalUploadEventType parse(@NotNull String event) {
-    for (ExternalUploadEventType type : values()) {
+  static ExternalSystemEventType parse(@NotNull String event) {
+    for (ExternalSystemEventType type : values()) {
       if (StatisticsEventLogUtil.equals(type.name(), event)) {
         return type;
       }

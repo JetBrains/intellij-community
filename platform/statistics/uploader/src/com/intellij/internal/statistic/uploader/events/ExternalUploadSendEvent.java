@@ -3,13 +3,13 @@ package com.intellij.internal.statistic.uploader.events;
 
 import java.util.Objects;
 
-public class ExternalUploadSendEvent extends ExternalUploadEvent {
+public class ExternalUploadSendEvent extends ExternalSystemEvent {
   private final int mySucceed;
   private final int myFailed;
   private final int myTotal;
 
   public ExternalUploadSendEvent(long timestamp, int succeed, int failed, int total) {
-    super(ExternalUploadEventType.SEND, timestamp);
+    super(ExternalSystemEventType.SEND, timestamp);
     mySucceed = succeed;
     myFailed = failed;
     myTotal = total;

@@ -5,11 +5,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public abstract class ExternalUploadEvent {
+public abstract class ExternalSystemEvent {
   private final long myTimestamp;
-  private final ExternalUploadEventType myEventType;
+  private final ExternalSystemEventType myEventType;
 
-  public ExternalUploadEvent(@NotNull ExternalUploadEventType eventType, long timestamp) {
+  public ExternalSystemEvent(@NotNull ExternalSystemEventType eventType, long timestamp) {
     myTimestamp = timestamp;
     myEventType = eventType;
   }
@@ -18,7 +18,7 @@ public abstract class ExternalUploadEvent {
     return myTimestamp;
   }
 
-  public ExternalUploadEventType getEventType() {
+  public ExternalSystemEventType getEventType() {
     return myEventType;
   }
 
@@ -26,7 +26,7 @@ public abstract class ExternalUploadEvent {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    ExternalUploadEvent event = (ExternalUploadEvent)o;
+    ExternalSystemEvent event = (ExternalSystemEvent)o;
     return myTimestamp == event.myTimestamp &&
            myEventType == event.myEventType;
   }
