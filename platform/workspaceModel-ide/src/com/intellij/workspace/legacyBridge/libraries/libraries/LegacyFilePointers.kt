@@ -83,7 +83,6 @@ class LegacyModelRootsFilePointers(val project: Project) {
         }
       }
     }
-    println("x")
   }
 
   fun onModelChange(newStorage: TypedEntityStorage) {
