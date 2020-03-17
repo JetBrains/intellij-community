@@ -10,7 +10,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
@@ -34,7 +33,6 @@ import com.intellij.workspace.legacyBridge.typedModel.module.SdkOrderEntryViaTyp
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
-import java.util.*
 
 class LegacyBridgeModifiableRootModel(
   diff: TypedEntityStorageBuilder,
@@ -46,10 +44,7 @@ class LegacyBridgeModifiableRootModel(
 
   override fun getModificationCount(): Long = diff.modificationCount
 
-  private val lock = Any()
   private val extensionsDisposable = Disposer.newDisposable()
-  private val myLibraryTableListeners: MutableMap<LibraryTable, LibraryTableListener> = HashMap()
-  private val projectRootManager = ProjectRootManagerImpl.getInstanceImpl(project) as LegacyBridgeProjectRootManager
 
   private val extensionsDelegate = lazy {
     RootModelViaTypedEntityImpl.loadExtensions(storage = initialStorage, module = module, writable = true,
@@ -188,45 +183,20 @@ class LegacyBridgeModifiableRootModel(
 
     val libraryOrderEntry = (orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
                              ?: error("Unable to find library orderEntry after adding"))
-    addListenerForTable(library.table)
     return libraryOrderEntry
   }
 
   override fun addInvalidLibrary(name: String, level: String): LibraryOrderEntry {
-    val libraryTableId = toLibraryTableId(level)
     val libraryDependency = ModuleDependencyItem.Exportable.LibraryDependency(
-      library = LibraryId(name, libraryTableId),
+      library = LibraryId(name, toLibraryTableId(level)),
       exported = false,
       scope = ModuleDependencyItem.DependencyScope.COMPILE
     )
 
     updateDependencies { it + libraryDependency }
 
-    val libraryOrderEntry = (orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
+    return (orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
                              ?: error("Unable to find library orderEntry after adding"))
-    registerLibraryTableListener(level)
-    return libraryOrderEntry
-  }
-
-  private fun registerLibraryTableListener(libraryLevel: String) {
-    val libraryTable = when (libraryLevel) {
-      JpsLibraryTableSerializer.MODULE_LEVEL -> return
-      JpsLibraryTableSerializer.PROJECT_LEVEL -> LibraryTablesRegistrar.getInstance().getLibraryTable(project)
-      else -> LibraryTablesRegistrar.getInstance().libraryTable
-    }
-    addListenerForTable(libraryTable)
-  }
-
-  // Listener that increments modification count should be added to each libraryTable that contains a library included in any orderEntry
-  private fun addListenerForTable(libraryTable: LibraryTable?) {
-    if (libraryTable == null) return
-    synchronized(lock) {
-      myLibraryTableListeners.computeIfAbsent(libraryTable) { libraryTable ->
-        val libraryTableListener = LibraryTableListener(projectRootManager)
-        libraryTable.addListener(libraryTableListener)
-        return@computeIfAbsent libraryTableListener
-      }.incTrackedLibrariesCount()
-    }
   }
 
   override fun addModuleOrderEntry(module: Module): ModuleOrderEntry {
@@ -288,22 +258,6 @@ class LegacyBridgeModifiableRootModel(
 
     if (assertChangesApplied && orderEntriesImpl.any { it.item == item })
       error("removeOrderEntry: removed order entry $item still exists after removing")
-
-    if (orderEntry is LibraryOrderEntry) {
-      unregisterLibraryTableListener(orderEntry.library)
-    }
-  }
-
-  private fun unregisterLibraryTableListener(library: Library?) {
-    val libraryTable = library?.table ?: return
-    synchronized(lock) {
-      myLibraryTableListeners[libraryTable]?.let { listener ->
-        listener.decTrackedLibrariesCount()
-        if (!listener.isEmpty()) return@let
-        libraryTable.removeListener(listener)
-        myLibraryTableListeners.remove(libraryTable)
-      }
-    }
   }
 
   override fun rearrangeOrderEntries(newOrder: Array<out OrderEntry>) {
@@ -418,9 +372,6 @@ class LegacyBridgeModifiableRootModel(
   private fun disposeWithoutLibraries() {
     if (!modelIsCommittedOrDisposed) {
       Disposer.dispose(extensionsDisposable)
-
-      myLibraryTableListeners.forEach { (table, listener) -> table.removeListener(listener) }
-      myLibraryTableListeners.clear()
     }
 
     // No assertions here since it is ok to call dispose twice or more
@@ -712,19 +663,6 @@ class LegacyBridgeModifiableRootModel(
 
     override fun removeListener(listener: LibraryTable.Listener) =
       throw UnsupportedOperationException("Not implemented for module-level library table")
-  }
-
-  private class LibraryTableListener(val projectRootManager: LegacyBridgeProjectRootManager) : LibraryTable.Listener {
-    private var counter = 0
-
-    fun incTrackedLibrariesCount() = counter++
-    fun decTrackedLibrariesCount() = counter--
-    fun isEmpty() = counter == 0
-
-    override fun afterLibraryAdded(newLibrary: Library) = projectRootManager.incModificationCount()
-    override fun afterLibraryRenamed(library: Library) = projectRootManager.incModificationCount()
-    override fun beforeLibraryRemoved(library: Library) = projectRootManager.incModificationCount()
-    override fun afterLibraryRemoved(library: Library) = projectRootManager.incModificationCount()
   }
 }
 
