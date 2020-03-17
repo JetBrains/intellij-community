@@ -105,7 +105,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
-      JavaPluginLayout.javaPlugin(false),
+      JavaPluginLayout.javaPlugin(),
       androidPluginInStudio([:]),
       CommunityRepositoryModules.groovyPlugin([]),
       layoutlibPlugin(),
