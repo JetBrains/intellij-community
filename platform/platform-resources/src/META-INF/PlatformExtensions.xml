@@ -37,7 +37,7 @@
 
     <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="await"/>
     <applicationService serviceImplementation="com.intellij.ide.ClipboardSynchronizer" preload="true"/>
-    <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager" preload="true"
+    <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager" preload="notHeadless"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>
 
     <!-- requested by FileBasedIndexImpl, so, to make start-up more flat, also preload -->
