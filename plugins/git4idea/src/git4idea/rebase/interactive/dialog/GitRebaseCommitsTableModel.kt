@@ -2,48 +2,42 @@
 package git4idea.rebase.interactive.dialog
 
 import com.intellij.util.ui.EditableModel
-import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseEntryWithDetails
+import git4idea.rebase.interactive.GitRebaseTodoModel
+import git4idea.rebase.interactive.convertToModel
 import javax.swing.table.AbstractTableModel
-import kotlin.math.max
-import kotlin.math.min
 
-internal class GitRebaseCommitsTableModel(initialEntries: List<GitRebaseEntryWithEditedMessage>) : AbstractTableModel(), EditableModel {
+internal class GitRebaseCommitsTableModel<T : GitRebaseEntryWithDetails>(private val initialEntries: List<T>) : AbstractTableModel(), EditableModel {
   companion object {
     const val COMMIT_ICON_COLUMN = 0
     const val SUBJECT_COLUMN = 1
   }
 
-  private val rows: MutableList<CommitTableModelRow> = initialEntries.mapIndexed { i, entry ->
-    CommitTableModelRow(i, entry)
-  }.toMutableList()
+  var rebaseTodoModel = createRebaseTodoModel()
+    private set
 
-  val entries: List<GitRebaseEntryWithEditedMessage>
-    get() = rows.map { it.entry }
+  private fun createRebaseTodoModel(): GitRebaseTodoModel<T> = convertToModel(initialEntries)
 
-  fun resetEntries() {
-    rows.sortBy { it.initialIndex }
-    rows.forEach {
-      it.action = it.initialAction
-      it.newMessage = it.entry.entry.commitDetails.fullMessage
-    }
-    fireTableRowsUpdated(0, rows.size - 1)
+  fun updateModel(f: (GitRebaseTodoModel<T>) -> Unit) {
+    f(rebaseTodoModel)
+    fireTableRowsUpdated(0, rowCount)
   }
 
-  override fun getRowCount() = rows.size
+  fun resetEntries() {
+    rebaseTodoModel = createRebaseTodoModel()
+    fireTableRowsUpdated(0, rowCount)
+  }
+
+  override fun getRowCount() = rebaseTodoModel.elements.size
 
   override fun getColumnCount() = SUBJECT_COLUMN + 1
 
-  override fun getValueAt(rowIndex: Int, columnIndex: Int): Any = when (columnIndex) {
-    COMMIT_ICON_COLUMN -> rows[rowIndex]
-    SUBJECT_COLUMN -> rows[rowIndex].newMessage
-    else -> throw IllegalArgumentException("Unsupported column index: $columnIndex")
-  }
+  override fun getValueAt(rowIndex: Int, columnIndex: Int): T = getEntry(rowIndex)
 
   override fun exchangeRows(oldIndex: Int, newIndex: Int) {
-    val movingElement = rows.removeAt(oldIndex)
-    rows.add(newIndex, movingElement)
-    fireTableRowsUpdated(min(oldIndex, newIndex), max(oldIndex, newIndex))
+    updateModel { rebaseTodoModel ->
+      rebaseTodoModel.exchangeIndices(oldIndex, newIndex)
+    }
   }
 
   override fun canExchangeRows(oldIndex: Int, newIndex: Int) = true
@@ -57,134 +51,28 @@ internal class GitRebaseCommitsTableModel(initialEntries: List<GitRebaseEntryWit
   }
 
   override fun setValueAt(aValue: Any?, rowIndex: Int, columnIndex: Int) {
-    when (aValue) {
-      is GitRebaseEntry.Action -> {
-        val row = rows[rowIndex]
-        if (aValue != GitRebaseEntry.Action.REWORD) {
-          row.newMessage = row.details.fullMessage
-        }
-        row.action = aValue
-      }
-      is String -> {
-        rows[rowIndex].action =
-          if (rows[rowIndex].details.fullMessage != aValue) {
-            GitRebaseEntry.Action.REWORD
-          }
-          else {
-            GitRebaseEntry.Action.PICK
-          }
-        rows[rowIndex].newMessage = aValue
-      }
-      else -> throw IllegalArgumentException()
-    }
-    fireTableRowsUpdated(rowIndex, rowIndex)
-  }
-
-  override fun isCellEditable(rowIndex: Int, columnIndex: Int) = columnIndex == SUBJECT_COLUMN
-
-  fun getEntry(row: Int): GitRebaseEntryWithEditedMessage = rows[row].entry
-
-  fun getEntryAction(row: Int): GitRebaseEntry.Action = rows[row].entry.entry.action
-
-  fun isFixupOrDrop(row: Int): Boolean {
-    val entryAction = getEntryAction(row)
-    return entryAction == GitRebaseEntry.Action.FIXUP || entryAction == GitRebaseEntry.Action.DROP
-  }
-
-  fun isFixupRoot(rowToCheck: Int): Boolean {
-    if (isFixupOrDrop(rowToCheck)) {
-      return false
-    }
-    for (row in rowToCheck + 1 until rowCount) {
-      val rowAction = getEntryAction(row)
-      if (rowAction != GitRebaseEntry.Action.DROP) {
-        return rowAction == GitRebaseEntry.Action.FIXUP
-      }
-    }
-    return false
-  }
-
-  fun isFirstFixup(rowToCheck: Int): Boolean {
-    if (getEntryAction(rowToCheck) != GitRebaseEntry.Action.FIXUP) {
-      return false
-    }
-    for (row in rowToCheck - 1 downTo 0) {
-      val rowAction = getEntryAction(row)
-      if (rowAction != GitRebaseEntry.Action.DROP) {
-        return rowAction != GitRebaseEntry.Action.FIXUP
-      }
-    }
-    return true
-  }
-
-  fun isLastFixup(rowToCheck: Int): Boolean {
-    if (getEntryAction(rowToCheck) != GitRebaseEntry.Action.FIXUP) {
-      return false
-    }
-    for (row in rowToCheck + 1 until rowCount) {
-      val rowAction = getEntryAction(row)
-      if (rowAction != GitRebaseEntry.Action.DROP) {
-        return rowAction != GitRebaseEntry.Action.FIXUP
-      }
-    }
-    return true
-  }
-
-  fun keepCommit(row: Int) {
-    if (isFixupOrDrop(row)) {
-      setValueAt(GitRebaseEntry.Action.PICK, row, COMMIT_ICON_COLUMN)
+    if (aValue is String) {
+      rebaseTodoModel.reword(rowIndex, aValue)
     }
   }
 
-  fun getFixupRootRow(row: Int): Int? {
-    var root = row - 1
-    while (root >= 0 && isFixupOrDrop(root)) {
-      root--
-    }
-    return root.takeIf { it >= 0 }
-  }
+  fun getEntry(row: Int): T = rebaseTodoModel.elements[row].entry
 
-  fun uniteCommitMessages(rows: List<Int>) = rows.joinToString(System.lineSeparator().repeat(3)) { row ->
-    getEntry(row).newMessage
-  }
+  override fun isCellEditable(rowIndex: Int, columnIndex: Int) = columnIndex == SUBJECT_COLUMN && rebaseTodoModel.canReword(rowIndex)
 
-  fun moveRowsToFirst(indicesToMove: List<Int>) {
-    if (indicesToMove.isEmpty()) {
-      return
-    }
-    val indicesToMoveSet = indicesToMove.toSet()
-    val sortedIndicesToMove = indicesToMove.sorted()
-    val minIndex = sortedIndicesToMove.first()
-    val maxIndex = sortedIndicesToMove.last()
-    val rowsToMoveBelow = (minIndex..maxIndex).filter { it !in indicesToMoveSet }.map {
-      rows[it]
-    }
-    val rowsToMove = sortedIndicesToMove.map {
-      rows[it]
-    }
-    (rowsToMove + rowsToMoveBelow).forEachIndexed { i, row ->
-      rows[minIndex + i] = row
-    }
-    fireTableRowsUpdated(minIndex, maxIndex)
-  }
+  fun getElement(row: Int): GitRebaseTodoModel.Element<T> = rebaseTodoModel.elements[row]
 
-  private class CommitTableModelRow(val initialIndex: Int, val entry: GitRebaseEntryWithEditedMessage) {
-    val initialAction = entry.entry.action
-    val details = entry.entry.commitDetails
-    var action
-      get() = entry.entry.action
-      set(value) {
-        entry.entry.action = value
-      }
-    var newMessage
-      get() = entry.newMessage
-      set(value) {
-        entry.newMessage = value
-      }
+  fun isFirstFixup(child: GitRebaseTodoModel.Element.UniteChild<*>) = child === child.root.children.first()
+
+  fun isLastFixup(child: GitRebaseTodoModel.Element.UniteChild<*>) = child === child.root.children.last()
+
+  fun getCommitMessage(row: Int): String {
+    val elementType = getElement(row).type
+    return if (elementType is GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword) {
+      elementType.newMessage
+    }
+    else {
+      getEntry(row).commitDetails.fullMessage
+    }
   }
 }
-
-internal class GitRebaseEntryWithEditedMessage(
-  val entry: GitRebaseEntryWithDetails,
-  var newMessage: String = entry.commitDetails.fullMessage
-)

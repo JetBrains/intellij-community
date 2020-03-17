@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.interactive.dialog
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.ModalityState
@@ -27,8 +26,8 @@ import com.intellij.vcs.log.ui.details.FullCommitDetailsListPanel
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
-import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseEntryWithDetails
+import git4idea.rebase.interactive.GitRebaseTodoModel
 import org.jetbrains.annotations.CalledInBackground
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -36,10 +35,10 @@ import javax.swing.JComponent
 import javax.swing.JSeparator
 import javax.swing.SwingConstants
 
-internal class GitInteractiveRebaseDialog(
+internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
   private val project: Project,
   root: VirtualFile,
-  entries: List<GitRebaseEntryWithDetails>
+  entries: List<T>
 ) : DialogWrapper(project, true) {
   companion object {
     private const val DETAILS_PROPORTION = "Git.Interactive.Rebase.Details.Proportion"
@@ -50,11 +49,7 @@ internal class GitInteractiveRebaseDialog(
     private const val DIALOG_WIDTH = 800
   }
 
-  private val commitsTableModel = GitRebaseCommitsTableModel(entries.map {
-    GitRebaseEntryWithEditedMessage(
-      GitRebaseEntryWithDetails(GitRebaseEntry(it.action, it.commit, it.subject), it.commitDetails)
-    )
-  })
+  private val commitsTableModel = GitRebaseCommitsTableModel(entries)
   private val resetEntriesLabel = LinkLabel<Any?>(GitBundle.getString("rebase.interactive.dialog.reset.link.text"), null).apply {
     isVisible = false
     setListener(
@@ -88,14 +83,8 @@ internal class GitInteractiveRebaseDialog(
     }
   }
   private val iconActions = listOf(
-    ChangeEntryStateSimpleAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, commitsTable),
-    ChangeEntryStateSimpleAction(
-      GitRebaseEntry.Action.EDIT,
-      GitBundle.messagePointer("rebase.interactive.dialog.stop.to.edit.text"),
-      GitBundle.messagePointer("rebase.interactive.dialog.stop.to.edit.text"),
-      AllIcons.Actions.Pause,
-      commitsTable
-    )
+    PickAction(commitsTable),
+    EditAction(commitsTable)
   )
   private val rewordAction = RewordAction(commitsTable)
   private val fixupAction = FixupAction(commitsTable)
@@ -108,7 +97,7 @@ internal class GitInteractiveRebaseDialog(
   init {
     commitsTable.selectionModel.addListSelectionListener { e ->
       if (!e.valueIsAdjusting) {
-        fullCommitDetailsListPanel.commitsSelected(commitsTable.selectedRows.map { commitsTableModel.getEntry(it).entry.commitDetails })
+        fullCommitDetailsListPanel.commitsSelected(commitsTable.selectedRows.map { commitsTableModel.getEntry(it).commitDetails })
       }
     }
     commitsTableModel.addTableModelListener { resetEntriesLabel.isVisible = true }
@@ -166,7 +155,7 @@ internal class GitInteractiveRebaseDialog(
 
   override fun getStyle() = DialogStyle.COMPACT
 
-  fun getEntries(): List<GitRebaseEntryWithEditedMessage> = commitsTableModel.entries
+  fun getModel(): GitRebaseTodoModel<T> = commitsTableModel.rebaseTodoModel
 
   override fun getPreferredFocusedComponent(): JComponent = commitsTable
 
