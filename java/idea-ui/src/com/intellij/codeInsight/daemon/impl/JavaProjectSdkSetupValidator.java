@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ProjectSdkSetupValidator;
@@ -25,10 +11,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupBuilder;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.EditorNotificationPanel.ActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
   public static final JavaProjectSdkSetupValidator INSTANCE = new JavaProjectSdkSetupValidator();
+
   @Override
   public boolean isApplicableFor(@NotNull Project project, @NotNull VirtualFile file) {
     if (file.getFileType() != JavaClassFileType.INSTANCE) {
@@ -66,14 +55,29 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
     return null;
   }
 
-  @Override
-  public void doFix(@NotNull Project project, @NotNull VirtualFile file) {
-    SdkPopupFactory
+  @NotNull
+  private static SdkPopupBuilder preparePopup(@NotNull Project project, @NotNull VirtualFile file) {
+    return SdkPopupFactory
       .newBuilder()
       .withProject(project)
       .withSdkTypeFilter(type -> type instanceof JavaSdkType)
-      .updateSdkForFile(file)
-      .buildPopup()
-      .showInFocusCenter();
+      .updateSdkForFile(file);
+  }
+
+  @NotNull
+  @Override
+  public ActionHandler getFixHandler(@NotNull Project project, @NotNull VirtualFile file) {
+    return preparePopup(project, file).buildEditorNotificationPanelHandler();
+  }
+
+  /**
+   * @deprecated use {@link #getFixHandler(Project, VirtualFile)} instead
+   */
+  @Override
+  @Deprecated
+  @SuppressWarnings("deprecation")
+  public void doFix(@NotNull Project project, @NotNull VirtualFile file) {
+    //implemented for backward compatibility with the older code
+    preparePopup(project, file).buildPopup().showInFocusCenter();
   }
 }
