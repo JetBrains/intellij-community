@@ -729,7 +729,6 @@ public final class DnDManagerImpl extends DnDManager {
     if (component instanceof Autoscroll) return null; // Swing DnD is used
     if (component.getAutoscrolls()) return null; // default scroller is used
     if (!component.isShowing()) return null; // component is not visible on screen
-    if (!component.isFocusOwner()) return null; // component is not visible on screen
     return isClientPropertyTrue(component, AUTO_SCROLL) ? component : null;
   }
 
