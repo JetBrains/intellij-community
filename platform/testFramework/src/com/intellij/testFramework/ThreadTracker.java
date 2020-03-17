@@ -215,6 +215,7 @@ public final class ThreadTracker {
     return isIdleApplicationPoolThread(stackTrace)
            || isIdleCommonPoolThread(thread, stackTrace)
            || isFutureTaskAboutToFinish(stackTrace)
+           || isIdleDefaultCoroutineExecutorThread(thread, stackTrace)
            || isCoroutineSchedulerPoolThread(thread, stackTrace);
   }
 
@@ -268,6 +269,21 @@ public final class ThreadTracker {
       && stackTrace[0].getMethodName().equals("unpark")
       && stackTrace[2].getClassName().equals("java.util.concurrent.FutureTask")
       && stackTrace[2].getMethodName().equals("finishCompletion");
+  }
+
+  /**
+   * at sun.misc.Unsafe.park(Native Method)
+   * at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+   * at kotlinx.coroutines.DefaultExecutor.run(DefaultExecutor.kt:83)
+   * at java.lang.Thread.run(Thread.java:748)
+   */
+  private static boolean isIdleDefaultCoroutineExecutorThread(@NotNull Thread thread, @NotNull StackTraceElement @NotNull [] stackTrace) {
+    if (stackTrace.length != 4) {
+      return false;
+    }
+    return "kotlinx.coroutines.DefaultExecutor".equals(thread.getName()) &&
+           stackTrace[0].getClassName().equals("sun.misc.Unsafe") && stackTrace[0].getMethodName().equals("park") &&
+           stackTrace[2].getClassName().equals("kotlinx.coroutines.DefaultExecutor") && stackTrace[2].getMethodName().equals("run");
   }
 
   private static boolean isCoroutineSchedulerPoolThread(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
