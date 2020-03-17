@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.util
 
 import com.intellij.UtilBundle
 import com.intellij.openapi.editor.impl.view.FontLayoutService
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -11,21 +10,17 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
-import com.intellij.util.ContentUtilEx
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
-import org.jetbrains.plugins.github.pullrequest.GHPRAccountsComponent
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import java.awt.Color
 import java.awt.Component
@@ -200,22 +195,6 @@ object GithubUIUtil {
       .createPopup()
       .showUnderneathOf(parentComponent)
     return result
-  }
-
-  fun findAndSelectGitHubContent(project: Project, select: Boolean) {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS) ?: return
-
-    val manager = toolWindow.contentManager
-    val component = ContentUtilEx.findContentComponent(manager) { c ->
-      return@findContentComponent c is GHPRAccountsComponent
-    } ?: return
-
-    if (select) {
-      if (!toolWindow.isVisible)
-        toolWindow.activate(null)
-
-      ContentUtilEx.selectContent(manager, component, true)
-    }
   }
 
   data class SelectableWrapper<T>(val value: T, var selected: Boolean = false)
