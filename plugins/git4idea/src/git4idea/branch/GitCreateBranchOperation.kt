@@ -36,7 +36,7 @@ internal class GitCreateBranchOperation(
     var fatalErrorHappened = false
     while (hasMoreRepositories() && !fatalErrorHappened) {
       val repository = next()
-      val result = myGit.branchCreate(repository, branchName, startPoints[repository]!!, force);
+      val result = myGit.branchCreate(repository, branchName, startPoints[repository]!!, force)
 
       if (result.success()) {
         repository.update()
