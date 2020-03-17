@@ -14,10 +14,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
@@ -77,7 +74,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.StreamSupport;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportFile = FileTypeManagerImpl.FILE_SPEC )
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
@@ -149,6 +145,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
+  private int cachedDetectFileBufferSize = -1;
 
   private final Object PENDING_INIT_LOCK = new Object();
 
@@ -285,6 +282,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
       }
     }, this);
+    FileTypeDetector.EP_NAME.addExtensionPointListener(() -> cachedDetectFileBufferSize = -1, this);
   }
 
   private void unregisterMatchers(@NotNull StandardFileType stdFileType, @NotNull FileTypeBean extension) {
@@ -457,14 +455,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @NotNull
   private FileType mergeOrInstantiateFileTypeBean(@NotNull FileTypeBean fileTypeBean) {
-    final StandardFileType type = myStandardFileTypes.get(fileTypeBean.name);
-    if (type != null) {
-      type.matchers.addAll(fileTypeBean.getMatchers());
-      return type.fileType;
-    }
-    else {
+    StandardFileType type = myStandardFileTypes.get(fileTypeBean.name);
+    if (type == null) {
       return instantiateFileTypeBean(fileTypeBean);
     }
+    type.matchers.addAll(fileTypeBean.getMatchers());
+    return type.fileType;
   }
 
   private FileType instantiateFileTypeBean(@NotNull FileTypeBean fileTypeBean) {
@@ -699,7 +695,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   public FileType getFileTypeByFileName(@NotNull CharSequence fileName) {
     synchronized (PENDING_INIT_LOCK) {
-      final FileTypeBean pendingFileType = myPendingAssociations.findAssociatedFileType(fileName);
+      FileTypeBean pendingFileType = myPendingAssociations.findAssociatedFileType(fileName);
       if (pendingFileType != null) {
         return ObjectUtils.notNull(instantiateFileTypeBean(pendingFileType), UnknownFileType.INSTANCE);
       }
@@ -746,22 +742,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     FileType fileType = getByFile(file);
-    if (!(file instanceof StubVirtualFile)) {
-      if (fileType == null) {
-        return getOrDetectFromContent(file, content);
-      }
-      if (mightBeReplacedByDetectedFileType(fileType) && isDetectable(file)) {
-        FileType detectedFromContent = getOrDetectFromContent(file, content);
-        // unknown file type means that it was detected as binary, it's better to keep it binary
-        if (detectedFromContent != PlainTextFileType.INSTANCE) {
-          return detectedFromContent;
-        }
-      }
+    if (!(file instanceof StubVirtualFile)
+        && (fileType == null || mightBeReplacedByDetectedFileType(fileType) && isDetectable(file))) {
+      return getOrDetectFromContent(file, content);
     }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
   }
 
-  private static boolean mightBeReplacedByDetectedFileType(FileType fileType) {
+  private static boolean mightBeReplacedByDetectedFileType(@NotNull FileType fileType) {
     return fileType instanceof PlainTextLikeFileType && fileType.isReadOnly();
   }
 
@@ -992,7 +980,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   private FileType detectFromContentAndCache(@NotNull final VirtualFile file, byte @Nullable [] content) throws IOException {
     long start = System.currentTimeMillis();
-    FileType fileType = detectFromContent(file, content, FileTypeDetector.EP_NAME.getExtensionList());
+    FileType fileType = detectFromContent(file, content);
 
     cacheAutoDetectedFileType(file, fileType);
     counterAutoDetect.incrementAndGet();
@@ -1003,7 +991,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType detectFromContent(@NotNull VirtualFile file, byte @Nullable [] content, @NotNull Iterable<? extends FileTypeDetector> detectors) throws IOException {
+  private FileType detectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) throws IOException {
+    List<FileTypeDetector> detectors = FileTypeDetector.EP_NAME.getExtensionList();
     FileType fileType;
     if (content != null) {
       fileType = detect(file, content, content.length, detectors);
@@ -1015,11 +1004,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
 
         int fileLength = (int)file.getLength();
-
-        int bufferLength = StreamSupport.stream(detectors.spliterator(), false)
-          .mapToInt(FileTypeDetector::getDesiredContentPrefixLength)
-          .max()
-          .orElse(FileUtilRt.getUserContentLoadLimit());
+        int bufferLength = getDetectFileBufferSize();
         byte[] buffer = fileLength <= FileUtilRt.THREAD_LOCAL_BUFFER_LENGTH
                         ? FileUtilRt.getThreadLocalBuffer()
                         : new byte[Math.min(fileLength, bufferLength)];
@@ -1047,8 +1032,25 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return fileType;
   }
 
+  private int getDetectFileBufferSize() {
+    int bufferLength = cachedDetectFileBufferSize;
+    if (bufferLength == -1) {
+      List<FileTypeDetector> detectors = FileTypeDetector.EP_NAME.getExtensionList();
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < detectors.size(); i++) {
+        FileTypeDetector detector = detectors.get(i);
+        bufferLength = Math.max(bufferLength, detector.getDesiredContentPrefixLength());
+      }
+      if (bufferLength <= 0) {
+        bufferLength = FileUtilRt.getUserContentLoadLimit();
+      }
+      cachedDetectFileBufferSize = bufferLength;
+    }
+    return bufferLength;
+  }
+
   @NotNull
-  private FileType detect(@NotNull VirtualFile file, byte @NotNull [] bytes, int length, @NotNull Iterable<? extends FileTypeDetector> detectors) {
+  private FileType detect(@NotNull VirtualFile file, byte @NotNull [] bytes, int length, @NotNull List<? extends FileTypeDetector> detectors) {
     if (length <= 0) return UnknownFileType.INSTANCE;
 
     // use PlainTextFileType because it doesn't supply its own charset detector
@@ -1094,7 +1096,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // for diagnostics
   @NonNls 
-  @SuppressWarnings("ConstantConditions")
   private static Object streamInfo(@NotNull InputStream stream) throws IOException {
     if (stream instanceof BufferedInputStream) {
       InputStream in = ReflectionUtil.getField(stream.getClass(), stream, InputStream.class, "in");
@@ -1234,7 +1235,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     synchronized (PENDING_INIT_LOCK) {
       instantiatePendingFileTypeByName(type.getName());
 
-      //noinspection deprecation
       return myPatternsTable.getAssociatedExtensions(type);
     }
   }
