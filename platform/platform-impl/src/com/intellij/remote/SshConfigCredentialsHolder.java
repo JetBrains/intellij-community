@@ -10,65 +10,63 @@ public class SshConfigCredentialsHolder {
 
   private static final String SSH_CREDENTIALS_ID = "SSH_CREDENTIALS_ID";
   private static final String SSH_CONFIG_NAME = "SSH_CONFIG_NAME";
+  private static final String SSH_CONFIG_ID = "SSH_CONFIG_ID";
   public static final String SSH_CONFIG_PREFIX = "sshConfig://";
 
-  private String myCredentialsId;
-  private String mySshConfigName;
-  private String mySshConfigId;
+  private @NotNull String myCredentialsId;
+  private @Nullable PresentableId mySshId;
 
   public SshConfigCredentialsHolder() {
-    this(null, null);
+    this(null);
   }
 
-  public SshConfigCredentialsHolder(@Nullable String sshConfigName, @Nullable String sshConfigId) {
-    mySshConfigName = sshConfigName;
-    mySshConfigId = sshConfigId;
-    updateCredentialsId();
+  public SshConfigCredentialsHolder(@Nullable PresentableId presentableId) {
+    mySshId = presentableId;
+    myCredentialsId = constructCredentialsId();
   }
 
-  public String getCredentialsId() {
+  public @NotNull String getCredentialsId() {
     return myCredentialsId;
   }
 
-  public String getSshConfigName() {
-    return mySshConfigName;
+  public @Nullable PresentableId getSshId() {
+    return mySshId;
   }
 
-  public void setSshConfigName(String sshConfigName) {
-    mySshConfigName = sshConfigName;
-  }
-
-  public String getSshConfigId() {
-    return mySshConfigId;
-  }
-
-  public void setSshConfigId(String sshConfigId) {
-    mySshConfigId = sshConfigId;
+  public void setSshId(@Nullable PresentableId sshId) {
+    mySshId = sshId;
   }
 
   public void save(@NotNull Element element) {
-    element.setAttribute(SSH_CONFIG_NAME, StringUtil.notNullize(mySshConfigName));
+    if (mySshId != null) {
+      if (mySshId.getId() != null) {
+        element.setAttribute(SSH_CONFIG_ID, mySshId.getId());
+      }
+      if (mySshId.getName() != null) {
+        element.setAttribute(SSH_CONFIG_NAME, mySshId.getName());
+      }
+    }
     element.setAttribute(SSH_CREDENTIALS_ID, StringUtil.notNullize(myCredentialsId));
   }
 
   public void load(@NotNull Element element) {
-    mySshConfigName = element.getAttributeValue(SSH_CONFIG_NAME);
-    myCredentialsId = element.getAttributeValue(SSH_CREDENTIALS_ID);
+    mySshId = PresentableId.createId(element.getAttributeValue(SSH_CONFIG_ID), element.getAttributeValue(SSH_CONFIG_NAME));
+    String credentialsId = element.getAttributeValue(SSH_CREDENTIALS_ID);
+    myCredentialsId = credentialsId == null ? constructCredentialsId() : credentialsId;
   }
 
   public void cleanConfigData() {
-    mySshConfigName = null;
-    mySshConfigId = null;
-    updateCredentialsId();
+    mySshId = null;
+    myCredentialsId = constructCredentialsId();
   }
 
-  private void updateCredentialsId() {
-    myCredentialsId = SSH_CONFIG_PREFIX + (StringUtil.isEmpty(mySshConfigName) ? "<unknown>" : mySshConfigName);
+  @NotNull
+  private String constructCredentialsId() {
+    return SSH_CONFIG_PREFIX + ((mySshId == null || mySshId.getName() == null) ? "<unknown>" : mySshId.getName());
   }
 
   public void copyFrom(SshConfigCredentialsHolder credentials) {
     myCredentialsId = credentials.myCredentialsId;
-    mySshConfigName = credentials.mySshConfigName;
-    mySshConfigId = credentials.mySshConfigId;
+    mySshId = credentials.mySshId == null ? null : credentials.mySshId.clone();
   }
 }
