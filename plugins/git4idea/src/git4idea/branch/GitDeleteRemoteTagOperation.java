@@ -86,13 +86,13 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
       String message = GitBundle.message("delete.remote.tag.operation.deleted.tag.on.remotes",
                                          remotesCount,
                                          myTagName);
-      notifySuccess("", message);
+      notifySuccessWithEmptyTitle(message);
     }
     else if (successRemotes == 0 && failureRemotes == 0) {
       String message = GitBundle.message("delete.remote.tag.operation.tag.does.not.exist.on.remotes",
                                          remotesCount,
                                          myTagName);
-      notifySuccess("", message);
+      notifySuccessWithEmptyTitle(message);
     }
 
     if (!result.totalSuccess()) {
@@ -112,8 +112,8 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
     });
   }
 
-  private void notifySuccess(@NotNull String title, @NotNull String message) {
-    Notification notification = STANDARD_NOTIFICATION.createNotification(title, message, NotificationType.INFORMATION, null);
+  private void notifySuccessWithEmptyTitle(@NotNull String message) {
+    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
     VcsNotifier.getInstance(myProject).notify(notification);
   }
 
