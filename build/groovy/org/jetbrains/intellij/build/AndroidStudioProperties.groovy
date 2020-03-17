@@ -215,6 +215,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("android.sdktools.ddmlib", "sdk-tools.jar")
       withModule("android.sdktools.dvlib", "sdk-tools.jar")
       withModule("android.sdktools.deployer", "sdk-tools.jar")
+      withModule("android.sdktools.zipflinger", "sdk-tools.jar")
       withModule("android.sdktools.tracer", "sdk-tools.jar")
       withModule("android.sdktools.draw9patch", "sdk-tools.jar")
       withModule("android.sdktools.lint-api", "sdk-tools.jar")
