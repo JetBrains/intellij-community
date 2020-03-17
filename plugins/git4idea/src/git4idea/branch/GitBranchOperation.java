@@ -362,7 +362,7 @@ abstract class GitBranchOperation {
 
   /**
    * When checkout or merge operation on a repository fails with the error "local changes would be overwritten by...",
-   * affected local files are captured by the {@link git4idea.commands.GitMessageWithFilesDetector detector}.
+   * affected local files are captured by the {@link GitMessageWithFilesDetector detector}.
    * Then all remaining (non successful repositories) are searched if they are about to fail with the same problem.
    * All collected local changes which prevent the operation, together with these repositories, are returned.
    * @param currentRepository          The first repository which failed the operation.
