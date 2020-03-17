@@ -48,7 +48,7 @@ public class EventLogUploader {
       return;
     }
 
-    EventLogApplicationInfo appInfo = newApplicationInfo(options, logger);
+    EventLogApplicationInfo appInfo = newApplicationInfo(options, logger, eventsLogger);
     if (appInfo == null) {
       logger.warn("Failed creating application info from arguments");
       eventsLogger.logSendingLogsFinished("NO_APPLICATION_CONFIG");
@@ -120,14 +120,16 @@ public class EventLogUploader {
   }
 
   @Nullable
-  private static EventLogApplicationInfo newApplicationInfo(Map<String, String> options, DataCollectorDebugLogger logger) {
+  private static EventLogApplicationInfo newApplicationInfo(Map<String, String> options,
+                                                            DataCollectorDebugLogger logger,
+                                                            DataCollectorSystemEventLogger eventLogger) {
     String url = options.get(EventLogUploaderOptions.URL_OPTION);
     String productCode = options.get(EventLogUploaderOptions.PRODUCT_OPTION);
     String userAgent = options.get(EventLogUploaderOptions.USER_AGENT_OPTION);
     if (url != null && productCode != null) {
       boolean isInternal = options.containsKey(EventLogUploaderOptions.INTERNAL_OPTION);
       boolean isTest = options.containsKey(EventLogUploaderOptions.TEST_OPTION);
-      return new EventLogExternalApplicationInfo(url, productCode, userAgent, isInternal, isTest, logger);
+      return new EventLogExternalApplicationInfo(url, productCode, userAgent, isInternal, isTest, logger, eventLogger);
     }
     return null;
   }

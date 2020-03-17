@@ -94,7 +94,7 @@ public class SendEventLogAction extends AnAction {
 
   private static class EventLogTestApplication extends EventLogInternalApplicationInfo {
     private EventLogTestApplication() {
-      super(true);
+      super(FUS_RECORDER, true);
     }
 
     @Override

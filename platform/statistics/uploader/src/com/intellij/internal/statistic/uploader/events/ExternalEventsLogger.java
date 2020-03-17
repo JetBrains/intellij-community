@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.uploader.events;
 
 import com.intellij.internal.statistic.connect.StatisticsResult;
+import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static com.intellij.internal.statistic.uploader.ExternalDataCollectorLogger.findDirectory;
 
-public class ExternalEventsLogger {
+public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
   @NonNls private final Logger myLogger;
 
   public ExternalEventsLogger() {
@@ -61,6 +62,11 @@ public class ExternalEventsLogger {
 
   public void logSendingLogsSucceed(int succeed, int failed, int total) {
     logEvent(new ExternalUploadSendEvent(System.currentTimeMillis(), succeed, failed, total));
+  }
+
+  @Override
+  public void logErrorEvent(@NotNull String eventId, @NotNull Throwable exception) {
+    logEvent(new ExternalSystemErrorEvent(System.currentTimeMillis(), eventId, exception));
   }
 
   private void logEvent(@NotNull ExternalSystemEvent event) {
