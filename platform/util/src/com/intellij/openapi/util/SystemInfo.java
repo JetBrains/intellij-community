@@ -210,7 +210,7 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   private static boolean isStudioJvm() {
-    final String vendor = SystemProperties.getJavaVendor();
+    final String vendor = JAVA_VENDOR;
     final String url = System.getProperty("java.vendor.url");
     return ("Google Inc.".equals(vendor) || ("Google LLC".equals(vendor))) && "http://developer.android.com/sdk/index.html".equals(url);
   }
