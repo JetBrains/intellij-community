@@ -23,6 +23,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitUIUtil.bold
 import git4idea.util.GitUIUtil.code
+import org.jetbrains.annotations.NotNull
 
 internal class GitCreateBranchOperation(
   project: Project,
@@ -73,10 +74,10 @@ internal class GitCreateBranchOperation(
     }
   }
 
-  override fun getSuccessMessage() = GitBundle.message("create.branch.operation.branch.created",
-                                                       bold(code(branchName)))
+  override fun getSuccessMessage(): @NotNull String = GitBundle.message("create.branch.operation.branch.created",
+                                                                        bold(code(branchName)))
 
-  override fun getRollbackProposal() =
+  override fun getRollbackProposal(): @NotNull String =
     GitBundle.message("create.branch.operation.however.the.branch.was.created.in.the.following.repositories",
                       successfulRepositories.size) +
     "<br/>" + //NON-NLS
@@ -84,5 +85,5 @@ internal class GitCreateBranchOperation(
     "<br/>" + //NON-NLS
     GitBundle.message("create.branch.operation.you.may.rollback.not.to.let.branches.diverge", branchName)
 
-  override fun getOperationName() = "create branch"
+  override fun getOperationName(): @NotNull String = "create branch"
 }
